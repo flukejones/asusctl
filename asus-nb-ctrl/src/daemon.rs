@@ -168,15 +168,15 @@ fn start_signal_task(
 ) {
     tokio::spawn(async move {
         // Some small things we need to track, without passing all sorts of stuff around
-        let mut last_fan_mode = config.lock().await.fan_mode;
+        let mut last_fan_mode = config.lock().await.power_profile;
         let mut last_charge_limit = config.lock().await.bat_charge_limit;
         loop {
             // Use tokio sleep to not hold up other threads
             tokio::time::delay_for(std::time::Duration::from_millis(500)).await;
 
             let config = config.lock().await;
-            if config.fan_mode != last_fan_mode {
-                last_fan_mode = config.fan_mode;
+            if config.power_profile != last_fan_mode {
+                last_fan_mode = config.power_profile;
                 connection
                     .send(
                         fanmode_signal
@@ -210,7 +210,7 @@ async fn send_boot_signals(
 
     let config = config.lock().await;
 
-    if let Some(data) = config.get_led_mode_data(config.current_mode) {
+    if let Some(data) = config.get_led_mode_data(config.kbd_backlight_mode) {
         connection
             .send(
                 led_changed_signal
@@ -224,7 +224,7 @@ async fn send_boot_signals(
         .send(
             fanmode_signal
                 .msg(&DBUS_PATH.into(), &DBUS_IFACE.into())
-                .append1(config.fan_mode),
+                .append1(config.power_profile),
         )
         .unwrap_or_else(|_| 0);
 

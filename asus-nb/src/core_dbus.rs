@@ -10,14 +10,14 @@ use std::sync::{
 use std::{thread, time::Duration};
 
 /// Simplified way to write a effect block
-pub struct AuraDbusWriter {
+pub struct AuraDbusClient {
     connection: Box<Connection>,
     block_time: u64,
     stop: Arc<AtomicBool>,
     stop_token: Token,
 }
 
-impl AuraDbusWriter {
+impl AuraDbusClient {
     #[inline]
     pub fn new() -> Result<Self, Box<dyn Error>> {
         let connection = Connection::new_system()?;
@@ -32,7 +32,7 @@ impl AuraDbusWriter {
             true
         })?;
 
-        Ok(AuraDbusWriter {
+        Ok(AuraDbusClient {
             connection: Box::new(connection),
             block_time: 33333,
             stop,

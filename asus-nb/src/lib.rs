@@ -1,6 +1,6 @@
-pub static DBUS_NAME: &str = "org.asus-linux.Daemon";
-pub static DBUS_PATH: &str = "/org/asus-linux/Daemon";
-pub static DBUS_IFACE: &str = "org.asus-linux.Daemon";
+pub static DBUS_NAME: &str = "org.asuslinux.Daemon";
+pub static DBUS_PATH: &str = "/org/asus/linux/Daemon";
+pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";
 pub const LED_MSG_LEN: usize = 17;
 
 pub mod aura_modes;
@@ -145,7 +145,7 @@ impl From<&AuraModes> for [u8; LED_MSG_LEN] {
         msg[1] = 0xb3;
         match mode {
             AuraModes::LedBrightness(n) => return aura_brightness_bytes(*n),
-            AuraModes::Stable(_) => msg[3] = 0x00,
+            AuraModes::Static(_) => msg[3] = 0x00,
             AuraModes::Breathe(_) => msg[3] = 0x01,
             AuraModes::Strobe(_) => msg[3] = 0x02,
             AuraModes::Rainbow(_) => msg[3] = 0x03,
@@ -192,7 +192,7 @@ impl From<&AuraModes> for [u8; LED_MSG_LEN] {
                 msg[6] = settings.colour.2;
                 msg[7] = settings.speed as u8;
             }
-            AuraModes::Stable(settings)
+            AuraModes::Static(settings)
             | AuraModes::Pulse(settings)
             | AuraModes::Comet(settings)
             | AuraModes::Flash(settings) => {

@@ -2,7 +2,7 @@ use crate::cli_options;
 use crate::cli_options::SetAuraBuiltin;
 use serde_derive::{Deserialize, Serialize};
 
-pub const SINGLE: u8 = 0x00;
+pub const STATIC: u8 = 0x00;
 pub const BREATHING: u8 = 0x01;
 pub const STROBE: u8 = 0x02;
 pub const RAINBOW: u8 = 0x03;
@@ -26,7 +26,7 @@ impl From<cli_options::Colour> for Colour {
 }
 impl Default for Colour {
     fn default() -> Self {
-        Colour(255, 255, 255)
+        Colour(128, 0, 0)
     }
 }
 
@@ -165,7 +165,7 @@ impl From<cli_options::SingleColourSpeed> for SingleColourSpeed {
 
 #[derive(Clone, Deserialize, Serialize)]
 pub enum AuraModes {
-    Stable(SingleColour),
+    Static(SingleColour),
     Breathe(TwoColourSpeed),
     Strobe(SingleSpeed),
     Rainbow(SingleSpeedDirection),
@@ -186,7 +186,7 @@ pub enum AuraModes {
 impl From<SetAuraBuiltin> for AuraModes {
     fn from(mode: SetAuraBuiltin) -> Self {
         match mode {
-            SetAuraBuiltin::Stable(x) => AuraModes::Stable(x.into()),
+            SetAuraBuiltin::Static(x) => AuraModes::Static(x.into()),
             SetAuraBuiltin::Breathe(x) => AuraModes::Breathe(x.into()),
             SetAuraBuiltin::Strobe(x) => AuraModes::Strobe(x.into()),
             SetAuraBuiltin::Rainbow(x) => AuraModes::Rainbow(x.into()),
@@ -221,7 +221,7 @@ impl From<&mut AuraModes> for u8 {
 impl From<&AuraModes> for u8 {
     fn from(mode: &AuraModes) -> Self {
         match mode {
-            AuraModes::Stable(_) => SINGLE,
+            AuraModes::Static(_) => STATIC,
             AuraModes::Breathe(_) => BREATHING,
             AuraModes::Strobe(_) => STROBE,
             AuraModes::Rainbow(_) => RAINBOW,
@@ -243,7 +243,7 @@ impl From<&AuraModes> for u8 {
 impl From<&AuraModes> for &str {
     fn from(mode: &AuraModes) -> Self {
         match mode {
-            AuraModes::Stable(_) => "Static",
+            AuraModes::Static(_) => "Static",
             AuraModes::Breathe(_) => "Breathing",
             AuraModes::Strobe(_) => "Strobing",
             AuraModes::Rainbow(_) => "Rainbow",
@@ -267,7 +267,7 @@ impl From<&AuraModes> for &str {
 impl From<u8> for AuraModes {
     fn from(byte: u8) -> Self {
         match byte {
-            SINGLE => AuraModes::Stable(SingleColour::default()),
+            STATIC => AuraModes::Static(SingleColour::default()),
             BREATHING => AuraModes::Breathe(TwoColourSpeed::default()),
             STROBE => AuraModes::Strobe(SingleSpeed::default()),
             RAINBOW => AuraModes::Rainbow(SingleSpeedDirection::default()),

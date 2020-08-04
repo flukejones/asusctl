@@ -3,7 +3,7 @@ use gumdrop::Options;
 use log::LevelFilter;
 use asus_nb::{
     cli_options::{LedBrightness, SetAuraBuiltin},
-    core_dbus::AuraDbusWriter,
+    core_dbus::AuraDbusClient,
 };
 use std::io::Write;
 
@@ -14,11 +14,11 @@ struct CLIStart {
     #[options(help = "show program version number")]
     version: bool,
     #[options(meta = "VAL", help = "<off, low, med, high>")]
-    bright: Option<LedBrightness>,
-    #[options(meta = "FAN", help = "<silent, normal, boost>")]
-    fan_mode: Option<FanLevel>,
+    kbd_bright: Option<LedBrightness>,
+    #[options(meta = "PWR", help = "<silent, normal, boost>")]
+    pwr_profile: Option<FanLevel>,
     #[options(meta = "CHRG", help = "<20-100>")]
-    charge_limit: Option<u8>,
+    chg_limit: Option<u8>,
     #[options(command)]
     command: Option<Command>,
 }
@@ -52,21 +52,21 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Version: {}", daemon::VERSION);
     }
 
-    let writer = AuraDbusWriter::new()?;
+    let writer = AuraDbusClient::new()?;
 
     if let Some(Command::LedMode(mode)) = parsed.command {
         if let Some(command) = mode.command {
             writer.write_builtin_mode(&command.into())?
         }
     }
-    if let Some(brightness) = parsed.bright {
+    if let Some(brightness) = parsed.kbd_bright {
         writer.write_brightness(brightness.level())?;
     }
-    if let Some(fan_level) = parsed.fan_mode {
+    if let Some(fan_level) = parsed.pwr_profile {
         writer.write_fan_mode(fan_level.into())?;
     }
-    if let Some(charge_limit) = parsed.charge_limit {
-        writer.write_charge_limit(charge_limit)?;
+    if let Some(chg_limit) = parsed.chg_limit {
+        writer.write_charge_limit(chg_limit)?;
     }
     Ok(())
 }

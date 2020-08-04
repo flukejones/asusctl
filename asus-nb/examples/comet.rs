@@ -1,10 +1,10 @@
 use asus_nb::{
-    core_dbus::AuraDbusWriter,
+    core_dbus::AuraDbusClient,
     fancy::{GX502Layout, KeyColourArray, KeyLayout},
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut writer = AuraDbusWriter::new()?;
+    let mut writer = AuraDbusClient::new()?;
 
     let layout = GX502Layout::default();
 

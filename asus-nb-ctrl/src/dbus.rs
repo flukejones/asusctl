@@ -39,8 +39,8 @@ fn get_keyboard_backlight(config: Arc<Mutex<Config>>) -> Method<MTSync, ()> {
         .method("GetKeyBacklight", (), {
             move |m| {
                 if let Ok(lock) = config.try_lock() {
-                    for mode in &lock.builtin_modes {
-                        if lock.current_mode == <u8>::from(mode) {
+                    for mode in &lock.kbd_backlight_modes {
+                        if lock.kbd_backlight_mode == <u8>::from(mode) {
                             let mode = serde_json::to_string(&mode).unwrap();
                             let mret = m.msg.method_return().append1(mode);
                             return Ok(vec![mret]);
@@ -63,7 +63,7 @@ fn get_keyboard_backlight_modes(config: Arc<Mutex<Config>>) -> Method<MTSync, ()
         .method("GetKeyBacklightModes", (), {
             move |m| {
                 if let Ok(lock) = config.try_lock() {
-                    let mode = serde_json::to_string(&lock.builtin_modes).unwrap();
+                    let mode = serde_json::to_string(&lock.kbd_backlight_modes).unwrap();
                     let mret = m.msg.method_return().append1(mode);
                     Ok(vec![mret])
                 } else {
@@ -124,7 +124,7 @@ fn get_fan_mode(config: Arc<Mutex<Config>>) -> Method<MTSync, ()> {
         .method("GetFanMode", (), {
             move |m| {
                 if let Ok(lock) = config.try_lock() {
-                    let mret = m.msg.method_return().append1(lock.fan_mode);
+                    let mret = m.msg.method_return().append1(lock.power_profile);
                     Ok(vec![mret])
                 } else {
                     Err(MethodErr::failed("Could not lock config for access"))

@@ -1,7 +1,7 @@
 use log::{info, warn};
 use asus_nb::aura_modes::{
     AuraModes, BREATHING, COMET, FLASH, HIGHLIGHT, LASER, MULTISTATIC, PULSE, RAIN, RAINBOW, RGB,
-    RIPPLE, SINGLE, STAR, STROBE,
+    RIPPLE, STATIC, STAR, STROBE,
 };
 
 static HELP_ADDRESS: &str = "https://gitlab.com/asus-linux/asus-nb-ctrl";
@@ -17,7 +17,7 @@ pub fn match_laptop() -> LaptopBase {
                     info!("Found GL753 or similar");
                     return LaptopBase {
                         usb_product: "1854".to_string(),
-                        supported_modes: vec![SINGLE, BREATHING, STROBE],
+                        supported_modes: vec![STATIC, BREATHING, STROBE],
                     };
                 }
                 _ => {}
@@ -54,12 +54,12 @@ fn select_1866_device(prod: String) -> LaptopBase {
         || board_name.starts_with("G532")
     {
         laptop.supported_modes = vec![
-            SINGLE, BREATHING, STROBE, RAINBOW, STAR, RAIN, HIGHLIGHT, LASER, RIPPLE, PULSE, COMET,
+            STATIC, BREATHING, STROBE, RAINBOW, STAR, RAIN, HIGHLIGHT, LASER, RIPPLE, PULSE, COMET,
             FLASH, RGB,
         ];
     } else if board_name.starts_with("G531") || board_name.starts_with("G731") {
         laptop.supported_modes = vec![
-            SINGLE,
+            STATIC,
             BREATHING,
             STROBE,
             RAINBOW,
@@ -76,14 +76,14 @@ fn select_1866_device(prod: String) -> LaptopBase {
         ];
     // RGB, limited effects, no zones
     } else if board_name.starts_with("G512LI") || board_name.starts_with("G712LI") {
-        laptop.supported_modes = vec![SINGLE, BREATHING, STROBE, RAINBOW, PULSE];
+        laptop.supported_modes = vec![STATIC, BREATHING, STROBE, RAINBOW, PULSE];
     // RGB, limited effects, 4-zone RGB
     } else if board_name.starts_with("GM501")
         || board_name.starts_with("GX531")
         || board_name.starts_with("G512")
         || board_name.starts_with("G712")
     {
-        laptop.supported_modes = vec![SINGLE, BREATHING, STROBE, RAINBOW, PULSE, MULTISTATIC];
+        laptop.supported_modes = vec![STATIC, BREATHING, STROBE, RAINBOW, PULSE, MULTISTATIC];
     } else {
         warn!(
             "Unsupported laptop, please request support at {}",

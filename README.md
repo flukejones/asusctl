@@ -1,42 +1,31 @@
-# ROG-Core
+# ASUS NB Ctrl
 
 **NOTICE:**
-I have completed kernel patches to move a large chunk of rog-core functionality
-in to the Linux kernel. The patch is not in mainline yet, but can be found in the
-`./kernel-patch/` directory. The patch enables the following in kernel:
+
+This program requires the kernel patch in `./kernel-patch/` to be applied.
+As of 04/08/2020 these have been submitted to lkml.
+
+The patch enables the following in kernel:
 
 - All hotkeys (FN+Key combos)
 - Control of keyboard brightness using FN+Key combos (not RGB)
-- FN+F5 (fan) to toggle fan modes. You can watch the path `/sys/devices/platform/asus-nb-wmi/throttle_thermal_policy`
-  to see which mode you are in
+- FN+F5 (fan) to toggle fan modes
 
-You will not get RGB control in kernel (yet), and rog-core is still required to
-change modes and RGB settings. The current version in master and last release
-still take full control of the interfaces
-
-**work on a version of rog-core for use with the kernel patch is in another branch** 
-
-The last version of rog-core will work with any kernel with or without this patch
- and provide full functions.
+You will not get RGB control in kernel (yet), and asusd is still required to
+change modes and RGB settings. The previous version of this program is named
+`rog-core` and takes full control of the interfaces required - if you can't
+apply the kernel patches then `rog-core` is still highly usable.
 
 ---
-rog-core is a utility for Linux to control many aspects (eventually) of the ASUS
-ROG laptops like the Zephyrus GX502GW.
-
-One of the benefits of this app (for me at least) is that you *don't* require a
-kernel with correct support for the laptop keyboard EC. The app
-reads and writes direct to the device interrupts, and can be customised (in
-source) quite extensively to do what you want such as directly controlling your
-laptop backlight rather than emitting a key-press for the DE to handle.
-
-Other laptop functions such as fan modes or battery charge limiting will need
-kernel level support which exists in most newer kernels (higher than 5.6.10).
+asusd is a utility for Linux to control many aspects of various ASUS laptops.
 
 ## Discord
 
 [Discord server link](https://discord.gg/PVyFzWj)
 
 ## SUPPORTED LAPTOPS
+
+If your laptop is not in the following lists, it may still work with fan-mode switching and charge limit control.
 
 **Please help test or provide info for:**
 
@@ -47,34 +36,32 @@ kernel level support which exists in most newer kernels (higher than 5.6.10).
 a little between models, e.g, some RGB modes are missing, or it's a single colour.
 As far as I can see, the EC does not give us a way to find what modes are supported.
 
-### KEYS + OTHER FUNCTIONS
+### ANIME AND OTHER FUNCTIONS
 
-Media keys are Volume -/+, Mute output, previous, next, play/pause. These keys are grouped together on one interface block on the keyboard EC
-as a "Consumer Device" HID, all other fn+<key> combo are on another interface which is "Vendor Custom", this includes things like keyboard
-LED brightness and mode change keys, Calc, fan-mode toggles etc.
-
-| MODEL |Media keys| Additional FN+<KEY> | AniMe |Touchpad-Numpad| Fan Modes | Charge Limit |
-|:-----:|:--------:|:-------------------:|:-----:|:-------------:|:---------:|:------------:|
-| GM501 |     X    |         X           |       |               |     X     |       X      |
-| GX502 |     X    |         X           |       |               |     X     |       X      |
-| GX531 |     X    |         X           |       |               |     X     |       X      |
-| GX701 |     X    |         X           |       |               |     X     |       X      |
-| G512  |     X    |         X           |       |               |     X     |       X      |
-| G712  |     X    |         X           |       |               |     X     |       X      |
-| G531  |     X    |         X           |       |               |     X     |       X      |
-| G731  |     X    |         X           |       |               |     X     |       X      |
-| G532  |     X    |         X           |       |               |     X     |       X      |
-| GA401 |     X    |         X           |   X   |               |     X     |       X      |
-| GA502 |     X    |         X           |   X   |               |     X     |       X      |
-| GU502 |     X    |         X           |   X   |               |     X     |       X      |
+| MODEL | AniMe |Touchpad-Numpad| Fan Modes | Charge Limit |
+|:-----:|:-----:|:-------------:|:---------:|:------------:|
+| GM501 |       |               |     X     |       X      |
+| GX502 |       |               |     X     |       X      |
+| GX531 |       |               |     X     |       X      |
+| GX701 |       |               |     X     |       X      |
+| G512  |       |               |     X     |       X      |
+| G712  |       |               |     X     |       X      |
+| G531  |       |               |     X     |       X      |
+| G731  |       |               |     X     |       X      |
+| G532  |       |               |     X     |       X      |
+| GA401 |   X   |               |     X     |       X      |
+| GA502 |   X   |               |     X     |       X      |
+| GU502 |   X   |               |     X     |       X      |
 
 **NOTE:** GA14/GA401 and GA15/GA502/GU502, You will need kernel [patches](https://lab.retarded.farm/zappel/asus-rog-zephyrus-g14/-/tree/master/kernel_patches).
 
-### LED MODES
+**NOTE:** If charge limit or fan modes are not working, then you may require a kernel newer than 5.6.10.
+
+### KEYBOARD BACKLIGHT MODES
 
 Models GA401, GA502, GU502 support LED brightness change only (no RGB).
 
-| MODEL  | SINGLE | BREATHING | STROBE | RAINBOW | STAR | RAIN | HIGHLIGHT | LASER | RIPPLE | PULSE | COMET | FLASH | ZONES | PER-KEY RGB |
+| MODEL  | STATIC | BREATHING | STROBE | RAINBOW | STAR | RAIN | HIGHLIGHT | LASER | RIPPLE | PULSE | COMET | FLASH | ZONES | PER-KEY RGB |
 |:------:|:------:|:---------:|:------:|:-------:|:----:|:----:|:---------:|:-----:|:------:|:-----:|:-----:|:-----:|:-----:|:-----------:|
 | G512LI |   X    |     X     |    X   |    X    |      |      |           |       |        |       |       |       |       |             |
 | G712LI |   X    |     X     |    X   |    X    |      |      |           |       |        |       |       |       |       |             |
@@ -88,26 +75,13 @@ Models GA401, GA502, GU502 support LED brightness change only (no RGB).
 | G731   |   X    |     X     |    X   |    X    |  X   |  X   |     X     |   X   |    X   |   X   |   X   |   X   |   X   |     X       |
 | G532   |   X    |     X     |    X   |    X    |  X   |  X   |     X     |   X   |    X   |   X   |   X   |   X   |       |     X       |
 
-
 ## Implemented
 
+- [X] Daemon
 - [X] Setting/modifying built-in LED modes
 - [X] Per-key LED setting
 - [X] Fancy LED modes (See examples)
-- [X] Daemon mode
 - [X] Saving settings for reload
-- [ ] System control
-  + [X] ROG key custom mapping (Can be done in source)
-  + [X] Fan/Performance mode
-  + [ ] Screen off? Now mapped to a keycode but has no effect
-  + [X] Screen brightness up/down
-  + [X] Touchpad toggle
-  + [X] Sleep
-  + [X] Airplane mode
-- [X] Capture and use hotkeys
-  + [X] Aura control by Aura keys
-  + [X] Volume + media controls work
-  + [X] Mic mute
 - [X] Logging - required for journalctl
 - [X] AniMatrix display on G14 models that include it
 - [X] Set battery charge limit (with kernel supporting this)
@@ -131,40 +105,22 @@ started when the device is initialised and ready.
 If you are upgrading from a previous installed version, you will need to restart the service or reboot.
 
 ```
-$ systemctl daemon-reload && systemctl restart rog-core
+$ systemctl daemon-reload && systemctl restart asusd
 ```
 
 You may also need to activate the service for debian install. If running Pop!_OS, I suggest disabling `system76-power`
-gnome-shell extension, or at least limiting use of the power-management parts as `rog-core` lets you set the same things
+gnome-shell extension, or at least limiting use of the power-management parts as `asusd` lets you set the same things
 (one or the other will overwrite pstates). I will create a shell extension at some point similar to system76, but using
-the rog-core parts. It is safe to leave `system76-power.service` enabled and use for switching between graphics modes.
+the asusd parts. It is safe to leave `system76-power.service` enabled and use for switching between graphics modes.
 
-### Ubuntu PPA
+## Uninstalling
 
-Alternatively, instead of building manually you can use the PPA.
-
-```
-sudo add-apt-repository ppa:lukedjones/rog-core
-sudo apt-get update
-sudo apt-get install rog-core
-```
-
-the rog-core service will run when the device is initialised.
-
-### Gentoo ebuild
-
-Thanks to @aspann you can grab it here [sys-power/rog-core](https://lab.retarded.farm/zappel/zGentoo/-/tree/master/sys-power/rog-core)
-
-### Arch AUR
-
-You can find the thingimajig [here](https://aur.archlinux.org/packages/rog-core/). If
-you are using a GA14 or GA15 series, you may need kernel [patches](https://lab.retarded.farm/zappel/asus-rog-zephyrus-g14/-/tree/master/kernel_patches).
+Run `sudo make uninstall` in the source repo, and remove `/etc/asusd.conf`.
 
 ## Updating
 
-Occasionally I might break things for you by tweaking or changing the config file layout. Usually this will mean you
-need to remove `/etc/rog-core.conf` and restart the daemon to create a new one. You *can* back up the old one and copy
-settings back over (then restart daemon again).
+Occasionally you need to remove `/etc/asusd.conf` and restart the daemon to create a new one. You *can* back up the old
+one and copy settings back over (then restart daemon again).
 
 # Usage
 
@@ -182,27 +138,27 @@ the daemon mode over dbus.
 Commands are given by:
 
 ```
-rog-core <option> <command> <command-options>
+asusd <option> <command> <command-options>
 ```
 
 Help is available through:
 
 ```
-rog-core --help
-rog-core <command> --help
+asusd --help
+asusd <command> --help
 ```
 
 Some commands may have subcommands:
 
 ```
-rog-core <command> <subcommand> --help
+asusd <command> <subcommand> --help
 ```
 
 ### Example
 
 ```
-$ rog-core --help
-Usage: rog-core [OPTIONS]
+$ asusd --help
+Usage: asusd [OPTIONS]
 
 Optional arguments:
   -h, --help          print help message
@@ -214,8 +170,8 @@ Optional arguments:
 Available commands:
   led-mode  Set the keyboard lighting from built-in modes
 
-$ rog-core led-mode --help
-Usage: rog-core led-mode [OPTIONS]
+$ asusd led-mode --help
+Usage: asusd led-mode [OPTIONS]
 
 Optional arguments:
   -h, --help  print help message
@@ -235,54 +191,21 @@ Available commands:
   flash         set a wide vertical line zooming from left
   multi-static  4-zone multi-colour
 
-$ rog-core led-mode stable --help
-Usage: rog-core led-mode stable [OPTIONS]
+$ asusd led-mode stable --help
+Usage: asusd led-mode stable [OPTIONS]
 
 Optional arguments:
   -h, --help  print help message
   -c HEX      set the RGB value e.g, ff00ff
 
-$ rog-core led-mode star --help
-Usage: rog-core led-mode star [OPTIONS]
+$ asusd led-mode star --help
+Usage: asusd led-mode star [OPTIONS]
 
 Optional arguments:
   -h, --help  print help message
   -c HEX      set the first RGB value e.g, ff00ff
   -C HEX      set the second RGB value e.g, ff00ff
   -s SPEED    set the speed: low, med, high
-```
-
-## ROG Key
-
-The ROG key can be customized in a limited way by use of presets:
-- Power
-- Sleep
-- MediaRecord
-- MediaFastFwd
-- MediaRewind
-- MediaNext
-- MediaPrev
-- MediaStop
-- MediaPlayPause
-- MediaVolMute
-- MediaVolUp
-- MediaVolDown
-- BacklightInc
-- BacklightDec
-- ControlConfig
-- LaunchTextEditor
-- LaunchEmailApp
-- LaunchNewsReader
-- LaunchCalendar
-- LaunchCalculator
-- LaunchWebBrowser
-- FileBrowser
-
-This key can be changed in /etc/rogcore.conf, for example:
-
-```
-{
-  "rog_key": "FileBrowser",
 ```
 
 ## Daemon mode
@@ -316,38 +239,7 @@ TODO: see `./wireshark_data/` for some captures.
 
 ### Supporting more laptops
 
-At a minimum it probably needs to be a Zephyrus laptop. If there is enough interest I will remove the restriction on
-board names so that anyone can try the app.
-
-From there I'll need wireshark captures from Windows using Armoury Crate if possible:
-
-- *No* USB devices plugged in
-- One action per capture, 2 or 3 times
-- An action may be switching a mode or pressing a button
-
-The real ticket items are:
-
-- Captures from installing Armoury Crate. To do this you need to uninstall almost all ASUS junkware and such
-- Byte sequence captures from hotkeys pressed in linux (which I need to make a tool for)
-- lsusb output
-
-lsusb:
-
-First do `lsusb |grep 0b05` and check the part after `0b05:`, output looks like:
-
-```text
-Bus 001 Device 005: ID 0b05:1866 ASUSTek Computer, Inc. N-KEY Device
-```
-
-Then do `sudo lsusb -vd 0b05:1866 > ~/laptop_info` and give that to me.
-
-Other helpful info can be gained from `sudo usbhid-dump`, for which you may need to unload kernel drivers. Please google
-this.
-
-Also required (for my book-keeping of data):
-- `cat /sys/class/dmi/id/product_name`
-- `cat /sys/class/dmi/id/product_family`
-- `cat /sys/class/dmi/id/board_name`
+Please file a support request.
 
 ## License
 

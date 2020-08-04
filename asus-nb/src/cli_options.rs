@@ -178,7 +178,7 @@ pub struct SingleColourSpeed {
 #[derive(Options, Deserialize, Serialize)]
 pub enum SetAuraBuiltin {
     #[options(help = "set a single static colour")]
-    Stable(SingleColour),
+    Static(SingleColour),
     #[options(help = "pulse between one or two colours")]
     Breathe(TwoColourSpeed),
     #[options(help = "strobe through all colours")]
@@ -207,7 +207,7 @@ pub enum SetAuraBuiltin {
 
 impl Default for SetAuraBuiltin {
     fn default() -> Self {
-        SetAuraBuiltin::Stable(SingleColour {
+        SetAuraBuiltin::Static(SingleColour {
             help: false,
             colour: Colour(255, 0, 0),
         })

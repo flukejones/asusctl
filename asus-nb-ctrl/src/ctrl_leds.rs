@@ -71,9 +71,9 @@ impl crate::Controller for CtrlKbdBacklight {
     async fn reload_from_config(&mut self, config: &mut Config) -> Result<(), Box<dyn Error>> {
         // set current mode (if any)
         if self.supported_modes.len() > 1 {
-            if self.supported_modes.contains(&config.current_mode) {
+            if self.supported_modes.contains(&config.kbd_backlight_mode) {
                 let mode = config
-                    .get_led_mode_data(config.current_mode)
+                    .get_led_mode_data(config.kbd_backlight_mode)
                     .ok_or(RogError::NotSupported)?
                     .to_owned();
                 self.write_mode(&mode).await?;
@@ -81,19 +81,19 @@ impl crate::Controller for CtrlKbdBacklight {
             } else {
                 warn!(
                     "An unsupported mode was set: {}, reset to first mode available",
-                    <&str>::from(&<AuraModes>::from(config.current_mode))
+                    <&str>::from(&<AuraModes>::from(config.kbd_backlight_mode))
                 );
-                for (idx, mode) in config.builtin_modes.iter_mut().enumerate() {
+                for (idx, mode) in config.kbd_backlight_modes.iter_mut().enumerate() {
                     if !self.supported_modes.contains(&mode.into()) {
-                        config.builtin_modes.remove(idx);
+                        config.kbd_backlight_modes.remove(idx);
                         config.write();
                         break;
                     }
                 }
-                config.current_mode = self.supported_modes[0];
+                config.kbd_backlight_mode = self.supported_modes[0];
                 // TODO: do a recursive call with a boxed dyn future later
                 let mode = config
-                    .get_led_mode_data(config.current_mode)
+                    .get_led_mode_data(config.kbd_backlight_mode)
                     .ok_or(RogError::NotSupported)?
                     .to_owned();
                 self.write_mode(&mode).await?;
@@ -102,7 +102,7 @@ impl crate::Controller for CtrlKbdBacklight {
         }
 
         // Reload brightness
-        let bright = config.brightness;
+        let bright = config.kbd_boot_brightness;
         let bytes = aura_brightness_bytes(bright);
         self.write_bytes(&bytes).await?;
         info!("Reloaded last used brightness");
@@ -186,7 +186,7 @@ impl CtrlKbdBacklight {
             AuraModes::LedBrightness(n) => {
                 let bytes: [u8; LED_MSG_LEN] = (&mode).into();
                 self.write_bytes(&bytes).await?;
-                config.brightness = n;
+                config.kbd_boot_brightness = n;
                 config.write();
                 info!("LED brightness set to {:#?}", n);
             }
@@ -201,7 +201,7 @@ impl CtrlKbdBacklight {
             _ => {
                 let mode_num: u8 = u8::from(&mode);
                 self.write_mode(&mode).await?;
-                config.current_mode = mode_num;
+                config.kbd_backlight_mode = mode_num;
                 config.set_mode_data(mode);
                 config.write();
             }

@@ -62,10 +62,10 @@ impl crate::Controller for CtrlFanAndCPU {
 
     async fn reload_from_config(&mut self, config: &mut Config) -> Result<(), Box<dyn Error>> {
         let mut file = OpenOptions::new().write(true).open(self.path)?;
-        file.write_all(format!("{:?}\n", config.fan_mode).as_bytes())
+        file.write_all(format!("{:?}\n", config.power_profile).as_bytes())
             .unwrap_or_else(|err| error!("Could not write to {}, {:?}", self.path, err));
-        self.set_pstate_for_fan_mode(FanLevel::from(config.fan_mode), config)?;
-        info!("Reloaded fan mode: {:?}", FanLevel::from(config.fan_mode));
+        self.set_pstate_for_fan_mode(FanLevel::from(config.power_profile), config)?;
+        info!("Reloaded fan mode: {:?}", FanLevel::from(config.power_profile));
         Ok(())
     }
 }
@@ -98,13 +98,13 @@ impl CtrlFanAndCPU {
         let mut buf = [0u8; 1];
         file.read_exact(&mut buf)?;
         if let Some(num) = char::from(buf[0]).to_digit(10) {
-            if config.fan_mode != num as u8 {
-                config.fan_mode = num as u8;
+            if config.power_profile != num as u8 {
+                config.power_profile = num as u8;
                 config.write();
-                self.set_pstate_for_fan_mode(FanLevel::from(config.fan_mode), config)?;
+                self.set_pstate_for_fan_mode(FanLevel::from(config.power_profile), config)?;
                 info!(
                     "Fan mode was changed: {:?}",
-                    FanLevel::from(config.fan_mode)
+                    FanLevel::from(config.power_profile)
                 );
             }
             return Ok(());
@@ -123,12 +123,12 @@ impl CtrlFanAndCPU {
     ) -> Result<(), Box<dyn Error>> {
         let mut fan_ctrl = OpenOptions::new().write(true).open(self.path)?;
 
-        config.fan_mode = n;
+        config.power_profile = n;
         config.write();
         fan_ctrl
-            .write_all(format!("{:?}\n", config.fan_mode).as_bytes())
+            .write_all(format!("{:?}\n", config.power_profile).as_bytes())
             .unwrap_or_else(|err| error!("Could not write to {}, {:?}", self.path, err));
-        info!("Fan mode set to: {:?}", FanLevel::from(config.fan_mode));
+        info!("Fan mode set to: {:?}", FanLevel::from(config.power_profile));
         self.set_pstate_for_fan_mode(FanLevel::from(n), config)?;
         Ok(())
     }
@@ -142,36 +142,36 @@ impl CtrlFanAndCPU {
         if let Ok(pstate) = intel_pstate::PState::new() {
             match mode {
                 FanLevel::Normal => {
-                    pstate.set_min_perf_pct(config.mode_performance.normal.min_percentage)?;
-                    pstate.set_max_perf_pct(config.mode_performance.normal.max_percentage)?;
-                    pstate.set_no_turbo(config.mode_performance.normal.no_turbo)?;
+                    pstate.set_min_perf_pct(config.power_profiles.normal.min_percentage)?;
+                    pstate.set_max_perf_pct(config.power_profiles.normal.max_percentage)?;
+                    pstate.set_no_turbo(config.power_profiles.normal.no_turbo)?;
                     info!(
                         "Intel CPU Power: min: {:?}%, max: {:?}%, turbo: {:?}",
-                        config.mode_performance.normal.min_percentage,
-                        config.mode_performance.normal.max_percentage,
-                        !config.mode_performance.normal.no_turbo
+                        config.power_profiles.normal.min_percentage,
+                        config.power_profiles.normal.max_percentage,
+                        !config.power_profiles.normal.no_turbo
                     );
                 }
                 FanLevel::Boost => {
-                    pstate.set_min_perf_pct(config.mode_performance.boost.min_percentage)?;
-                    pstate.set_max_perf_pct(config.mode_performance.boost.max_percentage)?;
-                    pstate.set_no_turbo(config.mode_performance.boost.no_turbo)?;
+                    pstate.set_min_perf_pct(config.power_profiles.boost.min_percentage)?;
+                    pstate.set_max_perf_pct(config.power_profiles.boost.max_percentage)?;
+                    pstate.set_no_turbo(config.power_profiles.boost.no_turbo)?;
                     info!(
                         "Intel CPU Power: min: {:?}%, max: {:?}%, turbo: {:?}",
-                        config.mode_performance.boost.min_percentage,
-                        config.mode_performance.boost.max_percentage,
-                        !config.mode_performance.boost.no_turbo
+                        config.power_profiles.boost.min_percentage,
+                        config.power_profiles.boost.max_percentage,
+                        !config.power_profiles.boost.no_turbo
                     );
                 }
                 FanLevel::Silent => {
-                    pstate.set_min_perf_pct(config.mode_performance.silent.min_percentage)?;
-                    pstate.set_max_perf_pct(config.mode_performance.silent.max_percentage)?;
-                    pstate.set_no_turbo(config.mode_performance.silent.no_turbo)?;
+                    pstate.set_min_perf_pct(config.power_profiles.silent.min_percentage)?;
+                    pstate.set_max_perf_pct(config.power_profiles.silent.max_percentage)?;
+                    pstate.set_no_turbo(config.power_profiles.silent.no_turbo)?;
                     info!(
                         "Intel CPU Power: min: {:?}%, max: {:?}%, turbo: {:?}",
-                        config.mode_performance.silent.min_percentage,
-                        config.mode_performance.silent.max_percentage,
-                        !config.mode_performance.silent.no_turbo
+                        config.power_profiles.silent.min_percentage,
+                        config.power_profiles.silent.max_percentage,
+                        !config.power_profiles.silent.no_turbo
                     );
                 }
             }
@@ -187,7 +187,7 @@ impl CtrlFanAndCPU {
                 })?;
             match mode {
                 FanLevel::Normal => {
-                    let boost = if config.mode_performance.normal.no_turbo {
+                    let boost = if config.power_profiles.normal.no_turbo {
                         "0"
                     } else {
                         "1"
@@ -198,7 +198,7 @@ impl CtrlFanAndCPU {
                     info!("AMD CPU Turbo: {:?}", boost);
                 }
                 FanLevel::Boost => {
-                    let boost = if config.mode_performance.boost.no_turbo {
+                    let boost = if config.power_profiles.boost.no_turbo {
                         "0"
                     } else {
                         "1"
@@ -209,7 +209,7 @@ impl CtrlFanAndCPU {
                     info!("AMD CPU Turbo: {:?}", boost);
                 }
                 FanLevel::Silent => {
-                    let boost = if config.mode_performance.silent.no_turbo {
+                    let boost = if config.power_profiles.silent.no_turbo {
                         "0"
                     } else {
                         "1"

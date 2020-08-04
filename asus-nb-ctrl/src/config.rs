@@ -7,12 +7,12 @@ pub static CONFIG_PATH: &str = "/etc/asusd.conf";
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct Config {
-    pub fan_mode: u8,
+    pub power_profile: u8,
     pub bat_charge_limit: u8,
-    pub brightness: u8,
-    pub current_mode: u8,
-    pub builtin_modes: Vec<AuraModes>,
-    pub mode_performance: FanModeSettings,
+    pub kbd_boot_brightness: u8,
+    pub kbd_backlight_mode: u8,
+    pub kbd_backlight_modes: Vec<AuraModes>,
+    pub power_profiles: FanModeProfile,
 }
 
 impl Config {
@@ -31,10 +31,10 @@ impl Config {
                 // create a default config here
                 let mut c = Config::default();
                 c.bat_charge_limit = 100;
-                c.current_mode = 0;
+                c.kbd_backlight_mode = 0;
 
                 for n in supported_led_modes {
-                    c.builtin_modes.push(AuraModes::from(*n))
+                    c.kbd_backlight_modes.push(AuraModes::from(*n))
                 }
 
                 // Should be okay to unwrap this as is since it is a Default
@@ -76,17 +76,17 @@ impl Config {
 
     pub fn set_mode_data(&mut self, mode: AuraModes) {
         let byte: u8 = (&mode).into();
-        for (index, n) in self.builtin_modes.iter().enumerate() {
+        for (index, n) in self.kbd_backlight_modes.iter().enumerate() {
             if byte == u8::from(n) {
                 // Consume it, OMNOMNOMNOM
-                self.builtin_modes[index] = mode;
+                self.kbd_backlight_modes[index] = mode;
                 break;
             }
         }
     }
 
     pub fn get_led_mode_data(&self, num: u8) -> Option<&AuraModes> {
-        for mode in &self.builtin_modes {
+        for mode in &self.kbd_backlight_modes {
             if u8::from(mode) == num {
                 return Some(mode);
             }
@@ -96,22 +96,22 @@ impl Config {
 }
 
 #[derive(Default, Deserialize, Serialize)]
-pub struct FanModeSettings {
-    pub normal: IntelPState,
-    pub boost: IntelPState,
-    pub silent: IntelPState,
+pub struct FanModeProfile {
+    pub normal: CPUSettings,
+    pub boost: CPUSettings,
+    pub silent: CPUSettings,
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct IntelPState {
+pub struct CPUSettings {
     pub min_percentage: u8,
     pub max_percentage: u8,
     pub no_turbo: bool,
 }
 
-impl Default for IntelPState {
+impl Default for CPUSettings {
     fn default() -> Self {
-        IntelPState {
+        CPUSettings {
             min_percentage: 0,
             max_percentage: 100,
             no_turbo: false,
