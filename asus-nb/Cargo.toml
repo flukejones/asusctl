@@ -1,0 +1,21 @@
+[package]
+name = "asus-nb"
+version = "0.15.0"
+license = "MPL-2.0"
+readme = "README.md"
+authors = ["Luke <luke@ljones.dev>"]
+repository = "https://gitlab.com/asus-linux/asus-nb-ctrl"
+homepage = "https://gitlab.com/asus-linux/asus-nb-ctrl"
+description = "A small library of effect types and conversions for ROG Aura"
+edition = "2018"
+
+[dependencies]
+gumdrop = "^0.8"
+dbus = { version = "^0.8" }
+serde = "^1.0"
+serde_derive = "^1.0"
+serde_json = "^1.0"
+yansi-term = "^0.1"
+
+[dev-dependencies]
+tinybmp = "^0.2.3"

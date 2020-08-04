@@ -11,7 +11,8 @@ SRC = Cargo.toml Cargo.lock Makefile $(shell find -type f -wholename '**/src/*.r
 
 .PHONY: all clean distclean install uninstall update
 
-BIN=rog-core
+BIN_C=asusctl
+BIN_D=asusd
 
 DEBUG ?= 0
 ifeq ($(DEBUG),0)
@@ -24,7 +25,7 @@ ifeq ($(VENDORED),1)
 	ARGS += "--frozen"
 endif
 
-all: target/release/$(BIN)
+all: target/release/$(BIN_D)
 
 clean:
 	cargo clean
@@ -33,16 +34,18 @@ distclean:
 	rm -rf .cargo vendor vendor.tar.xz
 
 install: all
-	install -D -m 0755 "target/release/$(BIN)" "$(DESTDIR)$(bindir)/$(BIN)"
-	install -D -m 0644 "data/$(BIN).rules" "$(DESTDIR)/lib/udev/rules.d/99-$(BIN).rules"
-	install -D -m 0644 "data/$(BIN).conf" "$(DESTDIR)$(sysconfdir)/dbus-1/system.d/$(BIN).conf"
-	install -D -m 0644 "data/$(BIN).service" "$(DESTDIR)/lib/systemd/system/$(BIN).service"
+	install -D -m 0755 "target/release/$(BIN_C)" "$(DESTDIR)$(bindir)/$(BIN_C)"
+	install -D -m 0755 "target/release/$(BIN_D)" "$(DESTDIR)$(bindir)/$(BIN_D)"
+	install -D -m 0644 "data/$(BIN_D).rules" "$(DESTDIR)/lib/udev/rules.d/99-$(BIN_D).rules"
+	install -D -m 0644 "data/$(BIN_D).conf" "$(DESTDIR)$(sysconfdir)/dbus-1/system.d/$(BIN_D).conf"
+	install -D -m 0644 "data/$(BIN_D).service" "$(DESTDIR)/lib/systemd/system/$(BIN_D).service"
 
 uninstall:
-	rm -f "$(DESTDIR)$(bindir)/$(BIN)"
-	rm -f "$(DESTDIR)/lib/udev/rules.d/99-$(BIN).rules"
-	rm -f "$(DESTDIR)$(sysconfdir)/dbus-1/system.d/$(BIN).conf"
-	rm -f "$(DESTDIR)/lib/systemd/system/$(BIN).service"
+	rm -f "$(DESTDIR)$(bindir)/$(BIN_C)"
+	rm -f "$(DESTDIR)$(bindir)/$(BIN_D)"
+	rm -f "$(DESTDIR)/lib/udev/rules.d/99-$(BIN_D).rules"
+	rm -f "$(DESTDIR)$(sysconfdir)/dbus-1/system.d/$(BIN_D).conf"
+	rm -f "$(DESTDIR)/lib/systemd/system/$(BIN_D).service"
 
 update:
 	cargo update
@@ -54,7 +57,7 @@ vendor:
 	tar pcfJ vendor.tar.xz vendor
 	rm -rf vendor
 
-target/release/$(BIN): $(SRC)
+target/release/$(BIN_D): $(SRC)
 ifeq ($(VENDORED),1)
 	tar pxf vendor.tar.xz
 endif

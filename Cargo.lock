@@ -16,6 +16,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "asus-nb"
+version = "0.15.0"
+dependencies = [
+ "dbus",
+ "gumdrop",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "tinybmp",
+ "yansi-term",
+]
+
+[[package]]
+name = "asus-nb-ctrl"
+version = "1.0.0"
+dependencies = [
+ "asus-nb",
+ "async-trait",
+ "dbus",
+ "dbus-tokio",
+ "env_logger",
+ "gumdrop",
+ "intel-pstate",
+ "log",
+ "rusb",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "sysfs-class",
+ "tokio",
+ "udev",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -638,40 +672,6 @@ name = "rle-decode-fast"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cabe4fa914dec5870285fa7f71f602645da47c486e68486d2b4ceb4a343e90ac"
-
-[[package]]
-name = "rog-client"
-version = "0.15.0"
-dependencies = [
- "dbus",
- "gumdrop",
- "serde",
- "serde_derive",
- "serde_json",
- "tinybmp",
- "yansi-term",
-]
-
-[[package]]
-name = "rog-daemon"
-version = "0.15.3"
-dependencies = [
- "async-trait",
- "dbus",
- "dbus-tokio",
- "env_logger",
- "gumdrop",
- "intel-pstate",
- "log",
- "rog-client",
- "rusb",
- "serde",
- "serde_derive",
- "serde_json",
- "sysfs-class",
- "tokio",
- "udev",
-]
 
 [[package]]
 name = "rusb"

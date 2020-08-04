@@ -1,5 +1,5 @@
 [workspace]
-members = ["rog-core", "rog-client"]
+members = ["asus-nb-ctrl", "asus-nb"]
 
 [profile.release]
 lto = true
@@ -12,6 +12,5 @@ debug = false
 opt-level = 1
 
 [profile.bench]
-lto = true
 debug = false
 opt-level = 3

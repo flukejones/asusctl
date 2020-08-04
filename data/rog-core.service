@@ -1,8 +1,0 @@
-[Unit]
-Description=ROG Core Daemon
-
-[Service]
-ExecStart=/usr/bin/rog-core -d
-Restart=on-failure
-Type=dbus
-BusName=org.rogcore.Daemon

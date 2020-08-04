@@ -1,0 +1,48 @@
+[package]
+name = "asus-nb-ctrl"
+version = "1.0.0"
+license = "MPL-2.0"
+readme = "README.md"
+authors = ["Luke <luke@ljones.dev>"]
+repository = "https://gitlab.com/asus-linux/asus-nb-ctrl"
+homepage = "https://gitlab.com/asus-linux/asus-nb-ctrl"
+description = "A daemon app for ASUS GX502 and similar laptops to control missing features"
+edition = "2018"
+
+[lib]
+name = "daemon"
+path = "src/lib.rs"
+
+[[bin]]
+name = "asusctl"
+path = "src/main.rs"
+
+[[bin]]
+name = "asusd"
+path = "src/daemon.rs"
+
+[dependencies]
+asus-nb = { path = "../asus-nb" }
+rusb = "^0.6.0"
+udev = "^0.4.0"
+async-trait = "0.1.36"
+
+# cli and logging
+gumdrop = "^0.8.0"
+log = "^0.4.8"
+env_logger = "^0.7.1"
+
+# async
+dbus = { version = "^0.8.2", features = ["futures"] }
+dbus-tokio = "^0.5.1"
+tokio = { version = "^0.2.4", features = ["rt-threaded", "sync"] }
+
+# serialisation
+serde = "^1.0"
+serde_derive = "^1.0"
+serde_json = "^1.0"
+
+# Device control
+sysfs-class = "^0.1.2" # used for backlight control and baord ID
+# cpu power management
+intel-pstate = "^0.2.1"

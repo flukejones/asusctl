@@ -1,0 +1,8 @@
+[Unit]
+Description=ASUS Notebook Control
+
+[Service]
+ExecStart=/usr/bin/asusd
+Restart=on-failure
+Type=dbus
+BusName=org.asus-linux.Daemon
