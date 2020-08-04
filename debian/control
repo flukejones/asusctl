@@ -1,4 +1,4 @@
-Source: rog-core
+Source: asus-nb-ctrl
 Section: admin
 Priority: optional
 Maintainer: Luke Jones <luke@ljones.dev>
@@ -9,16 +9,18 @@ Build-Depends:
   libclang-dev,
   libusb-1.0-0-dev,
   libdbus-1-dev,
+  libudev-1-dev
   pkg-config
 Standards-Version: 4.1.1
-Homepage: https://github.com/flukejones/rog-core
+Homepage: https://gitlab.com/asus-linux/asus-nb-ctrl
 
-Package: rog-core
+Package: asus-nb-ctrl
 Architecture: amd64
 Depends:
   dbus,
   systemd,
   libusb-1.0-0,
+  libudev,
   ${misc:Depends},
   ${shlibs:Depends}
 Description:ASUS ROG Laptop Management

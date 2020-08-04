@@ -1,9 +1,9 @@
 # DBUS Guide
 
 ```rust
-pub static DBUS_NAME: &str = "org.rogcore.Daemon";
-pub static DBUS_PATH: &str = "/org/rogcore/Daemon";
-pub static DBUS_IFACE: &str = "org.rogcore.Daemon";
+pub static DBUS_NAME: &str = "org.asuslinux.Daemon";
+pub static DBUS_PATH: &str = "/org/asuslinux/Daemon";
+pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";
 ```
 
 ## Methods
@@ -31,7 +31,7 @@ This method expects a string of JSON as input. The JSON is of format such:
 
 ```
 {
-  "Stable": {
+  "Static": {
     "colour": [ 255, 0, 0]
   }
 }
@@ -46,7 +46,7 @@ The possible contents of a mode are:
 Modes may or may not be available for a specific laptop (TODO: dbus getter for
 supported modes). Modes are:
 
-- `"Stable": { "colour": <colour> },`
+- `"Static": { "colour": <colour> },`
 - `"Pulse": { "colour": <colour> },`
 - `"Comet": { "colour": <colour> },`
 - `"Flash": { "colour": <colour> },`
@@ -111,7 +111,7 @@ When emitted, it will emit the JSON data of the mode changed to, e.g:
 
 ```
 {
-  "Stable": {
+  "Static": {
     "colour": [ 255, 0, 0]
   }
 }
@@ -128,31 +128,31 @@ When emitted, it will include the integer the charging limit was changed to.
 ## dbus-send examples
 
 ```
-dbus-send --system --type=method_call --dest=org.rogcore.Daemon /org/rogcore/Daemon org.rogcore.Daemon.SetKeyBacklight string:'{"Stable": {"colour": [ 80, 0, 40]}}'
+dbus-send --system --type=method_call --dest=org.asuslinux.Daemon /org/asuslinux/Daemon org.asuslinux.Daemon.SetKeyBacklight string:'{"Static": {"colour": [ 80, 0, 40]}}'
 ```
 
 ```
-dbus-send --system --type=method_call --dest=org.rogcore.Daemon /org/rogcore/Daemon org.rogcore.Daemon.SetKeyBacklight string:'{"Star":{"colour":[0,255,255],"colour2":[0,0,0],"speed":"Med"}}'
+dbus-send --system --type=method_call --dest=org.asuslinux.Daemon /org/asuslinux/Daemon org.asuslinux.Daemon.SetKeyBacklight string:'{"Star":{"colour":[0,255,255],"colour2":[0,0,0],"speed":"Med"}}'
 ```
 
 **Note:** setting colour2 to `[0,0,255]` activates random star colour. Colour2 has no effect on the
 mode otherwise.
 ```
-dbus-send --system --type=method_call --dest=org.rogcore.Daemon /org/rogcore/Daemon org.rogcore.Daemon.SetKeyBacklight string:'{"Star":{"colour":[0,255,255],"colour2":[0,0,255],"speed":"Med"}}'
+dbus-send --system --type=method_call --dest=org.asuslinux.Daemon /org/asuslinux/Daemon org.asuslinux.Daemon.SetKeyBacklight string:'{"Star":{"colour":[0,255,255],"colour2":[0,0,255],"speed":"Med"}}'
 ```
 
 ```
-dbus-send --system --type=method_call --dest=org.rogcore.Daemon /org/rogcore/Daemon org.rogcore.Daemon.SetKeyBacklight string:'{"LedBrightness":3}'
+dbus-send --system --type=method_call --dest=org.asuslinux.Daemon /org/asuslinux/Daemon org.asuslinux.Daemon.SetKeyBacklight string:'{"LedBrightness":3}'
 ```
 
 ```
-dbus-send --system --type=method_call --dest=org.rogcore.Daemon /org/rogcore/Daemon org.rogcore.Daemon.SetFanMode byte:'2'
+dbus-send --system --type=method_call --dest=org.asuslinux.Daemon /org/asuslinux/Daemon org.asuslinux.Daemon.SetFanMode byte:'2'
 ```
 
-Monitoring dbus while sending commands via `rog-core` will give you the json structure if you are otherwise unsure, e.g: `dbus-monitor --system |grep -A2 rogcore`.
+Monitoring dbus while sending commands via `rog-core` will give you the json structure if you are otherwise unsure, e.g: `dbus-monitor --system |grep -A2 asuslinux`.
 
 ## Getting an introspection .xml
 
 ```
-dbus-send --system --print-reply --dest=org.rogcore.Daemon /org/rogcore/Daemon org.freedesktop.DBus.Introspectable.Introspect > xml/dbus-0.14.4.xml
+dbus-send --system --print-reply --dest=org.asuslinux.Daemon /org/asuslinux/Daemon org.freedesktop.DBus.Introspectable.Introspect > xml/dbus-0.14.4.xml
 ```

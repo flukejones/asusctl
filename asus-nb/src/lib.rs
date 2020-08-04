@@ -1,5 +1,5 @@
 pub static DBUS_NAME: &str = "org.asuslinux.Daemon";
-pub static DBUS_PATH: &str = "/org/asus/linux/Daemon";
+pub static DBUS_PATH: &str = "/org/asuslinux/Daemon";
 pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";
 pub const LED_MSG_LEN: usize = 17;
 
