@@ -138,46 +138,46 @@ the daemon mode over dbus.
 Commands are given by:
 
 ```
-asusd <option> <command> <command-options>
+asusctl <option> <command> <command-options>
 ```
 
 Help is available through:
 
 ```
-asusd --help
-asusd <command> --help
+asusctl --help
+asusctl <command> --help
 ```
 
 Some commands may have subcommands:
 
 ```
-asusd <command> <subcommand> --help
+asusctl <command> <subcommand> --help
 ```
 
 ### Example
 
 ```
-$ asusd --help
-Usage: asusd [OPTIONS]
+$ asusctl --help
+Usage: asusctl [OPTIONS]
 
 Optional arguments:
-  -h, --help          print help message
-  -v, --version       show program version number
-  -d, --daemon        start daemon
-  -b, --bright VAL    <off, low, med, high>
-  -f, --fan-mode FAN  <silent, normal, boost>
+  -h, --help             print help message
+  -v, --version          show program version number
+  -k, --kbd-bright VAL   <off, low, med, high>
+  -p, --pwr-profile PWR  <silent, normal, boost>
+  -c, --chg-limit CHRG   <20-100>
 
 Available commands:
   led-mode  Set the keyboard lighting from built-in modes
 
-$ asusd led-mode --help
-Usage: asusd led-mode [OPTIONS]
+$ asusctl led-mode --help
+Usage: asusctl led-mode [OPTIONS]
 
 Optional arguments:
   -h, --help  print help message
 
 Available commands:
-  stable        set a single static colour
+  static        set a single static colour
   breathe       pulse between one or two colours
   strobe        strobe through all colours
   rainbow       rainbow cycling in one of four directions
@@ -191,15 +191,15 @@ Available commands:
   flash         set a wide vertical line zooming from left
   multi-static  4-zone multi-colour
 
-$ asusd led-mode stable --help
-Usage: asusd led-mode stable [OPTIONS]
+$ asusctl led-mode static --help
+Usage: asusctl led-mode static [OPTIONS]
 
 Optional arguments:
   -h, --help  print help message
   -c HEX      set the RGB value e.g, ff00ff
 
-$ asusd led-mode star --help
-Usage: asusd led-mode star [OPTIONS]
+$ asusctl led-mode star --help
+Usage: asusctl led-mode star [OPTIONS]
 
 Optional arguments:
   -h, --help  print help message
@@ -221,7 +221,7 @@ The daemon also saves the settings per mode as the keyboard does not do this
 itself - this means cycling through modes with the Aura keys will use the
 settings that were used via CLI.
 
-Daemon mode creates a config file at `/etc/rogcore.conf` which you can edit a 
+Daemon mode creates a config file at `/etc/asusd.conf` which you can edit a 
 little of. Most parts will be byte arrays, but you can adjust things like
 `mode_performance`.
 
