@@ -16,6 +16,9 @@ change modes and RGB settings. The previous version of this program is named
 `rog-core` and takes full control of the interfaces required - if you can't
 apply the kernel patches then `rog-core` is still highly usable.
 
+Many other patches for these laptops, AMD and Intel based, are working their way
+in to the kernel.
+
 ---
 asusd is a utility for Linux to control many aspects of various ASUS laptops.
 
@@ -38,24 +41,21 @@ As far as I can see, the EC does not give us a way to find what modes are suppor
 
 ### ANIME AND OTHER FUNCTIONS
 
-| MODEL | AniMe |Touchpad-Numpad| Fan Modes | Charge Limit |
-|:-----:|:-----:|:-------------:|:---------:|:------------:|
-| GM501 |       |               |     X     |       X      |
-| GX502 |       |               |     X     |       X      |
-| GX531 |       |               |     X     |       X      |
-| GX701 |       |               |     X     |       X      |
-| G512  |       |               |     X     |       X      |
-| G712  |       |               |     X     |       X      |
-| G531  |       |               |     X     |       X      |
-| G731  |       |               |     X     |       X      |
-| G532  |       |               |     X     |       X      |
-| GA401 |   X   |               |     X     |       X      |
-| GA502 |   X   |               |     X     |       X      |
-| GU502 |   X   |               |     X     |       X      |
-
-**NOTE:** GA14/GA401 and GA15/GA502/GU502, You will need kernel [patches](https://lab.retarded.farm/zappel/asus-rog-zephyrus-g14/-/tree/master/kernel_patches).
+**AniMe device check is performed on start, if your device has one it will be detected.**
 
 **NOTE:** If charge limit or fan modes are not working, then you may require a kernel newer than 5.6.10.
+
+- [X] AniMe Matrix display
+- [X] Power profile switching on fan-mode (FN+F5)
+  - [X] Intel
+    - [X] Turbo enale/disable
+    - [X] Min frequency percentage
+    - [X] Max frequency percentage
+  - [X] AMD
+    - [X] Turbo enale/disable
+- [X] Battery charge limit
+
+**NOTE:** GA14/GA401 and GA15/GA502/GU502, You will need kernel [patches](https://lab.retarded.farm/zappel/asus-rog-zephyrus-g14/-/tree/master/kernel_patches).
 
 ### KEYBOARD BACKLIGHT MODES
 

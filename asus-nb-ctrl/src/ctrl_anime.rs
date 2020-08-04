@@ -10,8 +10,8 @@ const APPLY: u8 = 0xc3;
 const SET: u8 = 0xc4;
 
 use crate::config::Config;
-use log::{error, info, warn};
 use asus_nb::error::AuraError;
+use log::{error, info, warn};
 use rusb::{Device, DeviceHandle};
 use std::error::Error;
 use std::sync::Arc;

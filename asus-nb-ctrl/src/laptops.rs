@@ -1,8 +1,8 @@
-use log::{info, warn};
 use asus_nb::aura_modes::{
     AuraModes, BREATHING, COMET, FLASH, HIGHLIGHT, LASER, MULTISTATIC, PULSE, RAIN, RAINBOW, RGB,
-    RIPPLE, STATIC, STAR, STROBE,
+    RIPPLE, STAR, STATIC, STROBE,
 };
+use log::{info, warn};
 
 static HELP_ADDRESS: &str = "https://gitlab.com/asus-linux/asus-nb-ctrl";
 

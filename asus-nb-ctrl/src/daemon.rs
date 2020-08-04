@@ -1,19 +1,20 @@
 use daemon::{
-    config::Config, ctrl_anime::CtrlAnimeDisplay, ctrl_charge::CtrlCharge, ctrl_fan_cpu::CtrlFanAndCPU,
-    ctrl_leds::CtrlKbdBacklight, dbus::dbus_create_tree, laptops::match_laptop,
+    config::Config, ctrl_anime::CtrlAnimeDisplay, ctrl_charge::CtrlCharge,
+    ctrl_fan_cpu::CtrlFanAndCPU, ctrl_leds::CtrlKbdBacklight, dbus::dbus_create_tree,
+    laptops::match_laptop,
 };
 
 use dbus::{channel::Sender, nonblock::SyncConnection, tree::Signal};
 
+use asus_nb::{DBUS_IFACE, DBUS_NAME, DBUS_PATH};
 use daemon::Controller;
 use dbus_tokio::connection;
-use log::{error, warn, info};
-use asus_nb::{DBUS_IFACE, DBUS_NAME, DBUS_PATH};
+use log::LevelFilter;
+use log::{error, info, warn};
 use std::error::Error;
+use std::io::Write;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use std::io::Write;
-use log::LevelFilter;
 
 #[tokio::main]
 pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -42,14 +43,15 @@ pub async fn start_daemon() -> Result<(), Box<dyn Error>> {
     let laptop = match_laptop();
     let mut config = Config::default().load(laptop.supported_modes());
 
-    let mut led_control = CtrlKbdBacklight::new(laptop.usb_product(), laptop.supported_modes().to_owned())
-        .map_or_else(
-            |err| {
-                error!("{}", err);
-                None
-            },
-            Some,
-        );
+    let mut led_control =
+        CtrlKbdBacklight::new(laptop.usb_product(), laptop.supported_modes().to_owned())
+            .map_or_else(
+                |err| {
+                    error!("{}", err);
+                    None
+                },
+                Some,
+            );
 
     let mut charge_control = CtrlCharge::new().map_or_else(
         |err| {
@@ -207,7 +209,6 @@ async fn send_boot_signals(
     charge_limit_signal: Arc<Signal<()>>,
     led_changed_signal: Arc<Signal<()>>,
 ) -> Result<(), Box<dyn Error>> {
-
     let config = config.lock().await;
 
     if let Some(data) = config.get_led_mode_data(config.kbd_backlight_mode) {

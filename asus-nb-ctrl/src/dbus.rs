@@ -1,7 +1,7 @@
 use crate::config::Config;
+use asus_nb::{aura_modes::AuraModes, DBUS_IFACE, DBUS_PATH};
 use dbus::tree::{Factory, MTSync, Method, MethodErr, Signal, Tree};
 use log::warn;
-use asus_nb::{aura_modes::AuraModes, DBUS_IFACE, DBUS_PATH};
 use std::sync::Arc;
 use tokio::sync::{
     mpsc::{channel, Receiver, Sender},

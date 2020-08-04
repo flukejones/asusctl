@@ -3,12 +3,12 @@ static LED_APPLY: [u8; 17] = [0x5d, 0xb4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 static LED_SET: [u8; 17] = [0x5d, 0xb5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 use crate::{config::Config, error::RogError};
-use dbus::{channel::Sender, nonblock::SyncConnection, tree::Signal};
-use log::{info, warn};
 use asus_nb::{
     aura_brightness_bytes, aura_modes::AuraModes, fancy::KeyColourArray, DBUS_IFACE, DBUS_PATH,
     LED_MSG_LEN,
 };
+use dbus::{channel::Sender, nonblock::SyncConnection, tree::Signal};
+use log::{info, warn};
 use std::error::Error;
 use std::fs::OpenOptions;
 use std::io::Write;

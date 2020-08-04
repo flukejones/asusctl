@@ -1,10 +1,10 @@
-use daemon::ctrl_fan_cpu::FanLevel;
-use gumdrop::Options;
-use log::LevelFilter;
 use asus_nb::{
     cli_options::{LedBrightness, SetAuraBuiltin},
     core_dbus::AuraDbusClient,
 };
+use daemon::ctrl_fan_cpu::FanLevel;
+use gumdrop::Options;
+use log::LevelFilter;
 use std::io::Write;
 
 #[derive(Options)]

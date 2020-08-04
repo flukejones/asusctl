@@ -47,6 +47,7 @@ impl crate::Controller for CtrlFanAndCPU {
             }
         });
         // need to watch file path
+        // TODO: split this out to a struct CtrlFanAndCPUWatcher or similar
         tokio::spawn(async move {
             loop {
                 if let Ok(mut lock) = gate2.try_lock() {
@@ -65,7 +66,10 @@ impl crate::Controller for CtrlFanAndCPU {
         file.write_all(format!("{:?}\n", config.power_profile).as_bytes())
             .unwrap_or_else(|err| error!("Could not write to {}, {:?}", self.path, err));
         self.set_pstate_for_fan_mode(FanLevel::from(config.power_profile), config)?;
-        info!("Reloaded fan mode: {:?}", FanLevel::from(config.power_profile));
+        info!(
+            "Reloaded fan mode: {:?}",
+            FanLevel::from(config.power_profile)
+        );
         Ok(())
     }
 }
@@ -128,7 +132,10 @@ impl CtrlFanAndCPU {
         fan_ctrl
             .write_all(format!("{:?}\n", config.power_profile).as_bytes())
             .unwrap_or_else(|err| error!("Could not write to {}, {:?}", self.path, err));
-        info!("Fan mode set to: {:?}", FanLevel::from(config.power_profile));
+        info!(
+            "Fan mode set to: {:?}",
+            FanLevel::from(config.power_profile)
+        );
         self.set_pstate_for_fan_mode(FanLevel::from(n), config)?;
         Ok(())
     }
