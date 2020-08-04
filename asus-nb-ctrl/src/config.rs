@@ -32,6 +32,7 @@ impl Config {
                 let mut c = Config::default();
                 c.bat_charge_limit = 100;
                 c.kbd_backlight_mode = 0;
+                c.kbd_boot_brightness = 1;
 
                 for n in supported_led_modes {
                     c.kbd_backlight_modes.push(AuraModes::from(*n))

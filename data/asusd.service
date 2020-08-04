@@ -5,4 +5,4 @@ Description=ASUS Notebook Control
 ExecStart=/usr/bin/asusd
 Restart=on-failure
 Type=dbus
-BusName=org.asus-linux.Daemon
+BusName=org.asuslinux.Daemon
