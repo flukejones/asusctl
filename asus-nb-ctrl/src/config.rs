@@ -1,4 +1,5 @@
 use asus_nb::aura_modes::AuraModes;
+use log::{error, warn};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
@@ -9,7 +10,7 @@ pub static CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
 pub struct Config {
     pub power_profile: u8,
     pub bat_charge_limit: u8,
-    pub kbd_boot_brightness: u8,
+    pub kbd_led_brightness: u8,
     pub kbd_backlight_mode: u8,
     pub kbd_backlight_modes: Vec<AuraModes>,
     pub power_profiles: FanModeProfile,
@@ -24,42 +25,48 @@ impl Config {
             .write(true)
             .create(true)
             .open(&CONFIG_PATH)
-            .expect("config file error");
+            .unwrap(); // okay to cause panic here
         let mut buf = String::new();
         if let Ok(l) = file.read_to_string(&mut buf) {
             if l == 0 {
-                // create a default config here
-                let mut c = Config::default();
-                c.bat_charge_limit = 100;
-                c.kbd_backlight_mode = 0;
-                c.kbd_boot_brightness = 1;
-
-                for n in supported_led_modes {
-                    c.kbd_backlight_modes.push(AuraModes::from(*n))
-                }
-
-                // Should be okay to unwrap this as is since it is a Default
-                let json = serde_json::to_string_pretty(&c).unwrap();
-                file.write_all(json.as_bytes())
-                    .unwrap_or_else(|_| panic!("Could not deserialise {}", CONFIG_PATH));
-                self = c;
+                self = Config::create_default(&mut file, &supported_led_modes);
             } else {
-                self = serde_json::from_str(&buf)
-                    .unwrap_or_else(|_| panic!("Could not deserialise {}", CONFIG_PATH));
+                self = serde_json::from_str(&buf).unwrap_or_else(|_| {
+                    warn!("Could not deserialise {}", CONFIG_PATH);
+                    Config::create_default(&mut file, &supported_led_modes)
+                });
             }
         }
         self
+    }
+
+    fn create_default(file: &mut File, supported_led_modes: &[u8]) -> Self {
+        // create a default config here
+        let mut c = Config::default();
+        c.bat_charge_limit = 100;
+        c.kbd_backlight_mode = 0;
+        c.kbd_led_brightness = 1;
+
+        for n in supported_led_modes {
+            c.kbd_backlight_modes.push(AuraModes::from(*n))
+        }
+
+        // Should be okay to unwrap this as is since it is a Default
+        let json = serde_json::to_string_pretty(&c).unwrap();
+        file.write_all(json.as_bytes())
+            .unwrap_or_else(|_| panic!("Could not write {}", CONFIG_PATH));
+        c
     }
 
     pub fn read(&mut self) {
         let mut file = OpenOptions::new()
             .read(true)
             .open(&CONFIG_PATH)
-            .expect("config file error");
+            .unwrap_or_else(|err| panic!("Error reading {}: {}", CONFIG_PATH, err));
         let mut buf = String::new();
         if let Ok(l) = file.read_to_string(&mut buf) {
             if l == 0 {
-                panic!("Missing {}", CONFIG_PATH);
+                warn!("File is empty {}", CONFIG_PATH);
             } else {
                 let x: Config = serde_json::from_str(&buf)
                     .unwrap_or_else(|_| panic!("Could not deserialise {}", CONFIG_PATH));
@@ -72,7 +79,7 @@ impl Config {
         let mut file = File::create(CONFIG_PATH).expect("Couldn't overwrite config");
         let json = serde_json::to_string_pretty(self).expect("Parse config to JSON failed");
         file.write_all(json.as_bytes())
-            .expect("Saving config failed");
+            .unwrap_or_else(|err| error!("Could not write config: {}", err));
     }
 
     pub fn set_mode_data(&mut self, mode: AuraModes) {

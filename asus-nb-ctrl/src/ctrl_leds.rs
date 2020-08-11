@@ -119,7 +119,7 @@ impl crate::Controller for CtrlKbdBacklight {
         }
 
         // Reload brightness
-        let bright = config.kbd_boot_brightness;
+        let bright = config.kbd_led_brightness;
         let bytes = aura_brightness_bytes(bright);
         self.write_bytes(&bytes).await?;
         info!("Reloaded last used brightness");
@@ -165,7 +165,7 @@ impl CtrlKbdBacklight {
         if let Some(num) = char::from(buf[0]).to_digit(10) {
             if config.power_profile != num as u8 {
                 config.read();
-                config.kbd_boot_brightness = num as u8;
+                config.kbd_led_brightness = num as u8;
                 config.write();
             }
             return Ok(());
@@ -225,7 +225,7 @@ impl CtrlKbdBacklight {
                 let bytes: [u8; LED_MSG_LEN] = (&mode).into();
                 self.write_bytes(&bytes).await?;
                 config.read();
-                config.kbd_boot_brightness = n;
+                config.kbd_led_brightness = n;
                 config.write();
                 info!("LED brightness set to {:#?}", n);
             }

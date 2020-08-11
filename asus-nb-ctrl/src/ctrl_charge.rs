@@ -86,7 +86,7 @@ impl CtrlCharge {
         file.write_all(limit.to_string().as_bytes())
             .unwrap_or_else(|err| error!("Could not write to {}, {:?}", BAT_CHARGE_PATH, err));
         info!("Battery charge limit: {}", limit);
-        
+
         config.read();
         config.bat_charge_limit = limit;
         config.write();
