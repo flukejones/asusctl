@@ -104,6 +104,7 @@ impl CtrlFanAndCPU {
         file.read_exact(&mut buf)?;
         if let Some(num) = char::from(buf[0]).to_digit(10) {
             if config.power_profile != num as u8 {
+                config.read();
                 config.power_profile = num as u8;
                 config.write();
                 self.set_pstate_for_fan_mode(FanLevel::from(config.power_profile), config)?;
@@ -127,7 +128,7 @@ impl CtrlFanAndCPU {
         config: &mut Config,
     ) -> Result<(), Box<dyn Error>> {
         let mut fan_ctrl = OpenOptions::new().write(true).open(self.path)?;
-
+        config.read();
         config.power_profile = n;
         config.write();
         fan_ctrl

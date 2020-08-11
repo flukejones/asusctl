@@ -186,6 +186,7 @@ impl CtrlKbdBacklight {
             AuraModes::LedBrightness(n) => {
                 let bytes: [u8; LED_MSG_LEN] = (&mode).into();
                 self.write_bytes(&bytes).await?;
+                config.read();
                 config.kbd_boot_brightness = n;
                 config.write();
                 info!("LED brightness set to {:#?}", n);
@@ -199,6 +200,7 @@ impl CtrlKbdBacklight {
                 }
             }
             _ => {
+                config.read();
                 let mode_num: u8 = u8::from(&mode);
                 self.write_mode(&mode).await?;
                 config.kbd_backlight_mode = mode_num;
@@ -245,9 +247,4 @@ impl CtrlKbdBacklight {
         }
         Ok(())
     }
-
-    // #[inline]
-    // pub async fn reload_from_config(&mut self, config: &mut Config) -> Result<(), RogError> {
-
-    // }
 }

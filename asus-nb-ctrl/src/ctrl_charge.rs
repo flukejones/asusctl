@@ -53,22 +53,6 @@ impl CtrlCharge {
         Ok(CtrlCharge { path })
     }
 
-    // /// Spawns two tasks which continuously check for changes
-    // pub(crate) fn spawn_task(
-    //     self,
-    //     config: Arc<Mutex<Config>>,
-    //     mut recv: Receiver<u8>,
-    // ) -> JoinHandle<()> {
-    //     tokio::spawn(async move {
-    //         while let Some(n) = recv.recv().await {
-    //             let mut config = config.lock().await;
-    //             self
-    //                 .set_charge_limit(n, &mut config)
-    //                 .unwrap_or_else(|err| warn!("{:?}", err));
-    //         }
-    //     })
-    // }
-
     fn get_battery_path() -> Result<&'static str, std::io::Error> {
         if Path::new(BAT_CHARGE_PATH).exists() {
             Ok(BAT_CHARGE_PATH)
@@ -79,15 +63,6 @@ impl CtrlCharge {
             ))
         }
     }
-
-    // pub(super) fn reload_from_config(
-    //     &self,
-    //     config: &mut Config,
-    // ) -> Result<(), Box<dyn Error>> {
-    //     config.read();
-    //     info!("Reloaded battery charge limit");
-    //     self.set_charge_limit(config.bat_charge_limit, config)
-    // }
 
     pub(super) fn set_charge_limit(
         &self,
@@ -111,7 +86,8 @@ impl CtrlCharge {
         file.write_all(limit.to_string().as_bytes())
             .unwrap_or_else(|err| error!("Could not write to {}, {:?}", BAT_CHARGE_PATH, err));
         info!("Battery charge limit: {}", limit);
-
+        
+        config.read();
         config.bat_charge_limit = limit;
         config.write();
 
