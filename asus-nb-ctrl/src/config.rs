@@ -3,7 +3,7 @@ use serde_derive::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 
-pub static CONFIG_PATH: &str = "/etc/asusd.conf";
+pub static CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct Config {

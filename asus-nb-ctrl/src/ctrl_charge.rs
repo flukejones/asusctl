@@ -23,20 +23,20 @@ impl crate::Controller for CtrlCharge {
     type A = u8;
 
     /// Spawns two tasks which continuously check for changes
-    fn spawn_task(
+    fn spawn_task_loop(
         self,
         config: Arc<Mutex<Config>>,
         mut recv: Receiver<Self::A>,
         _: Option<Arc<SyncConnection>>,
         _: Option<Arc<Signal<()>>>,
-    ) -> JoinHandle<()> {
-        tokio::spawn(async move {
+    ) -> Vec<JoinHandle<()>> {
+        vec![tokio::spawn(async move {
             while let Some(n) = recv.recv().await {
                 let mut config = config.lock().await;
                 self.set_charge_limit(n, &mut config)
                     .unwrap_or_else(|err| warn!("{:?}", err));
             }
-        })
+        })]
     }
 
     async fn reload_from_config(&mut self, config: &mut Config) -> Result<(), Box<dyn Error>> {

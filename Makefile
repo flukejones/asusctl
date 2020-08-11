@@ -13,6 +13,7 @@ SRC = Cargo.toml Cargo.lock Makefile $(shell find -type f -wholename '**/src/*.r
 
 BIN_C=asusctl
 BIN_D=asusd
+LEDCONFIG=asusd-ledmodes.toml
 
 DEBUG ?= 0
 ifeq ($(DEBUG),0)
@@ -37,6 +38,7 @@ install: all
 	install -D -m 0755 "target/release/$(BIN_C)" "$(DESTDIR)$(bindir)/$(BIN_C)"
 	install -D -m 0755 "target/release/$(BIN_D)" "$(DESTDIR)$(bindir)/$(BIN_D)"
 	install -D -m 0644 "data/$(BIN_D).rules" "$(DESTDIR)/lib/udev/rules.d/99-$(BIN_D).rules"
+	install -D -m 0644 "data/$(LEDCONFIG)" "$(DESTDIR)$(sysconfdir)/asusd/$(LEDCONFIG)"
 	install -D -m 0644 "data/$(BIN_D).conf" "$(DESTDIR)$(sysconfdir)/dbus-1/system.d/$(BIN_D).conf"
 	install -D -m 0644 "data/$(BIN_D).service" "$(DESTDIR)/lib/systemd/system/$(BIN_D).service"
 
@@ -46,6 +48,7 @@ uninstall:
 	rm -f "$(DESTDIR)/lib/udev/rules.d/99-$(BIN_D).rules"
 	rm -f "$(DESTDIR)$(sysconfdir)/dbus-1/system.d/$(BIN_D).conf"
 	rm -f "$(DESTDIR)/lib/systemd/system/$(BIN_D).service"
+	rm -rf "$(DESTDIR)$(sysconfdir)/asusd/"
 
 update:
 	cargo update

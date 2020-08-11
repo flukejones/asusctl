@@ -35,11 +35,11 @@ pub trait Controller {
 
     /// Spawn an infinitely running task (usually) which checks a Receiver for input,
     /// and may send a signal over dbus
-    fn spawn_task(
+    fn spawn_task_loop(
         self,
         config: Arc<Mutex<Config>>,
         recv: Receiver<Self::A>,
         connection: Option<Arc<SyncConnection>>,
         signal: Option<Arc<Signal<()>>>,
-    ) -> JoinHandle<()>;
+    ) -> Vec<JoinHandle<()>>;
 }

@@ -26,39 +26,40 @@ impl crate::Controller for CtrlFanAndCPU {
     type A = u8;
 
     /// Spawns two tasks which continuously check for changes
-    fn spawn_task(
+    fn spawn_task_loop(
         self,
         config: Arc<Mutex<Config>>,
         mut recv: Receiver<Self::A>,
         _: Option<Arc<SyncConnection>>,
         _: Option<Arc<Signal<()>>>,
-    ) -> JoinHandle<()> {
+    ) -> Vec<JoinHandle<()>> {
         let gate1 = Arc::new(Mutex::new(self));
         let gate2 = gate1.clone();
         let config1 = config.clone();
         // spawn an endless loop
-        tokio::spawn(async move {
-            while let Some(mode) = recv.recv().await {
-                let mut config = config1.lock().await;
-                if let Ok(mut lock) = gate1.try_lock() {
-                    lock.set_fan_mode(mode, &mut config)
-                        .unwrap_or_else(|err| warn!("{:?}", err));
+        vec![
+            tokio::spawn(async move {
+                while let Some(mode) = recv.recv().await {
+                    let mut config = config1.lock().await;
+                    if let Ok(mut lock) = gate1.try_lock() {
+                        lock.set_fan_mode(mode, &mut config)
+                            .unwrap_or_else(|err| warn!("{:?}", err));
+                    }
                 }
-            }
-        });
-        // need to watch file path
-        // TODO: split this out to a struct CtrlFanAndCPUWatcher or similar
-        tokio::spawn(async move {
-            loop {
-                if let Ok(mut lock) = gate2.try_lock() {
-                    let mut config = config.lock().await;
-                    lock.fan_mode_check_change(&mut config)
-                        .unwrap_or_else(|err| warn!("{:?}", err));
-                }
+            }),
+            // need to watch file path
+            tokio::spawn(async move {
+                loop {
+                    if let Ok(mut lock) = gate2.try_lock() {
+                        let mut config = config.lock().await;
+                        lock.fan_mode_check_change(&mut config)
+                            .unwrap_or_else(|err| warn!("{:?}", err));
+                    }
 
-                tokio::time::delay_for(std::time::Duration::from_millis(500)).await;
-            }
-        })
+                    tokio::time::delay_for(std::time::Duration::from_millis(500)).await;
+                }
+            }),
+        ]
     }
 
     async fn reload_from_config(&mut self, config: &mut Config) -> Result<(), Box<dyn Error>> {

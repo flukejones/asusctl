@@ -42,20 +42,20 @@ impl crate::Controller for CtrlAnimeDisplay {
     type A = Vec<Vec<u8>>;
 
     /// Spawns two tasks which continuously check for changes
-    fn spawn_task(
+    fn spawn_task_loop(
         mut self,
         _: Arc<Mutex<Config>>,
         mut recv: Receiver<Self::A>,
         _: Option<Arc<SyncConnection>>,
         _: Option<Arc<Signal<()>>>,
-    ) -> JoinHandle<()> {
-        tokio::spawn(async move {
+    ) -> Vec<JoinHandle<()>> {
+        vec![tokio::spawn(async move {
             while let Some(image) = recv.recv().await {
                 self.do_command(AnimatrixCommand::WriteImage(image))
                     .await
                     .unwrap_or_else(|err| warn!("{}", err));
             }
-        })
+        })]
     }
 
     async fn reload_from_config(&mut self, _: &mut Config) -> Result<(), Box<dyn Error>> {

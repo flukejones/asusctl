@@ -30,14 +30,14 @@ impl crate::Controller for CtrlKbdBacklight {
     type A = AuraModes;
 
     /// Spawns two tasks which continuously check for changes
-    fn spawn_task(
+    fn spawn_task_loop(
         mut self,
         config: Arc<Mutex<Config>>,
         mut recv: Receiver<Self::A>,
         connection: Option<Arc<SyncConnection>>,
         signal: Option<Arc<Signal<()>>>,
-    ) -> JoinHandle<()> {
-        tokio::spawn(async move {
+    ) -> Vec<JoinHandle<()>> {
+        vec![tokio::spawn(async move {
             while let Some(command) = recv.recv().await {
                 let mut config = config.lock().await;
                 match &command {
@@ -65,7 +65,7 @@ impl crate::Controller for CtrlKbdBacklight {
                     }
                 }
             }
-        })
+        })]
     }
 
     async fn reload_from_config(&mut self, config: &mut Config) -> Result<(), Box<dyn Error>> {

@@ -41,9 +41,13 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
 // DBUS processing takes 6ms if not tokiod
 pub async fn start_daemon() -> Result<(), Box<dyn Error>> {
     let laptop = match_laptop();
-    let mut config = Config::default().load(laptop.supported_modes());
+    let mut config = if let Some(laptop) = laptop.as_ref() {
+        Config::default().load(laptop.supported_modes())
+    } else {
+        Config::default().load(&[])
+    };
 
-    let mut led_control =
+    let mut led_control = if let Some(laptop) = laptop {
         CtrlKbdBacklight::new(laptop.usb_product(), laptop.supported_modes().to_owned())
             .map_or_else(
                 |err| {
@@ -51,7 +55,10 @@ pub async fn start_daemon() -> Result<(), Box<dyn Error>> {
                     None
                 },
                 Some,
-            );
+            )
+    } else {
+        None
+    };
 
     let mut charge_control = CtrlCharge::new().map_or_else(
         |err| {
@@ -134,19 +141,19 @@ pub async fn start_daemon() -> Result<(), Box<dyn Error>> {
     // Begin all tasks
     let mut handles = Vec::new();
     if let Ok(ctrl) = CtrlAnimeDisplay::new() {
-        handles.push(ctrl.spawn_task(config.clone(), animatrix_recv, None, None));
+        handles.append(&mut ctrl.spawn_task_loop(config.clone(), animatrix_recv, None, None));
     }
 
     if let Some(ctrl) = fan_control.take() {
-        handles.push(ctrl.spawn_task(config.clone(), fan_mode_recv, None, None));
+        handles.append(&mut ctrl.spawn_task_loop(config.clone(), fan_mode_recv, None, None));
     }
 
     if let Some(ctrl) = charge_control.take() {
-        handles.push(ctrl.spawn_task(config.clone(), charge_limit_recv, None, None));
+        handles.append(&mut ctrl.spawn_task_loop(config.clone(), charge_limit_recv, None, None));
     }
 
     if let Some(ctrl) = led_control.take() {
-        handles.push(ctrl.spawn_task(
+        handles.append(&mut ctrl.spawn_task_loop(
             config.clone(),
             aura_command_recv,
             Some(connection.clone()),

@@ -15,7 +15,7 @@ pub const PULSE: u8 = 0x0a;
 pub const COMET: u8 = 0x0b;
 pub const FLASH: u8 = 0x0c;
 pub const MULTISTATIC: u8 = 0x0d;
-pub const RGB: u8 = 0xf0;
+pub const RGB: u8 = 0xff;
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Colour(pub u8, pub u8, pub u8);

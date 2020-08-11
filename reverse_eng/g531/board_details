@@ -1,0 +1,6 @@
+Product name: ROG Strix G531GT_G531GT
+Product family: ROG Strix
+Board name: G531GT
+
+lsusb | grep 0b05: Bus 001 Device 004: ID 0b05:1866 ASUSTek Computer, Inc. N-KEY Device
+
