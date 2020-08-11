@@ -41,7 +41,7 @@ impl crate::Controller for CtrlKbdBacklight {
             while let Some(command) = recv.recv().await {
                 let mut config = config.lock().await;
                 match &command {
-                    AuraModes::RGB(_) => {
+                    AuraModes::PerKey(_) => {
                         self.do_command(command, &mut config)
                             .await
                             .unwrap_or_else(|err| warn!("{}", err));
@@ -191,7 +191,7 @@ impl CtrlKbdBacklight {
                 config.write();
                 info!("LED brightness set to {:#?}", n);
             }
-            AuraModes::RGB(v) => {
+            AuraModes::PerKey(v) => {
                 if v.is_empty() || v[0].is_empty() {
                     let bytes = KeyColourArray::get_init_msg();
                     self.write_bytes(&bytes).await?;
@@ -214,7 +214,7 @@ impl CtrlKbdBacklight {
     #[inline]
     async fn write_mode(&mut self, mode: &AuraModes) -> Result<(), Box<dyn Error>> {
         match mode {
-            AuraModes::RGB(v) => {
+            AuraModes::PerKey(v) => {
                 if v.is_empty() || v[0].is_empty() {
                     let bytes = KeyColourArray::get_init_msg();
                     self.write_bytes(&bytes).await?;

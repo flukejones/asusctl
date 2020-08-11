@@ -75,6 +75,27 @@ Models GA401, GA502, GU502 support LED brightness change only (no RGB).
 | G731   |   X    |     X     |    X   |    X    |  X   |  X   |     X     |   X   |    X   |   X   |   X   |   X   |   X   |     X       |
 | G532   |   X    |     X     |    X   |    X    |  X   |  X   |     X     |   X   |    X   |   X   |   X   |   X   |       |     X       |
 
+It is highly likely this doesn't cover all models.
+
+For editing the `/etc/asusd/asusd-ledmodes.toml`, the LED Mode numbers are as follows:
+
+```
+0   STATIC
+1   BREATHING
+2   STROBE
+3   RAINBOW
+4   STAR
+5   RAIN
+6   HIGHLIGHT
+7   LASER
+8   RIPPLE
+10  PULSE
+11  COMET
+12  FLASH
+13  MULTISTATIC
+255 PER_KEY
+```
+
 ## Implemented
 
 - [X] Daemon

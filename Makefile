@@ -48,7 +48,6 @@ uninstall:
 	rm -f "$(DESTDIR)/lib/udev/rules.d/99-$(BIN_D).rules"
 	rm -f "$(DESTDIR)$(sysconfdir)/dbus-1/system.d/$(BIN_D).conf"
 	rm -f "$(DESTDIR)/lib/systemd/system/$(BIN_D).service"
-	rm -rf "$(DESTDIR)$(sysconfdir)/asusd/"
 
 update:
 	cargo update

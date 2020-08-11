@@ -15,7 +15,7 @@ pub const PULSE: u8 = 0x0a;
 pub const COMET: u8 = 0x0b;
 pub const FLASH: u8 = 0x0c;
 pub const MULTISTATIC: u8 = 0x0d;
-pub const RGB: u8 = 0xff;
+pub const PER_KEY: u8 = 0xff;
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Colour(pub u8, pub u8, pub u8);
@@ -180,7 +180,7 @@ pub enum AuraModes {
     MultiStatic(MultiColour),
     LedBrightness(u8),
     // TODO: use a serializable structure for this (KeyColourArray)
-    RGB(Vec<Vec<u8>>),
+    PerKey(Vec<Vec<u8>>),
 }
 
 impl From<SetAuraBuiltin> for AuraModes {
@@ -234,7 +234,7 @@ impl From<&AuraModes> for u8 {
             AuraModes::Comet(_) => COMET,
             AuraModes::Flash(_) => FLASH,
             AuraModes::MultiStatic(_) => MULTISTATIC,
-            AuraModes::RGB(_) => RGB,
+            AuraModes::PerKey(_) => PER_KEY,
             _ => panic!("Invalid mode"),
         }
     }
@@ -256,13 +256,13 @@ impl From<&AuraModes> for &str {
             AuraModes::Comet(_) => "Comet",
             AuraModes::Flash(_) => "Flash",
             AuraModes::MultiStatic(_) => "4-Zone Static Colours",
-            AuraModes::RGB(_) => "RGB per-key",
+            AuraModes::PerKey(_) => "RGB per-key",
             _ => panic!("Invalid mode"),
         }
     }
 }
 
-/// Exists to convert back from correct bytes. RGB byte intentionally left off as it
+/// Exists to convert back from correct bytes. PER_KEY byte intentionally left off as it
 /// does not correspond to an actual pre-set mode, nor does brightness.
 impl From<u8> for AuraModes {
     fn from(byte: u8) -> Self {
@@ -280,7 +280,7 @@ impl From<u8> for AuraModes {
             COMET => AuraModes::Comet(SingleColour::default()),
             FLASH => AuraModes::Flash(SingleColour::default()),
             MULTISTATIC => AuraModes::MultiStatic(MultiColour::default()),
-            RGB => AuraModes::RGB(vec![]),
+            PER_KEY => AuraModes::PerKey(vec![]),
             _ => panic!("Invalid mode byte"),
         }
     }

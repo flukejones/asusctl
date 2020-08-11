@@ -44,7 +44,7 @@ impl AuraDbusClient {
     /// the keyboard LED EC in the correct mode
     #[inline]
     pub fn init_effect(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let mode = AuraModes::RGB(vec![vec![]]);
+        let mode = AuraModes::PerKey(vec![vec![]]);
         let mut msg =
             Message::new_method_call(DBUS_NAME, DBUS_PATH, DBUS_IFACE, "SetKeyBacklight")?
                 .append1(serde_json::to_string(&mode)?);
@@ -67,7 +67,7 @@ impl AuraDbusClient {
         for v in group {
             vecs.push(v.to_vec());
         }
-        let mode = AuraModes::RGB(vecs);
+        let mode = AuraModes::PerKey(vecs);
         let mut msg =
             Message::new_method_call(DBUS_NAME, DBUS_PATH, DBUS_IFACE, "SetKeyBacklight")?
                 .append1(serde_json::to_string(&mode)?);
