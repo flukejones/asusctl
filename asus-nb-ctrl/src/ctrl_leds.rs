@@ -11,7 +11,7 @@ use dbus::{channel::Sender, nonblock::SyncConnection, tree::Signal};
 use log::{info, warn};
 use std::error::Error;
 use std::fs::OpenOptions;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::sync::Arc;
 use tokio::sync::mpsc::Receiver;
 use tokio::sync::Mutex;
@@ -19,6 +19,7 @@ use tokio::task::JoinHandle;
 
 pub struct CtrlKbdBacklight {
     dev_node: String,
+    bright_node: String,
     supported_modes: Vec<u8>,
     flip_effect_write: bool,
 }
@@ -31,41 +32,57 @@ impl crate::Controller for CtrlKbdBacklight {
 
     /// Spawns two tasks which continuously check for changes
     fn spawn_task_loop(
-        mut self,
+        self,
         config: Arc<Mutex<Config>>,
         mut recv: Receiver<Self::A>,
         connection: Option<Arc<SyncConnection>>,
         signal: Option<Arc<Signal<()>>>,
     ) -> Vec<JoinHandle<()>> {
-        vec![tokio::spawn(async move {
-            while let Some(command) = recv.recv().await {
-                let mut config = config.lock().await;
-                match &command {
-                    AuraModes::PerKey(_) => {
-                        self.do_command(command, &mut config)
-                            .await
-                            .unwrap_or_else(|err| warn!("{}", err));
-                    }
-                    _ => {
-                        let json = serde_json::to_string(&command).unwrap();
-                        self.do_command(command, &mut config)
-                            .await
-                            .unwrap_or_else(|err| warn!("{}", err));
-                        connection
-                            .as_ref()
-                            .expect("LED Controller must have DBUS connection")
-                            .send(
-                                signal
-                                    .as_ref()
-                                    .expect("LED Controller must have DBUS signal")
-                                    .msg(&DBUS_PATH.into(), &DBUS_IFACE.into())
-                                    .append1(json),
-                            )
-                            .unwrap_or_else(|_| 0);
+        let gate1 = Arc::new(Mutex::new(self));
+        let gate2 = gate1.clone();
+
+        let config1 = config.clone();
+        vec![
+            tokio::spawn(async move {
+                while let Some(command) = recv.recv().await {
+                    let mut config = config1.lock().await;
+                    let mut lock = gate1.lock().await;
+                    match &command {
+                        AuraModes::PerKey(_) => {
+                            lock.do_command(command, &mut config)
+                                .await
+                                .unwrap_or_else(|err| warn!("{}", err));
+                        }
+                        _ => {
+                            let json = serde_json::to_string(&command).unwrap();
+                            lock.do_command(command, &mut config)
+                                .await
+                                .unwrap_or_else(|err| warn!("{}", err));
+                            connection
+                                .as_ref()
+                                .expect("LED Controller must have DBUS connection")
+                                .send(
+                                    signal
+                                        .as_ref()
+                                        .expect("LED Controller must have DBUS signal")
+                                        .msg(&DBUS_PATH.into(), &DBUS_IFACE.into())
+                                        .append1(json),
+                                )
+                                .unwrap_or_else(|_| 0);
+                        }
                     }
                 }
-            }
-        })]
+            }),
+            tokio::spawn(async move {
+                loop {
+                    let mut lock = gate2.lock().await;
+                    let mut config = config.lock().await;
+                    lock.let_bright_check_change(&mut config)
+                        .unwrap_or_else(|err| warn!("{:?}", err));
+                    tokio::time::delay_for(std::time::Duration::from_millis(500)).await;
+                }
+            }),
+        ]
     }
 
     async fn reload_from_config(&mut self, config: &mut Config) -> Result<(), Box<dyn Error>> {
@@ -126,6 +143,8 @@ impl CtrlKbdBacklight {
                         info!("Using device at: {:?} for LED control", dev_node);
                         return Ok(CtrlKbdBacklight {
                             dev_node: dev_node.to_string_lossy().to_string(),
+                            bright_node: "/sys/class/leds/asus::kbd_backlight/brightness"
+                                .to_string(),
                             supported_modes,
                             flip_effect_write: false,
                         });
@@ -137,6 +156,25 @@ impl CtrlKbdBacklight {
             std::io::ErrorKind::NotFound,
             "Device node not found",
         ))
+    }
+
+    fn let_bright_check_change(&mut self, config: &mut Config) -> Result<(), Box<dyn Error>> {
+        let mut file = OpenOptions::new().read(true).open(&self.bright_node)?;
+        let mut buf = [0u8; 1];
+        file.read_exact(&mut buf)?;
+        if let Some(num) = char::from(buf[0]).to_digit(10) {
+            if config.power_profile != num as u8 {
+                config.read();
+                config.kbd_boot_brightness = num as u8;
+                config.write();
+            }
+            return Ok(());
+        }
+        let err = std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "LED brightness could not be parsed",
+        );
+        Err(Box::new(err))
     }
 
     pub async fn do_command(
