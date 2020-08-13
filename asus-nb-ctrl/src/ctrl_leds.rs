@@ -76,12 +76,11 @@ impl crate::Controller for CtrlKbdBacklight {
             }),
             tokio::spawn(async move {
                 loop {
+                    tokio::time::delay_for(std::time::Duration::from_millis(100)).await;
                     let mut lock = gate2.lock().await;
-                    if let Ok(mut config) = config.try_lock() {
-                        lock.let_bright_check_change(&mut config)
-                            .unwrap_or_else(|err| warn!("{:?}", err));
-                    }
-                    tokio::time::delay_for(std::time::Duration::from_millis(500)).await;
+                    let mut config = config.lock().await;
+                    lock.let_bright_check_change(&mut config)
+                        .unwrap_or_else(|err| warn!("{:?}", err));
                 }
             }),
         ]
@@ -191,7 +190,7 @@ impl CtrlKbdBacklight {
         let mut buf = [0u8; 1];
         file.read_exact(&mut buf)?;
         if let Some(num) = char::from(buf[0]).to_digit(10) {
-            if config.power_profile != num as u8 {
+            if config.kbd_led_brightness != num as u8 {
                 config.read();
                 config.kbd_led_brightness = num as u8;
                 config.write();

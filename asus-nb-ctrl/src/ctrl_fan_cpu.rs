@@ -49,12 +49,11 @@ impl crate::Controller for CtrlFanAndCPU {
             // need to watch file path
             tokio::spawn(async move {
                 loop {
+                    tokio::time::delay_for(std::time::Duration::from_millis(100)).await;
                     let mut lock = gate2.lock().await;
-                    if let Ok(mut config) = config.try_lock() {
-                        lock.fan_mode_check_change(&mut config)
-                            .unwrap_or_else(|err| warn!("{:?}", err));
-                    }
-                    tokio::time::delay_for(std::time::Duration::from_millis(500)).await;
+                    let mut config = config.lock().await;
+                    lock.fan_mode_check_change(&mut config)
+                        .unwrap_or_else(|err| warn!("{:?}", err));
                 }
             }),
         ]
