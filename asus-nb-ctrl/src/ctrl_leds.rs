@@ -18,7 +18,8 @@ use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 
 pub struct CtrlKbdBacklight {
-    dev_node: String,
+    led_node: String,
+    kbd_node: String,
     bright_node: String,
     supported_modes: Vec<u8>,
     flip_effect_write: bool,
@@ -130,32 +131,58 @@ impl crate::Controller for CtrlKbdBacklight {
 impl CtrlKbdBacklight {
     #[inline]
     pub fn new(id_product: &str, supported_modes: Vec<u8>) -> Result<Self, std::io::Error> {
+        Ok(CtrlKbdBacklight {
+            led_node: Self::scan_led_node(id_product)?,
+            kbd_node: Self::scan_kbd_node(id_product)?,
+            // brightness node path should always be constant but this *might* change?
+            bright_node: "/sys/class/leds/asus::kbd_backlight/brightness".to_string(),
+            supported_modes,
+            flip_effect_write: false,
+        })
+    }
+
+    fn scan_led_node(id_product: &str) -> Result<String, std::io::Error> {
         let mut enumerator = udev::Enumerator::new()?;
         enumerator.match_subsystem("hidraw")?;
 
         for device in enumerator.scan_devices()? {
             if let Some(parent) = device.parent_with_subsystem_devtype("usb", "usb_device")? {
-                if parent.attribute_value("idProduct").unwrap() == id_product
+                if parent.attribute_value("idProduct").unwrap() == id_product {
                 // && device.parent().unwrap().sysnum().unwrap() == 3
-                {
                     if let Some(dev_node) = device.devnode() {
-                        info!("Device has keyboard backlight control");
                         info!("Using device at: {:?} for LED control", dev_node);
-                        return Ok(CtrlKbdBacklight {
-                            dev_node: dev_node.to_string_lossy().to_string(),
-                            bright_node: "/sys/class/leds/asus::kbd_backlight/brightness"
-                                .to_string(),
-                            supported_modes,
-                            flip_effect_write: false,
-                        });
+                        return Ok(dev_node.to_string_lossy().to_string());
                     }
                 }
             }
         }
-        Err(std::io::Error::new(
+        let err = std::io::Error::new(
             std::io::ErrorKind::NotFound,
-            "Device node not found",
-        ))
+            "ASUS LED device node not found",
+        );
+        Err(err)
+    }
+
+    fn scan_kbd_node(id_product: &str) -> Result<String, std::io::Error> {
+        let mut enumerator = udev::Enumerator::new()?;
+        enumerator.match_subsystem("input")?;
+        enumerator.match_property("ID_MODEL_ID", id_product)?;
+
+        for device in enumerator.scan_devices()? {
+            if let Some(dev_node) = device.devnode() {
+                if let Some(inum) = device.property_value("ID_USB_INTERFACE_NUM") {
+                    if inum == "02" {
+                        info!("Using device at: {:?} for keyboard polling", dev_node);
+                        return Ok(dev_node.to_string_lossy().to_string());
+                    }
+                }
+            }
+        }
+        let err = std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "ASUS N-Key Consumer Device node not found",
+        );
+        Err(err)
     }
 
     fn let_bright_check_change(&mut self, config: &mut Config) -> Result<(), Box<dyn Error>> {
@@ -188,7 +215,7 @@ impl CtrlKbdBacklight {
     /// Should only be used if the bytes you are writing are verified correct
     #[inline]
     async fn write_bytes(&self, message: &[u8]) -> Result<(), Box<dyn Error>> {
-        if let Ok(mut file) = OpenOptions::new().write(true).open(&self.dev_node) {
+        if let Ok(mut file) = OpenOptions::new().write(true).open(&self.led_node) {
             file.write_all(message).unwrap();
             return Ok(());
         }
