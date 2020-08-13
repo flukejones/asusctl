@@ -18,4 +18,3 @@ impl fmt::Display for AuraError {
         }
     }
 }
-

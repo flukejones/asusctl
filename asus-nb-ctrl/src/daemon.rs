@@ -4,11 +4,15 @@ use daemon::{
     laptops::match_laptop,
 };
 
-use dbus::{channel::Sender, nonblock::SyncConnection, tree::Signal};
+use dbus::{
+    channel::Sender,
+    nonblock::{Process, SyncConnection},
+    tree::Signal,
+};
+use dbus_tokio::connection;
 
 use asus_nb::{DBUS_IFACE, DBUS_NAME, DBUS_PATH};
 use daemon::Controller;
-use dbus_tokio::connection;
 use log::LevelFilter;
 use log::{error, info, warn};
 use std::error::Error;
@@ -161,6 +165,7 @@ pub async fn start_daemon() -> Result<(), Box<dyn Error>> {
         ));
     }
 
+    connection.process_all();
     for handle in handles {
         handle.await?;
     }

@@ -77,9 +77,10 @@ impl crate::Controller for CtrlKbdBacklight {
             tokio::spawn(async move {
                 loop {
                     let mut lock = gate2.lock().await;
-                    let mut config = config.lock().await;
-                    lock.let_bright_check_change(&mut config)
-                        .unwrap_or_else(|err| warn!("{:?}", err));
+                    if let Ok(mut config) = config.try_lock() {
+                        lock.let_bright_check_change(&mut config)
+                            .unwrap_or_else(|err| warn!("{:?}", err));
+                    }
                     tokio::time::delay_for(std::time::Duration::from_millis(500)).await;
                 }
             }),
@@ -148,7 +149,7 @@ impl CtrlKbdBacklight {
         for device in enumerator.scan_devices()? {
             if let Some(parent) = device.parent_with_subsystem_devtype("usb", "usb_device")? {
                 if parent.attribute_value("idProduct").unwrap() == id_product {
-                // && device.parent().unwrap().sysnum().unwrap() == 3
+                    // && device.parent().unwrap().sysnum().unwrap() == 3
                     if let Some(dev_node) = device.devnode() {
                         info!("Using device at: {:?} for LED control", dev_node);
                         return Ok(dev_node.to_string_lossy().to_string());
