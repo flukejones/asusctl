@@ -18,7 +18,7 @@ build:
     - make && make vendor
   artifacts:
     paths:
-    - vendor-*.tar.xz
+    - vendor-$(grep -P 'version = "(\d.\d.\d)"' asus-nb-ctrl/Cargo.toml | cut -d'"' -f2).tar.xz
     - cargo-config
 
 variables:
