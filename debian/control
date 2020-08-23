@@ -2,24 +2,23 @@ Source: asus-nb-ctrl
 Section: admin
 Priority: optional
 Maintainer: Luke Jones <luke@ljones.dev>
+Homepage: https://gitlab.com/asus-linux/asus-nb-ctrl
 Build-Depends:
   debhelper (>=9),
   cargo,
   llvm,
   libclang-dev,
-  libusb-1.0-0-dev,
   libdbus-1-dev,
-  libudev-1-dev
+  libudev-dev,
   pkg-config
 Standards-Version: 4.1.1
-Homepage: https://gitlab.com/asus-linux/asus-nb-ctrl
 
 Package: asus-nb-ctrl
 Architecture: amd64
 Depends:
   dbus,
   systemd,
-  libusb-1.0-0,
+  libdbus-1,
   libudev,
   ${misc:Depends},
   ${shlibs:Depends}
