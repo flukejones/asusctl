@@ -14,6 +14,7 @@ SRC = Cargo.toml Cargo.lock Makefile $(shell find -type f -wholename '**/src/*.r
 BIN_C=asusctl
 BIN_D=asusd
 LEDCONFIG=asusd-ledmodes.toml
+VERSION:=$(shell grep -P 'version = "(\d.\d.\d)"' asus-nb-ctrl/Cargo.toml | cut -d'"' -f2)
 
 DEBUG ?= 0
 ifeq ($(DEBUG),0)
@@ -56,11 +57,14 @@ vendor:
 	mkdir -p .cargo
 	cargo vendor | head -n -1 > .cargo/config
 	echo 'directory = "vendor"' >> .cargo/config
-	tar pcfJ vendor.tar.xz vendor
+	mv .cargo/config ./cargo-config
+	rm -rf .cargo
+	tar pcfJ vendor-$(VERSION).tar.xz vendor
 	rm -rf vendor
 
 target/release/$(BIN_D): $(SRC)
 ifeq ($(VENDORED),1)
-	tar pxf vendor.tar.xz
+	@echo "version = $(VERSION)"
+	tar pxf vendor-$(VERSION).tar.xz
 endif
 	cargo build $(ARGS)

@@ -5,13 +5,13 @@
 # Use hardening ldflags.
 %global rustflags -Clink-arg=-Wl,-z,relro,-z,now
 Name:           asus-nb-ctrl
-Version:        1.0.0
+Version:        1.0.2
 Release:        0
-Summary:        Text editor for terminal
+Summary:        ASUS Notebook control
 License:        MPLv2
-Group:          Productivity/Text/Editors
+Group:          System Environment/Daemons
 URL:            https://gitlab.com/asus-linux/asus-nb-ctrl
-Source:         %{name}-%{version}.tar.gz
+Source:         https://gitlab.com/asus-linux/asus-nb-ctrl/-/archive/%version/%{name}-%{version}.tar.gz
 # cargo vendor &&
 # tar cfJ vendor.tar.xz vendor
 Source1:        vendor.tar.xz
@@ -26,8 +26,8 @@ BuildRequires:  pkgconfig(libudev)
 ASUS Laptop control
 
 %prep
-%setup -q -n %name-next
-%setup -q -n %name-next -D -T -a 1
+%setup -q
+%setup -q -D -T -a 1
 
 mkdir .cargo
 cat >.cargo/config <<EOF
