@@ -118,6 +118,12 @@ For editing the `/etc/asusd/asusd-ledmodes.toml`, the LED Mode numbers are as fo
 
 ## Installing
 
+Packaging and auto-builds are available [here](https://build.opensuse.org/package/show/home:luke_nukem:asus/asus-nb-ctrl)
+
+Download repositories are available [here](https://download.opensuse.org/repositories/home:/luke_nukem:/asus/)
+
+---
+
 Run `make` then `sudo make install` then reboot.
 
 The default init method is to use the udev rule, this ensures that the service is
