@@ -3,7 +3,8 @@
 **NOTICE:**
 
 This program requires the kernel patch in `./kernel-patch/` to be applied.
-As of 04/08/2020 these have been submitted to lkml.
+As of 04/08/2020 these have been submitted to lkml. Alternatively you may
+use the dkms module for 'hid-asus-rog` from one of the repositories [here](https://download.opensuse.org/repositories/home:/luke_nukem:/asus/).
 
 The patch enables the following in kernel:
 
