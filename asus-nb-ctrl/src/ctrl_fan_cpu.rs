@@ -53,7 +53,7 @@ impl crate::Controller for CtrlFanAndCPU {
                     let mut lock = gate2.lock().await;
                     let mut config = config.lock().await;
                     lock.fan_mode_check_change(&mut config)
-                        .unwrap_or_else(|err| warn!("{:?}", err));
+                        .unwrap_or_else(|err| warn!("fan_ctrl: {:?}", err));
                 }
             }),
         ]

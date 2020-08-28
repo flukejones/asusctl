@@ -80,7 +80,7 @@ impl crate::Controller for CtrlKbdBacklight {
                     let mut lock = gate2.lock().await;
                     let mut config = config.lock().await;
                     lock.let_bright_check_change(&mut config)
-                        .unwrap_or_else(|err| warn!("{:?}", err));
+                        .unwrap_or_else(|err| warn!("led_ctrl: {:?}", err));
                 }
             }),
         ]

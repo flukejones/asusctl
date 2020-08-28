@@ -23,7 +23,7 @@ use std::sync::Arc;
 use tokio::sync::{mpsc::Receiver, Mutex};
 use tokio::task::JoinHandle;
 
-pub static VERSION: &str = "1.0.2";
+pub static VERSION: &str = "1.0.3";
 
 use ::dbus::{nonblock::SyncConnection, tree::Signal};
 

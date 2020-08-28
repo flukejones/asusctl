@@ -34,7 +34,7 @@ impl crate::Controller for CtrlCharge {
             while let Some(n) = recv.recv().await {
                 let mut config = config.lock().await;
                 self.set_charge_limit(n, &mut config)
-                    .unwrap_or_else(|err| warn!("{:?}", err));
+                    .unwrap_or_else(|err| warn!("charge_limit: {:?}", err));
             }
         })]
     }
