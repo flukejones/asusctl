@@ -132,13 +132,35 @@ impl CtrlKbdBacklight {
     #[inline]
     pub fn new(id_product: &str, supported_modes: Vec<u8>) -> Result<Self, std::io::Error> {
         Ok(CtrlKbdBacklight {
-            led_node: Self::scan_led_node(id_product)?,
-            kbd_node: Self::scan_kbd_node(id_product)?,
+            led_node: Self::get_node_failover(id_product, Self::scan_led_node)?,
+            kbd_node: Self::get_node_failover(id_product, Self::scan_kbd_node)?,
             // brightness node path should always be constant but this *might* change?
             bright_node: "/sys/class/leds/asus::kbd_backlight/brightness".to_string(),
             supported_modes,
             flip_effect_write: false,
         })
+    }
+
+    fn get_node_failover(id_product: &str, fun: fn(&str) -> Result<String, std::io::Error>) -> Result<String, std::io::Error> {
+        for n in 0..2 {
+            match fun(id_product) {
+                Ok(o) => return Ok(o),
+                Err(e) => {
+                    if n > 0 {
+                        warn!("Looking for node: {}", e.to_string());
+                        std::thread::sleep(std::time::Duration::from_secs(1));
+                    } else {
+                        return Err(e);
+                    }
+                }
+            }
+        }
+        // Shouldn't be possible to reach this...
+        let err = std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "node not found",
+        );
+        Err(err)
     }
 
     fn scan_led_node(id_product: &str) -> Result<String, std::io::Error> {
