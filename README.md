@@ -3,7 +3,8 @@
 **NOTICE:**
 
 This program requires the kernel patch in `./kernel-patch/` to be applied.
-As of 04/08/2020 these have been submitted to lkml.
+As of 04/08/2020 these have been submitted to lkml. Alternatively you may
+use the dkms module for 'hid-asus-rog` from one of the repositories [here](https://download.opensuse.org/repositories/home:/luke_nukem:/asus/).
 
 The patch enables the following in kernel:
 
@@ -117,6 +118,12 @@ For editing the `/etc/asusd/asusd-ledmodes.toml`, the LED Mode numbers are as fo
 - `libudev-dev`
 
 ## Installing
+
+Packaging and auto-builds are available [here](https://build.opensuse.org/package/show/home:luke_nukem:asus/asus-nb-ctrl)
+
+Download repositories are available [here](https://download.opensuse.org/repositories/home:/luke_nukem:/asus/)
+
+---
 
 Run `make` then `sudo make install` then reboot.
 
