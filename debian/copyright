@@ -1,7 +1,0 @@
-Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: rog-core
-Source: https://github.com/flukejones/rog-core
-
-Files: *
-Copyright: Copyright 2020 Luke Jones
-License: MPL-2.0
