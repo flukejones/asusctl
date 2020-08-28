@@ -1,6 +1,6 @@
 [package]
 name = "asus-nb-ctrl"
-version = "1.0.3"
+version = "1.0.4"
 license = "MPL-2.0"
 readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]
@@ -23,7 +23,7 @@ path = "src/daemon.rs"
 
 [dependencies]
 asus-nb = { path = "../asus-nb" }
-rusb = "^0.6.0"
+rusb = "=0.6.0"
 udev = "^0.4.0"
 async-trait = "0.1.36"
 

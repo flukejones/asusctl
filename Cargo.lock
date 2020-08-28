@@ -30,7 +30,7 @@ dependencies = [
 
 [[package]]
 name = "asus-nb-ctrl"
-version = "1.0.3"
+version = "1.0.4"
 dependencies = [
  "asus-nb",
  "async-trait",
@@ -71,6 +71,21 @@ dependencies = [
  "libc",
  "winapi 0.3.9",
 ]
+
+[[package]]
+name = "bit-set"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e11e16035ea35e4e5997b393eacbf6f63983188f7a2ad25bfb13465f5ad59de"
+dependencies = [
+ "bit-vec",
+]
+
+[[package]]
+name = "bit-vec"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5f0dc55f2d8a1a85650ac47858bb001b4c0dd73d79e3c455a842925e68d29cd3"
 
 [[package]]
 name = "bitflags"
@@ -633,10 +648,11 @@ checksum = "cabe4fa914dec5870285fa7f71f602645da47c486e68486d2b4ceb4a343e90ac"
 
 [[package]]
 name = "rusb"
-version = "0.6.2"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fac7576c07e31f5885d67ec09fd8509e4b730cea4266fecfe7f068f3a5d1f3b3"
+checksum = "884a9ee2c66cdb5ca6c5243ea91cdbba9865506792c3d175d1ad8de8bb0ea64a"
 dependencies = [
+ "bit-set",
  "libc",
  "libusb1-sys",
 ]
