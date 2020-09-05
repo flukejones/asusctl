@@ -19,6 +19,7 @@ use tokio::task::JoinHandle;
 
 pub struct CtrlKbdBacklight {
     led_node: String,
+    #[allow(dead_code)]
     kbd_node: String,
     bright_node: String,
     supported_modes: Vec<u8>,
@@ -141,7 +142,10 @@ impl CtrlKbdBacklight {
         })
     }
 
-    fn get_node_failover(id_product: &str, fun: fn(&str) -> Result<String, std::io::Error>) -> Result<String, std::io::Error> {
+    fn get_node_failover(
+        id_product: &str,
+        fun: fn(&str) -> Result<String, std::io::Error>,
+    ) -> Result<String, std::io::Error> {
         for n in 0..2 {
             match fun(id_product) {
                 Ok(o) => return Ok(o),
@@ -156,10 +160,7 @@ impl CtrlKbdBacklight {
             }
         }
         // Shouldn't be possible to reach this...
-        let err = std::io::Error::new(
-            std::io::ErrorKind::NotFound,
-            "node not found",
-        );
+        let err = std::io::Error::new(std::io::ErrorKind::NotFound, "node not found");
         Err(err)
     }
 

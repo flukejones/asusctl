@@ -197,6 +197,25 @@ Optional arguments:
 
 Available commands:
   led-mode  Set the keyboard lighting from built-in modes
+  profile   Create and configure profiles
+
+$ asusctl profile --help
+Usage: asusctl profile [OPTIONS]
+
+Positional arguments:
+  profile
+
+Optional arguments:
+  -h, --help         print help message
+  -c, --create       create the profile if it doesn't exist
+  -t, --turbo        enable cpu turbo (AMD)
+  -n, --no-turbo     disable cpu turbo (AMD)
+  -m, --min-percentage MIN-PERCENTAGE
+                     set min cpu scaling (intel)
+  -M, --max-percentage MAX-PERCENTAGE
+                     set max cpu scaling (intel)
+  -p, --preset PWR   <silent, normal, boost>
+  -C, --curve CURVE  set fan curve
 
 $ asusctl led-mode --help
 Usage: asusctl led-mode [OPTIONS]

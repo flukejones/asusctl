@@ -1,5 +1,6 @@
 use super::*;
 use crate::fancy::KeyColourArray;
+use crate::profile::ProfileEvent;
 use dbus::channel::Sender;
 use dbus::{blocking::Connection, channel::Token, Message};
 use std::error::Error;
@@ -95,8 +96,20 @@ impl AuraDbusClient {
 
     #[inline]
     pub fn write_fan_mode(&self, level: u8) -> Result<(), Box<dyn std::error::Error>> {
-        let mut msg = Message::new_method_call(DBUS_NAME, DBUS_PATH, DBUS_IFACE, "SetFanMode")?
-            .append1(level);
+        let mut msg = Message::new_method_call(DBUS_NAME, DBUS_PATH, DBUS_IFACE, "ProfileCommand")?
+            .append1(serde_json::to_string(&ProfileEvent::ChangeMode(level))?);
+        msg.set_no_reply(true);
+        self.connection.send(msg).unwrap();
+        Ok(())
+    }
+
+    #[inline]
+    pub fn write_profile_command(
+        &self,
+        cmd: &ProfileEvent,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut msg = Message::new_method_call(DBUS_NAME, DBUS_PATH, DBUS_IFACE, "ProfileCommand")?
+            .append1(serde_json::to_string(cmd)?);
         msg.set_no_reply(true);
         self.connection.send(msg).unwrap();
         Ok(())
