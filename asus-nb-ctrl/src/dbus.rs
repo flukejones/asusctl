@@ -1,4 +1,5 @@
 use crate::config::Config;
+use asus_nb::profile::ProfileEvent;
 use asus_nb::{aura_modes::AuraModes, DBUS_IFACE, DBUS_PATH};
 use dbus::tree::{Factory, MTSync, Method, MethodErr, Signal, Tree};
 use log::warn;
@@ -170,6 +171,25 @@ fn set_charge_limit(sender: Mutex<Sender<u8>>) -> Method<MTSync, ()> {
         .annotate("org.freedesktop.DBus.Method.NoReply", "true")
 }
 
+fn set_profile(sender: Sender<ProfileEvent>) -> Method<MTSync, ()> {
+    let factory = Factory::new_sync::<()>();
+    factory
+        // method for profile
+        .method("ProfileCommand", (), {
+            move |m| {
+                let mut iter = m.msg.iter_init();
+                let byte: String = iter.read()?;
+                if let Ok(byte) = serde_json::from_str(&byte) {
+                    sender.clone().try_send(byte).unwrap_or_else(|_err| {});
+                }
+
+                Ok(vec![])
+            }
+        })
+        .inarg::<String, _>("limit")
+        .annotate("org.freedesktop.DBus.Method.NoReply", "true")
+}
+
 #[allow(clippy::type_complexity)]
 pub fn dbus_create_tree(
     config: Arc<Mutex<Config>>,
@@ -179,6 +199,7 @@ pub fn dbus_create_tree(
     Receiver<Vec<Vec<u8>>>,
     Receiver<u8>,
     Receiver<u8>,
+    Receiver<ProfileEvent>,
     Arc<Signal<()>>,
     Arc<Signal<()>>,
     Arc<Signal<()>>,
@@ -186,6 +207,7 @@ pub fn dbus_create_tree(
     let (aura_command_send, aura_command_recv) = channel::<AuraModes>(1);
     let (animatrix_send, animatrix_recv) = channel::<Vec<Vec<u8>>>(1);
     let (fan_mode_send, fan_mode_recv) = channel::<u8>(1);
+    let (profile_send, profile_recv) = channel::<ProfileEvent>(1);
     let (charge_send, charge_recv) = channel::<u8>(1);
 
     let factory = Factory::new_sync::<()>();
@@ -211,6 +233,7 @@ pub fn dbus_create_tree(
                     .add_m(set_keyboard_backlight(Mutex::new(aura_command_send)))
                     .add_m(set_animatrix(Mutex::new(animatrix_send)))
                     .add_m(set_fan_mode(Mutex::new(fan_mode_send)))
+                    .add_m(set_profile(profile_send))
                     .add_m(set_charge_limit(Mutex::new(charge_send)))
                     .add_m(get_fan_mode(config.clone()))
                     .add_m(get_charge_limit(config.clone()))
@@ -228,6 +251,7 @@ pub fn dbus_create_tree(
         animatrix_recv,
         fan_mode_recv,
         charge_recv,
+        profile_recv,
         key_backlight_changed,
         fanmode_changed,
         chrg_limit_changed,

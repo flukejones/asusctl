@@ -1,6 +1,7 @@
 use asus_nb::{
     cli_options::{LedBrightness, SetAuraBuiltin},
     core_dbus::AuraDbusClient,
+    profile::{ProfileCommand, ProfileEvent},
 };
 use daemon::ctrl_fan_cpu::FanLevel;
 use gumdrop::Options;
@@ -27,6 +28,8 @@ struct CLIStart {
 enum Command {
     #[options(help = "Set the keyboard lighting from built-in modes")]
     LedMode(LedModeCommand),
+    #[options(help = "Create and configure profiles")]
+    Profile(ProfileCommand),
 }
 
 #[derive(Options)]
@@ -54,11 +57,18 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let writer = AuraDbusClient::new()?;
 
-    if let Some(Command::LedMode(mode)) = parsed.command {
-        if let Some(command) = mode.command {
-            writer.write_builtin_mode(&command.into())?
+    match parsed.command {
+        Some(Command::LedMode(mode)) => {
+            if let Some(command) = mode.command {
+                writer.write_builtin_mode(&command.into())?
+            }
         }
+        Some(Command::Profile(command)) => {
+            writer.write_profile_command(&ProfileEvent::Cli(command))?
+        }
+        None => (),
     }
+
     if let Some(brightness) = parsed.kbd_bright {
         writer.write_brightness(brightness.level())?;
     }

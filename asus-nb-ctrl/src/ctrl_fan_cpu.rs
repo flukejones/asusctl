@@ -1,4 +1,6 @@
 use crate::config::Config;
+use crate::config::Profile;
+use asus_nb::profile::ProfileEvent;
 use log::{error, info, warn};
 use std::error::Error;
 use std::fs::OpenOptions;
@@ -23,7 +25,7 @@ use async_trait::async_trait;
 
 #[async_trait]
 impl crate::Controller for CtrlFanAndCPU {
-    type A = u8;
+    type A = ProfileEvent;
 
     /// Spawns two tasks which continuously check for changes
     fn spawn_task_loop(
@@ -39,10 +41,12 @@ impl crate::Controller for CtrlFanAndCPU {
         // spawn an endless loop
         vec![
             tokio::spawn(async move {
-                while let Some(mode) = recv.recv().await {
+                while let Some(event) = recv.recv().await {
                     let mut config = config1.lock().await;
                     let mut lock = gate1.lock().await;
-                    lock.set_fan_mode(mode, &mut config)
+
+                    config.read();
+                    lock.handle_profile_event(&event, &mut config)
                         .unwrap_or_else(|err| warn!("{:?}", err));
                 }
             }),
@@ -63,7 +67,8 @@ impl crate::Controller for CtrlFanAndCPU {
         let mut file = OpenOptions::new().write(true).open(self.path)?;
         file.write_all(format!("{:?}\n", config.power_profile).as_bytes())
             .unwrap_or_else(|err| error!("Could not write to {}, {:?}", self.path, err));
-        self.set_pstate_for_fan_mode(FanLevel::from(config.power_profile), config)?;
+        let profile = config.active_profile.clone();
+        self.set_profile(&profile, config)?;
         info!(
             "Reloaded fan mode: {:?}",
             FanLevel::from(config.power_profile)
@@ -102,13 +107,26 @@ impl CtrlFanAndCPU {
         if let Some(num) = char::from(buf[0]).to_digit(10) {
             if config.power_profile != num as u8 {
                 config.read();
-                config.power_profile = num as u8;
-                config.write();
-                self.set_pstate_for_fan_mode(FanLevel::from(config.power_profile), config)?;
-                info!(
-                    "Fan mode was changed: {:?}",
-                    FanLevel::from(config.power_profile)
-                );
+
+                let mut i = config
+                    .toggle_profiles
+                    .iter()
+                    .position(|x| x == &config.active_profile)
+                    .map(|i| i + 1)
+                    .unwrap_or(0);
+                if i >= config.toggle_profiles.len() {
+                    i = 0;
+                }
+
+                let new_profile = config
+                    .toggle_profiles
+                    .get(i)
+                    .unwrap_or(&config.active_profile)
+                    .clone();
+
+                self.set_profile(&new_profile, config)?;
+
+                info!("Profile was changed: {:?}", &new_profile);
             }
             return Ok(());
         }
@@ -121,66 +139,121 @@ impl CtrlFanAndCPU {
 
     pub(super) fn set_fan_mode(
         &mut self,
-        n: u8,
+        preset: u8,
         config: &mut Config,
     ) -> Result<(), Box<dyn Error>> {
+        let mode = config.active_profile.clone();
         let mut fan_ctrl = OpenOptions::new().write(true).open(self.path)?;
         config.read();
-        config.power_profile = n;
+        let mut mode_config = config
+            .power_profiles
+            .get_mut(&mode)
+            .ok_or_else(|| RogError::MissingProfile(mode.clone()))?;
+        config.power_profile = preset;
+        mode_config.fan_preset = preset;
         config.write();
         fan_ctrl
-            .write_all(format!("{:?}\n", config.power_profile).as_bytes())
+            .write_all(format!("{:?}\n", preset).as_bytes())
             .unwrap_or_else(|err| error!("Could not write to {}, {:?}", self.path, err));
-        info!(
-            "Fan mode set to: {:?}",
-            FanLevel::from(config.power_profile)
-        );
-        self.set_pstate_for_fan_mode(FanLevel::from(n), config)?;
+        info!("Fan mode set to: {:?}", FanLevel::from(preset));
+        self.set_pstate_for_fan_mode(&mode, config)?;
+        self.set_fan_curve_for_fan_mode(&mode, config)?;
+        Ok(())
+    }
+
+    fn handle_profile_event(
+        &mut self,
+        event: &ProfileEvent,
+        config: &mut Config,
+    ) -> Result<(), Box<dyn Error>> {
+        match event {
+            ProfileEvent::ChangeMode(mode) => {
+                self.set_fan_mode(*mode, config)?;
+            }
+            ProfileEvent::Cli(command) => {
+                let profile_key = match command.profile.as_ref() {
+                    Some(k) => k.clone(),
+                    None => config.active_profile.clone(),
+                };
+
+                let mut profile = if command.create {
+                    config
+                        .power_profiles
+                        .entry(profile_key.clone())
+                        .or_insert_with(|| Profile::default())
+                } else {
+                    config
+                        .power_profiles
+                        .get_mut(&profile_key)
+                        .ok_or_else(|| RogError::MissingProfile(profile_key.clone()))?
+                };
+
+                if command.turbo {
+                    profile.no_turbo = false;
+                }
+                if command.no_turbo {
+                    profile.no_turbo = true;
+                }
+                if let Some(min_perc) = command.min_percentage {
+                    profile.min_percentage = min_perc;
+                }
+                if let Some(max_perc) = command.max_percentage {
+                    profile.max_percentage = max_perc;
+                }
+                if let Some(ref preset) = command.preset {
+                    profile.fan_preset = preset.into();
+                }
+                if let Some(ref curve) = command.curve {
+                    profile.fan_curve = Some(curve.clone());
+                }
+
+                self.set_profile(&profile_key, config)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn set_profile(&mut self, profile: &str, config: &mut Config) -> Result<(), Box<dyn Error>> {
+        let mode_config = config
+            .power_profiles
+            .get(profile)
+            .ok_or_else(|| RogError::MissingProfile(profile.into()))?;
+        let mut fan_ctrl = OpenOptions::new().write(true).open(self.path)?;
+        fan_ctrl
+            .write_all(format!("{:?}\n", mode_config.fan_preset).as_bytes())
+            .unwrap_or_else(|err| error!("Could not write to {}, {:?}", self.path, err));
+        config.power_profile = mode_config.fan_preset;
+
+        self.set_pstate_for_fan_mode(profile, config)?;
+        self.set_fan_curve_for_fan_mode(profile, config)?;
+
+        config.active_profile = profile.into();
+
+        config.write();
         Ok(())
     }
 
     fn set_pstate_for_fan_mode(
         &self,
-        mode: FanLevel,
+        // mode: FanLevel,
+        mode: &str,
         config: &mut Config,
     ) -> Result<(), Box<dyn Error>> {
+        info!("Setting pstate");
+        let mode_config = config
+            .power_profiles
+            .get(mode)
+            .ok_or_else(|| RogError::MissingProfile(mode.into()))?;
+
         // Set CPU pstate
         if let Ok(pstate) = intel_pstate::PState::new() {
-            match mode {
-                FanLevel::Normal => {
-                    pstate.set_min_perf_pct(config.power_profiles.normal.min_percentage)?;
-                    pstate.set_max_perf_pct(config.power_profiles.normal.max_percentage)?;
-                    pstate.set_no_turbo(config.power_profiles.normal.no_turbo)?;
-                    info!(
-                        "Intel CPU Power: min: {:?}%, max: {:?}%, turbo: {:?}",
-                        config.power_profiles.normal.min_percentage,
-                        config.power_profiles.normal.max_percentage,
-                        !config.power_profiles.normal.no_turbo
-                    );
-                }
-                FanLevel::Boost => {
-                    pstate.set_min_perf_pct(config.power_profiles.boost.min_percentage)?;
-                    pstate.set_max_perf_pct(config.power_profiles.boost.max_percentage)?;
-                    pstate.set_no_turbo(config.power_profiles.boost.no_turbo)?;
-                    info!(
-                        "Intel CPU Power: min: {:?}%, max: {:?}%, turbo: {:?}",
-                        config.power_profiles.boost.min_percentage,
-                        config.power_profiles.boost.max_percentage,
-                        !config.power_profiles.boost.no_turbo
-                    );
-                }
-                FanLevel::Silent => {
-                    pstate.set_min_perf_pct(config.power_profiles.silent.min_percentage)?;
-                    pstate.set_max_perf_pct(config.power_profiles.silent.max_percentage)?;
-                    pstate.set_no_turbo(config.power_profiles.silent.no_turbo)?;
-                    info!(
-                        "Intel CPU Power: min: {:?}%, max: {:?}%, turbo: {:?}",
-                        config.power_profiles.silent.min_percentage,
-                        config.power_profiles.silent.max_percentage,
-                        !config.power_profiles.silent.no_turbo
-                    );
-                }
-            }
+            pstate.set_min_perf_pct(mode_config.min_percentage)?;
+            pstate.set_max_perf_pct(mode_config.max_percentage)?;
+            pstate.set_no_turbo(mode_config.no_turbo)?;
+            info!(
+                "Intel CPU Power: min: {:?}%, max: {:?}%, turbo: {:?}",
+                mode_config.min_percentage, mode_config.max_percentage, !mode_config.no_turbo
+            );
         } else {
             info!("Setting pstate for AMD CPU");
             // must be AMD CPU
@@ -191,42 +264,36 @@ impl CtrlFanAndCPU {
                     warn!("Failed to open AMD boost: {:?}", err);
                     err
                 })?;
-            match mode {
-                FanLevel::Normal => {
-                    let boost = if config.power_profiles.normal.no_turbo {
-                        "0"
-                    } else {
-                        "1"
-                    }; // opposite of Intel
-                    file.write_all(boost.as_bytes()).unwrap_or_else(|err| {
-                        error!("Could not write to {}, {:?}", AMD_BOOST_PATH, err)
-                    });
-                    info!("AMD CPU Turbo: {:?}", boost);
-                }
-                FanLevel::Boost => {
-                    let boost = if config.power_profiles.boost.no_turbo {
-                        "0"
-                    } else {
-                        "1"
-                    };
-                    file.write_all(boost.as_bytes()).unwrap_or_else(|err| {
-                        error!("Could not write to {}, {:?}", AMD_BOOST_PATH, err)
-                    });
-                    info!("AMD CPU Turbo: {:?}", boost);
-                }
-                FanLevel::Silent => {
-                    let boost = if config.power_profiles.silent.no_turbo {
-                        "0"
-                    } else {
-                        "1"
-                    };
-                    file.write_all(boost.as_bytes()).unwrap_or_else(|err| {
-                        error!("Could not write to {}, {:?}", AMD_BOOST_PATH, err)
-                    });
-                    info!("AMD CPU Turbo: {:?}", boost);
-                }
+
+            let boost = if mode_config.no_turbo { "0" } else { "1" }; // opposite of Intel
+            file.write_all(boost.as_bytes())
+                .unwrap_or_else(|err| error!("Could not write to {}, {:?}", AMD_BOOST_PATH, err));
+            info!("AMD CPU Turbo: {:?}", boost);
+        }
+        Ok(())
+    }
+
+    fn set_fan_curve_for_fan_mode(
+        &self,
+        // mode: FanLevel,
+        mode: &str,
+        config: &Config,
+    ) -> Result<(), Box<dyn Error>> {
+        let mode_config = &config
+            .power_profiles
+            .get(mode)
+            .ok_or_else(|| RogError::MissingProfile(mode.into()))?;
+
+        if let Some(ref curve) = mode_config.fan_curve {
+            use rog_fan_curve::{Board, Fan};
+            if let Some(board) = Board::from_board_name() {
+                curve.apply(board, Fan::Cpu)?;
+                curve.apply(board, Fan::Gpu)?;
+            } else {
+                warn!("Fan curve unsupported on this board.")
             }
         }
+
         Ok(())
     }
 }

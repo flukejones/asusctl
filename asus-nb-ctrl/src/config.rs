@@ -1,6 +1,8 @@
 use asus_nb::aura_modes::AuraModes;
 use log::{error, warn};
+use rog_fan_curve::Curve;
 use serde_derive::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 
@@ -8,12 +10,15 @@ pub static CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct Config {
+    pub active_profile: String,
+    pub toggle_profiles: Vec<String>,
+    // TODO: remove power_profile
     pub power_profile: u8,
     pub bat_charge_limit: u8,
     pub kbd_led_brightness: u8,
     pub kbd_backlight_mode: u8,
     pub kbd_backlight_modes: Vec<AuraModes>,
-    pub power_profiles: FanModeProfile,
+    pub power_profiles: BTreeMap<String, Profile>,
 }
 
 impl Config {
@@ -50,6 +55,20 @@ impl Config {
         for n in supported_led_modes {
             c.kbd_backlight_modes.push(AuraModes::from(*n))
         }
+
+        let profile = Profile::default();
+        c.power_profiles.insert("normal".into(), profile);
+        let mut profile = Profile::default();
+        profile.fan_preset = 1;
+        c.power_profiles.insert("boost".into(), profile);
+        let mut profile = Profile::default();
+        profile.fan_preset = 2;
+        c.power_profiles.insert("silent".into(), profile);
+
+        c.toggle_profiles.push("normal".into());
+        c.toggle_profiles.push("boost".into());
+        c.toggle_profiles.push("silent".into());
+        c.active_profile = "normal".into();
 
         // Should be okay to unwrap this as is since it is a Default
         let json = serde_json::to_string_pretty(&c).unwrap();
@@ -103,26 +122,26 @@ impl Config {
     }
 }
 
-#[derive(Default, Deserialize, Serialize)]
-pub struct FanModeProfile {
-    pub normal: CPUSettings,
-    pub boost: CPUSettings,
-    pub silent: CPUSettings,
-}
-
 #[derive(Deserialize, Serialize)]
-pub struct CPUSettings {
+pub struct Profile {
     pub min_percentage: u8,
     pub max_percentage: u8,
     pub no_turbo: bool,
+    pub fan_preset: u8,
+    pub fan_curve: Option<Curve>,
 }
 
-impl Default for CPUSettings {
+#[deprecated]
+pub type CPUSettings = Profile;
+
+impl Default for Profile {
     fn default() -> Self {
-        CPUSettings {
+        Profile {
             min_percentage: 0,
             max_percentage: 100,
             no_turbo: false,
+            fan_preset: 0,
+            fan_curve: None,
         }
     }
 }

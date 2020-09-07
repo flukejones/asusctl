@@ -6,6 +6,8 @@ pub const LED_MSG_LEN: usize = 17;
 pub mod aura_modes;
 use aura_modes::AuraModes;
 
+pub mod profile;
+
 /// Contains mostly only what is required for parsing CLI options
 pub mod cli_options;
 

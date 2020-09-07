@@ -21,6 +21,7 @@ version = "0.15.0"
 dependencies = [
  "dbus",
  "gumdrop",
+ "rog_fan_curve",
  "serde",
  "serde_derive",
  "serde_json",
@@ -40,6 +41,7 @@ dependencies = [
  "gumdrop",
  "intel-pstate",
  "log",
+ "rog_fan_curve",
  "rusb",
  "serde",
  "serde_derive",
@@ -645,6 +647,15 @@ name = "rle-decode-fast"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cabe4fa914dec5870285fa7f71f602645da47c486e68486d2b4ceb4a343e90ac"
+
+[[package]]
+name = "rog_fan_curve"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38efab84f3f5a9f4ff26eb916b32810a263eb2d340d62acb8d64d8a37795c5b9"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "rusb"

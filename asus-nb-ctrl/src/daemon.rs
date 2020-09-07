@@ -114,8 +114,9 @@ pub async fn start_daemon() -> Result<(), Box<dyn Error>> {
         tree,
         aura_command_recv,
         animatrix_recv,
-        fan_mode_recv,
+        _fan_mode_recv,
         charge_limit_recv,
+        profile_recv,
         led_changed_signal,
         fanmode_signal,
         charge_limit_signal,
@@ -149,7 +150,7 @@ pub async fn start_daemon() -> Result<(), Box<dyn Error>> {
     }
 
     if let Some(ctrl) = fan_control.take() {
-        handles.append(&mut ctrl.spawn_task_loop(config.clone(), fan_mode_recv, None, None));
+        handles.append(&mut ctrl.spawn_task_loop(config.clone(), profile_recv, None, None));
     }
 
     if let Some(ctrl) = charge_control.take() {
