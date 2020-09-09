@@ -67,21 +67,18 @@ impl CtrlAnimeDisplay {
     #[inline]
     pub fn new() -> Result<CtrlAnimeDisplay, Box<dyn Error>> {
         // We don't expect this ID to ever change
-        let device = CtrlAnimeDisplay::get_device(0x0b05, 0x193b).map_err(|err| {
-            warn!("Could not get AniMe display handle: {:?}", err);
-            err
-        })?;
+        let device = CtrlAnimeDisplay::get_device(0x0b05, 0x193b)?;
 
         let mut device = device.open()?;
         device.reset()?;
 
         device.set_auto_detach_kernel_driver(true).map_err(|err| {
-            error!("Auto-detach kernel driver failed: {:?}", err);
+            error!("Auto-detach kernel driver failed: {}", err);
             err
         })?;
 
         device.claim_interface(0).map_err(|err| {
-            error!("Could not claim device interface: {:?}", err);
+            error!("Could not claim device interface: {}", err);
             err
         })?;
 
@@ -120,7 +117,6 @@ impl CtrlAnimeDisplay {
     /// Should only be used if the bytes you are writing are verified correct
     #[inline]
     async fn write_bytes(&self, message: &[u8]) -> Result<(), AuraError> {
-        let prev = std::time::Instant::now();
         match self.handle.write_control(
             0x21,  // request_type
             0x09,  // request
@@ -129,15 +125,10 @@ impl CtrlAnimeDisplay {
             message,
             Duration::from_millis(200),
         ) {
-            Ok(_) => {
-                println!(
-                    "{:?}",
-                    std::time::Instant::now().duration_since(prev).as_micros()
-                );
-            }
+            Ok(_) => {}
             Err(err) => match err {
                 rusb::Error::Timeout => {}
-                _ => error!("Failed to write to led interrupt: {:?}", err),
+                _ => error!("Failed to write to led interrupt: {}", err),
             },
         }
         Ok(())

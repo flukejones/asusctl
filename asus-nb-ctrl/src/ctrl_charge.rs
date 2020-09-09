@@ -34,7 +34,7 @@ impl crate::Controller for CtrlCharge {
             while let Some(n) = recv.recv().await {
                 let mut config = config.lock().await;
                 self.set_charge_limit(n, &mut config)
-                    .unwrap_or_else(|err| warn!("charge_limit: {:?}", err));
+                    .unwrap_or_else(|err| warn!("charge_limit: {}", err));
             }
         })]
     }
@@ -80,11 +80,11 @@ impl CtrlCharge {
             .write(true)
             .open(self.path)
             .map_err(|err| {
-                warn!("Failed to open battery charge limit path: {:?}", err);
+                warn!("Failed to open battery charge limit path: {}", err);
                 err
             })?;
         file.write_all(limit.to_string().as_bytes())
-            .unwrap_or_else(|err| error!("Could not write to {}, {:?}", BAT_CHARGE_PATH, err));
+            .unwrap_or_else(|err| error!("Could not write to {}, {}", BAT_CHARGE_PATH, err));
         info!("Battery charge limit: {}", limit);
 
         config.read();

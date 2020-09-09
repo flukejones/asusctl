@@ -6,16 +6,20 @@ use std::io::Read;
 
 pub static LEDMODE_CONFIG_PATH: &str = "/etc/asusd/asusd-ledmodes.toml";
 
-static HELP_ADDRESS: &str = "https://gitlab.com/asus-linux/asus-nb-ctrl";
+pub static HELP_ADDRESS: &str = "https://gitlab.com/asus-linux/asus-nb-ctrl";
 
 pub struct LaptopBase {
     usb_product: String,
+    condev_iface: Option<String>, // required for finding the Consumer Device interface
     supported_modes: Vec<u8>,
 }
 
 impl LaptopBase {
     pub fn usb_product(&self) -> &str {
         &self.usb_product
+    }
+    pub fn condev_iface(&self) -> Option<&String> {
+        self.condev_iface.as_ref()
     }
     pub fn supported_modes(&self) -> &[u8] {
         &self.supported_modes
@@ -37,6 +41,7 @@ pub fn match_laptop() -> Option<LaptopBase> {
                     info!("Found GL753 or similar");
                     return Some(LaptopBase {
                         usb_product: "1854".to_string(),
+                        condev_iface: None,
                         supported_modes: vec![STATIC, BREATHING, STROBE],
                     });
                 }
@@ -44,6 +49,11 @@ pub fn match_laptop() -> Option<LaptopBase> {
             }
         }
     }
+    warn!(
+        "Unsupported laptop, please request support at {}",
+        HELP_ADDRESS
+    );
+    warn!("Continuing with minimal support");
     None
 }
 
@@ -58,6 +68,7 @@ fn select_1866_device(prod: String) -> LaptopBase {
 
     let mut laptop = LaptopBase {
         usb_product: prod,
+        condev_iface: Some("02".to_owned()),
         supported_modes: vec![],
     };
 
@@ -67,13 +78,6 @@ fn select_1866_device(prod: String) -> LaptopBase {
             return laptop;
         }
     }
-
-    warn!(
-        "Unsupported laptop, please request support at {}",
-        HELP_ADDRESS
-    );
-    warn!("Continuing with minimal support");
-
     laptop
 }
 

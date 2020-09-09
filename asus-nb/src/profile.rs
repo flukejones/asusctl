@@ -78,10 +78,8 @@ pub struct ProfileCommand {
     #[options(help = "create the profile if it doesn't exist")]
     pub create: bool,
 
-    #[options(help = "enable cpu turbo (AMD)")]
-    pub turbo: bool,
-    #[options(help = "disable cpu turbo (AMD)")]
-    pub no_turbo: bool,
+    #[options(help = "enable or disable cpu turbo")]
+    pub turbo: Option<bool>,
     #[options(help = "set min cpu scaling (intel)")]
     pub min_percentage: Option<u8>,
     #[options(help = "set max cpu scaling (intel)")]

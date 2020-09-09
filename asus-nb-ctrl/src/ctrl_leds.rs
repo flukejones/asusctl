@@ -2,7 +2,7 @@
 static LED_APPLY: [u8; 17] = [0x5d, 0xb4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 static LED_SET: [u8; 17] = [0x5d, 0xb5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-use crate::{config::Config, error::RogError};
+use crate::{config::Config, error::RogError, laptops::HELP_ADDRESS};
 use asus_nb::{
     aura_brightness_bytes, aura_modes::AuraModes, fancy::KeyColourArray, DBUS_IFACE, DBUS_PATH,
     LED_MSG_LEN,
@@ -18,9 +18,9 @@ use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 
 pub struct CtrlKbdBacklight {
-    led_node: String,
+    led_node: Option<String>,
     #[allow(dead_code)]
-    kbd_node: String,
+    kbd_node: Option<String>,
     bright_node: String,
     supported_modes: Vec<u8>,
     flip_effect_write: bool,
@@ -81,7 +81,7 @@ impl crate::Controller for CtrlKbdBacklight {
                     let mut lock = gate2.lock().await;
                     let mut config = config.lock().await;
                     lock.let_bright_check_change(&mut config)
-                        .unwrap_or_else(|err| warn!("led_ctrl: {:?}", err));
+                        .unwrap_or_else(|err| warn!("led_ctrl: {}", err));
                 }
             }),
         ]
@@ -131,26 +131,29 @@ impl crate::Controller for CtrlKbdBacklight {
 
 impl CtrlKbdBacklight {
     #[inline]
-    pub fn new(id_product: &str, supported_modes: Vec<u8>) -> Result<Self, std::io::Error> {
-        Ok(CtrlKbdBacklight {
-            led_node: Self::get_node_failover(id_product, Self::scan_led_node)?,
-            kbd_node: Self::get_node_failover(id_product, Self::scan_kbd_node)?,
-            // brightness node path should always be constant but this *might* change?
+    pub fn new(id_product: &str, condev_iface: Option<&String>, supported_modes: Vec<u8>) -> Self {
+        // TODO: return error if *all* nodes are None
+        CtrlKbdBacklight {
+            led_node: Self::get_node_failover(id_product, None, Self::scan_led_node).ok(),
+            kbd_node: Self::get_node_failover(id_product, condev_iface, Self::scan_kbd_node).ok(),
+            // TODO: Check for existance
             bright_node: "/sys/class/leds/asus::kbd_backlight/brightness".to_string(),
             supported_modes,
             flip_effect_write: false,
-        })
+        }
     }
 
     fn get_node_failover(
         id_product: &str,
-        fun: fn(&str) -> Result<String, std::io::Error>,
+        iface: Option<&String>,
+        fun: fn(&str, Option<&String>) -> Result<String, std::io::Error>,
     ) -> Result<String, std::io::Error> {
-        for n in 0..2 {
-            match fun(id_product) {
+        for n in 0..=2 {
+            // 0,1,2 inclusive
+            match fun(id_product, iface) {
                 Ok(o) => return Ok(o),
                 Err(e) => {
-                    if n > 0 {
+                    if n == 2 {
                         warn!("Looking for node: {}", e.to_string());
                         std::thread::sleep(std::time::Duration::from_secs(1));
                     } else {
@@ -164,12 +167,24 @@ impl CtrlKbdBacklight {
         Err(err)
     }
 
-    fn scan_led_node(id_product: &str) -> Result<String, std::io::Error> {
-        let mut enumerator = udev::Enumerator::new()?;
-        enumerator.match_subsystem("hidraw")?;
+    fn scan_led_node(id_product: &str, _: Option<&String>) -> Result<String, std::io::Error> {
+        let mut enumerator = udev::Enumerator::new().map_err(|err| {
+            warn!("{}", err);
+            err
+        })?;
+        enumerator.match_subsystem("hidraw").map_err(|err| {
+            warn!("{}", err);
+            err
+        })?;
 
         for device in enumerator.scan_devices()? {
-            if let Some(parent) = device.parent_with_subsystem_devtype("usb", "usb_device")? {
+            if let Some(parent) = device
+                .parent_with_subsystem_devtype("usb", "usb_device")
+                .map_err(|err| {
+                    warn!("{}", err);
+                    err
+                })?
+            {
                 if parent.attribute_value("idProduct").unwrap() == id_product {
                     // && device.parent().unwrap().sysnum().unwrap() == 3
                     if let Some(dev_node) = device.devnode() {
@@ -183,28 +198,43 @@ impl CtrlKbdBacklight {
             std::io::ErrorKind::NotFound,
             "ASUS LED device node not found",
         );
+        warn!("Did not find a hidraw node for LED control, your device may be unsupported or require a kernel patch, see: {}", HELP_ADDRESS);
         Err(err)
     }
 
-    fn scan_kbd_node(id_product: &str) -> Result<String, std::io::Error> {
+    fn scan_kbd_node(id_product: &str, iface: Option<&String>) -> Result<String, std::io::Error> {
         let mut enumerator = udev::Enumerator::new()?;
-        enumerator.match_subsystem("input")?;
-        enumerator.match_property("ID_MODEL_ID", id_product)?;
+        enumerator.match_subsystem("input").map_err(|err| {
+            warn!("{}", err);
+            err
+        })?;
+        enumerator
+            .match_property("ID_MODEL_ID", id_product)
+            .map_err(|err| {
+                warn!("{}", err);
+                err
+            })?;
 
-        for device in enumerator.scan_devices()? {
+        for device in enumerator.scan_devices().map_err(|err| {
+            warn!("{}", err);
+            err
+        })? {
             if let Some(dev_node) = device.devnode() {
                 if let Some(inum) = device.property_value("ID_USB_INTERFACE_NUM") {
-                    if inum == "02" {
-                        info!("Using device at: {:?} for keyboard polling", dev_node);
-                        return Ok(dev_node.to_string_lossy().to_string());
+                    if let Some(iface) = iface {
+                        if inum == iface.as_str() {
+                            info!("Using device at: {:?} for keyboard polling", dev_node);
+                            return Ok(dev_node.to_string_lossy().to_string());
+                        }
                     }
                 }
             }
         }
         let err = std::io::Error::new(
             std::io::ErrorKind::NotFound,
-            "ASUS N-Key Consumer Device node not found",
+            "ASUS keyboard 'Consumer Device' node not found",
         );
+        warn!("Did not find keyboard consumer device node, if expected functions are missing please file an issue at {}", HELP_ADDRESS);
         Err(err)
     }
 
@@ -238,9 +268,11 @@ impl CtrlKbdBacklight {
     /// Should only be used if the bytes you are writing are verified correct
     #[inline]
     async fn write_bytes(&self, message: &[u8]) -> Result<(), Box<dyn Error>> {
-        if let Ok(mut file) = OpenOptions::new().write(true).open(&self.led_node) {
-            file.write_all(message).unwrap();
-            return Ok(());
+        if let Some(led_node) = &self.led_node {
+            if let Ok(mut file) = OpenOptions::new().write(true).open(led_node) {
+                file.write_all(message).unwrap();
+                return Ok(());
+            }
         }
         Err(Box::new(RogError::NotSupported))
     }

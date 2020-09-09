@@ -37,7 +37,10 @@ impl Config {
                 self = Config::create_default(&mut file, &supported_led_modes);
             } else {
                 self = serde_json::from_str(&buf).unwrap_or_else(|_| {
-                    warn!("Could not deserialise {}", CONFIG_PATH);
+                    warn!(
+                        "Could not deserialise {}. Overwriting with default",
+                        CONFIG_PATH
+                    );
                     Config::create_default(&mut file, &supported_led_modes)
                 });
             }
@@ -126,7 +129,7 @@ impl Config {
 pub struct Profile {
     pub min_percentage: u8,
     pub max_percentage: u8,
-    pub no_turbo: bool,
+    pub turbo: bool,
     pub fan_preset: u8,
     pub fan_curve: Option<Curve>,
 }
@@ -139,7 +142,7 @@ impl Default for Profile {
         Profile {
             min_percentage: 0,
             max_percentage: 100,
-            no_turbo: false,
+            turbo: false,
             fan_preset: 0,
             fan_curve: None,
         }
