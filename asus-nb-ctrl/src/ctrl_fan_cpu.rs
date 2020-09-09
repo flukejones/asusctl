@@ -47,7 +47,7 @@ impl crate::Controller for CtrlFanAndCPU {
 
                     config.read();
                     lock.handle_profile_event(&event, &mut config)
-                        .unwrap_or_else(|err| warn!("{:?}", err));
+                        .unwrap_or_else(|err| warn!("{}", err));
                 }
             }),
             // need to watch file path
@@ -57,7 +57,7 @@ impl crate::Controller for CtrlFanAndCPU {
                     let mut lock = gate2.lock().await;
                     let mut config = config.lock().await;
                     lock.fan_mode_check_change(&mut config)
-                        .unwrap_or_else(|err| warn!("fan_ctrl: {:?}", err));
+                        .unwrap_or_else(|err| warn!("fan_ctrl: {}", err));
                 }
             }),
         ]
@@ -65,8 +65,8 @@ impl crate::Controller for CtrlFanAndCPU {
 
     async fn reload_from_config(&mut self, config: &mut Config) -> Result<(), Box<dyn Error>> {
         let mut file = OpenOptions::new().write(true).open(self.path)?;
-        file.write_all(format!("{:?}\n", config.power_profile).as_bytes())
-            .unwrap_or_else(|err| error!("Could not write to {}, {:?}", self.path, err));
+        file.write_all(format!("{}\n", config.power_profile).as_bytes())
+            .unwrap_or_else(|err| error!("Could not write to {}, {}", self.path, err));
         let profile = config.active_profile.clone();
         self.set_profile(&profile, config)?;
         info!(
@@ -92,7 +92,7 @@ impl CtrlFanAndCPU {
         } else {
             Err(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
-                "Fan mode not available",
+                "Fan mode not available, you may require a v5.8 series kernel or newer",
             ))
         }
     }
@@ -126,7 +126,7 @@ impl CtrlFanAndCPU {
 
                 self.set_profile(&new_profile, config)?;
 
-                info!("Profile was changed: {:?}", &new_profile);
+                info!("Profile was changed: {}", &new_profile);
             }
             return Ok(());
         }
@@ -153,8 +153,8 @@ impl CtrlFanAndCPU {
         mode_config.fan_preset = preset;
         config.write();
         fan_ctrl
-            .write_all(format!("{:?}\n", preset).as_bytes())
-            .unwrap_or_else(|err| error!("Could not write to {}, {:?}", self.path, err));
+            .write_all(format!("{}\n", preset).as_bytes())
+            .unwrap_or_else(|err| error!("Could not write to {}, {}", self.path, err));
         info!("Fan mode set to: {:?}", FanLevel::from(preset));
         self.set_pstate_for_fan_mode(&mode, config)?;
         self.set_fan_curve_for_fan_mode(&mode, config)?;
@@ -180,7 +180,7 @@ impl CtrlFanAndCPU {
                     config
                         .power_profiles
                         .entry(profile_key.clone())
-                        .or_insert_with(|| Profile::default())
+                        .or_insert_with(Profile::default)
                 } else {
                     config
                         .power_profiles
@@ -188,11 +188,8 @@ impl CtrlFanAndCPU {
                         .ok_or_else(|| RogError::MissingProfile(profile_key.clone()))?
                 };
 
-                if command.turbo {
-                    profile.no_turbo = false;
-                }
-                if command.no_turbo {
-                    profile.no_turbo = true;
+                if command.turbo.is_some() {
+                    profile.turbo = command.turbo.unwrap();
                 }
                 if let Some(min_perc) = command.min_percentage {
                     profile.min_percentage = min_perc;
@@ -220,8 +217,8 @@ impl CtrlFanAndCPU {
             .ok_or_else(|| RogError::MissingProfile(profile.into()))?;
         let mut fan_ctrl = OpenOptions::new().write(true).open(self.path)?;
         fan_ctrl
-            .write_all(format!("{:?}\n", mode_config.fan_preset).as_bytes())
-            .unwrap_or_else(|err| error!("Could not write to {}, {:?}", self.path, err));
+            .write_all(format!("{}\n", mode_config.fan_preset).as_bytes())
+            .unwrap_or_else(|err| error!("Could not write to {}, {}", self.path, err));
         config.power_profile = mode_config.fan_preset;
 
         self.set_pstate_for_fan_mode(profile, config)?;
@@ -249,10 +246,10 @@ impl CtrlFanAndCPU {
         if let Ok(pstate) = intel_pstate::PState::new() {
             pstate.set_min_perf_pct(mode_config.min_percentage)?;
             pstate.set_max_perf_pct(mode_config.max_percentage)?;
-            pstate.set_no_turbo(mode_config.no_turbo)?;
+            pstate.set_no_turbo(!mode_config.turbo)?;
             info!(
-                "Intel CPU Power: min: {:?}%, max: {:?}%, turbo: {:?}",
-                mode_config.min_percentage, mode_config.max_percentage, !mode_config.no_turbo
+                "Intel CPU Power: min: {}%, max: {}%, turbo: {}",
+                mode_config.min_percentage, mode_config.max_percentage, mode_config.turbo
             );
         } else {
             info!("Setting pstate for AMD CPU");
@@ -261,14 +258,14 @@ impl CtrlFanAndCPU {
                 .write(true)
                 .open(AMD_BOOST_PATH)
                 .map_err(|err| {
-                    warn!("Failed to open AMD boost: {:?}", err);
+                    warn!("Failed to open AMD boost: {}", err);
                     err
                 })?;
 
-            let boost = if mode_config.no_turbo { "0" } else { "1" }; // opposite of Intel
+            let boost = if mode_config.turbo { "0" } else { "1" }; // opposite of Intel
             file.write_all(boost.as_bytes())
-                .unwrap_or_else(|err| error!("Could not write to {}, {:?}", AMD_BOOST_PATH, err));
-            info!("AMD CPU Turbo: {:?}", boost);
+                .unwrap_or_else(|err| error!("Could not write to {}, {}", AMD_BOOST_PATH, err));
+            info!("AMD CPU Turbo: {}", boost);
         }
         Ok(())
     }

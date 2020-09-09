@@ -52,14 +52,11 @@ pub async fn start_daemon() -> Result<(), Box<dyn Error>> {
     };
 
     let mut led_control = if let Some(laptop) = laptop {
-        CtrlKbdBacklight::new(laptop.usb_product(), laptop.supported_modes().to_owned())
-            .map_or_else(
-                |err| {
-                    error!("{}", err);
-                    None
-                },
-                Some,
-            )
+        Some(CtrlKbdBacklight::new(
+            laptop.usb_product(),
+            laptop.condev_iface(),
+            laptop.supported_modes().to_owned(),
+        ))
     } else {
         None
     };
