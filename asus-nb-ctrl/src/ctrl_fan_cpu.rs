@@ -262,7 +262,7 @@ impl CtrlFanAndCPU {
                     err
                 })?;
 
-            let boost = if mode_config.turbo { "0" } else { "1" }; // opposite of Intel
+            let boost = if mode_config.turbo { "1" } else { "0" }; // opposite of Intel
             file.write_all(boost.as_bytes())
                 .unwrap_or_else(|err| error!("Could not write to {}, {}", AMD_BOOST_PATH, err));
             info!("AMD CPU Turbo: {}", boost);
