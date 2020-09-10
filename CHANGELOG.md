@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+# [1.1.2] - 2020-09-10
+### Changed
+- Bump rog-fan-curve to new versiont o support GA401IV
+
 # [1.1.1] - 2020-09-10
 ### Changed
 - Correction to AMD turbo setting

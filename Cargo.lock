@@ -31,7 +31,7 @@ dependencies = [
 
 [[package]]
 name = "asus-nb-ctrl"
-version = "1.1.1"
+version = "1.1.2"
 dependencies = [
  "asus-nb",
  "async-trait",
@@ -367,9 +367,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.76"
+version = "0.2.77"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "755456fae044e6fa1ebbbd1b3e902ae19e73097ed4ed87bb79934a867c007bc3"
+checksum = "f2f96b10ec2560088a8e76961b00d47107b3a625fecb76dedb29ee7ccbf98235"
 
 [[package]]
 name = "libdbus-sys"
@@ -635,9 +635,9 @@ checksum = "cabe4fa914dec5870285fa7f71f602645da47c486e68486d2b4ceb4a343e90ac"
 
 [[package]]
 name = "rog_fan_curve"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38efab84f3f5a9f4ff26eb916b32810a263eb2d340d62acb8d64d8a37795c5b9"
+checksum = "b9d3867a0df47bf57c6eebe8b2fb3c2e5c09586a23c715cd7963c2f090c9983f"
 dependencies = [
  "serde",
 ]
