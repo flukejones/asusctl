@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+# [2.0.0] - 2020-09-21
+### Changed
+- Code refactor to spawn less tasks. Main loop will run only as fast as
+  it receives events
+- No-longer using tokio or async, reducing resource use
+### Added
+- A basic user daemon has been added for user notifications over dbus (XDG spec)
+- Added a user systemd service for notifications (asus-notify)
+- Graphics mode handling <iGPU only, dGPU only, or hybrid>, see asusctl --help
+### BREAKING CHANGES
+- asusd.conf has changed slightly and will overwrite old configs
+- All DBUS methods/signals/paths etc, are all updated and changed
+
 # [1.1.2] - 2020-09-10
 ### Changed
 - Bump rog-fan-curve to new versiont o support GA401IV

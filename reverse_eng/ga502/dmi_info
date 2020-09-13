@@ -1,7 +1,0 @@
-cat /sys/class/dmi/id/product_name
-ROG Zephyrus G15 GA502IU_GA502IU
-cat /sys/class/dmi/id/product_family
-ROG Zephyrus G15
-cat /sys/class/dmi/id/board_name
-GA502IU
-

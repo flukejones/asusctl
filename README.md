@@ -2,9 +2,9 @@
 
 **NOTICE:**
 
-This program requires the kernel patch in `./kernel-patch/` to be applied.
-As of 04/08/2020 these have been submitted to lkml. Alternatively you may
-use the dkms module for 'hid-asus-rog` from one of the repositories [here](https://download.opensuse.org/repositories/home:/luke_nukem:/asus/).
+This program requires the kernel patch [here](https://www.spinics.net/lists/linux-input/msg68977.html) to be applied.
+Alternatively you may use the dkms module for 'hid-asus-rog` from one of the
+repositories [here](https://download.opensuse.org/repositories/home:/luke_nukem:/asus/).
 
 The patch enables the following in kernel:
 
@@ -29,56 +29,47 @@ asusd is a utility for Linux to control many aspects of various ASUS laptops.
 
 ## SUPPORTED LAPTOPS
 
-If your laptop is not in the following lists, it may still work with fan-mode switching and charge limit control.
+Most ASUS gaming laptops that have a USB keyboard. If `lsusb` shows something similar
+to this:
 
-**Please help test or provide info for:**
+```
+Bus 001 Device 002: ID 0b05:1866 ASUSTek Computer, Inc. N-KEY Device
+```
 
-- GL703(0x1869)
-- GL553/GL753 (device = 0x1854) (attempted support from researching 2nd-hand info, multizone may work)
+then it may work without tweaks. Technically all other functions except the LED
+and AniMe parts should work regardless of your latop make. Eventually this project
+will probably suffer another rename once it becomes generic enough to do so.
 
-**Laptop support is modified on a per-case basis** as the EC for the keyboard varies
-a little between models, e.g, some RGB modes are missing, or it's a single colour.
-As far as I can see, the EC does not give us a way to find what modes are supported.
+## Implemented
 
-### ANIME AND OTHER FUNCTIONS
+- [X] System daemon
+- [X] User notifications daemon
+- [X] Setting/modifying built-in LED modes
+- [X] Per-key LED setting
+- [X] Fancy LED modes (See examples)
+- [X] Saving settings for reload
+- [X] Logging - required for journalctl
+- [X] AniMatrix display on G14 models that include it
+- [X] Set battery charge limit (with kernel supporting this)
+- [X] Fancy fan control on G14 + G15 thanks to @Yarn1
+- [X] Graphics mode switching between iGPU, dGPU, and On-Demand
 
-**AniMe device check is performed on start, if your device has one it will be detected.**
+## FUNCTIONS
 
-**NOTE:** If charge limit or fan modes are not working, then you may require a kernel newer than 5.6.10.
+### Graphics switching
 
-- [X] AniMe Matrix display
-- [X] Power profile switching on fan-mode (FN+F5)
-  - [X] Intel
-    - [X] Turbo enale/disable
-    - [X] Min frequency percentage
-    - [X] Max frequency percentage
-  - [X] AMD
-    - [X] Turbo enale/disable
-- [X] Battery charge limit
+A new feature has been added to enable switching graphics modes. This can be disabled
+in the config with `"manage_gfx": false,`. Please be aware it is a work in progress.
 
-**NOTE:** GA14/GA401 and GA15/GA502/GU502, You will need kernel [patches](https://lab.retarded.farm/zappel/asus-rog-zephyrus-g14/-/tree/master/kernel_patches).
+The CLI option for this does not require root until it asks for it, and provides
+instructions.
 
 ### KEYBOARD BACKLIGHT MODES
 
 Models GA401, GA502, GU502 support LED brightness change only (no RGB).
 
-| MODEL  | STATIC | BREATHING | STROBE | RAINBOW | STAR | RAIN | HIGHLIGHT | LASER | RIPPLE | PULSE | COMET | FLASH | ZONES | PER-KEY RGB |
-|:------:|:------:|:---------:|:------:|:-------:|:----:|:----:|:---------:|:-----:|:------:|:-----:|:-----:|:-----:|:-----:|:-----------:|
-| G512LI |   X    |     X     |    X   |    X    |      |      |           |       |        |       |       |       |       |             |
-| G712LI |   X    |     X     |    X   |    X    |      |      |           |       |        |       |       |       |       |             |
-| GM501  |   X    |     X     |    X   |    X    |      |      |           |       |        |       |       |       |   X   |             |
-| GX531  |   X    |     X     |    X   |    X    |      |      |           |       |        |       |       |       |   X   |             |
-| G512   |   X    |     X     |    X   |    X    |      |      |           |       |        |       |       |       |   X   |             |
-| G712   |   X    |     X     |    X   |    X    |      |      |           |       |        |       |       |       |   X   |             |
-| GX502  |   X    |     X     |    X   |    X    |  X   |  X   |     X     |   X   |    X   |   X   |   X   |   X   |       |     X       |
-| GX701  |   X    |     X     |    X   |    X    |  X   |  X   |     X     |   X   |    X   |   X   |   X   |   X   |       |     X       |
-| G531   |   X    |     X     |    X   |    X    |  X   |  X   |     X     |   X   |    X   |   X   |   X   |   X   |   X   |     X       |
-| G731   |   X    |     X     |    X   |    X    |  X   |  X   |     X     |   X   |    X   |   X   |   X   |   X   |   X   |     X       |
-| G532   |   X    |     X     |    X   |    X    |  X   |  X   |     X     |   X   |    X   |   X   |   X   |   X   |       |     X       |
-
-It is highly likely this doesn't cover all models.
-
-For editing the `/etc/asusd/asusd-ledmodes.toml`, the LED Mode numbers are as follows:
+If you model isn't getting the correct led modes, you can edit the file
+`/etc/asusd/asusd-ledmodes.toml`, the LED Mode numbers are as follows:
 
 ```
 0   STATIC
@@ -97,16 +88,7 @@ For editing the `/etc/asusd/asusd-ledmodes.toml`, the LED Mode numbers are as fo
 255 PER_KEY
 ```
 
-## Implemented
-
-- [X] Daemon
-- [X] Setting/modifying built-in LED modes
-- [X] Per-key LED setting
-- [X] Fancy LED modes (See examples)
-- [X] Saving settings for reload
-- [X] Logging - required for journalctl
-- [X] AniMatrix display on G14 models that include it
-- [X] Set battery charge limit (with kernel supporting this)
+use `cat /sys/class/dmi/id/product_name` to get details about your laptop.
 
 ## Requirements for compiling
 
@@ -136,32 +118,31 @@ If you are upgrading from a previous installed version, you will need to restart
 $ systemctl daemon-reload && systemctl restart asusd
 ```
 
-You may also need to activate the service for debian install. If running Pop!_OS, I suggest disabling `system76-power`
-gnome-shell extension, or at least limiting use of the power-management parts as `asusd` lets you set the same things
-(one or the other will overwrite pstates). I will create a shell extension at some point similar to system76, but using
-the asusd parts. It is safe to leave `system76-power.service` enabled and use for switching between graphics modes.
+You may also need to activate the service for debian install. If running Pop!_OS, I suggest disabling `system76-power` gnome-shell extension and systemd service.
 
 ## Uninstalling
 
-Run `sudo make uninstall` in the source repo, and remove `/etc/asusd.conf`.
+Run `sudo make uninstall` in the source repo, and remove `/etc/asusd/`.
 
 ## Updating
 
-Occasionally you need to remove `/etc/asusd.conf` and restart the daemon to create a new one. You *can* back up the old
-one and copy settings back over (then restart daemon again).
+If there has been a config file format change your config will be overwritten. This will
+become less of an issue once the feature set is nailed down. Work is happening to enable
+parsing of older configs and transferring settings to new.
 
 # Usage
 
-**NOTE! Fan mode toggling requires a newer kernel**. I'm unsure when the patches required for it got merged - I've
-tested with the 5.6.6 kernel and above only. To see if the fan-mode changed cat either:
+**NOTE! Fan mode toggling requires a newer kernel**. I'm unsure when the patches
+required for it got merged - I've tested with the 5.6.6 kernel and above only.
+To see if the fan-mode changed cat either:
 
 - `cat /sys/devices/platform/asus-nb-wmi/throttle_thermal_policy` or
 - `cat /sys/devices/platform/asus-nb-wmi/fan_boost_mode`
 
 The numbers are 0 = Normal/Balanced, 1 = Boost, 2 = Silent.
 
-Running the program as a daemon manually will require root. Standard (non-daemon) mode expects to be communicating with
-the daemon mode over dbus.
+Running the program as a daemon manually will require root. Standard (non-daemon)
+mode expects to be communicating with the daemon mode over dbus.
 
 Commands are given by:
 
@@ -182,79 +163,6 @@ Some commands may have subcommands:
 asusctl <command> <subcommand> --help
 ```
 
-### Example
-
-```
-$ asusctl --help
-Usage: asusctl [OPTIONS]
-
-Optional arguments:
-  -h, --help             print help message
-  -v, --version          show program version number
-  -k, --kbd-bright VAL   <off, low, med, high>
-  -p, --pwr-profile PWR  <silent, normal, boost>
-  -c, --chg-limit CHRG   <20-100>
-
-Available commands:
-  led-mode  Set the keyboard lighting from built-in modes
-  profile   Create and configure profiles
-
-$ asusctl profile --help
-Usage: asusctl profile [OPTIONS]
-
-Positional arguments:
-  profile
-
-Optional arguments:
-  -h, --help         print help message
-  -c, --create       create the profile if it doesn't exist
-  -t, --turbo        enable cpu turbo (AMD)
-  -n, --no-turbo     disable cpu turbo (AMD)
-  -m, --min-percentage MIN-PERCENTAGE
-                     set min cpu scaling (intel)
-  -M, --max-percentage MAX-PERCENTAGE
-                     set max cpu scaling (intel)
-  -p, --preset PWR   <silent, normal, boost>
-  -C, --curve CURVE  set fan curve
-
-$ asusctl led-mode --help
-Usage: asusctl led-mode [OPTIONS]
-
-Optional arguments:
-  -h, --help  print help message
-
-Available commands:
-  static        set a single static colour
-  breathe       pulse between one or two colours
-  strobe        strobe through all colours
-  rainbow       rainbow cycling in one of four directions
-  star          rain pattern mimicking raindrops
-  rain          rain pattern of three preset colours
-  highlight     pressed keys are highlighted to fade
-  laser         pressed keys generate horizontal laser
-  ripple        pressed keys ripple outwards like a splash
-  pulse         set a rapid pulse
-  comet         set a vertical line zooming from left
-  flash         set a wide vertical line zooming from left
-  multi-static  4-zone multi-colour
-
-$ asusctl led-mode static --help
-Usage: asusctl led-mode static [OPTIONS]
-
-Optional arguments:
-  -h, --help  print help message
-  -c HEX      set the RGB value e.g, ff00ff
-
-$ asusctl led-mode star --help
-Usage: asusctl led-mode star [OPTIONS]
-
-Optional arguments:
-  -h, --help  print help message
-  -c HEX      set the first RGB value e.g, ff00ff
-  -C HEX      set the second RGB value e.g, ff00ff
-  -s SPEED    set the speed: low, med, high
-```
-
 ## Daemon mode
 
 If the daemon service is enabled then on boot the following will be reloaded from save:
@@ -268,27 +176,40 @@ The daemon also saves the settings per mode as the keyboard does not do this
 itself - this means cycling through modes with the Aura keys will use the
 settings that were used via CLI.
 
-Daemon mode creates a config file at `/etc/asusd.conf` which you can edit a 
+Daemon mode creates a config file at `/etc/asusd/asusd.conf` which you can edit a 
 little of. Most parts will be byte arrays, but you can adjust things like
 `mode_performance`.
 
-### DBUS Input
+## User daemon for notification via dbus
+
+If you have a notifications handler set up, or are using KDE or Gnome then you
+can enable the user service to get basic notifications when something changes.
+
+```
+systemctl --user enable asus-notify.service
+systemctl --user start asus-notify.service
+```
+# Other
+
+## DBUS Input
 
 See [README_DBUS.md](./README_DBUS.md).
 
-### AniMe input
+## AniMe input
 
 You will want to look at what MeuMeu has done with [https://github.com/Meumeu/ZephyrusBling/](https://github.com/Meumeu/ZephyrusBling/)
 
-### Wireshark captures
-
-TODO: see `./wireshark_data/` for some captures.
-
-### Supporting more laptops
+## Supporting more laptops
 
 Please file a support request.
 
-## License
+## Notes:
+
+- If charge limit or fan modes are not working, then you may require a kernel newer than 5.6.10.
+- AniMe device check is performed on start, if your device has one it will be detected.
+- GA14/GA401 and GA15/GA502/GU502, You will need kernel [patches](https://lab.retarded.farm/zappel/asus-rog-zephyrus-g14/-/tree/master/kernel_patches), these are on their way to the kernel upstream.
+
+# License
 
 Mozilla Public License 2 (MPL-2.0)
 

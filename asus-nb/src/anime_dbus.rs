@@ -1,5 +1,5 @@
 use crate::anime_matrix::AniMePacketType;
-use crate::{DBUS_IFACE, DBUS_NAME, DBUS_PATH};
+use crate::{DBUS_IFACE, DBUS_NAME};
 use dbus::channel::Sender;
 use dbus::{blocking::Connection, Message};
 use std::error::Error;
@@ -65,8 +65,9 @@ impl AniMeDbusWriter {
             image[1][..7].copy_from_slice(&ANIME_PANE2_PREFIX);
         }
 
-        let mut msg = Message::new_method_call(DBUS_NAME, DBUS_PATH, DBUS_IFACE, "AnimatrixWrite")?
-            .append2(image[0].to_vec(), image[1].to_vec());
+        let mut msg =
+            Message::new_method_call(DBUS_NAME, "/org/asuslinux/Anime", DBUS_IFACE, "SetAnime")?
+                .append2(image[0].to_vec(), image[1].to_vec());
         msg.set_no_reply(true);
         self.connection.send(msg).unwrap();
         thread::sleep(Duration::from_millis(self.block_time));

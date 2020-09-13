@@ -9,16 +9,13 @@ const INIT: u8 = 0xc2;
 const APPLY: u8 = 0xc3;
 const SET: u8 = 0xc4;
 
-use crate::config::Config;
 use asus_nb::error::AuraError;
 use log::{error, info, warn};
 use rusb::{Device, DeviceHandle};
+use std::convert::TryInto;
 use std::error::Error;
-use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::mpsc::Receiver;
-use tokio::sync::Mutex;
-use tokio::task::JoinHandle;
+use zbus::dbus_interface;
 
 #[allow(dead_code)]
 #[derive(Debug)]
@@ -34,32 +31,24 @@ pub struct CtrlAnimeDisplay {
     initialised: bool,
 }
 
-use ::dbus::{nonblock::SyncConnection, tree::Signal};
-use async_trait::async_trait;
+//AnimatrixWrite
+pub trait Dbus {
+    fn set_anime(&mut self, input: Vec<Vec<u8>>);
+}
 
-#[async_trait]
-impl crate::Controller for CtrlAnimeDisplay {
-    type A = Vec<Vec<u8>>;
-
-    /// Spawns two tasks which continuously check for changes
-    fn spawn_task_loop(
-        mut self,
-        _: Arc<Mutex<Config>>,
-        mut recv: Receiver<Self::A>,
-        _: Option<Arc<SyncConnection>>,
-        _: Option<Arc<Signal<()>>>,
-    ) -> Vec<JoinHandle<()>> {
-        vec![tokio::spawn(async move {
-            while let Some(image) = recv.recv().await {
-                self.do_command(AnimatrixCommand::WriteImage(image))
-                    .await
-                    .unwrap_or_else(|err| warn!("{}", err));
-            }
-        })]
+impl crate::ZbusAdd for CtrlAnimeDisplay {
+    fn add_to_server(self, server: &mut zbus::ObjectServer) {
+        server
+            .at(&"/org/asuslinux/Anime".try_into().unwrap(), self)
+            .unwrap();
     }
+}
 
-    async fn reload_from_config(&mut self, _: &mut Config) -> Result<(), Box<dyn Error>> {
-        Ok(())
+#[dbus_interface(name = "org.asuslinux.Daemon")]
+impl Dbus for CtrlAnimeDisplay {
+    fn set_anime(&mut self, input: Vec<Vec<u8>>) {
+        self.do_command(AnimatrixCommand::WriteImage(input))
+            .unwrap_or_else(|err| warn!("{}", err));
     }
 }
 
@@ -100,15 +89,15 @@ impl CtrlAnimeDisplay {
         Err(rusb::Error::NoDevice)
     }
 
-    pub async fn do_command(&mut self, command: AnimatrixCommand) -> Result<(), AuraError> {
+    pub fn do_command(&mut self, command: AnimatrixCommand) -> Result<(), AuraError> {
         if !self.initialised {
-            self.do_initialization().await?
+            self.do_initialization()?
         }
 
         match command {
-            AnimatrixCommand::WriteImage(effect) => self.write_image(effect).await?,
-            AnimatrixCommand::Set => self.do_set().await?,
-            AnimatrixCommand::Apply => self.do_apply().await?,
+            AnimatrixCommand::WriteImage(effect) => self.write_image(effect)?,
+            AnimatrixCommand::Set => self.do_set()?,
+            AnimatrixCommand::Apply => self.do_apply()?,
             //AnimatrixCommand::ReloadLast => self.reload_last_builtin(&config).await?,
         }
         Ok(())
@@ -116,7 +105,7 @@ impl CtrlAnimeDisplay {
 
     /// Should only be used if the bytes you are writing are verified correct
     #[inline]
-    async fn write_bytes(&self, message: &[u8]) -> Result<(), AuraError> {
+    fn write_bytes(&self, message: &[u8]) -> Result<(), AuraError> {
         match self.handle.write_control(
             0x21,  // request_type
             0x09,  // request
@@ -150,22 +139,22 @@ impl CtrlAnimeDisplay {
     ///
     /// Where led brightness is 0..255, low to high
     #[inline]
-    async fn write_image(&mut self, image: Vec<Vec<u8>>) -> Result<(), AuraError> {
+    fn write_image(&mut self, image: Vec<Vec<u8>>) -> Result<(), AuraError> {
         for row in image.iter() {
-            self.write_bytes(row).await?;
+            self.write_bytes(row)?;
         }
-        self.do_flush().await?;
+        self.do_flush()?;
         Ok(())
     }
 
     #[inline]
-    async fn do_initialization(&mut self) -> Result<(), AuraError> {
+    fn do_initialization(&mut self) -> Result<(), AuraError> {
         let mut init = [0; PACKET_SIZE];
         init[0] = DEV_PAGE; // This is the USB page we're using throughout
         for (idx, byte) in INIT_STR.as_bytes().iter().enumerate() {
             init[idx + 1] = *byte
         }
-        self.write_bytes(&init).await?;
+        self.write_bytes(&init)?;
 
         // clear the init array and write other init message
         for ch in init.iter_mut() {
@@ -174,43 +163,43 @@ impl CtrlAnimeDisplay {
         init[0] = DEV_PAGE; // write it to be sure?
         init[1] = INIT;
 
-        self.write_bytes(&init).await?;
+        self.write_bytes(&init)?;
         self.initialised = true;
         Ok(())
     }
 
     #[inline]
-    async fn do_flush(&mut self) -> Result<(), AuraError> {
+    fn do_flush(&mut self) -> Result<(), AuraError> {
         let mut flush = [0; PACKET_SIZE];
         flush[0] = DEV_PAGE;
         flush[1] = WRITE;
         flush[2] = 0x03;
 
-        self.write_bytes(&flush).await?;
+        self.write_bytes(&flush)?;
         Ok(())
     }
 
     #[inline]
-    async fn do_set(&mut self) -> Result<(), AuraError> {
+    fn do_set(&mut self) -> Result<(), AuraError> {
         let mut flush = [0; PACKET_SIZE];
         flush[0] = DEV_PAGE;
         flush[1] = SET;
         flush[2] = 0x01;
         flush[3] = 0x80;
 
-        self.write_bytes(&flush).await?;
+        self.write_bytes(&flush)?;
         Ok(())
     }
 
     #[inline]
-    async fn do_apply(&mut self) -> Result<(), AuraError> {
+    fn do_apply(&mut self) -> Result<(), AuraError> {
         let mut flush = [0; PACKET_SIZE];
         flush[0] = DEV_PAGE;
         flush[1] = APPLY;
         flush[2] = 0x01;
         flush[3] = 0x80;
 
-        self.write_bytes(&flush).await?;
+        self.write_bytes(&flush)?;
         Ok(())
     }
 }

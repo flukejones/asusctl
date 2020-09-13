@@ -10,36 +10,31 @@ pub mod ctrl_fan_cpu;
 ///
 pub mod ctrl_leds;
 ///
-pub mod dbus;
 /// Laptop matching to determine capabilities
 pub mod laptops;
 
 mod error;
 
-use async_trait::async_trait;
 use config::Config;
-use std::error::Error;
-use std::sync::Arc;
-use tokio::sync::{mpsc::Receiver, Mutex};
-use tokio::task::JoinHandle;
+use crate::error::RogError;
+use zbus::ObjectServer;
 
-pub static VERSION: &str = "1.1.2";
+pub static VERSION: &str = "2.0.0";
 
-use ::dbus::{nonblock::SyncConnection, tree::Signal};
+pub trait Reloadable {
+    fn reload(&mut self) -> Result<(), RogError>;
+}
 
-#[async_trait]
-pub trait Controller {
+pub trait ZbusAdd {
+    fn add_to_server(self, server: &mut ObjectServer);
+}
+
+pub trait CtrlTask {
+    fn do_task(&mut self) -> Result<(), RogError>;
+}
+
+pub trait CtrlTaskComplex {
     type A;
 
-    async fn reload_from_config(&mut self, config: &mut Config) -> Result<(), Box<dyn Error>>;
-
-    /// Spawn an infinitely running task (usually) which checks a Receiver for input,
-    /// and may send a signal over dbus
-    fn spawn_task_loop(
-        self,
-        config: Arc<Mutex<Config>>,
-        recv: Receiver<Self::A>,
-        connection: Option<Arc<SyncConnection>>,
-        signal: Option<Arc<Signal<()>>>,
-    ) -> Vec<JoinHandle<()>>;
+    fn do_task(&mut self, config: &mut Config, event: Self::A);
 }

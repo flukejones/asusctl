@@ -23,6 +23,11 @@ pub mod anime_dbus;
 /// Helper functions for the AniMe display
 pub mod anime_matrix;
 
+pub mod dbus_gfx;
+pub mod dbus_ledmode;
+pub mod dbus_profile;
+pub mod dbus_charge;
+
 pub mod error;
 
 // static LED_INIT1: [u8; 2] = [0x5d, 0xb9];

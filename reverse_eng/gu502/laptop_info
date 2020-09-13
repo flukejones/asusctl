@@ -1,6 +1,0 @@
-distro= Arch Linux
-uname -r= 5.7.7-arch1-1
-product_name= Zephyrus G GU502DU_GA502DU
-product_family= Zephyrus G
-board_name= GU502DU
-lsusb= Bus 003 Device 002: ID 0b05:1866 ASUSTek Computer, Inc. N-KEY Device

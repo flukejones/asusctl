@@ -1,31 +1,33 @@
 # DBUS Guide
 
-```rust
-pub static DBUS_NAME: &str = "org.asuslinux.Daemon";
-pub static DBUS_PATH: &str = "/org/asuslinux/Daemon";
-pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";
-```
+**WARNING: In progress updates**
 
-## Methods
+Interface name = org.asuslinux.Daemon
 
-- `SetKeyBacklight`
-- `GetKeyBacklight`
-- `AnimatrixWrite`
-- `SetFanMode`
-- `GetFanMode`
-- `SetChargeLimit`
-- `GetChargeLimit`
-- `GetKeyBacklightModes`
+Paths:
+- `/org/asuslinux/Gfx`
+  + `SetVendor` (string)
+  + `NotifyVendor` (recv vendor label string)
+- `/org/asuslinux/Led`
+  + `LedMode` (AuraMode as json)
+  + `LedModes` (array[AuraMode] as json)
+  + `SetLedMode` (AuraMode -> json)
+  + `NotifyLed` (recv json data)
+- `/org/asuslinux/Anime`
+  + `SetAnime` (byte array data)
+- `/org/asuslinux/Charge`
+  + `Limit` (u8)
+  + `SetLimit` (u8)
+  + `NotifyCharge` (recv i8)
+- `/org/asuslinux/Profile`
+  + `Profile` (recv current profile data as json string)
+  + `Profiles` (recv profiles data as json string (map))
+  + `SetProfile` (event -> json)
+  + `NotifyProfile` (recv current profile name)
 
-## Signals
+All `Notify*` methods are signals.
 
-- `KeyBacklightChanged`
-- `FanModeChanged`
-- `ChargeLimitChanged`
-
-## Method Inputs
-
-### SetKeyBacklight
+### SetLed
 
 This method expects a string of JSON as input. The JSON is of format such:
 
@@ -66,23 +68,6 @@ dbus.
 
 Lastly, there is `"LedBrightness": <u8>` which accepts 0-3 for off, low, med, high.
 
-### GetKeyBacklight
-
-This method will return a JSON string in the same format as accepted by `SetKeyBacklight`.
-
-### GetKeyBacklightModes
-
-Will return a JSON string array of modes that this laptop accepts. The mode data
-within this will be the current settings per mode. Good for:
-
-- Getting supported modes
-- Getting all mode settings
-
-### AnimatrixWrite
-
-Used to write data to the AniMe display if available. Currently is takes `[[u8; 640]; 2]`
-which must be the byte data that will be written directly to the USB device.
-
 ### SetFanMode
 
 Accepts an integer from the following:
@@ -91,41 +76,7 @@ Accepts an integer from the following:
 - `1`: Boost mode
 - `2`: Silent mode
 
-### GetFanMode
-
-Returns the integer set from above.
-
-### SetChargeLimit
-
-Accepts an integer in the range of 20-100.
-
-### GetChargeLimit
-
-Returns the integer set from above.
-
-## Signal Outs
-
-### KeyBacklightChanged
-
-When emitted, it will emit the JSON data of the mode changed to, e.g:
-
-```
-{
-  "Static": {
-    "colour": [ 255, 0, 0]
-  }
-}
-```
-
-### FanModeChanged
-
-When emitted, it will include the integer the fan mode was changed to.
-
-### ChargeLimitChanged
-
-When emitted, it will include the integer the charging limit was changed to.
-
-## dbus-send examples
+## dbus-send examples OUTDATED
 
 ```
 dbus-send --system --type=method_call --dest=org.asuslinux.Daemon /org/asuslinux/Daemon org.asuslinux.Daemon.SetKeyBacklight string:'{"Static": {"colour": [ 80, 0, 40]}}'
@@ -154,5 +105,5 @@ Monitoring dbus while sending commands via `rog-core` will give you the json str
 ## Getting an introspection .xml
 
 ```
-dbus-send --system --print-reply --dest=org.asuslinux.Daemon /org/asuslinux/Daemon org.freedesktop.DBus.Introspectable.Introspect > xml/dbus-0.14.4.xml
+dbus-send --system --print-reply --dest=org.asuslinux.Daemon /org/asuslinux/Charge org.freedesktop.DBus.Introspectable.Introspect > xml/asusd-charge.xml
 ```

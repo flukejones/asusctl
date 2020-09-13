@@ -10,6 +10,7 @@ pub static CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct Config {
+    pub gfx_managed: bool,
     pub active_profile: String,
     pub toggle_profiles: Vec<String>,
     // TODO: remove power_profile
@@ -50,34 +51,38 @@ impl Config {
 
     fn create_default(file: &mut File, supported_led_modes: &[u8]) -> Self {
         // create a default config here
-        let mut c = Config::default();
-        c.bat_charge_limit = 100;
-        c.kbd_backlight_mode = 0;
-        c.kbd_led_brightness = 1;
+        let mut config = Config::default();
+        config.gfx_managed = true;
+
+        config.bat_charge_limit = 100;
+        config.kbd_backlight_mode = 0;
+        config.kbd_led_brightness = 1;
 
         for n in supported_led_modes {
-            c.kbd_backlight_modes.push(AuraModes::from(*n))
+            config.kbd_backlight_modes.push(AuraModes::from(*n))
         }
 
         let profile = Profile::default();
-        c.power_profiles.insert("normal".into(), profile);
+        config.power_profiles.insert("normal".into(), profile);
+
         let mut profile = Profile::default();
         profile.fan_preset = 1;
-        c.power_profiles.insert("boost".into(), profile);
+        config.power_profiles.insert("boost".into(), profile);
+
         let mut profile = Profile::default();
         profile.fan_preset = 2;
-        c.power_profiles.insert("silent".into(), profile);
+        config.power_profiles.insert("silent".into(), profile);
 
-        c.toggle_profiles.push("normal".into());
-        c.toggle_profiles.push("boost".into());
-        c.toggle_profiles.push("silent".into());
-        c.active_profile = "normal".into();
+        config.toggle_profiles.push("normal".into());
+        config.toggle_profiles.push("boost".into());
+        config.toggle_profiles.push("silent".into());
+        config.active_profile = "normal".into();
 
         // Should be okay to unwrap this as is since it is a Default
-        let json = serde_json::to_string_pretty(&c).unwrap();
+        let json = serde_json::to_string_pretty(&config).unwrap();
         file.write_all(json.as_bytes())
             .unwrap_or_else(|_| panic!("Could not write {}", CONFIG_PATH));
-        c
+        config
     }
 
     pub fn read(&mut self) {
@@ -95,6 +100,17 @@ impl Config {
                 *self = x;
             }
         }
+    }
+
+    pub fn read_new() -> Result<Config, Box<dyn std::error::Error>> {
+        let mut file = OpenOptions::new()
+            .read(true)
+            .open(&CONFIG_PATH)
+            .unwrap_or_else(|err| panic!("Error reading {}: {}", CONFIG_PATH, err));
+        let mut buf = String::new();
+        file.read_to_string(&mut buf)?;
+        let x: Config = serde_json::from_str(&buf)?;
+        Ok(x)
     }
 
     pub fn write(&self) {
