@@ -1,0 +1,14 @@
+[Unit]
+Description=ASUS Notifications
+StartLimitInterval=200
+StartLimitBurst=2
+
+[Service]
+ExecStart=/usr/bin/asus-notify
+Restart=on-failure
+Restart=always
+RestartSec=1
+Type=simple
+
+[Install]
+WantedBy=default.target

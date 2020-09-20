@@ -1,6 +1,6 @@
 [package]
 name = "asus-nb-ctrl"
-version = "1.1.2"
+version = "2.0.0"
 license = "MPL-2.0"
 readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]
@@ -22,10 +22,10 @@ name = "asusd"
 path = "src/daemon.rs"
 
 [dependencies]
+ctrl-gfx = { path = "../ctrl-gfx" } 
 asus-nb = { path = "../asus-nb" }
 rusb = "^0.6.0"
 udev = "^0.4.0"
-async-trait = "0.1.36"
 
 # cli and logging
 gumdrop = "^0.8.0"
@@ -33,9 +33,9 @@ log = "^0.4.8"
 env_logger = "^0.7.1"
 
 # async
-dbus = { version = "^0.8.2", features = ["futures"] }
-dbus-tokio = "^0.5.1"
-tokio = { version = "^0.2.4", features = ["rt-threaded", "sync"] }
+zbus = "1.1.1"
+zvariant = "2.2.0"
+#tokio = { version = "^0.2.4", features = ["rt-threaded", "sync"] }
 
 # serialisation
 serde = "^1.0"
@@ -48,3 +48,5 @@ sysfs-class = "^0.1.2" # used for backlight control and baord ID
 rog_fan_curve = { version = "0.1.5", features = ["serde"] }
 # cpu power management
 intel-pstate = "^0.2.1"
+
+yansi-term = "^0.1"

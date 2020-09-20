@@ -7,6 +7,7 @@ use std::str::FromStr;
 pub enum ProfileEvent {
     Cli(ProfileCommand),
     ChangeMode(u8),
+    Toggle,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

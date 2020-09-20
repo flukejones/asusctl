@@ -1,4 +1,0 @@
-cat /sys/class/dmi/id/product_name:ROG Strix G512LU_G512LU
-cat /sys/class/dmi/id/product_family: ROG Strix
-cat /sys/class/dmi/id/board_name:G512LU
-

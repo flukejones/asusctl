@@ -93,6 +93,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         writer.write_colour_block(&colours)?;
 
         // can change 100 times per second, so need to slow it down
-        //std::thread::sleep(std::time::Duration::from_millis(30));
+        std::thread::sleep(std::time::Duration::from_millis(30));
     }
 }

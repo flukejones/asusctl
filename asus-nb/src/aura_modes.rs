@@ -17,7 +17,7 @@ pub const FLASH: u8 = 0x0c;
 pub const MULTISTATIC: u8 = 0x0d;
 pub const PER_KEY: u8 = 0xff;
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Colour(pub u8, pub u8, pub u8);
 impl From<cli_options::Colour> for Colour {
     fn from(c: cli_options::Colour) -> Self {
@@ -30,7 +30,7 @@ impl Default for Colour {
     }
 }
 
-#[derive(Copy, Clone, Deserialize, Serialize)]
+#[derive(Debug, Copy, Clone, Deserialize, Serialize)]
 pub enum Speed {
     Low = 0xe1,
     Med = 0xeb,
@@ -54,7 +54,7 @@ impl Default for Speed {
 /// Used for Rainbow mode.
 ///
 /// Enum corresponds to the required integer value
-#[derive(Copy, Clone, Deserialize, Serialize)]
+#[derive(Debug, Copy, Clone, Deserialize, Serialize)]
 pub enum Direction {
     Right,
     Left,
@@ -77,7 +77,7 @@ impl Default for Direction {
     }
 }
 
-#[derive(Clone, Default, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct TwoColourSpeed {
     pub colour: Colour,
     pub colour2: Colour,
@@ -93,7 +93,7 @@ impl From<cli_options::TwoColourSpeed> for TwoColourSpeed {
     }
 }
 
-#[derive(Clone, Default, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct SingleSpeed {
     pub speed: Speed,
 }
@@ -105,7 +105,7 @@ impl From<cli_options::SingleSpeed> for SingleSpeed {
     }
 }
 
-#[derive(Clone, Default, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct SingleColour {
     pub colour: Colour,
 }
@@ -117,7 +117,7 @@ impl From<cli_options::SingleColour> for SingleColour {
     }
 }
 
-#[derive(Clone, Default, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct MultiColour {
     pub colour1: Colour,
     pub colour2: Colour,
@@ -135,7 +135,7 @@ impl From<cli_options::MultiColour> for MultiColour {
     }
 }
 
-#[derive(Clone, Default, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct SingleSpeedDirection {
     pub direction: Direction,
     pub speed: Speed,
@@ -149,7 +149,7 @@ impl From<cli_options::SingleSpeedDirection> for SingleSpeedDirection {
     }
 }
 
-#[derive(Clone, Default, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct SingleColourSpeed {
     pub colour: Colour,
     pub speed: Speed,
@@ -163,7 +163,7 @@ impl From<cli_options::SingleColourSpeed> for SingleColourSpeed {
     }
 }
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum AuraModes {
     Static(SingleColour),
     Breathe(TwoColourSpeed),

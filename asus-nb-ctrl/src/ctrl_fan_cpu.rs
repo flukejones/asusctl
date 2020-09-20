@@ -1,149 +1,200 @@
-use crate::config::Config;
-use crate::config::Profile;
+use crate::config::{Config, Profile};
 use asus_nb::profile::ProfileEvent;
-use log::{error, info, warn};
-use std::error::Error;
+use log::{info, warn};
+use std::convert::TryInto;
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
-use tokio::sync::mpsc::Receiver;
-use tokio::sync::Mutex;
-use tokio::task::JoinHandle;
+use std::sync::Mutex;
+use zbus::dbus_interface;
 
 static FAN_TYPE_1_PATH: &str = "/sys/devices/platform/asus-nb-wmi/throttle_thermal_policy";
 static FAN_TYPE_2_PATH: &str = "/sys/devices/platform/asus-nb-wmi/fan_boost_mode";
 static AMD_BOOST_PATH: &str = "/sys/devices/system/cpu/cpufreq/boost";
 
 pub struct CtrlFanAndCPU {
-    path: &'static str,
+    pub path: &'static str,
+    config: Arc<Mutex<Config>>,
 }
 
-use ::dbus::{nonblock::SyncConnection, tree::Signal};
-use async_trait::async_trait;
+pub struct DbusFanAndCpu {
+    inner: Arc<Mutex<CtrlFanAndCPU>>,
+}
 
-#[async_trait]
-impl crate::Controller for CtrlFanAndCPU {
-    type A = ProfileEvent;
+impl DbusFanAndCpu {
+    pub fn new(inner: Arc<Mutex<CtrlFanAndCPU>>) -> Self {
+        Self { inner }
+    }
+}
 
-    /// Spawns two tasks which continuously check for changes
-    fn spawn_task_loop(
-        self,
-        config: Arc<Mutex<Config>>,
-        mut recv: Receiver<Self::A>,
-        _: Option<Arc<SyncConnection>>,
-        _: Option<Arc<Signal<()>>>,
-    ) -> Vec<JoinHandle<()>> {
-        let gate1 = Arc::new(Mutex::new(self));
-        let gate2 = gate1.clone();
-        let config1 = config.clone();
-        // spawn an endless loop
-        vec![
-            tokio::spawn(async move {
-                while let Some(event) = recv.recv().await {
-                    let mut config = config1.lock().await;
-                    let mut lock = gate1.lock().await;
-
-                    config.read();
-                    lock.handle_profile_event(&event, &mut config)
+#[dbus_interface(name = "org.asuslinux.Daemon")]
+impl DbusFanAndCpu {
+    fn set_profile(&self, profile: String) {
+        if let Ok(event) = serde_json::from_str(&profile) {
+            if let Ok(mut ctrl) = self.inner.try_lock() {
+                if let Ok(mut cfg) = ctrl.config.clone().try_lock() {
+                    cfg.read();
+                    ctrl.handle_profile_event(&event, &mut cfg)
                         .unwrap_or_else(|err| warn!("{}", err));
+                    self.notify_profile(&cfg.active_profile)
+                        .unwrap_or_else(|_| ());
                 }
-            }),
-            // need to watch file path
-            tokio::spawn(async move {
-                loop {
-                    tokio::time::delay_for(std::time::Duration::from_millis(100)).await;
-                    let mut lock = gate2.lock().await;
-                    let mut config = config.lock().await;
-                    lock.fan_mode_check_change(&mut config)
-                        .unwrap_or_else(|err| warn!("fan_ctrl: {}", err));
-                }
-            }),
-        ]
+            }
+        }
     }
 
-    async fn reload_from_config(&mut self, config: &mut Config) -> Result<(), Box<dyn Error>> {
-        let mut file = OpenOptions::new().write(true).open(self.path)?;
-        file.write_all(format!("{}\n", config.power_profile).as_bytes())
-            .unwrap_or_else(|err| error!("Could not write to {}, {}", self.path, err));
-        let profile = config.active_profile.clone();
-        self.set_profile(&profile, config)?;
-        info!(
-            "Reloaded fan mode: {:?}",
-            FanLevel::from(config.power_profile)
-        );
+    fn profile(&mut self) -> String {
+        if let Ok(ctrl) = self.inner.try_lock() {
+            if let Ok(mut cfg) = ctrl.config.try_lock() {
+                cfg.read();
+                if let Some(profile) = cfg.power_profiles.get(&cfg.active_profile) {
+                    if let Ok(json) = serde_json::to_string(profile) {
+                        return json;
+                    }
+                }
+            }
+        }
+        "Failed".to_string()
+    }
+
+    fn profiles(&mut self) -> String {
+        if let Ok(ctrl) = self.inner.try_lock() {
+            if let Ok(mut cfg) = ctrl.config.try_lock() {
+                cfg.read();
+                if let Ok(json) = serde_json::to_string(&cfg.power_profiles) {
+                    return json;
+                }
+            }
+        }
+        "Failed".to_string()
+    }
+
+    #[dbus_interface(signal)]
+    fn notify_profile(&self, profile: &str) -> zbus::Result<()>;
+}
+
+impl crate::ZbusAdd for DbusFanAndCpu {
+    fn add_to_server(self, server: &mut zbus::ObjectServer) {
+        server
+            .at(&"/org/asuslinux/Profile".try_into().unwrap(), self)
+            .unwrap();
+    }
+}
+
+impl crate::Reloadable for CtrlFanAndCPU {
+    fn reload(&mut self) -> Result<(), RogError> {
+        if let Ok(mut config) = self.config.clone().try_lock() {
+            let mut file = OpenOptions::new()
+                .write(true)
+                .open(self.path)
+                .map_err(|err| RogError::Path(self.path.into(), err))?;
+            file.write_all(format!("{}\n", config.power_profile).as_bytes())
+                .map_err(|err| RogError::Write(self.path.into(), err))?;
+            let profile = config.active_profile.clone();
+            self.set(&profile, &mut config)?;
+            info!(
+                "Reloaded fan mode: {:?}",
+                FanLevel::from(config.power_profile)
+            );
+        }
         Ok(())
     }
 }
 
+impl crate::CtrlTask for CtrlFanAndCPU {
+    fn do_task(&mut self) -> Result<(), RogError> {
+        let mut file = OpenOptions::new()
+            .read(true)
+            .open(self.path)
+            .map_err(|err| RogError::Path(self.path.into(), err))?;
+        let mut buf = [0u8; 1];
+        file.read_exact(&mut buf)
+            .map_err(|err| RogError::Read(self.path.into(), err))?;
+        if let Some(num) = char::from(buf[0]).to_digit(10) {
+            if let Ok(mut config) = self.config.clone().try_lock() {
+                if config.power_profile != num as u8 {
+                    config.read();
+
+                    let mut i = config
+                        .toggle_profiles
+                        .iter()
+                        .position(|x| x == &config.active_profile)
+                        .map(|i| i + 1)
+                        .unwrap_or(0);
+                    if i >= config.toggle_profiles.len() {
+                        i = 0;
+                    }
+
+                    let new_profile = config
+                        .toggle_profiles
+                        .get(i)
+                        .unwrap_or(&config.active_profile)
+                        .clone();
+
+                    self.set(&new_profile, &mut config)?;
+
+                    info!("Profile was changed: {}", &new_profile);
+                }
+            }
+            return Ok(());
+        }
+
+        Err(RogError::DoTask("Fan-level could not be parsed".into()))
+    }
+}
+
 impl CtrlFanAndCPU {
-    pub fn new() -> Result<Self, Box<dyn Error>> {
+    pub fn new(config: Arc<Mutex<Config>>) -> Result<Self, RogError> {
         let path = CtrlFanAndCPU::get_fan_path()?;
         info!("Device has thermal throttle control");
-        Ok(CtrlFanAndCPU { path })
+        Ok(CtrlFanAndCPU { path, config })
     }
 
-    fn get_fan_path() -> Result<&'static str, std::io::Error> {
+    fn get_fan_path() -> Result<&'static str, RogError> {
         if Path::new(FAN_TYPE_1_PATH).exists() {
             Ok(FAN_TYPE_1_PATH)
         } else if Path::new(FAN_TYPE_2_PATH).exists() {
             Ok(FAN_TYPE_2_PATH)
         } else {
-            Err(std::io::Error::new(
-                std::io::ErrorKind::NotFound,
-                "Fan mode not available, you may require a v5.8 series kernel or newer",
+            Err(RogError::MissingFunction(
+                "Fan mode not available, you may require a v5.8 series kernel or newer".into(),
             ))
         }
     }
 
-    pub(super) fn fan_mode_check_change(
-        &mut self,
-        config: &mut Config,
-    ) -> Result<(), Box<dyn Error>> {
-        let mut file = OpenOptions::new().read(true).open(self.path)?;
-        let mut buf = [0u8; 1];
-        file.read_exact(&mut buf)?;
-        if let Some(num) = char::from(buf[0]).to_digit(10) {
-            if config.power_profile != num as u8 {
-                config.read();
+    pub(super) fn do_update(&mut self, config: &mut Config) -> Result<(), RogError> {
+        config.read();
 
-                let mut i = config
-                    .toggle_profiles
-                    .iter()
-                    .position(|x| x == &config.active_profile)
-                    .map(|i| i + 1)
-                    .unwrap_or(0);
-                if i >= config.toggle_profiles.len() {
-                    i = 0;
-                }
-
-                let new_profile = config
-                    .toggle_profiles
-                    .get(i)
-                    .unwrap_or(&config.active_profile)
-                    .clone();
-
-                self.set_profile(&new_profile, config)?;
-
-                info!("Profile was changed: {}", &new_profile);
-            }
-            return Ok(());
+        let mut i = config
+            .toggle_profiles
+            .iter()
+            .position(|x| x == &config.active_profile)
+            .map(|i| i + 1)
+            .unwrap_or(0);
+        if i >= config.toggle_profiles.len() {
+            i = 0;
         }
-        let err = std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "Fan-level could not be parsed",
-        );
-        Err(Box::new(err))
+
+        let new_profile = config
+            .toggle_profiles
+            .get(i)
+            .unwrap_or(&config.active_profile)
+            .clone();
+
+        self.set(&new_profile, config)?;
+
+        info!("Profile was changed: {}", &new_profile);
+        Ok(())
     }
 
-    pub(super) fn set_fan_mode(
-        &mut self,
-        preset: u8,
-        config: &mut Config,
-    ) -> Result<(), Box<dyn Error>> {
+    pub(super) fn set_fan_mode(&mut self, preset: u8, config: &mut Config) -> Result<(), RogError> {
         let mode = config.active_profile.clone();
-        let mut fan_ctrl = OpenOptions::new().write(true).open(self.path)?;
+        let mut fan_ctrl = OpenOptions::new()
+            .write(true)
+            .open(self.path)
+            .map_err(|err| RogError::Path(self.path.into(), err))?;
         config.read();
         let mut mode_config = config
             .power_profiles
@@ -154,7 +205,7 @@ impl CtrlFanAndCPU {
         config.write();
         fan_ctrl
             .write_all(format!("{}\n", preset).as_bytes())
-            .unwrap_or_else(|err| error!("Could not write to {}, {}", self.path, err));
+            .map_err(|err| RogError::Write(self.path.into(), err))?;
         info!("Fan mode set to: {:?}", FanLevel::from(preset));
         self.set_pstate_for_fan_mode(&mode, config)?;
         self.set_fan_curve_for_fan_mode(&mode, config)?;
@@ -165,8 +216,9 @@ impl CtrlFanAndCPU {
         &mut self,
         event: &ProfileEvent,
         config: &mut Config,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<(), RogError> {
         match event {
+            ProfileEvent::Toggle => self.do_update(config)?,
             ProfileEvent::ChangeMode(mode) => {
                 self.set_fan_mode(*mode, config)?;
             }
@@ -204,21 +256,24 @@ impl CtrlFanAndCPU {
                     profile.fan_curve = Some(curve.clone());
                 }
 
-                self.set_profile(&profile_key, config)?;
+                self.set(&profile_key, config)?;
             }
         }
         Ok(())
     }
 
-    fn set_profile(&mut self, profile: &str, config: &mut Config) -> Result<(), Box<dyn Error>> {
+    fn set(&mut self, profile: &str, config: &mut Config) -> Result<(), RogError> {
         let mode_config = config
             .power_profiles
             .get(profile)
             .ok_or_else(|| RogError::MissingProfile(profile.into()))?;
-        let mut fan_ctrl = OpenOptions::new().write(true).open(self.path)?;
+        let mut fan_ctrl = OpenOptions::new()
+            .write(true)
+            .open(self.path)
+            .map_err(|err| RogError::Path(self.path.into(), err))?;
         fan_ctrl
             .write_all(format!("{}\n", mode_config.fan_preset).as_bytes())
-            .unwrap_or_else(|err| error!("Could not write to {}, {}", self.path, err));
+            .map_err(|err| RogError::Write(self.path.into(), err))?;
         config.power_profile = mode_config.fan_preset;
 
         self.set_pstate_for_fan_mode(profile, config)?;
@@ -230,12 +285,7 @@ impl CtrlFanAndCPU {
         Ok(())
     }
 
-    fn set_pstate_for_fan_mode(
-        &self,
-        // mode: FanLevel,
-        mode: &str,
-        config: &mut Config,
-    ) -> Result<(), Box<dyn Error>> {
+    fn set_pstate_for_fan_mode(&self, mode: &str, config: &mut Config) -> Result<(), RogError> {
         info!("Setting pstate");
         let mode_config = config
             .power_profiles
@@ -257,25 +307,17 @@ impl CtrlFanAndCPU {
             let mut file = OpenOptions::new()
                 .write(true)
                 .open(AMD_BOOST_PATH)
-                .map_err(|err| {
-                    warn!("Failed to open AMD boost: {}", err);
-                    err
-                })?;
+                .map_err(|err| RogError::Path(self.path.into(), err))?;
 
             let boost = if mode_config.turbo { "1" } else { "0" }; // opposite of Intel
             file.write_all(boost.as_bytes())
-                .unwrap_or_else(|err| error!("Could not write to {}, {}", AMD_BOOST_PATH, err));
+            .map_err(|err| RogError::Write(AMD_BOOST_PATH.into(), err))?;
             info!("AMD CPU Turbo: {}", boost);
         }
         Ok(())
     }
 
-    fn set_fan_curve_for_fan_mode(
-        &self,
-        // mode: FanLevel,
-        mode: &str,
-        config: &Config,
-    ) -> Result<(), Box<dyn Error>> {
+    fn set_fan_curve_for_fan_mode(&self, mode: &str, config: &Config) -> Result<(), RogError> {
         let mode_config = &config
             .power_profiles
             .get(mode)

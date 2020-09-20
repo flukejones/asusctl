@@ -1,5 +1,7 @@
+use std::error::Error;
 use std::fmt;
 
+#[derive(Debug)]
 pub enum AuraError {
     ParseColour,
     ParseSpeed,
@@ -18,3 +20,21 @@ impl fmt::Display for AuraError {
         }
     }
 }
+
+impl Error for AuraError {}
+
+#[derive(Debug)]
+pub enum GraphicsError {
+    ParseVendor,
+}
+
+impl fmt::Display for GraphicsError {
+    // This trait requires `fmt` with this exact signature.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            GraphicsError::ParseVendor => write!(f, "Could not parse vendor name"),
+        }
+    }
+}
+
+impl Error for GraphicsError {}
