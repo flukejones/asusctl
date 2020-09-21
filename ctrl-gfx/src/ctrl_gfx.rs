@@ -25,6 +25,7 @@ pub struct CtrlGraphics {
 trait Dbus {
     fn set_vendor(&mut self, vendor: String);
     fn notify_gfx(&self, vendor: &str) -> zbus::Result<()>;
+    fn notify_action(&self, action: &str) -> zbus::Result<()>;
 }
 
 #[cfg(feature = "use-zbus")]
@@ -35,17 +36,22 @@ use std::convert::TryInto;
 impl Dbus for CtrlGraphics {
     fn set_vendor(&mut self, vendor: String) {
         if let Ok(tmp) = GfxVendors::from_str(&vendor) {
-            self.set(tmp).unwrap_or_else(|err| {
+            let action = self.set(tmp).unwrap_or_else(|err| {
                 warn!("{}", err);
                 format!("Failed: {}", err.to_string())
             });
             self.notify_gfx(&vendor)
+                .unwrap_or_else(|err| warn!("{}", err));
+            self.notify_action(&action)
                 .unwrap_or_else(|err| warn!("{}", err));
         }
     }
 
     #[dbus_interface(signal)]
     fn notify_gfx(&self, vendor: &str) -> zbus::Result<()>;
+
+    #[dbus_interface(signal)]
+    fn notify_action(&self, action: &str) -> zbus::Result<()>;
 }
 
 impl CtrlGraphics {

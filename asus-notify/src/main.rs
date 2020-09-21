@@ -21,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::thread::sleep(Duration::from_millis(100));
         connection.process(std::time::Duration::from_millis(200))?;
 
-        if let Ok(mut lock) = signals.gfx_signal.lock() {
+        if let Ok(mut lock) = signals.gfx_vendor_signal.lock() {
             if let Some(vendor) = lock.take() {
                 if let Some(notif) = last_gfx_notif.take() {
                     notif.close();

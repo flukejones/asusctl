@@ -11,14 +11,15 @@ use std::sync::{
 };
 use std::{thread, time::Duration};
 
-use crate::dbus_gfx::OrgAsuslinuxDaemonNotifyGfx;
+use crate::dbus_gfx::{OrgAsuslinuxDaemonNotifyGfx, OrgAsuslinuxDaemonNotifyAction};
 use crate::dbus_ledmode::OrgAsuslinuxDaemonNotifyLed;
 use crate::dbus_profile::OrgAsuslinuxDaemonNotifyProfile;
 use crate::dbus_charge::OrgAsuslinuxDaemonNotifyCharge;
 
 // Signals separated out
 pub struct CtrlSignals {
-    pub gfx_signal: Arc<Mutex<Option<String>>>,
+    pub gfx_vendor_signal: Arc<Mutex<Option<String>>>,
+    pub gfx_action_signal: Arc<Mutex<Option<String>>>,
     pub profile_signal: Arc<Mutex<Option<String>>>,
     pub ledmode_signal: Arc<Mutex<Option<AuraModes>>>,
     pub charge_signal: Arc<Mutex<Option<u8>>>,
@@ -33,13 +34,25 @@ impl CtrlSignals {
             Duration::from_millis(5000),
         );
 
-        let gfx_signal = Arc::new(Mutex::new(None));
-        let gfx_res1 = gfx_signal.clone();
+        let gfx_vendor_signal = Arc::new(Mutex::new(None));
+        let gfx_res1 = gfx_vendor_signal.clone();
 
         let _x = proxy.match_signal(
             move |sig: OrgAsuslinuxDaemonNotifyGfx, _: &Connection, _: &Message| {
                 if let Ok(mut lock) = gfx_res1.lock() {
                     *lock = Some(sig.vendor);
+                }
+                true
+            },
+        )?;
+
+        let gfx_action_signal = Arc::new(Mutex::new(None));
+        let gfx_res1 = gfx_action_signal.clone();
+
+        let _x = proxy.match_signal(
+            move |sig: OrgAsuslinuxDaemonNotifyAction, _: &Connection, _: &Message| {
+                if let Ok(mut lock) = gfx_res1.lock() {
+                    *lock = Some(sig.action);
                 }
                 true
             },
@@ -105,7 +118,8 @@ impl CtrlSignals {
         )?;
 
         Ok(CtrlSignals {
-            gfx_signal,
+            gfx_vendor_signal,
+            gfx_action_signal,
             profile_signal,
             ledmode_signal,
             charge_signal,
@@ -149,7 +163,7 @@ impl AuraDbusClient {
     pub fn wait_gfx_changed(&self) -> Result<String, Box<dyn Error>> {
         loop {
             self.connection.process(Duration::from_micros(500))?;
-            if let Ok(lock) = self.signals.gfx_signal.lock() {
+            if let Ok(lock) = self.signals.gfx_action_signal.lock() {
                 if let Some(stuff) = lock.as_ref() {
                     return Ok(stuff.to_string());
                 }
