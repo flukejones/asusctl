@@ -4,6 +4,11 @@ board_names = ["GX502", "GX701", "G531", "GL531", "G532"]
 led_modes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 255]
 
 [[led_modes]]
+prod_family = "Zephyrus M"
+board_names = ["GU502GV"]
+led_modes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 255]
+
+[[led_modes]]
 prod_family = "Zephyrus"
 board_names = ["GM501GM", "GX531"]
 led_modes = [0, 1, 2, 3, 10, 13]
