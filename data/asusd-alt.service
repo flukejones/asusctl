@@ -1,0 +1,12 @@
+[Unit]
+Description=ASUS Notebook Control
+After=basic.target syslog.target
+
+[Service]
+ExecStart=/usr/bin/asusd
+Restart=on-failure
+Type=dbus
+BusName=org.asuslinux.Daemon
+
+[Install]
+WantedBy=multi-user.target
