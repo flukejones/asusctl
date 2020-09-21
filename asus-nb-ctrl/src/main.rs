@@ -92,7 +92,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "reboot" => println!(
                 "{}\n{}",
                 Green.paint("\nGraphics vendor mode changed successfully\n"),
-                Red.paint("\nPlease reboot to complete switch to iGPU\n")
+                Red.paint("\nPlease reboot to complete switch\n")
             ),
             "restartx" => {
                 println!(
