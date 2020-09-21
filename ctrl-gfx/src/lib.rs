@@ -47,7 +47,6 @@ Section "OutputClass"
     Identifier "nvidia"
     MatchDriver "nvidia-drm"
     Driver "nvidia"
-    Option "TripleBuffer" "true"
     Option "AllowEmptyInitialConfiguration"
     Option "AllowExternalGpus""#;
 
