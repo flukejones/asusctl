@@ -168,6 +168,7 @@ impl CtrlGraphics {
             .iter()
             .any(|module| module.name == "nouveau" || module.name == "nvidia")
         {
+            info!("nvidia or nouveau module found");
             let mode = match Self::get_prime_discrete() {
                 Ok(m) => m,
                 Err(_) => "nvidia".to_string(),
@@ -181,6 +182,7 @@ impl CtrlGraphics {
                 "nvidia".to_string()
             }
         } else {
+            info!("No dGPU driver (nouveau or nvidia) loaded");
             "integrated".to_string()
         };
 
@@ -212,10 +214,10 @@ impl CtrlGraphics {
 
         // Switching from hybrid to/from nvidia shouldn't require a ramdisk update
         // or a reboot.
-        let switching_prime_modes = Self::is_switching_prime_modes(&vendor)?;
+        let no_reboot = Self::is_switching_prime_modes(&vendor)?;
 
         {
-            info!("Creating {}", MODPROBE_PATH);
+            info!("Writing {}", MODPROBE_PATH);
 
             let mut file = std::fs::OpenOptions::new()
                 .create(true)
@@ -239,7 +241,7 @@ impl CtrlGraphics {
                 .map_err(|err| GfxError::Write(MODPROBE_PATH.into(), err))?;
         }
 
-        info!("Creating {}", PRIMARY_GPU_XORG_PATH);
+        info!("Writing {}", PRIMARY_GPU_XORG_PATH);
 
         // begin section for non-separated Nvidia xorg modules
         // eg, not put in their own directory
@@ -283,7 +285,7 @@ impl CtrlGraphics {
         }
 
         let mut required_action = GfxCtrlAction::None;
-        if !switching_prime_modes {
+        if !no_reboot {
             info!("Updating initramfs");
             if let Some(cmd) = self.initfs_cmd.as_mut() {
                 let status = cmd
@@ -296,7 +298,7 @@ impl CtrlGraphics {
                 }
             }
             required_action = GfxCtrlAction::Reboot;
-        } else if switching_prime_modes {
+        } else if no_reboot {
             required_action = GfxCtrlAction::RestartX;
         }
 
