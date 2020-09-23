@@ -23,15 +23,14 @@ pub struct Config {
 }
 
 impl Config {
-    /// `load` will attempt to read the config, but if it is not found it
-    /// will create a new default config and write that out.
+    /// `load` will attempt to read the config, and panic if the dir is missing
     pub fn load(mut self, supported_led_modes: &[u8]) -> Self {
         let mut file = OpenOptions::new()
             .read(true)
             .write(true)
             .create(true)
             .open(&CONFIG_PATH)
-            .unwrap(); // okay to cause panic here
+            .expect(&format!("The file {} or directory /etc/asusd/ is missing", CONFIG_PATH)); // okay to cause panic here
         let mut buf = String::new();
         if let Ok(l) = file.read_to_string(&mut buf) {
             if l == 0 {
