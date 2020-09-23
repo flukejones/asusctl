@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # [2.0.0] - 2020-09-21
 ### Changed
+- graphics options via CLI are now a command block:
+  + `asusctl graphics`
+  + -m Mode <nvidia, hybrid, compute, integrated>
+  + -g Get current mode
+  + -f Force reboot or restart display manager without confirmation
+
+# [2.0.0] - 2020-09-21
+### Changed
 - Code refactor to spawn less tasks. Main loop will run only as fast as
   it receives events
 - No-longer using tokio or async, reducing resource use

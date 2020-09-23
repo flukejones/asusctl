@@ -1,5 +1,8 @@
 # ASUS NB Ctrl
 
+`asusd` is a utility for Linux to control many aspects of various ASUS laptops
+but can also be used with non-asus laptops with reduced features.
+
 **NOTICE:**
 
 This program requires the kernel patch [here](https://www.spinics.net/lists/linux-input/msg68977.html) to be applied.
@@ -12,16 +15,11 @@ The patch enables the following in kernel:
 - Control of keyboard brightness using FN+Key combos (not RGB)
 - FN+F5 (fan) to toggle fan modes
 
-You will not get RGB control in kernel (yet), and asusd is still required to
-change modes and RGB settings. The previous version of this program is named
-`rog-core` and takes full control of the interfaces required - if you can't
-apply the kernel patches then `rog-core` is still highly usable.
+You will not get RGB control in kernel (yet), and `asusd` + `asusctl` is required
+to change modes and RGB settings.
 
 Many other patches for these laptops, AMD and Intel based, are working their way
 in to the kernel.
-
----
-asusd is a utility for Linux to control many aspects of various ASUS laptops.
 
 ## Discord
 
@@ -54,9 +52,9 @@ will probably suffer another rename once it becomes generic enough to do so.
 - [X] Fancy fan control on G14 + G15 thanks to @Yarn1
 - [X] Graphics mode switching between iGPU, dGPU, and On-Demand
 
-## FUNCTIONS
+# FUNCTIONS
 
-### Graphics switching
+## Graphics switching
 
 A new feature has been added to enable switching graphics modes. This can be disabled
 in the config with `"manage_gfx": false,`. Please be aware it is a work in progress.
@@ -64,7 +62,37 @@ in the config with `"manage_gfx": false,`. Please be aware it is a work in progr
 The CLI option for this does not require root until it asks for it, and provides
 instructions.
 
-### KEYBOARD BACKLIGHT MODES
+This switcher conflicts with other gpu switchers like optimus-manager, suse-prime
+or ubuntu-prime, system76-power, and bbswitch. If you have issues with `asusd`
+always defaulting to `integrated` mode on boot then you will need to check for
+stray configs blocking nvidia modules from loading in:
+- `/etc/modprobe.d/`
+- `/usr/lib/modprope.d/`
+
+### Power management udev rule
+
+If you have installed the Nvidia driver manually you will require the
+`data/90-asusd-nvidia-pm.rules` udev rule to be installed in `/etc/udev/rules.d/`.
+
+The above seems to also apply to Arch in general as it leaves a lot of things up
+to the user.
+
+### fedora and openSUSE
+
+You *may* need a file `/etc/dracut.conf.d/90-nvidia-dracut-G05.conf` installed
+to stop dracut including the nvidia modules in the ramdisk.
+
+```
+# filename /etc/dracut.conf.d/90-nvidia-dracut-G05.conf
+# Omit the nvidia driver from the ramdisk, to avoid needing to regenerate
+# the ramdisk on updates, and to ensure the power-management udev rules run
+# on module load
+omit_drivers+=" nvidia nvidia-drm nvidia-modeset nvidia-uvm "
+```
+
+and run `dracut -f` after creating it.
+
+## KEYBOARD BACKLIGHT MODES
 
 Models GA401, GA502, GU502 support LED brightness change only (no RGB).
 
@@ -90,7 +118,9 @@ If you model isn't getting the correct led modes, you can edit the file
 
 use `cat /sys/class/dmi/id/product_name` to get details about your laptop.
 
-## Requirements for compiling
+# BUILDING
+
+Requirements are:
 
 - `rustc` + `cargo` + `make`
 - `libusb-1.0-0-dev`
@@ -120,6 +150,11 @@ $ systemctl daemon-reload && systemctl restart asusd
 
 You may also need to activate the service for debian install. If running Pop!_OS, I suggest disabling `system76-power` gnome-shell extension and systemd service.
 
+If you would like to run this daemon on another non-ASUS laptop you can. You'll
+have all features available except the LED and AniMe control (further controllers
+can be added on request). You will need to install the alternative service from
+`data/asusd-alt.service`.
+
 ## Uninstalling
 
 Run `sudo make uninstall` in the source repo, and remove `/etc/asusd/`.
@@ -130,7 +165,7 @@ If there has been a config file format change your config will be overwritten. T
 become less of an issue once the feature set is nailed down. Work is happening to enable
 parsing of older configs and transferring settings to new.
 
-# Usage
+# USAGE
 
 **NOTE! Fan mode toggling requires a newer kernel**. I'm unsure when the patches
 required for it got merged - I've tested with the 5.6.6 kernel and above only.
@@ -180,7 +215,7 @@ Daemon mode creates a config file at `/etc/asusd/asusd.conf` which you can edit 
 little of. Most parts will be byte arrays, but you can adjust things like
 `mode_performance`.
 
-## User daemon for notification via dbus
+## User NOTIFICATIONS via dbus
 
 If you have a notifications handler set up, or are using KDE or Gnome then you
 can enable the user service to get basic notifications when something changes.
@@ -189,7 +224,7 @@ can enable the user service to get basic notifications when something changes.
 systemctl --user enable asus-notify.service
 systemctl --user start asus-notify.service
 ```
-# Other
+# OTHER
 
 ## DBUS Input
 
@@ -208,6 +243,14 @@ Please file a support request.
 - If charge limit or fan modes are not working, then you may require a kernel newer than 5.6.10.
 - AniMe device check is performed on start, if your device has one it will be detected.
 - GA14/GA401 and GA15/GA502/GU502, You will need kernel [patches](https://lab.retarded.farm/zappel/asus-rog-zephyrus-g14/-/tree/master/kernel_patches), these are on their way to the kernel upstream.
+- On fedora manually installed Nvidia driver requires a dracut config as follows:
+```
+# filename/etc/dracut.conf.d/90-nvidia-dracut-G05.conf 
+# Omit the nvidia driver from the ramdisk, to avoid needing to regenerate
+# the ramdisk on updates, and to ensure the power-management udev rules run
+# on module load
+omit_drivers+=" nvidia nvidia-drm nvidia-modeset nvidia-uvm "
+```
 
 # License
 

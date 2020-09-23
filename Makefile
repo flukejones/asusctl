@@ -16,7 +16,7 @@ BIN_D=asusd
 BIN_N=asus-notify
 LEDCFG=asusd-ledmodes.toml
 X11CFG=90-nvidia-screen-G05.conf
-UDEVRULES=90-nvidia-pm.rules
+PMRULES=90-asusd-nvidia-pm.rules
 VERSION:=$(shell grep -Pm1 'version = "(\d.\d.\d)"' asus-nb-ctrl/Cargo.toml | cut -d'"' -f2)
 
 DEBUG ?= 0
@@ -42,8 +42,9 @@ install: all
 	install -D -m 0755 "target/release/$(BIN_C)" "$(DESTDIR)$(bindir)/$(BIN_C)"
 	install -D -m 0755 "target/release/$(BIN_D)" "$(DESTDIR)$(bindir)/$(BIN_D)"
 	install -D -m 0755 "target/release/$(BIN_N)" "$(DESTDIR)$(bindir)/$(BIN_N)"
-	install -D -m 0644 "data/$(UDEVRULES)" "$(DESTDIR)/lib/udev/rules.d/$(UDEVRULES)"
+	install -D -m 0644 "data/$(PMRULES)" "$(DESTDIR)/lib/udev/rules.d/$(PMRULES)"
 	install -D -m 0644 "data/$(BIN_D).rules" "$(DESTDIR)/lib/udev/rules.d/99-$(BIN_D).rules"
+	install -D -m 0644 "data/$(PMRULES).rules" "$(DESTDIR)/lib/udev/rules.d/$(PMRULES).rules"
 	install -D -m 0644 "data/$(LEDCFG)" "$(DESTDIR)$(sysconfdir)/asusd/$(LEDCFG)"
 	install -D -m 0644 "data/$(BIN_D).conf" "$(DESTDIR)$(sysconfdir)/dbus-1/system.d/$(BIN_D).conf"
 	install -D -m 0644 "data/$(X11CFG)" "$(DESTDIR)$(sysconfdir)/X11/xorg.conf.d/$(X11CFG)"
@@ -57,8 +58,9 @@ uninstall:
 	rm -f "$(DESTDIR)$(bindir)/$(BIN_C)"
 	rm -f "$(DESTDIR)$(bindir)/$(BIN_D)"
 	rm -f "$(DESTDIR)$(bindir)/$(BIN_N)"
-	rm -f "$(DESTDIR)/lib/udev/rules.d/$(UDEVRULES)"
+	rm -f "$(DESTDIR)/lib/udev/rules.d/$(PMRULES)"
 	rm -f "$(DESTDIR)/lib/udev/rules.d/99-$(BIN_D).rules"
+	rm -f "$(DESTDIR)/lib/udev/rules.d/$(PMRULES).rules"
 	rm -f "$(DESTDIR)$(sysconfdir)/dbus-1/system.d/$(BIN_D).conf"
 	rm -f "$(DESTDIR)$(sysconfdir)/X11/xorg.conf.d/$(X11CFG)"
 	rm -f "$(DESTDIR)/lib/systemd/system/$(BIN_D).service"

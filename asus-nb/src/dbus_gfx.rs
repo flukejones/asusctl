@@ -5,10 +5,22 @@ use dbus::arg;
 use dbus::blocking;
 
 pub trait OrgAsuslinuxDaemon {
+    fn vendor(&self) -> Result<String, dbus::Error>;
+    fn power(&self) -> Result<String, dbus::Error>;
     fn set_vendor(&self, vendor: &str) -> Result<(), dbus::Error>;
 }
 
 impl<'a, T: blocking::BlockingSender, C: ::std::ops::Deref<Target=T>> OrgAsuslinuxDaemon for blocking::Proxy<'a, C> {
+
+    fn vendor(&self) -> Result<String, dbus::Error> {
+        self.method_call("org.asuslinux.Daemon", "Vendor", ())
+            .and_then(|r: (String, )| Ok(r.0, ))
+    }
+
+    fn power(&self) -> Result<String, dbus::Error> {
+        self.method_call("org.asuslinux.Daemon", "Power", ())
+            .and_then(|r: (String, )| Ok(r.0, ))
+    }
 
     fn set_vendor(&self, vendor: &str) -> Result<(), dbus::Error> {
         self.method_call("org.asuslinux.Daemon", "SetVendor", (vendor, ))

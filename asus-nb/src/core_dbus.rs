@@ -2,7 +2,6 @@ use super::*;
 use crate::fancy::KeyColourArray;
 use crate::profile::ProfileEvent;
 use ctrl_gfx::vendors::GfxVendors;
-use dbus::channel::Sender;
 use dbus::{blocking::Connection, Message};
 use std::error::Error;
 use std::sync::{
@@ -11,10 +10,17 @@ use std::sync::{
 };
 use std::{thread, time::Duration};
 
-use crate::dbus_gfx::{OrgAsuslinuxDaemonNotifyGfx, OrgAsuslinuxDaemonNotifyAction};
-use crate::dbus_ledmode::OrgAsuslinuxDaemonNotifyLed;
-use crate::dbus_profile::OrgAsuslinuxDaemonNotifyProfile;
-use crate::dbus_charge::OrgAsuslinuxDaemonNotifyCharge;
+use crate::dbus_charge::{OrgAsuslinuxDaemonNotifyCharge, OrgAsuslinuxDaemon as OrgAsuslinuxDaemonCharge};
+use crate::dbus_gfx::{
+    OrgAsuslinuxDaemon as OrgAsuslinuxDaemonGfx, OrgAsuslinuxDaemonNotifyAction,
+    OrgAsuslinuxDaemonNotifyGfx,
+};
+use crate::dbus_ledmode::{
+    OrgAsuslinuxDaemon as OrgAsuslinuxDaemonLed, OrgAsuslinuxDaemonNotifyLed,
+};
+use crate::dbus_profile::{
+    OrgAsuslinuxDaemon as OrgAsuslinuxDaemonProfile, OrgAsuslinuxDaemonNotifyProfile,
+};
 
 // Signals separated out
 pub struct CtrlSignals {
@@ -111,7 +117,7 @@ impl CtrlSignals {
         let _x = proxy.match_signal(
             move |sig: OrgAsuslinuxDaemonNotifyCharge, _: &Connection, _: &Message| {
                 if let Ok(mut lock) = charge_res1.lock() {
-                        *lock = Some(sig.limit);
+                    *lock = Some(sig.limit);
                 }
                 true
             },
@@ -176,11 +182,12 @@ impl AuraDbusClient {
     #[inline]
     pub fn init_effect(&self) -> Result<(), Box<dyn std::error::Error>> {
         let mode = AuraModes::PerKey(vec![vec![]]);
-        let mut msg =
-            Message::new_method_call(DBUS_NAME, "/org/asuslinux/Led", DBUS_IFACE, "SetLedMode")?
-                .append1(serde_json::to_string(&mode)?);
-        msg.set_no_reply(true);
-        self.connection.send(msg).unwrap();
+        let proxy = self.connection.with_proxy(
+            "org.asuslinux.Daemon",
+            "/org/asuslinux/Led",
+            Duration::from_millis(5000),
+        );
+        proxy.set_led_mode(&serde_json::to_string(&mode)?)?;
         Ok(())
     }
 
@@ -199,13 +206,12 @@ impl AuraDbusClient {
             vecs.push(v.to_vec());
         }
         let mode = AuraModes::PerKey(vecs);
-        let mut msg =
-            Message::new_method_call(DBUS_NAME, "/org/asuslinux/Led", DBUS_IFACE, "SetLedMode")?
-                .append1(serde_json::to_string(&mode)?);
-        msg.set_no_reply(true);
-        self.connection.send(msg).unwrap();
+
+        self.write_keyboard_leds(&mode)?;
+
         thread::sleep(Duration::from_micros(self.block_time));
         self.connection.process(Duration::from_micros(500))?;
+
         if self.stop.load(Ordering::Relaxed) {
             println!("Keyboard backlight was changed, exiting");
             std::process::exit(1)
@@ -215,35 +221,56 @@ impl AuraDbusClient {
 
     #[inline]
     pub fn write_keyboard_leds(&self, mode: &AuraModes) -> Result<(), Box<dyn std::error::Error>> {
-        let mut msg =
-            Message::new_method_call(DBUS_NAME, "/org/asuslinux/Led", DBUS_IFACE, "SetLedMode")?
-                .append1(serde_json::to_string(mode)?);
-        msg.set_no_reply(true);
-        self.connection.send(msg).unwrap();
+        let proxy = self.connection.with_proxy(
+            "org.asuslinux.Daemon",
+            "/org/asuslinux/Led",
+            Duration::from_millis(5000),
+        );
+        proxy.set_led_mode(&serde_json::to_string(mode)?)?;
+        Ok(())
+    }
+
+    #[inline]
+    pub fn get_gfx_pwr(&self) -> Result<String, Box<dyn std::error::Error>> {
+        let proxy = self.connection.with_proxy(
+            "org.asuslinux.Daemon",
+            "/org/asuslinux/Gfx",
+            Duration::from_millis(5000),
+        );
+        let x = proxy.power().unwrap();
+        Ok(x)
+    }
+
+    #[inline]
+    pub fn get_gfx_mode(&self) -> Result<String, Box<dyn std::error::Error>> {
+        let proxy = self.connection.with_proxy(
+            "org.asuslinux.Daemon",
+            "/org/asuslinux/Gfx",
+            Duration::from_millis(5000),
+        );
+        let x = proxy.vendor().unwrap();
+        Ok(x)
+    }
+
+    #[inline]
+    pub fn write_gfx_mode(&self, vendor: GfxVendors) -> Result<(), Box<dyn std::error::Error>> {
+        let proxy = self.connection.with_proxy(
+            "org.asuslinux.Daemon",
+            "/org/asuslinux/Gfx",
+            Duration::from_millis(5000),
+        );
+        proxy.set_vendor(<&str>::from(&vendor))?;
         Ok(())
     }
 
     #[inline]
     pub fn write_fan_mode(&self, level: u8) -> Result<(), Box<dyn std::error::Error>> {
-        let mut msg = Message::new_method_call(
-            DBUS_NAME,
+        let proxy = self.connection.with_proxy(
+            "org.asuslinux.Daemon",
             "/org/asuslinux/Profile",
-            DBUS_IFACE,
-            "SetProfile",
-        )?
-        .append1(serde_json::to_string(&ProfileEvent::ChangeMode(level))?);
-        msg.set_no_reply(true);
-        self.connection.send(msg).unwrap();
-        Ok(())
-    }
-
-    #[inline]
-    pub fn write_gfx_mode(&self, vendor: GfxVendors) -> Result<(), Box<dyn std::error::Error>> {
-        let mut msg =
-            Message::new_method_call(DBUS_NAME, "/org/asuslinux/Gfx", DBUS_IFACE, "SetVendor")?
-                .append1(<&str>::from(&vendor));
-        msg.set_no_reply(true);
-        self.connection.send(msg).unwrap();
+            Duration::from_millis(5000),
+        );
+        proxy.set_profile(&serde_json::to_string(&ProfileEvent::ChangeMode(level))?)?;
         Ok(())
     }
 
@@ -252,25 +279,23 @@ impl AuraDbusClient {
         &self,
         cmd: &ProfileEvent,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let mut msg = Message::new_method_call(
-            DBUS_NAME,
+        let proxy = self.connection.with_proxy(
+            "org.asuslinux.Daemon",
             "/org/asuslinux/Profile",
-            DBUS_IFACE,
-            "SetProfile",
-        )?
-        .append1(serde_json::to_string(cmd)?);
-        msg.set_no_reply(true);
-        self.connection.send(msg).unwrap();
+            Duration::from_millis(5000),
+        );
+        proxy.set_profile(&serde_json::to_string(cmd)?)?;
         Ok(())
     }
 
     #[inline]
     pub fn write_charge_limit(&self, level: u8) -> Result<(), Box<dyn std::error::Error>> {
-        let mut msg =
-            Message::new_method_call(DBUS_NAME, "/org/asuslinux/Charge", DBUS_IFACE, "SetLimit")?
-                .append1(level);
-        msg.set_no_reply(true);
-        self.connection.send(msg).unwrap();
+        let proxy = self.connection.with_proxy(
+            "org.asuslinux.Daemon",
+            "/org/asuslinux/Charge",
+            Duration::from_millis(5000),
+        );
+        proxy.set_limit(level)?;
         Ok(())
     }
 

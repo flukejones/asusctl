@@ -14,8 +14,8 @@ use crate::{error::GfxError, system::*};
 
 pub struct CtrlGraphics {
     bus: PciBus,
-    amd: Vec<GraphicsDevice>,
-    intel: Vec<GraphicsDevice>,
+    _amd: Vec<GraphicsDevice>,
+    _intel: Vec<GraphicsDevice>,
     nvidia: Vec<GraphicsDevice>,
     #[allow(dead_code)]
     other: Vec<GraphicsDevice>,
@@ -23,6 +23,8 @@ pub struct CtrlGraphics {
 }
 
 trait Dbus {
+    fn vendor(&self) -> String;
+    fn power(&self) -> String;
     fn set_vendor(&mut self, vendor: String);
     fn notify_gfx(&self, vendor: &str) -> zbus::Result<()>;
     fn notify_action(&self, action: &str) -> zbus::Result<()>;
@@ -34,6 +36,18 @@ use std::convert::TryInto;
 #[cfg(feature = "use-zbus")]
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl Dbus for CtrlGraphics {
+    fn vendor(&self) -> String {
+        Self::get_vendor()
+            .map_err(|err| format!("Get vendor failed: {}", err))
+            .unwrap()
+    }
+
+    fn power(&self) -> String {
+        Self::get_runtime_status()
+            .map_err(|err| format!("Get power status failed: {}", err))
+            .unwrap()
+    }
+
     fn set_vendor(&mut self, vendor: String) {
         if let Ok(tmp) = GfxVendors::from_str(&vendor) {
             let action = self.set(tmp).unwrap_or_else(|err| {
@@ -113,17 +127,18 @@ impl CtrlGraphics {
             cmd.arg("-u");
             initfs_cmd = Some(cmd);
             info!("Using initramfs update command 'update-initramfs'");
-        } else if Path::new(DRACUT_PATH).exists() {
-            let mut cmd = Command::new("dracut");
-            cmd.arg("-f");
-            initfs_cmd = Some(cmd);
-            info!("Using initramfs update command 'dracut'");
         }
+        // } else if Path::new(DRACUT_PATH).exists() {
+        //     let mut cmd = Command::new("dracut");
+        //     cmd.arg("-f");
+        //     initfs_cmd = Some(cmd);
+        //     info!("Using initramfs update command 'dracut'");
+        // }
 
         Ok(CtrlGraphics {
             bus,
-            amd,
-            intel,
+            _amd: amd,
+            _intel: intel,
             nvidia,
             other,
             initfs_cmd,
@@ -143,9 +158,9 @@ impl CtrlGraphics {
         Ok(())
     }
 
-    fn can_switch(&self) -> bool {
-        !self.nvidia.is_empty() && (!self.intel.is_empty() || !self.amd.is_empty())
-    }
+    // fn can_switch(&self) -> bool {
+    //     !self.nvidia.is_empty() && (!self.intel.is_empty() || !self.amd.is_empty())
+    // }
 
     fn get_prime_discrete() -> Result<String, GfxError> {
         let s = std::fs::read_to_string(PRIME_DISCRETE_PATH)
@@ -305,11 +320,17 @@ impl CtrlGraphics {
         Ok(required_action.into())
     }
 
-    pub fn get_power(&self) -> Option<bool> {
-        if self.can_switch() {
-            return Some(self.nvidia.iter().any(GraphicsDevice::exists));
-        }
-        None
+    // pub fn get_power(&self) -> Option<bool> {
+    //     if self.can_switch() {
+    //         return Some(self.nvidia.iter().any(GraphicsDevice::exists));
+    //     }
+    //     None
+    // }
+    pub fn get_runtime_status() -> Result<String, GfxError> {
+        const PATH: &str = "/sys/bus/pci/devices/0000:01:00.0/power/runtime_status";
+        let buf = std::fs::read_to_string(PATH)
+            .map_err(|err| GfxError::Read(PATH.into(), err))?;
+        Ok(buf)
     }
 
     fn set_power(&self, power: bool) -> Result<(), GfxError> {
