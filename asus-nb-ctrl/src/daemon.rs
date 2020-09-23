@@ -126,7 +126,10 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
 
             for ctrl in tasks.iter() {
                 if let Ok(mut lock) = ctrl.try_lock() {
-                    lock.do_task().ok();
+                    lock.do_task().map_err(|err| {
+                        warn!("do_task error: {}", err);
+                    })
+                    .ok();
                 }
             }
         });
