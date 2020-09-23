@@ -121,7 +121,7 @@ impl GraphicsDevice {
                 warn!("{}: Already removed", func.id());
             }
         }
-        info!("Remmoved all gfx devices");
+        info!("Removed all gfx devices");
         Ok(())
     }
 }

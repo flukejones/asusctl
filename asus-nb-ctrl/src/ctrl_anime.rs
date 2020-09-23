@@ -40,7 +40,11 @@ impl crate::ZbusAdd for CtrlAnimeDisplay {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
             .at(&"/org/asuslinux/Anime".try_into().unwrap(), self)
-            .unwrap();
+            .map_err(|err| {
+                warn!("CtrlAnimeDisplay: add_to_server {}", err);
+                err
+            })
+            .ok();
     }
 }
 

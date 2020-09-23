@@ -42,7 +42,7 @@ impl crate::ZbusAdd for DbusKbdBacklight {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
             .at(&"/org/asuslinux/Led".try_into().unwrap(), self)
-            .unwrap();
+            .ok();
     }
 }
 
@@ -58,10 +58,11 @@ impl DbusKbdBacklight {
                                 .unwrap_or_else(|err| warn!("{}", err));
                         }
                         _ => {
-                            let json = serde_json::to_string(&data).unwrap();
-                            ctrl.do_command(data, &mut cfg)
-                                .unwrap_or_else(|err| warn!("{}", err));
-                            self.notify_led(&json).unwrap();
+                            if let Ok(json) = serde_json::to_string(&data) {
+                                ctrl.do_command(data, &mut cfg)
+                                    .unwrap_or_else(|err| warn!("{}", err));
+                                self.notify_led(&json).ok();
+                            }
                         }
                     }
                 }
@@ -233,8 +234,11 @@ impl CtrlKbdBacklight {
                     RogError::Udev("parent_with_subsystem_devtype failed".into(), err)
                 })?
             {
-                if parent.attribute_value("idProduct").unwrap() == id_product {
-                    // && device.parent().unwrap().sysnum().unwrap() == 3
+                if parent
+                    .attribute_value("idProduct")
+                    .ok_or(RogError::NotFound("LED idProduct".into()))?
+                    == id_product
+                {
                     if let Some(dev_node) = device.devnode() {
                         info!("Using device at: {:?} for LED control", dev_node);
                         return Ok(dev_node.to_string_lossy().to_string());
@@ -264,13 +268,17 @@ impl CtrlKbdBacklight {
                 RogError::Udev("match_property failed".into(), err)
             })?;
 
-        for device in enumerator.scan_devices().map_err(|err| {
-            warn!("{}", err);
-            err
-        }).map_err(|err| {
-            warn!("{}", err);
-            RogError::Udev("scan_devices failed".into(), err)
-        })? {
+        for device in enumerator
+            .scan_devices()
+            .map_err(|err| {
+                warn!("{}", err);
+                err
+            })
+            .map_err(|err| {
+                warn!("{}", err);
+                RogError::Udev("scan_devices failed".into(), err)
+            })?
+        {
             if let Some(dev_node) = device.devnode() {
                 if let Some(inum) = device.property_value("ID_USB_INTERFACE_NUM") {
                     if let Some(iface) = iface {
@@ -298,8 +306,7 @@ impl CtrlKbdBacklight {
     fn write_bytes(&self, message: &[u8]) -> Result<(), RogError> {
         if let Some(led_node) = &self.led_node {
             if let Ok(mut file) = OpenOptions::new().write(true).open(led_node) {
-                file.write_all(message).unwrap();
-                return Ok(());
+                return file.write_all(message).map_err(|err| RogError::Write("write_bytes".into(), err));
             }
         }
         Err(RogError::NotSupported)

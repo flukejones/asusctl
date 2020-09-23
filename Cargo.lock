@@ -46,7 +46,7 @@ dependencies = [
 
 [[package]]
 name = "asus-nb-ctrl"
-version = "2.0.2"
+version = "2.0.3"
 dependencies = [
  "asus-nb",
  "ctrl-gfx",
@@ -189,7 +189,7 @@ dependencies = [
 
 [[package]]
 name = "ctrl-gfx"
-version = "2.1.0"
+version = "2.1.1"
 dependencies = [
  "log",
  "sysfs-class",

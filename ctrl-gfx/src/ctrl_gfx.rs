@@ -37,15 +37,11 @@ use std::convert::TryInto;
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl Dbus for CtrlGraphics {
     fn vendor(&self) -> String {
-        Self::get_vendor()
-            .map_err(|err| format!("Get vendor failed: {}", err))
-            .unwrap()
+        Self::get_vendor().unwrap_or_else(|err| format!("Get vendor failed: {}", err))
     }
 
     fn power(&self) -> String {
-        Self::get_runtime_status()
-            .map_err(|err| format!("Get power status failed: {}", err))
-            .unwrap()
+        Self::get_runtime_status().unwrap_or_else(|err| format!("Get power status failed: {}", err))
     }
 
     fn set_vendor(&mut self, vendor: String) {
@@ -149,7 +145,11 @@ impl CtrlGraphics {
     pub fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
             .at(&"/org/asuslinux/Gfx".try_into().unwrap(), self)
-            .unwrap();
+            .map_err(|err| {
+                warn!("CtrlGraphics: add_to_server {}", err);
+                err
+            })
+            .ok();
     }
 
     pub fn reload(&mut self) -> Result<(), Box<dyn Error>> {
@@ -328,8 +328,7 @@ impl CtrlGraphics {
     // }
     pub fn get_runtime_status() -> Result<String, GfxError> {
         const PATH: &str = "/sys/bus/pci/devices/0000:01:00.0/power/runtime_status";
-        let buf = std::fs::read_to_string(PATH)
-            .map_err(|err| GfxError::Read(PATH.into(), err))?;
+        let buf = std::fs::read_to_string(PATH).map_err(|err| GfxError::Read(PATH.into(), err))?;
         Ok(buf)
     }
 

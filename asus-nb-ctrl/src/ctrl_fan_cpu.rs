@@ -79,7 +79,11 @@ impl crate::ZbusAdd for DbusFanAndCpu {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
             .at(&"/org/asuslinux/Profile".try_into().unwrap(), self)
-            .unwrap();
+            .map_err(|err| {
+                warn!("DbusFanAndCpu: {}", err);
+                err
+            })
+            .ok();
     }
 }
 
@@ -311,7 +315,7 @@ impl CtrlFanAndCPU {
 
             let boost = if mode_config.turbo { "1" } else { "0" }; // opposite of Intel
             file.write_all(boost.as_bytes())
-            .map_err(|err| RogError::Write(AMD_BOOST_PATH.into(), err))?;
+                .map_err(|err| RogError::Write(AMD_BOOST_PATH.into(), err))?;
             info!("AMD CPU Turbo: {}", boost);
         }
         Ok(())

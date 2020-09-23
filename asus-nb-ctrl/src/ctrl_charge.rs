@@ -26,8 +26,18 @@ trait Dbus {
 impl Dbus for CtrlCharge {
     fn set_limit(&mut self, limit: u8) {
         if let Ok(mut config) = self.config.try_lock() {
-            self.set(limit, &mut config).unwrap();
-            self.notify_charge(limit).unwrap();
+            self.set(limit, &mut config)
+                .map_err(|err| {
+                    warn!("CtrlCharge: set_limit {}", err);
+                    err
+                })
+                .ok();
+            self.notify_charge(limit)
+                .map_err(|err| {
+                    warn!("CtrlCharge: set_limit {}", err);
+                    err
+                })
+                .ok();
         }
     }
 
@@ -46,7 +56,11 @@ impl crate::ZbusAdd for CtrlCharge {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
             .at(&"/org/asuslinux/Charge".try_into().unwrap(), self)
-            .unwrap();
+            .map_err(|err| {
+                warn!("CtrlCharge: add_to_server {}", err);
+                err
+            })
+            .ok();
     }
 }
 

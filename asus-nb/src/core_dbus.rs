@@ -237,7 +237,7 @@ impl AuraDbusClient {
             "/org/asuslinux/Gfx",
             Duration::from_millis(5000),
         );
-        let x = proxy.power().unwrap();
+        let x = proxy.power()?;
         Ok(x)
     }
 
@@ -248,7 +248,7 @@ impl AuraDbusClient {
             "/org/asuslinux/Gfx",
             Duration::from_millis(5000),
         );
-        let x = proxy.vendor().unwrap();
+        let x = proxy.vendor()?;
         Ok(x)
     }
 

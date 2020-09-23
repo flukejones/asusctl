@@ -6,6 +6,8 @@ use std::error::Error;
 use std::time::Duration;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    println!("Version 1.0.1");
+    
     let mut cfg = Config::read_new()?;
     let mut last_profile = String::new();
 

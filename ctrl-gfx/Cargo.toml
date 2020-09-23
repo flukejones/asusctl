@@ -1,6 +1,6 @@
 [package]
 name = "ctrl-gfx"
-version = "2.1.0"
+version = "2.1.1"
 license = "MPL-2.0"
 readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]

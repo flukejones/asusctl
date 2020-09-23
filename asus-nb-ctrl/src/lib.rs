@@ -19,7 +19,7 @@ use config::Config;
 use crate::error::RogError;
 use zbus::ObjectServer;
 
-pub static VERSION: &str = "2.0.2";
+pub static VERSION: &str = "2.0.3";
 
 pub trait Reloadable {
     fn reload(&mut self) -> Result<(), RogError>;
