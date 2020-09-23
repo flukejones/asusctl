@@ -119,7 +119,7 @@ fn do_gfx(
                 );
                 do_gfx_action(
                     command.force,
-                    Command::new("systemctl").arg("reboot"),
+                    Command::new("systemctl").arg("reboot -i"),
                     "Reboot Linux PC",
                     "Please reboot when ready",
                 )?;
