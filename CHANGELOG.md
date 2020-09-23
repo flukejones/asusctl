@@ -6,7 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-# [2.0.0] - 2020-09-21
+# [2.0.4] - 2020-09-24
+### Changed
+- Better and more verbose error handling and logging in many places.
+- Fix timeout for client waiting on reply for graphics switching
+
+# [2.0.2] - 2020-09-21
 ### Changed
 - graphics options via CLI are now a command block:
   + `asusctl graphics`
