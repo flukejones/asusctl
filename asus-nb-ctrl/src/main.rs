@@ -107,7 +107,7 @@ fn do_gfx(
 ) -> Result<(), Box<dyn std::error::Error>> {
     if let Some(mode) = command.mode {
         println!("Updating settings, please wait...");
-        println!("If this takes longer than 30s, ctrl+c then check journalctl");
+        println!("If this takes longer than 30s, ctrl+c then check `journalctl -b -u asusd`");
 
         writer.write_gfx_mode(mode)?;
         let res = writer.wait_gfx_changed()?;

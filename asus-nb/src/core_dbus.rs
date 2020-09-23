@@ -37,7 +37,7 @@ impl CtrlSignals {
         let proxy = connection.with_proxy(
             "org.asuslinux.Daemon",
             "/org/asuslinux/Gfx",
-            Duration::from_millis(5000),
+            Duration::from_secs(2),
         );
 
         let gfx_vendor_signal = Arc::new(Mutex::new(None));
@@ -68,7 +68,7 @@ impl CtrlSignals {
         let proxy = connection.with_proxy(
             "org.asuslinux.Daemon",
             "/org/asuslinux/Profile",
-            Duration::from_millis(5000),
+            Duration::from_secs(2),
         );
 
         let profile_signal = Arc::new(Mutex::new(None));
@@ -87,7 +87,7 @@ impl CtrlSignals {
         let proxy = connection.with_proxy(
             "org.asuslinux.Daemon",
             "/org/asuslinux/Led",
-            Duration::from_millis(5000),
+            Duration::from_secs(2),
         );
 
         let ledmode_signal = Arc::new(Mutex::new(None));
@@ -108,7 +108,7 @@ impl CtrlSignals {
         let proxy = connection.with_proxy(
             "org.asuslinux.Daemon",
             "/org/asuslinux/Charge",
-            Duration::from_millis(5000),
+            Duration::from_secs(2),
         );
 
         let charge_signal = Arc::new(Mutex::new(None));
@@ -168,7 +168,7 @@ impl AuraDbusClient {
 
     pub fn wait_gfx_changed(&self) -> Result<String, Box<dyn Error>> {
         loop {
-            self.connection.process(Duration::from_micros(500))?;
+            self.connection.process(Duration::from_millis(1))?;
             if let Ok(lock) = self.signals.gfx_action_signal.lock() {
                 if let Some(stuff) = lock.as_ref() {
                     return Ok(stuff.to_string());
@@ -185,7 +185,7 @@ impl AuraDbusClient {
         let proxy = self.connection.with_proxy(
             "org.asuslinux.Daemon",
             "/org/asuslinux/Led",
-            Duration::from_millis(5000),
+            Duration::from_secs(2),
         );
         proxy.set_led_mode(&serde_json::to_string(&mode)?)?;
         Ok(())
@@ -224,7 +224,7 @@ impl AuraDbusClient {
         let proxy = self.connection.with_proxy(
             "org.asuslinux.Daemon",
             "/org/asuslinux/Led",
-            Duration::from_millis(5000),
+            Duration::from_secs(2),
         );
         proxy.set_led_mode(&serde_json::to_string(mode)?)?;
         Ok(())
@@ -235,7 +235,7 @@ impl AuraDbusClient {
         let proxy = self.connection.with_proxy(
             "org.asuslinux.Daemon",
             "/org/asuslinux/Gfx",
-            Duration::from_millis(5000),
+            Duration::from_secs(2),
         );
         let x = proxy.power()?;
         Ok(x)
@@ -246,7 +246,7 @@ impl AuraDbusClient {
         let proxy = self.connection.with_proxy(
             "org.asuslinux.Daemon",
             "/org/asuslinux/Gfx",
-            Duration::from_millis(5000),
+            Duration::from_secs(2),
         );
         let x = proxy.vendor()?;
         Ok(x)
@@ -257,7 +257,7 @@ impl AuraDbusClient {
         let proxy = self.connection.with_proxy(
             "org.asuslinux.Daemon",
             "/org/asuslinux/Gfx",
-            Duration::from_millis(5000),
+            Duration::from_secs(30),
         );
         proxy.set_vendor(<&str>::from(&vendor))?;
         Ok(())
@@ -268,7 +268,7 @@ impl AuraDbusClient {
         let proxy = self.connection.with_proxy(
             "org.asuslinux.Daemon",
             "/org/asuslinux/Profile",
-            Duration::from_millis(5000),
+            Duration::from_secs(2),
         );
         proxy.set_profile(&serde_json::to_string(&ProfileEvent::ChangeMode(level))?)?;
         Ok(())
@@ -282,7 +282,7 @@ impl AuraDbusClient {
         let proxy = self.connection.with_proxy(
             "org.asuslinux.Daemon",
             "/org/asuslinux/Profile",
-            Duration::from_millis(5000),
+            Duration::from_secs(2),
         );
         proxy.set_profile(&serde_json::to_string(cmd)?)?;
         Ok(())
@@ -293,7 +293,7 @@ impl AuraDbusClient {
         let proxy = self.connection.with_proxy(
             "org.asuslinux.Daemon",
             "/org/asuslinux/Charge",
-            Duration::from_millis(5000),
+            Duration::from_secs(2),
         );
         proxy.set_limit(level)?;
         Ok(())
