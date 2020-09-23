@@ -1,7 +1,7 @@
-use std::fmt;
-use std::convert::From;
 use intel_pstate::PStateError;
 use rog_fan_curve::CurveError;
+use std::convert::From;
+use std::fmt;
 
 #[derive(Debug)]
 pub enum RogError {
@@ -19,6 +19,7 @@ pub enum RogError {
     FanCurve(CurveError),
     DoTask(String),
     MissingFunction(String),
+    MissingLedBrightNode(String, std::io::Error),
 }
 
 impl fmt::Display for RogError {
@@ -39,6 +40,7 @@ impl fmt::Display for RogError {
             RogError::FanCurve(err) => write!(f, "Custom fan-curve error: {}", err),
             RogError::DoTask(deets) => write!(f, "Task error: {}", deets),
             RogError::MissingFunction(deets) => write!(f, "Missing functionality: {}", deets),
+            RogError::MissingLedBrightNode(path, error) => write!(f, "Led node at {} is missing, please check you have the required patch or dkms module installed: {}", path, error),
         }
     }
 }

@@ -152,7 +152,12 @@ impl crate::CtrlTask for CtrlKbdBacklight {
         let mut file = OpenOptions::new()
             .read(true)
             .open(&self.bright_node)
-            .map_err(|err| RogError::Path((&self.bright_node).into(), err))?;
+            .map_err(|err| {
+                match err.kind() {
+                    std::io::ErrorKind::NotFound => RogError::MissingLedBrightNode((&self.bright_node).into(), err),
+                    _ => RogError::Path((&self.bright_node).into(), err),
+                }
+            })?;
         let mut buf = [0u8; 1];
         file.read_exact(&mut buf)
             .map_err(|err| RogError::Read("buffer".into(), err))?;
