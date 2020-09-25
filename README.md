@@ -5,6 +5,8 @@ but can also be used with non-asus laptops with reduced features.
 
 **NOTICE:**
 
+This app is developed and tested on fedora only. Support is not provided for Arch or Arch based distros.
+
 This program requires the kernel patch [here](https://www.spinics.net/lists/linux-input/msg68977.html) to be applied.
 Alternatively you may use the dkms module for 'hid-asus-rog` from one of the
 repositories [here](https://download.opensuse.org/repositories/home:/luke_nukem:/asus/).
@@ -73,9 +75,6 @@ stray configs blocking nvidia modules from loading in:
 
 If you have installed the Nvidia driver manually you will require the
 `data/90-asusd-nvidia-pm.rules` udev rule to be installed in `/etc/udev/rules.d/`.
-
-The above seems to also apply to Arch in general as it leaves a lot of things up
-to the user.
 
 ### fedora and openSUSE
 
@@ -211,7 +210,7 @@ The daemon also saves the settings per mode as the keyboard does not do this
 itself - this means cycling through modes with the Aura keys will use the
 settings that were used via CLI.
 
-Daemon mode creates a config file at `/etc/asusd/asusd.conf` which you can edit a 
+Daemon mode creates a config file at `/etc/asusd/asusd.conf` which you can edit a
 little of. Most parts will be byte arrays, but you can adjust things like
 `mode_performance`.
 
@@ -245,7 +244,7 @@ Please file a support request.
 - GA14/GA401 and GA15/GA502/GU502, You will need kernel [patches](https://lab.retarded.farm/zappel/asus-rog-zephyrus-g14/-/tree/master/kernel_patches), these are on their way to the kernel upstream.
 - On fedora manually installed Nvidia driver requires a dracut config as follows:
 ```
-# filename/etc/dracut.conf.d/90-nvidia-dracut-G05.conf 
+# filename/etc/dracut.conf.d/90-nvidia-dracut-G05.conf
 # Omit the nvidia driver from the ramdisk, to avoid needing to regenerate
 # the ramdisk on updates, and to ensure the power-management udev rules run
 # on module load
