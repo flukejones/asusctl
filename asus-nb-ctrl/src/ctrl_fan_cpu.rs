@@ -45,6 +45,16 @@ impl DbusFanAndCpu {
         }
     }
 
+    fn active_profile_name(&mut self) -> String {
+        if let Ok(ctrl) = self.inner.try_lock() {
+            if let Ok(mut cfg) = ctrl.config.try_lock() {
+                cfg.read();
+                return cfg.active_profile.clone();
+            }
+        }
+        "Failed".to_string()
+    }
+
     fn profile(&mut self) -> String {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(mut cfg) = ctrl.config.try_lock() {
