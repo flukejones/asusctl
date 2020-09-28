@@ -61,11 +61,14 @@ impl Config {
             config.kbd_backlight_modes.push(AuraModes::from(*n))
         }
 
-        let profile = Profile::default();
+        let mut profile = Profile::default();
+        profile.fan_preset = 0;
+        profile.turbo = true;
         config.power_profiles.insert("normal".into(), profile);
 
         let mut profile = Profile::default();
         profile.fan_preset = 1;
+        profile.turbo = true;
         config.power_profiles.insert("boost".into(), profile);
 
         let mut profile = Profile::default();
