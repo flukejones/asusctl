@@ -14,9 +14,10 @@ fn main() {
     let mut matrix = AniMeMatrix::new();
 
     // Aligned left
-    for px in pixels {
+    for (i, px) in pixels.iter().enumerate() {
         if (px.x as usize / 2) < WIDTH && (px.y as usize) < HEIGHT && px.x % 2 == 0 {
-            matrix.get_mut()[px.y as usize][px.x as usize / 2] = px.color as u8;
+            let mut c = px.color as u32;
+            matrix.get_mut()[px.y as usize][px.x as usize / 2] = c as u8;
         }
     }
 

@@ -16,15 +16,9 @@ pub struct CtrlCharge {
     config: Arc<Mutex<Config>>,
 }
 
-trait Dbus {
-    fn set_limit(&mut self, charge: u8);
-    fn limit(&self) -> i8;
-    fn notify_charge(&self, limit: u8) -> zbus::Result<()>;
-}
-
 #[dbus_interface(name = "org.asuslinux.Daemon")]
-impl Dbus for CtrlCharge {
-    fn set_limit(&mut self, limit: u8) {
+impl CtrlCharge {
+    pub fn set_limit(&mut self, limit: u8) {
         if let Ok(mut config) = self.config.try_lock() {
             self.set(limit, &mut config)
                 .map_err(|err| {
@@ -41,7 +35,7 @@ impl Dbus for CtrlCharge {
         }
     }
 
-    fn limit(&self) -> i8 {
+    pub fn limit(&self) -> i8 {
         if let Ok(config) = self.config.try_lock() {
             return config.bat_charge_limit as i8;
         }
@@ -49,7 +43,7 @@ impl Dbus for CtrlCharge {
     }
 
     #[dbus_interface(signal)]
-    fn notify_charge(&self, limit: u8) -> zbus::Result<()>;
+    pub fn notify_charge(&self, limit: u8) -> zbus::Result<()>;
 }
 
 impl crate::ZbusAdd for CtrlCharge {

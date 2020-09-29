@@ -17,6 +17,8 @@ use std::sync::Mutex;
 
 use zbus::fdo;
 use zbus::Connection;
+use std::convert::Into;
+use std::convert::TryInto;
 
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut logger = env_logger::Builder::new();
@@ -134,6 +136,11 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
             }
         });
 
+    object_server.with(&"/org/asuslinux/Charge".try_into()?, |obj: &CtrlCharge| {
+        let x = obj.limit();
+        obj.notify_charge(x as u8)
+    })?;
+    
     loop {
         if let Err(err) = object_server.try_handle_next() {
             eprintln!("{}", err);

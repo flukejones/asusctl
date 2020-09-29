@@ -46,9 +46,9 @@ impl AniMeMatrix {
             // Write the top block of LEDs (first 7 rows)
             if count < 6 {
                 if count % 2 != 0 {
-                    print!("     ");
+                    print!(" ");
                 } else {
-                    print!("  ");
+                    print!("");
                 }
                 let tmp = if count == 0 || count == 1 || count == 3 || count == 5 {
                     row[1..].iter()
@@ -56,7 +56,7 @@ impl AniMeMatrix {
                     row.iter()
                 };
                 for x in tmp {
-                    print!(" {}", RGB(*x, *x, *x).paint(&format!("{:#04X}", x)));
+                    print!(" {}", RGB(*x, *x, *x).paint("XY"));
                 }
 
                 println!();
@@ -76,13 +76,13 @@ impl AniMeMatrix {
                 let index = row.len() - prog_row_len;
 
                 if count % 2 == 0 {
-                    print!("  ");
+                    print!(" ");
                 }
                 for (i, x) in row.iter().enumerate() {
                     if i >= index {
-                        print!(" {}", RGB(*x, *x, *x).paint(&format!("{:#04X}", x)));
+                        print!(" {}", RGB(*x, *x, *x).paint("XY"));
                     } else {
-                        print!("     ");
+                        print!("   ");
                     }
                 }
                 println!();

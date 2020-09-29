@@ -17,7 +17,7 @@ pub const ANIME_PANE2_PREFIX: [u8; 7] = [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x0
 /// The resolution is 34x56 (1904) but only 1,215 LEDs in the top-left are used.
 /// The display is available only on select GA401 models.
 ///
-/// Actual image ration when displayed is stretched width.
+/// Actual image ratio when displayed is stretched width.
 ///
 /// Data structure should be nested array of [[u8; 33]; 56]
 pub struct AniMeDbusWriter {
