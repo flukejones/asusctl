@@ -52,6 +52,7 @@ install: all
 	install -D -m 0644 "data/icons/asus_notif_yellow.png" "$(DESTDIR)/usr/share/icons/hicolor/512x512/apps/asus_notif_yellow.png"
 	install -D -m 0644 "data/icons/asus_notif_green.png" "$(DESTDIR)/usr/share/icons/hicolor/512x512/apps/asus_notif_green.png"
 	install -D -m 0644 "data/icons/asus_notif_red.png" "$(DESTDIR)/usr/share/icons/hicolor/512x512/apps/asus_notif_red.png"
+	install -D -m 0644 "data/_asusctl" "$(DESTDIR)/usr/share/zsh/site-functions/_asusctl"
 
 uninstall:
 	rm -f "$(DESTDIR)$(bindir)/$(BIN_C)"
@@ -64,6 +65,7 @@ uninstall:
 	rm -f "$(DESTDIR)/lib/systemd/system/$(BIN_D).service"
 	rm -r "$(DESTDIR)/lib/systemd/user/$(BIN_N).service"
 	rm -r "$(DESTDIR)/usr/share/icons/hicolor/512x512/apps/asus_notif_*"
+	rm -f "$(DESTDIR)/usr/share/zsh/site-functions/_asusctl"
 
 update:
 	cargo update
