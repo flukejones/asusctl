@@ -15,10 +15,10 @@ use std::io::Write;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use zbus::fdo;
-use zbus::Connection;
 use std::convert::Into;
 use std::convert::TryInto;
+use zbus::fdo;
+use zbus::Connection;
 
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut logger = env_logger::Builder::new();
@@ -55,6 +55,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         .request_name(DBUS_NAME, fdo::RequestNameFlags::ReplaceExisting.into())?;
     let mut object_server = zbus::ObjectServer::new(&connection);
 
+    let enable_gfx_switching = config.gfx_managed;
     let config = Arc::new(Mutex::new(config));
 
     match CtrlCharge::new(config.clone()) {
@@ -93,18 +94,20 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
     // Collect tasks for task thread
     let mut tasks: Vec<Arc<Mutex<dyn CtrlTask + Send>>> = Vec::new();
 
-    match CtrlFanAndCPU::new(config.clone()) {
-        Ok(mut ctrl) => {
-            ctrl.reload()
-                .unwrap_or_else(|err| warn!("Profile control: {}", err));
-            let tmp = Arc::new(Mutex::new(ctrl));
-            DbusFanAndCpu::new(tmp.clone()).add_to_server(&mut object_server);
-            tasks.push(tmp);
-        }
-        Err(err) => {
-            error!("Profile control: {}", err);
-        }
-    };
+    if enable_gfx_switching {
+        match CtrlFanAndCPU::new(config.clone()) {
+            Ok(mut ctrl) => {
+                ctrl.reload()
+                    .unwrap_or_else(|err| warn!("Profile control: {}", err));
+                let tmp = Arc::new(Mutex::new(ctrl));
+                DbusFanAndCpu::new(tmp.clone()).add_to_server(&mut object_server);
+                tasks.push(tmp);
+            }
+            Err(err) => {
+                error!("Profile control: {}", err);
+            }
+        };
+    }
 
     if let Some(laptop) = laptop {
         let ctrl = CtrlKbdBacklight::new(
@@ -128,10 +131,11 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
 
             for ctrl in tasks.iter() {
                 if let Ok(mut lock) = ctrl.try_lock() {
-                    lock.do_task().map_err(|err| {
-                        warn!("do_task error: {}", err);
-                    })
-                    .ok();
+                    lock.do_task()
+                        .map_err(|err| {
+                            warn!("do_task error: {}", err);
+                        })
+                        .ok();
                 }
             }
         });
@@ -140,7 +144,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         let x = obj.limit();
         obj.notify_charge(x as u8)
     })?;
-    
+
     loop {
         if let Err(err) = object_server.try_handle_next() {
             eprintln!("{}", err);
