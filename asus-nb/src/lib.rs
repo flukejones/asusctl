@@ -27,6 +27,7 @@ pub mod dbus_gfx;
 pub mod dbus_ledmode;
 pub mod dbus_profile;
 pub mod dbus_charge;
+pub mod dbus_anime;
 
 pub mod error;
 

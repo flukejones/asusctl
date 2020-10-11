@@ -1,16 +1,18 @@
-use crate::anime_matrix::AniMePacketType;
-use crate::{DBUS_IFACE, DBUS_NAME};
-use dbus::channel::Sender;
-use dbus::{blocking::Connection, Message};
+const DBUS_ANIME_PATH : &str = "/org/asuslinux/Anime";
+pub const ANIME_PANE1_PREFIX: [u8; 7] =
+    [0x5e, 0xc0, 0x02, 0x01, 0x00, 0x73, 0x02];
+pub const ANIME_PANE2_PREFIX: [u8; 7] =
+    [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x02];
+
+use crate::anime_matrix::{AniMeMatrix, AniMePacketType};
+use crate::DBUS_NAME;
+use dbus::blocking::Connection;
 use std::error::Error;
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc,
-};
 use std::{thread, time::Duration};
 
-pub const ANIME_PANE1_PREFIX: [u8; 7] = [0x5e, 0xc0, 0x02, 0x01, 0x00, 0x73, 0x02];
-pub const ANIME_PANE2_PREFIX: [u8; 7] = [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x02];
+use crate::dbus_anime::{
+    OrgAsuslinuxDaemon as OrgAsuslinuxDaemonAniMe,
+};
 
 /// Interface for the AniMe dot-matrix display
 ///
@@ -23,7 +25,6 @@ pub const ANIME_PANE2_PREFIX: [u8; 7] = [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x0
 pub struct AniMeDbusWriter {
     connection: Box<Connection>,
     block_time: u64,
-    stop: Arc<AtomicBool>,
 }
 
 impl AniMeDbusWriter {
@@ -33,8 +34,23 @@ impl AniMeDbusWriter {
         Ok(AniMeDbusWriter {
             connection: Box::new(connection),
             block_time: 25,
-            stop: Arc::new(AtomicBool::new(false)),
         })
+    }
+
+    /// Create D-Bus proxy and send the message
+    #[inline]
+    fn write_anime(&self, input: Vec<Vec<u8>>)
+                       -> Result<(), Box<dyn Error>> {
+        let proxy = self.connection.with_proxy(
+            DBUS_NAME,
+            DBUS_ANIME_PATH,
+            Duration::from_millis(200),
+        );
+
+        proxy.set_anime(input)?;
+        thread::sleep(Duration::from_millis(self.block_time));
+
+        Ok(())
     }
 
     pub fn write_image_to_buf(_buf: &mut AniMePacketType, _image_data: &[u8]) {
@@ -43,37 +59,35 @@ impl AniMeDbusWriter {
 
     /// Write an Animatrix image
     ///
-    /// The expected input here is *two* Vectors, 640 bytes in length. The two vectors
-    /// are each one half of the full image write.
+    /// The expected input here is *two* Vectors, 640 bytes in length.
+    /// The two vectors are each one half of the full image write.
     ///
-    /// After each write a flush is written, it is assumed that this tells the device to
-    /// go ahead and display the written bytes
+    /// After each write a flush is written, it is assumed that this tells the
+    /// device to go ahead and display the written bytes
     ///
-    /// # Note:
-    /// The vectors are expected to contain the full sequence of bytes as follows
+    /// # Note: The vectors are expected to contain the full sequence of bytes
+    /// as follows
     ///
     /// - Write packet 1: 0x5e 0xc0 0x02 0x01 0x00 0x73 0x02 .. <led brightness>
     /// - Write packet 2: 0x5e 0xc0 0x02 0x74 0x02 0x73 0x02 .. <led brightness>
     ///
     /// Where led brightness is 0..255, low to high
     #[inline]
-    pub fn write_image(&mut self, image: &mut AniMePacketType) -> Result<(), Box<dyn Error>> {
-        if image[0][0] != ANIME_PANE1_PREFIX[0] && image[0][6] != ANIME_PANE1_PREFIX[6] {
-            image[0][..7].copy_from_slice(&ANIME_PANE1_PREFIX);
-        }
-        if image[1][0] != ANIME_PANE2_PREFIX[0] && image[1][6] != ANIME_PANE2_PREFIX[6] {
-            image[1][..7].copy_from_slice(&ANIME_PANE2_PREFIX);
-        }
+    pub fn write_image(&self, image: &mut AniMePacketType)
+                       -> Result<(), Box<dyn Error>> {
+        image[0][..7].copy_from_slice(&ANIME_PANE1_PREFIX);
+        image[1][..7].copy_from_slice(&ANIME_PANE2_PREFIX);
+        self.write_anime(vec![image[0].to_vec(), image[1].to_vec()])?;
+        Ok(())
+    }
 
-        let mut msg =
-            Message::new_method_call(DBUS_NAME, "/org/asuslinux/Anime", DBUS_IFACE, "SetAnime")?
-                .append2(image[0].to_vec(), image[1].to_vec());
-        msg.set_no_reply(true);
-        self.connection.send(msg).unwrap();
-        thread::sleep(Duration::from_millis(self.block_time));
-        if self.stop.load(Ordering::Relaxed) {
-            panic!("Got signal to stop!");
-        }
+    #[inline]
+    pub fn set_leds_brightness(&self, led_brightness: u8)
+                               -> Result<(), Box<dyn Error>> {
+        let mut anime_matrix = AniMeMatrix::new();
+
+        anime_matrix.fill_with(led_brightness);
+        self.write_image(&mut AniMePacketType::from(anime_matrix))?;
         Ok(())
     }
 }

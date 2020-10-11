@@ -7,6 +7,7 @@ pub enum AuraError {
     ParseSpeed,
     ParseDirection,
     ParseBrightness,
+    ParseAnime,
 }
 
 impl fmt::Display for AuraError {
@@ -17,6 +18,7 @@ impl fmt::Display for AuraError {
             AuraError::ParseSpeed => write!(f, "Could not parse speed"),
             AuraError::ParseDirection => write!(f, "Could not parse direction"),
             AuraError::ParseBrightness => write!(f, "Could not parse brightness"),
+            AuraError::ParseAnime => write!(f, "Could not parse anime"),
         }
     }
 }

@@ -213,3 +213,26 @@ impl Default for SetAuraBuiltin {
         })
     }
 }
+
+
+#[derive(Debug, Options)]
+pub struct AniMeLeds {
+    #[options(help = "print help message")]
+    help: bool,
+    #[options(no_long, required,
+              short = "b", meta = "BYTE",
+              help = "set all leds brightness value")]
+    led_brightness: u8,
+}
+
+impl AniMeLeds {
+    pub fn led_brightness(&self) -> u8 {
+        self.led_brightness
+    }
+}
+
+#[derive(Debug, Options)]
+pub enum AniMeActions {
+    #[options(help = "change all leds brightness")]
+    Leds(AniMeLeds)
+}

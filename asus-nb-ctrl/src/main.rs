@@ -1,6 +1,7 @@
 use asus_nb::{
-    cli_options::{LedBrightness, SetAuraBuiltin},
+    cli_options::{LedBrightness, SetAuraBuiltin, AniMeActions},
     core_dbus::AuraDbusClient,
+    anime_dbus::AniMeDbusWriter,
     profile::{ProfileCommand, ProfileEvent},
 };
 use ctrl_gfx::vendors::GfxVendors;
@@ -36,6 +37,8 @@ enum CliCommand {
     Profile(ProfileCommand),
     #[options(help = "Set the graphics mode")]
     Graphics(GraphicsCommand),
+    #[options(name = "anime", help = "Manage AniMe Matrix")]
+    AniMe(AniMeCommand),
 }
 
 #[derive(Options)]
@@ -60,6 +63,14 @@ struct GraphicsCommand {
     force: bool,
 }
 
+#[derive(Debug, Options)]
+struct AniMeCommand {
+    #[options(help = "print help message")]
+    help: bool,
+    #[options(command, required)]
+    command: Option<AniMeActions>,
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut logger = env_logger::Builder::new();
     logger
@@ -75,6 +86,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let writer = AuraDbusClient::new()?;
+    let anime = AniMeDbusWriter::new()?;
 
     match parsed.command {
         Some(CliCommand::LedMode(mode)) => {
@@ -86,7 +98,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             writer.write_profile_command(&ProfileEvent::Cli(command))?
         }
         Some(CliCommand::Graphics(command)) => do_gfx(command, &writer)?,
-        None => (),
+        Some(CliCommand::AniMe(
+            AniMeCommand {
+                command: Some(AniMeActions::Leds(anime_leds)), ..
+            })) => {
+            anime.set_leds_brightness(anime_leds.led_brightness())?;
+        },
+        Some(CliCommand::AniMe(_))
+            | None => (),
     }
 
     if let Some(brightness) = parsed.kbd_bright {
