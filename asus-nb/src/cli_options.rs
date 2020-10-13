@@ -5,10 +5,14 @@ use std::str::FromStr;
 
 #[derive(Options)]
 pub struct LedBrightness {
-    level: u8,
+    level: Option<u8>,
 }
 impl LedBrightness {
-    pub fn level(&self) -> u8 {
+    pub fn new(level: Option<u8>) -> Self {
+        LedBrightness { level }
+    }
+
+    pub fn level(&self) -> Option<u8> {
         self.level
     }
 }
@@ -18,15 +22,28 @@ impl FromStr for LedBrightness {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s = s.to_lowercase();
         match s.as_str() {
-            "off" => Ok(LedBrightness { level: 0x00 }),
-            "low" => Ok(LedBrightness { level: 0x01 }),
-            "med" => Ok(LedBrightness { level: 0x02 }),
-            "high" => Ok(LedBrightness { level: 0x03 }),
+            "off" => Ok(LedBrightness { level: Some(0x00) }),
+            "low" => Ok(LedBrightness { level: Some(0x01) }),
+            "med" => Ok(LedBrightness { level: Some(0x02) }),
+            "high" => Ok(LedBrightness { level: Some(0x03) }),
             _ => {
-                println!("Missing required argument, must be one of:\noff,low,med,high\n");
+                print!("{}\n{}\n",
+                       "Invalid argument, must be one of:",
+                       "off, low, med, high");
                 Err(AuraError::ParseBrightness)
             }
         }
+    }
+}
+impl ToString for LedBrightness {
+    fn to_string(&self) -> String {
+        let s = match self.level {
+            Some(0x00) => "low",
+            Some(0x01) => "med",
+            Some(0x02) => "high",
+            _ => "unknown",
+        };
+        s.to_string()
     }
 }
 

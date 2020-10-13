@@ -1,3 +1,4 @@
+use crate::cli_options::LedBrightness;
 use super::*;
 use crate::fancy::KeyColourArray;
 use crate::profile::ProfileEvent;
@@ -305,8 +306,21 @@ impl AuraDbusClient {
     }
 
     #[inline]
-    pub fn write_brightness(&self, level: u8) -> Result<String, Box<dyn std::error::Error>> {
+    pub fn get_led_brightness(&self) -> Result<LedBrightness, Box<dyn Error>> {
+        let proxy = self.connection.with_proxy(
+            "org.asuslinux.Daemon",
+            "/org/asuslinux/Led",
+            Duration::from_secs(2),
+        );
+        match proxy.led_bright()? {
+            -1 => Ok(LedBrightness::new(None)),
+            level => Ok(LedBrightness::new(Some(level as u8))),
+        }
+    }
+
+    #[inline]
+    pub fn write_brightness(&self, level: u8) -> Result<(), Box<dyn std::error::Error>> {
         self.write_keyboard_leds(&AuraModes::LedBrightness(level))?;
-        Ok(String::new())
+        Ok(())
     }
 }

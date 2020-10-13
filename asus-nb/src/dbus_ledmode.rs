@@ -8,6 +8,7 @@ pub trait OrgAsuslinuxDaemon {
     fn set_led_mode(&self, data: &str) -> Result<(), dbus::Error>;
     fn led_mode(&self) -> Result<String, dbus::Error>;
     fn led_modes(&self) -> Result<String, dbus::Error>;
+    fn led_bright(&self) -> Result<i16, dbus::Error>;
 }
 
 impl<'a, T: blocking::BlockingSender, C: ::std::ops::Deref<Target=T>> OrgAsuslinuxDaemon for blocking::Proxy<'a, C> {
@@ -24,6 +25,11 @@ impl<'a, T: blocking::BlockingSender, C: ::std::ops::Deref<Target=T>> OrgAsuslin
     fn led_modes(&self) -> Result<String, dbus::Error> {
         self.method_call("org.asuslinux.Daemon", "LedModes", ())
             .and_then(|r: (String, )| Ok(r.0, ))
+    }
+
+    fn led_bright(&self) -> Result<i16, dbus::Error> {
+        self.method_call("org.asuslinux.Daemon", "LedBright", ())
+            .and_then(|r: (i16, )| Ok(r.0, ))
     }
 }
 
