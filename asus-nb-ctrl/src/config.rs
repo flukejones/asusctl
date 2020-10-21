@@ -30,18 +30,18 @@ impl Config {
             .write(true)
             .create(true)
             .open(&CONFIG_PATH)
-            .expect(&format!("The file {} or directory /etc/asusd/ is missing", CONFIG_PATH)); // okay to cause panic here
+            .expect(&format!(
+                "The file {} or directory /etc/asusd/ is missing",
+                CONFIG_PATH
+            )); // okay to cause panic here
         let mut buf = String::new();
         if let Ok(l) = file.read_to_string(&mut buf) {
             if l == 0 {
                 self = Config::create_default(&mut file, &supported_led_modes);
             } else {
                 self = serde_json::from_str(&buf).unwrap_or_else(|_| {
-                    warn!(
-                        "Could not deserialise {}. Overwriting with default",
-                        CONFIG_PATH
-                    );
-                    Config::create_default(&mut file, &supported_led_modes)
+                    warn!("Could not deserialise {}", CONFIG_PATH);
+                    panic!("Please remove {} then restart asusd", CONFIG_PATH);
                 });
             }
         }
