@@ -4,9 +4,9 @@ StartLimitInterval=200
 StartLimitBurst=2
 
 [Service]
+ExecStartPre=/usr/bin/sleep 2
 ExecStart=/usr/bin/asus-notify
 Restart=on-failure
-Restart=always
 RestartSec=1
 Type=simple
 

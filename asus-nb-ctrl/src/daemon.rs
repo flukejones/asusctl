@@ -80,34 +80,34 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    match CtrlGraphics::new() {
-        Ok(mut ctrl) => {
-            ctrl.reload()
-                .unwrap_or_else(|err| warn!("Gfx controller: {}", err));
-            ctrl.add_to_server(&mut object_server);
-        }
-        Err(err) => {
-            error!("Gfx control: {}", err);
+    if enable_gfx_switching {
+        match CtrlGraphics::new() {
+            Ok(mut ctrl) => {
+                ctrl.reload()
+                    .unwrap_or_else(|err| warn!("Gfx controller: {}", err));
+                ctrl.add_to_server(&mut object_server);
+            }
+            Err(err) => {
+                error!("Gfx control: {}", err);
+            }
         }
     }
 
     // Collect tasks for task thread
     let mut tasks: Vec<Arc<Mutex<dyn CtrlTask + Send>>> = Vec::new();
 
-    if enable_gfx_switching {
-        match CtrlFanAndCPU::new(config.clone()) {
-            Ok(mut ctrl) => {
-                ctrl.reload()
-                    .unwrap_or_else(|err| warn!("Profile control: {}", err));
-                let tmp = Arc::new(Mutex::new(ctrl));
-                DbusFanAndCpu::new(tmp.clone()).add_to_server(&mut object_server);
-                tasks.push(tmp);
-            }
-            Err(err) => {
-                error!("Profile control: {}", err);
-            }
-        };
-    }
+    match CtrlFanAndCPU::new(config.clone()) {
+        Ok(mut ctrl) => {
+            ctrl.reload()
+                .unwrap_or_else(|err| warn!("Profile control: {}", err));
+            let tmp = Arc::new(Mutex::new(ctrl));
+            DbusFanAndCpu::new(tmp.clone()).add_to_server(&mut object_server);
+            tasks.push(tmp);
+        }
+        Err(err) => {
+            error!("Profile control: {}", err);
+        }
+    };
 
     if let Some(laptop) = laptop {
         let ctrl = CtrlKbdBacklight::new(
