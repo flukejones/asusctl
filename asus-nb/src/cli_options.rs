@@ -214,8 +214,7 @@ impl Default for SetAuraBuiltin {
     }
 }
 
-
-#[derive(Debug, Options)]
+#[derive(Options)]
 pub struct AniMeLeds {
     #[options(help = "print help message")]
     help: bool,
@@ -231,8 +230,8 @@ impl AniMeLeds {
     }
 }
 
-#[derive(Debug, Options)]
+#[derive(Options)]
 pub enum AniMeActions {
     #[options(help = "change all leds brightness")]
-    Leds(AniMeLeds)
+    Leds(AniMeLeds),
 }

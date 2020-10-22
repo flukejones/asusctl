@@ -1,5 +1,9 @@
 use asus_nb::{
-    cli_options::{LedBrightness, SetAuraBuiltin, AniMeActions},
+    cli_options::{
+        LedBrightness,
+        SetAuraBuiltin,
+        AniMeActions,
+    },
     core_dbus::AuraDbusClient,
     anime_dbus::AniMeDbusWriter,
     profile::{ProfileCommand, ProfileEvent},
@@ -63,11 +67,17 @@ struct GraphicsCommand {
     force: bool,
 }
 
-#[derive(Debug, Options)]
+#[derive(Options)]
 struct AniMeCommand {
     #[options(help = "print help message")]
     help: bool,
-    #[options(command, required)]
+    #[options(help = "turn on the panel (and accept write requests)",
+              no_short)]
+    on: bool,
+    #[options(help = "turn off the panel (and reject write requests)",
+              no_short)]
+    off: bool,
+    #[options(command)]
     command: Option<AniMeActions>,
 }
 
@@ -86,7 +96,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let writer = AuraDbusClient::new()?;
-    let anime = AniMeDbusWriter::new()?;
+    let anime_writer = AniMeDbusWriter::new()?;
 
     match parsed.command {
         Some(CliCommand::LedMode(mode)) => {
@@ -98,14 +108,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             writer.write_profile_command(&ProfileEvent::Cli(command))?
         }
         Some(CliCommand::Graphics(command)) => do_gfx(command, &writer)?,
-        Some(CliCommand::AniMe(
-            AniMeCommand {
-                command: Some(AniMeActions::Leds(anime_leds)), ..
-            })) => {
-            anime.set_leds_brightness(anime_leds.led_brightness())?;
-        },
-        Some(CliCommand::AniMe(_))
-            | None => (),
+        Some(CliCommand::AniMe(anime)) => {
+            if anime.on {
+                anime_writer.turn_on()?;
+            } else if anime.off {
+                anime_writer.turn_off()?;
+            } else if let Some(action) = anime.command {
+                match action {
+                    AniMeActions::Leds(anime_leds) => {
+                        let led_brightness = anime_leds.led_brightness();
+                        anime_writer.set_leds_brightness(led_brightness)?;
+                    }
+                }
+            }
+        }
+        None => ()
     }
 
     if let Some(brightness) = parsed.kbd_bright {
