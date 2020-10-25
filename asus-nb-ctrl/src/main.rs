@@ -6,16 +6,22 @@ use asus_nb::{
 };
 use ctrl_gfx::vendors::GfxVendors;
 use daemon::ctrl_fan_cpu::FanLevel;
-use gumdrop::Options;
+use gumdrop::{
+    Opt,
+    Options,
+};
 use log::LevelFilter;
-use std::io::Write;
-use std::process::Command;
+use std::{
+    env::args,
+    io::Write,
+    process::Command,
+};
 use yansi_term::Colour::Green;
 use yansi_term::Colour::Red;
 
-#[derive(Options)]
+#[derive(Default, Options)]
 struct CLIStart {
-    #[options(help = "print help message")]
+    #[options(help_flag, help = "print help message")]
     help: bool,
     #[options(help = "show program version number")]
     version: bool,
@@ -79,7 +85,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .filter(None, LevelFilter::Info)
         .init();
 
-    let parsed = CLIStart::parse_args_default_or_exit();
+    let mut args : Vec<String> = args().collect();
+    args.remove(0);
+
+    let parsed : CLIStart;
+    let missing_argument_k = gumdrop::Error::missing_argument(Opt::Short('k'));
+    match CLIStart::parse_args_default(&args) {
+        Ok(p) => {
+            parsed = p;
+        }
+        Err(err) if err.to_string() == missing_argument_k.to_string() => {
+            parsed = CLIStart {
+                kbd_bright: Some(LedBrightness::new(None)),
+                ..Default::default()
+            };
+        }
+        Err(err) => {
+            eprintln!("source {:?}", err);
+            std::process::exit(2);
+        }
+    }
+
+    if parsed.help_requested() {
+        // As help option don't work with `parse_args_default`
+        // we will call `parse_args_default_or_exit` instead
+        CLIStart::parse_args_default_or_exit();
+    }
 
     if parsed.version {
         println!("Version: {}", daemon::VERSION);
@@ -109,8 +140,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if let Some(brightness) = parsed.kbd_bright {
-        writer.write_brightness(brightness.level())?;
+        match brightness.level() {
+            None => {
+                let level = writer.get_led_brightness()?;
+                println!("Current keyboard led brightness: {}",
+                         level.to_string());
+            },
+            Some(level) => writer.write_brightness(level)?,
+        }
     }
+
     if let Some(fan_level) = parsed.pwr_profile {
         writer.write_fan_mode(fan_level.into())?;
     }

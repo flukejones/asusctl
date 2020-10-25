@@ -98,6 +98,16 @@ impl DbusKbdBacklight {
         "SetKeyBacklight could not deserialise".to_string()
     }
 
+    fn led_bright(&self) -> i8 {
+        if let Ok(ctrl) = self.inner.try_lock() {
+            if let Ok(cfg) = ctrl.config.clone().try_lock() {
+                return cfg.kbd_led_brightness as i8;
+            }
+        }
+        warn!("SetKeyBacklight could not deserialise");
+        -1
+    }
+
     #[dbus_interface(signal)]
     fn notify_led(&self, data: &str) -> zbus::Result<()>;
 }
