@@ -5,6 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+# [2.1.0] - 2020-10-25
+### Added
+- Option to turn off AniMe display (@asere)
+### Changed
+- Change option -k to show current LED bright (@asere)
+- Correctly disable GFX control via config
+- Panic and exit if config can't be parsed
+- Add DBUS method to toggle to next fan/thermal profile
+
 # [2.0.5] - 2020-09-29
 ### Changed
 - Bugfixes

@@ -29,7 +29,7 @@ checksum = "cff77d8686867eceff3105329d4698d96c2391c176d5d03adc90c7389162b5b8"
 
 [[package]]
 name = "asus-nb"
-version = "2.0.5"
+version = "2.1.0"
 dependencies = [
  "ctrl-gfx",
  "dbus",
@@ -46,7 +46,7 @@ dependencies = [
 
 [[package]]
 name = "asus-nb-ctrl"
-version = "2.0.5"
+version = "2.1.0"
 dependencies = [
  "asus-nb",
  "ctrl-gfx",

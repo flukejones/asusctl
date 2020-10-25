@@ -265,6 +265,17 @@ impl AuraDbusClient {
     }
 
     #[inline]
+    pub fn next_fan_profile(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let proxy = self.connection.with_proxy(
+            "org.asuslinux.Daemon",
+            "/org/asuslinux/Profile",
+            Duration::from_secs(2),
+        );
+        proxy.next_profile()?;
+        Ok(())
+    }
+
+    #[inline]
     pub fn write_fan_mode(&self, level: u8) -> Result<(), Box<dyn std::error::Error>> {
         let proxy = self.connection.with_proxy(
             "org.asuslinux.Daemon",

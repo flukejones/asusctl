@@ -72,6 +72,7 @@ impl DbusKbdBacklight {
         }
     }
 
+    /// Return the current mode data
     fn led_mode(&self) -> String {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(cfg) = ctrl.config.clone().try_lock() {
@@ -86,6 +87,7 @@ impl DbusKbdBacklight {
         "SetKeyBacklight could not deserialise".to_string()
     }
 
+    /// Return a list of available modes
     fn led_modes(&self) -> String {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(cfg) = ctrl.config.clone().try_lock() {
@@ -98,7 +100,8 @@ impl DbusKbdBacklight {
         "SetKeyBacklight could not deserialise".to_string()
     }
 
-    fn led_bright(&self) -> i8 {
+    /// Return the current LED brightness
+    fn led_brightness(&self) -> i8 {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(cfg) = ctrl.config.clone().try_lock() {
                 return cfg.kbd_led_brightness as i8;

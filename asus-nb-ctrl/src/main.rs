@@ -1,25 +1,14 @@
 use asus_nb::{
-    cli_options::{
-        LedBrightness,
-        SetAuraBuiltin,
-        AniMeActions,
-    },
-    core_dbus::AuraDbusClient,
     anime_dbus::AniMeDbusWriter,
+    cli_options::{AniMeActions, LedBrightness, SetAuraBuiltin},
+    core_dbus::AuraDbusClient,
     profile::{ProfileCommand, ProfileEvent},
 };
 use ctrl_gfx::vendors::GfxVendors;
 use daemon::ctrl_fan_cpu::FanLevel;
-use gumdrop::{
-    Opt,
-    Options,
-};
+use gumdrop::{Opt, Options};
 use log::LevelFilter;
-use std::{
-    env::args,
-    io::Write,
-    process::Command,
-};
+use std::{env::args, io::Write, process::Command};
 use yansi_term::Colour::Green;
 use yansi_term::Colour::Red;
 
@@ -77,11 +66,9 @@ struct GraphicsCommand {
 struct AniMeCommand {
     #[options(help = "print help message")]
     help: bool,
-    #[options(help = "turn on the panel (and accept write requests)",
-              no_short)]
+    #[options(help = "turn on the panel (and accept write requests)", no_short)]
     on: bool,
-    #[options(help = "turn off the panel (and reject write requests)",
-              no_short)]
+    #[options(help = "turn off the panel (and reject write requests)", no_short)]
     off: bool,
     #[options(command)]
     command: Option<AniMeActions>,
@@ -95,10 +82,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .filter(None, LevelFilter::Info)
         .init();
 
-    let mut args : Vec<String> = args().collect();
+    let mut args: Vec<String> = args().collect();
     args.remove(0);
 
-    let parsed : CLIStart;
+    let parsed: CLIStart;
     let missing_argument_k = gumdrop::Error::missing_argument(Opt::Short('k'));
     match CLIStart::parse_args_default(&args) {
         Ok(p) => {
@@ -136,7 +123,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
         Some(CliCommand::Profile(command)) => {
-            writer.write_profile_command(&ProfileEvent::Cli(command))?
+            if command.next {
+                writer.next_fan_profile()?;
+            } else {
+                writer.write_profile_command(&ProfileEvent::Cli(command))?
+            }
         }
         Some(CliCommand::Graphics(command)) => do_gfx(command, &writer)?,
         Some(CliCommand::AniMe(anime)) => {
@@ -153,16 +144,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
         }
-        None => ()
+        None => (),
     }
 
     if let Some(brightness) = parsed.kbd_bright {
         match brightness.level() {
             None => {
                 let level = writer.get_led_brightness()?;
-                println!("Current keyboard led brightness: {}",
-                         level.to_string());
-            },
+                println!("Current keyboard led brightness: {}", level.to_string());
+            }
             Some(level) => writer.write_brightness(level)?,
         }
     }

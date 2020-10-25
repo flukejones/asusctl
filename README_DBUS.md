@@ -76,6 +76,12 @@ Accepts an integer from the following:
 - `1`: Boost mode
 - `2`: Silent mode
 
+## dbus-send examples:
+
+```
+dbus-send --system --type=method_call --dest=org.asuslinux.Daemon /org/asuslinux/Profile org.asuslinux.Daemon.NextProfile
+```
+
 ## dbus-send examples OUTDATED
 
 ```

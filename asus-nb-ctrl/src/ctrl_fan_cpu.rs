@@ -31,6 +31,7 @@ impl DbusFanAndCpu {
 
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl DbusFanAndCpu {
+    /// Set profile details
     fn set_profile(&self, profile: String) {
         if let Ok(event) = serde_json::from_str(&profile) {
             if let Ok(mut ctrl) = self.inner.try_lock() {
@@ -45,6 +46,23 @@ impl DbusFanAndCpu {
         }
     }
 
+    /// Fetch the active profile name
+    fn next_profile(&mut self) {
+        if let Ok(mut ctrl) = self.inner.try_lock() {
+            if let Ok(mut cfg) = ctrl.config.clone().try_lock() {
+                ctrl.do_next_profile(&mut cfg)
+                    .unwrap_or_else(|err| warn!("{}", err));
+                if let Some(profile) = cfg.power_profiles.get(&cfg.active_profile) {
+                    if let Ok(json) = serde_json::to_string(profile) {
+                        self.notify_profile(&json)
+                        .unwrap_or_else(|err| warn!("{}", err));
+                    }
+                }
+            }
+        }
+    }
+
+    /// Fetch the active profile name
     fn active_profile_name(&mut self) -> String {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(mut cfg) = ctrl.config.try_lock() {
@@ -55,6 +73,7 @@ impl DbusFanAndCpu {
         "Failed".to_string()
     }
 
+    /// Fetch the active profile details
     fn profile(&mut self) -> String {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(mut cfg) = ctrl.config.try_lock() {
@@ -178,7 +197,8 @@ impl CtrlFanAndCPU {
         }
     }
 
-    pub(super) fn do_update(&mut self, config: &mut Config) -> Result<(), RogError> {
+    /// Toggle to next profile in list
+    pub(super) fn do_next_profile(&mut self, config: &mut Config) -> Result<(), RogError> {
         config.read();
 
         let mut i = config
@@ -232,7 +252,7 @@ impl CtrlFanAndCPU {
         config: &mut Config,
     ) -> Result<(), RogError> {
         match event {
-            ProfileEvent::Toggle => self.do_update(config)?,
+            ProfileEvent::Toggle => self.do_next_profile(config)?,
             ProfileEvent::ChangeMode(mode) => {
                 self.set_fan_mode(*mode, config)?;
             }

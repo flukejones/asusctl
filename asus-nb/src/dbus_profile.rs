@@ -6,6 +6,7 @@ use dbus::blocking;
 
 pub trait OrgAsuslinuxDaemon {
     fn set_profile(&self, profile: &str) -> Result<(), dbus::Error>;
+    fn next_profile(&self) -> Result<(), dbus::Error>;
     fn active_profile_name(&self) -> Result<String, dbus::Error>;
     fn profile(&self) -> Result<String, dbus::Error>;
     fn profiles(&self) -> Result<String, dbus::Error>;
@@ -15,6 +16,10 @@ impl<'a, T: blocking::BlockingSender, C: ::std::ops::Deref<Target=T>> OrgAsuslin
 
     fn set_profile(&self, profile: &str) -> Result<(), dbus::Error> {
         self.method_call("org.asuslinux.Daemon", "SetProfile", (profile, ))
+    }
+
+    fn next_profile(&self) -> Result<(), dbus::Error> {
+        self.method_call("org.asuslinux.Daemon", "NextProfile", ())
     }
 
     fn active_profile_name(&self) -> Result<String, dbus::Error> {
