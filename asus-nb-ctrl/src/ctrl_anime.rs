@@ -9,6 +9,10 @@ const INIT: u8 = 0xc2;
 const APPLY: u8 = 0xc3;
 const SET: u8 = 0xc4;
 
+// Used to turn the panel on and off
+// The next byte can be 0x03 for "on" and 0x00 for "off"
+const ON_OFF : u8 = 0x04;
+
 use asus_nb::error::AuraError;
 use log::{error, info, warn};
 use rusb::{Device, DeviceHandle};
@@ -22,6 +26,7 @@ use zbus::dbus_interface;
 pub enum AnimatrixCommand {
     Apply,
     Set,
+    Write(Vec<u8>),
     WriteImage(Vec<Vec<u8>>),
     //ReloadLast,
 }
@@ -34,6 +39,8 @@ pub struct CtrlAnimeDisplay {
 //AnimatrixWrite
 pub trait Dbus {
     fn set_anime(&mut self, input: Vec<Vec<u8>>);
+
+    fn set_on_off(&mut self, status: bool);
 }
 
 impl crate::ZbusAdd for CtrlAnimeDisplay {
@@ -52,6 +59,26 @@ impl crate::ZbusAdd for CtrlAnimeDisplay {
 impl Dbus for CtrlAnimeDisplay {
     fn set_anime(&mut self, input: Vec<Vec<u8>>) {
         self.do_command(AnimatrixCommand::WriteImage(input))
+            .unwrap_or_else(|err| warn!("{}", err));
+    }
+
+    fn set_on_off(&mut self, status: bool) {
+        let mut activity : Vec<u8> = vec![0; PACKET_SIZE];
+        activity[0] = DEV_PAGE;
+        activity[1] = WRITE;
+        activity[2] = ON_OFF;
+
+        let status_str;
+        if status {
+            activity[3] = 0x03;
+            status_str = "on";
+        } else {
+            activity[3] = 0x00;
+            status_str = "off";
+        }
+        info!("Turning {} the AniMe", status_str);
+
+        self.do_command(AnimatrixCommand::Write(activity))
             .unwrap_or_else(|err| warn!("{}", err));
     }
 }
@@ -99,9 +126,10 @@ impl CtrlAnimeDisplay {
         }
 
         match command {
-            AnimatrixCommand::WriteImage(effect) => self.write_image(effect)?,
-            AnimatrixCommand::Set => self.do_set()?,
             AnimatrixCommand::Apply => self.do_apply()?,
+            AnimatrixCommand::Set => self.do_set()?,
+            AnimatrixCommand::Write(bytes) => self.write_bytes(&bytes)?,
+            AnimatrixCommand::WriteImage(effect) => self.write_image(effect)?,
             //AnimatrixCommand::ReloadLast => self.reload_last_builtin(&config).await?,
         }
         Ok(())

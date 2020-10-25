@@ -6,7 +6,7 @@ pub const ANIME_PANE2_PREFIX: [u8; 7] =
 
 use crate::anime_matrix::{AniMeMatrix, AniMePacketType};
 use crate::DBUS_NAME;
-use dbus::blocking::Connection;
+use dbus::blocking::{Connection, Proxy};
 use std::error::Error;
 use std::{thread, time::Duration};
 
@@ -37,20 +37,13 @@ impl AniMeDbusWriter {
         })
     }
 
-    /// Create D-Bus proxy and send the message
-    #[inline]
-    fn write_anime(&self, input: Vec<Vec<u8>>)
-                       -> Result<(), Box<dyn Error>> {
-        let proxy = self.connection.with_proxy(
+    // Create D-Bus proxy
+    fn new_proxy(&self) -> Proxy<&Connection>{
+        self.connection.with_proxy(
             DBUS_NAME,
             DBUS_ANIME_PATH,
             Duration::from_millis(200),
-        );
-
-        proxy.set_anime(input)?;
-        thread::sleep(Duration::from_millis(self.block_time));
-
-        Ok(())
+        )
     }
 
     pub fn write_image_to_buf(_buf: &mut AniMePacketType, _image_data: &[u8]) {
@@ -75,9 +68,14 @@ impl AniMeDbusWriter {
     #[inline]
     pub fn write_image(&self, image: &mut AniMePacketType)
                        -> Result<(), Box<dyn Error>> {
+        let proxy = self.new_proxy();
+
         image[0][..7].copy_from_slice(&ANIME_PANE1_PREFIX);
         image[1][..7].copy_from_slice(&ANIME_PANE2_PREFIX);
-        self.write_anime(vec![image[0].to_vec(), image[1].to_vec()])?;
+
+        proxy.set_anime(vec![image[0].to_vec(), image[1].to_vec()])?;
+        thread::sleep(Duration::from_millis(self.block_time));
+
         Ok(())
     }
 
@@ -88,6 +86,28 @@ impl AniMeDbusWriter {
 
         anime_matrix.fill_with(led_brightness);
         self.write_image(&mut AniMePacketType::from(anime_matrix))?;
+
+        Ok(())
+    }
+
+    fn turn_on_off(&self, status : bool) -> Result<(), Box<dyn Error>> {
+        let proxy = self.new_proxy();
+
+        proxy.set_on_off(status)?;
+        thread::sleep(Duration::from_millis(self.block_time));
+
+        Ok(())
+    }
+
+    #[inline]
+    pub fn turn_on(&self) -> Result<(), Box<dyn Error>> {
+        self.turn_on_off(true)?;
+        Ok(())
+    }
+
+    #[inline]
+    pub fn turn_off(&self) -> Result<(), Box<dyn Error>> {
+        self.turn_on_off(false)?;
         Ok(())
     }
 }
