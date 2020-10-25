@@ -133,20 +133,19 @@ To switch Fan/Thermal profiles you need to bind the Fn+F5 key to `asusctl profil
 
 # BUILDING
 
-Requirements are:
+Requirements are rust >= 1.40 installed from rustup.io if the distro provided version is too old, and `make`.
 
-- `rustc` + `cargo` + `make`
-- `libusb-1.0-0-dev`
-- `libdbus-1-dev`
-- `llvm`
-- `libclang-dev`
-- `libudev-dev`
+**Ubuntu*:** `apt install libdbus-1-dev libclang-dev libudev-dev`
+
+**fedora:** `dnf install clang-devel dbus-devel systemd-devel`
 
 ## Installing
 
 Packaging and auto-builds are available [here](https://build.opensuse.org/package/show/home:luke_nukem:asus/asus-nb-ctrl)
 
 Download repositories are available [here](https://download.opensuse.org/repositories/home:/luke_nukem:/asus/)
+
+Alternatively check the releases page for f33 RPM.
 
 ---
 
