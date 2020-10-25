@@ -77,6 +77,13 @@ impl DbusKbdBacklight {
             if let Ok(mut cfg) = ctrl.config.clone().try_lock() {
                 ctrl.toggle_mode(false, &mut cfg)
                 .unwrap_or_else(|err| warn!("{}", err));
+
+                if let Some(mode) = cfg.get_led_mode_data(cfg.kbd_backlight_mode) {
+                    if let Ok(json) = serde_json::to_string(&mode) {
+                        self.notify_led(&json)
+                        .unwrap_or_else(|err| warn!("{}", err));
+                    }
+                }
             }
         }
     }
@@ -86,6 +93,13 @@ impl DbusKbdBacklight {
             if let Ok(mut cfg) = ctrl.config.clone().try_lock() {
                 ctrl.toggle_mode(true, &mut cfg)
                 .unwrap_or_else(|err| warn!("{}", err));
+
+                if let Some(mode) = cfg.get_led_mode_data(cfg.kbd_backlight_mode) {
+                    if let Ok(json) = serde_json::to_string(&mode) {
+                        self.notify_led(&json)
+                        .unwrap_or_else(|err| warn!("{}", err));
+                    }
+                }
             }
         }
     }
