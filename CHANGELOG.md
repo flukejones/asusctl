@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Correctly disable GFX control via config
 - Panic and exit if config can't be parsed
 - Add DBUS method to toggle to next fan/thermal profile
+- Add DBUS method to toggle to next/prev Aura mode
 
 # [2.0.5] - 2020-09-29
 ### Changed

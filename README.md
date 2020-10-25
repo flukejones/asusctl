@@ -117,6 +117,20 @@ If you model isn't getting the correct led modes, you can edit the file
 
 use `cat /sys/class/dmi/id/product_name` to get details about your laptop.
 
+# Keybinds
+
+To switch to next/previous Aura modes you will need to bind both the aura keys (if available) to one of:
+**Next**
+```
+asusctl led-mode -n
+```
+**Previous**
+```
+asusctl led-mode -p
+```
+
+To switch Fan/Thermal profiles you need to bind the Fn+F5 key to `asusctl profile -n`.
+
 # BUILDING
 
 Requirements are:

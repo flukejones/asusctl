@@ -72,6 +72,24 @@ impl DbusKbdBacklight {
         }
     }
 
+    fn next_led_mode(&self) {
+        if let Ok(mut ctrl) = self.inner.try_lock() {
+            if let Ok(mut cfg) = ctrl.config.clone().try_lock() {
+                ctrl.toggle_mode(false, &mut cfg)
+                .unwrap_or_else(|err| warn!("{}", err));
+            }
+        }
+    }
+
+    fn prev_led_mode(&self) {
+        if let Ok(mut ctrl) = self.inner.try_lock() {
+            if let Ok(mut cfg) = ctrl.config.clone().try_lock() {
+                ctrl.toggle_mode(true, &mut cfg)
+                .unwrap_or_else(|err| warn!("{}", err));
+            }
+        }
+    }
+
     /// Return the current mode data
     fn led_mode(&self) -> String {
         if let Ok(ctrl) = self.inner.try_lock() {
@@ -165,11 +183,11 @@ impl crate::CtrlTask for CtrlKbdBacklight {
         let mut file = OpenOptions::new()
             .read(true)
             .open(&self.bright_node)
-            .map_err(|err| {
-                match err.kind() {
-                    std::io::ErrorKind::NotFound => RogError::MissingLedBrightNode((&self.bright_node).into(), err),
-                    _ => RogError::Path((&self.bright_node).into(), err),
+            .map_err(|err| match err.kind() {
+                std::io::ErrorKind::NotFound => {
+                    RogError::MissingLedBrightNode((&self.bright_node).into(), err)
                 }
+                _ => RogError::Path((&self.bright_node).into(), err),
             })?;
         let mut buf = [0u8; 1];
         file.read_exact(&mut buf)
@@ -324,7 +342,9 @@ impl CtrlKbdBacklight {
     fn write_bytes(&self, message: &[u8]) -> Result<(), RogError> {
         if let Some(led_node) = &self.led_node {
             if let Ok(mut file) = OpenOptions::new().write(true).open(led_node) {
-                return file.write_all(message).map_err(|err| RogError::Write("write_bytes".into(), err));
+                return file
+                    .write_all(message)
+                    .map_err(|err| RogError::Write("write_bytes".into(), err));
             }
         }
         Err(RogError::NotSupported)
@@ -377,6 +397,38 @@ impl CtrlKbdBacklight {
                 config.write();
             }
         }
+        Ok(())
+    }
+
+    #[inline]
+    fn toggle_mode(&mut self, reverse: bool, config: &mut Config) -> Result<(), RogError> {
+        let current = config.kbd_backlight_mode;
+        if let Some(idx) = self.supported_modes.iter().position(|v| *v == current) {
+
+            let mut idx = idx;
+            // goes past end of array
+            if reverse {
+                if idx == 0 {
+                    idx = self.supported_modes.len() - 1;
+                } else {
+                    idx -= 1;
+                }
+            } else {
+                idx += 1;
+                if idx == self.supported_modes.len() {
+                    idx = 0;
+                }
+            }
+            let next = self.supported_modes[idx];
+
+            config.read();
+            if let Some(data) = config.get_led_mode_data(next) {
+                self.write_mode(&data)?;
+                config.kbd_backlight_mode = next;
+            }
+            config.write();
+        }
+
         Ok(())
     }
 

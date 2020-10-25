@@ -44,7 +44,11 @@ enum CliCommand {
 struct LedModeCommand {
     #[options(help = "print help message")]
     help: bool,
-    #[options(command, required)]
+    #[options(help = "switch to next aura mode")]
+    next_mode: bool,
+    #[options(help = "switch to previous aura mode")]
+    prev_mode: bool,
+    #[options(command)]
     command: Option<SetAuraBuiltin>,
 }
 
@@ -118,7 +122,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     match parsed.command {
         Some(CliCommand::LedMode(mode)) => {
-            if let Some(command) = mode.command {
+            if mode.next_mode && mode.prev_mode {
+                println!("Please specify either next or previous")
+            }
+            if mode.next_mode {
+                writer.next_keyboard_led_mode()?;
+            } else if mode.prev_mode {
+                writer.prev_keyboard_led_mode()?;
+            } else if let Some(command) = mode.command {
                 writer.write_builtin_mode(&command.into())?
             }
         }

@@ -232,6 +232,28 @@ impl AuraDbusClient {
     }
 
     #[inline]
+    pub fn next_keyboard_led_mode(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let proxy = self.connection.with_proxy(
+            "org.asuslinux.Daemon",
+            "/org/asuslinux/Led",
+            Duration::from_secs(2),
+        );
+        proxy.next_led_mode()?;
+        Ok(())
+    }
+
+    #[inline]
+    pub fn prev_keyboard_led_mode(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let proxy = self.connection.with_proxy(
+            "org.asuslinux.Daemon",
+            "/org/asuslinux/Led",
+            Duration::from_secs(2),
+        );
+        proxy.prev_led_mode()?;
+        Ok(())
+    }
+
+    #[inline]
     pub fn get_gfx_pwr(&self) -> Result<String, Box<dyn std::error::Error>> {
         let proxy = self.connection.with_proxy(
             "org.asuslinux.Daemon",
@@ -323,7 +345,7 @@ impl AuraDbusClient {
             "/org/asuslinux/Led",
             Duration::from_secs(2),
         );
-        match proxy.led_bright()? {
+        match proxy.led_brightness()? {
             -1 => Ok(LedBrightness::new(None)),
             level => Ok(LedBrightness::new(Some(level as u8))),
         }
