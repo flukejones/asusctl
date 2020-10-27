@@ -1,6 +1,11 @@
 use asus_nb::{
     anime_dbus::AniMeDbusWriter,
-    cli_options::{AniMeActions, LedBrightness, SetAuraBuiltin},
+    cli_options::{
+        AniMeActions,
+        AniMeStatusValue,
+        LedBrightness,
+        SetAuraBuiltin,
+    },
     core_dbus::AuraDbusClient,
     profile::{ProfileCommand, ProfileEvent},
 };
@@ -70,10 +75,10 @@ struct GraphicsCommand {
 struct AniMeCommand {
     #[options(help = "print help message")]
     help: bool,
-    #[options(help = "turn on the panel (and accept write requests)", no_short)]
-    on: bool,
-    #[options(help = "turn off the panel (and reject write requests)", no_short)]
-    off: bool,
+    #[options(help = "turn on/off the panel (accept/reject write requests)")]
+    turn: Option<AniMeStatusValue>,
+    #[options(help = "turn on/off the panel at boot (with Asus effect)")]
+    boot: Option<AniMeStatusValue>,
     #[options(command)]
     command: Option<AniMeActions>,
 }
@@ -102,7 +107,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             };
         }
         Err(err) => {
-            eprintln!("source {:?}", err);
+            eprintln!("source {}", err);
             std::process::exit(2);
         }
     }
@@ -142,11 +147,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Some(CliCommand::Graphics(command)) => do_gfx(command, &writer)?,
         Some(CliCommand::AniMe(anime)) => {
-            if anime.on {
-                anime_writer.turn_on()?;
-            } else if anime.off {
-                anime_writer.turn_off()?;
-            } else if let Some(action) = anime.command {
+            if let Some(anime_turn) = anime.turn {
+                anime_writer.turn_on_off(anime_turn.into())?
+            }
+            if let Some(anime_boot) = anime.boot {
+                anime_writer.turn_boot_on_off(anime_boot.into())?
+            }
+            if let Some(action) = anime.command {
                 match action {
                     AniMeActions::Leds(anime_leds) => {
                         let led_brightness = anime_leds.led_brightness();

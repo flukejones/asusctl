@@ -7,6 +7,7 @@ use dbus::blocking;
 pub trait OrgAsuslinuxDaemon {
     fn set_anime(&self, input: Vec<Vec<u8>>) -> Result<(), dbus::Error>;
     fn set_on_off(&self, status: bool) -> Result<(), dbus::Error>;
+    fn set_boot_on_off(&self, status: bool) -> Result<(), dbus::Error>;
 }
 
 impl<'a, T: blocking::BlockingSender, C: ::std::ops::Deref<Target=T>> OrgAsuslinuxDaemon for blocking::Proxy<'a, C> {
@@ -17,5 +18,9 @@ impl<'a, T: blocking::BlockingSender, C: ::std::ops::Deref<Target=T>> OrgAsuslin
 
     fn set_on_off(&self, status: bool) -> Result<(), dbus::Error> {
         self.method_call("org.asuslinux.Daemon", "SetOnOff", (status, ))
+    }
+
+    fn set_boot_on_off(&self, status: bool) -> Result<(), dbus::Error> {
+        self.method_call("org.asuslinux.Daemon", "SetBootOnOff", (status, ))
     }
 }

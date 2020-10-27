@@ -46,6 +46,10 @@ impl AniMeDbusWriter {
         )
     }
 
+    fn thread_sleep(&self) {
+        thread::sleep(Duration::from_millis(self.block_time));
+    }
+
     pub fn write_image_to_buf(_buf: &mut AniMePacketType, _image_data: &[u8]) {
         unimplemented!("Image format is in progress of being worked out")
     }
@@ -74,7 +78,7 @@ impl AniMeDbusWriter {
         image[1][..7].copy_from_slice(&ANIME_PANE2_PREFIX);
 
         proxy.set_anime(vec![image[0].to_vec(), image[1].to_vec()])?;
-        thread::sleep(Duration::from_millis(self.block_time));
+        self.thread_sleep();
 
         Ok(())
     }
@@ -90,24 +94,24 @@ impl AniMeDbusWriter {
         Ok(())
     }
 
-    fn turn_on_off(&self, status : bool) -> Result<(), Box<dyn Error>> {
+    #[inline]
+    pub fn turn_on_off(&self, status: bool) -> Result<(), Box<dyn Error>> {
         let proxy = self.new_proxy();
 
         proxy.set_on_off(status)?;
-        thread::sleep(Duration::from_millis(self.block_time));
+        self.thread_sleep();
 
         Ok(())
     }
 
     #[inline]
-    pub fn turn_on(&self) -> Result<(), Box<dyn Error>> {
-        self.turn_on_off(true)?;
-        Ok(())
-    }
+    pub fn turn_boot_on_off(&self, status: bool)
+                            -> Result<(), Box<dyn Error>> {
+        let proxy = self.new_proxy();
 
-    #[inline]
-    pub fn turn_off(&self) -> Result<(), Box<dyn Error>> {
-        self.turn_on_off(false)?;
+        proxy.set_boot_on_off(status)?;
+        self.thread_sleep();
+
         Ok(())
     }
 }

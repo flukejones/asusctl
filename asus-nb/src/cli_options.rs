@@ -231,6 +231,37 @@ impl Default for SetAuraBuiltin {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
+pub enum AniMeStatusValue {
+    On,
+    Off,
+}
+impl FromStr for AniMeStatusValue {
+    type Err = AuraError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = s.to_lowercase();
+        match s.as_str() {
+            "on" => Ok(AniMeStatusValue::On),
+            "off" => Ok(AniMeStatusValue::Off),
+            _ => {
+                print!("{}\n{}\n",
+                       "Invalid argument, must be one of:",
+                       "on, off");
+                Err(AuraError::ParseAnime)
+            }
+        }
+    }
+}
+impl From<AniMeStatusValue> for bool {
+    fn from(value: AniMeStatusValue) -> Self {
+        match value {
+            AniMeStatusValue::On => true,
+            AniMeStatusValue::Off => false,
+        }
+    }
+}
+
 #[derive(Options)]
 pub struct AniMeLeds {
     #[options(help = "print help message")]
@@ -240,7 +271,6 @@ pub struct AniMeLeds {
               help = "set all leds brightness value")]
     led_brightness: u8,
 }
-
 impl AniMeLeds {
     pub fn led_brightness(&self) -> u8 {
         self.led_brightness
