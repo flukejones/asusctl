@@ -25,7 +25,7 @@ in to the kernel.
 
 ## Discord
 
-[Discord server link](https://discord.gg/PVyFzWj)
+[Discord server link](https://discord.gg/ngbdKabAnP)
 
 ## SUPPORTED LAPTOPS
 
