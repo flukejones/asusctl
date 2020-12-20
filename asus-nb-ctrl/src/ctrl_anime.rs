@@ -6,8 +6,8 @@ const DEV_PAGE: u8 = 0x5e;
 // These bytes are in [1] position of the array
 const WRITE: u8 = 0xc0;
 const INIT: u8 = 0xc2;
-const APPLY: u8 = 0xc3;
-const SET: u8 = 0xc4;
+const SET: u8 = 0xc3;
+const APPLY: u8 = 0xc4;
 
 // Used to turn the panel on and off
 // The next byte can be 0x03 for "on" and 0x00 for "off"
@@ -25,7 +25,7 @@ use zbus::dbus_interface;
 #[derive(Debug)]
 pub enum AnimatrixCommand {
     Apply,
-    Set,
+    SetBoot(bool),
     Write(Vec<u8>),
     WriteImage(Vec<Vec<u8>>),
     //ReloadLast,
@@ -41,6 +41,8 @@ pub trait Dbus {
     fn set_anime(&mut self, input: Vec<Vec<u8>>);
 
     fn set_on_off(&mut self, status: bool);
+
+    fn set_boot_on_off(&mut self, status: bool);
 }
 
 impl crate::ZbusAdd for CtrlAnimeDisplay {
@@ -58,28 +60,40 @@ impl crate::ZbusAdd for CtrlAnimeDisplay {
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl Dbus for CtrlAnimeDisplay {
     fn set_anime(&mut self, input: Vec<Vec<u8>>) {
+
         self.do_command(AnimatrixCommand::WriteImage(input))
-            .unwrap_or_else(|err| warn!("{}", err));
+            .map_or_else(|err| warn!("{}", err),
+                         |()| info!("Writing image to Anime"));
     }
 
     fn set_on_off(&mut self, status: bool) {
-        let mut activity : Vec<u8> = vec![0; PACKET_SIZE];
-        activity[0] = DEV_PAGE;
-        activity[1] = WRITE;
-        activity[2] = ON_OFF;
+        let mut flush : Vec<u8> = vec![0; PACKET_SIZE];
+        flush[0] = DEV_PAGE;
+        flush[1] = WRITE;
+        flush[2] = ON_OFF;
 
         let status_str;
         if status {
-            activity[3] = 0x03;
+            flush[3] = 0x03;
             status_str = "on";
         } else {
-            activity[3] = 0x00;
+            flush[3] = 0x00;
             status_str = "off";
         }
-        info!("Turning {} the AniMe", status_str);
 
-        self.do_command(AnimatrixCommand::Write(activity))
-            .unwrap_or_else(|err| warn!("{}", err));
+        self.do_command(AnimatrixCommand::Write(flush))
+            .map_or_else(|err| warn!("{}", err),
+                         |()| info!("Turning {} the AniMe", status_str));
+    }
+
+    fn set_boot_on_off(&mut self, status: bool) {
+        let status_str = if status { "on" } else { "off" };
+
+        self.do_command(AnimatrixCommand::SetBoot(status))
+            .and_then(|()| self.do_command(AnimatrixCommand::Apply))
+            .map_or_else(|err| warn!("{}", err),
+                         |()| info!("Turning {} the AniMe at boot/shutdown",
+                                    status_str));
     }
 }
 
@@ -127,7 +141,8 @@ impl CtrlAnimeDisplay {
 
         match command {
             AnimatrixCommand::Apply => self.do_apply()?,
-            AnimatrixCommand::Set => self.do_set()?,
+            //AnimatrixCommand::Set => self.do_set_boot()?,
+            AnimatrixCommand::SetBoot(status) => self.do_set_boot(status)?,
             AnimatrixCommand::Write(bytes) => self.write_bytes(&bytes)?,
             AnimatrixCommand::WriteImage(effect) => self.write_image(effect)?,
             //AnimatrixCommand::ReloadLast => self.reload_last_builtin(&config).await?,
@@ -212,12 +227,12 @@ impl CtrlAnimeDisplay {
     }
 
     #[inline]
-    fn do_set(&mut self) -> Result<(), AuraError> {
+    fn do_set_boot(&mut self, status: bool) -> Result<(), AuraError> {
         let mut flush = [0; PACKET_SIZE];
         flush[0] = DEV_PAGE;
         flush[1] = SET;
         flush[2] = 0x01;
-        flush[3] = 0x80;
+        flush[3] = if status { 0x00 } else { 0x80 };
 
         self.write_bytes(&flush)?;
         Ok(())
