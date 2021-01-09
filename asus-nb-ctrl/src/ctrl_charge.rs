@@ -43,7 +43,7 @@ impl CtrlCharge {
     }
 
     #[dbus_interface(signal)]
-    fn notify_charge(&self, limit: u8) -> zbus::Result<()>;
+    pub fn notify_charge(&self, limit: u8) -> zbus::Result<()>;
 }
 
 impl crate::ZbusAdd for CtrlCharge {

@@ -1,6 +1,6 @@
 [package]
 name = "asus-nb"
-version = "2.1.0"
+version = "2.1.1"
 license = "MPL-2.0"
 readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]
@@ -17,8 +17,8 @@ serde_derive = "^1.0"
 serde_json = "^1.0"
 yansi-term = "^0.1"
 rog_fan_curve = { version = "0.1", features = ["serde"] }
-zbus = "1.1.1"
-zvariant = "2.2.0"
+zbus = "^1.8.0"
+zvariant = "^2.4.0"
 ctrl-gfx = { path = "../ctrl-gfx" } 
 
 [dev-dependencies]
