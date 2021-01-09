@@ -1,11 +1,6 @@
 use asus_nb::{
     anime_dbus::AniMeDbusWriter,
-    cli_options::{
-        AniMeActions,
-        AniMeStatusValue,
-        LedBrightness,
-        SetAuraBuiltin,
-    },
+    cli_options::{AniMeActions, AniMeStatusValue, LedBrightness, SetAuraBuiltin},
     core_dbus::AuraDbusClient,
     profile::{ProfileCommand, ProfileEvent},
 };

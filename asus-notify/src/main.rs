@@ -7,7 +7,7 @@ use std::time::Duration;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Version {}", env!("CARGO_PKG_VERSION"));
-    
+
     let mut cfg = Config::read_new()?;
     let mut last_profile = String::new();
 
@@ -83,7 +83,11 @@ fn do_thermal_notif(profile: &Profile, label: &str) -> Result<NotificationHandle
     };
     let x = Notification::new()
         .summary("ASUS ROG")
-        .body(&format!("Thermal profile changed to {}, turbo {}", label.to_uppercase(), turbo))
+        .body(&format!(
+            "Thermal profile changed to {}, turbo {}",
+            label.to_uppercase(),
+            turbo
+        ))
         .hint(Hint::Resident(true))
         .timeout(2000)
         .hint(Hint::Category("device".into()))

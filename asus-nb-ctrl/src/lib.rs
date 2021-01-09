@@ -15,8 +15,8 @@ pub mod laptops;
 
 mod error;
 
-use config::Config;
 use crate::error::RogError;
+use config::Config;
 use zbus::ObjectServer;
 
 pub static VERSION: &str = env!("CARGO_PKG_VERSION");

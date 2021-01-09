@@ -55,4 +55,3 @@ static PRIMARY_GPU_NVIDIA: &[u8] = br#"
 
 static PRIMARY_GPU_END: &[u8] = br#"
 EndSection"#;
-

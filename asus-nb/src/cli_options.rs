@@ -27,9 +27,10 @@ impl FromStr for LedBrightness {
             "med" => Ok(LedBrightness { level: Some(0x02) }),
             "high" => Ok(LedBrightness { level: Some(0x03) }),
             _ => {
-                print!("{}\n{}\n",
-                       "Invalid argument, must be one of:",
-                       "off, low, med, high");
+                print!(
+                    "{}\n{}\n",
+                    "Invalid argument, must be one of:", "off, low, med, high"
+                );
                 Err(AuraError::ParseBrightness)
             }
         }
@@ -245,9 +246,7 @@ impl FromStr for AniMeStatusValue {
             "on" => Ok(AniMeStatusValue::On),
             "off" => Ok(AniMeStatusValue::Off),
             _ => {
-                print!("{}\n{}\n",
-                       "Invalid argument, must be one of:",
-                       "on, off");
+                print!("{}\n{}\n", "Invalid argument, must be one of:", "on, off");
                 Err(AuraError::ParseAnime)
             }
         }
@@ -266,9 +265,13 @@ impl From<AniMeStatusValue> for bool {
 pub struct AniMeLeds {
     #[options(help = "print help message")]
     help: bool,
-    #[options(no_long, required,
-              short = "b", meta = "BYTE",
-              help = "set all leds brightness value")]
+    #[options(
+        no_long,
+        required,
+        short = "b",
+        meta = "BYTE",
+        help = "set all leds brightness value"
+    )]
     led_brightness: u8,
 }
 impl AniMeLeds {

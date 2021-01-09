@@ -1,5 +1,5 @@
-use crate::cli_options::LedBrightness;
 use super::*;
+use crate::cli_options::LedBrightness;
 use crate::fancy::KeyColourArray;
 use crate::profile::ProfileEvent;
 use ctrl_gfx::vendors::GfxVendors;
@@ -11,7 +11,9 @@ use std::sync::{
 };
 use std::{thread, time::Duration};
 
-use crate::dbus_charge::{OrgAsuslinuxDaemonNotifyCharge, OrgAsuslinuxDaemon as OrgAsuslinuxDaemonCharge};
+use crate::dbus_charge::{
+    OrgAsuslinuxDaemon as OrgAsuslinuxDaemonCharge, OrgAsuslinuxDaemonNotifyCharge,
+};
 use crate::dbus_gfx::{
     OrgAsuslinuxDaemon as OrgAsuslinuxDaemonGfx, OrgAsuslinuxDaemonNotifyAction,
     OrgAsuslinuxDaemonNotifyGfx,

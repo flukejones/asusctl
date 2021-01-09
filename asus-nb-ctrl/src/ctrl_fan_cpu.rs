@@ -55,7 +55,7 @@ impl DbusFanAndCpu {
                 if let Some(profile) = cfg.power_profiles.get(&cfg.active_profile) {
                     if let Ok(json) = serde_json::to_string(profile) {
                         self.notify_profile(&json)
-                        .unwrap_or_else(|err| warn!("{}", err));
+                            .unwrap_or_else(|err| warn!("{}", err));
                     }
                 }
             }

@@ -1,8 +1,6 @@
-const DBUS_ANIME_PATH : &str = "/org/asuslinux/Anime";
-pub const ANIME_PANE1_PREFIX: [u8; 7] =
-    [0x5e, 0xc0, 0x02, 0x01, 0x00, 0x73, 0x02];
-pub const ANIME_PANE2_PREFIX: [u8; 7] =
-    [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x02];
+const DBUS_ANIME_PATH: &str = "/org/asuslinux/Anime";
+pub const ANIME_PANE1_PREFIX: [u8; 7] = [0x5e, 0xc0, 0x02, 0x01, 0x00, 0x73, 0x02];
+pub const ANIME_PANE2_PREFIX: [u8; 7] = [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x02];
 
 use crate::anime_matrix::{AniMeMatrix, AniMePacketType};
 use crate::DBUS_NAME;
@@ -10,9 +8,7 @@ use dbus::blocking::{Connection, Proxy};
 use std::error::Error;
 use std::{thread, time::Duration};
 
-use crate::dbus_anime::{
-    OrgAsuslinuxDaemon as OrgAsuslinuxDaemonAniMe,
-};
+use crate::dbus_anime::OrgAsuslinuxDaemon as OrgAsuslinuxDaemonAniMe;
 
 /// Interface for the AniMe dot-matrix display
 ///
@@ -38,12 +34,9 @@ impl AniMeDbusWriter {
     }
 
     // Create D-Bus proxy
-    fn new_proxy(&self) -> Proxy<&Connection>{
-        self.connection.with_proxy(
-            DBUS_NAME,
-            DBUS_ANIME_PATH,
-            Duration::from_millis(200),
-        )
+    fn new_proxy(&self) -> Proxy<&Connection> {
+        self.connection
+            .with_proxy(DBUS_NAME, DBUS_ANIME_PATH, Duration::from_millis(200))
     }
 
     fn thread_sleep(&self) {
@@ -70,8 +63,7 @@ impl AniMeDbusWriter {
     ///
     /// Where led brightness is 0..255, low to high
     #[inline]
-    pub fn write_image(&self, image: &mut AniMePacketType)
-                       -> Result<(), Box<dyn Error>> {
+    pub fn write_image(&self, image: &mut AniMePacketType) -> Result<(), Box<dyn Error>> {
         let proxy = self.new_proxy();
 
         image[0][..7].copy_from_slice(&ANIME_PANE1_PREFIX);
@@ -84,8 +76,7 @@ impl AniMeDbusWriter {
     }
 
     #[inline]
-    pub fn set_leds_brightness(&self, led_brightness: u8)
-                               -> Result<(), Box<dyn Error>> {
+    pub fn set_leds_brightness(&self, led_brightness: u8) -> Result<(), Box<dyn Error>> {
         let mut anime_matrix = AniMeMatrix::new();
 
         anime_matrix.fill_with(led_brightness);
@@ -105,8 +96,7 @@ impl AniMeDbusWriter {
     }
 
     #[inline]
-    pub fn turn_boot_on_off(&self, status: bool)
-                            -> Result<(), Box<dyn Error>> {
+    pub fn turn_boot_on_off(&self, status: bool) -> Result<(), Box<dyn Error>> {
         let proxy = self.new_proxy();
 
         proxy.set_boot_on_off(status)?;

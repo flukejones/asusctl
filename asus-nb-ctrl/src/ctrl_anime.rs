@@ -11,7 +11,7 @@ const APPLY: u8 = 0xc4;
 
 // Used to turn the panel on and off
 // The next byte can be 0x03 for "on" and 0x00 for "off"
-const ON_OFF : u8 = 0x04;
+const ON_OFF: u8 = 0x04;
 
 use asus_nb::error::AuraError;
 use log::{error, info, warn};
@@ -60,14 +60,12 @@ impl crate::ZbusAdd for CtrlAnimeDisplay {
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl Dbus for CtrlAnimeDisplay {
     fn set_anime(&mut self, input: Vec<Vec<u8>>) {
-
         self.do_command(AnimatrixCommand::WriteImage(input))
-            .map_or_else(|err| warn!("{}", err),
-                         |()| info!("Writing image to Anime"));
+            .map_or_else(|err| warn!("{}", err), |()| info!("Writing image to Anime"));
     }
 
     fn set_on_off(&mut self, status: bool) {
-        let mut flush : Vec<u8> = vec![0; PACKET_SIZE];
+        let mut flush: Vec<u8> = vec![0; PACKET_SIZE];
         flush[0] = DEV_PAGE;
         flush[1] = WRITE;
         flush[2] = ON_OFF;
@@ -81,9 +79,10 @@ impl Dbus for CtrlAnimeDisplay {
             status_str = "off";
         }
 
-        self.do_command(AnimatrixCommand::Write(flush))
-            .map_or_else(|err| warn!("{}", err),
-                         |()| info!("Turning {} the AniMe", status_str));
+        self.do_command(AnimatrixCommand::Write(flush)).map_or_else(
+            |err| warn!("{}", err),
+            |()| info!("Turning {} the AniMe", status_str),
+        );
     }
 
     fn set_boot_on_off(&mut self, status: bool) {
@@ -91,9 +90,10 @@ impl Dbus for CtrlAnimeDisplay {
 
         self.do_command(AnimatrixCommand::SetBoot(status))
             .and_then(|()| self.do_command(AnimatrixCommand::Apply))
-            .map_or_else(|err| warn!("{}", err),
-                         |()| info!("Turning {} the AniMe at boot/shutdown",
-                                    status_str));
+            .map_or_else(
+                |err| warn!("{}", err),
+                |()| info!("Turning {} the AniMe at boot/shutdown", status_str),
+            );
     }
 }
 

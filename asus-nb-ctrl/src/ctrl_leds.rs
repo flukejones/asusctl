@@ -76,12 +76,12 @@ impl DbusKbdBacklight {
         if let Ok(mut ctrl) = self.inner.try_lock() {
             if let Ok(mut cfg) = ctrl.config.clone().try_lock() {
                 ctrl.toggle_mode(false, &mut cfg)
-                .unwrap_or_else(|err| warn!("{}", err));
+                    .unwrap_or_else(|err| warn!("{}", err));
 
                 if let Some(mode) = cfg.get_led_mode_data(cfg.kbd_backlight_mode) {
                     if let Ok(json) = serde_json::to_string(&mode) {
                         self.notify_led(&json)
-                        .unwrap_or_else(|err| warn!("{}", err));
+                            .unwrap_or_else(|err| warn!("{}", err));
                     }
                 }
             }
@@ -92,12 +92,12 @@ impl DbusKbdBacklight {
         if let Ok(mut ctrl) = self.inner.try_lock() {
             if let Ok(mut cfg) = ctrl.config.clone().try_lock() {
                 ctrl.toggle_mode(true, &mut cfg)
-                .unwrap_or_else(|err| warn!("{}", err));
+                    .unwrap_or_else(|err| warn!("{}", err));
 
                 if let Some(mode) = cfg.get_led_mode_data(cfg.kbd_backlight_mode) {
                     if let Ok(json) = serde_json::to_string(&mode) {
                         self.notify_led(&json)
-                        .unwrap_or_else(|err| warn!("{}", err));
+                            .unwrap_or_else(|err| warn!("{}", err));
                     }
                 }
             }
@@ -418,7 +418,6 @@ impl CtrlKbdBacklight {
     fn toggle_mode(&mut self, reverse: bool, config: &mut Config) -> Result<(), RogError> {
         let current = config.kbd_backlight_mode;
         if let Some(idx) = self.supported_modes.iter().position(|v| *v == current) {
-
             let mut idx = idx;
             // goes past end of array
             if reverse {
