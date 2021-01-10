@@ -96,29 +96,30 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
     // Collect tasks for task thread
     let mut tasks: Vec<Arc<Mutex<dyn CtrlTask + Send>>> = Vec::new();
 
-    match CtrlFanAndCPU::new(config.clone()) {
-        Ok(mut ctrl) => {
-            ctrl.reload()
-                .unwrap_or_else(|err| warn!("Profile control: {}", err));
-            let tmp = Arc::new(Mutex::new(ctrl));
-            DbusFanAndCpu::new(tmp.clone()).add_to_server(&mut object_server);
-            tasks.push(tmp);
-        }
-        Err(err) => {
-            error!("Profile control: {}", err);
-        }
+    if let Ok(mut ctrl) = CtrlFanAndCPU::new(config.clone()).map_err(|err| {
+        error!("Profile control: {}", err);
+    }) {
+        ctrl.reload()
+            .unwrap_or_else(|err| warn!("Profile control: {}", err));
+        let tmp = Arc::new(Mutex::new(ctrl));
+        DbusFanAndCpu::new(tmp.clone()).add_to_server(&mut object_server);
+        tasks.push(tmp);
     };
 
     if let Some(laptop) = laptop {
-        let ctrl = CtrlKbdBacklight::new(
+        if let Ok(ctrl) = CtrlKbdBacklight::new(
             laptop.usb_product(),
             laptop.condev_iface(),
             laptop.supported_modes().to_owned(),
             config,
-        );
-        let tmp = Arc::new(Mutex::new(ctrl));
-        DbusKbdBacklight::new(tmp.clone()).add_to_server(&mut object_server);
-        tasks.push(tmp);
+        )
+        .map_err(|err| {
+            error!("Keyboard control: {}", err);
+        }) {
+            let tmp = Arc::new(Mutex::new(ctrl));
+            DbusKbdBacklight::new(tmp.clone()).add_to_server(&mut object_server);
+            tasks.push(tmp);
+        }
     }
 
     // TODO: implement messaging between threads to check fails

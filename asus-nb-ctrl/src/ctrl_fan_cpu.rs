@@ -192,7 +192,7 @@ impl CtrlFanAndCPU {
             Ok(FAN_TYPE_2_PATH)
         } else {
             Err(RogError::MissingFunction(
-                "Fan mode not available, you may require a v5.8 series kernel or newer".into(),
+                "Fan mode not available, you may require a v5.8.10 series kernel or newer".into(),
             ))
         }
     }
