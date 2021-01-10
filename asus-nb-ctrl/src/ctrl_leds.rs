@@ -2,14 +2,16 @@
 static LED_APPLY: [u8; 17] = [0x5d, 0xb4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 static LED_SET: [u8; 17] = [0x5d, 0xb5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
+static KBD_BRIGHT_PATH: &str = "/sys/class/leds/asus::kbd_backlight/brightness";
+
 use crate::{config::Config, error::RogError, laptops::HELP_ADDRESS};
 use asus_nb::{aura_brightness_bytes, aura_modes::AuraModes, fancy::KeyColourArray, LED_MSG_LEN};
 use log::{info, warn};
-use std::convert::TryInto;
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::{convert::TryInto, path::Path};
 use zbus::dbus_interface;
 
 pub struct CtrlKbdBacklight {
@@ -227,16 +229,29 @@ impl CtrlKbdBacklight {
         condev_iface: Option<&String>,
         supported_modes: Vec<u8>,
         config: Arc<Mutex<Config>>,
-    ) -> Self {
+    ) -> Result<Self, RogError> {
         // TODO: return error if *all* nodes are None
-        CtrlKbdBacklight {
+        let ctrl = CtrlKbdBacklight {
+            // Using `ok` here so we can continue without keyboard features but
+            // still get brightness control at least... maybe...
             led_node: Self::get_node_failover(id_product, None, Self::scan_led_node).ok(),
             kbd_node: Self::get_node_failover(id_product, condev_iface, Self::scan_kbd_node).ok(),
             // TODO: Check for existance
-            bright_node: "/sys/class/leds/asus::kbd_backlight/brightness".to_string(),
+            bright_node: Self::get_kbd_bright_path()?.to_owned(),
             supported_modes,
             flip_effect_write: false,
             config,
+        };
+        Ok(ctrl)
+    }
+
+    fn get_kbd_bright_path() -> Result<&'static str, RogError> {
+        if Path::new(KBD_BRIGHT_PATH).exists() {
+            Ok(KBD_BRIGHT_PATH)
+        } else {
+            Err(RogError::MissingFunction(
+                "Keyboard features missing, you may require a v5.11 series kernel or newer".into(),
+            ))
         }
     }
 
@@ -245,6 +260,8 @@ impl CtrlKbdBacklight {
         iface: Option<&String>,
         fun: fn(&str, Option<&String>) -> Result<String, RogError>,
     ) -> Result<String, RogError> {
+        // We do three tries here just to be certain that we avoid systemd unit
+        // load order issues
         for n in 0..=2 {
             // 0,1,2 inclusive
             match fun(id_product, iface) {

@@ -178,27 +178,36 @@ impl CtrlGraphics {
 
     /// Associated method to get which vendor mode is set
     pub fn get_vendor() -> Result<String, GfxError> {
+        let mode = match Self::get_prime_discrete() {
+            Ok(m) => m,
+            Err(_) => "nvidia".to_string(),
+        };
         let modules = Module::all().map_err(|err| GfxError::Read("get_vendor".into(), err))?;
-        let vendor = if modules
+
+        let driver_loaded = if modules
             .iter()
             .any(|module| module.name == "nouveau" || module.name == "nvidia")
         {
-            info!("nvidia or nouveau module found");
-            let mode = match Self::get_prime_discrete() {
-                Ok(m) => m,
-                Err(_) => "nvidia".to_string(),
-            };
+            true
+        } else {
+            false
+        };
 
+        let vendor = if mode == "off" {
+            if driver_loaded {
+                info!("dGPU driver loaded for compute mode");
+                "compute".to_string()
+            } else {
+                info!("No dGPU driver loaded");
+                "integrated".to_string()
+            }
+        } else {
+            info!("Assuming dGPU driver loaded");
             if mode == "on-demand" {
                 "hybrid".to_string()
-            } else if mode == "off" {
-                "compute".to_string()
             } else {
                 "nvidia".to_string()
             }
-        } else {
-            info!("No dGPU driver (nouveau or nvidia) loaded");
-            "integrated".to_string()
         };
 
         Ok(vendor)

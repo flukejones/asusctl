@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Adjust gfx controller to assume that the graphics driver is loaded if the
+  mode is set for nvidia/hybrid
+
 # [2.1.0] - 2021-01-09
 ### Changed
 - Updates to dependencies

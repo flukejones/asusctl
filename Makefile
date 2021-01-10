@@ -31,7 +31,7 @@ ifeq ($(VENDORED),1)
 	ARGS += --frozen
 endif
 
-all: build install
+all: build
 
 clean:
 	cargo clean

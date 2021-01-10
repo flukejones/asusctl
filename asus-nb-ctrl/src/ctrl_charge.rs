@@ -81,7 +81,8 @@ impl CtrlCharge {
             Ok(BAT_CHARGE_PATH)
         } else {
             Err(RogError::MissingFunction(
-                "Charge control not available".into(),
+                "Charge control not available, you may require a v5.8.10 series kernel or newer"
+                    .into(),
             ))
         }
     }
