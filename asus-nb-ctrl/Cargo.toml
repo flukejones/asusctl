@@ -1,6 +1,6 @@
 [package]
 name = "asus-nb-ctrl"
-version = "2.1.2"
+version = "2.2.0"
 license = "MPL-2.0"
 readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]
@@ -22,7 +22,6 @@ name = "asusd"
 path = "src/daemon.rs"
 
 [dependencies]
-ctrl-gfx = { path = "../ctrl-gfx" }
 asus-nb = { path = "../asus-nb" }
 rusb = "^0.6.0"
 udev = "^0.4.0"

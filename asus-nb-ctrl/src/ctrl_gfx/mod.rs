@@ -2,7 +2,7 @@ pub mod vendors;
 
 pub mod error;
 
-pub mod ctrl_gfx;
+pub mod gfx;
 
 pub mod system;
 

@@ -1,6 +1,6 @@
 [package]
 name = "asus-nb"
-version = "2.1.2"
+version = "2.2.0"
 license = "MPL-2.0"
 readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]
@@ -19,7 +19,6 @@ yansi-term = "^0.1"
 rog_fan_curve = { version = "0.1", features = ["serde"] }
 zbus = "^1.8.0"
 zvariant = "^2.4.0"
-ctrl-gfx = { path = "../ctrl-gfx" } 
 
 [dev-dependencies]
 tinybmp = "^0.2.3"

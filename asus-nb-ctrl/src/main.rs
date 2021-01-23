@@ -4,8 +4,7 @@ use asus_nb::{
     core_dbus::AuraDbusClient,
     profile::{ProfileCommand, ProfileEvent},
 };
-use ctrl_gfx::vendors::GfxVendors;
-use daemon::ctrl_fan_cpu::FanLevel;
+use daemon::{ctrl_fan_cpu::FanLevel, ctrl_gfx::vendors::GfxVendors};
 use gumdrop::{Opt, Options};
 use log::LevelFilter;
 use std::{env::args, io::Write, process::Command};
@@ -18,11 +17,13 @@ struct CLIStart {
     help: bool,
     #[options(help = "show program version number")]
     version: bool,
-    #[options(meta = "VAL", help = "<off, low, med, high>")]
+    #[options(help = "show supported functions of this laptop")]
+    show_supported: bool,
+    #[options(meta = "", help = "<off, low, med, high>")]
     kbd_bright: Option<LedBrightness>,
-    #[options(meta = "PWR", help = "<silent, normal, boost>")]
+    #[options(meta = "", help = "<silent, normal, boost>")]
     pwr_profile: Option<FanLevel>,
-    #[options(meta = "CHRG", help = "<20-100>")]
+    #[options(meta = "", help = "<20-100>")]
     chg_limit: Option<u8>,
     #[options(command)]
     command: Option<CliCommand>,
@@ -38,6 +39,8 @@ enum CliCommand {
     Graphics(GraphicsCommand),
     #[options(name = "anime", help = "Manage AniMe Matrix")]
     AniMe(AniMeCommand),
+    #[options(help = "Change bios settings")]
+    Bios(BiosCommand),
 }
 
 #[derive(Options)]
@@ -56,7 +59,10 @@ struct LedModeCommand {
 struct GraphicsCommand {
     #[options(help = "print help message")]
     help: bool,
-    #[options(help = "Set graphics mode: <nvidia, hybrid, compute, integrated>")]
+    #[options(
+        meta = "",
+        help = "Set graphics mode: <nvidia, hybrid, compute, integrated>"
+    )]
     mode: Option<GfxVendors>,
     #[options(help = "Get the current mode")]
     get: bool,
@@ -70,12 +76,29 @@ struct GraphicsCommand {
 struct AniMeCommand {
     #[options(help = "print help message")]
     help: bool,
-    #[options(help = "turn on/off the panel (accept/reject write requests)")]
+    #[options(
+        meta = "",
+        help = "turn on/off the panel (accept/reject write requests)"
+    )]
     turn: Option<AniMeStatusValue>,
-    #[options(help = "turn on/off the panel at boot (with Asus effect)")]
+    #[options(meta = "", help = "turn on/off the panel at boot (with Asus effect)")]
     boot: Option<AniMeStatusValue>,
     #[options(command)]
     command: Option<AniMeActions>,
+}
+
+#[derive(Options, Debug)]
+struct BiosCommand {
+    #[options(help = "print help message")]
+    help: bool,
+    #[options(meta = "", no_long, help = "toggle bios POST sound")]
+    post_sound_set: Option<bool>,
+    #[options(no_long, help = "read bios POST sound")]
+    post_sound_get: bool,
+    #[options(meta = "", no_long, help = "toggle GPU to/from dedicated mode")]
+    dedicated_gfx_set: Option<bool>,
+    #[options(no_long, help = "get GPU mode")]
+    dedicated_gfx_get: bool,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -117,78 +140,157 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Version: {}", daemon::VERSION);
     }
 
-    let writer = AuraDbusClient::new()?;
-    let anime_writer = AniMeDbusWriter::new()?;
+    let dbus_client = AuraDbusClient::new()?;
+    let anime_dbus_client = AniMeDbusWriter::new()?;
 
     match parsed.command {
         Some(CliCommand::LedMode(mode)) => {
+            if (mode.command.is_none() && !mode.prev_mode && !mode.next_mode) || mode.help {
+                println!("Missing arg or command\n\n{}", mode.self_usage());
+                if let Some(lst) = mode.self_command_list() {
+                    println!("\n{}", lst);
+                }
+            }
             if mode.next_mode && mode.prev_mode {
                 println!("Please specify either next or previous")
             }
             if mode.next_mode {
-                writer.next_keyboard_led_mode()?;
+                dbus_client.next_keyboard_led_mode()?;
             } else if mode.prev_mode {
-                writer.prev_keyboard_led_mode()?;
+                dbus_client.prev_keyboard_led_mode()?;
             } else if let Some(command) = mode.command {
-                writer.write_builtin_mode(&command.into())?
+                dbus_client.write_builtin_mode(&command.into())?
             }
         }
-        Some(CliCommand::Profile(command)) => {
-            if command.next {
-                writer.next_fan_profile()?;
+        Some(CliCommand::Profile(cmd)) => {
+            if (!cmd.next
+                && !cmd.create
+                && cmd.curve.is_none()
+                && cmd.max_percentage.is_none()
+                && cmd.min_percentage.is_none()
+                && cmd.preset.is_none()
+                && cmd.profile.is_none()
+                && cmd.turbo.is_none())
+                || cmd.help
+            {
+                println!("Missing arg or command\n\n{}", cmd.self_usage());
+                if let Some(lst) = cmd.self_command_list() {
+                    println!("\n{}", lst);
+                }
+            }
+            if cmd.next {
+                dbus_client.next_fan_profile()?;
             } else {
-                writer.write_profile_command(&ProfileEvent::Cli(command))?
+                dbus_client.write_profile_command(&ProfileEvent::Cli(cmd))?
             }
         }
-        Some(CliCommand::Graphics(command)) => do_gfx(command, &writer)?,
-        Some(CliCommand::AniMe(anime)) => {
-            if let Some(anime_turn) = anime.turn {
-                anime_writer.turn_on_off(anime_turn.into())?
+        Some(CliCommand::Graphics(cmd)) => do_gfx(cmd, &dbus_client)?,
+        Some(CliCommand::AniMe(cmd)) => {
+            if (cmd.command.is_none() && cmd.boot.is_none() && cmd.turn.is_none()) || cmd.help {
+                println!("Missing arg or command\n\n{}", cmd.self_usage());
+                if let Some(lst) = cmd.self_command_list() {
+                    println!("\n{}", lst);
+                }
             }
-            if let Some(anime_boot) = anime.boot {
-                anime_writer.turn_boot_on_off(anime_boot.into())?
+            if let Some(anime_turn) = cmd.turn {
+                anime_dbus_client.turn_on_off(anime_turn.into())?
             }
-            if let Some(action) = anime.command {
+            if let Some(anime_boot) = cmd.boot {
+                anime_dbus_client.turn_boot_on_off(anime_boot.into())?
+            }
+            if let Some(action) = cmd.command {
                 match action {
                     AniMeActions::Leds(anime_leds) => {
                         let led_brightness = anime_leds.led_brightness();
-                        anime_writer.set_leds_brightness(led_brightness)?;
+                        anime_dbus_client.set_leds_brightness(led_brightness)?;
                     }
                 }
             }
         }
-        None => (),
+        Some(CliCommand::Bios(cmd)) => {
+            if (cmd.dedicated_gfx_set.is_none()
+                && !cmd.dedicated_gfx_get
+                && cmd.post_sound_set.is_none()
+                && !cmd.post_sound_get)
+                || cmd.help
+            {
+                println!("Missing arg or command\n\n{}", cmd.self_usage());
+                if let Some(lst) = cmd.self_command_list() {
+                    println!("\n{}", lst);
+                }
+            }
+
+            if let Some(opt) = cmd.post_sound_set {
+                dbus_client.set_bios_post_sound(opt)?;
+            }
+            if cmd.post_sound_get {
+                let res = if dbus_client.get_bios_post_sound()? == 1 {
+                    true
+                } else {
+                    false
+                };
+                println!("Bios POST sound on: {}", res);
+            }
+            if let Some(opt) = cmd.dedicated_gfx_set {
+                dbus_client.set_bios_dedicated_gfx(opt)?;
+            }
+            if cmd.dedicated_gfx_get {
+                let res = if dbus_client.get_bios_dedicated_gfx()? == 1 {
+                    true
+                } else {
+                    false
+                };
+                println!("Bios dedicated GPU on: {}", res);
+            }
+        }
+        None => {
+            if (!parsed.show_supported
+                && parsed.kbd_bright.is_none()
+                && parsed.pwr_profile.is_none()
+                && parsed.chg_limit.is_none())
+                || parsed.help
+            {
+                println!("{}", CLIStart::usage());
+                println!();
+                println!("{}", CLIStart::command_list().unwrap());
+            }
+        }
     }
 
     if let Some(brightness) = parsed.kbd_bright {
         match brightness.level() {
             None => {
-                let level = writer.get_led_brightness()?;
+                let level = dbus_client.get_led_brightness()?;
                 println!("Current keyboard led brightness: {}", level.to_string());
             }
-            Some(level) => writer.write_brightness(level)?,
+            Some(level) => dbus_client.write_brightness(level)?,
         }
     }
 
+    if parsed.show_supported {
+        let dat = dbus_client.get_supported_functions()?;
+        println!("Supported laptop functions:\n{}", dat.to_string());
+    }
+
     if let Some(fan_level) = parsed.pwr_profile {
-        writer.write_fan_mode(fan_level.into())?;
+        dbus_client.write_fan_mode(fan_level.into())?;
     }
     if let Some(chg_limit) = parsed.chg_limit {
-        writer.write_charge_limit(chg_limit)?;
+        dbus_client.write_charge_limit(chg_limit)?;
     }
     Ok(())
 }
 
 fn do_gfx(
     command: GraphicsCommand,
-    writer: &AuraDbusClient,
+    dbus_client: &AuraDbusClient,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if let Some(mode) = command.mode {
         println!("Updating settings, please wait...");
         println!("If this takes longer than 30s, ctrl+c then check `journalctl -b -u asusd`");
 
-        writer.write_gfx_mode(mode)?;
-        let res = writer.wait_gfx_changed()?;
+        dbus_client.write_gfx_mode(<&str>::from(&mode).into())?;
+        let res = dbus_client.wait_gfx_changed()?;
         match res.as_str() {
             "reboot" => {
                 println!(
@@ -222,11 +324,11 @@ fn do_gfx(
         std::process::exit(-1)
     }
     if command.get {
-        let res = writer.get_gfx_mode()?;
+        let res = dbus_client.get_gfx_mode()?;
         println!("Current graphics mode: {}", res);
     }
     if command.pow {
-        let res = writer.get_gfx_pwr()?;
+        let res = dbus_client.get_gfx_pwr()?;
         if res.contains("active") {
             println!("Current power status: {}", Red.paint(&format!("{}", res)));
         } else {

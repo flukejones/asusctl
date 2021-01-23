@@ -4,8 +4,17 @@ static LED_SET: [u8; 17] = [0x5d, 0xb5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 static KBD_BRIGHT_PATH: &str = "/sys/class/leds/asus::kbd_backlight/brightness";
 
-use crate::{config::Config, error::RogError, laptops::HELP_ADDRESS};
-use asus_nb::{aura_brightness_bytes, aura_modes::AuraModes, fancy::KeyColourArray, LED_MSG_LEN};
+use crate::{
+    config::Config,
+    error::RogError,
+    laptops::{match_laptop, HELP_ADDRESS},
+};
+use asus_nb::{
+    aura_brightness_bytes,
+    aura_modes::{AuraModes, PER_KEY},
+    fancy::KeyColourArray,
+    LED_MSG_LEN,
+};
 use log::{info, warn};
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
@@ -13,6 +22,44 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::{convert::TryInto, path::Path};
 use zbus::dbus_interface;
+
+use crate::GetSupported;
+
+use serde_derive::{Deserialize, Serialize};
+#[derive(Serialize, Deserialize)]
+pub struct LedSupportedFunctions {
+    pub brightness_set: bool,
+    pub stock_led_modes: Option<Vec<u8>>,
+    pub per_key_led_mode: bool,
+}
+
+impl GetSupported for CtrlKbdBacklight {
+    type A = LedSupportedFunctions;
+
+    fn get_supported() -> Self::A {
+        // let mode = <&str>::from(&<AuraModes>::from(*mode));
+        let mut stock_led_modes = None;
+        let mut per_key_led_mode = false;
+        if let Some(laptop) = match_laptop() {
+            let modes = laptop.supported_modes().to_vec();
+            if modes.contains(&PER_KEY) {
+                per_key_led_mode = true;
+                let modes = modes
+                    .iter()
+                    .filter(|x| **x != PER_KEY)
+                    .map(|x| *x)
+                    .collect();
+                stock_led_modes = Some(modes);
+            }
+        }
+
+        LedSupportedFunctions {
+            brightness_set: CtrlKbdBacklight::get_kbd_bright_path().is_ok(),
+            stock_led_modes,
+            per_key_led_mode,
+        }
+    }
+}
 
 pub struct CtrlKbdBacklight {
     led_node: Option<String>,

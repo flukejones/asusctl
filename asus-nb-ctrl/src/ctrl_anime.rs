@@ -21,6 +21,20 @@ use std::error::Error;
 use std::time::Duration;
 use zbus::dbus_interface;
 
+use crate::GetSupported;
+
+use serde_derive::{Deserialize, Serialize};
+#[derive(Serialize, Deserialize)]
+pub struct AnimeSupportedFunctions(bool);
+
+impl GetSupported for CtrlAnimeDisplay {
+    type A = AnimeSupportedFunctions;
+
+    fn get_supported() -> Self::A {
+        AnimeSupportedFunctions(CtrlAnimeDisplay::get_device(0x0b05, 0x193b).is_ok())
+    }
+}
+
 #[allow(dead_code)]
 #[derive(Debug)]
 pub enum AnimatrixCommand {

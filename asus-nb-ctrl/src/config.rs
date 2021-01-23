@@ -1,16 +1,51 @@
 use asus_nb::aura_modes::AuraModes;
-use log::{error, warn};
+use log::{error, info, warn};
 use rog_fan_curve::Curve;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 
+use crate::VERSION;
+
 pub static CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
+
+/// for parsing old v2.1.2 config
+#[derive(Deserialize)]
+struct ConfigV212 {
+    gfx_managed: bool,
+    active_profile: String,
+    toggle_profiles: Vec<String>,
+    // TODO: remove power_profile
+    power_profile: u8,
+    bat_charge_limit: u8,
+    kbd_led_brightness: u8,
+    kbd_backlight_mode: u8,
+    kbd_backlight_modes: Vec<AuraModes>,
+    power_profiles: BTreeMap<String, Profile>,
+}
+
+impl ConfigV212 {
+    fn into_current(self) -> Config {
+        Config {
+            gfx_managed: self.gfx_managed,
+            gfx_nv_mode_is_dedicated: true,
+            active_profile: self.active_profile,
+            toggle_profiles: self.toggle_profiles,
+            power_profile: self.power_profile,
+            bat_charge_limit: self.bat_charge_limit,
+            kbd_led_brightness: self.kbd_led_brightness,
+            kbd_backlight_mode: self.kbd_backlight_mode,
+            kbd_backlight_modes: self.kbd_backlight_modes,
+            power_profiles: self.power_profiles,
+        }
+    }
+}
 
 #[derive(Default, Deserialize, Serialize)]
 pub struct Config {
     pub gfx_managed: bool,
+    pub gfx_nv_mode_is_dedicated: bool,
     pub active_profile: String,
     pub toggle_profiles: Vec<String>,
     // TODO: remove power_profile
@@ -24,7 +59,7 @@ pub struct Config {
 
 impl Config {
     /// `load` will attempt to read the config, and panic if the dir is missing
-    pub fn load(mut self, supported_led_modes: &[u8]) -> Self {
+    pub fn load(supported_led_modes: &[u8]) -> Self {
         let mut file = OpenOptions::new()
             .read(true)
             .write(true)
@@ -35,23 +70,30 @@ impl Config {
                 CONFIG_PATH
             )); // okay to cause panic here
         let mut buf = String::new();
-        if let Ok(l) = file.read_to_string(&mut buf) {
-            if l == 0 {
-                self = Config::create_default(&mut file, &supported_led_modes);
+        if let Ok(read_len) = file.read_to_string(&mut buf) {
+            if read_len == 0 {
+                return Config::create_default(&mut file, &supported_led_modes);
             } else {
-                self = serde_json::from_str(&buf).unwrap_or_else(|_| {
-                    warn!("Could not deserialise {}", CONFIG_PATH);
-                    panic!("Please remove {} then restart asusd", CONFIG_PATH);
-                });
+                if let Ok(data) = serde_json::from_str(&buf) {
+                    return data;
+                } else if let Ok(data) = serde_json::from_str::<ConfigV212>(&buf) {
+                    let config = data.into_current();
+                    config.write();
+                    info!("Updated config version to: {}", VERSION);
+                    return config;
+                }
+                warn!("Could not deserialise {}", CONFIG_PATH);
+                panic!("Please remove {} then restart asusd", CONFIG_PATH);
             }
         }
-        self
+        Config::create_default(&mut file, &supported_led_modes)
     }
 
     fn create_default(file: &mut File, supported_led_modes: &[u8]) -> Self {
         // create a default config here
         let mut config = Config::default();
         config.gfx_managed = true;
+        config.gfx_nv_mode_is_dedicated = true;
 
         config.bat_charge_limit = 100;
         config.kbd_backlight_mode = 0;

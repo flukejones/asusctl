@@ -2,7 +2,6 @@ use super::*;
 use crate::cli_options::LedBrightness;
 use crate::fancy::KeyColourArray;
 use crate::profile::ProfileEvent;
-use ctrl_gfx::vendors::GfxVendors;
 use dbus::{blocking::Connection, Message};
 use std::error::Error;
 use std::sync::{
@@ -24,6 +23,8 @@ use crate::dbus_ledmode::{
 use crate::dbus_profile::{
     OrgAsuslinuxDaemon as OrgAsuslinuxDaemonProfile, OrgAsuslinuxDaemonNotifyProfile,
 };
+use crate::dbus_rogbios::OrgAsuslinuxDaemon as OrgAsuslinuxDaemonRogBios;
+use crate::dbus_supported::OrgAsuslinuxDaemon as OrgAsuslinuxDaemonSupported;
 
 // Signals separated out
 pub struct CtrlSignals {
@@ -278,13 +279,13 @@ impl AuraDbusClient {
     }
 
     #[inline]
-    pub fn write_gfx_mode(&self, vendor: GfxVendors) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn write_gfx_mode(&self, vendor: String) -> Result<(), Box<dyn std::error::Error>> {
         let proxy = self.connection.with_proxy(
             "org.asuslinux.Daemon",
             "/org/asuslinux/Gfx",
             Duration::from_secs(30),
         );
-        proxy.set_vendor(<&str>::from(&vendor))?;
+        proxy.set_vendor(&vendor)?;
         Ok(())
     }
 
@@ -357,5 +358,61 @@ impl AuraDbusClient {
     pub fn write_brightness(&self, level: u8) -> Result<(), Box<dyn std::error::Error>> {
         self.write_keyboard_leds(&AuraModes::LedBrightness(level))?;
         Ok(())
+    }
+
+    //
+    #[inline]
+    pub fn get_bios_dedicated_gfx(&self) -> Result<i16, Box<dyn std::error::Error>> {
+        let proxy = self.connection.with_proxy(
+            "org.asuslinux.Daemon",
+            "/org/asuslinux/RogBios",
+            Duration::from_secs(2),
+        );
+        let x = proxy.dedicated_graphic_mode()?;
+        Ok(x)
+    }
+
+    #[inline]
+    pub fn set_bios_dedicated_gfx(&self, on: bool) -> Result<(), Box<dyn std::error::Error>> {
+        let proxy = self.connection.with_proxy(
+            "org.asuslinux.Daemon",
+            "/org/asuslinux/RogBios",
+            Duration::from_secs(2),
+        );
+        proxy.set_dedicated_graphic_mode(<bool>::from(on))?;
+        Ok(())
+    }
+
+    #[inline]
+    pub fn get_bios_post_sound(&self) -> Result<i16, Box<dyn std::error::Error>> {
+        let proxy = self.connection.with_proxy(
+            "org.asuslinux.Daemon",
+            "/org/asuslinux/RogBios",
+            Duration::from_secs(2),
+        );
+        let x = proxy.post_boot_sound()?;
+        Ok(x)
+    }
+
+    #[inline]
+    pub fn set_bios_post_sound(&self, on: bool) -> Result<(), Box<dyn std::error::Error>> {
+        let proxy = self.connection.with_proxy(
+            "org.asuslinux.Daemon",
+            "/org/asuslinux/RogBios",
+            Duration::from_secs(2),
+        );
+        proxy.set_post_boot_sound(<bool>::from(on))?;
+        Ok(())
+    }
+
+    #[inline]
+    pub fn get_supported_functions(&self) -> Result<String, Box<dyn std::error::Error>> {
+        let proxy = self.connection.with_proxy(
+            "org.asuslinux.Daemon",
+            "/org/asuslinux/Supported",
+            Duration::from_secs(2),
+        );
+        let x = proxy.supported_functions()?;
+        Ok(x)
     }
 }

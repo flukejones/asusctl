@@ -75,7 +75,7 @@ fn parse_fan_curve(data: &str) -> Result<Curve, String> {
 #[derive(Debug, Clone, Options, Serialize, Deserialize)]
 pub struct ProfileCommand {
     #[options(help = "print help message")]
-    help: bool,
+    pub help: bool,
     #[options(help = "toggle to next profile in list")]
     pub next: bool,
     #[options(help = "create the profile if it doesn't exist")]

@@ -1,10 +1,14 @@
-use ctrl_gfx::ctrl_gfx::CtrlGraphics;
-use daemon::config::Config;
-use daemon::ctrl_anime::CtrlAnimeDisplay;
 use daemon::ctrl_charge::CtrlCharge;
 use daemon::ctrl_fan_cpu::{CtrlFanAndCPU, DbusFanAndCpu};
 use daemon::ctrl_leds::{CtrlKbdBacklight, DbusKbdBacklight};
 use daemon::laptops::match_laptop;
+use daemon::{
+    config::Config, laptops::print_board_info, supported::SupportedFunctions, GetSupported,
+};
+use daemon::{
+    ctrl_anime::CtrlAnimeDisplay,
+    ctrl_gfx::{gfx::CtrlGraphics, vendors::GfxVendors},
+};
 
 use asus_nb::DBUS_NAME;
 use daemon::{CtrlTask, Reloadable, ZbusAdd};
@@ -15,6 +19,7 @@ use std::io::Write;
 use std::sync::Arc;
 use std::sync::Mutex;
 
+use daemon::ctrl_rog_bios::CtrlRogBios;
 use std::convert::Into;
 use std::convert::TryInto;
 use zbus::fdo;
@@ -40,14 +45,16 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 // - to maintain constant times of 1ms, per-key colours should use
 //   the effect endpoint so that the complete colour block is written
 //   as fast as 1ms per row of the matrix inside it. (10ms total time)
-//
-// DBUS processing takes 6ms if not tokiod
 fn start_daemon() -> Result<(), Box<dyn Error>> {
+    let supported = SupportedFunctions::get_supported();
+    print_board_info();
+    println!("{}", serde_json::to_string_pretty(&supported).unwrap());
+
     let laptop = match_laptop();
     let config = if let Some(laptop) = laptop.as_ref() {
-        Config::default().load(laptop.supported_modes())
+        Config::load(laptop.supported_modes())
     } else {
-        Config::default().load(&[])
+        Config::load(&[])
     };
 
     let connection = Connection::new_system()?;
@@ -55,8 +62,23 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         .request_name(DBUS_NAME, fdo::RequestNameFlags::ReplaceExisting.into())?;
     let mut object_server = zbus::ObjectServer::new(&connection);
 
+    supported.add_to_server(&mut object_server);
+
     let enable_gfx_switching = config.gfx_managed;
     let config = Arc::new(Mutex::new(config));
+
+    match CtrlRogBios::new(config.clone()) {
+        Ok(mut ctrl) => {
+            // Do a reload of any settings
+            ctrl.reload()
+                .unwrap_or_else(|err| warn!("Battery charge limit: {}", err));
+            // Then register to dbus server
+            ctrl.add_to_server(&mut object_server);
+        }
+        Err(err) => {
+            error!("rog_bios_control: {}", err);
+        }
+    }
 
     match CtrlCharge::new(config.clone()) {
         Ok(mut ctrl) => {
@@ -81,10 +103,25 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
     }
 
     if enable_gfx_switching {
-        match CtrlGraphics::new() {
+        match CtrlGraphics::new(config.clone()) {
             Ok(mut ctrl) => {
-                ctrl.reload()
-                    .unwrap_or_else(|err| warn!("Gfx controller: {}", err));
+                // Need to check if a laptop has the dedicated gfx switch
+                if CtrlRogBios::has_dedicated_gfx_toggle() {
+                    if let Ok(ded) = CtrlRogBios::get_gfx_mode() {
+                        if let Ok(vendor) = CtrlGraphics::get_vendor() {
+                            if ded == 1 && vendor != "nvidia" {
+                                error!("Dedicated GFX toggle is on but driver mode is not nvidia \nSetting to nvidia driver mode");
+                                error!("You must reboot to enable Nvidia driver");
+                                ctrl.set(GfxVendors::Nvidia)?;
+                            } else if ded == 0 {
+                                info!("Dedicated GFX toggle is off");
+                            }
+                        }
+                    }
+                } else {
+                    ctrl.reload()
+                        .unwrap_or_else(|err| warn!("Gfx controller: {}", err));
+                }
                 ctrl.add_to_server(&mut object_server);
             }
             Err(err) => {

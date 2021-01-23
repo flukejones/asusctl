@@ -27,13 +27,12 @@ impl LaptopBase {
 }
 
 pub fn match_laptop() -> Option<LaptopBase> {
-    for device in rusb::devices().unwrap().iter() {
-        let device_desc = device.device_descriptor().unwrap();
+    for device in rusb::devices().expect("Failed here").iter() {
+        let device_desc = device.device_descriptor().expect("Failed there");
         if device_desc.vendor_id() == 0x0b05 {
             match device_desc.product_id() {
                 0x1866 => {
                     let laptop = select_1866_device("1866".to_owned());
-                    print_modes(&laptop.supported_modes);
                     return Some(laptop);
                 }
                 0x1869 => return Some(select_1866_device("1869".to_owned())),
@@ -61,10 +60,6 @@ fn select_1866_device(prod: String) -> LaptopBase {
     let dmi = sysfs_class::DmiId::default();
     let board_name = dmi.board_name().expect("Could not get board_name");
     let prod_family = dmi.product_family().expect("Could not get product_family");
-    let prod_name = dmi.product_name().expect("Could not get product_name");
-
-    info!("Product name: {}", prod_name.trim());
-    info!("Board name: {}", board_name.trim());
 
     let mut laptop = LaptopBase {
         usb_product: prod,
@@ -81,7 +76,18 @@ fn select_1866_device(prod: String) -> LaptopBase {
     laptop
 }
 
-fn print_modes(supported_modes: &[u8]) {
+pub fn print_board_info() {
+    let dmi = sysfs_class::DmiId::default();
+    let board_name = dmi.board_name().expect("Could not get board_name");
+    let prod_name = dmi.product_name().expect("Could not get product_name");
+    let prod_family = dmi.product_family().expect("Could not get product_family");
+
+    info!("Product name: {}", prod_name.trim());
+    info!("Product family: {}", prod_family.trim());
+    info!("Board name: {}", board_name.trim());
+}
+
+pub fn print_modes(supported_modes: &[u8]) {
     if !supported_modes.is_empty() {
         info!("Supported Keyboard LED modes are:");
         for mode in supported_modes {
