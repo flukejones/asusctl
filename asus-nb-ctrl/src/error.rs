@@ -20,6 +20,7 @@ pub enum RogError {
     DoTask(String),
     MissingFunction(String),
     MissingLedBrightNode(String, std::io::Error),
+    ReloadFail(String),
 }
 
 impl fmt::Display for RogError {
@@ -41,6 +42,7 @@ impl fmt::Display for RogError {
             RogError::DoTask(deets) => write!(f, "Task error: {}", deets),
             RogError::MissingFunction(deets) => write!(f, "Missing functionality: {}", deets),
             RogError::MissingLedBrightNode(path, error) => write!(f, "Led node at {} is missing, please check you have the required patch or dkms module installed: {}", path, error),
+            RogError::ReloadFail(deets) => write!(f, "Task error: {}", deets),
         }
     }
 }

@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+# [2.2.0] - 2021-01-26
+### Added
+- Dbus command to fetch all supported functions of the laptop. That is, all the
+  functions that asusd supports for the currently running laptop.
+- Bios setting toggles for:
+  + Dedicated gfx toggle (support depends on the laptop)
+  + Bios boot POST sound toggle
+
+### Changed
+- added config option for dedicated gfx mode on laptops with it to enable
+  switching directly to dedicated using `asusctl graphics -m nvidia`
+
 # [2.1.2] - 2021-01-10
 ### Changed
 - Adjust gfx controller to assume that the graphics driver is loaded if the

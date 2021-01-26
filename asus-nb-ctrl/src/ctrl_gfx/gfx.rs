@@ -1,16 +1,19 @@
+use ctrl_gfx::error::GfxError;
+use ctrl_gfx::*;
+use ctrl_rog_bios::CtrlRogBios;
 use log::{error, info, warn};
-use std::error::Error;
 use std::io::Write;
 use std::iter::FromIterator;
 use std::path::Path;
 use std::process::Command;
 use std::str::FromStr;
+use std::{error::Error, sync::Arc, sync::Mutex};
 use sysfs_class::{PciDevice, SysClass};
+use system::{GraphicsDevice, Module, PciBus};
+use vendors::{GfxCtrlAction, GfxVendors};
 use zbus::dbus_interface;
 
-use crate::vendors::*;
 use crate::*;
-use crate::{error::GfxError, system::*};
 
 pub struct CtrlGraphics {
     bus: PciBus,
@@ -20,6 +23,7 @@ pub struct CtrlGraphics {
     #[allow(dead_code)]
     other: Vec<GraphicsDevice>,
     initfs_cmd: Option<Command>,
+    config: Arc<Mutex<Config>>,
 }
 
 trait Dbus {
@@ -30,10 +34,8 @@ trait Dbus {
     fn notify_action(&self, action: &str) -> zbus::Result<()>;
 }
 
-#[cfg(feature = "use-zbus")]
 use std::convert::TryInto;
 
-#[cfg(feature = "use-zbus")]
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl Dbus for CtrlGraphics {
     fn vendor(&self) -> String {
@@ -58,14 +60,14 @@ impl Dbus for CtrlGraphics {
     }
 
     #[dbus_interface(signal)]
-    fn notify_gfx(&self, vendor: &str) -> zbus::Result<()>;
+    fn notify_gfx(&self, vendor: &str) -> zbus::Result<()> {}
 
     #[dbus_interface(signal)]
-    fn notify_action(&self, action: &str) -> zbus::Result<()>;
+    fn notify_action(&self, action: &str) -> zbus::Result<()> {}
 }
 
 impl CtrlGraphics {
-    pub fn new() -> std::io::Result<CtrlGraphics> {
+    pub fn new(config: Arc<Mutex<Config>>) -> std::io::Result<CtrlGraphics> {
         let bus = PciBus::new()?;
 
         info!("Rescanning PCI bus");
@@ -138,13 +140,16 @@ impl CtrlGraphics {
             nvidia,
             other,
             initfs_cmd,
+            config,
         })
     }
 
-    #[cfg(feature = "use-zbus")]
     pub fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
-            .at(&"/org/asuslinux/Gfx".try_into().unwrap(), self)
+            .at(
+                &"/org/asuslinux/Gfx".try_into().expect("Some fail here"),
+                self,
+            )
             .map_err(|err| {
                 warn!("CtrlGraphics: add_to_server {}", err);
                 err
@@ -157,10 +162,6 @@ impl CtrlGraphics {
         info!("Reloaded gfx mode: {:?}", CtrlGraphics::get_vendor()?);
         Ok(())
     }
-
-    // fn can_switch(&self) -> bool {
-    //     !self.nvidia.is_empty() && (!self.intel.is_empty() || !self.amd.is_empty())
-    // }
 
     fn get_prime_discrete() -> Result<String, GfxError> {
         let s = std::fs::read_to_string(PRIME_DISCRETE_PATH)
@@ -220,10 +221,7 @@ impl CtrlGraphics {
         Ok(x)
     }
 
-    /// Write out config files if required, enable/disable relevant services, and update the ramdisk
-    pub fn set(&mut self, vendor: GfxVendors) -> Result<String, GfxError> {
-        //self.switchable_or_fail()?;
-
+    pub fn set_gfx_config(vendor: GfxVendors) -> Result<(), GfxError> {
         let mode = if vendor == GfxVendors::Hybrid {
             "on-demand\n"
         } else if vendor == GfxVendors::Nvidia {
@@ -235,10 +233,6 @@ impl CtrlGraphics {
 
         info!("Setting {} to {}", PRIME_DISCRETE_PATH, mode);
         Self::set_prime_discrete(mode)?;
-
-        // Switching from hybrid to/from nvidia shouldn't require a ramdisk update
-        // or a reboot.
-        let no_reboot = Self::is_switching_prime_modes(&vendor)?;
 
         {
             info!("Writing {}", MODPROBE_PATH);
@@ -307,6 +301,32 @@ impl CtrlGraphics {
                 status
             );
         }
+        Ok(())
+    }
+
+    /// Write out config files if required, enable/disable relevant services, and update the ramdisk
+    pub fn set(&mut self, vendor: GfxVendors) -> Result<String, GfxError> {
+        if CtrlRogBios::has_dedicated_gfx_toggle() {
+            if let Ok(config) = self.config.clone().try_lock() {
+                // Switch to dedicated if config says to do so
+                if config.gfx_nv_mode_is_dedicated && vendor == GfxVendors::Nvidia {
+                    CtrlRogBios::set_gfx_mode(true)
+                        .unwrap_or_else(|err| warn!("Gfx controller: {}", err));
+                } else if let Ok(ded) = CtrlRogBios::get_gfx_mode() {
+                    // otherwise if switching to non-Nvidia mode turn off dedicated mode
+                    if ded == 1 && vendor != GfxVendors::Nvidia {
+                        CtrlRogBios::set_gfx_mode(false)
+                            .unwrap_or_else(|err| warn!("Gfx controller: {}", err));
+                    }
+                }
+            }
+        }
+
+        // Switching from hybrid to/from nvidia shouldn't require a ramdisk update
+        // or a reboot.
+        let no_reboot = Self::is_switching_prime_modes(&vendor)?;
+
+        Self::set_gfx_config(vendor)?;
 
         let mut required_action = GfxCtrlAction::None;
         if !no_reboot {
@@ -329,12 +349,6 @@ impl CtrlGraphics {
         Ok(required_action.into())
     }
 
-    // pub fn get_power(&self) -> Option<bool> {
-    //     if self.can_switch() {
-    //         return Some(self.nvidia.iter().any(GraphicsDevice::exists));
-    //     }
-    //     None
-    // }
     pub fn get_runtime_status() -> Result<String, GfxError> {
         const PATH: &str = "/sys/bus/pci/devices/0000:01:00.0/power/runtime_status";
         let buf = std::fs::read_to_string(PATH).map_err(|err| GfxError::Read(PATH.into(), err))?;
@@ -342,8 +356,6 @@ impl CtrlGraphics {
     }
 
     fn set_power(&self, power: bool) -> Result<(), GfxError> {
-        // self.switchable_or_fail()?;
-
         if power {
             info!("Enabling graphics power");
             self.bus

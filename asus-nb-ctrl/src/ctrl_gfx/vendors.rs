@@ -6,8 +6,9 @@ pub enum GfxVendors {
     Hybrid,
 }
 
-use crate::error::GfxError;
 use std::str::FromStr;
+
+use super::error::GfxError;
 
 impl FromStr for GfxVendors {
     type Err = GfxError;

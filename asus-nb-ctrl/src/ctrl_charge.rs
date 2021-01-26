@@ -1,6 +1,7 @@
-use crate::{config::Config, error::RogError};
+use crate::{config::Config, error::RogError, GetSupported};
 //use crate::dbus::DbusEvents;
 use log::{info, warn};
+use serde_derive::{Deserialize, Serialize};
 use std::convert::TryInto;
 use std::fs::OpenOptions;
 use std::io::Write;
@@ -11,8 +12,22 @@ use zbus::dbus_interface;
 
 static BAT_CHARGE_PATH: &str = "/sys/class/power_supply/BAT0/charge_control_end_threshold";
 
+#[derive(Serialize, Deserialize)]
+pub struct ChargeSupportedFunctions {
+    pub charge_level_set: bool,
+}
+
+impl GetSupported for CtrlCharge {
+    type A = ChargeSupportedFunctions;
+
+    fn get_supported() -> Self::A {
+        ChargeSupportedFunctions {
+            charge_level_set: CtrlCharge::get_battery_path().is_ok(),
+        }
+    }
+}
+
 pub struct CtrlCharge {
-    path: &'static str,
     config: Arc<Mutex<Config>>,
 }
 
@@ -43,7 +58,7 @@ impl CtrlCharge {
     }
 
     #[dbus_interface(signal)]
-    pub fn notify_charge(&self, limit: u8) -> zbus::Result<()>;
+    pub fn notify_charge(&self, limit: u8) -> zbus::Result<()> {}
 }
 
 impl crate::ZbusAdd for CtrlCharge {
@@ -62,7 +77,6 @@ impl crate::Reloadable for CtrlCharge {
     fn reload(&mut self) -> Result<(), RogError> {
         if let Ok(mut config) = self.config.try_lock() {
             config.read();
-            info!("Reloaded battery charge limit");
             self.set(config.bat_charge_limit, &mut config)?;
         }
         Ok(())
@@ -71,9 +85,8 @@ impl crate::Reloadable for CtrlCharge {
 
 impl CtrlCharge {
     pub fn new(config: Arc<Mutex<Config>>) -> Result<Self, RogError> {
-        let path = CtrlCharge::get_battery_path()?;
-        info!("Device has battery charge threshold control");
-        Ok(CtrlCharge { path, config })
+        CtrlCharge::get_battery_path()?;
+        Ok(CtrlCharge { config })
     }
 
     fn get_battery_path() -> Result<&'static str, RogError> {
@@ -97,10 +110,10 @@ impl CtrlCharge {
 
         let mut file = OpenOptions::new()
             .write(true)
-            .open(self.path)
-            .map_err(|err| RogError::Path(self.path.into(), err))?;
+            .open(BAT_CHARGE_PATH)
+            .map_err(|err| RogError::Path(BAT_CHARGE_PATH.into(), err))?;
         file.write_all(limit.to_string().as_bytes())
-            .map_err(|err| RogError::Write(self.path.into(), err))?;
+            .map_err(|err| RogError::Write(BAT_CHARGE_PATH.into(), err))?;
         info!("Battery charge limit: {}", limit);
 
         config.read();

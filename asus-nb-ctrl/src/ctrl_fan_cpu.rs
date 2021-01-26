@@ -1,6 +1,10 @@
-use crate::config::{Config, Profile};
+use crate::{
+    config::{Config, Profile},
+    GetSupported,
+};
 use asus_nb::profile::ProfileEvent;
 use log::{info, warn};
+use serde_derive::{Deserialize, Serialize};
 use std::convert::TryInto;
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
@@ -17,6 +21,25 @@ static AMD_BOOST_PATH: &str = "/sys/devices/system/cpu/cpufreq/boost";
 pub struct CtrlFanAndCPU {
     pub path: &'static str,
     config: Arc<Mutex<Config>>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct FanCpuSupportedFunctions {
+    pub stock_fan_modes: bool,
+    pub min_max_freq: bool,
+    pub fan_curve_set: bool,
+}
+
+impl GetSupported for CtrlFanAndCPU {
+    type A = FanCpuSupportedFunctions;
+
+    fn get_supported() -> Self::A {
+        FanCpuSupportedFunctions {
+            stock_fan_modes: CtrlFanAndCPU::get_fan_path().is_ok(),
+            min_max_freq: intel_pstate::PState::new().is_ok(),
+            fan_curve_set: rog_fan_curve::Board::from_board_name().is_some(),
+        }
+    }
 }
 
 pub struct DbusFanAndCpu {
@@ -101,7 +124,7 @@ impl DbusFanAndCpu {
     }
 
     #[dbus_interface(signal)]
-    fn notify_profile(&self, profile: &str) -> zbus::Result<()>;
+    fn notify_profile(&self, profile: &str) -> zbus::Result<()> {}
 }
 
 impl crate::ZbusAdd for DbusFanAndCpu {

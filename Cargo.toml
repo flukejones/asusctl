@@ -1,5 +1,5 @@
 [workspace]
-members = ["asus-notify", "asus-nb-ctrl", "asus-nb", "ctrl-gfx"]
+members = ["asus-notify", "asus-nb-ctrl", "asus-nb"]
 
 [profile.release]
 lto = true
