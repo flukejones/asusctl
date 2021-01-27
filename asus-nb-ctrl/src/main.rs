@@ -21,8 +21,11 @@ struct CLIStart {
     show_supported: bool,
     #[options(meta = "", help = "<off, low, med, high>")]
     kbd_bright: Option<LedBrightness>,
-    #[options(meta = "", help = "<silent, normal, boost>")]
-    pwr_profile: Option<FanLevel>,
+    #[options(
+        meta = "",
+        help = "<silent, normal, boost>, set fan mode independent of profile"
+    )]
+    fan_mode: Option<FanLevel>,
     #[options(meta = "", help = "<20-100>")]
     chg_limit: Option<u8>,
     #[options(command)]
@@ -246,7 +249,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         None => {
             if (!parsed.show_supported
                 && parsed.kbd_bright.is_none()
-                && parsed.pwr_profile.is_none()
+                && parsed.fan_mode.is_none()
                 && parsed.chg_limit.is_none())
                 || parsed.help
             {
@@ -272,7 +275,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Supported laptop functions:\n{}", dat.to_string());
     }
 
-    if let Some(fan_level) = parsed.pwr_profile {
+    if let Some(fan_level) = parsed.fan_mode {
         dbus_client.write_fan_mode(fan_level.into())?;
     }
     if let Some(chg_limit) = parsed.chg_limit {
@@ -319,7 +322,10 @@ fn do_gfx(
                 )?;
                 std::process::exit(1)
             }
-            _ => std::process::exit(-1),
+            _ => {
+                println!("{}", Red.paint(&format!("\n{}\n", res.as_str())),);
+                std::process::exit(-1);
+            }
         }
         std::process::exit(-1)
     }

@@ -7,6 +7,10 @@ but can also be used with non-asus laptops with reduced features.
 
 This app is developed and tested on fedora only. Support is not provided for Arch or Arch based distros.
 
+**NOTICE:**
+The following is *not* required for 5.11 kernel versions, as this version includes
+all the required patches.
+---
 This program requires the kernel patch [here](https://www.spinics.net/lists/linux-input/msg68977.html) to be applied.
 Alternatively you may use the dkms module for 'hid-asus-rog` from one of the
 repositories [here](https://download.opensuse.org/repositories/home:/luke_nukem:/asus/).
@@ -53,13 +57,17 @@ will probably suffer another rename once it becomes generic enough to do so.
 - [X] Set battery charge limit (with kernel supporting this)
 - [X] Fancy fan control on G14 + G15 thanks to @Yarn1
 - [X] Graphics mode switching between iGPU, dGPU, and On-Demand
+- [X] Toggle bios setting for boot/POST sound
+- [X] Toggle bios setting for "dedicated gfx" mode on supported laptops (g-sync)
 
 # FUNCTIONS
 
 ## Graphics switching
 
 A new feature has been added to enable switching graphics modes. This can be disabled
-in the config with `"manage_gfx": false,`. Please be aware it is a work in progress.
+in the config with `"manage_gfx": false,`. Additionally there is an extra setting
+for laptops capable of g-sync dedicated gfx mode to enable the graphics switching
+to switch on dedicated gfx for "nvidia" mode.
 
 The CLI option for this does not require root until it asks for it, and provides
 instructions.
@@ -79,7 +87,8 @@ If you have installed the Nvidia driver manually you will require the
 ### fedora and openSUSE
 
 You *may* need a file `/etc/dracut.conf.d/90-nvidia-dracut-G05.conf` installed
-to stop dracut including the nvidia modules in the ramdisk.
+to stop dracut including the nvidia modules in the ramdisk. This is espeically
+true if you manually installed the nvidia drivers.
 
 ```
 # filename /etc/dracut.conf.d/90-nvidia-dracut-G05.conf

@@ -15,7 +15,7 @@ use asus_nb::{
     fancy::KeyColourArray,
     LED_MSG_LEN,
 };
-use log::{info, warn};
+use log::{error, info, warn};
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::sync::Arc;
@@ -91,6 +91,9 @@ impl crate::ZbusAdd for DbusKbdBacklight {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
             .at(&"/org/asuslinux/Led".try_into().unwrap(), self)
+            .map_err(|err| {
+                error!("DbusKbdBacklight: add_to_server {}", err);
+            })
             .ok();
     }
 }
@@ -281,8 +284,16 @@ impl CtrlKbdBacklight {
         let ctrl = CtrlKbdBacklight {
             // Using `ok` here so we can continue without keyboard features but
             // still get brightness control at least... maybe...
-            led_node: Self::get_node_failover(id_product, None, Self::scan_led_node).ok(),
-            kbd_node: Self::get_node_failover(id_product, condev_iface, Self::scan_kbd_node).ok(),
+            led_node: Some(Self::get_node_failover(
+                id_product,
+                None,
+                Self::scan_led_node,
+            )?),
+            kbd_node: Some(Self::get_node_failover(
+                id_product,
+                condev_iface,
+                Self::scan_kbd_node,
+            )?),
             // TODO: Check for existance
             bright_node: Self::get_kbd_bright_path()?.to_owned(),
             supported_modes,
