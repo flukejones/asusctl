@@ -9,7 +9,7 @@ pub mod system;
 const PRIME_DISCRETE_PATH: &str = "/etc/prime-discrete";
 const MODPROBE_PATH: &str = "/etc/modprobe.d/asusd.conf";
 const INITRAMFS_PATH: &str = "/usr/sbin/update-initramfs";
-// const DRACUT_PATH: &str = "/usr/bin/dracut";
+const DRACUT_PATH: &str = "/usr/bin/dracut";
 
 static MODPROBE_NVIDIA: &[u8] = MODPROBE_HYBRID;
 

@@ -1,6 +1,8 @@
 use std::error;
 use std::fmt;
 
+use crate::error::RogError;
+
 #[derive(Debug)]
 pub enum GfxError {
     ParseVendor,
@@ -28,3 +30,9 @@ impl fmt::Display for GfxError {
 }
 
 impl error::Error for GfxError {}
+
+impl From<GfxError> for RogError {
+    fn from(err: GfxError) -> Self {
+        RogError::GfxSwitching(err)
+    }
+}

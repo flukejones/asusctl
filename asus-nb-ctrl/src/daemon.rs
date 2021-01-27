@@ -112,7 +112,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
                             if ded == 1 && vendor != "nvidia" {
                                 error!("Dedicated GFX toggle is on but driver mode is not nvidia \nSetting to nvidia driver mode");
                                 error!("You must reboot to enable Nvidia driver");
-                                ctrl.set(GfxVendors::Nvidia)?;
+                                CtrlGraphics::set_gfx_config(GfxVendors::Nvidia)?;
                             } else if ded == 0 {
                                 info!("Dedicated GFX toggle is off");
                             }

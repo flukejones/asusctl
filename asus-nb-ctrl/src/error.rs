@@ -3,6 +3,8 @@ use rog_fan_curve::CurveError;
 use std::convert::From;
 use std::fmt;
 
+use crate::ctrl_gfx::error::GfxError;
+
 #[derive(Debug)]
 pub enum RogError {
     ParseFanLevel,
@@ -21,6 +23,7 @@ pub enum RogError {
     MissingFunction(String),
     MissingLedBrightNode(String, std::io::Error),
     ReloadFail(String),
+    GfxSwitching(GfxError),
 }
 
 impl fmt::Display for RogError {
@@ -43,6 +46,7 @@ impl fmt::Display for RogError {
             RogError::MissingFunction(deets) => write!(f, "Missing functionality: {}", deets),
             RogError::MissingLedBrightNode(path, error) => write!(f, "Led node at {} is missing, please check you have the required patch or dkms module installed: {}", path, error),
             RogError::ReloadFail(deets) => write!(f, "Task error: {}", deets),
+            RogError::GfxSwitching(deets) => write!(f, "Graphics switching error: {}", deets),
         }
     }
 }

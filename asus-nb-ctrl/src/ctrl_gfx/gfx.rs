@@ -7,7 +7,7 @@ use std::iter::FromIterator;
 use std::path::Path;
 use std::process::Command;
 use std::str::FromStr;
-use std::{error::Error, sync::Arc, sync::Mutex};
+use std::{sync::Arc, sync::Mutex};
 use sysfs_class::{PciDevice, SysClass};
 use system::{GraphicsDevice, Module, PciBus};
 use vendors::{GfxCtrlAction, GfxVendors};
@@ -64,6 +64,31 @@ impl Dbus for CtrlGraphics {
 
     #[dbus_interface(signal)]
     fn notify_action(&self, action: &str) -> zbus::Result<()> {}
+}
+
+impl ZbusAdd for CtrlGraphics {
+    fn add_to_server(self, server: &mut zbus::ObjectServer) {
+        server
+            .at(
+                &"/org/asuslinux/Gfx"
+                    .try_into()
+                    .expect("Couldn't add to zbus"),
+                self,
+            )
+            .map_err(|err| {
+                warn!("CtrlGraphics: add_to_server {}", err);
+                err
+            })
+            .ok();
+    }
+}
+
+impl Reloadable for CtrlGraphics {
+    fn reload(&mut self) -> Result<(), RogError> {
+        self.auto_power()?;
+        info!("Reloaded gfx mode: {:?}", CtrlGraphics::get_vendor()?);
+        Ok(())
+    }
 }
 
 impl CtrlGraphics {
@@ -125,13 +150,12 @@ impl CtrlGraphics {
             cmd.arg("-u");
             initfs_cmd = Some(cmd);
             info!("Using initramfs update command 'update-initramfs'");
+        } else if Path::new(DRACUT_PATH).exists() {
+            let mut cmd = Command::new("dracut");
+            cmd.arg("-f");
+            initfs_cmd = Some(cmd);
+            info!("Using initramfs update command 'dracut'");
         }
-        // } else if Path::new(DRACUT_PATH).exists() {
-        //     let mut cmd = Command::new("dracut");
-        //     cmd.arg("-f");
-        //     initfs_cmd = Some(cmd);
-        //     info!("Using initramfs update command 'dracut'");
-        // }
 
         Ok(CtrlGraphics {
             bus,
@@ -144,26 +168,7 @@ impl CtrlGraphics {
         })
     }
 
-    pub fn add_to_server(self, server: &mut zbus::ObjectServer) {
-        server
-            .at(
-                &"/org/asuslinux/Gfx".try_into().expect("Some fail here"),
-                self,
-            )
-            .map_err(|err| {
-                warn!("CtrlGraphics: add_to_server {}", err);
-                err
-            })
-            .ok();
-    }
-
-    pub fn reload(&mut self) -> Result<(), Box<dyn Error>> {
-        self.auto_power()?;
-        info!("Reloaded gfx mode: {:?}", CtrlGraphics::get_vendor()?);
-        Ok(())
-    }
-
-    fn get_prime_discrete() -> Result<String, GfxError> {
+    fn get_prime_discrete() -> Result<String, RogError> {
         let s = std::fs::read_to_string(PRIME_DISCRETE_PATH)
             .map_err(|err| GfxError::Read(PRIME_DISCRETE_PATH.into(), err))?
             .trim()
@@ -171,14 +176,14 @@ impl CtrlGraphics {
         Ok(s)
     }
 
-    fn set_prime_discrete(mode: &str) -> Result<(), GfxError> {
+    fn set_prime_discrete(mode: &str) -> Result<(), RogError> {
         std::fs::write(PRIME_DISCRETE_PATH, mode)
             .map_err(|err| GfxError::Read(PRIME_DISCRETE_PATH.into(), err))?;
         Ok(())
     }
 
     /// Associated method to get which vendor mode is set
-    pub fn get_vendor() -> Result<String, GfxError> {
+    pub fn get_vendor() -> Result<String, RogError> {
         let mode = match Self::get_prime_discrete() {
             Ok(m) => m,
             Err(_) => "nvidia".to_string(),
@@ -214,14 +219,32 @@ impl CtrlGraphics {
         Ok(vendor)
     }
 
-    pub fn is_switching_prime_modes(vendor: &GfxVendors) -> Result<bool, GfxError> {
+    fn is_switching_prime_modes(&self, vendor: &GfxVendors) -> Result<bool, RogError> {
         let prev_mode = GfxVendors::from_str(&Self::get_vendor()?)?;
-        let x = (prev_mode == GfxVendors::Hybrid || prev_mode == GfxVendors::Nvidia)
-            && (*vendor == GfxVendors::Hybrid || *vendor == GfxVendors::Nvidia);
-        Ok(x)
+        if prev_mode == GfxVendors::Integrated
+            && (*vendor == GfxVendors::Hybrid || *vendor == GfxVendors::Nvidia)
+        {
+            return Ok(true);
+        }
+        if (prev_mode == GfxVendors::Hybrid || prev_mode == GfxVendors::Nvidia)
+            && *vendor == GfxVendors::Integrated
+        {
+            return Ok(true);
+        }
+        if let Ok(config) = self.config.clone().try_lock() {
+            if CtrlRogBios::has_dedicated_gfx_toggle() && config.gfx_nv_mode_is_dedicated {
+                if prev_mode == GfxVendors::Hybrid && *vendor == GfxVendors::Nvidia {
+                    return Ok(true);
+                }
+                if *vendor == GfxVendors::Hybrid && prev_mode == GfxVendors::Nvidia {
+                    return Ok(true);
+                }
+            }
+        }
+        Ok(false)
     }
 
-    pub fn set_gfx_config(vendor: GfxVendors) -> Result<(), GfxError> {
+    pub fn set_gfx_config(vendor: GfxVendors) -> Result<(), RogError> {
         let mode = if vendor == GfxVendors::Hybrid {
             "on-demand\n"
         } else if vendor == GfxVendors::Nvidia {
@@ -305,7 +328,11 @@ impl CtrlGraphics {
     }
 
     /// Write out config files if required, enable/disable relevant services, and update the ramdisk
-    pub fn set(&mut self, vendor: GfxVendors) -> Result<String, GfxError> {
+    fn set(&mut self, vendor: GfxVendors) -> Result<String, RogError> {
+        // Switching from hybrid to/from nvidia shouldn't require a ramdisk update
+        // or a reboot.
+        let reboot = self.is_switching_prime_modes(&vendor)?;
+
         if CtrlRogBios::has_dedicated_gfx_toggle() {
             if let Ok(config) = self.config.clone().try_lock() {
                 // Switch to dedicated if config says to do so
@@ -322,40 +349,44 @@ impl CtrlGraphics {
             }
         }
 
-        // Switching from hybrid to/from nvidia shouldn't require a ramdisk update
-        // or a reboot.
-        let no_reboot = Self::is_switching_prime_modes(&vendor)?;
-
-        Self::set_gfx_config(vendor)?;
+        Self::set_gfx_config(vendor.clone())?;
 
         let mut required_action = GfxCtrlAction::None;
-        if !no_reboot {
+        if reboot {
             info!("Updating initramfs");
             if let Some(cmd) = self.initfs_cmd.as_mut() {
+                // If switching to Nvidia dedicated we need these modules included
+                if Path::new(DRACUT_PATH).exists() && vendor == GfxVendors::Nvidia {
+                    cmd.arg("--add-drivers");
+                    cmd.arg("nvidia nvidia-drm nvidia-modeset nvidia-uvm");
+                    info!("System uses dracut, forcing nvidia modules to be included in init");
+                }
+
                 let status = cmd
                     .status()
                     .map_err(|err| GfxError::Write(format!("{:?}", cmd), err))?;
                 if !status.success() {
                     error!("Ram disk update failed");
+                    return Ok("Ram disk update failed".into());
                 } else {
                     info!("Successfully updated iniramfs");
                 }
             }
             required_action = GfxCtrlAction::Reboot;
-        } else if no_reboot {
+        } else if !reboot {
             required_action = GfxCtrlAction::RestartX;
         }
 
         Ok(required_action.into())
     }
 
-    pub fn get_runtime_status() -> Result<String, GfxError> {
+    fn get_runtime_status() -> Result<String, RogError> {
         const PATH: &str = "/sys/bus/pci/devices/0000:01:00.0/power/runtime_status";
         let buf = std::fs::read_to_string(PATH).map_err(|err| GfxError::Read(PATH.into(), err))?;
         Ok(buf)
     }
 
-    fn set_power(&self, power: bool) -> Result<(), GfxError> {
+    fn set_power(&self, power: bool) -> Result<(), RogError> {
         if power {
             info!("Enabling graphics power");
             self.bus
@@ -377,7 +408,7 @@ impl CtrlGraphics {
         Ok(())
     }
 
-    fn auto_power(&self) -> Result<(), GfxError> {
+    fn auto_power(&self) -> Result<(), RogError> {
         let vendor = CtrlGraphics::get_vendor()?;
         self.set_power(vendor != "integrated")
     }

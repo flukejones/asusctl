@@ -132,7 +132,7 @@ impl crate::ZbusAdd for DbusFanAndCpu {
         server
             .at(&"/org/asuslinux/Profile".try_into().unwrap(), self)
             .map_err(|err| {
-                warn!("DbusFanAndCpu: {}", err);
+                warn!("DbusFanAndCpu: add_to_server {}", err);
                 err
             })
             .ok();
