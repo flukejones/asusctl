@@ -281,21 +281,39 @@ impl CtrlKbdBacklight {
         config: Arc<Mutex<Config>>,
     ) -> Result<Self, RogError> {
         // TODO: return error if *all* nodes are None
+        let led_node = Self::get_node_failover(
+            id_product,
+            None,
+            Self::scan_led_node,
+        ).map_or_else(|err| {
+            warn!("led_node: {}", err);
+            None
+        }, |node| Some(node));
+
+        let kbd_node = Self::get_node_failover(
+            id_product,
+            condev_iface,
+            Self::scan_kbd_node,
+        ).map_or_else(|err| {
+            warn!("kbd_node: {}", err);
+            None
+        }, |node| Some(node));
+
+        let bright_node = Self::get_kbd_bright_path();
+
+        if led_node.is_none() && kbd_node.is_none() && Self::get_kbd_bright_path().is_err() {
+            return Err(RogError::MissingFunction(
+                "All keyboard features missing, you may require a v5.11 series kernel or newer".into(),
+            ));
+        }
+
         let ctrl = CtrlKbdBacklight {
             // Using `ok` here so we can continue without keyboard features but
             // still get brightness control at least... maybe...
-            led_node: Some(Self::get_node_failover(
-                id_product,
-                None,
-                Self::scan_led_node,
-            )?),
-            kbd_node: Some(Self::get_node_failover(
-                id_product,
-                condev_iface,
-                Self::scan_kbd_node,
-            )?),
+            led_node,
+            kbd_node,
             // TODO: Check for existance
-            bright_node: Self::get_kbd_bright_path()?.to_owned(),
+            bright_node: bright_node?.to_owned(),
             supported_modes,
             flip_effect_write: false,
             config,
@@ -318,23 +336,12 @@ impl CtrlKbdBacklight {
         iface: Option<&String>,
         fun: fn(&str, Option<&String>) -> Result<String, RogError>,
     ) -> Result<String, RogError> {
-        // We do three tries here just to be certain that we avoid systemd unit
-        // load order issues
-        for n in 0..=2 {
-            // 0,1,2 inclusive
-            match fun(id_product, iface) {
-                Ok(o) => return Ok(o),
-                Err(e) => {
-                    if n == 2 {
-                        warn!("Looking for node: {}", e.to_string());
-                        std::thread::sleep(std::time::Duration::from_secs(1));
-                    } else {
-                        break;
-                    }
-                }
+        match fun(id_product, iface) {
+            Ok(o) => return Ok(o),
+            Err(e) => {
+                warn!("Looking for node: {}", e.to_string());
             }
         }
-        // Shouldn't be possible to reach this...
         Err(RogError::NotFound(format!("{}, {:?}", id_product, iface)))
     }
 
