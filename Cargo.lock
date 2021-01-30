@@ -45,7 +45,7 @@ dependencies = [
 
 [[package]]
 name = "asus-nb-ctrl"
-version = "2.2.1"
+version = "2.2.2"
 dependencies = [
  "asus-nb",
  "env_logger",

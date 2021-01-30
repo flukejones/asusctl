@@ -118,10 +118,9 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
                             }
                         }
                     }
-                } else {
-                    ctrl.reload()
-                        .unwrap_or_else(|err| warn!("Gfx controller: {}", err));
                 }
+                ctrl.reload()
+                    .unwrap_or_else(|err| warn!("Gfx controller: {}", err));
                 ctrl.add_to_server(&mut object_server);
             }
             Err(err) => {

@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+# [2.2.2] - 2021-01-31
+### Changed
+- Fix for dedicated gfx capable laptops in integrated mode
+- Fix for 0x1854 device
+
 # [2.2.1] - 2021-01-27
 ### Added
 - Add ROG Zephyrus M15 LED config
