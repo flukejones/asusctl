@@ -21,7 +21,7 @@ static ASUS_POST_LOGO_SOUND: &str =
     "/sys/firmware/efi/efivars/AsusPostLogoSound-607005d5-3f75-4b2e-98f0-85ba66797a3e";
 
 pub struct CtrlRogBios {
-    config: Arc<Mutex<Config>>,
+    _config: Arc<Mutex<Config>>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -138,7 +138,7 @@ impl CtrlRogBios {
             }
         }
 
-        Ok(CtrlRogBios { config })
+        Ok(CtrlRogBios { _config: config })
     }
 
     fn set_path_mutable(path: &str) -> Result<(), RogError> {

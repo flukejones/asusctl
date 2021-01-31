@@ -26,7 +26,7 @@ led_modes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 255]
 [[led_modes]]
 prod_family = "ROG Strix"
 board_names = ["GX531", "G512LV", "G712LV"]
-led_modes = [0, 1, 2, 3, 10, 13]
+led_modes = [0, 1, 2, 3, 10, 13, 14]
 
 [[led_modes]]
 prod_family = "ROG Strix"
@@ -36,7 +36,7 @@ led_modes = [0, 1, 2, 3, 10]
 [[led_modes]]
 prod_family = "Strix"
 board_names = ["G731GV", "G731GW", "G531GV"]
-led_modes = [0, 1, 2, 3, 13]
+led_modes = [0, 1, 2, 3, 13, 14]
 
 [[led_modes]]
 prod_family = "Strix"
@@ -46,4 +46,9 @@ led_modes = [0, 1, 2, 3]
 [[led_modes]]
 prod_family = "Strix Scar"
 board_names = ["G531", "G731"]
-led_modes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 255]
+led_modes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 255]
+
+[[led_modes]]
+prod_family = "ROG"
+board_names = ["GL553VE"]
+led_modes = [0, 1, 2, 13, 14]
