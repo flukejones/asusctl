@@ -153,6 +153,7 @@ impl From<&AuraModes> for [u8; LED_MSG_LEN] {
         let mut msg = [0u8; LED_MSG_LEN];
         msg[0] = 0x5d;
         msg[1] = 0xb3;
+        msg[7] = 0xeb;
         match mode {
             AuraModes::LedBrightness(n) => return aura_brightness_bytes(*n),
             AuraModes::Static(_) => msg[3] = 0x00,
@@ -234,14 +235,15 @@ impl From<&AuraModes> for [[u8; LED_MSG_LEN]; 4] {
     #[inline]
     fn from(mode: &AuraModes) -> Self {
         let mut msg = [[0u8; LED_MSG_LEN]; 4];
-        for (i, row) in msg.iter_mut().enumerate() {
-            row[0] = 0x5d;
-            row[1] = 0xb3;
-            row[2] = i as u8 + 1;
-        }
-
         match mode {
             AuraModes::MultiStatic(settings) => {
+                for (i, row) in msg.iter_mut().enumerate() {
+                    row[0] = 0x5d;
+                    row[1] = 0xb3;
+                    row[2] = i as u8 + 1; // zone
+                    row[3] = 0x00; // mode
+                    row[7] = 0xeb; // static needs speed?
+                }
                 msg[0][4] = settings.colour1.0;
                 msg[0][5] = settings.colour1.1;
                 msg[0][6] = settings.colour1.2;
@@ -254,6 +256,35 @@ impl From<&AuraModes> for [[u8; LED_MSG_LEN]; 4] {
                 msg[3][4] = settings.colour4.0;
                 msg[3][5] = settings.colour4.1;
                 msg[3][6] = settings.colour4.2;
+            }
+            AuraModes::MultiBreathe(settings) => {
+                for (i, row) in msg.iter_mut().enumerate() {
+                    row[0] = 0x5d;
+                    row[1] = 0xb3;
+                    row[2] = i as u8 + 1; // zone
+                    row[3] = 0x01; // mode
+                }
+                let speed = match settings.speed {
+                    aura_modes::Speed::Low => 0xfd,
+                    aura_modes::Speed::Med => 0xfe,
+                    aura_modes::Speed::High => 0xff,
+                };
+                msg[0][4] = settings.colour1.0;
+                msg[0][5] = settings.colour1.1;
+                msg[0][6] = settings.colour1.2;
+                msg[0][7] = speed; // fd, fe, ff
+                msg[1][4] = settings.colour2.0;
+                msg[1][5] = settings.colour2.1;
+                msg[1][6] = settings.colour2.2;
+                msg[1][7] = speed;
+                msg[2][4] = settings.colour3.0;
+                msg[2][5] = settings.colour3.1;
+                msg[2][6] = settings.colour3.2;
+                msg[2][7] = speed;
+                msg[3][4] = settings.colour4.0;
+                msg[3][5] = settings.colour4.1;
+                msg[3][6] = settings.colour4.2;
+                msg[3][7] = speed;
             }
             _ => panic!("Mode not convertable to 2D array: {}", <&str>::from(mode)),
         }

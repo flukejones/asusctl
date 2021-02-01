@@ -178,13 +178,15 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
             }
         });
 
-    object_server.with(&"/org/asuslinux/Charge".try_into()?, |obj: &CtrlCharge| {
-        let x = obj.limit();
-        obj.notify_charge(x as u8)
-    }).map_err(|err| {
-        warn!("object_server notify_charge error: {}", err);
-    })
-    .ok();
+    object_server
+        .with(&"/org/asuslinux/Charge".try_into()?, |obj: &CtrlCharge| {
+            let x = obj.limit();
+            obj.notify_charge(x as u8)
+        })
+        .map_err(|err| {
+            warn!("object_server notify_charge error: {}", err);
+        })
+        .ok();
 
     loop {
         if let Err(err) = object_server.try_handle_next() {

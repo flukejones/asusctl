@@ -1,4 +1,4 @@
-use asus_nb::aura_modes::{AuraModes, BREATHING, STATIC, STROBE};
+use asus_nb::aura_modes::{AuraModes, BREATHING, STATIC};
 use log::{info, warn};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::OpenOptions;
@@ -8,6 +8,9 @@ pub static LEDMODE_CONFIG_PATH: &str = "/etc/asusd/asusd-ledmodes.toml";
 
 pub static HELP_ADDRESS: &str = "https://gitlab.com/asus-linux/asus-nb-ctrl";
 
+static LAPTOP_DEVICES: [u16; 3] = [0x1866, 0x1869, 0x1854];
+
+#[derive(Debug)]
 pub struct LaptopBase {
     usb_product: String,
     condev_iface: Option<String>, // required for finding the Consumer Device interface
@@ -27,24 +30,22 @@ impl LaptopBase {
 }
 
 pub fn match_laptop() -> Option<LaptopBase> {
-    for device in rusb::devices().expect("Failed here").iter() {
-        let device_desc = device.device_descriptor().expect("Failed there");
+    for device in rusb::devices().expect("Couldn't get device").iter() {
+        let device_desc = device.device_descriptor().expect("Couldn't get device descriptor");
         if device_desc.vendor_id() == 0x0b05 {
-            match device_desc.product_id() {
-                0x1866 => {
-                    let laptop = select_1866_device("1866".to_owned());
+            if LAPTOP_DEVICES.contains(&device_desc.product_id()) {
+                let prod_str = format!("{:x?}", device_desc.product_id());
+
+                if device_desc.product_id() == 0x1854 {
+                    let mut laptop = laptop(prod_str, None);
+                    if laptop.supported_modes.is_empty() {
+                        laptop.supported_modes = vec![STATIC, BREATHING];
+                    }
                     return Some(laptop);
                 }
-                0x1869 => return Some(select_1866_device("1869".to_owned())),
-                0x1854 => {
-                    info!("Found GL753 or similar");
-                    return Some(LaptopBase {
-                        usb_product: "1854".to_string(),
-                        condev_iface: None,
-                        supported_modes: vec![STATIC, BREATHING, STROBE],
-                    });
-                }
-                _ => {}
+
+                let laptop = laptop(prod_str, Some("02".to_owned()));
+                return Some(laptop);
             }
         }
     }
@@ -56,14 +57,14 @@ pub fn match_laptop() -> Option<LaptopBase> {
     None
 }
 
-fn select_1866_device(prod: String) -> LaptopBase {
+fn laptop(prod: String, condev_iface: Option<String>) -> LaptopBase {
     let dmi = sysfs_class::DmiId::default();
     let board_name = dmi.board_name().expect("Could not get board_name");
     let prod_family = dmi.product_family().expect("Could not get product_family");
 
     let mut laptop = LaptopBase {
         usb_product: prod,
-        condev_iface: Some("02".to_owned()),
+        condev_iface,
         supported_modes: vec![],
     };
 

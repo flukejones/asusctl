@@ -153,6 +153,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Some(lst) = mode.self_command_list() {
                     println!("\n{}", lst);
                 }
+                println!("\nHelp can also be requested on modes, e.g: static --help");
             }
             if mode.next_mode && mode.prev_mode {
                 println!("Please specify either next or previous")

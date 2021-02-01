@@ -56,13 +56,13 @@ impl PciBus {
 }
 
 pub struct GraphicsDevice {
-    id: String,
+    _id: String,
     functions: Vec<PciDevice>,
 }
 
 impl GraphicsDevice {
     pub fn new(id: String, functions: Vec<PciDevice>) -> GraphicsDevice {
-        GraphicsDevice { id, functions }
+        GraphicsDevice { _id: id, functions }
     }
 
     pub fn exists(&self) -> bool {

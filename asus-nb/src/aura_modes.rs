@@ -1,6 +1,8 @@
-use crate::cli_options;
 use crate::cli_options::SetAuraBuiltin;
+use crate::error::AuraError;
+use gumdrop::Options;
 use serde_derive::{Deserialize, Serialize};
+use std::str::FromStr;
 
 pub const STATIC: u8 = 0x00;
 pub const BREATHING: u8 = 0x01;
@@ -15,18 +17,29 @@ pub const PULSE: u8 = 0x0a;
 pub const COMET: u8 = 0x0b;
 pub const FLASH: u8 = 0x0c;
 pub const MULTISTATIC: u8 = 0x0d;
+pub const MULTIBREATHE: u8 = 0x0e;
 pub const PER_KEY: u8 = 0xff;
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Colour(pub u8, pub u8, pub u8);
-impl From<cli_options::Colour> for Colour {
-    fn from(c: cli_options::Colour) -> Self {
-        Colour(c.0, c.1, c.2)
-    }
-}
+
 impl Default for Colour {
     fn default() -> Self {
         Colour(128, 0, 0)
+    }
+}
+
+impl FromStr for Colour {
+    type Err = AuraError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.len() < 6 {
+            return Err(AuraError::ParseColour);
+        }
+        let r = u8::from_str_radix(&s[0..2], 16).or(Err(AuraError::ParseColour))?;
+        let g = u8::from_str_radix(&s[2..4], 16).or(Err(AuraError::ParseColour))?;
+        let b = u8::from_str_radix(&s[4..6], 16).or(Err(AuraError::ParseColour))?;
+        Ok(Colour(r, g, b))
     }
 }
 
@@ -36,18 +49,22 @@ pub enum Speed {
     Med = 0xeb,
     High = 0xf5,
 }
-impl From<cli_options::Speed> for Speed {
-    fn from(s: cli_options::Speed) -> Self {
-        match s {
-            cli_options::Speed::Low => Speed::Low,
-            cli_options::Speed::Med => Speed::Med,
-            cli_options::Speed::High => Speed::High,
-        }
-    }
-}
 impl Default for Speed {
     fn default() -> Self {
         Speed::Med
+    }
+}
+impl FromStr for Speed {
+    type Err = AuraError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = s.to_lowercase();
+        match s.as_str() {
+            "low" => Ok(Speed::Low),
+            "med" => Ok(Speed::Med),
+            "high" => Ok(Speed::High),
+            _ => Err(AuraError::ParseSpeed),
+        }
     }
 }
 
@@ -61,106 +78,107 @@ pub enum Direction {
     Up,
     Down,
 }
-impl From<cli_options::Direction> for Direction {
-    fn from(s: cli_options::Direction) -> Self {
-        match s {
-            cli_options::Direction::Right => Direction::Right,
-            cli_options::Direction::Left => Direction::Left,
-            cli_options::Direction::Up => Direction::Up,
-            cli_options::Direction::Down => Direction::Down,
-        }
-    }
-}
 impl Default for Direction {
     fn default() -> Self {
         Direction::Right
     }
 }
+impl FromStr for Direction {
+    type Err = AuraError;
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
-pub struct TwoColourSpeed {
-    pub colour: Colour,
-    pub colour2: Colour,
-    pub speed: Speed,
-}
-impl From<cli_options::TwoColourSpeed> for TwoColourSpeed {
-    fn from(mode: cli_options::TwoColourSpeed) -> Self {
-        TwoColourSpeed {
-            colour: mode.colour.into(),
-            colour2: mode.colour2.into(),
-            speed: mode.speed.into(),
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = s.to_lowercase();
+        match s.as_str() {
+            "right" => Ok(Direction::Right),
+            "up" => Ok(Direction::Up),
+            "down" => Ok(Direction::Down),
+            "left" => Ok(Direction::Left),
+            _ => Err(AuraError::ParseDirection),
         }
     }
 }
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[derive(Debug, Clone, Options, Default, Deserialize, Serialize)]
 pub struct SingleSpeed {
+    #[serde(skip)]
+    #[options(help = "print help message")]
+    help: bool,
+    #[options(no_long, meta = "WORD", help = "set the speed: low, med, high")]
     pub speed: Speed,
 }
-impl From<cli_options::SingleSpeed> for SingleSpeed {
-    fn from(mode: cli_options::SingleSpeed) -> Self {
-        SingleSpeed {
-            speed: mode.speed.into(),
-        }
-    }
+#[derive(Debug, Clone, Options, Default, Deserialize, Serialize)]
+pub struct SingleSpeedDirection {
+    #[serde(skip)]
+    #[options(help = "print help message")]
+    help: bool,
+    #[options(no_long, meta = "", help = "set the direction: up, down, left, right")]
+    pub direction: Direction,
+    #[options(no_long, meta = "", help = "set the speed: low, med, high")]
+    pub speed: Speed,
 }
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Options, Deserialize, Serialize)]
 pub struct SingleColour {
+    #[serde(skip)]
+    #[options(help = "print help message")]
+    help: bool,
+    #[options(no_long, meta = "", help = "set the RGB value e.g, ff00ff")]
     pub colour: Colour,
 }
-impl From<cli_options::SingleColour> for SingleColour {
-    fn from(mode: cli_options::SingleColour) -> Self {
-        SingleColour {
-            colour: mode.colour.into(),
-        }
-    }
+
+#[derive(Debug, Clone, Default, Options, Deserialize, Serialize)]
+pub struct SingleColourSpeed {
+    #[serde(skip)]
+    #[options(help = "print help message")]
+    help: bool,
+    #[options(no_long, meta = "", help = "set the RGB value e.g, ff00ff")]
+    pub colour: Colour,
+    #[options(no_long, meta = "", help = "set the speed: low, med, high")]
+    pub speed: Speed,
 }
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
-pub struct MultiColour {
-    pub colour1: Colour,
+#[derive(Debug, Clone, Options, Default, Deserialize, Serialize)]
+pub struct TwoColourSpeed {
+    #[serde(skip)]
+    #[options(help = "print help message")]
+    help: bool,
+    #[options(no_long, meta = "", help = "set the first RGB value e.g, ff00ff")]
+    pub colour: Colour,
+    #[options(no_long, meta = "", help = "set the second RGB value e.g, ff00ff")]
     pub colour2: Colour,
+    #[options(no_long, meta = "", help = "set the speed: low, med, high")]
+    pub speed: Speed,
+}
+
+#[derive(Debug, Clone, Default, Options, Deserialize, Serialize)]
+pub struct MultiColour {
+    #[serde(skip)]
+    #[options(help = "print help message")]
+    help: bool,
+    #[options(short = "a", meta = "", help = "set the RGB value e.g, ff00ff")]
+    pub colour1: Colour,
+    #[options(short = "b", meta = "", help = "set the RGB value e.g, ff00ff")]
+    pub colour2: Colour,
+    #[options(short = "c", meta = "", help = "set the RGB value e.g, ff00ff")]
     pub colour3: Colour,
+    #[options(short = "d", meta = "", help = "set the RGB value e.g, ff00ff")]
     pub colour4: Colour,
 }
-impl From<cli_options::MultiColour> for MultiColour {
-    fn from(mode: cli_options::MultiColour) -> Self {
-        MultiColour {
-            colour1: mode.colour1.into(),
-            colour2: mode.colour2.into(),
-            colour3: mode.colour3.into(),
-            colour4: mode.colour4.into(),
-        }
-    }
-}
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
-pub struct SingleSpeedDirection {
-    pub direction: Direction,
+#[derive(Debug, Clone, Default, Options, Deserialize, Serialize)]
+pub struct MultiColourSpeed {
+    #[options(help = "print help message")]
+    help: bool,
+    #[options(short = "a", meta = "", help = "set the RGB value e.g, ff00ff")]
+    pub colour1: Colour,
+    #[options(short = "b", meta = "", help = "set the RGB value e.g, ff00ff")]
+    pub colour2: Colour,
+    #[options(short = "c", meta = "", help = "set the RGB value e.g, ff00ff")]
+    pub colour3: Colour,
+    #[options(short = "d", meta = "", help = "set the RGB value e.g, ff00ff")]
+    pub colour4: Colour,
+    #[options(no_long, meta = "", help = "set the speed: low, med, high")]
     pub speed: Speed,
-}
-impl From<cli_options::SingleSpeedDirection> for SingleSpeedDirection {
-    fn from(mode: cli_options::SingleSpeedDirection) -> Self {
-        SingleSpeedDirection {
-            direction: mode.direction.into(),
-            speed: mode.speed.into(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
-pub struct SingleColourSpeed {
-    pub colour: Colour,
-    pub speed: Speed,
-}
-impl From<cli_options::SingleColourSpeed> for SingleColourSpeed {
-    fn from(mode: cli_options::SingleColourSpeed) -> Self {
-        SingleColourSpeed {
-            colour: mode.colour.into(),
-            speed: mode.speed.into(),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -178,8 +196,10 @@ pub enum AuraModes {
     Comet(SingleColour),
     Flash(SingleColour),
     MultiStatic(MultiColour),
+    MultiBreathe(MultiColourSpeed),
     LedBrightness(u8),
     // TODO: use a serializable structure for this (KeyColourArray)
+    #[serde(skip)]
     PerKey(Vec<Vec<u8>>),
 }
 
@@ -199,6 +219,7 @@ impl From<SetAuraBuiltin> for AuraModes {
             SetAuraBuiltin::Comet(x) => AuraModes::Comet(x.into()),
             SetAuraBuiltin::Flash(x) => AuraModes::Flash(x.into()),
             SetAuraBuiltin::MultiStatic(x) => AuraModes::MultiStatic(x.into()),
+            SetAuraBuiltin::MultiBreathe(x) => AuraModes::MultiBreathe(x.into()),
         }
     }
 }
@@ -234,6 +255,7 @@ impl From<&AuraModes> for u8 {
             AuraModes::Comet(_) => COMET,
             AuraModes::Flash(_) => FLASH,
             AuraModes::MultiStatic(_) => MULTISTATIC,
+            AuraModes::MultiBreathe(_) => MULTIBREATHE,
             AuraModes::PerKey(_) => PER_KEY,
             _ => panic!("Invalid mode"),
         }
@@ -256,6 +278,7 @@ impl From<&AuraModes> for &str {
             AuraModes::Comet(_) => "Comet",
             AuraModes::Flash(_) => "Flash",
             AuraModes::MultiStatic(_) => "4-Zone Static Colours",
+            AuraModes::MultiBreathe(_) => "4-Zone Breathing Colours",
             AuraModes::PerKey(_) => "RGB per-key",
             _ => panic!("Invalid mode"),
         }
@@ -280,6 +303,7 @@ impl From<u8> for AuraModes {
             COMET => AuraModes::Comet(SingleColour::default()),
             FLASH => AuraModes::Flash(SingleColour::default()),
             MULTISTATIC => AuraModes::MultiStatic(MultiColour::default()),
+            MULTIBREATHE => AuraModes::MultiBreathe(MultiColourSpeed::default()),
             PER_KEY => AuraModes::PerKey(vec![]),
             _ => panic!("Invalid mode byte"),
         }

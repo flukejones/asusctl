@@ -50,6 +50,8 @@ impl GetSupported for CtrlKbdBacklight {
                     .map(|x| *x)
                     .collect();
                 stock_led_modes = Some(modes);
+            } else {
+                stock_led_modes = Some(modes);
             }
         }
 
@@ -111,9 +113,14 @@ impl DbusKbdBacklight {
                         }
                         _ => {
                             if let Ok(json) = serde_json::to_string(&data) {
-                                ctrl.do_command(data, &mut cfg)
-                                    .unwrap_or_else(|err| warn!("{}", err));
-                                self.notify_led(&json).ok();
+                                match ctrl.do_command(data, &mut cfg) {
+                                    Ok(_) => {
+                                        self.notify_led(&json).ok();
+                                    }
+                                    Err(err) => {
+                                        warn!("{}", err);
+                                    }
+                                }
                             }
                         }
                     }
@@ -281,29 +288,29 @@ impl CtrlKbdBacklight {
         config: Arc<Mutex<Config>>,
     ) -> Result<Self, RogError> {
         // TODO: return error if *all* nodes are None
-        let led_node = Self::get_node_failover(
-            id_product,
-            None,
-            Self::scan_led_node,
-        ).map_or_else(|err| {
-            warn!("led_node: {}", err);
-            None
-        }, |node| Some(node));
+        let led_node = Self::get_node_failover(id_product, None, Self::scan_led_node).map_or_else(
+            |err| {
+                warn!("led_node: {}", err);
+                None
+            },
+            |node| Some(node),
+        );
 
-        let kbd_node = Self::get_node_failover(
-            id_product,
-            condev_iface,
-            Self::scan_kbd_node,
-        ).map_or_else(|err| {
-            warn!("kbd_node: {}", err);
-            None
-        }, |node| Some(node));
+        let kbd_node = Self::get_node_failover(id_product, condev_iface, Self::scan_kbd_node)
+            .map_or_else(
+                |err| {
+                    warn!("kbd_node: {}", err);
+                    None
+                },
+                |node| Some(node),
+            );
 
         let bright_node = Self::get_kbd_bright_path();
 
         if led_node.is_none() && kbd_node.is_none() && Self::get_kbd_bright_path().is_err() {
             return Err(RogError::MissingFunction(
-                "All keyboard features missing, you may require a v5.11 series kernel or newer".into(),
+                "All keyboard features missing, you may require a v5.11 series kernel or newer"
+                    .into(),
             ));
         }
 
@@ -438,6 +445,7 @@ impl CtrlKbdBacklight {
     fn write_bytes(&self, message: &[u8]) -> Result<(), RogError> {
         if let Some(led_node) = &self.led_node {
             if let Ok(mut file) = OpenOptions::new().write(true).open(led_node) {
+                // println!("write: {:02x?}", &message);
                 return file
                     .write_all(message)
                     .map_err(|err| RogError::Write("write_bytes".into(), err));
@@ -529,6 +537,10 @@ impl CtrlKbdBacklight {
 
     #[inline]
     fn write_mode(&mut self, mode: &AuraModes) -> Result<(), RogError> {
+        let mode_num: u8 = u8::from(mode);
+        if !self.supported_modes.contains(&mode_num) {
+            return Err(RogError::NotSupported);
+        }
         match mode {
             AuraModes::PerKey(v) => {
                 if v.is_empty() || v[0].is_empty() {
@@ -538,24 +550,19 @@ impl CtrlKbdBacklight {
                     self.write_effect(v)?;
                 }
             }
-            _ => {
-                let mode_num: u8 = u8::from(mode);
-                match mode {
-                    AuraModes::MultiStatic(_) => {
-                        if self.supported_modes.contains(&mode_num) {
-                            let bytes: [[u8; LED_MSG_LEN]; 4] = mode.into();
-                            for array in bytes.iter() {
-                                self.write_bytes(array)?;
-                            }
-                        }
-                    }
-                    _ => {
-                        if self.supported_modes.contains(&mode_num) {
-                            let bytes: [u8; LED_MSG_LEN] = mode.into();
-                            self.write_bytes(&bytes)?;
-                        }
-                    }
+            AuraModes::MultiStatic(_) | AuraModes::MultiBreathe(_) => {
+                let bytes: [[u8; LED_MSG_LEN]; 4] = mode.into();
+                for array in bytes.iter() {
+                    self.write_bytes(array)?;
                 }
+                self.write_bytes(&LED_SET)?;
+                // Changes won't persist unless apply is set
+                self.write_bytes(&LED_APPLY)?;
+                return Ok(());
+            }
+            _ => {
+                let bytes: [u8; LED_MSG_LEN] = mode.into();
+                self.write_bytes(&bytes)?;
                 self.write_bytes(&LED_SET)?;
                 // Changes won't persist unless apply is set
                 self.write_bytes(&LED_APPLY)?;
