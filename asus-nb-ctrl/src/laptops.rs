@@ -31,7 +31,9 @@ impl LaptopBase {
 
 pub fn match_laptop() -> Option<LaptopBase> {
     for device in rusb::devices().expect("Couldn't get device").iter() {
-        let device_desc = device.device_descriptor().expect("Couldn't get device descriptor");
+        let device_desc = device
+            .device_descriptor()
+            .expect("Couldn't get device descriptor");
         if device_desc.vendor_id() == 0x0b05 {
             if LAPTOP_DEVICES.contains(&device_desc.product_id()) {
                 let prod_str = format!("{:x?}", device_desc.product_id());

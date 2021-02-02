@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use same code path as 0x1866 device to configure led support
 - Remove duplicate code
 - Set correct speeds for multizone
+- Remove dbus crate in favour of zbus. This removes the external dbus lib requirement.
 
 # [2.2.2] - 2021-01-31
 ### Changed

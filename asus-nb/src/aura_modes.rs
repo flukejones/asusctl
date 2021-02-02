@@ -199,7 +199,6 @@ pub enum AuraModes {
     MultiBreathe(MultiColourSpeed),
     LedBrightness(u8),
     // TODO: use a serializable structure for this (KeyColourArray)
-    #[serde(skip)]
     PerKey(Vec<Vec<u8>>),
 }
 

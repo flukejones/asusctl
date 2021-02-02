@@ -4,12 +4,12 @@ use asus_nb::{
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut writer = AuraDbusClient::new()?;
+    let (dbus, _) = AuraDbusClient::new()?;
 
     let mut key_colours = KeyColourArray::new();
     let layout = GX502Layout::default();
 
-    writer.init_effect()?;
+    dbus.proxies().led().init_effect()?;
     let rows = layout.get_rows();
 
     let mut fade = 50;
@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        writer.write_colour_block(&key_colours)?;
+        dbus.proxies().led().set_per_key(&key_colours)?;
 
         if flip {
             if fade > 1 {

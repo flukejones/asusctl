@@ -6,6 +6,9 @@ const BLOCK_START: usize = 7;
 const BLOCK_END: usize = 634;
 use yansi_term::Colour::RGB;
 
+pub const ANIME_PANE1_PREFIX: [u8; 7] = [0x5e, 0xc0, 0x02, 0x01, 0x00, 0x73, 0x02];
+pub const ANIME_PANE2_PREFIX: [u8; 7] = [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x02];
+
 /// Helper structure for writing images.
 ///
 ///  See the examples for ways to write an image to `AniMeMatrix` format.
