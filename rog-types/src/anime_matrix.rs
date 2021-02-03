@@ -3,12 +3,13 @@ use zvariant_derive::Type;
 
 pub const WIDTH: usize = 34; // Width is definitely 34 items
 pub const HEIGHT: usize = 56;
-pub type AniMeBufferType = [[u8; WIDTH]; HEIGHT];
 pub type AniMePacketType = [[u8; 640]; 2];
 const BLOCK_START: usize = 7;
-/// Not inclusive
+/// *Not* inclusive, the byte before this is the final for each "pane"
 const BLOCK_END: usize = 634;
 pub const PANE_LEN: usize = BLOCK_END - BLOCK_START;
+/// The length of usable data
+pub const FULL_PANE_LEN: usize = PANE_LEN * 2;
 
 pub const ANIME_PANE1_PREFIX: [u8; 7] = [0x5e, 0xc0, 0x02, 0x01, 0x00, 0x73, 0x02];
 pub const ANIME_PANE2_PREFIX: [u8; 7] = [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x02];
@@ -18,14 +19,14 @@ pub struct AniMeDataBuffer(Vec<u8>);
 
 impl AniMeDataBuffer {
     pub fn new() -> Self {
-        AniMeDataBuffer(vec![0u8; PANE_LEN])
+        AniMeDataBuffer(vec![0u8; FULL_PANE_LEN])
     }
 
     pub fn get(&self) -> &[u8] {
         &self.0
     }
 
-    pub fn set(&mut self, input: [u8; PANE_LEN]) {
+    pub fn set(&mut self, input: [u8; FULL_PANE_LEN]) {
         self.0 = input.to_vec();
     }
 }
@@ -33,7 +34,7 @@ impl AniMeDataBuffer {
 impl From<AniMeDataBuffer> for AniMePacketType {
     #[inline]
     fn from(anime: AniMeDataBuffer) -> Self {
-        assert!(anime.0.len() == PANE_LEN);
+        assert!(anime.0.len() == FULL_PANE_LEN);
         let mut buffers = [[0; 640]; 2];
         for (idx, chunk) in anime.0.as_slice().chunks(PANE_LEN).enumerate() {
             buffers[idx][BLOCK_START..BLOCK_END].copy_from_slice(chunk);
@@ -197,7 +198,7 @@ mod tests {
     #[test]
     fn check_from_data_buffer() {
         let mut data = AniMeDataBuffer::new();
-        data.set([42u8; PANE_LEN]);
+        data.set([42u8; FULL_PANE_LEN]);
 
         let out: AniMePacketType = data.into();
     }

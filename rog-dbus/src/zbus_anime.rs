@@ -19,24 +19,27 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
+use rog_types::anime_matrix::{AniMeDataBuffer, AniMeImageBuffer};
 use zbus::{dbus_proxy, Connection, Result};
-
-use rog_types::anime_matrix::{AniMeImageBuffer, AniMePacketType, ANIME_PANE1_PREFIX, ANIME_PANE2_PREFIX};
 
 #[dbus_proxy(
     interface = "org.asuslinux.Daemon",
     default_path = "/org/asuslinux/Anime"
 )]
 trait Daemon {
-    /// SetAnime method
-    fn set_anime(&self, input: &[&[u8]]) -> zbus::Result<()>;
-
     /// SetBootOnOff method
     fn set_boot_on_off(&self, status: bool) -> zbus::Result<()>;
 
     /// SetOnOff method
     fn set_on_off(&self, status: bool) -> zbus::Result<()>;
+
+    /// WriteDirect method
+    fn write_direct(&self, input: &[u8]) -> zbus::Result<()>;
+
+    /// WriteImage method
+    fn write_image(&self, input: &[Vec<u8>]) -> zbus::Result<()>;
 }
+
 
 pub struct AnimeProxy<'a>(DaemonProxy<'a>);
 
@@ -51,19 +54,6 @@ impl<'a> AnimeProxy<'a> {
     }
 
     #[inline]
-    pub fn set_brightness(&self, led_brightness: u8) -> Result<()> {
-        let mut anime_matrix = AniMeImageBuffer::new();
-
-        anime_matrix.fill_with(led_brightness);
-
-        let mut image = AniMePacketType::from(anime_matrix);
-        image[0][..7].copy_from_slice(&ANIME_PANE1_PREFIX);
-        image[1][..7].copy_from_slice(&ANIME_PANE2_PREFIX);
-
-        self.0.set_anime(&[&image[0], &image[1]])
-    }
-
-    #[inline]
     pub fn toggle_boot_on(&self, on: bool) -> Result<()> {
         self.0.set_boot_on_off(on)
     }
@@ -71,5 +61,15 @@ impl<'a> AnimeProxy<'a> {
     #[inline]
     pub fn toggle_on(&self, on: bool) -> Result<()> {
         self.0.set_on_off(on)
+    }
+
+    #[inline]
+    pub fn write_direct(&self, input: AniMeDataBuffer) -> Result<()> {
+        self.0.write_direct(input.get())
+    }
+
+    #[inline]
+    pub fn write_image(&self, input: AniMeImageBuffer) -> Result<()> {
+        self.0.write_image(input.get())
     }
 }

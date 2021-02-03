@@ -4,7 +4,7 @@ use rog_dbus::AuraDbusClient;
 use std::{env::args, process::Command};
 use yansi_term::Colour::Green;
 use yansi_term::Colour::Red;
-use rog_types::{cli_options::{AniMeActions, AniMeStatusValue, LedBrightness, SetAuraBuiltin}, profile::{ProfileCommand, ProfileEvent}};
+use rog_types::{anime_matrix::{AniMeDataBuffer, FULL_PANE_LEN}, cli_options::{AniMeActions, AniMeStatusValue, LedBrightness, SetAuraBuiltin}, profile::{ProfileCommand, ProfileEvent}};
 
 #[derive(Default, Options)]
 struct CLIStart {
@@ -197,8 +197,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if let Some(action) = cmd.command {
                 match action {
                     AniMeActions::Leds(anime_leds) => {
-                        let led_brightness = anime_leds.led_brightness();
-                        dbus.proxies().anime().set_brightness(led_brightness)?;
+                        let mut data = AniMeDataBuffer::new();
+                        data.set([anime_leds.led_brightness(); FULL_PANE_LEN]);
+                        dbus.proxies().anime().write_direct(data)?;
                     }
                 }
             }
