@@ -4,11 +4,11 @@ use asus_nb::{
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut writer = AuraDbusClient::new()?;
+    let (dbus, _) = AuraDbusClient::new()?;
 
     let layout = GX502Layout::default();
 
-    writer.init_effect()?;
+    dbus.proxies().led().init_effect()?;
     let rows = layout.get_rows();
 
     let mut column = 0;
@@ -25,7 +25,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             column += 1;
         }
 
-        writer.write_colour_block(&key_colours)?;
-        std::thread::sleep(std::time::Duration::from_millis(30));
+        dbus.proxies().led().set_per_key(&key_colours)?;
     }
 }

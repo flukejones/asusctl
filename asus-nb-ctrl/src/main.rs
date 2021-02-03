@@ -1,5 +1,4 @@
 use asus_nb::{
-    anime_dbus::AniMeDbusWriter,
     cli_options::{AniMeActions, AniMeStatusValue, LedBrightness, SetAuraBuiltin},
     core_dbus::AuraDbusClient,
     profile::{ProfileCommand, ProfileEvent},
@@ -143,8 +142,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Version: {}", daemon::VERSION);
     }
 
-    let dbus_client = AuraDbusClient::new()?;
-    let anime_dbus_client = AniMeDbusWriter::new()?;
+    let (dbus, _) = AuraDbusClient::new()?;
 
     match parsed.command {
         Some(CliCommand::LedMode(mode)) => {
@@ -159,11 +157,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Please specify either next or previous")
             }
             if mode.next_mode {
-                dbus_client.next_keyboard_led_mode()?;
+                dbus.proxies().led().next_led_mode()?;
             } else if mode.prev_mode {
-                dbus_client.prev_keyboard_led_mode()?;
+                dbus.proxies().led().prev_led_mode()?;
             } else if let Some(command) = mode.command {
-                dbus_client.write_builtin_mode(&command.into())?
+                dbus.proxies().led().set_led_mode(&command.into())?
             }
         }
         Some(CliCommand::Profile(cmd)) => {
@@ -183,12 +181,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             if cmd.next {
-                dbus_client.next_fan_profile()?;
+                dbus.proxies().profile().next_fan()?;
             } else {
-                dbus_client.write_profile_command(&ProfileEvent::Cli(cmd))?
+                dbus.proxies()
+                    .profile()
+                    .write_command(&ProfileEvent::Cli(cmd))?
             }
         }
-        Some(CliCommand::Graphics(cmd)) => do_gfx(cmd, &dbus_client)?,
+        Some(CliCommand::Graphics(cmd)) => do_gfx(cmd, &dbus)?,
         Some(CliCommand::AniMe(cmd)) => {
             if (cmd.command.is_none() && cmd.boot.is_none() && cmd.turn.is_none()) || cmd.help {
                 println!("Missing arg or command\n\n{}", cmd.self_usage());
@@ -197,16 +197,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             if let Some(anime_turn) = cmd.turn {
-                anime_dbus_client.turn_on_off(anime_turn.into())?
+                dbus.proxies().anime().toggle_on(anime_turn.into())?
             }
             if let Some(anime_boot) = cmd.boot {
-                anime_dbus_client.turn_boot_on_off(anime_boot.into())?
+                dbus.proxies().anime().toggle_boot_on(anime_boot.into())?
             }
             if let Some(action) = cmd.command {
                 match action {
                     AniMeActions::Leds(anime_leds) => {
                         let led_brightness = anime_leds.led_brightness();
-                        anime_dbus_client.set_leds_brightness(led_brightness)?;
+                        dbus.proxies().anime().set_brightness(led_brightness)?;
                     }
                 }
             }
@@ -225,10 +225,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
 
             if let Some(opt) = cmd.post_sound_set {
-                dbus_client.set_bios_post_sound(opt)?;
+                dbus.proxies().rog_bios().set_post_sound(opt)?;
             }
             if cmd.post_sound_get {
-                let res = if dbus_client.get_bios_post_sound()? == 1 {
+                let res = if dbus.proxies().rog_bios().get_post_sound()? == 1 {
                     true
                 } else {
                     false
@@ -236,10 +236,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("Bios POST sound on: {}", res);
             }
             if let Some(opt) = cmd.dedicated_gfx_set {
-                dbus_client.set_bios_dedicated_gfx(opt)?;
+                dbus.proxies().rog_bios().set_dedicated_gfx(opt)?;
             }
             if cmd.dedicated_gfx_get {
-                let res = if dbus_client.get_bios_dedicated_gfx()? == 1 {
+                let res = if dbus.proxies().rog_bios().get_dedicated_gfx()? == 1 {
                     true
                 } else {
                     false
@@ -264,23 +264,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(brightness) = parsed.kbd_bright {
         match brightness.level() {
             None => {
-                let level = dbus_client.get_led_brightness()?;
+                let level = dbus.proxies().led().get_led_brightness()?;
                 println!("Current keyboard led brightness: {}", level.to_string());
             }
-            Some(level) => dbus_client.write_brightness(level)?,
+            Some(level) => dbus.proxies().led().set_brightness(level)?,
         }
     }
 
     if parsed.show_supported {
-        let dat = dbus_client.get_supported_functions()?;
+        let dat = dbus.proxies().supported().get_supported_functions()?;
         println!("Supported laptop functions:\n{}", dat.to_string());
     }
 
     if let Some(fan_level) = parsed.fan_mode {
-        dbus_client.write_fan_mode(fan_level.into())?;
+        dbus.proxies().profile().write_fan_mode(fan_level.into())?;
     }
     if let Some(chg_limit) = parsed.chg_limit {
-        dbus_client.write_charge_limit(chg_limit)?;
+        dbus.proxies().charge().write_limit(chg_limit)?;
     }
     Ok(())
 }
@@ -293,8 +293,11 @@ fn do_gfx(
         println!("Updating settings, please wait...");
         println!("If this takes longer than 30s, ctrl+c then check `journalctl -b -u asusd`");
 
-        dbus_client.write_gfx_mode(<&str>::from(&mode).into())?;
-        let res = dbus_client.wait_gfx_changed()?;
+        dbus_client
+            .proxies()
+            .gfx()
+            .gfx_write_mode(<&str>::from(&mode).into())?;
+        let res = dbus_client.gfx_wait_changed()?;
         match res.as_str() {
             "reboot" => {
                 println!(
@@ -331,11 +334,11 @@ fn do_gfx(
         std::process::exit(-1)
     }
     if command.get {
-        let res = dbus_client.get_gfx_mode()?;
+        let res = dbus_client.proxies().gfx().gfx_get_mode()?;
         println!("Current graphics mode: {}", res);
     }
     if command.pow {
-        let res = dbus_client.get_gfx_pwr()?;
+        let res = dbus_client.proxies().gfx().gfx_get_pwr()?;
         if res.contains("active") {
             println!("Current power status: {}", Red.paint(&format!("{}", res)));
         } else {

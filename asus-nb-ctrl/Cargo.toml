@@ -23,27 +23,27 @@ path = "src/daemon.rs"
 
 [dependencies]
 asus-nb = { path = "../asus-nb" }
-rusb = "^0.6.0"
-udev = "^0.4.0"
+rusb = "^0.7"
+udev = "^0.6"
 
 # cli and logging
-gumdrop = "^0.8.0"
-log = "^0.4.8"
-env_logger = "^0.7.1"
+gumdrop = "^0.8"
+log = "^0.4"
+env_logger = "^0.8"
 
-zbus = "^1.8.0"
-zvariant = "^2.4.0"
+zbus = "^1.8"
+zvariant = "^2.4"
 
 # serialisation
 serde = "^1.0"
 serde_derive = "^1.0"
 serde_json = "^1.0"
-toml = "0.4.6"
+toml = "^0.5"
 
 # Device control
 sysfs-class = "^0.1.2" # used for backlight control and baord ID
-rog_fan_curve = { version = "0.1.5", features = ["serde"] }
+rog_fan_curve = { version = "0.1", features = ["serde"] }
 # cpu power management
-intel-pstate = "^0.2.1"
+intel-pstate = "^0.2"
 
 yansi-term = "^0.1"

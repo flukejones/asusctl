@@ -14,15 +14,15 @@ pub static CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
 #[derive(Deserialize)]
 struct ConfigV212 {
     gfx_managed: bool,
+    bat_charge_limit: u8,
     active_profile: String,
     toggle_profiles: Vec<String>,
+    power_profiles: BTreeMap<String, Profile>,
     // TODO: remove power_profile
     power_profile: u8,
-    bat_charge_limit: u8,
     kbd_led_brightness: u8,
     kbd_backlight_mode: u8,
     kbd_backlight_modes: Vec<AuraModes>,
-    power_profiles: BTreeMap<String, Profile>,
 }
 
 impl ConfigV212 {

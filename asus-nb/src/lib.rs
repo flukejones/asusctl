@@ -17,21 +17,18 @@ pub mod fancy;
 /// The main dbus group for system controls, e.g, fan control, keyboard LED's
 pub mod core_dbus;
 
-/// Specific dbus for writing to the AniMe Matrix display (if supported)
-pub mod anime_dbus;
-
 /// Helper functions for the AniMe display
 pub mod anime_matrix;
 
 pub mod error;
 
-pub mod dbus_anime;
-pub mod dbus_charge;
-pub mod dbus_gfx;
-pub mod dbus_ledmode;
-pub mod dbus_profile;
-pub mod dbus_rogbios;
-pub mod dbus_supported;
+pub mod zbus_anime;
+pub mod zbus_charge;
+pub mod zbus_gfx;
+pub mod zbus_led;
+pub mod zbus_profile;
+pub mod zbus_rogbios;
+pub mod zbus_supported;
 
 // static LED_INIT1: [u8; 2] = [0x5d, 0xb9];
 // static LED_INIT2: &str = "]ASUS Tech.Inc."; // ] == 0x5d

@@ -22,7 +22,7 @@ pub struct SupportedFunctions {
     rog_bios_ctrl: RogBiosSupportedFunctions,
 }
 
-#[dbus_interface(name = "org.asuslinux.Daemon")]
+#[dbus_interface(name = "org.asuslinux.Supported")]
 impl SupportedFunctions {
     fn supported_functions(&self) -> String {
         serde_json::to_string_pretty(self).unwrap()

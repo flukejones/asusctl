@@ -54,7 +54,7 @@ impl Ball {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut writer = AuraDbusClient::new()?;
+    let (dbus, _) = AuraDbusClient::new()?;
 
     let mut colours = KeyColourArray::new();
 
@@ -62,7 +62,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut balls = [Ball::new(2, 1, 12), Ball::new(4, 6, 12)];
 
-    writer.init_effect()?;
+    dbus.proxies().led().init_effect()?;
 
     let rows = layout.get_rows();
     loop {
@@ -89,10 +89,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 *c.2 = 255;
             };
         }
+        dbus.proxies().led().set_per_key(&colours)?;
 
-        writer.write_colour_block(&colours)?;
-
-        // can change 100 times per second, so need to slow it down
-        std::thread::sleep(std::time::Duration::from_millis(30));
+        std::thread::sleep(std::time::Duration::from_millis(10));
     }
 }

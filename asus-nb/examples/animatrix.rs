@@ -1,9 +1,11 @@
-use asus_nb::anime_dbus::AniMeDbusWriter;
-use asus_nb::anime_matrix::{AniMeMatrix, AniMePacketType, HEIGHT, WIDTH};
+use asus_nb::{
+    anime_matrix::{AniMeMatrix, AniMePacketType, HEIGHT, WIDTH},
+    core_dbus::AuraDbusClient,
+};
 use tinybmp::{Bmp, Pixel};
 
 fn main() {
-    let mut writer = AniMeDbusWriter::new().unwrap();
+    let mut writer = AuraDbusClient::new().unwrap();
 
     let bmp =
         Bmp::from_slice(include_bytes!("non-skewed_r.bmp")).expect("Failed to parse BMP image");
@@ -38,5 +40,5 @@ fn main() {
     // println!("{:?}", matrix[0].to_vec());
     // println!("{:?}", matrix[1].to_vec());
 
-    writer.write_image(&mut matrix).unwrap();
+    //writer.set_anime_led_brightness(&mut matrix).unwrap();
 }
