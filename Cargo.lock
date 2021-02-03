@@ -813,6 +813,8 @@ dependencies = [
  "rog_fan_curve",
  "serde",
  "serde_derive",
+ "zvariant",
+ "zvariant_derive",
 ]
 
 [[package]]

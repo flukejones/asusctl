@@ -1,6 +1,6 @@
 use rog_dbus::AuraDbusClient;
 use rog_types::{
-    anime_matrix::{AniMeMatrix, AniMePacketType, HEIGHT, WIDTH},
+    anime_matrix::{AniMeImageBuffer, AniMePacketType, HEIGHT, WIDTH},
 };
 use tinybmp::{Bmp, Pixel};
 
@@ -13,7 +13,7 @@ fn main() {
     //assert_eq!(pixels.len(), 56 * 56);
 
     // Try an outline, top and right
-    let mut matrix = AniMeMatrix::new();
+    let mut matrix = AniMeImageBuffer::new();
 
     // Aligned left
     for (i, px) in pixels.iter().enumerate() {

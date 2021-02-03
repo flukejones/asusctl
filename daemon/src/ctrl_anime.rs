@@ -13,7 +13,7 @@ const APPLY: u8 = 0xc4;
 // The next byte can be 0x03 for "on" and 0x00 for "off"
 const ON_OFF: u8 = 0x04;
 
-use rog_types::error::AuraError;
+use rog_types::{anime_matrix::{ANIME_PANE1_PREFIX, ANIME_PANE2_PREFIX, AniMeDataBuffer, AniMeImageBuffer, AniMePacketType, PANE_LEN}, error::AuraError};
 use log::{error, info, warn};
 use rusb::{Device, DeviceHandle};
 use std::convert::TryInto;
@@ -40,8 +40,8 @@ impl GetSupported for CtrlAnimeDisplay {
 pub enum AnimatrixCommand {
     Apply,
     SetBoot(bool),
-    Write(Vec<u8>),
-    WriteImage(Vec<Vec<u8>>),
+    Write([u8; 640]),
+    WriteImage(AniMeImageBuffer),
     //ReloadLast,
 }
 
@@ -52,7 +52,9 @@ pub struct CtrlAnimeDisplay {
 
 //AnimatrixWrite
 pub trait Dbus {
-    fn set_anime(&mut self, input: Vec<Vec<u8>>);
+    fn write_image(&mut self, input: AniMeImageBuffer);
+
+    fn write_direct(&mut self, input: AniMeDataBuffer);
 
     fn set_on_off(&mut self, status: bool);
 
@@ -73,27 +75,32 @@ impl crate::ZbusAdd for CtrlAnimeDisplay {
 
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl Dbus for CtrlAnimeDisplay {
-    fn set_anime(&mut self, input: Vec<Vec<u8>>) {
-        self.do_command(AnimatrixCommand::WriteImage(input))
+    fn write_image(&mut self, input: AniMeImageBuffer) {
+        self.write_image_buffer(input)
             .map_or_else(|err| warn!("{}", err), |()| info!("Writing image to Anime"));
     }
 
+    fn write_direct(&mut self, input: AniMeDataBuffer) {
+        self.write_data_buffer(input)
+        .map_or_else(|err| warn!("{}", err), |()| info!("Writing data to Anime"));
+    }
+
     fn set_on_off(&mut self, status: bool) {
-        let mut flush: Vec<u8> = vec![0; PACKET_SIZE];
-        flush[0] = DEV_PAGE;
-        flush[1] = WRITE;
-        flush[2] = ON_OFF;
+        let mut buffer = [0u8; PACKET_SIZE];
+        buffer[0] = DEV_PAGE;
+        buffer[1] = WRITE;
+        buffer[2] = ON_OFF;
 
         let status_str;
         if status {
-            flush[3] = 0x03;
+            buffer[3] = 0x03;
             status_str = "on";
         } else {
-            flush[3] = 0x00;
+            buffer[3] = 0x00;
             status_str = "off";
         }
 
-        self.do_command(AnimatrixCommand::Write(flush)).map_or_else(
+        self.do_command(AnimatrixCommand::Write(buffer)).map_or_else(
             |err| warn!("{}", err),
             |()| info!("Turning {} the AniMe", status_str),
         );
@@ -158,7 +165,7 @@ impl CtrlAnimeDisplay {
             //AnimatrixCommand::Set => self.do_set_boot()?,
             AnimatrixCommand::SetBoot(status) => self.do_set_boot(status)?,
             AnimatrixCommand::Write(bytes) => self.write_bytes(&bytes)?,
-            AnimatrixCommand::WriteImage(effect) => self.write_image(effect)?,
+            AnimatrixCommand::WriteImage(effect) => self.write_image_buffer(effect)?,
             //AnimatrixCommand::ReloadLast => self.reload_last_builtin(&config).await?,
         }
         Ok(())
@@ -183,6 +190,18 @@ impl CtrlAnimeDisplay {
         }
         Ok(())
     }
+    #[inline]
+    fn write_data_buffer(&mut self, buffer: AniMeDataBuffer) -> Result<(), AuraError> {
+        let mut image = AniMePacketType::from(buffer);
+        image[0][..7].copy_from_slice(&ANIME_PANE1_PREFIX);
+        image[1][..7].copy_from_slice(&ANIME_PANE2_PREFIX);
+
+        for row in image.iter() {
+            self.write_bytes(row)?;
+        }
+        self.do_flush()?;
+        Ok(())
+    }
 
     /// Write an Animatrix image
     ///
@@ -200,7 +219,11 @@ impl CtrlAnimeDisplay {
     ///
     /// Where led brightness is 0..255, low to high
     #[inline]
-    fn write_image(&mut self, image: Vec<Vec<u8>>) -> Result<(), AuraError> {
+    fn write_image_buffer(&mut self, buffer: AniMeImageBuffer) -> Result<(), AuraError> {
+        let mut image = AniMePacketType::from(buffer);
+        image[0][..7].copy_from_slice(&ANIME_PANE1_PREFIX);
+        image[1][..7].copy_from_slice(&ANIME_PANE2_PREFIX);
+
         for row in image.iter() {
             self.write_bytes(row)?;
         }

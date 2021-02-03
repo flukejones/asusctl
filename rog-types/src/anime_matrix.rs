@@ -1,34 +1,69 @@
+use serde_derive::{Deserialize, Serialize};
+use zvariant_derive::Type;
+
 pub const WIDTH: usize = 34; // Width is definitely 34 items
 pub const HEIGHT: usize = 56;
 pub type AniMeBufferType = [[u8; WIDTH]; HEIGHT];
 pub type AniMePacketType = [[u8; 640]; 2];
 const BLOCK_START: usize = 7;
+/// Not inclusive
 const BLOCK_END: usize = 634;
+pub const PANE_LEN: usize = BLOCK_END - BLOCK_START;
 
 pub const ANIME_PANE1_PREFIX: [u8; 7] = [0x5e, 0xc0, 0x02, 0x01, 0x00, 0x73, 0x02];
 pub const ANIME_PANE2_PREFIX: [u8; 7] = [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x02];
 
+#[derive(Debug, Deserialize, Serialize, Type)]
+pub struct AniMeDataBuffer(Vec<u8>);
+
+impl AniMeDataBuffer {
+    pub fn new() -> Self {
+        AniMeDataBuffer(vec![0u8; PANE_LEN])
+    }
+
+    pub fn get(&self) -> &[u8] {
+        &self.0
+    }
+
+    pub fn set(&mut self, input: [u8; PANE_LEN]) {
+        self.0 = input.to_vec();
+    }
+}
+
+impl From<AniMeDataBuffer> for AniMePacketType {
+    #[inline]
+    fn from(anime: AniMeDataBuffer) -> Self {
+        assert!(anime.0.len() == PANE_LEN);
+        let mut buffers = [[0; 640]; 2];
+        for (idx, chunk) in anime.0.as_slice().chunks(PANE_LEN).enumerate() {
+            buffers[idx][BLOCK_START..BLOCK_END].copy_from_slice(chunk);
+        }
+        buffers
+    }
+}
+
 /// Helper structure for writing images.
 ///
 ///  See the examples for ways to write an image to `AniMeMatrix` format.
-pub struct AniMeMatrix(AniMeBufferType);
+#[derive(Debug, Deserialize, Serialize, Type)]
+pub struct AniMeImageBuffer(Vec<Vec<u8>>);
 
-impl Default for AniMeMatrix {
+impl Default for AniMeImageBuffer {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl AniMeMatrix {
+impl AniMeImageBuffer {
     pub fn new() -> Self {
-        AniMeMatrix([[0u8; WIDTH]; HEIGHT])
+        AniMeImageBuffer(vec![vec![0u8; WIDTH]; HEIGHT])
     }
 
-    pub fn get(&self) -> &AniMeBufferType {
+    pub fn get(&self) -> &Vec<Vec<u8>> {
         &self.0
     }
 
-    pub fn get_mut(&mut self) -> &mut AniMeBufferType {
+    pub fn get_mut(&mut self) -> &mut Vec<Vec<u8>> {
         &mut self.0
     }
 
@@ -93,11 +128,11 @@ impl AniMeMatrix {
     }
 }
 
-impl From<AniMeMatrix> for AniMePacketType {
+impl From<AniMeImageBuffer> for AniMePacketType {
     /// Do conversion from the nested Vec in AniMeMatrix to the two required
     /// packets suitable for sending over USB
     #[inline]
-    fn from(anime: AniMeMatrix) -> Self {
+    fn from(anime: AniMeImageBuffer) -> Self {
         let mut buffers = [[0; 640]; 2];
 
         let mut write_index = BLOCK_START;
@@ -155,15 +190,26 @@ impl From<AniMeMatrix> for AniMePacketType {
 
 #[cfg(test)]
 mod tests {
-    use crate::anime_matrix::{AniMeMatrix, AniMePacketType};
+    use crate::anime_matrix::*;
+
+    use super::AniMeDataBuffer;
+
+    #[test]
+    fn check_from_data_buffer() {
+        let mut data = AniMeDataBuffer::new();
+        data.set([42u8; PANE_LEN]);
+
+        let out: AniMePacketType = data.into();
+    }
 
     #[test]
     fn check_data_alignment() {
-        let mut matrix = AniMeMatrix::new();
+        let mut matrix = AniMeImageBuffer::new();
         {
             let tmp = matrix.get_mut();
             for row in tmp.iter_mut() {
-                row[row.len() - 1] = 0xff;
+                let idx = row.len() - 1;
+                row[idx] = 0xff;
             }
         }
 

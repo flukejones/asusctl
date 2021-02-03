@@ -21,7 +21,7 @@
 
 use zbus::{dbus_proxy, Connection, Result};
 
-use rog_types::anime_matrix::{AniMeMatrix, AniMePacketType, ANIME_PANE1_PREFIX, ANIME_PANE2_PREFIX};
+use rog_types::anime_matrix::{AniMeImageBuffer, AniMePacketType, ANIME_PANE1_PREFIX, ANIME_PANE2_PREFIX};
 
 #[dbus_proxy(
     interface = "org.asuslinux.Daemon",
@@ -52,7 +52,7 @@ impl<'a> AnimeProxy<'a> {
 
     #[inline]
     pub fn set_brightness(&self, led_brightness: u8) -> Result<()> {
-        let mut anime_matrix = AniMeMatrix::new();
+        let mut anime_matrix = AniMeImageBuffer::new();
 
         anime_matrix.fill_with(led_brightness);
 
