@@ -14,21 +14,12 @@ pub mod cli_options;
 /// Enables you to create fancy RGB effects
 pub mod fancy;
 
-/// The main dbus group for system controls, e.g, fan control, keyboard LED's
-pub mod core_dbus;
-
 /// Helper functions for the AniMe display
 pub mod anime_matrix;
 
 pub mod error;
 
-pub mod zbus_anime;
-pub mod zbus_charge;
-pub mod zbus_gfx;
-pub mod zbus_led;
-pub mod zbus_profile;
-pub mod zbus_rogbios;
-pub mod zbus_supported;
+pub static VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // static LED_INIT1: [u8; 2] = [0x5d, 0xb9];
 // static LED_INIT2: &str = "]ASUS Tech.Inc."; // ] == 0x5d

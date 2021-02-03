@@ -4,7 +4,6 @@ pub type AniMeBufferType = [[u8; WIDTH]; HEIGHT];
 pub type AniMePacketType = [[u8; 640]; 2];
 const BLOCK_START: usize = 7;
 const BLOCK_END: usize = 634;
-use yansi_term::Colour::RGB;
 
 pub const ANIME_PANE1_PREFIX: [u8; 7] = [0x5e, 0xc0, 0x02, 0x01, 0x00, 0x73, 0x02];
 pub const ANIME_PANE2_PREFIX: [u8; 7] = [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x02];
@@ -58,8 +57,8 @@ impl AniMeMatrix {
                 } else {
                     row.iter()
                 };
-                for x in tmp {
-                    print!(" {}", RGB(*x, *x, *x).paint("XY"));
+                for _ in tmp {
+                    print!(" XY");
                 }
 
                 println!();
@@ -81,9 +80,9 @@ impl AniMeMatrix {
                 if count % 2 == 0 {
                     print!(" ");
                 }
-                for (i, x) in row.iter().enumerate() {
+                for (i, _) in row.iter().enumerate() {
                     if i >= index {
-                        print!(" {}", RGB(*x, *x, *x).paint("XY"));
+                        print!(" XY");
                     } else {
                         print!("   ");
                     }

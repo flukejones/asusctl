@@ -1,14 +1,10 @@
-use asus_nb::{
-    cli_options::{AniMeActions, AniMeStatusValue, LedBrightness, SetAuraBuiltin},
-    core_dbus::AuraDbusClient,
-    profile::{ProfileCommand, ProfileEvent},
-};
 use daemon::{ctrl_fan_cpu::FanLevel, ctrl_gfx::vendors::GfxVendors};
 use gumdrop::{Opt, Options};
-use log::LevelFilter;
-use std::{env::args, io::Write, process::Command};
+use rog_dbus::AuraDbusClient;
+use std::{env::args, process::Command};
 use yansi_term::Colour::Green;
 use yansi_term::Colour::Red;
+use rog_types::{cli_options::{AniMeActions, AniMeStatusValue, LedBrightness, SetAuraBuiltin}, profile::{ProfileCommand, ProfileEvent}};
 
 #[derive(Default, Options)]
 struct CLIStart {
@@ -104,13 +100,6 @@ struct BiosCommand {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut logger = env_logger::Builder::new();
-    logger
-        .target(env_logger::Target::Stdout)
-        .format(|buf, record| writeln!(buf, "{}: {}", record.level(), record.args()))
-        .filter(None, LevelFilter::Info)
-        .init();
-
     let mut args: Vec<String> = args().collect();
     args.remove(0);
 
@@ -139,7 +128,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if parsed.version {
-        println!("Version: {}", daemon::VERSION);
+        println!("  asusctl version {}", env!("CARGO_PKG_VERSION"));
+        println!("   daemon version {}", daemon::VERSION);
+        println!(" rog-dbus version {}", rog_dbus::VERSION);
+        println!("rog-types version {}", rog_types::VERSION);
     }
 
     let (dbus, _) = AuraDbusClient::new()?;

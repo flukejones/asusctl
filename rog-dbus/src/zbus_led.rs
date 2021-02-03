@@ -23,7 +23,7 @@ use std::sync::{Arc, Mutex};
 
 use zbus::{dbus_proxy, Connection, Result};
 
-use crate::{aura_modes::AuraModes, cli_options::LedBrightness, fancy::KeyColourArray};
+use rog_types::{aura_modes::AuraModes, cli_options::LedBrightness, fancy::KeyColourArray};
 
 const BLOCKING_TIME: u64 = 40; // 100ms = 10 FPS, max 50ms = 20 FPS, 40ms = 25 FPS
 

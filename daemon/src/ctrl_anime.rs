@@ -13,7 +13,7 @@ const APPLY: u8 = 0xc4;
 // The next byte can be 0x03 for "on" and 0x00 for "off"
 const ON_OFF: u8 = 0x04;
 
-use asus_nb::error::AuraError;
+use rog_types::error::AuraError;
 use log::{error, info, warn};
 use rusb::{Device, DeviceHandle};
 use std::convert::TryInto;
