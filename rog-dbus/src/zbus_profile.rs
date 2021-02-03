@@ -21,9 +21,8 @@
 
 use std::sync::{Arc, Mutex};
 
+use rog_types::profile::ProfileEvent;
 use zbus::{dbus_proxy, Connection, Result};
-
-use crate::profile::ProfileEvent;
 
 #[dbus_proxy(
     interface = "org.asuslinux.Daemon",

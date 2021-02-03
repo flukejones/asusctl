@@ -1,4 +1,4 @@
-use asus_nb::aura_modes::{AuraModes, BREATHING, STATIC};
+use rog_types::aura_modes::{AuraModes, BREATHING, STATIC};
 use log::{info, warn};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::OpenOptions;

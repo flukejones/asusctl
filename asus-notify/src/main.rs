@@ -1,11 +1,13 @@
-use asus_nb::core_dbus::{DbusProxies, Signals};
-use daemon::config::Profile;
+use daemon::{config::Profile};
 use notify_rust::{Hint, Notification, NotificationHandle};
+use rog_dbus::{DbusProxies, Signals};
 use std::error::Error;
 use std::time::Duration;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("Version {}", env!("CARGO_PKG_VERSION"));
+    println!("asus-notify version {}", env!("CARGO_PKG_VERSION"));
+    println!("     daemon version {}", daemon::VERSION);
+    println!("   rog-dbus version {}", rog_dbus::VERSION);
 
     // let mut cfg = Config::read_new()?;
     // let mut last_profile = String::new();

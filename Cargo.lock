@@ -22,55 +22,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "23b62fc65de8e4e7f52534fb52b0f3ed04746ae267519eef2a83941e8085068b"
 
 [[package]]
-name = "asus-nb"
-version = "2.2.1"
-dependencies = [
- "gumdrop",
- "rog_fan_curve",
- "serde",
- "serde_derive",
- "serde_json",
- "tinybmp",
- "yansi-term",
- "zbus",
- "zbus_macros",
- "zvariant",
-]
-
-[[package]]
-name = "asus-nb-ctrl"
-version = "2.2.2"
-dependencies = [
- "asus-nb",
- "env_logger",
- "gumdrop",
- "intel-pstate",
- "log",
- "rog_fan_curve",
- "rusb",
- "serde",
- "serde_derive",
- "serde_json",
- "sysfs-class",
- "toml",
- "udev",
- "yansi-term",
- "zbus",
- "zvariant",
-]
-
-[[package]]
 name = "asus-notify"
 version = "2.0.4"
 dependencies = [
- "asus-nb",
- "asus-nb-ctrl",
+ "daemon",
  "notify-rust",
- "serde",
- "serde_derive",
+ "rog_dbus",
  "serde_json",
- "zbus",
- "zvariant",
+]
+
+[[package]]
+name = "asusctl"
+version = "2.0.4"
+dependencies = [
+ "daemon",
+ "gumdrop",
+ "rog_dbus",
+ "rog_types",
+ "serde_json",
+ "tinybmp",
+ "yansi-term",
 ]
 
 [[package]]
@@ -212,6 +183,27 @@ dependencies = [
  "autocfg",
  "cfg-if 1.0.0",
  "lazy_static",
+]
+
+[[package]]
+name = "daemon"
+version = "2.2.2"
+dependencies = [
+ "env_logger",
+ "intel-pstate",
+ "log",
+ "rog_dbus",
+ "rog_fan_curve",
+ "rog_types",
+ "rusb",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "sysfs-class",
+ "toml",
+ "udev",
+ "zbus",
+ "zvariant",
 ]
 
 [[package]]
@@ -482,9 +474,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.84"
+version = "0.2.85"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1cca32fa0182e8c0989459524dc356b8f2b5c10f1b9eb521b7d182c03cf8c5ff"
+checksum = "7ccac4b00700875e6a07c6cde370d44d32fa01c5a65cdd2fca6858c479d28bb3"
 
 [[package]]
 name = "libudev-sys"
@@ -793,12 +785,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5eb417147ba9860a96cfe72a0b93bf88fee1744b5636ec99ab20c1aa9376581"
 
 [[package]]
+name = "rog_dbus"
+version = "2.2.1"
+dependencies = [
+ "rog_fan_curve",
+ "rog_types",
+ "serde_json",
+ "zbus",
+ "zbus_macros",
+ "zvariant",
+]
+
+[[package]]
 name = "rog_fan_curve"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c71cfe91a717104796aeefea4e98ce5cefb11f2bb5dd10bba865dd4ae86273cb"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "rog_types"
+version = "2.2.1"
+dependencies = [
+ "gumdrop",
+ "rog_fan_curve",
+ "serde",
+ "serde_derive",
 ]
 
 [[package]]

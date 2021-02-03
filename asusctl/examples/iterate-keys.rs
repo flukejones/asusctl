@@ -1,7 +1,7 @@
-use asus_nb::{
-    core_dbus::AuraDbusClient,
+use rog_types::{
     fancy::{GX502Layout, Key, KeyColourArray, KeyLayout},
 };
+use rog_dbus::AuraDbusClient;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (dbus, _) = AuraDbusClient::new()?;

@@ -2,7 +2,7 @@ use crate::{
     config::{Config, Profile},
     GetSupported,
 };
-use asus_nb::profile::ProfileEvent;
+use rog_types::profile::ProfileEvent;
 use log::{info, warn};
 use serde_derive::{Deserialize, Serialize};
 use std::convert::TryInto;

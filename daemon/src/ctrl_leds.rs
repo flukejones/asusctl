@@ -9,7 +9,7 @@ use crate::{
     error::RogError,
     laptops::{match_laptop, HELP_ADDRESS},
 };
-use asus_nb::{
+use rog_types::{
     aura_brightness_bytes,
     aura_modes::{AuraModes, PER_KEY},
     fancy::KeyColourArray,

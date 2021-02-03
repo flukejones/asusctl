@@ -10,7 +10,7 @@ use daemon::{
     ctrl_gfx::{gfx::CtrlGraphics, vendors::GfxVendors},
 };
 
-use asus_nb::DBUS_NAME;
+use rog_dbus::DBUS_NAME;
 use daemon::{CtrlTask, Reloadable, ZbusAdd};
 use log::LevelFilter;
 use log::{error, info, warn};
@@ -33,7 +33,10 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
         .filter(None, LevelFilter::Info)
         .init();
 
-    info!("Version: {}", daemon::VERSION);
+    info!(   "daemon version {}", daemon::VERSION);
+    info!(" rog-dbus version {}", rog_dbus::VERSION);
+    info!("rog-types version {}", rog_types::VERSION);
+
     start_daemon()?;
     Ok(())
 }

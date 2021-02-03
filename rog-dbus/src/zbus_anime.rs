@@ -21,7 +21,7 @@
 
 use zbus::{dbus_proxy, Connection, Result};
 
-use crate::anime_matrix::{AniMeMatrix, AniMePacketType, ANIME_PANE1_PREFIX, ANIME_PANE2_PREFIX};
+use rog_types::anime_matrix::{AniMeMatrix, AniMePacketType, ANIME_PANE1_PREFIX, ANIME_PANE2_PREFIX};
 
 #[dbus_proxy(
     interface = "org.asuslinux.Daemon",

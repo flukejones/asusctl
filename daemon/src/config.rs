@@ -1,4 +1,4 @@
-use asus_nb::aura_modes::AuraModes;
+use rog_types::aura_modes::AuraModes;
 use log::{error, info, warn};
 use rog_fan_curve::Curve;
 use serde_derive::{Deserialize, Serialize};

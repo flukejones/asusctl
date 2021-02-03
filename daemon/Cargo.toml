@@ -1,5 +1,5 @@
 [package]
-name = "asus-nb-ctrl"
+name = "daemon"
 version = "2.2.2"
 license = "MPL-2.0"
 readme = "README.md"
@@ -14,20 +14,16 @@ name = "daemon"
 path = "src/lib.rs"
 
 [[bin]]
-name = "asusctl"
-path = "src/main.rs"
-
-[[bin]]
 name = "asusd"
 path = "src/daemon.rs"
 
 [dependencies]
-asus-nb = { path = "../asus-nb" }
+rog_types = { path = "../rog-types" }
+rog_dbus = { path = "../rog-dbus" }
 rusb = "^0.7"
 udev = "^0.6"
 
 # cli and logging
-gumdrop = "^0.8"
 log = "^0.4"
 env_logger = "^0.8"
 
@@ -45,5 +41,3 @@ sysfs-class = "^0.1.2" # used for backlight control and baord ID
 rog_fan_curve = { version = "0.1", features = ["serde"] }
 # cpu power management
 intel-pstate = "^0.2"
-
-yansi-term = "^0.1"

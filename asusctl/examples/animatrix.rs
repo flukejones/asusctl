@@ -1,11 +1,11 @@
-use asus_nb::{
+use rog_dbus::AuraDbusClient;
+use rog_types::{
     anime_matrix::{AniMeMatrix, AniMePacketType, HEIGHT, WIDTH},
-    core_dbus::AuraDbusClient,
 };
 use tinybmp::{Bmp, Pixel};
 
 fn main() {
-    let mut writer = AuraDbusClient::new().unwrap();
+    let (client, _) = AuraDbusClient::new().unwrap();
 
     let bmp =
         Bmp::from_slice(include_bytes!("non-skewed_r.bmp")).expect("Failed to parse BMP image");
@@ -40,5 +40,5 @@ fn main() {
     // println!("{:?}", matrix[0].to_vec());
     // println!("{:?}", matrix[1].to_vec());
 
-    //writer.set_anime_led_brightness(&mut matrix).unwrap();
+    //client.proxies().anime().set_brightness(&mut matrix).unwrap();
 }
