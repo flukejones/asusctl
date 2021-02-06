@@ -144,9 +144,9 @@ To switch Fan/Thermal profiles you need to bind the Fn+F5 key to `asusctl profil
 
 Requirements are rust >= 1.40 installed from rustup.io if the distro provided version is too old, and `make`.
 
-**Ubuntu*:** `apt install libdbus-1-dev libclang-dev libudev-dev`
+**Ubuntu*:** `apt install libclang-dev libudev-dev`
 
-**fedora:** `dnf install clang-devel dbus-devel systemd-devel`
+**fedora:** `dnf install clang-devel systemd-devel`
 
 ## Installing
 

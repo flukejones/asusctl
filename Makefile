@@ -1,4 +1,4 @@
-VERSION := $(shell grep -Pm1 'version = "(\d.\d.\d)"' asus-nb-ctrl/Cargo.toml | cut -d'"' -f2)
+VERSION := $(shell grep -Pm1 'version = "(\d.\d.\d)"' daemon/Cargo.toml | cut -d'"' -f2)
 
 INSTALL = install
 INSTALL_PROGRAM = ${INSTALL} -D -m 0755
