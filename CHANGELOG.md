@@ -8,10 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Write set+apply after each array in multizone
 - Remove misc bad logic
-- Use same code path as 0x1866 device to configure led support
+- Use same code path as 0x1866 device to configure led support for 0x1854 device
 - Remove duplicate code
 - Set correct speeds for multizone
 - Remove dbus crate in favour of zbus. This removes the external dbus lib requirement.
+- Huge internal refactor
+- BREAKING CHANGE: Anime code refactor. DBUS method names have changed
 
 # [2.2.2] - 2021-01-31
 ### Changed

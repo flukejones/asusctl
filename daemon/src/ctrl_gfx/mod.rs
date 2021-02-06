@@ -1,5 +1,3 @@
-pub mod vendors;
-
 pub mod error;
 
 pub mod gfx;

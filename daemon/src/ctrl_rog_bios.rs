@@ -1,11 +1,12 @@
 use crate::{
     config::Config,
-    ctrl_gfx::{gfx::CtrlGraphics, vendors::GfxVendors},
+    ctrl_gfx::{gfx::CtrlGraphics},
     error::RogError,
     GetSupported,
 };
 //use crate::dbus::DbusEvents;
 use log::{info, warn};
+use rog_types::gfx_vendors::GfxVendors;
 use serde_derive::{Deserialize, Serialize};
 use std::convert::TryInto;
 use std::fs::OpenOptions;

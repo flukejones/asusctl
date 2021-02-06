@@ -46,8 +46,7 @@ impl GetSupported for CtrlKbdBacklight {
                 per_key_led_mode = true;
                 let modes = modes
                     .iter()
-                    .filter(|x| **x != PER_KEY)
-                    .map(|x| *x)
+                    .filter(|x| **x != PER_KEY).copied()
                     .collect();
                 stock_led_modes = Some(modes);
             } else {
@@ -293,7 +292,7 @@ impl CtrlKbdBacklight {
                 warn!("led_node: {}", err);
                 None
             },
-            |node| Some(node),
+            Some,
         );
 
         let kbd_node = Self::get_node_failover(id_product, condev_iface, Self::scan_kbd_node)
@@ -302,7 +301,7 @@ impl CtrlKbdBacklight {
                     warn!("kbd_node: {}", err);
                     None
                 },
-                |node| Some(node),
+                Some,
             );
 
         let bright_node = Self::get_kbd_bright_path();
@@ -375,7 +374,7 @@ impl CtrlKbdBacklight {
             {
                 if parent
                     .attribute_value("idProduct")
-                    .ok_or(RogError::NotFound("LED idProduct".into()))?
+                    .ok_or_else(|| RogError::NotFound("LED idProduct".into()))?
                     == id_product
                 {
                     if let Some(dev_node) = device.devnode() {

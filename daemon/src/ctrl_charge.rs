@@ -101,7 +101,7 @@ impl CtrlCharge {
     }
 
     pub(super) fn set(&self, limit: u8, config: &mut Config) -> Result<(), RogError> {
-        if limit < 20 || limit > 100 {
+        if !(20..=100).contains(&limit) {
             warn!(
                 "Unable to set battery charge limit, must be between 20-100: requested {}",
                 limit

@@ -89,19 +89,13 @@ impl Dbus for CtrlAnimeDisplay {
         buffer[1] = WRITE;
         buffer[2] = ON_OFF;
 
-        let status_str;
         if status {
             buffer[3] = 0x03;
-            status_str = "on";
         } else {
             buffer[3] = 0x00;
-            status_str = "off";
         }
 
-        self.write_bytes(&buffer).map_or_else(
-            |err| warn!("{}", err),
-            |()| info!("Turning {} the AniMe", status_str),
-        );
+        self.write_bytes(&buffer);
     }
 
     fn set_boot_on_off(&self, status: bool) {
@@ -159,7 +153,7 @@ impl CtrlAnimeDisplay {
 
     /// Should only be used if the bytes you are writing are verified correct
     #[inline]
-    fn write_bytes(&self, message: &[u8]) -> Result<(), AuraError> {
+    fn write_bytes(&self, message: &[u8]) {
         match self.handle.write_control(
             0x21,  // request_type
             0x09,  // request
@@ -174,7 +168,6 @@ impl CtrlAnimeDisplay {
                 _ => error!("Failed to write to led interrupt: {}", err),
             },
         }
-        Ok(())
     }
     #[inline]
     fn write_data_buffer(&self, buffer: AniMeDataBuffer) -> Result<(), AuraError> {
@@ -183,7 +176,7 @@ impl CtrlAnimeDisplay {
         image[1][..7].copy_from_slice(&ANIME_PANE2_PREFIX);
 
         for row in image.iter() {
-            self.write_bytes(row)?;
+            self.write_bytes(row);
         }
         self.do_flush()?;
         Ok(())
@@ -211,7 +204,7 @@ impl CtrlAnimeDisplay {
         image[1][..7].copy_from_slice(&ANIME_PANE2_PREFIX);
 
         for row in image.iter() {
-            self.write_bytes(row)?;
+            self.write_bytes(row);
         }
         self.do_flush()?;
         Ok(())
@@ -224,7 +217,7 @@ impl CtrlAnimeDisplay {
         for (idx, byte) in INIT_STR.as_bytes().iter().enumerate() {
             init[idx + 1] = *byte
         }
-        self.write_bytes(&init)?;
+        self.write_bytes(&init);
 
         // clear the init array and write other init message
         for ch in init.iter_mut() {
@@ -233,7 +226,7 @@ impl CtrlAnimeDisplay {
         init[0] = DEV_PAGE; // write it to be sure?
         init[1] = INIT;
 
-        self.write_bytes(&init)?;
+        self.write_bytes(&init);
         Ok(())
     }
 
@@ -244,7 +237,7 @@ impl CtrlAnimeDisplay {
         flush[1] = WRITE;
         flush[2] = 0x03;
 
-        self.write_bytes(&flush)?;
+        self.write_bytes(&flush);
         Ok(())
     }
 
@@ -256,7 +249,7 @@ impl CtrlAnimeDisplay {
         flush[2] = 0x01;
         flush[3] = if status { 0x00 } else { 0x80 };
 
-        self.write_bytes(&flush)?;
+        self.write_bytes(&flush);
         Ok(())
     }
 
@@ -268,7 +261,7 @@ impl CtrlAnimeDisplay {
         flush[2] = 0x01;
         flush[3] = 0x80;
 
-        self.write_bytes(&flush)?;
+        self.write_bytes(&flush);
         Ok(())
     }
 }

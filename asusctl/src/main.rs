@@ -1,10 +1,9 @@
-use daemon::{ctrl_fan_cpu::FanLevel, ctrl_gfx::vendors::GfxVendors};
 use gumdrop::{Opt, Options};
 use rog_dbus::AuraDbusClient;
 use std::{env::args, process::Command};
 use yansi_term::Colour::Green;
 use yansi_term::Colour::Red;
-use rog_types::{anime_matrix::{AniMeDataBuffer, FULL_PANE_LEN}, cli_options::{AniMeActions, AniMeStatusValue, LedBrightness, SetAuraBuiltin}, profile::{ProfileCommand, ProfileEvent}};
+use rog_types::{anime_matrix::{AniMeDataBuffer, FULL_PANE_LEN}, cli_options::{AniMeActions, AniMeStatusValue, LedBrightness, SetAuraBuiltin}, gfx_vendors::GfxVendors, profile::{FanLevel, ProfileCommand, ProfileEvent}};
 
 #[derive(Default, Options)]
 struct CLIStart {
@@ -129,7 +128,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if parsed.version {
         println!("  asusctl version {}", env!("CARGO_PKG_VERSION"));
-        println!("   daemon version {}", daemon::VERSION);
         println!(" rog-dbus version {}", rog_dbus::VERSION);
         println!("rog-types version {}", rog_types::VERSION);
     }

@@ -1,5 +1,6 @@
 use intel_pstate::PStateError;
 use rog_fan_curve::CurveError;
+use rog_types::error::GraphicsError;
 use std::convert::From;
 use std::fmt;
 
@@ -62,5 +63,13 @@ impl From<PStateError> for RogError {
 impl From<CurveError> for RogError {
     fn from(err: CurveError) -> Self {
         RogError::FanCurve(err)
+    }
+}
+
+impl From<GraphicsError> for RogError {
+    fn from(err: GraphicsError) -> Self {
+        match err {
+            GraphicsError::ParseVendor => RogError::GfxSwitching(GfxError::ParseVendor)
+        }
     }
 }

@@ -1,15 +1,25 @@
 #![deny(unused_must_use)]
 /// Configuration loading, saving
 pub mod config;
-///
+/// Control of AniMe matrix display
 pub mod ctrl_anime;
-///
+/// Control of battery charge level
 pub mod ctrl_charge;
+/// Control CPU min/max freq and turbo, fan mode, fan curves
 ///
+/// Intel machines can control:
+/// - CPU min/max frequency
+/// - CPU turbo enable/disable
+/// - Fan mode (normal, boost, silent)
+///
+/// AMD machines can control:
+/// - CPU turbo enable/disable
+/// - Fan mode (normal, boost, silent)
+/// - Fan min/max RPM curve
 pub mod ctrl_fan_cpu;
-///
+/// GPU switching and power
 pub mod ctrl_gfx;
-///
+/// Keyboard LED brightness control, RGB, and LED display modes
 pub mod ctrl_leds;
 /// Control ASUS bios function such as boot sound, Optimus/Dedicated gfx mode
 pub mod ctrl_rog_bios;
@@ -17,7 +27,7 @@ pub mod ctrl_rog_bios;
 pub mod laptops;
 
 /// Fetch all supported functions for the laptop
-pub mod supported;
+pub mod ctrl_supported;
 
 mod error;
 

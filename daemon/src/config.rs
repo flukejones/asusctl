@@ -42,7 +42,7 @@ impl ConfigV212 {
     }
 }
 
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Config {
     pub gfx_managed: bool,
     pub gfx_nv_mode_is_dedicated: bool,
@@ -55,6 +55,28 @@ pub struct Config {
     pub kbd_backlight_mode: u8,
     pub kbd_backlight_modes: Vec<AuraModes>,
     pub power_profiles: BTreeMap<String, Profile>,
+}
+
+impl  Default for Config {
+    fn default() -> Self {
+        let mut pwr = BTreeMap::new();
+        pwr.insert("normal".into(), Profile::new(0, 100, true, 0, None));
+        pwr.insert("boost".into(), Profile::new(0, 100, true, 1, None));
+        pwr.insert("silent".into(), Profile::new(0, 100, true, 2, None));
+
+        Config {
+            gfx_managed: true,
+            gfx_nv_mode_is_dedicated: true,
+            active_profile: "normal".into(),
+            toggle_profiles: vec!["normal".into(), "boost".into(), "silent".into()],
+            power_profile: 0,
+            bat_charge_limit:100,
+            kbd_led_brightness: 1,
+            kbd_backlight_mode: 0,
+            kbd_backlight_modes: Vec::new(),
+            power_profiles: pwr,
+        }
+    }
 }
 
 impl Config {
@@ -92,35 +114,10 @@ impl Config {
     fn create_default(file: &mut File, supported_led_modes: &[u8]) -> Self {
         // create a default config here
         let mut config = Config::default();
-        config.gfx_managed = true;
-        config.gfx_nv_mode_is_dedicated = true;
-
-        config.bat_charge_limit = 100;
-        config.kbd_backlight_mode = 0;
-        config.kbd_led_brightness = 1;
 
         for n in supported_led_modes {
             config.kbd_backlight_modes.push(AuraModes::from(*n))
         }
-
-        let mut profile = Profile::default();
-        profile.fan_preset = 0;
-        profile.turbo = true;
-        config.power_profiles.insert("normal".into(), profile);
-
-        let mut profile = Profile::default();
-        profile.fan_preset = 1;
-        profile.turbo = true;
-        config.power_profiles.insert("boost".into(), profile);
-
-        let mut profile = Profile::default();
-        profile.fan_preset = 2;
-        config.power_profiles.insert("silent".into(), profile);
-
-        config.toggle_profiles.push("normal".into());
-        config.toggle_profiles.push("boost".into());
-        config.toggle_profiles.push("silent".into());
-        config.active_profile = "normal".into();
 
         // Should be okay to unwrap this as is since it is a Default
         let json = serde_json::to_string_pretty(&config).unwrap();
@@ -205,6 +202,20 @@ impl Default for Profile {
             turbo: false,
             fan_preset: 0,
             fan_curve: None,
+        }
+    }
+}
+
+impl Profile {
+    pub fn new(min_percentage: u8, max_percentage: u8, turbo: bool,
+    fan_preset: u8, fan_curve: Option<Curve>) -> Self {
+        Profile {
+            min_percentage,
+            max_percentage,
+            turbo,
+            fan_preset,
+            fan_curve,
+
         }
     }
 }

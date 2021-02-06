@@ -2,17 +2,17 @@ use crate::{
     config::{Config, Profile},
     GetSupported,
 };
-use rog_types::profile::ProfileEvent;
+use rog_types::profile::{FanLevel, ProfileEvent};
 use log::{info, warn};
 use serde_derive::{Deserialize, Serialize};
 use std::convert::TryInto;
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::Path;
-use std::str::FromStr;
 use std::sync::Arc;
 use std::sync::Mutex;
 use zbus::dbus_interface;
+use crate::error::RogError;
 
 static FAN_TYPE_1_PATH: &str = "/sys/devices/platform/asus-nb-wmi/throttle_thermal_policy";
 static FAN_TYPE_2_PATH: &str = "/sys/devices/platform/asus-nb-wmi/fan_boost_mode";
@@ -63,7 +63,7 @@ impl DbusFanAndCpu {
                     ctrl.handle_profile_event(&event, &mut cfg)
                         .unwrap_or_else(|err| warn!("{}", err));
                     self.notify_profile(&cfg.active_profile)
-                        .unwrap_or_else(|_| ());
+                        .unwrap_or(());
                 }
             }
         }
@@ -391,48 +391,5 @@ impl CtrlFanAndCPU {
         }
 
         Ok(())
-    }
-}
-
-use crate::error::RogError;
-
-#[derive(Debug)]
-pub enum FanLevel {
-    Normal,
-    Boost,
-    Silent,
-}
-
-impl FromStr for FanLevel {
-    type Err = RogError;
-
-    fn from_str(s: &str) -> Result<Self, RogError> {
-        match s.to_lowercase().as_str() {
-            "normal" => Ok(FanLevel::Normal),
-            "boost" => Ok(FanLevel::Boost),
-            "silent" => Ok(FanLevel::Silent),
-            _ => Err(RogError::ParseFanLevel),
-        }
-    }
-}
-
-impl From<u8> for FanLevel {
-    fn from(n: u8) -> Self {
-        match n {
-            0 => FanLevel::Normal,
-            1 => FanLevel::Boost,
-            2 => FanLevel::Silent,
-            _ => FanLevel::Normal,
-        }
-    }
-}
-
-impl From<FanLevel> for u8 {
-    fn from(n: FanLevel) -> Self {
-        match n {
-            FanLevel::Normal => 0,
-            FanLevel::Boost => 1,
-            FanLevel::Silent => 2,
-        }
     }
 }

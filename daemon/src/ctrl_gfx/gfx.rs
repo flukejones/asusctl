@@ -10,7 +10,7 @@ use std::str::FromStr;
 use std::{sync::Arc, sync::Mutex};
 use sysfs_class::{PciDevice, SysClass};
 use system::{GraphicsDevice, Module, PciBus};
-use vendors::{GfxCtrlAction, GfxVendors};
+use rog_types::gfx_vendors::{GfxCtrlAction, GfxVendors};
 use zbus::dbus_interface;
 
 use crate::*;
@@ -190,14 +190,9 @@ impl CtrlGraphics {
         };
         let modules = Module::all().map_err(|err| GfxError::Read("get_vendor".into(), err))?;
 
-        let driver_loaded = if modules
+        let driver_loaded = modules
             .iter()
-            .any(|module| module.name == "nouveau" || module.name == "nvidia")
-        {
-            true
-        } else {
-            false
-        };
+            .any(|module| module.name == "nouveau" || module.name == "nvidia");
 
         let vendor = if mode == "off" {
             if driver_loaded {

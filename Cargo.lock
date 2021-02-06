@@ -23,7 +23,7 @@ checksum = "23b62fc65de8e4e7f52534fb52b0f3ed04746ae267519eef2a83941e8085068b"
 
 [[package]]
 name = "asus-notify"
-version = "2.0.4"
+version = "3.0.0"
 dependencies = [
  "daemon",
  "notify-rust",
@@ -33,9 +33,8 @@ dependencies = [
 
 [[package]]
 name = "asusctl"
-version = "2.0.4"
+version = "3.0.0"
 dependencies = [
- "daemon",
  "gumdrop",
  "rog_dbus",
  "rog_types",
@@ -187,7 +186,7 @@ dependencies = [
 
 [[package]]
 name = "daemon"
-version = "2.2.2"
+version = "3.0.0"
 dependencies = [
  "env_logger",
  "intel-pstate",
@@ -786,7 +785,7 @@ checksum = "b5eb417147ba9860a96cfe72a0b93bf88fee1744b5636ec99ab20c1aa9376581"
 
 [[package]]
 name = "rog_dbus"
-version = "2.2.1"
+version = "3.0.0"
 dependencies = [
  "rog_fan_curve",
  "rog_types",
@@ -807,7 +806,7 @@ dependencies = [
 
 [[package]]
 name = "rog_types"
-version = "2.2.1"
+version = "3.0.0"
 dependencies = [
  "gumdrop",
  "rog_fan_curve",

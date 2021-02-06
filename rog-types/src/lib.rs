@@ -17,6 +17,8 @@ pub mod fancy;
 /// Helper functions for the AniMe display
 pub mod anime_matrix;
 
+pub mod gfx_vendors;
+
 pub mod error;
 
 pub static VERSION: &str = env!("CARGO_PKG_VERSION");

@@ -34,8 +34,7 @@ impl FromStr for LedBrightness {
             "high" => Ok(LedBrightness { level: Some(0x03) }),
             _ => {
                 print!(
-                    "{}\n{}\n",
-                    "Invalid argument, must be one of:", "off, low, med, high"
+                    "Invalid argument, must be one of: off, low, med, high"
                 );
                 Err(AuraError::ParseBrightness)
             }
@@ -109,7 +108,7 @@ impl FromStr for AniMeStatusValue {
             "on" => Ok(AniMeStatusValue::On),
             "off" => Ok(AniMeStatusValue::Off),
             _ => {
-                print!("{}\n{}\n", "Invalid argument, must be one of:", "on, off");
+                print!("Invalid argument, must be one of: on, off");
                 Err(AuraError::ParseAnime)
             }
         }

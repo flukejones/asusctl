@@ -205,20 +205,20 @@ pub enum AuraModes {
 impl From<SetAuraBuiltin> for AuraModes {
     fn from(mode: SetAuraBuiltin) -> Self {
         match mode {
-            SetAuraBuiltin::Static(x) => AuraModes::Static(x.into()),
-            SetAuraBuiltin::Breathe(x) => AuraModes::Breathe(x.into()),
-            SetAuraBuiltin::Strobe(x) => AuraModes::Strobe(x.into()),
-            SetAuraBuiltin::Rainbow(x) => AuraModes::Rainbow(x.into()),
-            SetAuraBuiltin::Star(x) => AuraModes::Star(x.into()),
-            SetAuraBuiltin::Rain(x) => AuraModes::Rain(x.into()),
-            SetAuraBuiltin::Highlight(x) => AuraModes::Highlight(x.into()),
-            SetAuraBuiltin::Laser(x) => AuraModes::Laser(x.into()),
-            SetAuraBuiltin::Ripple(x) => AuraModes::Ripple(x.into()),
-            SetAuraBuiltin::Pulse(x) => AuraModes::Pulse(x.into()),
-            SetAuraBuiltin::Comet(x) => AuraModes::Comet(x.into()),
-            SetAuraBuiltin::Flash(x) => AuraModes::Flash(x.into()),
-            SetAuraBuiltin::MultiStatic(x) => AuraModes::MultiStatic(x.into()),
-            SetAuraBuiltin::MultiBreathe(x) => AuraModes::MultiBreathe(x.into()),
+            SetAuraBuiltin::Static(x) => AuraModes::Static(x),
+            SetAuraBuiltin::Breathe(x) => AuraModes::Breathe(x),
+            SetAuraBuiltin::Strobe(x) => AuraModes::Strobe(x),
+            SetAuraBuiltin::Rainbow(x) => AuraModes::Rainbow(x),
+            SetAuraBuiltin::Star(x) => AuraModes::Star(x),
+            SetAuraBuiltin::Rain(x) => AuraModes::Rain(x),
+            SetAuraBuiltin::Highlight(x) => AuraModes::Highlight(x),
+            SetAuraBuiltin::Laser(x) => AuraModes::Laser(x),
+            SetAuraBuiltin::Ripple(x) => AuraModes::Ripple(x),
+            SetAuraBuiltin::Pulse(x) => AuraModes::Pulse(x),
+            SetAuraBuiltin::Comet(x) => AuraModes::Comet(x),
+            SetAuraBuiltin::Flash(x) => AuraModes::Flash(x),
+            SetAuraBuiltin::MultiStatic(x) => AuraModes::MultiStatic(x),
+            SetAuraBuiltin::MultiBreathe(x) => AuraModes::MultiBreathe(x),
         }
     }
 }
