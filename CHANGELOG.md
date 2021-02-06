@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove dbus crate in favour of zbus. This removes the external dbus lib requirement.
 - Huge internal refactor
 - BREAKING CHANGE: Anime code refactor. DBUS method names have changed
+- Cleanup fan and cpu control + configs
 
 # [2.2.2] - 2021-01-31
 ### Changed

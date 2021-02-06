@@ -132,9 +132,7 @@ impl CtrlAnimeDisplay {
         })?;
 
         info!("Device has an AniMe Matrix display");
-        let ctrl = CtrlAnimeDisplay {
-            handle: device,
-        };
+        let ctrl = CtrlAnimeDisplay { handle: device };
         ctrl.do_initialization()?;
 
         Ok(ctrl)

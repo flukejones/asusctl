@@ -2,6 +2,7 @@ use ctrl_gfx::error::GfxError;
 use ctrl_gfx::*;
 use ctrl_rog_bios::CtrlRogBios;
 use log::{error, info, warn};
+use rog_types::gfx_vendors::{GfxCtrlAction, GfxVendors};
 use std::io::Write;
 use std::iter::FromIterator;
 use std::path::Path;
@@ -10,7 +11,6 @@ use std::str::FromStr;
 use std::{sync::Arc, sync::Mutex};
 use sysfs_class::{PciDevice, SysClass};
 use system::{GraphicsDevice, Module, PciBus};
-use rog_types::gfx_vendors::{GfxCtrlAction, GfxVendors};
 use zbus::dbus_interface;
 
 use crate::*;

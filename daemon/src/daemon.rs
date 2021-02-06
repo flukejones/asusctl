@@ -3,17 +3,14 @@ use daemon::ctrl_fan_cpu::{CtrlFanAndCPU, DbusFanAndCpu};
 use daemon::ctrl_leds::{CtrlKbdBacklight, DbusKbdBacklight};
 use daemon::laptops::match_laptop;
 use daemon::{
-    config::Config, laptops::print_board_info, ctrl_supported::SupportedFunctions, GetSupported,
+    config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
 };
-use daemon::{
-    ctrl_anime::CtrlAnimeDisplay,
-    ctrl_gfx::{gfx::CtrlGraphics},
-};
+use daemon::{ctrl_anime::CtrlAnimeDisplay, ctrl_gfx::gfx::CtrlGraphics};
 
-use rog_dbus::DBUS_NAME;
 use daemon::{CtrlTask, Reloadable, ZbusAdd};
 use log::LevelFilter;
 use log::{error, info, warn};
+use rog_dbus::DBUS_NAME;
 use rog_types::gfx_vendors::GfxVendors;
 use std::error::Error;
 use std::io::Write;
@@ -34,7 +31,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
         .filter(None, LevelFilter::Info)
         .init();
 
-    info!(   "daemon version {}", daemon::VERSION);
+    info!("daemon version {}", daemon::VERSION);
     info!(" rog-dbus version {}", rog_dbus::VERSION);
     info!("rog-types version {}", rog_types::VERSION);
 
@@ -142,8 +139,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         ctrl.reload()
             .unwrap_or_else(|err| warn!("Profile control: {}", err));
         let tmp = Arc::new(Mutex::new(ctrl));
-        DbusFanAndCpu::new(tmp.clone()).add_to_server(&mut object_server);
-        tasks.push(tmp);
+        DbusFanAndCpu::new(tmp).add_to_server(&mut object_server);
     };
 
     if let Some(laptop) = laptop {

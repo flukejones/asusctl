@@ -18,11 +18,11 @@ pub const ANIME_PANE2_PREFIX: [u8; 7] = [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x0
 pub struct AniMeDataBuffer(Vec<u8>);
 
 impl Default for AniMeDataBuffer {
-     fn default() -> Self {
-          Self::new()
-       }
+    fn default() -> Self {
+        Self::new()
     }
-    
+}
+
 impl AniMeDataBuffer {
     pub fn new() -> Self {
         AniMeDataBuffer(vec![0u8; FULL_PANE_LEN])

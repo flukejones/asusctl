@@ -9,13 +9,13 @@ use crate::{
     error::RogError,
     laptops::{match_laptop, HELP_ADDRESS},
 };
+use log::{error, info, warn};
 use rog_types::{
     aura_brightness_bytes,
     aura_modes::{AuraModes, PER_KEY},
     fancy::KeyColourArray,
     LED_MSG_LEN,
 };
-use log::{error, info, warn};
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::sync::Arc;
@@ -44,10 +44,7 @@ impl GetSupported for CtrlKbdBacklight {
             let modes = laptop.supported_modes().to_vec();
             if modes.contains(&PER_KEY) {
                 per_key_led_mode = true;
-                let modes = modes
-                    .iter()
-                    .filter(|x| **x != PER_KEY).copied()
-                    .collect();
+                let modes = modes.iter().filter(|x| **x != PER_KEY).copied().collect();
                 stock_led_modes = Some(modes);
             } else {
                 stock_led_modes = Some(modes);

@@ -1,5 +1,5 @@
-use rog_types::aura_modes::{AuraModes, BREATHING, STATIC};
 use log::{info, warn};
+use rog_types::aura_modes::{AuraModes, BREATHING, STATIC};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io::Read;

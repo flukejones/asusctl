@@ -40,7 +40,6 @@ trait Daemon {
     fn write_image(&self, input: &[Vec<u8>]) -> zbus::Result<()>;
 }
 
-
 pub struct AnimeProxy<'a>(DaemonProxy<'a>);
 
 impl<'a> AnimeProxy<'a> {

@@ -1,4 +1,4 @@
-use daemon::{config::Profile};
+use daemon::config::Profile;
 use notify_rust::{Hint, Notification, NotificationHandle};
 use rog_dbus::{DbusProxies, Signals};
 use std::error::Error;

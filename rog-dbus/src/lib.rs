@@ -11,8 +11,8 @@ pub mod zbus_profile;
 pub mod zbus_rogbios;
 pub mod zbus_supported;
 
-use std::sync::{Arc, Mutex};
 use rog_types::aura_modes::AuraModes;
+use std::sync::{Arc, Mutex};
 use zbus::{Connection, Result, SignalReceiver};
 
 pub static VERSION: &str = env!("CARGO_PKG_VERSION");

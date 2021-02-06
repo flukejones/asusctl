@@ -1,9 +1,14 @@
 use gumdrop::{Opt, Options};
 use rog_dbus::AuraDbusClient;
+use rog_types::{
+    anime_matrix::{AniMeDataBuffer, FULL_PANE_LEN},
+    cli_options::{AniMeActions, AniMeStatusValue, LedBrightness, SetAuraBuiltin},
+    gfx_vendors::GfxVendors,
+    profile::{FanLevel, ProfileCommand, ProfileEvent},
+};
 use std::{env::args, process::Command};
 use yansi_term::Colour::Green;
 use yansi_term::Colour::Red;
-use rog_types::{anime_matrix::{AniMeDataBuffer, FULL_PANE_LEN}, cli_options::{AniMeActions, AniMeStatusValue, LedBrightness, SetAuraBuiltin}, gfx_vendors::GfxVendors, profile::{FanLevel, ProfileCommand, ProfileEvent}};
 
 #[derive(Default, Options)]
 struct CLIStart {

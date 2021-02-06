@@ -1,7 +1,5 @@
 use rog_dbus::AuraDbusClient;
-use rog_types::{
-    anime_matrix::{AniMeImageBuffer, AniMePacketType, HEIGHT, WIDTH},
-};
+use rog_types::anime_matrix::{AniMeImageBuffer, AniMePacketType, HEIGHT, WIDTH};
 use tinybmp::{Bmp, Pixel};
 
 fn main() {

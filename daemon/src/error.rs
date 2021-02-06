@@ -69,7 +69,7 @@ impl From<CurveError> for RogError {
 impl From<GraphicsError> for RogError {
     fn from(err: GraphicsError) -> Self {
         match err {
-            GraphicsError::ParseVendor => RogError::GfxSwitching(GfxError::ParseVendor)
+            GraphicsError::ParseVendor => RogError::GfxSwitching(GfxError::ParseVendor),
         }
     }
 }

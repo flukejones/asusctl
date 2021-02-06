@@ -1,9 +1,10 @@
+use crate::error::RogError;
 use crate::{
     config::{Config, Profile},
     GetSupported,
 };
-use rog_types::profile::{FanLevel, ProfileEvent};
 use log::{info, warn};
+use rog_types::profile::{FanLevel, ProfileEvent};
 use serde_derive::{Deserialize, Serialize};
 use std::convert::TryInto;
 use std::fs::OpenOptions;
@@ -12,7 +13,6 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
 use zbus::dbus_interface;
-use crate::error::RogError;
 
 static FAN_TYPE_1_PATH: &str = "/sys/devices/platform/asus-nb-wmi/throttle_thermal_policy";
 static FAN_TYPE_2_PATH: &str = "/sys/devices/platform/asus-nb-wmi/fan_boost_mode";
@@ -62,8 +62,7 @@ impl DbusFanAndCpu {
                     cfg.read();
                     ctrl.handle_profile_event(&event, &mut cfg)
                         .unwrap_or_else(|err| warn!("{}", err));
-                    self.notify_profile(&cfg.active_profile)
-                        .unwrap_or(());
+                    self.notify_profile(&cfg.active_profile).unwrap_or(());
                 }
             }
         }
@@ -142,62 +141,14 @@ impl crate::ZbusAdd for DbusFanAndCpu {
 impl crate::Reloadable for CtrlFanAndCPU {
     fn reload(&mut self) -> Result<(), RogError> {
         if let Ok(mut config) = self.config.clone().try_lock() {
-            let mut file = OpenOptions::new()
-                .write(true)
-                .open(self.path)
-                .map_err(|err| RogError::Path(self.path.into(), err))?;
-            file.write_all(format!("{}\n", config.power_profile).as_bytes())
-                .map_err(|err| RogError::Write(self.path.into(), err))?;
             let profile = config.active_profile.clone();
             self.set(&profile, &mut config)?;
-            info!(
-                "Reloaded fan mode: {:?}",
-                FanLevel::from(config.power_profile)
-            );
+            // info!(
+            //     "Reloaded fan mode: {:?}",
+            //     FanLevel::from(config.power_profile)
+            // );
         }
         Ok(())
-    }
-}
-
-impl crate::CtrlTask for CtrlFanAndCPU {
-    fn do_task(&mut self) -> Result<(), RogError> {
-        let mut file = OpenOptions::new()
-            .read(true)
-            .open(self.path)
-            .map_err(|err| RogError::Path(self.path.into(), err))?;
-        let mut buf = [0u8; 1];
-        file.read_exact(&mut buf)
-            .map_err(|err| RogError::Read(self.path.into(), err))?;
-        if let Some(num) = char::from(buf[0]).to_digit(10) {
-            if let Ok(mut config) = self.config.clone().try_lock() {
-                if config.power_profile != num as u8 {
-                    config.read();
-
-                    let mut i = config
-                        .toggle_profiles
-                        .iter()
-                        .position(|x| x == &config.active_profile)
-                        .map(|i| i + 1)
-                        .unwrap_or(0);
-                    if i >= config.toggle_profiles.len() {
-                        i = 0;
-                    }
-
-                    let new_profile = config
-                        .toggle_profiles
-                        .get(i)
-                        .unwrap_or(&config.active_profile)
-                        .clone();
-
-                    self.set(&new_profile, &mut config)?;
-
-                    info!("Profile was changed: {}", &new_profile);
-                }
-            }
-            return Ok(());
-        }
-
-        Err(RogError::DoTask("Fan-level could not be parsed".into()))
     }
 }
 
@@ -246,7 +197,7 @@ impl CtrlFanAndCPU {
         Ok(())
     }
 
-    pub(super) fn set_fan_mode(&mut self, preset: u8, config: &mut Config) -> Result<(), RogError> {
+    fn set_fan_mode(&mut self, preset: u8, config: &mut Config) -> Result<(), RogError> {
         let mode = config.active_profile.clone();
         let mut fan_ctrl = OpenOptions::new()
             .write(true)
@@ -257,15 +208,13 @@ impl CtrlFanAndCPU {
             .power_profiles
             .get_mut(&mode)
             .ok_or_else(|| RogError::MissingProfile(mode.clone()))?;
-        config.power_profile = preset;
+        config.curr_fan_mode = preset;
         mode_config.fan_preset = preset;
         config.write();
         fan_ctrl
             .write_all(format!("{}\n", preset).as_bytes())
             .map_err(|err| RogError::Write(self.path.into(), err))?;
         info!("Fan mode set to: {:?}", FanLevel::from(preset));
-        self.set_pstate_for_fan_mode(&mode, config)?;
-        self.set_fan_curve_for_fan_mode(&mode, config)?;
         Ok(())
     }
 
@@ -278,6 +227,9 @@ impl CtrlFanAndCPU {
             ProfileEvent::Toggle => self.do_next_profile(config)?,
             ProfileEvent::ChangeMode(mode) => {
                 self.set_fan_mode(*mode, config)?;
+                let mode = config.active_profile.clone();
+                self.set_pstate_for_fan_mode(&mode, config)?;
+                self.set_fan_curve_for_fan_mode(&mode, config)?;
             }
             ProfileEvent::Cli(command) => {
                 let profile_key = match command.profile.as_ref() {
@@ -328,10 +280,10 @@ impl CtrlFanAndCPU {
             .write(true)
             .open(self.path)
             .map_err(|err| RogError::Path(self.path.into(), err))?;
+        config.curr_fan_mode = mode_config.fan_preset;
         fan_ctrl
             .write_all(format!("{}\n", mode_config.fan_preset).as_bytes())
             .map_err(|err| RogError::Write(self.path.into(), err))?;
-        config.power_profile = mode_config.fan_preset;
 
         self.set_pstate_for_fan_mode(profile, config)?;
         self.set_fan_curve_for_fan_mode(profile, config)?;

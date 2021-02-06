@@ -1,6 +1,6 @@
-use rog_types::aura_modes::AuraModes;
 use log::{error, info, warn};
 use rog_fan_curve::Curve;
+use rog_types::aura_modes::AuraModes;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs::{File, OpenOptions};
@@ -18,7 +18,6 @@ struct ConfigV212 {
     active_profile: String,
     toggle_profiles: Vec<String>,
     power_profiles: BTreeMap<String, Profile>,
-    // TODO: remove power_profile
     power_profile: u8,
     kbd_led_brightness: u8,
     kbd_backlight_mode: u8,
@@ -32,7 +31,38 @@ impl ConfigV212 {
             gfx_nv_mode_is_dedicated: true,
             active_profile: self.active_profile,
             toggle_profiles: self.toggle_profiles,
-            power_profile: self.power_profile,
+            curr_fan_mode: self.power_profile,
+            bat_charge_limit: self.bat_charge_limit,
+            kbd_led_brightness: self.kbd_led_brightness,
+            kbd_backlight_mode: self.kbd_backlight_mode,
+            kbd_backlight_modes: self.kbd_backlight_modes,
+            power_profiles: self.power_profiles,
+        }
+    }
+}
+
+/// for parsing old v2.2.2 config
+#[derive(Deserialize)]
+struct ConfigV222 {
+    gfx_managed: bool,
+    bat_charge_limit: u8,
+    active_profile: String,
+    toggle_profiles: Vec<String>,
+    power_profiles: BTreeMap<String, Profile>,
+    power_profile: u8,
+    kbd_led_brightness: u8,
+    kbd_backlight_mode: u8,
+    kbd_backlight_modes: Vec<AuraModes>,
+}
+
+impl ConfigV222 {
+    fn into_current(self) -> Config {
+        Config {
+            gfx_managed: self.gfx_managed,
+            gfx_nv_mode_is_dedicated: true,
+            active_profile: self.active_profile,
+            toggle_profiles: self.toggle_profiles,
+            curr_fan_mode: self.power_profile,
             bat_charge_limit: self.bat_charge_limit,
             kbd_led_brightness: self.kbd_led_brightness,
             kbd_backlight_mode: self.kbd_backlight_mode,
@@ -49,7 +79,8 @@ pub struct Config {
     pub active_profile: String,
     pub toggle_profiles: Vec<String>,
     // TODO: remove power_profile
-    pub power_profile: u8,
+    #[serde(skip)]
+    pub curr_fan_mode: u8,
     pub bat_charge_limit: u8,
     pub kbd_led_brightness: u8,
     pub kbd_backlight_mode: u8,
@@ -57,7 +88,7 @@ pub struct Config {
     pub power_profiles: BTreeMap<String, Profile>,
 }
 
-impl  Default for Config {
+impl Default for Config {
     fn default() -> Self {
         let mut pwr = BTreeMap::new();
         pwr.insert("normal".into(), Profile::new(0, 100, true, 0, None));
@@ -69,8 +100,8 @@ impl  Default for Config {
             gfx_nv_mode_is_dedicated: true,
             active_profile: "normal".into(),
             toggle_profiles: vec!["normal".into(), "boost".into(), "silent".into()],
-            power_profile: 0,
-            bat_charge_limit:100,
+            curr_fan_mode: 0,
+            bat_charge_limit: 100,
             kbd_led_brightness: 1,
             kbd_backlight_mode: 0,
             kbd_backlight_modes: Vec::new(),
@@ -98,6 +129,11 @@ impl Config {
             } else {
                 if let Ok(data) = serde_json::from_str(&buf) {
                     return data;
+                } else if let Ok(data) = serde_json::from_str::<ConfigV222>(&buf) {
+                    let config = data.into_current();
+                    config.write();
+                    info!("Updated config version to: {}", VERSION);
+                    return config;
                 } else if let Ok(data) = serde_json::from_str::<ConfigV212>(&buf) {
                     let config = data.into_current();
                     config.write();
@@ -207,15 +243,19 @@ impl Default for Profile {
 }
 
 impl Profile {
-    pub fn new(min_percentage: u8, max_percentage: u8, turbo: bool,
-    fan_preset: u8, fan_curve: Option<Curve>) -> Self {
+    pub fn new(
+        min_percentage: u8,
+        max_percentage: u8,
+        turbo: bool,
+        fan_preset: u8,
+        fan_curve: Option<Curve>,
+    ) -> Self {
         Profile {
             min_percentage,
             max_percentage,
             turbo,
             fan_preset,
             fan_curve,
-
         }
     }
 }
