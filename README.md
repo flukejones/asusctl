@@ -1,5 +1,7 @@
 # ASUS NB Ctrl
 
+[![](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate/?hosted_button_id=4V2DEPS7K6APC) - [Asus Linux Website](https://asus-linux.org/)
+
 `asusd` is a utility for Linux to control many aspects of various ASUS laptops
 but can also be used with non-asus laptops with reduced features.
 
