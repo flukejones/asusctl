@@ -8,7 +8,7 @@ pub static LEDMODE_CONFIG_PATH: &str = "/etc/asusd/asusd-ledmodes.toml";
 
 pub static HELP_ADDRESS: &str = "https://gitlab.com/asus-linux/asus-nb-ctrl";
 
-static LAPTOP_DEVICES: [u16; 3] = [0x1866, 0x1869, 0x1854];
+static LAPTOP_DEVICES: [u16; 4] = [0x1866, 0x1869, 0x1854, 0x19b6];
 
 #[derive(Debug)]
 pub struct LaptopBase {
