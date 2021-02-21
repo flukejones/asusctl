@@ -30,7 +30,7 @@ led_modes = [0, 1, 2, 3, 10, 13, 14]
 
 [[led_modes]]
 prod_family = "ROG Strix"
-board_names = ["G512LI", "G712LI"]
+board_names = ["G512LI", "G712LI", "G531GD"]
 led_modes = [0, 1, 2, 3, 10]
 
 [[led_modes]]
