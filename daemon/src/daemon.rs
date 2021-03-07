@@ -109,11 +109,11 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
                 // Need to check if a laptop has the dedicated gfx switch
                 if CtrlRogBios::has_dedicated_gfx_toggle() {
                     if let Ok(ded) = CtrlRogBios::get_gfx_mode() {
-                        if let Ok(vendor) = CtrlGraphics::get_vendor() {
-                            if ded == 1 && vendor != "nvidia" {
+                        if let Ok(vendor) = ctrl.get_gfx_mode() {
+                            if ded == 1 && vendor != GfxVendors::Nvidia {
                                 error!("Dedicated GFX toggle is on but driver mode is not nvidia \nSetting to nvidia driver mode");
                                 error!("You must reboot to enable Nvidia driver");
-                                CtrlGraphics::set_gfx_config(GfxVendors::Nvidia)?;
+                                ctrl.do_vendor_tasks(GfxVendors::Nvidia)?;
                             } else if ded == 0 {
                                 info!("Dedicated GFX toggle is off");
                             }

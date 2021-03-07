@@ -12,6 +12,8 @@ pub enum GfxError {
     Module(String, std::io::Error),
     Bus(String, std::io::Error),
     Command(String, std::io::Error),
+    Modprobe(String),
+    DisplayManager(String),
 }
 
 impl fmt::Display for GfxError {
@@ -25,6 +27,8 @@ impl fmt::Display for GfxError {
             GfxError::Module(func, error) => write!(f, "Module error: {}: {}", func, error),
             GfxError::Bus(func, error) => write!(f, "Bus error: {}: {}", func, error),
             GfxError::Command(func, error) => write!(f, "Command exec error: {}: {}", func, error),
+            GfxError::Modprobe(detail) => write!(f, "Modprobe error: {}", detail),
+            GfxError::DisplayManager(detail) => write!(f, "Display manager: {}", detail),
         }
     }
 }

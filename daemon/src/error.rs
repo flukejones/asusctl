@@ -25,6 +25,7 @@ pub enum RogError {
     MissingLedBrightNode(String, std::io::Error),
     ReloadFail(String),
     GfxSwitching(GfxError),
+    Initramfs(String),
 }
 
 impl fmt::Display for RogError {
@@ -48,6 +49,7 @@ impl fmt::Display for RogError {
             RogError::MissingLedBrightNode(path, error) => write!(f, "Led node at {} is missing, please check you have the required patch or dkms module installed: {}", path, error),
             RogError::ReloadFail(deets) => write!(f, "Task error: {}", deets),
             RogError::GfxSwitching(deets) => write!(f, "Graphics switching error: {}", deets),
+            RogError::Initramfs(detail) => write!(f, "Initiramfs error: {}", detail),
         }
     }
 }

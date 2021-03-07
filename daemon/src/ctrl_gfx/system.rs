@@ -50,6 +50,7 @@ impl PciBus {
         }
     }
 
+    /// Will rescan the device tree, which adds all removed devices back
     pub fn rescan(&self) -> io::Result<()> {
         write(self.path.join("rescan"), "1")
     }
@@ -78,6 +79,32 @@ impl GraphicsDevice {
                         unsafe {
                             driver.unbind(&func).map_err(|err| {
                                 error!("gfx unbind: {}", err);
+                                err
+                            })?;
+                        }
+                    }
+                    Err(err) => match err.kind() {
+                        io::ErrorKind::NotFound => (),
+                        _ => {
+                            error!("gfx driver: {:?}, {}", func.path(), err);
+                            return Err(err);
+                        }
+                    },
+                }
+            }
+        }
+        Ok(())
+    }
+
+    pub fn rebind(&self) -> Result<(), std::io::Error> {
+        for func in self.functions.iter() {
+            if func.path().exists() {
+                match func.driver() {
+                    Ok(driver) => {
+                        info!("{}: Binding {}", driver.id(), func.id());
+                        unsafe {
+                            driver.bind(&func).map_err(|err| {
+                                error!("gfx bind: {}", err);
                                 err
                             })?;
                         }

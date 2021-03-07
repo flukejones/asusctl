@@ -6,7 +6,7 @@ use rog_types::{
     gfx_vendors::GfxVendors,
     profile::{FanLevel, ProfileCommand, ProfileEvent},
 };
-use std::{env::args, process::Command};
+use std::env::args;
 use yansi_term::Colour::Green;
 use yansi_term::Colour::Red;
 
@@ -241,6 +241,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     false
                 };
                 println!("Bios dedicated GPU on: {}", res);
+                println!("You must reboot your system to activate dedicated Nvidia mode");
             }
         }
         None => {
@@ -286,46 +287,18 @@ fn do_gfx(
     dbus_client: &AuraDbusClient,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if let Some(mode) = command.mode {
-        println!("Updating settings, please wait...");
+        println!("Changing graphics modes...");
         println!("If this takes longer than 30s, ctrl+c then check `journalctl -b -u asusd`");
 
-        dbus_client
-            .proxies()
-            .gfx()
-            .gfx_write_mode(<&str>::from(&mode).into())?;
-        let res = dbus_client.gfx_wait_changed()?;
-        match res.as_str() {
-            "reboot" => {
-                println!(
-                    "{}",
-                    Green.paint("\nGraphics vendor mode changed successfully\n"),
-                );
-                do_gfx_action(
-                    command.force,
-                    Command::new("systemctl").arg("reboot").arg("-i"),
-                    "Reboot Linux PC",
-                    "Please reboot when ready",
-                )?;
-            }
-            "restartx" => {
-                println!(
-                    "{}",
-                    Green.paint("\nGraphics vendor mode changed successfully\n")
-                );
-                do_gfx_action(
-                    command.force,
-                    Command::new("systemctl")
-                        .arg("restart")
-                        .arg("display-manager.service"),
-                    "Restart display-manager server",
-                    "Please restart display-manager when ready",
-                )?;
-                std::process::exit(1)
-            }
-            _ => {
-                println!("{}", Red.paint(&format!("\n{}\n", res.as_str())),);
-                std::process::exit(-1);
-            }
+        if do_gfx_action(
+            command.force,
+            "This will restart your display-manager. Please save all work!",
+            "Setting graphics mode...",
+        ) {
+            dbus_client.proxies().gfx().gfx_write_mode(mode.into())?;
+            let res = dbus_client.gfx_wait_changed()?;
+            println!("{}", res);
+            std::process::exit(1)
         }
         std::process::exit(-1)
     }
@@ -344,34 +317,17 @@ fn do_gfx(
     Ok(())
 }
 
-fn do_gfx_action(
-    no_confirm: bool,
-    command: &mut Command,
-    ask_msg: &str,
-    cancel_msg: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
-    println!("{}? y/n", ask_msg);
+fn do_gfx_action(no_confirm: bool, ask_msg: &str, ok_msg: &str) -> bool {
+    println!("{}", Red.paint(&format!("{} Continue?", ask_msg)));
 
     let mut buf = String::new();
-    if no_confirm {
-        let status = command.status()?;
-
-        if !status.success() {
-            println!("systemctl: returned with {}", status);
-        }
-    }
 
     std::io::stdin().read_line(&mut buf).expect("Input failed");
     let input = buf.chars().next().unwrap() as char;
 
     if input == 'Y' || input == 'y' || no_confirm {
-        let status = command.status()?;
-
-        if !status.success() {
-            println!("systemctl: returned with {}", status);
-        }
-    } else {
-        println!("{}", Red.paint(&format!("{}", cancel_msg)));
+        println!("{}", Green.paint(&format!("{}", ok_msg)));
+        return true;
     }
-    Ok(())
+    false
 }
