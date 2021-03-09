@@ -1,4 +1,6 @@
-#[derive(Debug, PartialEq, Clone)]
+use serde_derive::{Deserialize, Serialize};
+
+#[derive(Debug, PartialEq, Copy, Clone, Deserialize, Serialize)]
 pub enum GfxVendors {
     Nvidia,
     Integrated,
@@ -28,13 +30,24 @@ impl FromStr for GfxVendors {
     }
 }
 
-impl From<&GfxVendors> for &str {
-    fn from(mode: &GfxVendors) -> Self {
-        match mode {
+impl Into<&str> for GfxVendors {
+    fn into(self) -> &'static str {
+        match self {
             GfxVendors::Nvidia => "nvidia",
             GfxVendors::Hybrid => "hybrid",
             GfxVendors::Compute => "compute",
             GfxVendors::Integrated => "integrated",
+        }
+    }
+}
+
+impl Into<String> for GfxVendors {
+    fn into(self) -> String {
+        match self {
+            GfxVendors::Nvidia => "nvidia".to_string(),
+            GfxVendors::Hybrid => "hybrid".to_string(),
+            GfxVendors::Compute => "compute".to_string(),
+            GfxVendors::Integrated => "integrated".to_string(),
         }
     }
 }

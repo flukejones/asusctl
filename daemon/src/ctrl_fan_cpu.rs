@@ -8,7 +8,7 @@ use rog_types::profile::{FanLevel, ProfileEvent};
 use serde_derive::{Deserialize, Serialize};
 use std::convert::TryInto;
 use std::fs::OpenOptions;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;

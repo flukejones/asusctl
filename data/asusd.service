@@ -10,3 +10,4 @@ Restart=always
 RestartSec=1
 Type=dbus
 BusName=org.asuslinux.Daemon
+Before=display-manager.service
