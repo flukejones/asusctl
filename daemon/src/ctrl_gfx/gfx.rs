@@ -318,7 +318,7 @@ impl CtrlGraphics {
             .rescan()
             .map_err(|err| GfxError::Bus("bus rescan error".into(), err))?;
 
-        let drivers = vec!["nvidia_drm", "nvidia_modeset", "nvidia"]; // i2c_nvidia_gpu?
+        let drivers = vec!["nvidia_drm", "nvidia_uvm", "nvidia_modeset", "nvidia"]; // i2c_nvidia_gpu?
 
         match vendor {
             GfxVendors::Nvidia | GfxVendors::Hybrid | GfxVendors::Compute => {
