@@ -4,7 +4,7 @@ pub mod gfx;
 
 pub mod system;
 
-const NVIDIA_DRIVERS: [&str; 4] = ["nvidia_drm", "nvidia_uvm", "nvidia_modeset", "nvidia"];
+const NVIDIA_DRIVERS: [&str; 4] = ["nvidia_drm", "nvidia_modeset", "nvidia_uvm", "nvidia"];
 
 const DISPLAY_MANAGER: &str = "display-manager.service";
 

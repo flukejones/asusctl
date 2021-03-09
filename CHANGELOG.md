@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Test and create /etc/X11/xorg.conf.d/ if it doesn't exist
+- Hotfix to better report module issues
 
 # [3.1.0] - 2021-03-10
 ### Changed

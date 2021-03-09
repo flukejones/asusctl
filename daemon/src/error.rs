@@ -26,6 +26,8 @@ pub enum RogError {
     ReloadFail(String),
     GfxSwitching(GfxError),
     Initramfs(String),
+    Modprobe(String),
+    Command(String, std::io::Error),
 }
 
 impl fmt::Display for RogError {
@@ -50,6 +52,8 @@ impl fmt::Display for RogError {
             RogError::ReloadFail(deets) => write!(f, "Task error: {}", deets),
             RogError::GfxSwitching(deets) => write!(f, "Graphics switching error: {}", deets),
             RogError::Initramfs(detail) => write!(f, "Initiramfs error: {}", detail),
+            RogError::Modprobe(detail) => write!(f, "Modprobe error: {}", detail),
+            RogError::Command(func, error) => write!(f, "Command exec error: {}: {}", func, error),
         }
     }
 }

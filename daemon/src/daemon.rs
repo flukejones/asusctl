@@ -31,9 +31,9 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
         .filter(None, LevelFilter::Info)
         .init();
 
-    info!("daemon version {}", daemon::VERSION);
-    info!(" rog-dbus version {}", rog_dbus::VERSION);
-    info!("rog-types version {}", rog_types::VERSION);
+    info!("   daemon v{}", daemon::VERSION);
+    info!(" rog-dbus v{}", rog_dbus::VERSION);
+    info!("rog-types v{}", rog_types::VERSION);
 
     start_daemon()?;
     Ok(())
@@ -121,7 +121,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
                     }
                 }
                 ctrl.reload()
-                    .unwrap_or_else(|err| warn!("Gfx controller: {}", err));
+                    .unwrap_or_else(|err| error!("Gfx controller: {}", err));
                 ctrl.add_to_server(&mut object_server);
             }
             Err(err) => {

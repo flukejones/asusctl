@@ -48,7 +48,7 @@ impl Dbus for CtrlGraphics {
     fn set_vendor(&mut self, vendor: String) {
         if let Ok(tmp) = GfxVendors::from_str(&vendor) {
             let msg = self.set_gfx_config(tmp).unwrap_or_else(|err| {
-                warn!("{}", err);
+                error!("{}", err);
                 format!("Failed: {}", err.to_string())
             });
             self.notify_gfx(&vendor)
@@ -173,7 +173,7 @@ impl CtrlGraphics {
 
     fn get_runtime_status() -> Result<String, RogError> {
         const PATH: &str = "/sys/bus/pci/devices/0000:01:00.0/power/runtime_status";
-        let buf = std::fs::read_to_string(PATH).map_err(|err| GfxError::Read(PATH.into(), err))?;
+        let buf = std::fs::read_to_string(PATH).map_err(|err| RogError::Read(PATH.into(), err))?;
         Ok(buf)
     }
 
@@ -190,7 +190,7 @@ impl CtrlGraphics {
             .arg(action)
             .arg("nvidia-fallback.service")
             .status()
-            .map_err(|err| GfxError::Command("systemctl".into(), err))?;
+            .map_err(|err| RogError::Command("systemctl".into(), err))?;
 
         if !status.success() {
             // Error is ignored in case this service is removed
@@ -211,7 +211,7 @@ impl CtrlGraphics {
         };
 
         if !Path::new(XORG_PATH).exists() {
-            std::fs::create_dir(XORG_PATH).map_err(|err| GfxError::Write(XORG_PATH.into(), err))?;
+            std::fs::create_dir(XORG_PATH).map_err(|err| RogError::Write(XORG_PATH.into(), err))?;
         }
 
         let file = XORG_PATH.to_string().add(XORG_FILE);
@@ -221,11 +221,11 @@ impl CtrlGraphics {
             .truncate(true)
             .write(true)
             .open(&file)
-            .map_err(|err| GfxError::Write(file, err))?;
+            .map_err(|err| RogError::Write(file, err))?;
 
         file.write_all(&text)
             .and_then(|_| file.sync_all())
-            .map_err(|err| GfxError::Write(MODPROBE_PATH.into(), err))?;
+            .map_err(|err| RogError::Write(MODPROBE_PATH.into(), err))?;
         Ok(())
     }
 
@@ -237,11 +237,11 @@ impl CtrlGraphics {
             .truncate(true)
             .write(true)
             .open(MODPROBE_PATH)
-            .map_err(|err| GfxError::Path(MODPROBE_PATH.into(), err))?;
+            .map_err(|err| RogError::Path(MODPROBE_PATH.into(), err))?;
 
         file.write_all(MODPROBE_BASE)
             .and_then(|_| file.sync_all())
-            .map_err(|err| GfxError::Write(MODPROBE_PATH.into(), err))?;
+            .map_err(|err| RogError::Write(MODPROBE_PATH.into(), err))?;
 
         Ok(())
     }
@@ -254,7 +254,7 @@ impl CtrlGraphics {
         let removes = self.nvidia.iter().map(|dev| dev.remove());
 
         Result::from_iter(unbinds.chain(removes))
-            .map_err(|err| GfxError::Command("device unbind error".into(), err))?;
+            .map_err(|err| RogError::Command("device unbind error".into(), err))?;
 
         Ok(())
     }
@@ -263,13 +263,12 @@ impl CtrlGraphics {
         let mut cmd = Command::new(action);
         cmd.arg(driver);
 
-        let status = cmd
-            .status()
-            .map_err(|err| GfxError::Command(format!("{:?}", cmd), err))?;
-        if !status.success() {
-            let msg = format!("{} {} failed: {:?}", action, driver, status);
-            error!("{}", msg);
-            return Err(GfxError::Modprobe(msg).into());
+        let output = cmd
+            .output()
+            .map_err(|err| RogError::Command(format!("{:?}", cmd), err))?;
+        if !output.status.success() {
+            let msg = format!("{} {} failed: {:?}", action, driver, String::from_utf8_lossy(&output.stderr));
+            return Err(RogError::Modprobe(msg));
         }
         Ok(())
     }
@@ -281,13 +280,12 @@ impl CtrlGraphics {
 
         let status = cmd
             .status()
-            .map_err(|err| GfxError::Command(format!("{:?}", cmd), err))?;
+            .map_err(|err| RogError::Command(format!("{:?}", cmd), err))?;
         if !status.success() {
             let msg = format!(
                 "systemctl {} {} failed: {:?}",
                 action, DISPLAY_MANAGER, status
             );
-            error!("{}", msg);
             return Err(GfxError::DisplayManager(msg).into());
         }
         Ok(())
@@ -303,7 +301,7 @@ impl CtrlGraphics {
         while count <= 4 {
             let output = cmd
                 .output()
-                .map_err(|err| GfxError::Command(format!("{:?}", cmd), err))?;
+                .map_err(|err| RogError::Command(format!("{:?}", cmd), err))?;
             if output.stdout.starts_with("inactive".as_bytes()) {
                 return Ok(());
             }
