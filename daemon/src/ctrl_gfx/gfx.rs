@@ -2,10 +2,10 @@ use ctrl_gfx::error::GfxError;
 use ctrl_gfx::*;
 use log::{error, info, warn};
 use rog_types::gfx_vendors::GfxVendors;
-use std::io::Write;
 use std::iter::FromIterator;
 use std::process::Command;
 use std::str::FromStr;
+use std::{io::Write, ops::Add, path::Path};
 use std::{sync::Arc, sync::Mutex};
 use sysfs_class::{PciDevice, SysClass};
 use system::{GraphicsDevice, PciBus};
@@ -210,13 +210,18 @@ impl CtrlGraphics {
             [PRIMARY_GPU_BEGIN, PRIMARY_GPU_END].concat()
         };
 
-        info!("Writing {}", PRIMARY_GPU_XORG_PATH);
+        if !Path::new(XORG_PATH).exists() {
+            std::fs::create_dir(XORG_PATH).map_err(|err| GfxError::Write(XORG_PATH.into(), err))?;
+        }
+
+        let file = XORG_PATH.to_string().add(XORG_FILE);
+        info!("Writing {}", file);
         let mut file = std::fs::OpenOptions::new()
             .create(true)
             .truncate(true)
             .write(true)
-            .open(PRIMARY_GPU_XORG_PATH)
-            .map_err(|err| GfxError::Write(PRIMARY_GPU_XORG_PATH.into(), err))?;
+            .open(&file)
+            .map_err(|err| GfxError::Write(file, err))?;
 
         file.write_all(&text)
             .and_then(|_| file.sync_all())
@@ -270,16 +275,18 @@ impl CtrlGraphics {
     }
 
     fn do_display_manager_action(action: &str) -> Result<(), RogError> {
-        let service = "display-manager.service";
         let mut cmd = Command::new("systemctl");
         cmd.arg(action);
-        cmd.arg(service);
+        cmd.arg(DISPLAY_MANAGER);
 
         let status = cmd
             .status()
             .map_err(|err| GfxError::Command(format!("{:?}", cmd), err))?;
         if !status.success() {
-            let msg = format!("systemctl {} {} failed: {:?}", action, service, status);
+            let msg = format!(
+                "systemctl {} {} failed: {:?}",
+                action, DISPLAY_MANAGER, status
+            );
             error!("{}", msg);
             return Err(GfxError::DisplayManager(msg).into());
         }
@@ -287,10 +294,9 @@ impl CtrlGraphics {
     }
 
     fn wait_display_manager_inactive() -> Result<(), RogError> {
-        let service = "display-manager.service";
         let mut cmd = Command::new("systemctl");
         cmd.arg("is-active");
-        cmd.arg(service);
+        cmd.arg(DISPLAY_MANAGER);
 
         let mut count = 0;
 
@@ -318,18 +324,16 @@ impl CtrlGraphics {
             .rescan()
             .map_err(|err| GfxError::Bus("bus rescan error".into(), err))?;
 
-        let drivers = vec!["nvidia_drm", "nvidia_uvm", "nvidia_modeset", "nvidia"]; // i2c_nvidia_gpu?
-
         match vendor {
             GfxVendors::Nvidia | GfxVendors::Hybrid | GfxVendors::Compute => {
-                for driver in drivers {
+                for driver in NVIDIA_DRIVERS.iter() {
                     Self::do_driver_action(driver, "modprobe")?;
                 }
             }
             // TODO: compute mode, needs different setup
             // GfxVendors::Compute => {}
             GfxVendors::Integrated => {
-                for driver in drivers {
+                for driver in NVIDIA_DRIVERS.iter() {
                     Self::do_driver_action(driver, "rmmod")?;
                 }
                 self.unbind_remove_nvidia()?;
