@@ -5,11 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+# [3.1.2] - 2021-03-10
 ### Changed
 - Test and create /etc/X11/xorg.conf.d/ if it doesn't exist
 - Hotfix to better report module issues
 
-# [3.1.0] - 2021-03-10
+# [3.1.1] - 2021-03-10
 ### Changed
 - Add missing nvidia module nvidia_uvm to gfx ctrl list
 
