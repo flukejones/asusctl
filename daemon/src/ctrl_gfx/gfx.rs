@@ -47,6 +47,7 @@ impl Dbus for CtrlGraphics {
 
     fn set_vendor(&mut self, vendor: String) {
         if let Ok(tmp) = GfxVendors::from_str(&vendor) {
+            info!("Switching gfx mode to {}", vendor);
             let msg = self.set_gfx_config(tmp).unwrap_or_else(|err| {
                 error!("{}", err);
                 format!("Failed: {}", err.to_string())
@@ -260,13 +261,29 @@ impl CtrlGraphics {
     }
 
     fn do_driver_action(driver: &str, action: &str) -> Result<(), RogError> {
-        let mut cmd = Command::new(action);
+        let mut cmd;
+        if Self::kmod_exists() {
+            info!("using kmod");
+            cmd = Command::new("kmod");
+            cmd.arg(action);
+        } else {
+            cmd = Command::new(action);
+        }
         cmd.arg(driver);
 
         let output = cmd
             .output()
             .map_err(|err| RogError::Command(format!("{:?}", cmd), err))?;
         if !output.status.success() {
+            if output.stderr.ends_with("is not currently loaded\n".as_bytes()) {
+                return Ok(())
+            }
+            if output.stderr.ends_with("Permission denied\n".as_bytes()) {
+                let msg = format!("{} {} failed: {:?}", action, driver, String::from_utf8_lossy(&output.stderr));
+                warn!("{}", msg);
+                warn!("It may be safe to ignore the above error, run `lsmod |grep nvidia` to confirm modules loaded");
+                return Ok(())
+            }
             let msg = format!("{} {} failed: {:?}", action, driver, String::from_utf8_lossy(&output.stderr));
             return Err(RogError::Modprobe(msg));
         }
@@ -311,6 +328,17 @@ impl CtrlGraphics {
         return Err(
             GfxError::DisplayManager("display-manager did not completely stop".into()).into(),
         );
+    }
+
+    fn kmod_exists() -> bool {
+        let mut cmd = Command::new("which");
+        cmd.arg("kmod");
+        if let Ok(output) = cmd
+        .output() {
+            return output.status.success() && output.stdout.ends_with("kmod".as_bytes())
+        }
+        //Path::new("/usr/bin/kmod").exists()
+        false
     }
 
     pub fn do_vendor_tasks(&mut self, vendor: GfxVendors) -> Result<(), RogError> {

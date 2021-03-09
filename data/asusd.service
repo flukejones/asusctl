@@ -2,6 +2,7 @@
 Description=ASUS Notebook Control
 StartLimitInterval=200
 StartLimitBurst=2
+Before=display-manager.service
 
 [Service]
 ExecStart=/usr/bin/asusd
@@ -10,4 +11,3 @@ Restart=always
 RestartSec=1
 Type=dbus
 BusName=org.asuslinux.Daemon
-Before=display-manager.service
