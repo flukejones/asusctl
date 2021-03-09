@@ -15,11 +15,11 @@ use crate::{
 
 #[derive(Serialize, Deserialize)]
 pub struct SupportedFunctions {
-    anime_ctrl: AnimeSupportedFunctions,
-    charge_ctrl: ChargeSupportedFunctions,
-    fan_cpu_ctrl: FanCpuSupportedFunctions,
-    keyboard_led: LedSupportedFunctions,
-    rog_bios_ctrl: RogBiosSupportedFunctions,
+    pub anime_ctrl: AnimeSupportedFunctions,
+    pub charge_ctrl: ChargeSupportedFunctions,
+    pub fan_cpu_ctrl: FanCpuSupportedFunctions,
+    pub keyboard_led: LedSupportedFunctions,
+    pub rog_bios_ctrl: RogBiosSupportedFunctions,
 }
 
 #[dbus_interface(name = "org.asuslinux.Daemon")]

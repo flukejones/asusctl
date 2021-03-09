@@ -30,7 +30,7 @@ use crate::GetSupported;
 
 use serde_derive::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
-pub struct AnimeSupportedFunctions(bool);
+pub struct AnimeSupportedFunctions(pub bool);
 
 impl GetSupported for CtrlAnimeDisplay {
     type A = AnimeSupportedFunctions;

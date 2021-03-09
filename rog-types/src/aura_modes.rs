@@ -223,6 +223,12 @@ impl From<SetAuraBuiltin> for AuraModes {
     }
 }
 
+impl From<&SetAuraBuiltin> for AuraModes {
+    fn from(mode: &SetAuraBuiltin) -> Self {
+        mode.clone().into()
+    }
+}
+
 /// Very specific mode conversion required because numbering isn't linear
 impl From<AuraModes> for u8 {
     fn from(mode: AuraModes) -> Self {

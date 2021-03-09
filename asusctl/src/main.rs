@@ -1,3 +1,7 @@
+use daemon::{
+    ctrl_fan_cpu::FanCpuSupportedFunctions, ctrl_leds::LedSupportedFunctions,
+    ctrl_supported::SupportedFunctions,
+};
 use gumdrop::{Opt, Options};
 use rog_dbus::AuraDbusClient;
 use rog_types::{
@@ -104,8 +108,7 @@ struct BiosCommand {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args: Vec<String> = args().collect();
-    args.remove(0);
+    let mut args: Vec<String> = args().skip(1).collect();
 
     let parsed: CLIStart;
     let missing_argument_k = gumdrop::Error::missing_argument(Opt::Short('k'));
@@ -125,64 +128,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    if parsed.help_requested() {
-        // As help option don't work with `parse_args_default`
-        // we will call `parse_args_default_or_exit` instead
-        CLIStart::parse_args_default_or_exit();
+    let (dbus, _) = AuraDbusClient::new()?;
+
+    let supported_tmp = dbus.proxies().supported().get_supported_functions()?;
+    let supported = serde_json::from_str::<SupportedFunctions>(&supported_tmp)?;
+
+    if parsed.help {
+        print_supported_help(&supported, &parsed);
+        std::process::exit(1);
     }
 
     if parsed.version {
-        println!("  asusctl version {}", env!("CARGO_PKG_VERSION"));
-        println!(" rog-dbus version {}", rog_dbus::VERSION);
-        println!("rog-types version {}", rog_types::VERSION);
+        println!("  asusctl v{}", env!("CARGO_PKG_VERSION"));
+        println!(" rog-dbus v{}", rog_dbus::VERSION);
+        println!("rog-types v{}", rog_types::VERSION);
+        return Ok(());
     }
 
-    let (dbus, _) = AuraDbusClient::new()?;
-
     match parsed.command {
-        Some(CliCommand::LedMode(mode)) => {
-            if (mode.command.is_none() && !mode.prev_mode && !mode.next_mode) || mode.help {
-                println!("Missing arg or command\n\n{}", mode.self_usage());
-                if let Some(lst) = mode.self_command_list() {
-                    println!("\n{}", lst);
-                }
-                println!("\nHelp can also be requested on modes, e.g: static --help");
-            }
-            if mode.next_mode && mode.prev_mode {
-                println!("Please specify either next or previous")
-            }
-            if mode.next_mode {
-                dbus.proxies().led().next_led_mode()?;
-            } else if mode.prev_mode {
-                dbus.proxies().led().prev_led_mode()?;
-            } else if let Some(command) = mode.command {
-                dbus.proxies().led().set_led_mode(&command.into())?
-            }
-        }
-        Some(CliCommand::Profile(cmd)) => {
-            if (!cmd.next
-                && !cmd.create
-                && cmd.curve.is_none()
-                && cmd.max_percentage.is_none()
-                && cmd.min_percentage.is_none()
-                && cmd.preset.is_none()
-                && cmd.profile.is_none()
-                && cmd.turbo.is_none())
-                || cmd.help
-            {
-                println!("Missing arg or command\n\n{}", cmd.self_usage());
-                if let Some(lst) = cmd.self_command_list() {
-                    println!("\n{}", lst);
-                }
-            }
-            if cmd.next {
-                dbus.proxies().profile().next_fan()?;
-            } else {
-                dbus.proxies()
-                    .profile()
-                    .write_command(&ProfileEvent::Cli(cmd))?
-            }
-        }
+        Some(CliCommand::LedMode(mode)) => handle_led_mode(&dbus, &supported.keyboard_led, &mode)?,
+        Some(CliCommand::Profile(cmd)) => handle_profile(&dbus, &supported.fan_cpu_ctrl, &cmd)?,
         Some(CliCommand::Graphics(cmd)) => do_gfx(cmd, &dbus)?,
         Some(CliCommand::AniMe(cmd)) => {
             if (cmd.command.is_none() && cmd.boot.is_none() && cmd.turn.is_none()) || cmd.help {
@@ -282,6 +247,37 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+fn print_supported_help(supported: &SupportedFunctions, parsed: &CLIStart) {
+    // As help option don't work with `parse_args_default`
+    // we will call `parse_args_default_or_exit` instead
+    println!("{}", parsed.self_usage());
+    // command strings are in order of the struct
+    let commands: Vec<String> = CliCommand::usage().lines().map(|s| s.to_string()).collect();
+
+    if !supported.fan_cpu_ctrl.stock_fan_modes {
+        println!("Note: Fan mode control is not supported by this laptop");
+    }
+    if !supported.charge_ctrl.charge_level_set {
+        println!("Note: Charge control is not supported by this laptop");
+    }
+
+    println!("\nCommands available");
+    if supported.keyboard_led.stock_led_modes.is_some() {
+        println!("{}", commands[0]);
+    }
+    if supported.fan_cpu_ctrl.stock_fan_modes || supported.fan_cpu_ctrl.fan_curve_set {
+        println!("{}", commands[1]);
+    }
+    // graphics
+    println!("{}", commands[2]);
+    if supported.anime_ctrl.0 {
+        println!("{}", commands[3]);
+    }
+    if supported.rog_bios_ctrl.dedicated_gfx_toggle || supported.rog_bios_ctrl.post_sound_toggle {
+        println!("{}", commands[4]);
+    }
+}
+
 fn do_gfx(
     command: GraphicsCommand,
     dbus_client: &AuraDbusClient,
@@ -330,4 +326,69 @@ fn do_gfx_action(no_confirm: bool, ask_msg: &str, ok_msg: &str) -> bool {
         return true;
     }
     false
+}
+
+fn handle_led_mode(
+    dbus: &AuraDbusClient,
+    supported: &LedSupportedFunctions,
+    mode: &LedModeCommand,
+) -> Result<(), Box<dyn std::error::Error>> {
+    if mode.command.is_none() && !mode.prev_mode && !mode.next_mode {
+        if !mode.help {
+            println!("Missing arg or command\n");
+        }
+        println!("{}", mode.self_usage());
+
+        if let Some(lst) = mode.self_command_list() {
+            println!("\n{}", lst);
+        }
+        println!("\nHelp can also be requested on modes, e.g: static --help");
+        std::process::exit(1);
+    }
+    if mode.next_mode && mode.prev_mode {
+        println!("Please specify either next or previous")
+    }
+    if mode.next_mode {
+        dbus.proxies().led().next_led_mode()?;
+    } else if mode.prev_mode {
+        dbus.proxies().led().prev_led_mode()?;
+    } else if let Some(command) = mode.command.as_ref() {
+        dbus.proxies().led().set_led_mode(&command.into())?
+    }
+    Ok(())
+}
+
+fn handle_profile(
+    dbus: &AuraDbusClient,
+    supported: &FanCpuSupportedFunctions,
+    cmd: &ProfileCommand,
+) -> Result<(), Box<dyn std::error::Error>> {
+    if !cmd.next
+        && !cmd.create
+        && cmd.curve.is_none()
+        && cmd.max_percentage.is_none()
+        && cmd.min_percentage.is_none()
+        && cmd.preset.is_none()
+        && cmd.profile.is_none()
+        && cmd.turbo.is_none()
+    {
+        if !cmd.help {
+            println!("Missing arg or command\n");
+        }
+        println!("{}", cmd.self_usage());
+
+        if let Some(lst) = cmd.self_command_list() {
+            println!("\n{}", lst);
+        }
+        std::process::exit(1);
+    }
+    if cmd.next {
+        dbus.proxies().profile().next_fan()?;
+    } else {
+        dbus.proxies()
+            .profile()
+            .write_command(&ProfileEvent::Cli(cmd.clone()))?
+    }
+
+    Ok(())
 }

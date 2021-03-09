@@ -81,16 +81,16 @@ pub struct ProfileCommand {
     #[options(help = "create the profile if it doesn't exist")]
     pub create: bool,
 
-    #[options(help = "enable or disable cpu turbo")]
+    #[options(meta = "", help = "enable or disable cpu turbo")]
     pub turbo: Option<bool>,
-    #[options(help = "set min cpu scaling (intel)")]
+    #[options(meta = "", help = "set min cpu scaling (intel)")]
     pub min_percentage: Option<u8>,
-    #[options(help = "set max cpu scaling (intel)")]
+    #[options(meta = "", help = "set max cpu scaling (intel)")]
     pub max_percentage: Option<u8>,
 
-    #[options(meta = "PWR", help = "<silent, normal, boost>")]
+    #[options(meta = "", help = "<silent, normal, boost>")]
     pub preset: Option<FanLevel>,
-    #[options(parse(try_from_str = "parse_fan_curve"), help = "set fan curve")]
+    #[options(meta = "", parse(try_from_str = "parse_fan_curve"), help = "set fan curve")]
     pub curve: Option<Curve>,
     #[options(free)]
     pub profile: Option<String>,
