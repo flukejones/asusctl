@@ -1,5 +1,6 @@
 use ctrl_gfx::error::GfxError;
 use ctrl_gfx::*;
+use ctrl_rog_bios::CtrlRogBios;
 use log::{error, info, warn};
 use rog_types::gfx_vendors::GfxVendors;
 use std::iter::FromIterator;
@@ -260,8 +261,25 @@ impl CtrlGraphics {
         Ok(())
     }
 
+    fn log_uses_of_nvidia() {
+        // lsof /dev/nvidia*
+        let mut cmd = Command::new("lsof");
+        cmd.arg("/dev/nvidia*");
+
+        match cmd.output() {
+            Ok(output) => {
+                if !output.status.success() {
+                    error!("Failed to list uses of nvidia devices: {}",  String::from_utf8_lossy(&output.stderr));
+                } else if output.status.success() {
+                    warn!("{}", String::from_utf8_lossy(&output.stdout));
+                }
+            }
+            Err(err) => error!("Failed to list uses of nvidia devices: {}", err),
+        }
+    }
+
     fn do_driver_action(driver: &str, action: &str) -> Result<(), RogError> {
-        let mut cmd= Command::new(action);
+        let mut cmd = Command::new(action);
         cmd.arg(driver);
 
         let mut count = 0;
@@ -270,28 +288,41 @@ impl CtrlGraphics {
             if count > MAX_TRIES {
                 let msg = format!("{} {} failed for unknown reason", action, driver);
                 error!("{}", msg);
-                return Ok(()) //Err(RogError::Modprobe(msg));
+                return Ok(()); //Err(RogError::Modprobe(msg));
             }
 
             let output = cmd
                 .output()
                 .map_err(|err| RogError::Command(format!("{:?}", cmd), err))?;
             if !output.status.success() {
-                if output.stderr.ends_with("is not currently loaded\n".as_bytes()) {
-                    return Ok(())
+                if output
+                    .stderr
+                    .ends_with("is not currently loaded\n".as_bytes())
+                {
+                    return Ok(());
                 }
                 if output.stderr.ends_with("Permission denied\n".as_bytes()) {
-                    let msg = format!("{} {} failed: {:?}", action, driver, String::from_utf8_lossy(&output.stderr));
+                    let msg = format!(
+                        "{} {} failed: {:?}",
+                        action,
+                        driver,
+                        String::from_utf8_lossy(&output.stderr)
+                    );
                     warn!("{}", msg);
                     warn!("It may be safe to ignore the above error, run `lsmod |grep nvidia` to confirm modules loaded");
-                    return Ok(())
+                    return Ok(());
                 }
                 if count >= MAX_TRIES {
-                    let msg = format!("{} {} failed: {:?}", action, driver, String::from_utf8_lossy(&output.stderr));
+                    let msg = format!(
+                        "{} {} failed: {:?}",
+                        action,
+                        driver,
+                        String::from_utf8_lossy(&output.stderr)
+                    );
                     return Err(RogError::Modprobe(msg));
                 }
             } else if output.status.success() {
-                return Ok(())
+                return Ok(());
             }
 
             count += 1;
@@ -312,7 +343,7 @@ impl CtrlGraphics {
                 "systemctl {} {} failed: {:?}",
                 action, DISPLAY_MANAGER, status
             );
-            return Err(GfxError::DisplayManager(msg).into());
+            return Err(GfxError::DisplayManagerAction(msg, status).into());
         }
         Ok(())
     }
@@ -334,9 +365,7 @@ impl CtrlGraphics {
             std::thread::sleep(std::time::Duration::from_millis(500));
             count += 1;
         }
-        return Err(
-            GfxError::DisplayManager(format!("display-manager timed out waiting for {} state", state).into()).into(),
-        );
+        return Err(GfxError::DisplayManagerTimeout(state.into()).into());
     }
 
     pub fn do_vendor_tasks(&mut self, vendor: GfxVendors) -> Result<(), RogError> {
@@ -351,7 +380,10 @@ impl CtrlGraphics {
         match vendor {
             GfxVendors::Nvidia | GfxVendors::Hybrid | GfxVendors::Compute => {
                 for driver in NVIDIA_DRIVERS.iter() {
-                    Self::do_driver_action(driver, "modprobe")?;
+                    Self::do_driver_action(driver, "modprobe").map_err(|err| {
+                        Self::log_uses_of_nvidia();
+                        err
+                    })?;
                 }
             }
             // TODO: compute mode, needs different setup
@@ -372,11 +404,38 @@ impl CtrlGraphics {
     ///
     /// Will stop and start display manager without warning
     pub fn set_gfx_config(&mut self, vendor: GfxVendors) -> Result<String, RogError> {
+        if let Ok(gsync) = CtrlRogBios::get_gfx_mode() {
+            if gsync == 1{
+                return Err(GfxError::GsyncModeActive.into());
+            }
+        }
+
         Self::do_display_manager_action("stop")?;
-        Self::wait_display_manager_state("inactive")?;
+        match Self::wait_display_manager_state("inactive") {
+            Ok(_) => info!("display-manager stopped"),
+            Err(err) => {
+                warn!("{}", err);
+                warn!("Retry stop display manager");
+                Self::do_display_manager_action("stop")?;
+                Self::wait_display_manager_state("inactive")?;
+            }
+        }
+
         self.do_vendor_tasks(vendor)?;
+
         Self::do_display_manager_action("start")?;
+        match Self::wait_display_manager_state("active") {
+            Ok(_) => info!("display-manager started"),
+            Err(err) => {
+                warn!("{}", err);
+                warn!("Retry start display manager");
+                Self::do_display_manager_action("restart")?;
+                Self::wait_display_manager_state("active")?;
+            }
+        }
+
         if Self::wait_display_manager_state("active").is_err() {
+            error!("display-manager failed to start normally, attempting restart");
             Self::do_display_manager_action("restart")?;
         }
         Self::wait_display_manager_state("active")?;

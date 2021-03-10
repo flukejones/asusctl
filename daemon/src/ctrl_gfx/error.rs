@@ -1,5 +1,5 @@
-use std::error;
 use std::fmt;
+use std::{error, process::ExitStatus};
 
 use crate::error::RogError;
 
@@ -7,7 +7,9 @@ use crate::error::RogError;
 pub enum GfxError {
     ParseVendor,
     Bus(String, std::io::Error),
-    DisplayManager(String),
+    DisplayManagerAction(String, ExitStatus),
+    DisplayManagerTimeout(String),
+    GsyncModeActive,
 }
 
 impl fmt::Display for GfxError {
@@ -16,7 +18,13 @@ impl fmt::Display for GfxError {
         match self {
             GfxError::ParseVendor => write!(f, "Could not parse vendor name"),
             GfxError::Bus(func, error) => write!(f, "Bus error: {}: {}", func, error),
-            GfxError::DisplayManager(detail) => write!(f, "Display manager: {}", detail),
+            GfxError::DisplayManagerAction(action, status) => {
+                write!(f, "Display-manager action {} failed: {}", action, status)
+            }
+            GfxError::DisplayManagerTimeout(state) => {
+                write!(f, "Timed out waiting for display-manager {} state", state)
+            }
+            GfxError::GsyncModeActive => write!(f, "Can not switch gfx modes when dedicated/G-Sync mode is active"),
         }
     }
 }
