@@ -142,6 +142,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("  asusctl v{}", env!("CARGO_PKG_VERSION"));
         println!(" rog-dbus v{}", rog_dbus::VERSION);
         println!("rog-types v{}", rog_types::VERSION);
+        println!("   daemon v{}", daemon::VERSION);
         return Ok(());
     }
 
