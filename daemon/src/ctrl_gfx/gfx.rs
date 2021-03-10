@@ -317,25 +317,25 @@ impl CtrlGraphics {
         Ok(())
     }
 
-    fn wait_display_manager_inactive() -> Result<(), RogError> {
+    fn wait_display_manager_state(state: &str) -> Result<(), RogError> {
         let mut cmd = Command::new("systemctl");
         cmd.arg("is-active");
         cmd.arg(DISPLAY_MANAGER);
 
         let mut count = 0;
 
-        while count <= 4 {
+        while count <= 5 {
             let output = cmd
                 .output()
                 .map_err(|err| RogError::Command(format!("{:?}", cmd), err))?;
-            if output.stdout.starts_with("inactive".as_bytes()) {
+            if output.stdout.starts_with(state.as_bytes()) {
                 return Ok(());
             }
             std::thread::sleep(std::time::Duration::from_millis(500));
             count += 1;
         }
         return Err(
-            GfxError::DisplayManager("display-manager did not completely stop".into()).into(),
+            GfxError::DisplayManager(format!("display-manager timed out waiting for {} state", state).into()).into(),
         );
     }
 
@@ -373,9 +373,13 @@ impl CtrlGraphics {
     /// Will stop and start display manager without warning
     pub fn set_gfx_config(&mut self, vendor: GfxVendors) -> Result<String, RogError> {
         Self::do_display_manager_action("stop")?;
-        Self::wait_display_manager_inactive()?;
+        Self::wait_display_manager_state("inactive")?;
         self.do_vendor_tasks(vendor)?;
         Self::do_display_manager_action("start")?;
+        if Self::wait_display_manager_state("active").is_err() {
+            Self::do_display_manager_action("restart")?;
+        }
+        Self::wait_display_manager_state("active")?;
         // TODO: undo if failed? Save last mode, catch errors...
         let v: &str = vendor.into();
         Ok(format!("Graphics mode changed to {} successfully", v))
