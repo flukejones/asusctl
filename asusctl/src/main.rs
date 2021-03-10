@@ -149,7 +149,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     match parsed.command {
         Some(CliCommand::LedMode(mode)) => handle_led_mode(&dbus, &supported.keyboard_led, &mode)?,
         Some(CliCommand::Profile(cmd)) => handle_profile(&dbus, &supported.fan_cpu_ctrl, &cmd)?,
-        Some(CliCommand::Graphics(cmd)) => do_gfx(cmd, &dbus)?,
+        Some(CliCommand::Graphics(cmd)) => do_gfx(&dbus, cmd)?,
         Some(CliCommand::AniMe(cmd)) => {
             if (cmd.command.is_none() && cmd.boot.is_none() && cmd.turn.is_none()) || cmd.help {
                 println!("Missing arg or command\n\n{}", cmd.self_usage());
@@ -294,9 +294,13 @@ fn print_supported_help(supported: &SupportedFunctions, parsed: &CLIStart) {
 }
 
 fn do_gfx(
-    command: GraphicsCommand,
     dbus_client: &AuraDbusClient,
+    command: GraphicsCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    if command.mode.is_none() || command.help {
+        println!("{}", command.self_usage());
+    }
+
     if let Some(mode) = command.mode {
         println!("Changing graphics modes...");
         println!("If this takes longer than 30s, ctrl+c then check `journalctl -b -u asusd`");
