@@ -108,7 +108,7 @@ struct BiosCommand {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut args: Vec<String> = args().skip(1).collect();
+    let args: Vec<String> = args().skip(1).collect();
 
     let parsed: CLIStart;
     let missing_argument_k = gumdrop::Error::missing_argument(Opt::Short('k'));
@@ -337,11 +337,19 @@ fn handle_led_mode(
         if !mode.help {
             println!("Missing arg or command\n");
         }
-        println!("{}", mode.self_usage());
+        println!("{}\n", mode.self_usage());
+        println!("Commands available");
 
-        if let Some(lst) = mode.self_command_list() {
-            println!("\n{}", lst);
+        let commands: Vec<String> = LedModeCommand::command_list().unwrap().lines().map(|s| s.to_string()).collect();
+        for (_, command) in commands.iter().enumerate().filter(|(mode_num, _)| {
+            if let Some(modes) = supported.stock_led_modes.as_ref() {
+                return modes.contains(&(*mode_num as u8))
+            }
+            false
+        }) {
+            println!("{}", command);
         }
+
         println!("\nHelp can also be requested on modes, e.g: static --help");
         std::process::exit(1);
     }
@@ -368,14 +376,19 @@ fn handle_profile(
         && cmd.curve.is_none()
         && cmd.max_percentage.is_none()
         && cmd.min_percentage.is_none()
-        && cmd.preset.is_none()
+        && cmd.fan_preset.is_none()
         && cmd.profile.is_none()
         && cmd.turbo.is_none()
     {
         if !cmd.help {
             println!("Missing arg or command\n");
         }
-        println!("{}", cmd.self_usage());
+        let usage: Vec<String> = ProfileCommand::usage().lines().map(|s| s.to_string()).collect();
+        for line in usage.iter().filter(|line| {
+            !(line.contains("--curve") && !supported.fan_curve_set)
+        }) {
+            println!("{}", line);
+        }
 
         if let Some(lst) = cmd.self_command_list() {
             println!("\n{}", lst);

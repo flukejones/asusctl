@@ -264,7 +264,7 @@ impl CtrlFanAndCPU {
                 if let Some(max_perc) = command.max_percentage {
                     profile.max_percentage = max_perc;
                 }
-                if let Some(ref preset) = command.preset {
+                if let Some(ref preset) = command.fan_preset {
                     profile.fan_preset = preset.into();
                 }
                 if let Some(ref curve) = command.curve {

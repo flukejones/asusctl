@@ -89,7 +89,7 @@ pub struct ProfileCommand {
     pub max_percentage: Option<u8>,
 
     #[options(meta = "", help = "<silent, normal, boost>")]
-    pub preset: Option<FanLevel>,
+    pub fan_preset: Option<FanLevel>,
     #[options(meta = "", parse(try_from_str = "parse_fan_curve"), help = "set fan curve")]
     pub curve: Option<Curve>,
     #[options(free)]
