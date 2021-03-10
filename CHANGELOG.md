@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+# [3.1.3] - 2021-03-10
+### Changed
+- Hotfix: gracefully handle removing modules in use caused by display-manager not
+  fully shutdown at the time of trying to remove modules. It will now retry every
+  250ms per module
+
 # [3.1.2] - 2021-03-10
 ### Changed
 - Test and create /etc/X11/xorg.conf.d/ if it doesn't exist

@@ -271,23 +271,37 @@ impl CtrlGraphics {
         }
         cmd.arg(driver);
 
-        let output = cmd
-            .output()
-            .map_err(|err| RogError::Command(format!("{:?}", cmd), err))?;
-        if !output.status.success() {
-            if output.stderr.ends_with("is not currently loaded\n".as_bytes()) {
-                return Ok(())
+        let mut count = 0;
+        const MAX_TRIES: i32 = 6;
+        loop {
+            if count > MAX_TRIES {
+                let msg = format!("{} {} failed for unknown reason", action, driver);
+                error!("{}", msg);
+                return Ok(()) //Err(RogError::Modprobe(msg));
             }
-            if output.stderr.ends_with("Permission denied\n".as_bytes()) {
-                let msg = format!("{} {} failed: {:?}", action, driver, String::from_utf8_lossy(&output.stderr));
-                warn!("{}", msg);
-                warn!("It may be safe to ignore the above error, run `lsmod |grep nvidia` to confirm modules loaded");
-                return Ok(())
+
+            let output = cmd
+                .output()
+                .map_err(|err| RogError::Command(format!("{:?}", cmd), err))?;
+            if !output.status.success() {
+                if output.stderr.ends_with("is not currently loaded\n".as_bytes()) {
+                    return Ok(())
+                }
+                if output.stderr.ends_with("Permission denied\n".as_bytes()) {
+                    let msg = format!("{} {} failed: {:?}", action, driver, String::from_utf8_lossy(&output.stderr));
+                    warn!("{}", msg);
+                    warn!("It may be safe to ignore the above error, run `lsmod |grep nvidia` to confirm modules loaded");
+                    return Ok(())
+                }
+                if count == MAX_TRIES {
+                    let msg = format!("{} {} failed: {:?}", action, driver, String::from_utf8_lossy(&output.stderr));
+                    return Err(RogError::Modprobe(msg));
+                }
             }
-            let msg = format!("{} {} failed: {:?}", action, driver, String::from_utf8_lossy(&output.stderr));
-            return Err(RogError::Modprobe(msg));
+
+            count += 1;
+            std::thread::sleep(std::time::Duration::from_millis(250));
         }
-        Ok(())
     }
 
     fn do_display_manager_action(action: &str) -> Result<(), RogError> {
