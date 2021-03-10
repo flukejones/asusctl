@@ -136,9 +136,7 @@ impl CtrlRogBios {
             }
         }
 
-        Ok(CtrlRogBios {
-            _config: config,
-        })
+        Ok(CtrlRogBios { _config: config })
     }
 
     fn set_path_mutable(path: &str) -> Result<(), RogError> {
@@ -271,6 +269,7 @@ impl CtrlRogBios {
         } else if Path::new(DRACUT_PATH).exists() {
             let mut cmd = Command::new("dracut");
             cmd.arg("-f");
+            cmd.arg("-q");
             initfs_cmd = Some(cmd);
             info!("Using initramfs update command 'dracut'");
         }

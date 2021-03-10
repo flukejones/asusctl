@@ -1,7 +1,4 @@
-use daemon::{
-    ctrl_fan_cpu::FanCpuSupportedFunctions, ctrl_leds::LedSupportedFunctions,
-    ctrl_supported::SupportedFunctions,
-};
+use daemon::{ctrl_fan_cpu::FanCpuSupportedFunctions, ctrl_leds::LedSupportedFunctions, ctrl_rog_bios::RogBiosSupportedFunctions, ctrl_supported::SupportedFunctions};
 use gumdrop::{Opt, Options};
 use rog_dbus::AuraDbusClient;
 use rog_types::{
@@ -97,11 +94,11 @@ struct AniMeCommand {
 struct BiosCommand {
     #[options(help = "print help message")]
     help: bool,
-    #[options(meta = "", no_long, help = "toggle bios POST sound")]
+    #[options(meta = "", no_long, help = "set bios POST sound <true/false>")]
     post_sound_set: Option<bool>,
     #[options(no_long, help = "read bios POST sound")]
     post_sound_get: bool,
-    #[options(meta = "", no_long, help = "toggle GPU to/from dedicated mode")]
+    #[options(meta = "", no_long, help = "activate dGPU dedicated/G-Sync <true/false>")]
     dedicated_gfx_set: Option<bool>,
     #[options(no_long, help = "get GPU mode")]
     dedicated_gfx_get: bool,
@@ -149,7 +146,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     match parsed.command {
         Some(CliCommand::LedMode(mode)) => handle_led_mode(&dbus, &supported.keyboard_led, &mode)?,
         Some(CliCommand::Profile(cmd)) => handle_profile(&dbus, &supported.fan_cpu_ctrl, &cmd)?,
-        Some(CliCommand::Graphics(cmd)) => do_gfx(&dbus, cmd)?,
+        Some(CliCommand::Graphics(cmd)) => do_gfx(&dbus, &supported.rog_bios_ctrl, cmd)?,
         Some(CliCommand::AniMe(cmd)) => {
             if (cmd.command.is_none() && cmd.boot.is_none() && cmd.turn.is_none()) || cmd.help {
                 println!("Missing arg or command\n\n{}", cmd.self_usage());
@@ -173,43 +170,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
         }
-        Some(CliCommand::Bios(cmd)) => {
-            if (cmd.dedicated_gfx_set.is_none()
-                && !cmd.dedicated_gfx_get
-                && cmd.post_sound_set.is_none()
-                && !cmd.post_sound_get)
-                || cmd.help
-            {
-                println!("Missing arg or command\n\n{}", cmd.self_usage());
-                if let Some(lst) = cmd.self_command_list() {
-                    println!("\n{}", lst);
-                }
-            }
-
-            if let Some(opt) = cmd.post_sound_set {
-                dbus.proxies().rog_bios().set_post_sound(opt)?;
-            }
-            if cmd.post_sound_get {
-                let res = if dbus.proxies().rog_bios().get_post_sound()? == 1 {
-                    true
-                } else {
-                    false
-                };
-                println!("Bios POST sound on: {}", res);
-            }
-            if let Some(opt) = cmd.dedicated_gfx_set {
-                dbus.proxies().rog_bios().set_dedicated_gfx(opt)?;
-            }
-            if cmd.dedicated_gfx_get {
-                let res = if dbus.proxies().rog_bios().get_dedicated_gfx()? == 1 {
-                    true
-                } else {
-                    false
-                };
-                println!("Bios dedicated GPU on: {}", res);
-                println!("You must reboot your system to activate dedicated Nvidia mode");
-            }
-        }
+        Some(CliCommand::Bios(cmd)) => handle_bios_option(&dbus, &supported.rog_bios_ctrl, &cmd)?,
         None => {
             if (!parsed.show_supported
                 && parsed.kbd_bright.is_none()
@@ -268,13 +229,19 @@ fn print_supported_help(supported: &SupportedFunctions, parsed: &CLIStart) {
     let commands: Vec<String> = CliCommand::usage().lines().map(|s| s.to_string()).collect();
     println!("\nCommands available");
     for line in commands.iter().filter(|line| {
-        if line.contains("profile") && !supported.fan_cpu_ctrl.stock_fan_modes && !supported.fan_cpu_ctrl.fan_curve_set {
+        if line.contains("profile")
+            && !supported.fan_cpu_ctrl.stock_fan_modes
+            && !supported.fan_cpu_ctrl.fan_curve_set
+        {
             return false;
         }
         if line.contains("led-mode") && supported.keyboard_led.stock_led_modes.is_none() {
             return false;
         }
-        if line.contains("bios") && (!supported.rog_bios_ctrl.dedicated_gfx_toggle || !supported.rog_bios_ctrl.post_sound_toggle) {
+        if line.contains("bios")
+            && (!supported.rog_bios_ctrl.dedicated_gfx_toggle
+                || !supported.rog_bios_ctrl.post_sound_toggle)
+        {
             return false;
         }
         if line.contains("anime") && !supported.anime_ctrl.0 {
@@ -294,14 +261,22 @@ fn print_supported_help(supported: &SupportedFunctions, parsed: &CLIStart) {
 }
 
 fn do_gfx(
-    dbus_client: &AuraDbusClient,
+    dbus: &AuraDbusClient,
+    supported: &RogBiosSupportedFunctions,
     command: GraphicsCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if command.mode.is_none() || command.help {
+    if command.mode.is_none() && !command.get && !command.pow && !command.force || command.help {
         println!("{}", command.self_usage());
     }
 
     if let Some(mode) = command.mode {
+        if supported.dedicated_gfx_toggle {
+            if dbus.proxies().rog_bios().get_dedicated_gfx()? == 1 {
+                println!("You can not change modes until you turn dedicated/G-Sync off and reboot");
+                std::process::exit(-1);
+            }
+        }
+
         println!("Changing graphics modes...");
         println!("If this takes longer than 30s, ctrl+c then check `journalctl -b -u asusd`");
 
@@ -310,19 +285,19 @@ fn do_gfx(
             "This will restart your display-manager. Please save all work!",
             "Setting graphics mode...",
         ) {
-            dbus_client.proxies().gfx().gfx_write_mode(mode.into())?;
-            let res = dbus_client.gfx_wait_changed()?;
+            dbus.proxies().gfx().gfx_write_mode(mode.into())?;
+            let res = dbus.gfx_wait_changed()?;
             println!("{}", res);
             std::process::exit(1)
         }
         std::process::exit(-1)
     }
     if command.get {
-        let res = dbus_client.proxies().gfx().gfx_get_mode()?;
+        let res = dbus.proxies().gfx().gfx_get_mode()?;
         println!("Current graphics mode: {}", res);
     }
     if command.pow {
-        let res = dbus_client.proxies().gfx().gfx_get_pwr()?;
+        let res = dbus.proxies().gfx().gfx_get_pwr()?;
         if res.contains("active") {
             println!("Current power status: {}", Red.paint(&format!("{}", res)));
         } else {
@@ -359,10 +334,14 @@ fn handle_led_mode(
         println!("{}\n", mode.self_usage());
         println!("Commands available");
 
-        let commands: Vec<String> = LedModeCommand::command_list().unwrap().lines().map(|s| s.to_string()).collect();
+        let commands: Vec<String> = LedModeCommand::command_list()
+            .unwrap()
+            .lines()
+            .map(|s| s.to_string())
+            .collect();
         for (_, command) in commands.iter().enumerate().filter(|(mode_num, _)| {
             if let Some(modes) = supported.stock_led_modes.as_ref() {
-                return modes.contains(&(*mode_num as u8))
+                return modes.contains(&(*mode_num as u8));
             }
             false
         }) {
@@ -402,10 +381,14 @@ fn handle_profile(
         if !cmd.help {
             println!("Missing arg or command\n");
         }
-        let usage: Vec<String> = ProfileCommand::usage().lines().map(|s| s.to_string()).collect();
-        for line in usage.iter().filter(|line| {
-            !(line.contains("--curve") && !supported.fan_curve_set)
-        }) {
+        let usage: Vec<String> = ProfileCommand::usage()
+            .lines()
+            .map(|s| s.to_string())
+            .collect();
+        for line in usage
+            .iter()
+            .filter(|line| !(line.contains("--curve") && !supported.fan_curve_set))
+        {
             println!("{}", line);
         }
 
@@ -422,5 +405,66 @@ fn handle_profile(
             .write_command(&ProfileEvent::Cli(cmd.clone()))?
     }
 
+    Ok(())
+}
+
+fn handle_bios_option(
+    dbus: &AuraDbusClient,
+    supported: &RogBiosSupportedFunctions,
+    cmd: &BiosCommand,
+) -> Result<(), Box<dyn std::error::Error>> {
+    {
+        if (cmd.dedicated_gfx_set.is_none()
+            && !cmd.dedicated_gfx_get
+            && cmd.post_sound_set.is_none()
+            && !cmd.post_sound_get)
+            || cmd.help
+        {
+            println!("Missing arg or command\n");
+
+            let usage: Vec<String> = BiosCommand::usage()
+            .lines()
+            .map(|s| s.to_string())
+            .collect();
+
+            for line in usage
+                .iter()
+                .filter(|line| !(line.contains("sound") && !supported.post_sound_toggle)
+            || !(line.contains("GPU") && !supported.dedicated_gfx_toggle))
+            {
+                println!("{}", line);
+            }
+        }
+
+        if let Some(opt) = cmd.post_sound_set {
+            dbus.proxies().rog_bios().set_post_sound(opt)?;
+        }
+        if cmd.post_sound_get {
+            let res = if dbus.proxies().rog_bios().get_post_sound()? == 1 {
+                true
+            } else {
+                false
+            };
+            println!("Bios POST sound on: {}", res);
+        }
+        if let Some(opt) = cmd.dedicated_gfx_set {
+            println!("Rebuilding initrd to include drivers");
+            dbus.proxies().rog_bios().set_dedicated_gfx(opt)?;
+                println!("The mode change is not active until you reboot, on boot the bios will make the required change");
+            if opt {
+                println!("NOTE: on reboot your display manager will be forced to use Nvidia drivers");
+            } else {
+                println!("NOTE: after reboot you can then select regular graphics modes");
+            }
+        }
+        if cmd.dedicated_gfx_get {
+            let res = if dbus.proxies().rog_bios().get_dedicated_gfx()? == 1 {
+                true
+            } else {
+                false
+            };
+            println!("Bios dedicated GPU on: {}", res);
+        }
+    }
     Ok(())
 }

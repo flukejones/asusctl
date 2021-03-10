@@ -111,8 +111,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
                     if let Ok(ded) = CtrlRogBios::get_gfx_mode() {
                         if let Ok(vendor) = ctrl.get_gfx_mode() {
                             if ded == 1 && vendor != GfxVendors::Nvidia {
-                                error!("Dedicated GFX toggle is on but driver mode is not nvidia \nSetting to nvidia driver mode");
-                                error!("You must reboot to enable Nvidia driver");
+                                warn!("Dedicated GFX toggle is on but driver mode is not nvidia \nSetting to nvidia driver mode");
                                 ctrl.do_vendor_tasks(GfxVendors::Nvidia)?;
                             } else if ded == 0 {
                                 info!("Dedicated GFX toggle is off");

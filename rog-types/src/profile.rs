@@ -90,7 +90,11 @@ pub struct ProfileCommand {
 
     #[options(meta = "", help = "<silent, normal, boost>")]
     pub fan_preset: Option<FanLevel>,
-    #[options(meta = "", parse(try_from_str = "parse_fan_curve"), help = "set fan curve")]
+    #[options(
+        meta = "",
+        parse(try_from_str = "parse_fan_curve"),
+        help = "set fan curve"
+    )]
     pub curve: Option<Curve>,
     #[options(free)]
     pub profile: Option<String>,

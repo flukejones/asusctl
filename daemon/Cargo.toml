@@ -1,6 +1,6 @@
 [package]
 name = "daemon"
-version = "3.1.4"
+version = "3.1.5"
 license = "MPL-2.0"
 readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]
