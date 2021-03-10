@@ -293,9 +293,8 @@ impl CtrlGraphics {
                     warn!("It may be safe to ignore the above error, run `lsmod |grep nvidia` to confirm modules loaded");
                     return Ok(())
                 }
-                let msg = format!("{} {} failed: {:?}", action, driver, String::from_utf8_lossy(&output.stderr));
-                error!("{} {} try: {}: Error: {}", action, driver, count, msg);
-                if count == MAX_TRIES {
+                if count >= MAX_TRIES {
+                    let msg = format!("{} {} failed: {:?}", action, driver, String::from_utf8_lossy(&output.stderr));
                     return Err(RogError::Modprobe(msg));
                 }
             }
