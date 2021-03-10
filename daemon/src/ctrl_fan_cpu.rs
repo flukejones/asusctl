@@ -62,7 +62,12 @@ impl DbusFanAndCpu {
                     cfg.read();
                     ctrl.handle_profile_event(&event, &mut cfg)
                         .unwrap_or_else(|err| warn!("{}", err));
-                    self.notify_profile(&cfg.active_profile).unwrap_or(());
+                    if let Some(profile) = cfg.power_profiles.get(&cfg.active_profile) {
+                        if let Ok(json) = serde_json::to_string(profile) {
+                            self.notify_profile(&json)
+                                .unwrap_or_else(|err| warn!("{}", err));
+                        }
+                    }
                 }
             }
         }
@@ -72,6 +77,7 @@ impl DbusFanAndCpu {
     fn next_profile(&mut self) {
         if let Ok(mut ctrl) = self.inner.try_lock() {
             if let Ok(mut cfg) = ctrl.config.clone().try_lock() {
+                cfg.read();
                 ctrl.do_next_profile(&mut cfg)
                     .unwrap_or_else(|err| warn!("{}", err));
                 if let Some(profile) = cfg.power_profiles.get(&cfg.active_profile) {
