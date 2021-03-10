@@ -250,31 +250,45 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 fn print_supported_help(supported: &SupportedFunctions, parsed: &CLIStart) {
     // As help option don't work with `parse_args_default`
     // we will call `parse_args_default_or_exit` instead
-    println!("{}", parsed.self_usage());
+    let usage: Vec<String> = parsed.self_usage().lines().map(|s| s.to_string()).collect();
+    for line in usage.iter().filter(|line| {
+        if line.contains("--fan-mode") && !supported.fan_cpu_ctrl.stock_fan_modes {
+            return false;
+        }
+        if line.contains("--chg-limit") && !supported.charge_ctrl.charge_level_set {
+            return false;
+        }
+        true
+    }) {
+        println!("{}", line);
+    }
+
     // command strings are in order of the struct
     let commands: Vec<String> = CliCommand::usage().lines().map(|s| s.to_string()).collect();
+    println!("\nCommands available");
+    for line in commands.iter().filter(|line| {
+        if line.contains("profile") && !supported.fan_cpu_ctrl.stock_fan_modes && !supported.fan_cpu_ctrl.fan_curve_set {
+            return false;
+        }
+        if line.contains("led-mode") && supported.keyboard_led.stock_led_modes.is_none() {
+            return false;
+        }
+        if line.contains("bios") && (!supported.rog_bios_ctrl.dedicated_gfx_toggle || !supported.rog_bios_ctrl.post_sound_toggle) {
+            return false;
+        }
+        if line.contains("anime") && !supported.anime_ctrl.0 {
+            return false;
+        }
+        true
+    }) {
+        println!("{}", line);
+    }
 
     if !supported.fan_cpu_ctrl.stock_fan_modes {
         println!("Note: Fan mode control is not supported by this laptop");
     }
     if !supported.charge_ctrl.charge_level_set {
         println!("Note: Charge control is not supported by this laptop");
-    }
-
-    println!("\nCommands available");
-    if supported.keyboard_led.stock_led_modes.is_some() {
-        println!("{}", commands[0]);
-    }
-    if supported.fan_cpu_ctrl.stock_fan_modes || supported.fan_cpu_ctrl.fan_curve_set {
-        println!("{}", commands[1]);
-    }
-    // graphics
-    println!("{}", commands[2]);
-    if supported.anime_ctrl.0 {
-        println!("{}", commands[3]);
-    }
-    if supported.rog_bios_ctrl.dedicated_gfx_toggle || supported.rog_bios_ctrl.post_sound_toggle {
-        println!("{}", commands[4]);
     }
 }
 
