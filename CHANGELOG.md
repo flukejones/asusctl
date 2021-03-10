@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Notify through dbus if user changes profile manually
+- Better help on CLI, show help only for supported items
+- Bugfix to gfx switcher
 
 # [3.1.3] - 2021-03-10
 ### Changed

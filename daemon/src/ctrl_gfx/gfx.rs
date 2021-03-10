@@ -261,20 +261,13 @@ impl CtrlGraphics {
     }
 
     fn do_driver_action(driver: &str, action: &str) -> Result<(), RogError> {
-        let mut cmd;
-        if Self::kmod_exists() {
-            info!("using kmod");
-            cmd = Command::new("kmod");
-            cmd.arg(action);
-        } else {
-            cmd = Command::new(action);
-        }
+        let mut cmd= Command::new(action);
         cmd.arg(driver);
 
         let mut count = 0;
         const MAX_TRIES: i32 = 6;
         loop {
-            if count > MAX_TRIES+1 {
+            if count > MAX_TRIES {
                 let msg = format!("{} {} failed for unknown reason", action, driver);
                 error!("{}", msg);
                 return Ok(()) //Err(RogError::Modprobe(msg));
@@ -297,6 +290,8 @@ impl CtrlGraphics {
                     let msg = format!("{} {} failed: {:?}", action, driver, String::from_utf8_lossy(&output.stderr));
                     return Err(RogError::Modprobe(msg));
                 }
+            } else if output.status.success() {
+                return Ok(())
             }
 
             count += 1;
@@ -342,17 +337,6 @@ impl CtrlGraphics {
         return Err(
             GfxError::DisplayManager("display-manager did not completely stop".into()).into(),
         );
-    }
-
-    fn kmod_exists() -> bool {
-        let mut cmd = Command::new("which");
-        cmd.arg("kmod");
-        if let Ok(output) = cmd
-        .output() {
-            return output.status.success() && output.stdout.ends_with("kmod".as_bytes())
-        }
-        //Path::new("/usr/bin/kmod").exists()
-        false
     }
 
     pub fn do_vendor_tasks(&mut self, vendor: GfxVendors) -> Result<(), RogError> {
