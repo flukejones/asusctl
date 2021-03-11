@@ -4,7 +4,7 @@ use rog_types::error::GraphicsError;
 use std::convert::From;
 use std::fmt;
 
-use crate::ctrl_gfx::error::GfxError;
+use crate::{ctrl_gfx::error::GfxError, session_manager::SessionError};
 
 #[derive(Debug)]
 pub enum RogError {
@@ -28,6 +28,7 @@ pub enum RogError {
     Initramfs(String),
     Modprobe(String),
     Command(String, std::io::Error),
+    Session(SessionError),
 }
 
 impl fmt::Display for RogError {
@@ -54,6 +55,7 @@ impl fmt::Display for RogError {
             RogError::Initramfs(detail) => write!(f, "Initiramfs error: {}", detail),
             RogError::Modprobe(detail) => write!(f, "Modprobe error: {}", detail),
             RogError::Command(func, error) => write!(f, "Command exec error: {}: {}", func, error),
+            RogError::Session(detail) => write!(f, "Session error: {}", detail),
         }
     }
 }

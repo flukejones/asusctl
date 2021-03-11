@@ -33,6 +33,7 @@ impl Module {
     }
 }
 
+#[derive(Clone)]
 pub struct PciBus {
     path: PathBuf,
 }
@@ -56,6 +57,7 @@ impl PciBus {
     }
 }
 
+#[derive(Clone)]
 pub struct GraphicsDevice {
     _id: String,
     functions: Vec<PciDevice>,

@@ -3,10 +3,11 @@ use ctrl_gfx::*;
 use ctrl_rog_bios::CtrlRogBios;
 use log::{error, info, warn};
 use rog_types::gfx_vendors::GfxVendors;
-use std::iter::FromIterator;
-use std::process::Command;
-use std::str::FromStr;
+use session_manager::{are_gfx_sessions_alive, get_sessions};
 use std::{io::Write, ops::Add, path::Path};
+use std::{iter::FromIterator, thread::JoinHandle};
+use std::{process::Command, thread::sleep, time::Duration};
+use std::{str::FromStr, sync::mpsc};
 use std::{sync::Arc, sync::Mutex};
 use sysfs_class::{PciDevice, SysClass};
 use system::{GraphicsDevice, PciBus};
@@ -22,6 +23,7 @@ pub struct CtrlGraphics {
     #[allow(dead_code)]
     other: Vec<GraphicsDevice>,
     config: Arc<Mutex<Config>>,
+    thread_kill: Arc<Mutex<Option<mpsc::Sender<bool>>>>,
 }
 
 trait Dbus {
@@ -48,15 +50,15 @@ impl Dbus for CtrlGraphics {
 
     fn set_vendor(&mut self, vendor: String) {
         if let Ok(tmp) = GfxVendors::from_str(&vendor) {
-            info!("Switching gfx mode to {}", vendor);
+            info!("GFX: Switching gfx mode to {}", vendor);
             let msg = self.set_gfx_config(tmp).unwrap_or_else(|err| {
-                error!("{}", err);
+                error!("GFX: {}", err);
                 format!("Failed: {}", err.to_string())
             });
             self.notify_gfx(&vendor)
-                .unwrap_or_else(|err| warn!("{}", err));
+                .unwrap_or_else(|err| warn!("GFX: {}", err));
             self.notify_action(&msg)
-                .unwrap_or_else(|err| warn!("{}", err));
+                .unwrap_or_else(|err| warn!("GFX: {}", err));
         }
     }
 
@@ -77,7 +79,7 @@ impl ZbusAdd for CtrlGraphics {
                 self,
             )
             .map_err(|err| {
-                warn!("CtrlGraphics: add_to_server {}", err);
+                warn!("GFX: CtrlGraphics: add_to_server {}", err);
                 err
             })
             .ok();
@@ -87,7 +89,7 @@ impl ZbusAdd for CtrlGraphics {
 impl Reloadable for CtrlGraphics {
     fn reload(&mut self) -> Result<(), RogError> {
         self.auto_power()?;
-        info!("Reloaded gfx mode: {:?}", self.get_gfx_mode()?);
+        info!("GFX: Reloaded gfx mode: {:?}", self.get_gfx_mode()?);
         Ok(())
     }
 }
@@ -96,7 +98,7 @@ impl CtrlGraphics {
     pub fn new(config: Arc<Mutex<Config>>) -> std::io::Result<CtrlGraphics> {
         let bus = PciBus::new()?;
 
-        info!("Rescanning PCI bus");
+        info!("GFX: Rescanning PCI bus");
         bus.rescan()?;
 
         let devs = PciDevice::all()?;
@@ -107,7 +109,7 @@ impl CtrlGraphics {
                 for func in devs.iter() {
                     if let Some(func_slot) = func.id().split('.').next() {
                         if func_slot == parent_slot {
-                            info!("{}: Function for {}", func.id(), parent.id());
+                            info!("GFX: {}: Function for {}", func.id(), parent.id());
                             functions.push(func.clone());
                         }
                     }
@@ -125,19 +127,19 @@ impl CtrlGraphics {
             if 0x03 == (c >> 16) & 0xFF {
                 match dev.vendor()? {
                     0x1002 => {
-                        info!("{}: AMD graphics", dev.id());
+                        info!("GFX: {}: AMD graphics", dev.id());
                         amd.push(GraphicsDevice::new(dev.id().to_owned(), functions(&dev)));
                     }
                     0x10DE => {
-                        info!("{}: NVIDIA graphics", dev.id());
+                        info!("GFX: {}: NVIDIA graphics", dev.id());
                         nvidia.push(GraphicsDevice::new(dev.id().to_owned(), functions(&dev)));
                     }
                     0x8086 => {
-                        info!("{}: Intel graphics", dev.id());
+                        info!("GFX: {}: Intel graphics", dev.id());
                         intel.push(GraphicsDevice::new(dev.id().to_owned(), functions(&dev)));
                     }
                     vendor => {
-                        info!("{}: Other({:X}) graphics", dev.id(), vendor);
+                        info!("GFX: {}: Other({:X}) graphics", dev.id(), vendor);
                         other.push(GraphicsDevice::new(dev.id().to_owned(), functions(&dev)));
                     }
                 }
@@ -151,11 +153,20 @@ impl CtrlGraphics {
             nvidia,
             other,
             config,
+            thread_kill: Arc::new(Mutex::new(None)),
         })
     }
 
-    fn save_gfx_mode(&self, vendor: GfxVendors) -> Result<(), RogError> {
-        if let Ok(mut config) = self.config.lock() {
+    pub fn bus(&self) -> PciBus {
+        self.bus.clone()
+    }
+
+    pub fn devices(&self) -> Vec<GraphicsDevice> {
+        self.nvidia.clone()
+    }
+
+    fn save_gfx_mode(vendor: GfxVendors, config: Arc<Mutex<Config>>) -> Result<(), RogError> {
+        if let Ok(mut config) = config.lock() {
             config.gfx_mode = vendor.clone();
             config.write();
             return Ok(());
@@ -181,10 +192,10 @@ impl CtrlGraphics {
 
     fn toggle_fallback_service(vendor: GfxVendors) -> Result<(), RogError> {
         let action = if vendor == GfxVendors::Nvidia {
-            info!("Enabling nvidia-fallback.service");
+            info!("GFX: Enabling nvidia-fallback.service");
             "enable"
         } else {
-            info!("Disabling nvidia-fallback.service");
+            info!("GFX: Disabling nvidia-fallback.service");
             "disable"
         };
 
@@ -217,7 +228,7 @@ impl CtrlGraphics {
         }
 
         let file = XORG_PATH.to_string().add(XORG_FILE);
-        info!("Writing {}", file);
+        info!("GFX: Writing {}", file);
         let mut file = std::fs::OpenOptions::new()
             .create(true)
             .truncate(true)
@@ -232,7 +243,7 @@ impl CtrlGraphics {
     }
 
     fn write_modprobe_conf() -> Result<(), RogError> {
-        info!("Writing {}", MODPROBE_PATH);
+        info!("GFX: Writing {}", MODPROBE_PATH);
 
         let mut file = std::fs::OpenOptions::new()
             .create(true)
@@ -248,12 +259,12 @@ impl CtrlGraphics {
         Ok(())
     }
 
-    fn unbind_remove_nvidia(&self) -> Result<(), RogError> {
+    fn unbind_remove_nvidia(devices: &[GraphicsDevice]) -> Result<(), RogError> {
         // Unbind NVIDIA graphics devices and their functions
-        let unbinds = self.nvidia.iter().map(|dev| dev.unbind());
+        let unbinds = devices.iter().map(|dev| dev.unbind());
 
         // Remove NVIDIA graphics devices and their functions
-        let removes = self.nvidia.iter().map(|dev| dev.remove());
+        let removes = devices.iter().map(|dev| dev.remove());
 
         Result::from_iter(unbinds.chain(removes))
             .map_err(|err| RogError::Command("device unbind error".into(), err))?;
@@ -269,12 +280,15 @@ impl CtrlGraphics {
         match cmd.output() {
             Ok(output) => {
                 if !output.status.success() {
-                    error!("Failed to list uses of nvidia devices: {}",  String::from_utf8_lossy(&output.stderr));
+                    error!(
+                        "Failed to list uses of nvidia devices: {}",
+                        String::from_utf8_lossy(&output.stderr)
+                    );
                 } else if output.status.success() {
-                    warn!("{}", String::from_utf8_lossy(&output.stdout));
+                    warn!("GFX: {}", String::from_utf8_lossy(&output.stdout));
                 }
             }
-            Err(err) => error!("Failed to list uses of nvidia devices: {}", err),
+            Err(err) => error!("GFX: Failed to list uses of nvidia devices: {}", err),
         }
     }
 
@@ -287,7 +301,7 @@ impl CtrlGraphics {
         loop {
             if count > MAX_TRIES {
                 let msg = format!("{} {} failed for unknown reason", action, driver);
-                error!("{}", msg);
+                error!("GFX: {}", msg);
                 return Ok(()); //Err(RogError::Modprobe(msg));
             }
 
@@ -308,8 +322,8 @@ impl CtrlGraphics {
                         driver,
                         String::from_utf8_lossy(&output.stderr)
                     );
-                    warn!("{}", msg);
-                    warn!("It may be safe to ignore the above error, run `lsmod |grep nvidia` to confirm modules loaded");
+                    warn!("GFX: {}", msg);
+                    warn!("GFX: It may be safe to ignore the above error, run `lsmod |grep nvidia` to confirm modules loaded");
                     return Ok(());
                 }
                 if count >= MAX_TRIES {
@@ -368,13 +382,16 @@ impl CtrlGraphics {
         return Err(GfxError::DisplayManagerTimeout(state.into()).into());
     }
 
-    pub fn do_vendor_tasks(&mut self, vendor: GfxVendors) -> Result<(), RogError> {
+    pub fn do_vendor_tasks(
+        vendor: GfxVendors,
+        devices: &[GraphicsDevice],
+        bus: &PciBus,
+    ) -> Result<(), RogError> {
         Self::write_xorg_conf(vendor)?;
         Self::write_modprobe_conf()?; // TODO: Not required here, should put in startup?
 
         // Rescan before doing remove or add drivers
-        self.bus
-            .rescan()
+        bus.rescan()
             .map_err(|err| GfxError::Bus("bus rescan error".into(), err))?;
 
         match vendor {
@@ -392,12 +409,56 @@ impl CtrlGraphics {
                 for driver in NVIDIA_DRIVERS.iter() {
                     Self::do_driver_action(driver, "rmmod")?;
                 }
-                self.unbind_remove_nvidia()?;
+                Self::unbind_remove_nvidia(&devices)?;
             }
         }
 
-        self.save_gfx_mode(vendor)?;
         Ok(())
+    }
+
+    /// Spools until all user sessions are ended
+    fn fire_starter(
+        vendor: GfxVendors,
+        devices: Vec<GraphicsDevice>,
+        bus: PciBus,
+        sessions: Vec<session_manager::Session>,
+        killer: mpsc::Receiver<bool>,
+    ) -> Result<String, RogError> {
+        info!("GFX: display-manager thread started");
+        while are_gfx_sessions_alive(&sessions) {
+            if let Ok(stop) = killer.try_recv() {
+                if stop {
+                    return Ok("Graphics mode change was cancelled".into());
+                }
+            }
+            sleep(Duration::from_millis(300));
+        }
+        info!("GFX: all graphical user sessions ended, continuing");
+        Self::do_display_manager_action("stop")?;
+
+        match Self::wait_display_manager_state("inactive") {
+            Ok(_) => info!("GFX: display-manager stopped"),
+            Err(err) => {
+                warn!("GFX: {}", err);
+                warn!("GFX: Retry stop display manager");
+                Self::do_display_manager_action("stop")?;
+                Self::wait_display_manager_state("inactive")?;
+            }
+        }
+
+        Self::do_vendor_tasks(vendor, &devices, &bus)?;
+        Self::do_display_manager_action("start")?;
+
+        if Self::wait_display_manager_state("active").is_err() {
+            error!("GFX: display-manager failed to start normally, attempting restart");
+            Self::do_display_manager_action("restart")?;
+            Self::wait_display_manager_state("active")?;
+        }
+        info!("GFX: display-manager started");
+
+        let v: &str = vendor.into();
+        info!("GFX: Graphics mode changed to {} successfully", v);
+        Ok(format!("Graphics mode changed to {} successfully", v))
     }
 
     /// For manually calling (not on boot/startup)
@@ -405,40 +466,48 @@ impl CtrlGraphics {
     /// Will stop and start display manager without warning
     pub fn set_gfx_config(&mut self, vendor: GfxVendors) -> Result<String, RogError> {
         if let Ok(gsync) = CtrlRogBios::get_gfx_mode() {
-            if gsync == 1{
+            if gsync == 1 {
                 return Err(GfxError::GsyncModeActive.into());
             }
         }
 
-        Self::do_display_manager_action("stop")?;
-        match Self::wait_display_manager_state("inactive") {
-            Ok(_) => info!("display-manager stopped"),
-            Err(err) => {
-                warn!("{}", err);
-                warn!("Retry stop display manager");
-                Self::do_display_manager_action("stop")?;
-                Self::wait_display_manager_state("inactive")?;
+        if let Ok(lock) = self.thread_kill.lock() {
+            if let Some(tx) = lock.as_ref() {
+                // Cancel the running thread
+                info!("GFX: Cancelling previous thread");
+                tx.send(true)
+                    .map_err(|err| {
+                        warn!("GFX: {}", err);
+                    })
+                    .ok();
             }
         }
 
-        self.do_vendor_tasks(vendor)?;
+        let devices = self.nvidia.clone();
+        let bus = self.bus.clone();
+        let sessions = get_sessions().unwrap();
+        let (tx, rx) = mpsc::channel();
+        if let Ok(mut lock) = self.thread_kill.lock() {
+            *lock = Some(tx);
+        }
+        let killer = self.thread_kill.clone();
 
-        Self::do_display_manager_action("start")?;
-        match Self::wait_display_manager_state("active") {
-            Ok(_) => info!("display-manager started"),
-            Err(err) => {
-                warn!("{}", err);
-                warn!("Retry start display manager");
-                Self::do_display_manager_action("restart")?;
-                Self::wait_display_manager_state("active")?;
+        // Save selected mode in case of reboot
+        Self::save_gfx_mode(vendor, self.config.clone())?;
+
+        let _join: JoinHandle<()> = std::thread::spawn(move || {
+            Self::fire_starter(vendor, devices, bus, sessions, rx)
+                .map_err(|err| {
+                    error!("GFX: {}", err);
+                })
+                .ok();
+            // clear the tx/rx when done
+            if let Ok(mut lock) = killer.try_lock() {
+                *lock = None;
             }
-        }
+            return;
+        });
 
-        if Self::wait_display_manager_state("active").is_err() {
-            error!("display-manager failed to start normally, attempting restart");
-            Self::do_display_manager_action("restart")?;
-        }
-        Self::wait_display_manager_state("active")?;
         // TODO: undo if failed? Save last mode, catch errors...
         let v: &str = vendor.into();
         Ok(format!("Graphics mode changed to {} successfully", v))
@@ -449,12 +518,12 @@ impl CtrlGraphics {
     //         // Switch to dedicated if config says to do so
     //         if config.gfx_nv_mode_is_dedicated && vendor == GfxVendors::Nvidia {
     //             CtrlRogBios::set_gfx_mode(true)
-    //                 .unwrap_or_else(|err| warn!("Gfx controller: {}", err));
+    //                 .unwrap_or_else(|err| warn!("GFX: Gfx controller: {}", err));
     //         } else if let Ok(ded) = CtrlRogBios::get_gfx_mode() {
     //             // otherwise if switching to non-Nvidia mode turn off dedicated mode
     //             if ded == 1 && vendor != GfxVendors::Nvidia {
     //                 CtrlRogBios::set_gfx_mode(false)
-    //                     .unwrap_or_else(|err| warn!("Gfx controller: {}", err));
+    //                     .unwrap_or_else(|err| warn!("GFX: Gfx controller: {}", err));
     //             }
     //         }
     //     }
@@ -462,7 +531,9 @@ impl CtrlGraphics {
 
     fn auto_power(&mut self) -> Result<(), RogError> {
         let vendor = self.get_gfx_mode()?;
-        self.do_vendor_tasks(vendor)?;
+        let devices = self.nvidia.clone();
+        let bus = self.bus.clone();
+        Self::do_vendor_tasks(vendor, &devices, &bus)?;
         Self::toggle_fallback_service(vendor)?;
         Ok(())
     }

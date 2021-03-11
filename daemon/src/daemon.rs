@@ -112,7 +112,9 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
                         if let Ok(vendor) = ctrl.get_gfx_mode() {
                             if ded == 1 && vendor != GfxVendors::Nvidia {
                                 warn!("Dedicated GFX toggle is on but driver mode is not nvidia \nSetting to nvidia driver mode");
-                                ctrl.do_vendor_tasks(GfxVendors::Nvidia)?;
+                                let devices = ctrl.devices();
+                                let bus = ctrl.bus();
+                                CtrlGraphics::do_vendor_tasks(GfxVendors::Nvidia, &devices, &bus)?;
                             } else if ded == 0 {
                                 info!("Dedicated GFX toggle is off");
                             }
