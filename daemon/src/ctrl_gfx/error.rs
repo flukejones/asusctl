@@ -24,7 +24,10 @@ impl fmt::Display for GfxError {
             GfxError::DisplayManagerTimeout(state) => {
                 write!(f, "Timed out waiting for display-manager {} state", state)
             }
-            GfxError::GsyncModeActive => write!(f, "Can not switch gfx modes when dedicated/G-Sync mode is active"),
+            GfxError::GsyncModeActive => write!(
+                f,
+                "Can not switch gfx modes when dedicated/G-Sync mode is active"
+            ),
         }
     }
 }

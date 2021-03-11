@@ -1,4 +1,7 @@
-use daemon::{ctrl_fan_cpu::FanCpuSupportedFunctions, ctrl_leds::LedSupportedFunctions, ctrl_rog_bios::RogBiosSupportedFunctions, ctrl_supported::SupportedFunctions};
+use daemon::{
+    ctrl_fan_cpu::FanCpuSupportedFunctions, ctrl_leds::LedSupportedFunctions,
+    ctrl_rog_bios::RogBiosSupportedFunctions, ctrl_supported::SupportedFunctions,
+};
 use gumdrop::{Opt, Options};
 use rog_dbus::AuraDbusClient;
 use rog_types::{
@@ -98,7 +101,11 @@ struct BiosCommand {
     post_sound_set: Option<bool>,
     #[options(no_long, help = "read bios POST sound")]
     post_sound_get: bool,
-    #[options(meta = "", no_long, help = "activate dGPU dedicated/G-Sync <true/false>")]
+    #[options(
+        meta = "",
+        no_long,
+        help = "activate dGPU dedicated/G-Sync <true/false>"
+    )]
     dedicated_gfx_set: Option<bool>,
     #[options(no_long, help = "get GPU mode")]
     dedicated_gfx_get: bool,
@@ -277,20 +284,15 @@ fn do_gfx(
             }
         }
 
-        println!("Changing graphics modes...");
-        println!("If this takes longer than 30s, ctrl+c then check `journalctl -b -u asusd`");
+        println!(
+            "Your display-manager will restart in requested mode when all users are logged out"
+        );
+        println!("If anything fails check `journalctl -b -u asusd`");
 
-        if do_gfx_action(
-            command.force,
-            "This will restart your display-manager. Please save all work!",
-            "Setting graphics mode...",
-        ) {
-            dbus.proxies().gfx().gfx_write_mode(mode.into())?;
-            let res = dbus.gfx_wait_changed()?;
-            println!("{}", res);
-            std::process::exit(1)
-        }
-        std::process::exit(-1)
+        dbus.proxies().gfx().gfx_write_mode(mode.into())?;
+        let res = dbus.gfx_wait_changed()?;
+        println!("{}", res);
+        std::process::exit(0)
     }
     if command.get {
         let res = dbus.proxies().gfx().gfx_get_mode()?;
@@ -305,21 +307,6 @@ fn do_gfx(
         }
     }
     Ok(())
-}
-
-fn do_gfx_action(no_confirm: bool, ask_msg: &str, ok_msg: &str) -> bool {
-    println!("{}", Red.paint(&format!("{} Continue?", ask_msg)));
-
-    let mut buf = String::new();
-
-    std::io::stdin().read_line(&mut buf).expect("Input failed");
-    let input = buf.chars().next().unwrap() as char;
-
-    if input == 'Y' || input == 'y' || no_confirm {
-        println!("{}", Green.paint(&format!("{}", ok_msg)));
-        return true;
-    }
-    false
 }
 
 fn handle_led_mode(
@@ -423,15 +410,14 @@ fn handle_bios_option(
             println!("Missing arg or command\n");
 
             let usage: Vec<String> = BiosCommand::usage()
-            .lines()
-            .map(|s| s.to_string())
-            .collect();
+                .lines()
+                .map(|s| s.to_string())
+                .collect();
 
-            for line in usage
-                .iter()
-                .filter(|line| !(line.contains("sound") && !supported.post_sound_toggle)
-            || !(line.contains("GPU") && !supported.dedicated_gfx_toggle))
-            {
+            for line in usage.iter().filter(|line| {
+                !(line.contains("sound") && !supported.post_sound_toggle)
+                    || !(line.contains("GPU") && !supported.dedicated_gfx_toggle)
+            }) {
                 println!("{}", line);
             }
         }
@@ -450,9 +436,11 @@ fn handle_bios_option(
         if let Some(opt) = cmd.dedicated_gfx_set {
             println!("Rebuilding initrd to include drivers");
             dbus.proxies().rog_bios().set_dedicated_gfx(opt)?;
-                println!("The mode change is not active until you reboot, on boot the bios will make the required change");
+            println!("The mode change is not active until you reboot, on boot the bios will make the required change");
             if opt {
-                println!("NOTE: on reboot your display manager will be forced to use Nvidia drivers");
+                println!(
+                    "NOTE: on reboot your display manager will be forced to use Nvidia drivers"
+                );
             } else {
                 println!("NOTE: after reboot you can then select regular graphics modes");
             }
