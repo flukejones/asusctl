@@ -4,12 +4,7 @@ use daemon::{
 };
 use gumdrop::{Opt, Options};
 use rog_dbus::AuraDbusClient;
-use rog_types::{
-    anime_matrix::{AniMeDataBuffer, FULL_PANE_LEN},
-    cli_options::{AniMeActions, AniMeStatusValue, LedBrightness, SetAuraBuiltin},
-    gfx_vendors::GfxVendors,
-    profile::{FanLevel, ProfileCommand, ProfileEvent},
-};
+use rog_types::{anime_matrix::{AniMeDataBuffer, FULL_PANE_LEN}, aura_modes::AuraModes, cli_options::{AniMeActions, AniMeStatusValue, LedBrightness, SetAuraBuiltin}, gfx_vendors::GfxVendors, profile::{FanLevel, ProfileCommand, ProfileEvent}};
 use std::env::args;
 use yansi_term::Colour::Green;
 use yansi_term::Colour::Red;
@@ -336,17 +331,23 @@ fn handle_led_mode(
         }
 
         println!("\nHelp can also be requested on modes, e.g: static --help");
-        std::process::exit(1);
+        return Ok(());
     }
+
     if mode.next_mode && mode.prev_mode {
-        println!("Please specify either next or previous")
+        println!("Please specify either next or previous");
+        return Ok(());
     }
     if mode.next_mode {
         dbus.proxies().led().next_led_mode()?;
     } else if mode.prev_mode {
         dbus.proxies().led().prev_led_mode()?;
-    } else if let Some(command) = mode.command.as_ref() {
-        dbus.proxies().led().set_led_mode(&command.into())?
+    } else if let Some(mode) = mode.command.as_ref() {
+        if mode.help_requested() {
+            println!("{}", mode.self_usage());
+            return Ok(());
+        }
+        dbus.proxies().led().set_led_mode(&<AuraModes>::from(mode))?;
     }
     Ok(())
 }

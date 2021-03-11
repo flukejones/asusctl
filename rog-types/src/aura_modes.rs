@@ -204,28 +204,28 @@ pub enum AuraModes {
 
 impl From<SetAuraBuiltin> for AuraModes {
     fn from(mode: SetAuraBuiltin) -> Self {
-        match mode {
-            SetAuraBuiltin::Static(x) => AuraModes::Static(x),
-            SetAuraBuiltin::Breathe(x) => AuraModes::Breathe(x),
-            SetAuraBuiltin::Strobe(x) => AuraModes::Strobe(x),
-            SetAuraBuiltin::Rainbow(x) => AuraModes::Rainbow(x),
-            SetAuraBuiltin::Star(x) => AuraModes::Star(x),
-            SetAuraBuiltin::Rain(x) => AuraModes::Rain(x),
-            SetAuraBuiltin::Highlight(x) => AuraModes::Highlight(x),
-            SetAuraBuiltin::Laser(x) => AuraModes::Laser(x),
-            SetAuraBuiltin::Ripple(x) => AuraModes::Ripple(x),
-            SetAuraBuiltin::Pulse(x) => AuraModes::Pulse(x),
-            SetAuraBuiltin::Comet(x) => AuraModes::Comet(x),
-            SetAuraBuiltin::Flash(x) => AuraModes::Flash(x),
-            SetAuraBuiltin::MultiStatic(x) => AuraModes::MultiStatic(x),
-            SetAuraBuiltin::MultiBreathe(x) => AuraModes::MultiBreathe(x),
-        }
+        (&mode).into()
     }
 }
 
 impl From<&SetAuraBuiltin> for AuraModes {
     fn from(mode: &SetAuraBuiltin) -> Self {
-        mode.clone().into()
+        match mode {
+            SetAuraBuiltin::Static(x) => AuraModes::Static(x.clone()),
+            SetAuraBuiltin::Breathe(x) => AuraModes::Breathe(x.clone()),
+            SetAuraBuiltin::Strobe(x) => AuraModes::Strobe(x.clone()),
+            SetAuraBuiltin::Rainbow(x) => AuraModes::Rainbow(x.clone()),
+            SetAuraBuiltin::Star(x) => AuraModes::Star(x.clone()),
+            SetAuraBuiltin::Rain(x) => AuraModes::Rain(x.clone()),
+            SetAuraBuiltin::Highlight(x) => AuraModes::Highlight(x.clone()),
+            SetAuraBuiltin::Laser(x) => AuraModes::Laser(x.clone()),
+            SetAuraBuiltin::Ripple(x) => AuraModes::Ripple(x.clone()),
+            SetAuraBuiltin::Pulse(x) => AuraModes::Pulse(x.clone()),
+            SetAuraBuiltin::Comet(x) => AuraModes::Comet(x.clone()),
+            SetAuraBuiltin::Flash(x) => AuraModes::Flash(x.clone()),
+            SetAuraBuiltin::MultiStatic(x) => AuraModes::MultiStatic(x.clone()),
+            SetAuraBuiltin::MultiBreathe(x) => AuraModes::MultiBreathe(x.clone()),
+        }
     }
 }
 
