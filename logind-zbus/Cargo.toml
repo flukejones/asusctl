@@ -1,10 +1,11 @@
 [package]
 name = "logind-zbus"
 version = "0.1.0"
+license = "MPL-2.0"
+readme = "README.md"
 authors = ["Luke D Jones <luke@ljones.dev>"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description = "A dbus client (using zbus) for logind"
 
 [dependencies]
 serde = "^1.0"
