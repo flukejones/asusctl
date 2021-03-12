@@ -524,6 +524,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "logind-zbus"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "zbus",
+ "zbus_macros",
+ "zvariant",
+ "zvariant_derive",
+]
+
+[[package]]
 name = "loom"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -24,6 +24,8 @@
 
 use zbus::dbus_proxy;
 
+use crate::types::logind::{Seat, SessionInfo, User};
+
 #[dbus_proxy(interface = "org.freedesktop.login1.Manager",
     default_service = "org.freedesktop.login1",
     default_path = "/org/freedesktop/login1")]
@@ -148,15 +150,15 @@ trait Manager {
     fn list_inhibitors(&self) -> zbus::Result<Vec<(String, String, String, String, u32, u32)>>;
 
     /// ListSeats method
-    fn list_seats(&self) -> zbus::Result<Vec<(String, zvariant::OwnedObjectPath)>>;
+    fn list_seats(&self) -> zbus::Result<Vec<Seat>>;
 
     /// ListSessions method
     fn list_sessions(
         &self,
-    ) -> zbus::Result<Vec<(String, u32, String, String, zvariant::OwnedObjectPath)>>;
+    ) -> zbus::Result<Vec<SessionInfo>>;
 
     /// ListUsers method
-    fn list_users(&self) -> zbus::Result<Vec<(u32, String, zvariant::OwnedObjectPath)>>;
+    fn list_users(&self) -> zbus::Result<Vec<User>>;
 
     /// LockSession method
     fn lock_session(&self, session_id: &str) -> zbus::Result<()>;

@@ -382,6 +382,15 @@ impl CtrlGraphics {
         return Err(GfxError::DisplayManagerTimeout(state.into()).into());
     }
 
+    /// Write the config changes and add/remove drivers and devices depending
+    /// on selected mode:
+    ///
+    /// Tasks:
+    /// - write xorg config
+    /// - write modprobe config
+    /// - rescan for devices
+    ///   + add drivers
+    ///   + or remove drivers and devices
     pub fn do_vendor_tasks(
         vendor: GfxVendors,
         devices: &[GraphicsDevice],
@@ -416,7 +425,7 @@ impl CtrlGraphics {
         Ok(())
     }
 
-    /// Spools until all user sessions are ended
+    /// Spools until all user sessions are ended then switches to requested mode
     fn fire_starter(
         vendor: GfxVendors,
         devices: Vec<GraphicsDevice>,
@@ -424,7 +433,7 @@ impl CtrlGraphics {
         killer: mpsc::Receiver<bool>,
     ) -> Result<String, RogError> {
         info!("GFX: display-manager thread started");
-        let mut sessions: Vec<session_manager::Session> = get_sessions().unwrap();
+        let mut sessions: Vec<session_manager::Session> = get_sessions()?;
 
         const SLEEP_PERIOD: Duration = Duration::from_millis(300);
         const REFRESH_COUNTDOWN: u32 = 3;
@@ -439,7 +448,7 @@ impl CtrlGraphics {
             sleep(SLEEP_PERIOD);
             if refresh_sessions == 0 {
                 refresh_sessions = REFRESH_COUNTDOWN;
-                sessions = get_sessions().unwrap();
+                sessions = get_sessions()?;
             }
             refresh_sessions -= 1;
         }
@@ -472,9 +481,11 @@ impl CtrlGraphics {
         Ok(format!("Graphics mode changed to {} successfully", v))
     }
 
-    /// For manually calling (not on boot/startup)
+    /// Initiates a mode change by starting a thread that will wait until all
+    /// graphical sessions are exited before performing the tasks required
+    /// to switch modes.
     ///
-    /// Will stop and start display manager without warning
+    /// For manually calling (not on boot/startup) via dbus
     pub fn set_gfx_config(&mut self, vendor: GfxVendors) -> Result<String, RogError> {
         if let Ok(gsync) = CtrlRogBios::get_gfx_mode() {
             if gsync == 1 {

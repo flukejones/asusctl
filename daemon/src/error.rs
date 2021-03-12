@@ -81,3 +81,9 @@ impl From<GraphicsError> for RogError {
         }
     }
 }
+
+impl From<SessionError> for RogError {
+    fn from(err: SessionError) -> Self {
+        RogError::Session(err)
+    }
+}
