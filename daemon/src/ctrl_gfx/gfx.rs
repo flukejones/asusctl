@@ -421,18 +421,29 @@ impl CtrlGraphics {
         vendor: GfxVendors,
         devices: Vec<GraphicsDevice>,
         bus: PciBus,
-        sessions: Vec<session_manager::Session>,
         killer: mpsc::Receiver<bool>,
     ) -> Result<String, RogError> {
         info!("GFX: display-manager thread started");
+        let mut sessions: Vec<session_manager::Session> = get_sessions().unwrap();
+
+        const SLEEP_PERIOD: Duration = Duration::from_millis(300);
+        const REFRESH_COUNTDOWN: u32 = 3;
+        let mut refresh_sessions = REFRESH_COUNTDOWN;
         while are_gfx_sessions_alive(&sessions) {
             if let Ok(stop) = killer.try_recv() {
                 if stop {
                     return Ok("Graphics mode change was cancelled".into());
                 }
             }
-            sleep(Duration::from_millis(300));
+            // Don't spin at max speed
+            sleep(SLEEP_PERIOD);
+            if refresh_sessions == 0 {
+                refresh_sessions = REFRESH_COUNTDOWN;
+                sessions = get_sessions().unwrap();
+            }
+            refresh_sessions -= 1;
         }
+        
         info!("GFX: all graphical user sessions ended, continuing");
         Self::do_display_manager_action("stop")?;
 
@@ -485,7 +496,6 @@ impl CtrlGraphics {
 
         let devices = self.nvidia.clone();
         let bus = self.bus.clone();
-        let sessions = get_sessions().unwrap();
         let (tx, rx) = mpsc::channel();
         if let Ok(mut lock) = self.thread_kill.lock() {
             *lock = Some(tx);
@@ -496,7 +506,7 @@ impl CtrlGraphics {
         Self::save_gfx_mode(vendor, self.config.clone())?;
 
         let _join: JoinHandle<()> = std::thread::spawn(move || {
-            Self::fire_starter(vendor, devices, bus, sessions, rx)
+            Self::fire_starter(vendor, devices, bus, rx)
                 .map_err(|err| {
                     error!("GFX: {}", err);
                 })
