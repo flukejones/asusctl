@@ -507,18 +507,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "logind-zbus"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
- "zbus",
- "zbus_macros",
- "zvariant",
- "zvariant_derive",
-]
-
-[[package]]
 name = "mac-notification-sys"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
