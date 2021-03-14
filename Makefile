@@ -54,6 +54,7 @@ install:
 	$(INSTALL_DATA) "./data/icons/asus_notif_green.png" "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/asus_notif_green.png"
 	$(INSTALL_DATA) "./data/icons/asus_notif_red.png" "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/asus_notif_red.png"
 	$(INSTALL_DATA) "./data/_asusctl" "$(DESTDIR)$(zshcpl)/_asusctl"
+	$(INSTALL_DATA) "./data/completions/asusctl.fish" "$(DESTDIR)$(datarootdir)/fish/vendor_completions.d/asusctl.fish"
 
 uninstall:
 	rm -f "$(DESTDIR)$(bindir)/$(BIN_C)"
@@ -70,6 +71,7 @@ uninstall:
 	rm -r "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/asus_notif_green.png"
 	rm -r "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/asus_notif_red.png"
 	rm -f "$(DESTDIR)$(zshcpl)/_asusctl"
+	rm -f "$(DESTDIR)$(datarootdir)/fish/vendor_completions.d/asusctl.fish"
 
 update:
 	cargo update
