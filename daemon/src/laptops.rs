@@ -34,21 +34,19 @@ pub fn match_laptop() -> Option<LaptopBase> {
         let device_desc = device
             .device_descriptor()
             .expect("Couldn't get device descriptor");
-        if device_desc.vendor_id() == 0x0b05 {
-            if LAPTOP_DEVICES.contains(&device_desc.product_id()) {
-                let prod_str = format!("{:x?}", device_desc.product_id());
+        if device_desc.vendor_id() == 0x0b05 && LAPTOP_DEVICES.contains(&device_desc.product_id()) {
+            let prod_str = format!("{:x?}", device_desc.product_id());
 
-                if device_desc.product_id() == 0x1854 {
-                    let mut laptop = laptop(prod_str, None);
-                    if laptop.supported_modes.is_empty() {
-                        laptop.supported_modes = vec![STATIC, BREATHING];
-                    }
-                    return Some(laptop);
+            if device_desc.product_id() == 0x1854 {
+                let mut laptop = laptop(prod_str, None);
+                if laptop.supported_modes.is_empty() {
+                    laptop.supported_modes = vec![STATIC, BREATHING];
                 }
-
-                let laptop = laptop(prod_str, Some("02".to_owned()));
                 return Some(laptop);
             }
+
+            let laptop = laptop(prod_str, Some("02".to_owned()));
+            return Some(laptop);
         }
     }
     warn!(

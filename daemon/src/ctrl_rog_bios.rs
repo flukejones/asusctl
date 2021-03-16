@@ -2,12 +2,12 @@ use crate::{config::Config, error::RogError, GetSupported};
 use log::{error, info, warn};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::OpenOptions;
+use std::io::BufRead;
 use std::io::{Read, Write};
 use std::path::Path;
 use std::process::Command;
 use std::sync::Arc;
 use std::sync::Mutex;
-use std::{convert::TryInto, io::BufRead};
 use zbus::dbus_interface;
 
 const INITRAMFS_PATH: &str = "/usr/sbin/update-initramfs";
@@ -101,7 +101,7 @@ impl CtrlRogBios {
 impl crate::ZbusAdd for CtrlRogBios {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
-            .at(&"/org/asuslinux/RogBios".try_into().unwrap(), self)
+            .at("/org/asuslinux/RogBios", self)
             .map_err(|err| {
                 warn!("CtrlRogBios: add_to_server {}", err);
                 err
@@ -334,7 +334,7 @@ impl CtrlRogBios {
                 .map_err(|err| RogError::Write(format!("{:?}", cmd), err))?;
             if !status.success() {
                 error!("Ram disk update failed");
-                return Err(RogError::Initramfs("Ram disk update failed".into()).into());
+                return Err(RogError::Initramfs("Ram disk update failed".into()));
             } else {
                 info!("Successfully updated initramfs");
             }

@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use log::warn;
 use serde_derive::{Deserialize, Serialize};
 use zbus::dbus_interface;
@@ -32,7 +30,7 @@ impl SupportedFunctions {
 impl crate::ZbusAdd for SupportedFunctions {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
-            .at(&"/org/asuslinux/Supported".try_into().unwrap(), self)
+            .at("/org/asuslinux/Supported", self)
             .map_err(|err| {
                 warn!("SupportedFunctions: add_to_server {}", err);
                 err

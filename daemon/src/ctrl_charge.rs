@@ -2,7 +2,6 @@ use crate::{config::Config, error::RogError, GetSupported};
 //use crate::dbus::DbusEvents;
 use log::{info, warn};
 use serde_derive::{Deserialize, Serialize};
-use std::convert::TryInto;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
@@ -64,7 +63,7 @@ impl CtrlCharge {
 impl crate::ZbusAdd for CtrlCharge {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
-            .at(&"/org/asuslinux/Charge".try_into().unwrap(), self)
+            .at("/org/asuslinux/Charge", self)
             .map_err(|err| {
                 warn!("CtrlCharge: add_to_server {}", err);
                 err

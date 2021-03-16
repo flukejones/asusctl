@@ -30,8 +30,6 @@ pub mod laptops;
 /// Fetch all supported functions for the laptop
 pub mod ctrl_supported;
 
-pub mod session_manager;
-
 mod error;
 
 use crate::error::RogError;

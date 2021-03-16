@@ -4,7 +4,13 @@ use daemon::{
 };
 use gumdrop::{Opt, Options};
 use rog_dbus::AuraDbusClient;
-use rog_types::{anime_matrix::{AniMeDataBuffer, FULL_PANE_LEN}, aura_modes::AuraModes, cli_options::{AniMeActions, AniMeStatusValue, LedBrightness, SetAuraBuiltin}, gfx_vendors::GfxVendors, profile::{FanLevel, ProfileCommand, ProfileEvent}};
+use rog_types::{
+    anime_matrix::{AniMeDataBuffer, FULL_PANE_LEN},
+    aura_modes::AuraModes,
+    cli_options::{AniMeActions, AniMeStatusValue, LedBrightness, SetAuraBuiltin},
+    gfx_vendors::GfxVendors,
+    profile::{FanLevel, ProfileCommand, ProfileEvent},
+};
 use std::env::args;
 use yansi_term::Colour::Green;
 use yansi_term::Colour::Red;
@@ -199,7 +205,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if parsed.show_supported {
         let dat = dbus.proxies().supported().get_supported_functions()?;
-        println!("Supported laptop functions:\n{}", dat.to_string());
+        println!("Supported laptop functions:\n{}", dat);
     }
 
     if let Some(fan_level) = parsed.fan_mode {
@@ -272,11 +278,9 @@ fn do_gfx(
     }
 
     if let Some(mode) = command.mode {
-        if supported.dedicated_gfx_toggle {
-            if dbus.proxies().rog_bios().get_dedicated_gfx()? == 1 {
-                println!("You can not change modes until you turn dedicated/G-Sync off and reboot");
-                std::process::exit(-1);
-            }
+        if supported.dedicated_gfx_toggle && dbus.proxies().rog_bios().get_dedicated_gfx()? == 1 {
+            println!("You can not change modes until you turn dedicated/G-Sync off and reboot");
+            std::process::exit(-1);
         }
 
         println!(
@@ -296,9 +300,9 @@ fn do_gfx(
     if command.pow {
         let res = dbus.proxies().gfx().gfx_get_pwr()?;
         if res.contains("active") {
-            println!("Current power status: {}", Red.paint(&format!("{}", res)));
+            println!("Current power status: {}", Red.paint(&res));
         } else {
-            println!("Current power status: {}", Green.paint(&format!("{}", res)));
+            println!("Current power status: {}", Green.paint(&res));
         }
     }
     Ok(())
@@ -347,7 +351,9 @@ fn handle_led_mode(
             println!("{}", mode.self_usage());
             return Ok(());
         }
-        dbus.proxies().led().set_led_mode(&<AuraModes>::from(mode))?;
+        dbus.proxies()
+            .led()
+            .set_led_mode(&<AuraModes>::from(mode))?;
     }
     Ok(())
 }
@@ -375,7 +381,7 @@ fn handle_profile(
             .collect();
         for line in usage
             .iter()
-            .filter(|line| !(line.contains("--curve") && !supported.fan_curve_set))
+            .filter(|line| !line.contains("--curve") || supported.fan_curve_set)
         {
             println!("{}", line);
         }
@@ -427,11 +433,7 @@ fn handle_bios_option(
             dbus.proxies().rog_bios().set_post_sound(opt)?;
         }
         if cmd.post_sound_get {
-            let res = if dbus.proxies().rog_bios().get_post_sound()? == 1 {
-                true
-            } else {
-                false
-            };
+            let res = dbus.proxies().rog_bios().get_post_sound()? == 1;
             println!("Bios POST sound on: {}", res);
         }
         if let Some(opt) = cmd.dedicated_gfx_set {
@@ -447,11 +449,7 @@ fn handle_bios_option(
             }
         }
         if cmd.dedicated_gfx_get {
-            let res = if dbus.proxies().rog_bios().get_dedicated_gfx()? == 1 {
-                true
-            } else {
-                false
-            };
+            let res = dbus.proxies().rog_bios().get_dedicated_gfx()? == 1;
             println!("Bios dedicated GPU on: {}", res);
         }
     }

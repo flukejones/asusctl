@@ -2,18 +2,23 @@ use ctrl_gfx::error::GfxError;
 use ctrl_gfx::*;
 use ctrl_rog_bios::CtrlRogBios;
 use log::{error, info, warn};
+use logind_zbus::{
+    types::{SessionClass, SessionInfo, SessionType},
+    ManagerProxy, SessionProxy,
+};
 use rog_types::gfx_vendors::GfxVendors;
-use session_manager::{are_gfx_sessions_alive, get_sessions};
-use std::{io::Write, ops::Add, path::Path};
+use std::{io::Write, ops::Add, path::Path, time::Instant};
 use std::{iter::FromIterator, thread::JoinHandle};
 use std::{process::Command, thread::sleep, time::Duration};
 use std::{str::FromStr, sync::mpsc};
 use std::{sync::Arc, sync::Mutex};
 use sysfs_class::{PciDevice, SysClass};
 use system::{GraphicsDevice, PciBus};
-use zbus::dbus_interface;
+use zbus::{dbus_interface, Connection};
 
 use crate::*;
+
+const THREAD_TIMEOUT_MSG: &str = "GFX: thread time exceeded 3 minutes, exiting";
 
 pub struct CtrlGraphics {
     bus: PciBus,
@@ -33,8 +38,6 @@ trait Dbus {
     fn notify_gfx(&self, vendor: &str) -> zbus::Result<()>;
     fn notify_action(&self, action: &str) -> zbus::Result<()>;
 }
-
-use std::convert::TryInto;
 
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl Dbus for CtrlGraphics {
@@ -72,12 +75,7 @@ impl Dbus for CtrlGraphics {
 impl ZbusAdd for CtrlGraphics {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
-            .at(
-                &"/org/asuslinux/Gfx"
-                    .try_into()
-                    .expect("Couldn't add to zbus"),
-                self,
-            )
+            .at("/org/asuslinux/Gfx", self)
             .map_err(|err| {
                 warn!("GFX: CtrlGraphics: add_to_server {}", err);
                 err
@@ -165,20 +163,18 @@ impl CtrlGraphics {
         self.nvidia.clone()
     }
 
-    fn save_gfx_mode(vendor: GfxVendors, config: Arc<Mutex<Config>>) -> Result<(), RogError> {
+    fn save_gfx_mode(vendor: GfxVendors, config: Arc<Mutex<Config>>) {
         if let Ok(mut config) = config.lock() {
-            config.gfx_mode = vendor.clone();
+            config.gfx_mode = vendor;
             config.write();
-            return Ok(());
         }
         // TODO: Error here
-        Ok(())
     }
 
     /// Associated method to get which vendor mode is set
     pub fn get_gfx_mode(&self) -> Result<GfxVendors, RogError> {
         if let Ok(config) = self.config.lock() {
-            return Ok(config.gfx_mode.clone());
+            return Ok(config.gfx_mode);
         }
         // TODO: Error here
         Ok(GfxVendors::Hybrid)
@@ -379,7 +375,7 @@ impl CtrlGraphics {
             std::thread::sleep(std::time::Duration::from_millis(500));
             count += 1;
         }
-        return Err(GfxError::DisplayManagerTimeout(state.into()).into());
+        Err(GfxError::DisplayManagerTimeout(state.into()).into())
     }
 
     /// Write the config changes and add/remove drivers and devices depending
@@ -425,34 +421,69 @@ impl CtrlGraphics {
         Ok(())
     }
 
+    fn graphical_session_active(
+        connection: &Connection,
+        sessions: &[SessionInfo],
+    ) -> Result<bool, RogError> {
+        for session in sessions {
+            let session_proxy = SessionProxy::new(&connection, session)?;
+            if session_proxy.get_class()? == SessionClass::User {
+                match session_proxy.get_type()? {
+                    SessionType::X11 | SessionType::Wayland | SessionType::MIR => {
+                        if session_proxy.get_active()? {
+                            return Ok(true);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+        Ok(false)
+    }
+
     /// Spools until all user sessions are ended then switches to requested mode
     fn fire_starter(
         vendor: GfxVendors,
         devices: Vec<GraphicsDevice>,
         bus: PciBus,
-        killer: mpsc::Receiver<bool>,
+        thread_stop: mpsc::Receiver<bool>,
     ) -> Result<String, RogError> {
         info!("GFX: display-manager thread started");
-        let mut sessions: Vec<session_manager::Session> = get_sessions()?;
 
-        const SLEEP_PERIOD: Duration = Duration::from_millis(300);
-        const REFRESH_COUNTDOWN: u32 = 3;
-        let mut refresh_sessions = REFRESH_COUNTDOWN;
-        while are_gfx_sessions_alive(&sessions) {
-            if let Ok(stop) = killer.try_recv() {
+        const SLEEP_PERIOD: Duration = Duration::from_millis(100);
+        let start_time = Instant::now();
+
+        let connection = Connection::new_system()?;
+        let manager = ManagerProxy::new(&connection)?;
+        let mut sessions = manager.list_sessions()?;
+
+        loop {
+            let tmp = manager.list_sessions()?;
+            if !tmp.iter().eq(&sessions) {
+                warn!("GFX: Sessions list changed");
+                warn!("GFX: Old list:\n{:?}\nNew list:\n{:?}", &sessions, &tmp);
+                sessions = tmp;
+            }
+
+            if !Self::graphical_session_active(&connection, &sessions)? {
+                break;
+            }
+
+            if let Ok(stop) = thread_stop.try_recv() {
                 if stop {
                     return Ok("Graphics mode change was cancelled".into());
                 }
             }
+            // exit if 3 minutes pass
+            if Instant::now().duration_since(start_time).as_secs() > 180 {
+                warn!("{}", THREAD_TIMEOUT_MSG);
+                return Ok(THREAD_TIMEOUT_MSG.into());
+            }
+
             // Don't spin at max speed
             sleep(SLEEP_PERIOD);
-            if refresh_sessions == 0 {
-                refresh_sessions = REFRESH_COUNTDOWN;
-                sessions = get_sessions()?;
-            }
-            refresh_sessions -= 1;
         }
-        
+
         info!("GFX: all graphical user sessions ended, continuing");
         Self::do_display_manager_action("stop")?;
 
@@ -514,7 +545,7 @@ impl CtrlGraphics {
         let killer = self.thread_kill.clone();
 
         // Save selected mode in case of reboot
-        Self::save_gfx_mode(vendor, self.config.clone())?;
+        Self::save_gfx_mode(vendor, self.config.clone());
 
         let _join: JoinHandle<()> = std::thread::spawn(move || {
             Self::fire_starter(vendor, devices, bus, rx)
@@ -526,7 +557,6 @@ impl CtrlGraphics {
             if let Ok(mut lock) = killer.try_lock() {
                 *lock = None;
             }
-            return;
         });
 
         // TODO: undo if failed? Save last mode, catch errors...

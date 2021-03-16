@@ -18,9 +18,9 @@ use rog_types::{
 };
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
+use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
-use std::{convert::TryInto, path::Path};
 use zbus::dbus_interface;
 
 use crate::GetSupported;
@@ -88,7 +88,7 @@ trait Dbus {
 impl crate::ZbusAdd for DbusKbdBacklight {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
-            .at(&"/org/asuslinux/Led".try_into().unwrap(), self)
+            .at("/org/asuslinux/Led", self)
             .map_err(|err| {
                 error!("DbusKbdBacklight: add_to_server {}", err);
             })
