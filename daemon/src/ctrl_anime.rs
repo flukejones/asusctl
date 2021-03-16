@@ -21,7 +21,6 @@ use rog_types::{
     error::AuraError,
 };
 use rusb::{Device, DeviceHandle};
-use std::convert::TryInto;
 use std::error::Error;
 use std::time::Duration;
 use zbus::dbus_interface;
@@ -60,7 +59,7 @@ pub trait Dbus {
 impl crate::ZbusAdd for CtrlAnimeDisplay {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
-            .at(&"/org/asuslinux/Anime".try_into().unwrap(), self)
+            .at("/org/asuslinux/Anime", self)
             .map_err(|err| {
                 warn!("CtrlAnimeDisplay: add_to_server {}", err);
                 err

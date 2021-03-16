@@ -15,4 +15,4 @@ rog_types = { path = "../rog-types" }
 rog_fan_curve = { version = "^0.1", features = ["serde"] }
 zbus = "^1.8"
 zbus_macros = "^1.8"
-zvariant = "^2.4"
+zvariant = "^2.5"

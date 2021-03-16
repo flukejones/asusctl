@@ -1,6 +1,6 @@
 [package]
 name = "daemon"
-version = "3.1.6"
+version = "3.1.7"
 license = "MPL-2.0"
 readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]
@@ -27,8 +27,9 @@ udev = "^0.6"
 log = "^0.4"
 env_logger = "^0.8"
 
-zbus = "^1.8"
-zvariant = "^2.4"
+zbus = "^2.0.0-beta.3"
+zvariant = "^2.5"
+logind-zbus = "*"
 
 # serialisation
 serde = "^1.0"

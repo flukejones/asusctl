@@ -6,7 +6,6 @@ use crate::{
 use log::{info, warn};
 use rog_types::profile::{FanLevel, ProfileEvent};
 use serde_derive::{Deserialize, Serialize};
-use std::convert::TryInto;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
@@ -135,7 +134,7 @@ impl DbusFanAndCpu {
 impl crate::ZbusAdd for DbusFanAndCpu {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
-            .at(&"/org/asuslinux/Profile".try_into().unwrap(), self)
+            .at("/org/asuslinux/Profile", self)
             .map_err(|err| {
                 warn!("DbusFanAndCpu: add_to_server {}", err);
                 err

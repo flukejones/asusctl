@@ -56,10 +56,12 @@ impl Config {
             .write(true)
             .create(true)
             .open(&CONFIG_PATH)
-            .expect(&format!(
-                "The file {} or directory /etc/asusd/ is missing",
-                CONFIG_PATH
-            )); // okay to cause panic here
+            .unwrap_or_else(|_| {
+                panic!(
+                    "The file {} or directory /etc/asusd/ is missing",
+                    CONFIG_PATH
+                )
+            }); // okay to cause panic here
         let mut buf = String::new();
         if let Ok(read_len) = file.read_to_string(&mut buf) {
             if read_len == 0 {

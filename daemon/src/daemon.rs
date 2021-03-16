@@ -19,7 +19,6 @@ use std::sync::Mutex;
 
 use daemon::ctrl_rog_bios::CtrlRogBios;
 use std::convert::Into;
-use std::convert::TryInto;
 use zbus::fdo;
 use zbus::Connection;
 
@@ -180,7 +179,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         });
 
     object_server
-        .with(&"/org/asuslinux/Charge".try_into()?, |obj: &CtrlCharge| {
+        .with("/org/asuslinux/Charge", |obj: &CtrlCharge| {
             let x = obj.limit();
             obj.notify_charge(x as u8)
         })
