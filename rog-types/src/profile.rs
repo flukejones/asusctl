@@ -80,6 +80,8 @@ pub struct ProfileCommand {
     pub next: bool,
     #[options(help = "create the profile if it doesn't exist")]
     pub create: bool,
+    #[options(help = "list available profiles")]
+    pub list: bool,
 
     #[options(meta = "", help = "enable or disable cpu turbo")]
     pub turbo: Option<bool>,
