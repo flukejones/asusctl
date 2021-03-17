@@ -365,6 +365,7 @@ fn handle_profile(
 ) -> Result<(), Box<dyn std::error::Error>> {
     if !cmd.next
         && !cmd.create
+        && !cmd.list
         && cmd.curve.is_none()
         && cmd.max_percentage.is_none()
         && cmd.min_percentage.is_none()
@@ -393,6 +394,9 @@ fn handle_profile(
     }
     if cmd.next {
         dbus.proxies().profile().next_fan()?;
+    } else if cmd.list {
+        let profile_names = dbus.proxies().profile().profile_names()?;
+        println!("Available profiles are {}", profile_names);
     } else {
         dbus.proxies()
             .profile()
