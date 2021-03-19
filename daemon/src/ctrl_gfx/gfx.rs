@@ -43,7 +43,7 @@ trait Dbus {
 impl Dbus for CtrlGraphics {
     fn vendor(&self) -> String {
         self.get_gfx_mode()
-            .map(|gfx| gfx.into())
+            .map(|gfx| (<&str>::from(gfx)).into())
             .unwrap_or_else(|err| format!("Get vendor failed: {}", err))
     }
 
@@ -238,7 +238,7 @@ impl CtrlGraphics {
         Ok(())
     }
 
-    fn write_modprobe_conf() -> Result<(), RogError> {
+    fn write_modprobe_conf(content: &[u8]) -> Result<(), RogError> {
         info!("GFX: Writing {}", MODPROBE_PATH);
 
         let mut file = std::fs::OpenOptions::new()
@@ -248,7 +248,7 @@ impl CtrlGraphics {
             .open(MODPROBE_PATH)
             .map_err(|err| RogError::Path(MODPROBE_PATH.into(), err))?;
 
-        file.write_all(MODPROBE_BASE)
+        file.write_all(content)
             .and_then(|_| file.sync_all())
             .map_err(|err| RogError::Write(MODPROBE_PATH.into(), err))?;
 
@@ -393,7 +393,14 @@ impl CtrlGraphics {
         bus: &PciBus,
     ) -> Result<(), RogError> {
         Self::write_xorg_conf(vendor)?;
-        Self::write_modprobe_conf()?; // TODO: Not required here, should put in startup?
+        // Write different modprobe to enable boot control to work
+        match vendor {
+            GfxVendors::Nvidia | GfxVendors::Hybrid | GfxVendors::Compute => {
+                Self::write_modprobe_conf(MODPROBE_BASE)?
+            }
+            // GfxVendors::Compute => {}
+            GfxVendors::Integrated => Self::write_modprobe_conf(MODPROBE_INTEGRATED)?,
+        }
 
         // Rescan before doing remove or add drivers
         bus.rescan()
@@ -408,8 +415,6 @@ impl CtrlGraphics {
                     })?;
                 }
             }
-            // TODO: compute mode, needs different setup
-            // GfxVendors::Compute => {}
             GfxVendors::Integrated => {
                 for driver in NVIDIA_DRIVERS.iter() {
                     Self::do_driver_action(driver, "rmmod")?;

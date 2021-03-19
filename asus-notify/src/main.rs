@@ -67,7 +67,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
                 let x = do_notif(&format!(
                     "Keyboard LED mode changed to {}",
-                    <&str>::from(&ledmode)
+                    ledmode.mode_name()
                 ))?;
                 last_led_notif = Some(x);
             }

@@ -1,6 +1,6 @@
 use log::{error, info, warn};
 use rog_fan_curve::Curve;
-use rog_types::{aura_modes::AuraModes, gfx_vendors::GfxVendors};
+use rog_types::gfx_vendors::GfxVendors;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs::{File, OpenOptions};
@@ -10,6 +10,7 @@ use crate::config_old::*;
 use crate::VERSION;
 
 pub static CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
+pub static AURA_CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
@@ -20,9 +21,6 @@ pub struct Config {
     #[serde(skip)]
     pub curr_fan_mode: u8,
     pub bat_charge_limit: u8,
-    pub kbd_led_brightness: u8,
-    pub kbd_backlight_mode: u8,
-    pub kbd_backlight_modes: Vec<AuraModes>,
     pub power_profiles: BTreeMap<String, Profile>,
 }
 
@@ -40,9 +38,6 @@ impl Default for Config {
             toggle_profiles: vec!["normal".into(), "boost".into(), "silent".into()],
             curr_fan_mode: 0,
             bat_charge_limit: 100,
-            kbd_led_brightness: 1,
-            kbd_backlight_mode: 0,
-            kbd_backlight_modes: Vec::new(),
             power_profiles: pwr,
         }
     }
@@ -50,7 +45,7 @@ impl Default for Config {
 
 impl Config {
     /// `load` will attempt to read the config, and panic if the dir is missing
-    pub fn load(supported_led_modes: &[u8]) -> Self {
+    pub fn load() -> Self {
         let mut file = OpenOptions::new()
             .read(true)
             .write(true)
@@ -65,10 +60,15 @@ impl Config {
         let mut buf = String::new();
         if let Ok(read_len) = file.read_to_string(&mut buf) {
             if read_len == 0 {
-                return Config::create_default(&mut file, &supported_led_modes);
+                return Config::create_default(&mut file);
             } else {
                 if let Ok(data) = serde_json::from_str(&buf) {
                     return data;
+                } else if let Ok(data) = serde_json::from_str::<ConfigV317>(&buf) {
+                    let config = data.into_current();
+                    config.write();
+                    info!("Updated config version to: {}", VERSION);
+                    return config;
                 } else if let Ok(data) = serde_json::from_str::<ConfigV301>(&buf) {
                     let config = data.into_current();
                     config.write();
@@ -89,17 +89,11 @@ impl Config {
                 panic!("Please remove {} then restart asusd", CONFIG_PATH);
             }
         }
-        Config::create_default(&mut file, &supported_led_modes)
+        Config::create_default(&mut file)
     }
 
-    fn create_default(file: &mut File, supported_led_modes: &[u8]) -> Self {
-        // create a default config here
-        let mut config = Config::default();
-
-        for n in supported_led_modes {
-            config.kbd_backlight_modes.push(AuraModes::from(*n))
-        }
-
+    fn create_default(file: &mut File) -> Self {
+        let config = Config::default();
         // Should be okay to unwrap this as is since it is a Default
         let json = serde_json::to_string_pretty(&config).unwrap();
         file.write_all(json.as_bytes())
@@ -140,26 +134,6 @@ impl Config {
         let json = serde_json::to_string_pretty(self).expect("Parse config to JSON failed");
         file.write_all(json.as_bytes())
             .unwrap_or_else(|err| error!("Could not write config: {}", err));
-    }
-
-    pub fn set_mode_data(&mut self, mode: AuraModes) {
-        let byte: u8 = (&mode).into();
-        for (index, n) in self.kbd_backlight_modes.iter().enumerate() {
-            if byte == u8::from(n) {
-                // Consume it, OMNOMNOMNOM
-                self.kbd_backlight_modes[index] = mode;
-                break;
-            }
-        }
-    }
-
-    pub fn get_led_mode_data(&self, num: u8) -> Option<&AuraModes> {
-        for mode in &self.kbd_backlight_modes {
-            if u8::from(mode) == num {
-                return Some(mode);
-            }
-        }
-        None
     }
 }
 

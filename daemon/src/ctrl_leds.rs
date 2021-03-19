@@ -5,15 +5,13 @@ static LED_SET: [u8; 17] = [0x5d, 0xb5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 static KBD_BRIGHT_PATH: &str = "/sys/class/leds/asus::kbd_backlight/brightness";
 
 use crate::{
-    config::Config,
+    config_aura::AuraConfig,
     error::RogError,
-    laptops::{match_laptop, HELP_ADDRESS},
+    laptops::{match_laptop, LaptopLedData, HELP_ADDRESS},
 };
 use log::{error, info, warn};
 use rog_types::{
-    aura_brightness_bytes,
-    aura_modes::{AuraModes, PER_KEY},
-    fancy::KeyColourArray,
+    aura_modes::{AuraEffect, AuraModeNum},
     LED_MSG_LEN,
 };
 use std::fs::OpenOptions;
@@ -29,7 +27,8 @@ use serde_derive::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 pub struct LedSupportedFunctions {
     pub brightness_set: bool,
-    pub stock_led_modes: Option<Vec<u8>>,
+    pub stock_led_modes: Option<Vec<AuraModeNum>>,
+    pub multizone_led_mode: bool,
     pub per_key_led_mode: bool,
 }
 
@@ -39,21 +38,20 @@ impl GetSupported for CtrlKbdBacklight {
     fn get_supported() -> Self::A {
         // let mode = <&str>::from(&<AuraModes>::from(*mode));
         let mut stock_led_modes = None;
-        let mut per_key_led_mode = false;
+        let multizone_led_mode = false;
+        let per_key_led_mode = false;
         if let Some(laptop) = match_laptop() {
-            let modes = laptop.supported_modes().to_vec();
-            if modes.contains(&PER_KEY) {
-                per_key_led_mode = true;
-                let modes = modes.iter().filter(|x| **x != PER_KEY).copied().collect();
-                stock_led_modes = Some(modes);
+            stock_led_modes = if laptop.supported_modes().standard.is_empty() {
+                None
             } else {
-                stock_led_modes = Some(modes);
-            }
+                Some(laptop.supported_modes().standard.clone())
+            };
         }
 
         LedSupportedFunctions {
             brightness_set: CtrlKbdBacklight::get_kbd_bright_path().is_ok(),
             stock_led_modes,
+            multizone_led_mode,
             per_key_led_mode,
         }
     }
@@ -64,9 +62,9 @@ pub struct CtrlKbdBacklight {
     #[allow(dead_code)]
     kbd_node: Option<String>,
     pub bright_node: String,
-    supported_modes: Vec<u8>,
+    supported_modes: LaptopLedData,
     flip_effect_write: bool,
-    config: Arc<Mutex<Config>>,
+    config: AuraConfig,
 }
 
 pub struct DbusKbdBacklight {
@@ -96,48 +94,42 @@ impl crate::ZbusAdd for DbusKbdBacklight {
     }
 }
 
+/// The main interface for changing, reading, or notfying signals
+///
+/// LED commands are split between Brightness, Modes, Per-Key
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl DbusKbdBacklight {
-    fn set_led_mode(&mut self, data: String) {
-        if let Ok(data) = serde_json::from_str(&data) {
-            if let Ok(mut ctrl) = self.inner.try_lock() {
-                if let Ok(mut cfg) = ctrl.config.clone().try_lock() {
-                    match &data {
-                        AuraModes::PerKey(_) => {
-                            ctrl.do_command(data, &mut cfg)
-                                .unwrap_or_else(|err| warn!("{}", err));
-                        }
-                        _ => {
-                            if let Ok(json) = serde_json::to_string(&data) {
-                                match ctrl.do_command(data, &mut cfg) {
-                                    Ok(_) => {
-                                        self.notify_led(&json).ok();
-                                    }
-                                    Err(err) => {
-                                        warn!("{}", err);
-                                    }
-                                }
-                            }
-                        }
-                    }
+    fn set_brightness(&mut self, brightness: u8) {
+        if let Ok(ctrl) = self.inner.try_lock() {
+            ctrl.set_brightness(brightness)
+                .map_err(|err| warn!("{}", err))
+                .ok();
+        }
+    }
+
+    fn set_led_mode(&mut self, effect: AuraEffect) {
+        if let Ok(mut ctrl) = self.inner.try_lock() {
+            let mode_name = effect.mode_name();
+            match ctrl.do_command(effect) {
+                Ok(_) => {
+                    self.notify_led(&mode_name).ok();
+                }
+                Err(err) => {
+                    warn!("{}", err);
                 }
             }
-        } else {
-            warn!("SetKeyBacklight could not deserialise");
         }
     }
 
     fn next_led_mode(&self) {
         if let Ok(mut ctrl) = self.inner.try_lock() {
-            if let Ok(mut cfg) = ctrl.config.clone().try_lock() {
-                ctrl.toggle_mode(false, &mut cfg)
-                    .unwrap_or_else(|err| warn!("{}", err));
+            ctrl.toggle_mode(false)
+                .unwrap_or_else(|err| warn!("{}", err));
 
-                if let Some(mode) = cfg.get_led_mode_data(cfg.kbd_backlight_mode) {
-                    if let Ok(json) = serde_json::to_string(&mode) {
-                        self.notify_led(&json)
-                            .unwrap_or_else(|err| warn!("{}", err));
-                    }
+            if let Some(mode) = ctrl.config.builtins.get(&ctrl.config.current_mode) {
+                if let Ok(json) = serde_json::to_string(&mode) {
+                    self.notify_led(&json)
+                        .unwrap_or_else(|err| warn!("{}", err));
                 }
             }
         }
@@ -145,40 +137,24 @@ impl DbusKbdBacklight {
 
     fn prev_led_mode(&self) {
         if let Ok(mut ctrl) = self.inner.try_lock() {
-            if let Ok(mut cfg) = ctrl.config.clone().try_lock() {
-                ctrl.toggle_mode(true, &mut cfg)
-                    .unwrap_or_else(|err| warn!("{}", err));
+            ctrl.toggle_mode(true)
+                .unwrap_or_else(|err| warn!("{}", err));
 
-                if let Some(mode) = cfg.get_led_mode_data(cfg.kbd_backlight_mode) {
-                    if let Ok(json) = serde_json::to_string(&mode) {
-                        self.notify_led(&json)
-                            .unwrap_or_else(|err| warn!("{}", err));
-                    }
+            if let Some(mode) = ctrl.config.builtins.get(&ctrl.config.current_mode) {
+                if let Ok(json) = serde_json::to_string(&mode) {
+                    self.notify_led(&json)
+                        .unwrap_or_else(|err| warn!("{}", err));
                 }
             }
         }
     }
 
     /// Return the current mode data
+    #[dbus_interface(property)]
     fn led_mode(&self) -> String {
         if let Ok(ctrl) = self.inner.try_lock() {
-            if let Ok(cfg) = ctrl.config.clone().try_lock() {
-                if let Some(mode) = cfg.get_led_mode_data(cfg.kbd_backlight_mode) {
-                    if let Ok(json) = serde_json::to_string(&mode) {
-                        return json;
-                    }
-                }
-            }
-        }
-        warn!("SetKeyBacklight could not deserialise");
-        "SetKeyBacklight could not deserialise".to_string()
-    }
-
-    /// Return a list of available modes
-    fn led_modes(&self) -> String {
-        if let Ok(ctrl) = self.inner.try_lock() {
-            if let Ok(cfg) = ctrl.config.clone().try_lock() {
-                if let Ok(json) = serde_json::to_string(&cfg.kbd_backlight_modes) {
+            if let Some(mode) = ctrl.config.builtins.get(&ctrl.config.current_mode) {
+                if let Ok(json) = serde_json::to_string(&mode) {
                     return json;
                 }
             }
@@ -187,14 +163,25 @@ impl DbusKbdBacklight {
         "SetKeyBacklight could not deserialise".to_string()
     }
 
-    /// Return the current LED brightness
-    fn led_brightness(&self) -> i8 {
+    /// Return a list of available modes
+    #[dbus_interface(property)]
+    fn led_modes(&self) -> String {
         if let Ok(ctrl) = self.inner.try_lock() {
-            if let Ok(cfg) = ctrl.config.clone().try_lock() {
-                return cfg.kbd_led_brightness as i8;
+            if let Ok(json) = serde_json::to_string(&ctrl.config.builtins) {
+                return json;
             }
         }
         warn!("SetKeyBacklight could not deserialise");
+        "SetKeyBacklight could not serialise".to_string()
+    }
+
+    /// Return the current LED brightness
+    #[dbus_interface(property)]
+    fn led_brightness(&self) -> i8 {
+        if let Ok(ctrl) = self.inner.try_lock() {
+            return ctrl.get_brightness().map(|n| n as i8).unwrap_or(-1);
+        }
+        warn!("SetKeyBacklight could not serialise");
         -1
     }
 
@@ -205,44 +192,40 @@ impl DbusKbdBacklight {
 impl crate::Reloadable for CtrlKbdBacklight {
     fn reload(&mut self) -> Result<(), RogError> {
         // set current mode (if any)
-        if let Ok(mut config) = self.config.clone().try_lock() {
-            if self.supported_modes.len() > 1 {
-                if self.supported_modes.contains(&config.kbd_backlight_mode) {
-                    let mode = config
-                        .get_led_mode_data(config.kbd_backlight_mode)
-                        .ok_or(RogError::NotSupported)?
-                        .to_owned();
-                    self.write_mode(&mode)?;
-                    info!("Reloaded last used mode");
-                } else {
-                    warn!(
-                        "An unsupported mode was set: {}, reset to first mode available",
-                        <&str>::from(&<AuraModes>::from(config.kbd_backlight_mode))
-                    );
-                    for (idx, mode) in config.kbd_backlight_modes.iter_mut().enumerate() {
-                        if !self.supported_modes.contains(&mode.into()) {
-                            config.kbd_backlight_modes.remove(idx);
-                            config.write();
-                            break;
-                        }
-                    }
-                    config.kbd_backlight_mode = self.supported_modes[0];
-                    // TODO: do a recursive call with a boxed dyn future later
-                    let mode = config
-                        .get_led_mode_data(config.kbd_backlight_mode)
-                        .ok_or(RogError::NotSupported)?
-                        .to_owned();
-                    self.write_mode(&mode)?;
-                    info!("Reloaded last used mode");
-                }
+        if self.supported_modes.standard.len() > 1 {
+            let current_mode = self.config.current_mode;
+            if self.supported_modes.standard.contains(&(current_mode)) {
+                let mode = self
+                    .config
+                    .builtins
+                    .get(&current_mode)
+                    .ok_or(RogError::NotSupported)?
+                    .to_owned();
+                self.write_mode(&mode)?;
+                info!("Reloaded last used mode");
+            } else {
+                warn!(
+                    "An unsupported mode was set: {}, reset to first mode available",
+                    <&str>::from(&self.config.current_mode)
+                );
+                self.config.builtins.remove(&current_mode);
+                self.config.current_mode = AuraModeNum::Static;
+                // TODO: do a recursive call with a boxed dyn future later
+                let mode = self
+                    .config
+                    .builtins
+                    .get(&current_mode)
+                    .ok_or(RogError::NotSupported)?
+                    .to_owned();
+                self.write_mode(&mode)?;
+                info!("Reloaded last used mode");
             }
-
-            // Reload brightness
-            let bright = config.kbd_led_brightness;
-            let bytes = aura_brightness_bytes(bright);
-            self.write_bytes(&bytes)?;
-            info!("Reloaded last used brightness");
         }
+
+        // Reload brightness
+        let bright = self.config.brightness;
+        self.set_brightness(bright)?;
+        info!("Reloaded last used brightness");
         Ok(())
     }
 }
@@ -262,12 +245,10 @@ impl crate::CtrlTask for CtrlKbdBacklight {
         file.read_exact(&mut buf)
             .map_err(|err| RogError::Read("buffer".into(), err))?;
         if let Some(num) = char::from(buf[0]).to_digit(10) {
-            if let Ok(mut config) = self.config.clone().try_lock() {
-                if config.kbd_led_brightness != num as u8 {
-                    config.read();
-                    config.kbd_led_brightness = num as u8;
-                    config.write();
-                }
+            if self.config.brightness != num as u8 {
+                self.config.read();
+                self.config.brightness = num as u8;
+                self.config.write();
             }
             return Ok(());
         }
@@ -280,8 +261,8 @@ impl CtrlKbdBacklight {
     pub fn new(
         id_product: &str,
         condev_iface: Option<&String>,
-        supported_modes: Vec<u8>,
-        config: Arc<Mutex<Config>>,
+        supported_modes: LaptopLedData,
+        config: AuraConfig,
     ) -> Result<Self, RogError> {
         // TODO: return error if *all* nodes are None
         let led_node = Self::get_node_failover(id_product, None, Self::scan_led_node).map_or_else(
@@ -332,6 +313,37 @@ impl CtrlKbdBacklight {
                 "Keyboard features missing, you may require a v5.11 series kernel or newer".into(),
             ))
         }
+    }
+
+    pub fn get_brightness(&self) -> Result<u8, RogError> {
+        let mut file = OpenOptions::new()
+            .read(true)
+            .open(&self.bright_node)
+            .map_err(|err| match err.kind() {
+                std::io::ErrorKind::NotFound => {
+                    RogError::MissingLedBrightNode((&self.bright_node).into(), err)
+                }
+                _ => RogError::Path((&self.bright_node).into(), err),
+            })?;
+        let mut buf = [0u8; 1];
+        file.read_exact(&mut buf)
+            .map_err(|err| RogError::Read("buffer".into(), err))?;
+        Ok(buf[0])
+    }
+
+    pub fn set_brightness(&self, brightness: u8) -> Result<(), RogError> {
+        let mut file = OpenOptions::new()
+            .write(true)
+            .open(&self.bright_node)
+            .map_err(|err| match err.kind() {
+                std::io::ErrorKind::NotFound => {
+                    RogError::MissingLedBrightNode((&self.bright_node).into(), err)
+                }
+                _ => RogError::Path((&self.bright_node).into(), err),
+            })?;
+        file.write_all(&[brightness])
+            .map_err(|err| RogError::Read("buffer".into(), err))?;
+        Ok(())
     }
 
     fn get_node_failover(
@@ -432,8 +444,8 @@ impl CtrlKbdBacklight {
         ))
     }
 
-    pub fn do_command(&mut self, mode: AuraModes, config: &mut Config) -> Result<(), RogError> {
-        self.set_and_save(mode, config)
+    pub(crate) fn do_command(&mut self, mode: AuraEffect) -> Result<(), RogError> {
+        self.set_and_save(mode)
     }
 
     /// Should only be used if the bytes you are writing are verified correct
@@ -470,100 +482,61 @@ impl CtrlKbdBacklight {
     ///
     /// This needs to be universal so that settings applied by dbus stick
     #[inline]
-    fn set_and_save(&mut self, mode: AuraModes, config: &mut Config) -> Result<(), RogError> {
-        match mode {
-            AuraModes::LedBrightness(n) => {
-                let bytes: [u8; LED_MSG_LEN] = (&mode).into();
-                self.write_bytes(&bytes)?;
-                config.read();
-                config.kbd_led_brightness = n;
-                config.write();
-                info!("LED brightness set to {:#?}", n);
-            }
-            AuraModes::PerKey(v) => {
-                if v.is_empty() || v[0].is_empty() {
-                    let bytes = KeyColourArray::get_init_msg();
-                    self.write_bytes(&bytes)?;
-                } else {
-                    self.write_effect(&v)?;
-                }
-            }
-            _ => {
-                config.read();
-                let mode_num: u8 = u8::from(&mode);
-                self.write_mode(&mode)?;
-                config.kbd_backlight_mode = mode_num;
-                config.set_mode_data(mode);
-                config.write();
-            }
-        }
+    fn set_and_save(&mut self, mode: AuraEffect) -> Result<(), RogError> {
+        self.config.read();
+        self.write_mode(&mode)?;
+        self.config.current_mode = *mode.mode();
+        self.config.set_builtin(mode);
+        self.config.write();
         Ok(())
     }
 
     #[inline]
-    fn toggle_mode(&mut self, reverse: bool, config: &mut Config) -> Result<(), RogError> {
-        let current = config.kbd_backlight_mode;
-        if let Some(idx) = self.supported_modes.iter().position(|v| *v == current) {
+    fn toggle_mode(&mut self, reverse: bool) -> Result<(), RogError> {
+        let current = self.config.current_mode;
+        if let Some(idx) = self
+            .supported_modes
+            .standard
+            .iter()
+            .position(|v| *v == current)
+        {
             let mut idx = idx;
             // goes past end of array
             if reverse {
                 if idx == 0 {
-                    idx = self.supported_modes.len() - 1;
+                    idx = self.supported_modes.standard.len() - 1;
                 } else {
                     idx -= 1;
                 }
             } else {
                 idx += 1;
-                if idx == self.supported_modes.len() {
+                if idx == self.supported_modes.standard.len() {
                     idx = 0;
                 }
             }
-            let next = self.supported_modes[idx];
+            let next = self.supported_modes.standard[idx];
 
-            config.read();
-            if let Some(data) = config.get_led_mode_data(next) {
+            self.config.read();
+            if let Some(data) = self.config.builtins.get(&next) {
                 self.write_mode(&data)?;
-                config.kbd_backlight_mode = next;
+                self.config.current_mode = next;
             }
-            config.write();
+            self.config.write();
         }
 
         Ok(())
     }
 
     #[inline]
-    fn write_mode(&mut self, mode: &AuraModes) -> Result<(), RogError> {
-        let mode_num: u8 = u8::from(mode);
-        if !self.supported_modes.contains(&mode_num) {
+    fn write_mode(&self, mode: &AuraEffect) -> Result<(), RogError> {
+        if !self.supported_modes.standard.contains(&mode.mode()) {
             return Err(RogError::NotSupported);
         }
-        match mode {
-            AuraModes::PerKey(v) => {
-                if v.is_empty() || v[0].is_empty() {
-                    let bytes = KeyColourArray::get_init_msg();
-                    self.write_bytes(&bytes)?;
-                } else {
-                    self.write_effect(v)?;
-                }
-            }
-            AuraModes::MultiStatic(_) | AuraModes::MultiBreathe(_) => {
-                let bytes: [[u8; LED_MSG_LEN]; 4] = mode.into();
-                for array in bytes.iter() {
-                    self.write_bytes(array)?;
-                }
-                self.write_bytes(&LED_SET)?;
-                // Changes won't persist unless apply is set
-                self.write_bytes(&LED_APPLY)?;
-                return Ok(());
-            }
-            _ => {
-                let bytes: [u8; LED_MSG_LEN] = mode.into();
-                self.write_bytes(&bytes)?;
-                self.write_bytes(&LED_SET)?;
-                // Changes won't persist unless apply is set
-                self.write_bytes(&LED_APPLY)?;
-            }
-        }
+        let bytes: [u8; LED_MSG_LEN] = mode.into();
+        self.write_bytes(&bytes)?;
+        self.write_bytes(&LED_SET)?;
+        // Changes won't persist unless apply is set
+        self.write_bytes(&LED_APPLY)?;
         Ok(())
     }
 }

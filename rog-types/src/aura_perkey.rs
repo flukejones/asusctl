@@ -35,8 +35,8 @@ impl KeyColourArray {
 
     /// Initialise and clear the keyboard for custom effects
     #[inline]
-    pub fn get_init_msg() -> Vec<u8> {
-        let mut init = vec![0u8; 64];
+    pub const fn get_init_msg() -> [u8; 64] {
+        let mut init = [0u8; 64];
         init[0] = 0x5d; // Report ID
         init[1] = 0xbc; // Mode = custom??, 0xb3 is builtin
         init

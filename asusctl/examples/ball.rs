@@ -1,5 +1,5 @@
 use rog_dbus::AuraDbusClient;
-use rog_types::fancy::{GX502Layout, Key, KeyColourArray, KeyLayout};
+use rog_types::aura_perkey::{GX502Layout, Key, KeyColourArray, KeyLayout};
 use std::collections::LinkedList;
 
 #[derive(Debug, Clone)]

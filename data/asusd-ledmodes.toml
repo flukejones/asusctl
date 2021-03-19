@@ -1,59 +1,83 @@
-[[led_modes]]
+[[led_data]]
 prod_family = "Zephyrus S"
 board_names = ["GX502", "GX701", "G531", "GL531", "G532"]
-led_modes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 255]
+standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
+multizone = false
+per_key = true
 
-[[led_modes]]
+[[led_data]]
 prod_family = "Zephyrus M"
 board_names = ["GU502GV"]
-led_modes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 255]
+standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
+multizone = false
+per_key = true
 
-[[led_modes]]
+[[led_data]]
 prod_family = "ROG Zephyrus M15"
 board_names = ["GU502LW"]
-led_modes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 255]
+standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
+multizone = false
+per_key = true
 
-[[led_modes]]
+[[led_data]]
 prod_family = "ROG Zephyrus M15"
 board_names = ["GU502LU"]
-led_modes = [0, 1, 2, 10]
+standard = ["Static", "Breathe", "Strobe", "Pulse"]
+multizone = false
+per_key = false
 
-[[led_modes]]
+[[led_data]]
 prod_family = "Zephyrus"
 board_names = ["GM501GM", "GX531"]
-led_modes = [0, 1, 2, 3, 10, 13]
+standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
+multizone = true
+per_key = false
 
-[[led_modes]]
+[[led_data]]
 prod_family = "ROG Strix"
 board_names = ["G531GW"]
-led_modes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 255]
+standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
+multizone = false
+per_key = true
 
-[[led_modes]]
+[[led_data]]
 prod_family = "ROG Strix"
 board_names = ["GX531", "G512LV", "G712LV"]
-led_modes = [0, 1, 2, 3, 10, 13, 14]
+standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
+multizone = true
+per_key = false
 
-[[led_modes]]
+[[led_data]]
 prod_family = "ROG Strix"
 board_names = ["G512LI", "G712LI", "G531GD"]
-led_modes = [0, 1, 2, 3, 10]
+standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
+multizone = false
+per_key = false
 
-[[led_modes]]
+[[led_data]]
 prod_family = "Strix"
 board_names = ["G731GV", "G731GW", "G531GV"]
-led_modes = [0, 1, 2, 3, 13, 14]
+standard = ["Static", "Breathe", "Strobe", "Rainbow"]
+multizone = true
+per_key = false
 
-[[led_modes]]
+[[led_data]]
 prod_family = "Strix"
 board_names = ["G731GT", "G731GU", "G531GT", "G531GU"]
-led_modes = [0, 1, 2, 3]
+standard = ["Static", "Breathe", "Strobe", "Rainbow"]
+multizone = false
+per_key = false
 
-[[led_modes]]
+[[led_data]]
 prod_family = "Strix Scar"
 board_names = ["G531", "G731"]
-led_modes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 255]
+standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
+multizone = true
+per_key = true
 
-[[led_modes]]
+[[led_data]]
 prod_family = "ROG"
 board_names = ["GL553VE"]
-led_modes = [0, 1, 2, 13, 14]
+standard = ["Static", "Breathe", "Strobe"]
+multizone = true
+per_key = false
