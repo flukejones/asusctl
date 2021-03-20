@@ -11,7 +11,7 @@ use std::io::Write;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
-use zbus::dbus_interface;
+use zbus::{dbus_interface, fdo::Error};
 
 static FAN_TYPE_1_PATH: &str = "/sys/devices/platform/asus-nb-wmi/throttle_thermal_policy";
 static FAN_TYPE_2_PATH: &str = "/sys/devices/platform/asus-nb-wmi/fan_boost_mode";
@@ -146,9 +146,35 @@ impl DbusFanAndCpu {
         "Failed".to_string()
     }
 
+    fn remove(&self, profile: &str) -> zbus::fdo::Result<()> {
+        if let Ok(ctrl) = self.inner.try_lock() {
+            if let Ok(mut cfg) = ctrl.config.try_lock() {
+                cfg.read();
+
+                if !cfg.power_profiles.contains_key(profile) {
+                    return Err(Error::Failed("Invalid profile specified".to_string()));
+                }
+
+                if cfg.power_profiles.keys().len() == 1 {
+                    return Err(Error::Failed("Cannot delete the last profile".to_string()));
+                }
+
+                if cfg.active_profile == *profile {
+                    return Err(Error::Failed("Cannot delete the active profile".to_string()));
+                }
+
+                cfg.power_profiles.remove(profile);
+                cfg.write();
+
+                return Ok(());
+            }
+        }
+
+        return Err(Error::Failed("Failed to lock configuration".to_string()));
+    }
+
     #[dbus_interface(signal)]
     fn notify_profile(&self, profile: &str) -> zbus::Result<()> {}
-
 }
 
 impl crate::ZbusAdd for DbusFanAndCpu {
