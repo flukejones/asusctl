@@ -100,4 +100,6 @@ pub struct ProfileCommand {
     pub curve: Option<Curve>,
     #[options(free)]
     pub profile: Option<String>,
+    #[options(help = "remove a profile by name")]
+    pub remove: Option<String>,
 }

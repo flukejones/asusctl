@@ -44,6 +44,9 @@ trait Daemon {
     /// ProfileNames method
     fn profile_names(&self) -> zbus::Result<String>;
 
+    /// Remove method
+    fn remove(&self, profile: &str) -> zbus::Result<()>;
+
     /// SetProfile method
     fn set_profile(&self, profile: &str) -> zbus::Result<()>;
 
@@ -88,6 +91,11 @@ impl<'a> ProfileProxy<'a> {
     #[inline]
     pub fn profile_names(&self) -> Result<String> {
         self.0.profile_names()
+    }
+
+    #[inline]
+    pub fn remove(&self, profile: &str) -> Result<()> {
+        self.0.remove(profile)
     }
 
     #[inline]
