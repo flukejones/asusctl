@@ -1,6 +1,4 @@
-use crate::{
-    error::AuraError,
-};
+use crate::error::AuraError;
 use gumdrop::Options;
 use std::str::FromStr;
 

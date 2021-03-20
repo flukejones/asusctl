@@ -11,7 +11,10 @@ pub mod zbus_profile;
 pub mod zbus_rogbios;
 pub mod zbus_supported;
 
-use rog_types::aura_modes::AuraEffect;
+use rog_types::{
+    aura_modes::AuraEffect,
+    gfx_vendors::{GfxRequiredUserAction, GfxVendors},
+};
 use std::sync::{Arc, Mutex};
 use zbus::{Connection, Result, SignalReceiver};
 
@@ -86,8 +89,8 @@ impl<'a> DbusProxies<'a> {
 
 // Signals separated out
 pub struct Signals {
-    pub gfx_vendor: Arc<Mutex<Option<String>>>,
-    pub gfx_action: Arc<Mutex<Option<String>>>,
+    pub gfx_vendor: Arc<Mutex<Option<GfxVendors>>>,
+    pub gfx_action: Arc<Mutex<Option<GfxRequiredUserAction>>>,
     pub profile: Arc<Mutex<Option<String>>>,
     pub led_mode: Arc<Mutex<Option<AuraEffect>>>,
     pub charge: Arc<Mutex<Option<u8>>>,
@@ -151,13 +154,13 @@ impl<'a> AuraDbusClient<'a> {
     /*
      * GFX
      */
-    pub fn gfx_wait_changed(&self) -> Result<String> {
+    pub fn gfx_wait_changed(&self) -> Result<GfxRequiredUserAction> {
         loop {
             if let Ok(res) = self.proxies.gfx.proxy().next_signal() {
                 if res.is_none() {
                     if let Ok(lock) = self.signals.gfx_action.lock() {
                         if let Some(stuff) = lock.as_ref() {
-                            return Ok(stuff.to_string());
+                            return Ok(*stuff);
                         }
                     }
                     // return Ok("Failed for unknown reason".to_owned());

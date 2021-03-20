@@ -6,6 +6,14 @@ pub mod system;
 
 const NVIDIA_DRIVERS: [&str; 4] = ["nvidia_drm", "nvidia_modeset", "nvidia_uvm", "nvidia"];
 
+const VFIO_DRIVERS: [&str; 5] = [
+    "vfio-pci",
+    "vfio_iommu_type1",
+    "vfio_virqfd",
+    "vfio_mdev",
+    "vfio",
+];
+
 const DISPLAY_MANAGER: &str = "display-manager.service";
 
 const MODPROBE_PATH: &str = "/etc/modprobe.d/asusd.conf";
@@ -29,6 +37,8 @@ blacklist nvidia-modeset
 blacklist nouveau
 alias nouveau off
 "#;
+
+static MODPROBE_VFIO: &[u8] = br#"options vfio-pci ids="#;
 
 const XORG_FILE: &str = "90-nvidia-primary.conf";
 const XORG_PATH: &str = "/etc/X11/xorg.conf.d/";

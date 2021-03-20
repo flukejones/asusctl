@@ -160,7 +160,9 @@ impl DbusFanAndCpu {
                 }
 
                 if cfg.active_profile == *profile {
-                    return Err(Error::Failed("Cannot delete the active profile".to_string()));
+                    return Err(Error::Failed(
+                        "Cannot delete the active profile".to_string(),
+                    ));
                 }
 
                 cfg.power_profiles.remove(profile);

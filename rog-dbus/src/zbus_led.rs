@@ -45,7 +45,7 @@ trait Daemon {
     fn set_led_mode(&self, effect: &AuraEffect) -> zbus::Result<()>;
 
     /// NotifyLed signal
-        /// NotifyLed signal
+    /// NotifyLed signal
     #[dbus_proxy(signal)]
     fn notify_led(&self, data: &str) -> zbus::Result<()>;
 
