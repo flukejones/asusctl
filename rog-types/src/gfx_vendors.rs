@@ -1,4 +1,6 @@
+use crate::error::GraphicsError;
 use serde_derive::{Deserialize, Serialize};
+use std::str::FromStr;
 
 #[derive(Debug, PartialEq, Copy, Clone, Deserialize, Serialize)]
 pub enum GfxVendors {
@@ -7,10 +9,6 @@ pub enum GfxVendors {
     Compute,
     Hybrid,
 }
-
-use std::str::FromStr;
-
-use crate::error::GraphicsError;
 
 impl FromStr for GfxVendors {
     type Err = GraphicsError;
@@ -30,9 +28,9 @@ impl FromStr for GfxVendors {
     }
 }
 
-impl Into<&str> for GfxVendors {
-    fn into(self) -> &'static str {
-        match self {
+impl From<&GfxVendors> for &str {
+    fn from(gfx: &GfxVendors) -> &'static str {
+        match gfx {
             GfxVendors::Nvidia => "nvidia",
             GfxVendors::Hybrid => "hybrid",
             GfxVendors::Compute => "compute",
@@ -41,14 +39,9 @@ impl Into<&str> for GfxVendors {
     }
 }
 
-impl Into<String> for GfxVendors {
-    fn into(self) -> String {
-        match self {
-            GfxVendors::Nvidia => "nvidia".to_string(),
-            GfxVendors::Hybrid => "hybrid".to_string(),
-            GfxVendors::Compute => "compute".to_string(),
-            GfxVendors::Integrated => "integrated".to_string(),
-        }
+impl From<GfxVendors> for &str {
+    fn from(gfx: GfxVendors) -> &'static str {
+        (&gfx).into()
     }
 }
 
@@ -82,17 +75,7 @@ impl From<&GfxCtrlAction> for &str {
     }
 }
 
-impl From<&GfxCtrlAction> for String {
-    fn from(mode: &GfxCtrlAction) -> Self {
-        match mode {
-            GfxCtrlAction::Reboot => "reboot".into(),
-            GfxCtrlAction::RestartX => "restartx".into(),
-            GfxCtrlAction::None => "none".into(),
-        }
-    }
-}
-
-impl From<GfxCtrlAction> for String {
+impl From<GfxCtrlAction> for &str {
     fn from(mode: GfxCtrlAction) -> Self {
         (&mode).into()
     }

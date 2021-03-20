@@ -1,3 +1,5 @@
+mod aura_cli;
+
 use daemon::{
     ctrl_fan_cpu::FanCpuSupportedFunctions, ctrl_leds::LedSupportedFunctions,
     ctrl_rog_bios::RogBiosSupportedFunctions, ctrl_supported::SupportedFunctions,
@@ -6,14 +8,15 @@ use gumdrop::{Opt, Options};
 use rog_dbus::AuraDbusClient;
 use rog_types::{
     anime_matrix::{AniMeDataBuffer, FULL_PANE_LEN},
-    aura_modes::AuraModes,
-    cli_options::{AniMeActions, AniMeStatusValue, LedBrightness, SetAuraBuiltin},
+    aura_modes::{AuraEffect, AuraModeNum},
+    cli_options::{AniMeActions, AniMeStatusValue},
     gfx_vendors::GfxVendors,
     profile::{FanLevel, ProfileCommand, ProfileEvent},
 };
 use std::env::args;
 use yansi_term::Colour::Green;
 use yansi_term::Colour::Red;
+use crate::aura_cli::{LedBrightness, SetAuraBuiltin};
 
 #[derive(Default, Options)]
 struct CLIStart {
@@ -199,7 +202,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let level = dbus.proxies().led().get_led_brightness()?;
                 println!("Current keyboard led brightness: {}", level.to_string());
             }
-            Some(level) => dbus.proxies().led().set_brightness(level)?,
+            Some(level) => dbus.proxies().led().set_led_brightness(level)?,
         }
     }
 
@@ -325,9 +328,12 @@ fn handle_led_mode(
             .lines()
             .map(|s| s.to_string())
             .collect();
-        for (_, command) in commands.iter().enumerate().filter(|(mode_num, _)| {
+        for command in commands.iter().filter(|mode| {
             if let Some(modes) = supported.stock_led_modes.as_ref() {
-                return modes.contains(&(*mode_num as u8));
+                return modes.contains(&<AuraModeNum>::from(mode.as_str()));
+            }
+            if supported.multizone_led_mode {
+                return true;
             }
             false
         }) {
@@ -351,9 +357,20 @@ fn handle_led_mode(
             println!("{}", mode.self_usage());
             return Ok(());
         }
-        dbus.proxies()
-            .led()
-            .set_led_mode(&<AuraModes>::from(mode))?;
+        match mode {
+            SetAuraBuiltin::MultiStatic(_) | SetAuraBuiltin::MultiBreathe(_) => {
+                let zones = <Vec<AuraEffect>>::from(mode);
+                for eff in zones {
+                    dbus.proxies()
+                        .led()
+                        .set_led_mode(&eff)?
+                }
+            }
+            _ => dbus
+                .proxies()
+                .led()
+                .set_led_mode(&<AuraEffect>::from(mode))?,
+        }
     }
     Ok(())
 }

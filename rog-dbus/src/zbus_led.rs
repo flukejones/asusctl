@@ -23,7 +23,7 @@ use std::sync::{Arc, Mutex};
 
 use zbus::{dbus_proxy, Connection, Result};
 
-use rog_types::{aura_modes::AuraModes, cli_options::LedBrightness, fancy::KeyColourArray};
+use rog_types::{aura_modes::AuraEffect, aura_perkey::KeyColourArray};
 
 const BLOCKING_TIME: u64 = 40; // 100ms = 10 FPS, max 50ms = 20 FPS, 40ms = 25 FPS
 
@@ -32,27 +32,34 @@ const BLOCKING_TIME: u64 = 40; // 100ms = 10 FPS, max 50ms = 20 FPS, 40ms = 25 F
     default_path = "/org/asuslinux/Led"
 )]
 trait Daemon {
-    /// LedBrightness method
-    fn led_brightness(&self) -> zbus::Result<i16>;
-
-    /// LedMode method
-    fn led_mode(&self) -> zbus::Result<String>;
-
-    /// LedModes method
-    fn led_modes(&self) -> zbus::Result<String>;
-
     /// NextLedMode method
     fn next_led_mode(&self) -> zbus::Result<()>;
 
     /// PrevLedMode method
     fn prev_led_mode(&self) -> zbus::Result<()>;
 
+    /// SetBrightness method
+    fn set_brightness(&self, brightness: u8) -> zbus::Result<()>;
+
     /// SetLedMode method
-    fn set_led_mode(&self, data: &str) -> zbus::Result<()>;
+    fn set_led_mode(&self, effect: &AuraEffect) -> zbus::Result<()>;
 
     /// NotifyLed signal
+        /// NotifyLed signal
     #[dbus_proxy(signal)]
     fn notify_led(&self, data: &str) -> zbus::Result<()>;
+
+    /// LedBrightness property
+    #[dbus_proxy(property)]
+    fn led_brightness(&self) -> zbus::Result<i16>;
+
+    /// LedMode property
+    #[dbus_proxy(property)]
+    fn led_mode(&self) -> zbus::Result<String>;
+
+    /// LedModes property
+    #[dbus_proxy(property)]
+    fn led_modes(&self) -> zbus::Result<String>;
 }
 
 pub struct LedProxy<'a>(DaemonProxy<'a>);
@@ -68,16 +75,13 @@ impl<'a> LedProxy<'a> {
     }
 
     #[inline]
-    pub fn get_led_brightness(&self) -> Result<LedBrightness> {
-        match self.0.led_brightness()? {
-            -1 => Ok(LedBrightness::new(None)),
-            level => Ok(LedBrightness::new(Some(level as u8))),
-        }
+    pub fn get_led_brightness(&self) -> Result<i16> {
+        self.0.led_brightness()
     }
 
     #[inline]
-    pub fn set_brightness(&self, level: u8) -> Result<()> {
-        self.set_led_mode(&AuraModes::LedBrightness(level))?;
+    pub fn set_led_brightness(&self, level: u8) -> Result<()> {
+        self.0.set_brightness(level)?;
         Ok(())
     }
 
@@ -92,8 +96,8 @@ impl<'a> LedProxy<'a> {
     }
 
     #[inline]
-    pub fn set_led_mode(&self, mode: &AuraModes) -> Result<()> {
-        self.0.set_led_mode(&serde_json::to_string(mode).unwrap())
+    pub fn set_led_mode(&self, mode: &AuraEffect) -> Result<()> {
+        self.0.set_led_mode(mode)
     }
 
     /// Write a single colour block.
@@ -107,9 +111,8 @@ impl<'a> LedProxy<'a> {
         for v in group {
             vecs.push(v.to_vec());
         }
-        let mode = AuraModes::PerKey(vecs);
-
-        self.set_led_mode(&mode)?;
+        // TODO: let mode = AuraModes::PerKey(vecs);
+        // self.set_led_mode(&mode)?;
 
         std::thread::sleep(std::time::Duration::from_millis(BLOCKING_TIME));
 
@@ -124,12 +127,13 @@ impl<'a> LedProxy<'a> {
     /// the keyboard LED EC in the correct mode
     #[inline]
     pub fn init_effect(&self) -> Result<()> {
-        let mode = AuraModes::PerKey(vec![vec![]]);
-        self.0.set_led_mode(&serde_json::to_string(&mode).unwrap())
+        // TODO: let mode = AuraModes::PerKey(vec![vec![]]);
+        // self.0.set_led_mode(&serde_json::to_string(&mode).unwrap())
+        Ok(())
     }
 
     #[inline]
-    pub fn connect_notify_led(&self, led: Arc<Mutex<Option<AuraModes>>>) -> zbus::fdo::Result<()> {
+    pub fn connect_notify_led(&self, led: Arc<Mutex<Option<AuraEffect>>>) -> zbus::fdo::Result<()> {
         self.0.connect_notify_led(move |data| {
             if let Ok(mut lock) = led.lock() {
                 if let Ok(dat) = serde_json::from_str(&data) {

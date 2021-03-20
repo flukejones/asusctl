@@ -11,7 +11,7 @@ pub mod zbus_profile;
 pub mod zbus_rogbios;
 pub mod zbus_supported;
 
-use rog_types::aura_modes::AuraModes;
+use rog_types::aura_modes::AuraEffect;
 use std::sync::{Arc, Mutex};
 use zbus::{Connection, Result, SignalReceiver};
 
@@ -89,7 +89,7 @@ pub struct Signals {
     pub gfx_vendor: Arc<Mutex<Option<String>>>,
     pub gfx_action: Arc<Mutex<Option<String>>>,
     pub profile: Arc<Mutex<Option<String>>>,
-    pub led_mode: Arc<Mutex<Option<AuraModes>>>,
+    pub led_mode: Arc<Mutex<Option<AuraEffect>>>,
     pub charge: Arc<Mutex<Option<u8>>>,
 }
 

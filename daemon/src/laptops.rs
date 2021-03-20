@@ -1,20 +1,19 @@
 use log::{info, warn};
-use rog_types::aura_modes::{AuraModes, BREATHING, STATIC};
+use rog_types::aura_modes::AuraModeNum;
 use serde_derive::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io::Read;
 
 pub static LEDMODE_CONFIG_PATH: &str = "/etc/asusd/asusd-ledmodes.toml";
-
 pub static HELP_ADDRESS: &str = "https://gitlab.com/asus-linux/asus-nb-ctrl";
-
 static LAPTOP_DEVICES: [u16; 4] = [0x1866, 0x1869, 0x1854, 0x19b6];
 
+/// A helper of sorts specifically for functions tied to laptop models
 #[derive(Debug)]
 pub struct LaptopBase {
     usb_product: String,
     condev_iface: Option<String>, // required for finding the Consumer Device interface
-    supported_modes: Vec<u8>,
+    led_support: LaptopLedData,
 }
 
 impl LaptopBase {
@@ -24,8 +23,8 @@ impl LaptopBase {
     pub fn condev_iface(&self) -> Option<&String> {
         self.condev_iface.as_ref()
     }
-    pub fn supported_modes(&self) -> &[u8] {
-        &self.supported_modes
+    pub fn supported_modes(&self) -> &LaptopLedData {
+        &self.led_support
     }
 }
 
@@ -38,10 +37,7 @@ pub fn match_laptop() -> Option<LaptopBase> {
             let prod_str = format!("{:x?}", device_desc.product_id());
 
             if device_desc.product_id() == 0x1854 {
-                let mut laptop = laptop(prod_str, None);
-                if laptop.supported_modes.is_empty() {
-                    laptop.supported_modes = vec![STATIC, BREATHING];
-                }
+                let laptop = laptop(prod_str, None);
                 return Some(laptop);
             }
 
@@ -65,12 +61,18 @@ fn laptop(prod: String, condev_iface: Option<String>) -> LaptopBase {
     let mut laptop = LaptopBase {
         usb_product: prod,
         condev_iface,
-        supported_modes: vec![],
+        led_support: LaptopLedData {
+            board_names: vec![],
+            prod_family: String::new(),
+            standard: vec![],
+            multizone: false,
+            per_key: false,
+        },
     };
 
-    if let Some(modes) = LEDModeGroup::load_from_config() {
+    if let Some(modes) = LedSupportFile::load_from_config() {
         if let Some(led_modes) = modes.matcher(&prod_family, &board_name) {
-            laptop.supported_modes = led_modes;
+            laptop.led_support = led_modes;
             return laptop;
         }
     }
@@ -92,7 +94,7 @@ pub fn print_modes(supported_modes: &[u8]) {
     if !supported_modes.is_empty() {
         info!("Supported Keyboard LED modes are:");
         for mode in supported_modes {
-            let mode = <&str>::from(&<AuraModes>::from(*mode));
+            let mode = <&str>::from(&<AuraModeNum>::from(*mode));
             info!("- {}", mode);
         }
         info!(
@@ -105,19 +107,28 @@ pub fn print_modes(supported_modes: &[u8]) {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-struct LEDModeGroup {
-    led_modes: Vec<LEDModes>,
+struct LedSupportFile {
+    led_data: Vec<LaptopLedData>,
 }
 
-impl LEDModeGroup {
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct LaptopLedData {
+    pub prod_family: String,
+    pub board_names: Vec<String>,
+    pub standard: Vec<AuraModeNum>,
+    pub multizone: bool,
+    pub per_key: bool,
+}
+
+impl LedSupportFile {
     /// Consumes the LEDModes
-    fn matcher(self, prod_family: &str, board_name: &str) -> Option<Vec<u8>> {
-        for led_modes in self.led_modes {
-            if prod_family.contains(&led_modes.prod_family) {
-                for board in led_modes.board_names {
-                    if board_name.contains(&board) {
-                        info!("Matched to {} {}", led_modes.prod_family, board);
-                        return Some(led_modes.led_modes);
+    fn matcher(self, prod_family: &str, board_name: &str) -> Option<LaptopLedData> {
+        for config in self.led_data {
+            if prod_family.contains(&config.prod_family) {
+                for board in &config.board_names {
+                    if board_name.contains(board) {
+                        info!("Matched to {} {}", config.prod_family, board);
+                        return Some(config);
                     }
                 }
             }
@@ -141,11 +152,4 @@ impl LEDModeGroup {
         warn!("Does {} exist?", LEDMODE_CONFIG_PATH);
         None
     }
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-struct LEDModes {
-    prod_family: String,
-    board_names: Vec<String>,
-    led_modes: Vec<u8>,
 }

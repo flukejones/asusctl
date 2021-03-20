@@ -1,10 +1,10 @@
-use daemon::ctrl_charge::CtrlCharge;
 use daemon::ctrl_fan_cpu::{CtrlFanAndCPU, DbusFanAndCpu};
 use daemon::ctrl_leds::{CtrlKbdBacklight, DbusKbdBacklight};
 use daemon::laptops::match_laptop;
 use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
 };
+use daemon::{config_aura::AuraConfig, ctrl_charge::CtrlCharge};
 use daemon::{ctrl_anime::CtrlAnimeDisplay, ctrl_gfx::gfx::CtrlGraphics};
 
 use daemon::{CtrlTask, Reloadable, ZbusAdd};
@@ -50,12 +50,9 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
     print_board_info();
     println!("{}", serde_json::to_string_pretty(&supported).unwrap());
 
-    let laptop = match_laptop();
-    let config = if let Some(laptop) = laptop.as_ref() {
-        Config::load(laptop.supported_modes())
-    } else {
-        Config::load(&[])
-    };
+    let config = Config::load();
+    let enable_gfx_switching = config.gfx_managed;
+    let config = Arc::new(Mutex::new(config));
 
     let connection = Connection::new_system()?;
     fdo::DBusProxy::new(&connection)?
@@ -63,9 +60,6 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
     let mut object_server = zbus::ObjectServer::new(&connection);
 
     supported.add_to_server(&mut object_server);
-
-    let enable_gfx_switching = config.gfx_managed;
-    let config = Arc::new(Mutex::new(config));
 
     match CtrlRogBios::new(config.clone()) {
         Ok(mut ctrl) => {
@@ -133,7 +127,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
     // Collect tasks for task thread
     let mut tasks: Vec<Arc<Mutex<dyn CtrlTask + Send>>> = Vec::new();
 
-    if let Ok(mut ctrl) = CtrlFanAndCPU::new(config.clone()).map_err(|err| {
+    if let Ok(mut ctrl) = CtrlFanAndCPU::new(config).map_err(|err| {
         error!("Profile control: {}", err);
     }) {
         ctrl.reload()
@@ -142,12 +136,14 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         DbusFanAndCpu::new(tmp).add_to_server(&mut object_server);
     };
 
-    if let Some(laptop) = laptop {
+    if let Some(laptop) = match_laptop() {
+        let aura_config = AuraConfig::load(laptop.supported_modes());
+
         if let Ok(ctrl) = CtrlKbdBacklight::new(
             laptop.usb_product(),
             laptop.condev_iface(),
             laptop.supported_modes().to_owned(),
-            config,
+            aura_config,
         )
         .map_err(|err| {
             error!("Keyboard control: {}", err);
