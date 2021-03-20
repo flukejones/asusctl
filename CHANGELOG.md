@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Refactor keyboard LED handling
 - Added --list for profiles (Thanks @aqez)
+- Added --remove for profiles (Thanks @aqez)
 ### Broken
 - Per-key LED modes, which need thinking about how to go ahead with for future
 
