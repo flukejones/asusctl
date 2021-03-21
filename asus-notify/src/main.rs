@@ -30,7 +30,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 if let Some(notif) = last_gfx_notif.take() {
                     notif.close();
                 }
-                let x = do_notif(&format!("Graphics mode changed to {}", vendor))?;
+                let x = do_notif(&format!(
+                    "Graphics mode changed to {}",
+                    <&str>::from(vendor)
+                ))?;
                 last_gfx_notif = Some(x);
             }
         }

@@ -4,8 +4,8 @@
 // static LED_INIT4: &str = "^ASUS Tech.Inc."; // ^ == 0x5e
 // static LED_INIT5: [u8; 6] = [0x5e, 0x05, 0x20, 0x31, 0, 0x08];
 
-use crate::LED_MSG_LEN;
 use crate::error::AuraError;
+use crate::LED_MSG_LEN;
 use serde_derive::{Deserialize, Serialize};
 use std::str::FromStr;
 use zvariant_derive::Type;

@@ -72,6 +72,10 @@ impl GraphicsDevice {
         self.functions.iter().any(|func| func.path().exists())
     }
 
+    pub fn functions(&self) -> &[PciDevice] {
+        &self.functions
+    }
+
     pub fn unbind(&self) -> Result<(), std::io::Error> {
         for func in self.functions.iter() {
             if func.path().exists() {

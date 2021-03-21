@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactor keyboard LED handling
 - Added --list for profiles (Thanks @aqez)
 - Added --remove for profiles (Thanks @aqez)
+- Added a graphics mode: vfio. This attaches Nvidia devices to vfio module.
 ### Broken
 - Per-key LED modes, which need thinking about how to go ahead with for future
 

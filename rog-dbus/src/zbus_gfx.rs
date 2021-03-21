@@ -21,6 +21,7 @@
 
 use std::sync::{Arc, Mutex};
 
+use rog_types::gfx_vendors::{GfxRequiredUserAction, GfxVendors};
 use zbus::{dbus_proxy, Connection, Result};
 
 #[dbus_proxy(
@@ -32,18 +33,18 @@ trait Daemon {
     fn power(&self) -> zbus::Result<String>;
 
     /// SetVendor method
-    fn set_vendor(&self, vendor: &str) -> zbus::Result<()>;
+    fn set_vendor(&self, vendor: &GfxVendors) -> zbus::Result<GfxRequiredUserAction>;
 
     /// Vendor method
-    fn vendor(&self) -> zbus::Result<String>;
+    fn vendor(&self) -> zbus::Result<GfxVendors>;
 
     /// NotifyAction signal
     #[dbus_proxy(signal)]
-    fn notify_action(&self, action: &str) -> zbus::Result<()>;
+    fn notify_action(&self, action: GfxRequiredUserAction) -> zbus::Result<()>;
 
     /// NotifyGfx signal
     #[dbus_proxy(signal)]
-    fn notify_gfx(&self, vendor: &str) -> zbus::Result<()>;
+    fn notify_gfx(&self, vendor: GfxVendors) -> zbus::Result<()>;
 }
 
 pub struct GfxProxy<'a>(DaemonProxy<'a>);
@@ -64,33 +65,36 @@ impl<'a> GfxProxy<'a> {
     }
 
     #[inline]
-    pub fn gfx_get_mode(&self) -> Result<String> {
+    pub fn gfx_get_mode(&self) -> Result<GfxVendors> {
         self.0.vendor()
     }
 
     #[inline]
-    pub fn gfx_write_mode(&self, vendor: &str) -> Result<()> {
+    pub fn gfx_write_mode(&self, vendor: &GfxVendors) -> Result<GfxRequiredUserAction> {
         self.0.set_vendor(vendor)
     }
 
     #[inline]
     pub fn connect_notify_action(
         &self,
-        action: Arc<Mutex<Option<String>>>,
+        action: Arc<Mutex<Option<GfxRequiredUserAction>>>,
     ) -> zbus::fdo::Result<()> {
         self.0.connect_notify_action(move |data| {
             if let Ok(mut lock) = action.lock() {
-                *lock = Some(data.to_owned());
+                *lock = Some(data);
             }
             Ok(())
         })
     }
 
     #[inline]
-    pub fn connect_notify_gfx(&self, vendor: Arc<Mutex<Option<String>>>) -> zbus::fdo::Result<()> {
+    pub fn connect_notify_gfx(
+        &self,
+        vendor: Arc<Mutex<Option<GfxVendors>>>,
+    ) -> zbus::fdo::Result<()> {
         self.0.connect_notify_gfx(move |data| {
             if let Ok(mut lock) = vendor.lock() {
-                *lock = Some(data.to_owned());
+                *lock = Some(data);
             }
             Ok(())
         })

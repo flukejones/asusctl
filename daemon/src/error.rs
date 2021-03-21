@@ -28,6 +28,7 @@ pub enum RogError {
     Initramfs(String),
     Modprobe(String),
     Command(String, std::io::Error),
+    Io(std::io::Error),
     Zbus(zbus::Error),
 }
 
@@ -55,6 +56,7 @@ impl fmt::Display for RogError {
             RogError::Initramfs(detail) => write!(f, "Initiramfs error: {}", detail),
             RogError::Modprobe(detail) => write!(f, "Modprobe error: {}", detail),
             RogError::Command(func, error) => write!(f, "Command exec error: {}: {}", func, error),
+            RogError::Io(detail) => write!(f, "std::io error: {}", detail),
             RogError::Zbus(detail) => write!(f, "Zbus error: {}", detail),
         }
     }
@@ -85,5 +87,11 @@ impl From<GraphicsError> for RogError {
 impl From<zbus::Error> for RogError {
     fn from(err: zbus::Error) -> Self {
         RogError::Zbus(err)
+    }
+}
+
+impl From<std::io::Error> for RogError {
+    fn from(err: std::io::Error) -> Self {
+        RogError::Io(err)
     }
 }

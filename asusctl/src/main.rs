@@ -1,5 +1,6 @@
 mod aura_cli;
 
+use crate::aura_cli::{LedBrightness, SetAuraBuiltin};
 use daemon::{
     ctrl_fan_cpu::FanCpuSupportedFunctions, ctrl_leds::LedSupportedFunctions,
     ctrl_rog_bios::RogBiosSupportedFunctions, ctrl_supported::SupportedFunctions,
@@ -16,7 +17,6 @@ use rog_types::{
 use std::env::args;
 use yansi_term::Colour::Green;
 use yansi_term::Colour::Red;
-use crate::aura_cli::{LedBrightness, SetAuraBuiltin};
 
 #[derive(Default, Options)]
 struct CLIStart {
@@ -286,19 +286,24 @@ fn do_gfx(
             std::process::exit(-1);
         }
 
-        println!(
-            "Your display-manager will restart in requested mode when all users are logged out"
-        );
-        println!("If anything fails check `journalctl -b -u asusd`");
+        println!("If anything fails check `journalctl -b -u asusd`\n");
 
-        dbus.proxies().gfx().gfx_write_mode(mode.into())?;
+        dbus.proxies().gfx().gfx_write_mode(&mode).map_err(|err|{
+            println!("Graphics mode change error. You may be in an invalid state.");
+            println!("Check mode with `asusctl graphics -g` and switch to opposite\nmode to correct it, e.g: if integrated, switch to hybrid, or if nvidia, switch to integrated.\n");
+            err
+        })?;
         let res = dbus.gfx_wait_changed()?;
-        println!("{}", res);
+        println!(
+            "Graphics mode changed to {}. User action required is: {}",
+            <&str>::from(mode),
+            <&str>::from(&res)
+        );
         std::process::exit(0)
     }
     if command.get {
         let res = dbus.proxies().gfx().gfx_get_mode()?;
-        println!("Current graphics mode: {}", res);
+        println!("Current graphics mode: {}", <&str>::from(res));
     }
     if command.pow {
         let res = dbus.proxies().gfx().gfx_get_pwr()?;
@@ -361,9 +366,7 @@ fn handle_led_mode(
             SetAuraBuiltin::MultiStatic(_) | SetAuraBuiltin::MultiBreathe(_) => {
                 let zones = <Vec<AuraEffect>>::from(mode);
                 for eff in zones {
-                    dbus.proxies()
-                        .led()
-                        .set_led_mode(&eff)?
+                    dbus.proxies().led().set_led_mode(&eff)?
                 }
             }
             _ => dbus
