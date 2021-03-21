@@ -4,11 +4,7 @@ static LED_SET: [u8; 17] = [0x5d, 0xb5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 static KBD_BRIGHT_PATH: &str = "/sys/class/leds/asus::kbd_backlight/brightness";
 
-use crate::{
-    config_aura::AuraConfig,
-    error::RogError,
-    laptops::{match_laptop, LaptopLedData, HELP_ADDRESS},
-};
+use crate::{config_aura::AuraConfig, error::RogError, laptops::{ASUS_KEYBOARD_DEVICES, HELP_ADDRESS, LaptopLedData, laptop_data}};
 use log::{error, info, warn};
 use rog_types::{
     aura_modes::{AuraEffect, AuraModeNum},
@@ -37,16 +33,14 @@ impl GetSupported for CtrlKbdBacklight {
 
     fn get_supported() -> Self::A {
         // let mode = <&str>::from(&<AuraModes>::from(*mode));
-        let mut stock_led_modes = None;
         let multizone_led_mode = false;
         let per_key_led_mode = false;
-        if let Some(laptop) = match_laptop() {
-            stock_led_modes = if laptop.supported_modes().standard.is_empty() {
-                None
-            } else {
-                Some(laptop.supported_modes().standard.clone())
-            };
-        }
+        let laptop = laptop_data();
+        let stock_led_modes = if laptop.supported_modes().standard.is_empty() {
+            None
+        } else {
+            Some(laptop.supported_modes().standard.clone())
+        };
 
         LedSupportedFunctions {
             brightness_set: CtrlKbdBacklight::get_kbd_bright_path().is_ok(),
@@ -59,8 +53,6 @@ impl GetSupported for CtrlKbdBacklight {
 
 pub struct CtrlKbdBacklight {
     led_node: Option<String>,
-    #[allow(dead_code)]
-    kbd_node: Option<String>,
     pub bright_node: String,
     supported_modes: LaptopLedData,
     flip_effect_write: bool,
@@ -258,46 +250,39 @@ impl crate::CtrlTask for CtrlKbdBacklight {
 
 impl CtrlKbdBacklight {
     #[inline]
-    pub fn new(
-        id_product: &str,
-        condev_iface: Option<&String>,
-        supported_modes: LaptopLedData,
-        config: AuraConfig,
-    ) -> Result<Self, RogError> {
+    pub fn new(supported_modes: LaptopLedData, config: AuraConfig) -> Result<Self, RogError> {
         // TODO: return error if *all* nodes are None
-        let led_node = Self::get_node_failover(id_product, None, Self::scan_led_node).map_or_else(
-            |err| {
-                warn!("led_node: {}", err);
-                None
-            },
-            Some,
-        );
+        let mut led_node = None;
+        for prod in ASUS_KEYBOARD_DEVICES.iter() {
+            match Self::get_node_failover(prod, Self::scan_led_node) {
+                Ok(node) => {
+                    led_node = Some(node);
+                    break;
+                }
+                Err(err) => warn!("led_node: {}", err),
+            }
+        }
 
-        let kbd_node = Self::get_node_failover(id_product, condev_iface, Self::scan_kbd_node)
-            .map_or_else(
-                |err| {
-                    warn!("kbd_node: {}", err);
-                    None
-                },
-                Some,
-            );
+        let bright_node = Self::get_kbd_bright_path().map_or_else(|_| None, Some);
 
-        let bright_node = Self::get_kbd_bright_path();
-
-        if led_node.is_none() && kbd_node.is_none() && Self::get_kbd_bright_path().is_err() {
+        if led_node.is_none() && bright_node.is_none() {
             return Err(RogError::MissingFunction(
                 "All keyboard features missing, you may require a v5.11 series kernel or newer"
                     .into(),
             ));
         }
 
+        if bright_node.is_none() {
+            return Err(RogError::MissingFunction(
+                "No brightness control, you may require a v5.11 series kernel or newer"
+                    .into(),
+            ));
+        }
+        
+
         let ctrl = CtrlKbdBacklight {
-            // Using `ok` here so we can continue without keyboard features but
-            // still get brightness control at least... maybe...
             led_node,
-            kbd_node,
-            // TODO: Check for existance
-            bright_node: bright_node?.to_owned(),
+            bright_node: bright_node.unwrap(), // If was none then we already returned above
             supported_modes,
             flip_effect_write: false,
             config,
@@ -305,9 +290,9 @@ impl CtrlKbdBacklight {
         Ok(ctrl)
     }
 
-    fn get_kbd_bright_path() -> Result<&'static str, RogError> {
+    fn get_kbd_bright_path() -> Result<String, RogError> {
         if Path::new(KBD_BRIGHT_PATH).exists() {
-            Ok(KBD_BRIGHT_PATH)
+            Ok(KBD_BRIGHT_PATH.to_string())
         } else {
             Err(RogError::MissingFunction(
                 "Keyboard features missing, you may require a v5.11 series kernel or newer".into(),
@@ -348,19 +333,18 @@ impl CtrlKbdBacklight {
 
     fn get_node_failover(
         id_product: &str,
-        iface: Option<&String>,
-        fun: fn(&str, Option<&String>) -> Result<String, RogError>,
+        fun: fn(&str) -> Result<String, RogError>,
     ) -> Result<String, RogError> {
-        match fun(id_product, iface) {
+        match fun(id_product) {
             Ok(o) => return Ok(o),
             Err(e) => {
                 warn!("Looking for node: {}", e.to_string());
             }
         }
-        Err(RogError::NotFound(format!("{}, {:?}", id_product, iface)))
+        Err(RogError::NotFound(format!("{}", id_product)))
     }
 
-    fn scan_led_node(id_product: &str, _: Option<&String>) -> Result<String, RogError> {
+    fn scan_led_node(id_product: &str) -> Result<String, RogError> {
         let mut enumerator = udev::Enumerator::new().map_err(|err| {
             warn!("{}", err);
             RogError::Udev("enumerator failed".into(), err)
@@ -396,51 +380,6 @@ impl CtrlKbdBacklight {
         warn!("Did not find a hidraw node for LED control, your device may be unsupported or require a kernel patch, see: {}", HELP_ADDRESS);
         Err(RogError::MissingFunction(
             "ASUS LED device node not found".into(),
-        ))
-    }
-
-    fn scan_kbd_node(id_product: &str, iface: Option<&String>) -> Result<String, RogError> {
-        let mut enumerator = udev::Enumerator::new().map_err(|err| {
-            warn!("{}", err);
-            RogError::Udev("enumerator failed".into(), err)
-        })?;
-        enumerator.match_subsystem("input").map_err(|err| {
-            warn!("{}", err);
-            RogError::Udev("match_subsystem failed".into(), err)
-        })?;
-        enumerator
-            .match_property("ID_MODEL_ID", id_product)
-            .map_err(|err| {
-                warn!("{}", err);
-                RogError::Udev("match_property failed".into(), err)
-            })?;
-
-        for device in enumerator
-            .scan_devices()
-            .map_err(|err| {
-                warn!("{}", err);
-                err
-            })
-            .map_err(|err| {
-                warn!("{}", err);
-                RogError::Udev("scan_devices failed".into(), err)
-            })?
-        {
-            if let Some(dev_node) = device.devnode() {
-                if let Some(inum) = device.property_value("ID_USB_INTERFACE_NUM") {
-                    if let Some(iface) = iface {
-                        if inum == iface.as_str() {
-                            info!("Using device at: {:?} for keyboard polling", dev_node);
-                            return Ok(dev_node.to_string_lossy().to_string());
-                        }
-                    }
-                }
-            }
-        }
-
-        warn!("Did not find keyboard consumer device node, if expected functions are missing please file an issue at {}", HELP_ADDRESS);
-        Err(RogError::MissingFunction(
-            "ASUS keyboard 'Consumer Device' node not found".into(),
         ))
     }
 

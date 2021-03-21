@@ -1,6 +1,5 @@
-use daemon::ctrl_fan_cpu::{CtrlFanAndCPU, DbusFanAndCpu};
+use daemon::{ctrl_fan_cpu::{CtrlFanAndCPU, DbusFanAndCpu}, laptops::laptop_data};
 use daemon::ctrl_leds::{CtrlKbdBacklight, DbusKbdBacklight};
-use daemon::laptops::match_laptop;
 use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
 };
@@ -136,12 +135,11 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         DbusFanAndCpu::new(tmp).add_to_server(&mut object_server);
     };
 
-    if let Some(laptop) = match_laptop() {
+    let laptop = laptop_data();
+    if !laptop.supported_modes().standard.is_empty() {
         let aura_config = AuraConfig::load(laptop.supported_modes());
 
         if let Ok(ctrl) = CtrlKbdBacklight::new(
-            laptop.usb_product(),
-            laptop.condev_iface(),
             laptop.supported_modes().to_owned(),
             aura_config,
         )

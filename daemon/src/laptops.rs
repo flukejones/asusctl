@@ -4,63 +4,28 @@ use serde_derive::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io::Read;
 
-pub static LEDMODE_CONFIG_PATH: &str = "/etc/asusd/asusd-ledmodes.toml";
-pub static HELP_ADDRESS: &str = "https://gitlab.com/asus-linux/asus-nb-ctrl";
-static LAPTOP_DEVICES: [u16; 4] = [0x1866, 0x1869, 0x1854, 0x19b6];
+pub const LEDMODE_CONFIG_PATH: &str = "/etc/asusd/asusd-ledmodes.toml";
+pub const HELP_ADDRESS: &str = "https://gitlab.com/asus-linux/asus-nb-ctrl";
+pub const ASUS_KEYBOARD_DEVICES: [&str; 4] = ["0x1866", "0x1869", "0x1854", "0x19b6"];
 
 /// A helper of sorts specifically for functions tied to laptop models
 #[derive(Debug)]
 pub struct LaptopBase {
-    usb_product: String,
-    condev_iface: Option<String>, // required for finding the Consumer Device interface
     led_support: LaptopLedData,
 }
 
 impl LaptopBase {
-    pub fn usb_product(&self) -> &str {
-        &self.usb_product
-    }
-    pub fn condev_iface(&self) -> Option<&String> {
-        self.condev_iface.as_ref()
-    }
     pub fn supported_modes(&self) -> &LaptopLedData {
         &self.led_support
     }
 }
 
-pub fn match_laptop() -> Option<LaptopBase> {
-    for device in rusb::devices().expect("Couldn't get device").iter() {
-        let device_desc = device
-            .device_descriptor()
-            .expect("Couldn't get device descriptor");
-        if device_desc.vendor_id() == 0x0b05 && LAPTOP_DEVICES.contains(&device_desc.product_id()) {
-            let prod_str = format!("{:x?}", device_desc.product_id());
-
-            if device_desc.product_id() == 0x1854 {
-                let laptop = laptop(prod_str, None);
-                return Some(laptop);
-            }
-
-            let laptop = laptop(prod_str, Some("02".to_owned()));
-            return Some(laptop);
-        }
-    }
-    warn!(
-        "Unsupported laptop, please request support at {}",
-        HELP_ADDRESS
-    );
-    warn!("Continuing with minimal support");
-    None
-}
-
-fn laptop(prod: String, condev_iface: Option<String>) -> LaptopBase {
+pub fn laptop_data() -> LaptopBase {
     let dmi = sysfs_class::DmiId::default();
     let board_name = dmi.board_name().expect("Could not get board_name");
     let prod_family = dmi.product_family().expect("Could not get product_family");
 
     let mut laptop = LaptopBase {
-        usb_product: prod,
-        condev_iface,
         led_support: LaptopLedData {
             board_names: vec![],
             prod_family: String::new(),
