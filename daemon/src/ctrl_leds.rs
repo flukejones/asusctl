@@ -10,10 +10,7 @@ use crate::{
     laptops::{LaptopLedData, ASUS_KEYBOARD_DEVICES},
 };
 use log::{error, info, warn};
-use rog_types::{
-    aura_modes::{AuraEffect, AuraModeNum},
-    LED_MSG_LEN,
-};
+use rog_types::{LED_MSG_LEN, aura_modes::{AuraEffect, AuraModeNum, LedBrightness}};
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::Path;
@@ -99,7 +96,7 @@ impl crate::ZbusAdd for DbusKbdBacklight {
 /// LED commands are split between Brightness, Modes, Per-Key
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl DbusKbdBacklight {
-    fn set_brightness(&mut self, brightness: u8) {
+    fn set_brightness(&mut self, brightness: LedBrightness) {
         if let Ok(ctrl) = self.inner.try_lock() {
             ctrl.set_brightness(brightness)
                 .map_err(|err| warn!("{}", err))
@@ -245,9 +242,9 @@ impl crate::CtrlTask for CtrlKbdBacklight {
         file.read_exact(&mut buf)
             .map_err(|err| RogError::Read("buffer".into(), err))?;
         if let Some(num) = char::from(buf[0]).to_digit(10) {
-            if self.config.brightness != num as u8 {
+            if self.config.brightness != num.into() {
                 self.config.read();
-                self.config.brightness = num as u8;
+                self.config.brightness = num.into();
                 self.config.write();
             }
             return Ok(());
@@ -319,17 +316,18 @@ impl CtrlKbdBacklight {
         Ok(buf[0])
     }
 
-    pub fn set_brightness(&self, brightness: u8) -> Result<(), RogError> {
+    pub fn set_brightness(&self, brightness: LedBrightness) -> Result<(), RogError> {
+        let path = Path::new(&self.bright_node);
         let mut file = OpenOptions::new()
             .write(true)
-            .open(&self.bright_node)
+            .open(&path)
             .map_err(|err| match err.kind() {
                 std::io::ErrorKind::NotFound => {
                     RogError::MissingLedBrightNode((&self.bright_node).into(), err)
                 }
                 _ => RogError::Path((&self.bright_node).into(), err),
             })?;
-        file.write_all(&[brightness])
+        file.write_all(&[brightness.as_char_code()])
             .map_err(|err| RogError::Read("buffer".into(), err))?;
         Ok(())
     }

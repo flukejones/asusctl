@@ -23,7 +23,7 @@ use std::sync::{Arc, Mutex};
 
 use zbus::{dbus_proxy, Connection, Result};
 
-use rog_types::{aura_modes::AuraEffect, aura_perkey::KeyColourArray};
+use rog_types::{aura_modes::{AuraEffect, LedBrightness}, aura_perkey::KeyColourArray};
 
 const BLOCKING_TIME: u64 = 40; // 100ms = 10 FPS, max 50ms = 20 FPS, 40ms = 25 FPS
 
@@ -39,7 +39,7 @@ trait Daemon {
     fn prev_led_mode(&self) -> zbus::Result<()>;
 
     /// SetBrightness method
-    fn set_brightness(&self, brightness: u8) -> zbus::Result<()>;
+    fn set_brightness(&self, brightness: LedBrightness) -> zbus::Result<()>;
 
     /// SetLedMode method
     fn set_led_mode(&self, effect: &AuraEffect) -> zbus::Result<()>;
@@ -80,7 +80,7 @@ impl<'a> LedProxy<'a> {
     }
 
     #[inline]
-    pub fn set_led_brightness(&self, level: u8) -> Result<()> {
+    pub fn set_led_brightness(&self, level: LedBrightness) -> Result<()> {
         self.0.set_brightness(level)?;
         Ok(())
     }
