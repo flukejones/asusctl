@@ -7,14 +7,14 @@ use std::str::FromStr;
 
 #[derive(Options)]
 pub struct LedBrightness {
-    level: Option<u8>,
+    level: Option<u32>,
 }
 impl LedBrightness {
-    pub fn new(level: Option<u8>) -> Self {
+    pub fn new(level: Option<u32>) -> Self {
         LedBrightness { level }
     }
 
-    pub fn level(&self) -> Option<u8> {
+    pub fn level(&self) -> Option<u32> {
         self.level
     }
 }

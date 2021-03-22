@@ -1,6 +1,5 @@
-use daemon::ctrl_fan_cpu::{CtrlFanAndCPU, DbusFanAndCpu};
+use daemon::{ctrl_fan_cpu::{CtrlFanAndCPU, DbusFanAndCpu}, laptops::LaptopLedData};
 use daemon::ctrl_leds::{CtrlKbdBacklight, DbusKbdBacklight};
-use daemon::laptops::match_laptop;
 use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
 };
@@ -136,13 +135,12 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         DbusFanAndCpu::new(tmp).add_to_server(&mut object_server);
     };
 
-    if let Some(laptop) = match_laptop() {
-        let aura_config = AuraConfig::load(laptop.supported_modes());
+    if let Some(laptop) = LaptopLedData::get_data() {
+    if !laptop.standard.is_empty() {
+        let aura_config = AuraConfig::load(&laptop);
 
         if let Ok(ctrl) = CtrlKbdBacklight::new(
-            laptop.usb_product(),
-            laptop.condev_iface(),
-            laptop.supported_modes().to_owned(),
+            laptop,
             aura_config,
         )
         .map_err(|err| {
@@ -153,7 +151,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
             DbusKbdBacklight::new(tmp.clone()).add_to_server(&mut object_server);
             tasks.push(tmp);
         }
-    }
+    }}
 
     // TODO: implement messaging between threads to check fails
     // These tasks generally read a sys path or file to check for a

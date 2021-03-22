@@ -4,80 +4,8 @@ use serde_derive::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io::Read;
 
-pub static LEDMODE_CONFIG_PATH: &str = "/etc/asusd/asusd-ledmodes.toml";
-pub static HELP_ADDRESS: &str = "https://gitlab.com/asus-linux/asus-nb-ctrl";
-static LAPTOP_DEVICES: [u16; 4] = [0x1866, 0x1869, 0x1854, 0x19b6];
-
-/// A helper of sorts specifically for functions tied to laptop models
-#[derive(Debug)]
-pub struct LaptopBase {
-    usb_product: String,
-    condev_iface: Option<String>, // required for finding the Consumer Device interface
-    led_support: LaptopLedData,
-}
-
-impl LaptopBase {
-    pub fn usb_product(&self) -> &str {
-        &self.usb_product
-    }
-    pub fn condev_iface(&self) -> Option<&String> {
-        self.condev_iface.as_ref()
-    }
-    pub fn supported_modes(&self) -> &LaptopLedData {
-        &self.led_support
-    }
-}
-
-pub fn match_laptop() -> Option<LaptopBase> {
-    for device in rusb::devices().expect("Couldn't get device").iter() {
-        let device_desc = device
-            .device_descriptor()
-            .expect("Couldn't get device descriptor");
-        if device_desc.vendor_id() == 0x0b05 && LAPTOP_DEVICES.contains(&device_desc.product_id()) {
-            let prod_str = format!("{:x?}", device_desc.product_id());
-
-            if device_desc.product_id() == 0x1854 {
-                let laptop = laptop(prod_str, None);
-                return Some(laptop);
-            }
-
-            let laptop = laptop(prod_str, Some("02".to_owned()));
-            return Some(laptop);
-        }
-    }
-    warn!(
-        "Unsupported laptop, please request support at {}",
-        HELP_ADDRESS
-    );
-    warn!("Continuing with minimal support");
-    None
-}
-
-fn laptop(prod: String, condev_iface: Option<String>) -> LaptopBase {
-    let dmi = sysfs_class::DmiId::default();
-    let board_name = dmi.board_name().expect("Could not get board_name");
-    let prod_family = dmi.product_family().expect("Could not get product_family");
-
-    let mut laptop = LaptopBase {
-        usb_product: prod,
-        condev_iface,
-        led_support: LaptopLedData {
-            board_names: vec![],
-            prod_family: String::new(),
-            standard: vec![],
-            multizone: false,
-            per_key: false,
-        },
-    };
-
-    if let Some(modes) = LedSupportFile::load_from_config() {
-        if let Some(led_modes) = modes.matcher(&prod_family, &board_name) {
-            laptop.led_support = led_modes;
-            return laptop;
-        }
-    }
-    laptop
-}
+pub const ASUS_LED_MODE_CONF: &str = "/etc/asusd/asusd-ledmodes.toml";
+pub const ASUS_KEYBOARD_DEVICES: [&str; 4] = ["1866", "1869", "1854", "19b6"];
 
 pub fn print_board_info() {
     let dmi = sysfs_class::DmiId::default();
@@ -98,8 +26,8 @@ pub fn print_modes(supported_modes: &[u8]) {
             info!("- {}", mode);
         }
         info!(
-            "If these modes are incorrect or missing please request support at {}",
-            HELP_ADDRESS
+            "If these modes are incorrect you can edit {}",
+            ASUS_LED_MODE_CONF
         );
     } else {
         info!("No RGB control available");
@@ -120,6 +48,19 @@ pub struct LaptopLedData {
     pub per_key: bool,
 }
 
+impl LaptopLedData {
+    pub fn get_data() -> Option<Self> {
+        let dmi = sysfs_class::DmiId::default();
+        let board_name = dmi.board_name().expect("Could not get board_name");
+        let prod_family = dmi.product_family().expect("Could not get product_family");
+
+        if let Some(modes) = LedSupportFile::load_from_config() {
+            return modes.matcher(&prod_family, &board_name);
+        }
+        None
+    }
+}
+
 impl LedSupportFile {
     /// Consumes the LEDModes
     fn matcher(self, prod_family: &str, board_name: &str) -> Option<LaptopLedData> {
@@ -137,19 +78,19 @@ impl LedSupportFile {
     }
 
     fn load_from_config() -> Option<Self> {
-        if let Ok(mut file) = OpenOptions::new().read(true).open(&LEDMODE_CONFIG_PATH) {
+        if let Ok(mut file) = OpenOptions::new().read(true).open(&ASUS_LED_MODE_CONF) {
             let mut buf = String::new();
             if let Ok(l) = file.read_to_string(&mut buf) {
                 if l == 0 {
-                    warn!("{} is empty", LEDMODE_CONFIG_PATH);
+                    warn!("{} is empty", ASUS_LED_MODE_CONF);
                 } else {
                     return Some(toml::from_str(&buf).unwrap_or_else(|_| {
-                        panic!("Could not deserialise {}", LEDMODE_CONFIG_PATH)
+                        panic!("Could not deserialise {}", ASUS_LED_MODE_CONF)
                     }));
                 }
             }
         }
-        warn!("Does {} exist?", LEDMODE_CONFIG_PATH);
+        warn!("Does {} exist?", ASUS_LED_MODE_CONF);
         None
     }
 }

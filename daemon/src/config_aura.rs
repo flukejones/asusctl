@@ -1,6 +1,6 @@
 use crate::laptops::LaptopLedData;
-use log::{error, warn};
-use rog_types::aura_modes::{AuraEffect, AuraModeNum, AuraMultiZone, AuraZone};
+use log::{error, info, warn};
+use rog_types::aura_modes::{AuraEffect, AuraModeNum, AuraMultiZone, AuraZone, LedBrightness};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs::{File, OpenOptions};
@@ -9,8 +9,27 @@ use std::io::{Read, Write};
 pub static AURA_CONFIG_PATH: &str = "/etc/asusd/aura.conf";
 
 #[derive(Deserialize, Serialize)]
+pub struct AuraConfigV320 {
+    pub brightness: u32,
+    pub current_mode: AuraModeNum,
+    pub builtins: BTreeMap<AuraModeNum, AuraEffect>,
+    pub multizone: Option<AuraMultiZone>,
+}
+
+impl AuraConfigV320 {
+    pub(crate) fn into_current(self) -> AuraConfig {
+        AuraConfig {
+            brightness: <LedBrightness>::from(self.brightness),
+            current_mode: self.current_mode,
+            builtins: self.builtins,
+            multizone: self.multizone,
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize)]
 pub struct AuraConfig {
-    pub brightness: u8,
+    pub brightness: LedBrightness,
     pub current_mode: AuraModeNum,
     pub builtins: BTreeMap<AuraModeNum, AuraEffect>,
     pub multizone: Option<AuraMultiZone>,
@@ -19,7 +38,7 @@ pub struct AuraConfig {
 impl Default for AuraConfig {
     fn default() -> Self {
         AuraConfig {
-            brightness: 1,
+            brightness: LedBrightness::Med,
             current_mode: AuraModeNum::Static,
             builtins: BTreeMap::new(),
             multizone: None,
@@ -48,6 +67,11 @@ impl AuraConfig {
             } else {
                 if let Ok(data) = serde_json::from_str(&buf) {
                     return data;
+                }  else if let Ok(data) = serde_json::from_str::<AuraConfigV320>(&buf) {
+                    let config = data.into_current();
+                    config.write();
+                    info!("Updated AuraConfig version");
+                    return config;
                 }
                 warn!("Could not deserialise {}", AURA_CONFIG_PATH);
                 panic!("Please remove {} then restart asusd", AURA_CONFIG_PATH);

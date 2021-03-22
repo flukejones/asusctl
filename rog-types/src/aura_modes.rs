@@ -10,6 +10,32 @@ use serde_derive::{Deserialize, Serialize};
 use std::str::FromStr;
 use zvariant_derive::Type;
 
+#[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize, Type)]
+pub enum LedBrightness {
+    Off,
+    Low,
+    Med,
+    High,
+}
+
+impl LedBrightness {
+    pub fn as_char_code(&self) -> u8 {
+        std::char::from_digit(*self as u32, 10).unwrap() as u8
+    }
+}
+
+impl From<u32> for LedBrightness {
+    fn from(bright: u32) -> Self {
+        match bright {
+            0 => LedBrightness::Off,
+            1 => LedBrightness::Low,
+            2 => LedBrightness::Med,
+            3 => LedBrightness::High,
+            _ => LedBrightness::Med,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Copy, Deserialize, Serialize, Type)]
 pub struct Colour(pub u8, pub u8, pub u8);
 
