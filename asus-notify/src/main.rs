@@ -1,6 +1,6 @@
-use daemon::config::Profile;
 use notify_rust::{Hint, Notification, NotificationHandle};
 use rog_dbus::{DbusProxies, Signals};
+use rog_types::profile::Profile;
 use std::error::Error;
 use std::time::Duration;
 

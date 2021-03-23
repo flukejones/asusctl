@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+# [3.2.3] - 2021-03-24
+### Changed
+- Better handling of session tracking
+### Added
+- List all profile data
+- Get active profile name
+- Get active profile data
+
 # [3.2.2] - 2021-03-23
 ### Changed
 - Fix brightness control, again, for non-RGB keyboards

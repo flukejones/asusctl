@@ -42,7 +42,7 @@ trait Daemon {
     fn profiles(&self) -> zbus::Result<String>;
 
     /// ProfileNames method
-    fn profile_names(&self) -> zbus::Result<String>;
+    fn profile_names(&self) -> zbus::Result<Vec<String>>;
 
     /// Remove method
     fn remove(&self, profile: &str) -> zbus::Result<()>;
@@ -73,6 +73,16 @@ impl<'a> ProfileProxy<'a> {
     }
 
     #[inline]
+    pub fn active_profile_data(&self) -> Result<String> {
+        self.0.profile()
+    }
+
+    #[inline]
+    pub fn all_profile_data(&self) -> Result<String> {
+        self.0.profiles()
+    }
+
+    #[inline]
     pub fn next_fan(&self) -> Result<()> {
         self.0.next_profile()
     }
@@ -89,7 +99,7 @@ impl<'a> ProfileProxy<'a> {
     }
 
     #[inline]
-    pub fn profile_names(&self) -> Result<String> {
+    pub fn profile_names(&self) -> Result<Vec<String>> {
         self.0.profile_names()
     }
 

@@ -10,6 +10,8 @@ pub enum GfxError {
     DisplayManagerAction(String, ExitStatus),
     DisplayManagerTimeout(String),
     GsyncModeActive,
+    VfioBuiltin,
+    MissingModule(String),
 }
 
 impl fmt::Display for GfxError {
@@ -27,6 +29,14 @@ impl fmt::Display for GfxError {
             GfxError::GsyncModeActive => write!(
                 f,
                 "Can not switch gfx modes when dedicated/G-Sync mode is active"
+            ),
+            GfxError::VfioBuiltin => write!(
+                f,
+                "Can not switch to vfio mode if the modules are built in to kernel"
+            ),
+            GfxError::MissingModule(m) => write!(
+                f,
+                "The module {} is missing", m
             ),
         }
     }
