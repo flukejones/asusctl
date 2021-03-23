@@ -37,14 +37,10 @@ impl GetSupported for CtrlKbdBacklight {
         let multizone_led_mode = false;
         let per_key_led_mode = false;
         let laptop = LaptopLedData::get_data();
-        let stock_led_modes = if let Some(data) = laptop {
-            if data.standard.is_empty() {
-                None
-            } else {
-                Some(data.standard)
-            }
-        } else {
+        let stock_led_modes = if laptop.standard.is_empty() {
             None
+        } else {
+            Some(laptop.standard)
         };
 
         LedSupportedFunctions {

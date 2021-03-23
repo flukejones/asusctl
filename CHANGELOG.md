@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+# [3.2.2] - 2021-03-23
+### Changed
+- Fix brightness control, again, for non-RGB keyboards
+
 # [3.2.1] - 2021-03-21
 ### Changed
 - Fix brightness control

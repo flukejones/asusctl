@@ -135,23 +135,20 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         DbusFanAndCpu::new(tmp).add_to_server(&mut object_server);
     };
 
-    if let Some(laptop) = LaptopLedData::get_data() {
-    if !laptop.standard.is_empty() {
-        let aura_config = AuraConfig::load(&laptop);
-
-        if let Ok(ctrl) = CtrlKbdBacklight::new(
-            laptop,
-            aura_config,
-        )
-        .map_err(|err| {
-            error!("Keyboard control: {}", err);
-            err
-        }) {
-            let tmp = Arc::new(Mutex::new(ctrl));
-            DbusKbdBacklight::new(tmp.clone()).add_to_server(&mut object_server);
-            tasks.push(tmp);
-        }
-    }}
+    let laptop = LaptopLedData::get_data();
+    let aura_config = AuraConfig::load(&laptop);
+    if let Ok(ctrl) = CtrlKbdBacklight::new(
+        laptop,
+        aura_config,
+    )
+    .map_err(|err| {
+        error!("Keyboard control: {}", err);
+        err
+    }) {
+        let tmp = Arc::new(Mutex::new(ctrl));
+        DbusKbdBacklight::new(tmp.clone()).add_to_server(&mut object_server);
+        tasks.push(tmp);
+    }
 
     // TODO: implement messaging between threads to check fails
     // These tasks generally read a sys path or file to check for a

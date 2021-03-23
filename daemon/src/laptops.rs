@@ -49,15 +49,24 @@ pub struct LaptopLedData {
 }
 
 impl LaptopLedData {
-    pub fn get_data() -> Option<Self> {
+    pub fn get_data() -> Self {
         let dmi = sysfs_class::DmiId::default();
         let board_name = dmi.board_name().expect("Could not get board_name");
         let prod_family = dmi.product_family().expect("Could not get product_family");
 
         if let Some(modes) = LedSupportFile::load_from_config() {
-            return modes.matcher(&prod_family, &board_name);
+            if let Some(data) = modes.matcher(&prod_family, &board_name) {
+                return data;
+            }
         }
-        None
+        info!("Using generic LED control for keyboard brightness only");
+        LaptopLedData {
+            prod_family,
+            board_names: vec![board_name],
+            standard: vec![],
+            multizone: false,
+            per_key: false,
+        }
     }
 }
 
