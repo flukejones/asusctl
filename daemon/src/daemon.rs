@@ -1,10 +1,13 @@
-use daemon::{ctrl_fan_cpu::{CtrlFanAndCPU, DbusFanAndCpu}, laptops::LaptopLedData};
 use daemon::ctrl_leds::{CtrlKbdBacklight, DbusKbdBacklight};
 use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
 };
 use daemon::{config_aura::AuraConfig, ctrl_charge::CtrlCharge};
 use daemon::{ctrl_anime::CtrlAnimeDisplay, ctrl_gfx::gfx::CtrlGraphics};
+use daemon::{
+    ctrl_fan_cpu::{CtrlFanAndCPU, DbusFanAndCpu},
+    laptops::LaptopLedData,
+};
 
 use daemon::{CtrlTask, Reloadable, ZbusAdd};
 use log::LevelFilter;
@@ -137,11 +140,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
 
     let laptop = LaptopLedData::get_data();
     let aura_config = AuraConfig::load(&laptop);
-    if let Ok(ctrl) = CtrlKbdBacklight::new(
-        laptop,
-        aura_config,
-    )
-    .map_err(|err| {
+    if let Ok(ctrl) = CtrlKbdBacklight::new(laptop, aura_config).map_err(|err| {
         error!("Keyboard control: {}", err);
         err
     }) {

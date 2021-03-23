@@ -10,7 +10,10 @@ use crate::{
     laptops::{LaptopLedData, ASUS_KEYBOARD_DEVICES},
 };
 use log::{error, info, warn};
-use rog_types::{LED_MSG_LEN, aura_modes::{AuraEffect, AuraModeNum, LedBrightness}};
+use rog_types::{
+    aura_modes::{AuraEffect, AuraModeNum, LedBrightness},
+    LED_MSG_LEN,
+};
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::Path;
@@ -314,15 +317,16 @@ impl CtrlKbdBacklight {
 
     pub fn set_brightness(&self, brightness: LedBrightness) -> Result<(), RogError> {
         let path = Path::new(&self.bright_node);
-        let mut file = OpenOptions::new()
-            .write(true)
-            .open(&path)
-            .map_err(|err| match err.kind() {
-                std::io::ErrorKind::NotFound => {
-                    RogError::MissingLedBrightNode((&self.bright_node).into(), err)
-                }
-                _ => RogError::Path((&self.bright_node).into(), err),
-            })?;
+        let mut file =
+            OpenOptions::new()
+                .write(true)
+                .open(&path)
+                .map_err(|err| match err.kind() {
+                    std::io::ErrorKind::NotFound => {
+                        RogError::MissingLedBrightNode((&self.bright_node).into(), err)
+                    }
+                    _ => RogError::Path((&self.bright_node).into(), err),
+                })?;
         file.write_all(&[brightness.as_char_code()])
             .map_err(|err| RogError::Read("buffer".into(), err))?;
         Ok(())

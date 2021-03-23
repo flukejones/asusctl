@@ -67,7 +67,7 @@ impl AuraConfig {
             } else {
                 if let Ok(data) = serde_json::from_str(&buf) {
                     return data;
-                }  else if let Ok(data) = serde_json::from_str::<AuraConfigV320>(&buf) {
+                } else if let Ok(data) = serde_json::from_str::<AuraConfigV320>(&buf) {
                     let config = data.into_current();
                     config.write();
                     info!("Updated AuraConfig version");

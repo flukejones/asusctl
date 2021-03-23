@@ -7,7 +7,13 @@ use daemon::{
 };
 use gumdrop::{Opt, Options};
 use rog_dbus::AuraDbusClient;
-use rog_types::{anime_matrix::{AniMeDataBuffer, FULL_PANE_LEN}, aura_modes::{self, AuraEffect, AuraModeNum}, cli_options::{AniMeActions, AniMeStatusValue}, gfx_vendors::GfxVendors, profile::{FanLevel, ProfileCommand, ProfileEvent}};
+use rog_types::{
+    anime_matrix::{AniMeDataBuffer, FULL_PANE_LEN},
+    aura_modes::{self, AuraEffect, AuraModeNum},
+    cli_options::{AniMeActions, AniMeStatusValue},
+    gfx_vendors::GfxVendors,
+    profile::{FanLevel, ProfileCommand, ProfileEvent},
+};
 use std::env::args;
 use yansi_term::Colour::Green;
 use yansi_term::Colour::Red;
@@ -196,7 +202,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let level = dbus.proxies().led().get_led_brightness()?;
                 println!("Current keyboard led brightness: {}", level.to_string());
             }
-            Some(level) => dbus.proxies().led().set_led_brightness(<aura_modes::LedBrightness>::from(level))?,
+            Some(level) => dbus
+                .proxies()
+                .led()
+                .set_led_brightness(<aura_modes::LedBrightness>::from(level))?,
         }
     }
 
