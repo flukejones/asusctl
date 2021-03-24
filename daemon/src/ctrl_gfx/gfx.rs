@@ -95,10 +95,8 @@ impl Reloadable for CtrlGraphics {
 impl CtrlGraphics {
     pub fn new(config: Arc<Mutex<Config>>) -> std::io::Result<CtrlGraphics> {
         let bus = PciBus::new()?;
-
         info!("GFX: Rescanning PCI bus");
         bus.rescan()?;
-
         let devs = PciDevice::all()?;
 
         let functions = |parent: &PciDevice| -> Vec<PciDevice> {
@@ -169,7 +167,6 @@ impl CtrlGraphics {
             config.gfx_mode = vendor;
             config.write();
         }
-        // TODO: Error here
     }
 
     /// Associated method to get which vendor mode is set
@@ -187,6 +184,7 @@ impl CtrlGraphics {
         Ok(buf)
     }
 
+    /// Some systems have a fallback service to load nouveau if nvidia fails
     fn toggle_fallback_service(vendor: GfxVendors) -> Result<(), RogError> {
         let action = if vendor == GfxVendors::Nvidia {
             info!("GFX: Enabling nvidia-fallback.service");
@@ -213,6 +211,7 @@ impl CtrlGraphics {
         Ok(())
     }
 
+    /// Write the appropriate xorg config for the chosen mode
     fn write_xorg_conf(vendor: GfxVendors) -> Result<(), RogError> {
         let text = if vendor == GfxVendors::Nvidia {
             [PRIMARY_GPU_BEGIN, PRIMARY_GPU_NVIDIA, PRIMARY_GPU_END].concat()
@@ -239,6 +238,7 @@ impl CtrlGraphics {
         Ok(())
     }
 
+    /// Creates the full modprobe.conf required for vfio pass-through
     fn get_vfio_conf(devices: &[GraphicsDevice]) -> Vec<u8> {
         let mut vifo = MODPROBE_VFIO.to_vec();
         for (d_count, dev) in devices.iter().enumerate() {
@@ -303,7 +303,7 @@ impl CtrlGraphics {
             .map_err(|err| RogError::Command("device unbind error".into(), err))
     }
 
-    fn do_driver_action(driver: &str, action: &str) -> Result<(), RogError> {
+    fn do_driver_action(driver: &str, action: &str) -> Result<(), GfxError> {
         let mut cmd = Command::new(action);
         cmd.arg(driver);
 
@@ -318,7 +318,7 @@ impl CtrlGraphics {
 
             let output = cmd
                 .output()
-                .map_err(|err| RogError::Command(format!("{:?}", cmd), err))?;
+                .map_err(|err| GfxError::Command(format!("{:?}", cmd), err))?;
             if !output.status.success() {
                 if output
                     .stderr
@@ -327,7 +327,7 @@ impl CtrlGraphics {
                     return Ok(());
                 }
                 if output.stderr.ends_with("is builtin.\n".as_bytes()) {
-                    return Err(GfxError::VfioBuiltin.into());
+                    return Err(GfxError::VfioBuiltin);
                 }
                 if output.stderr.ends_with("Permission denied\n".as_bytes()) {
                     warn!(
@@ -342,7 +342,7 @@ impl CtrlGraphics {
                 if String::from_utf8_lossy(&output.stderr)
                     .contains(&format!("Module {} not found", driver))
                 {
-                    return Err(GfxError::MissingModule(driver.into()).into());
+                    return Err(GfxError::MissingModule(driver.into()));
                 }
                 if count >= MAX_TRIES {
                     let msg = format!(
@@ -351,7 +351,7 @@ impl CtrlGraphics {
                         driver,
                         String::from_utf8_lossy(&output.stderr)
                     );
-                    return Err(RogError::Modprobe(msg));
+                    return Err(GfxError::Modprobe(msg));
                 }
             } else if output.status.success() {
                 return Ok(());
@@ -457,7 +457,13 @@ impl CtrlGraphics {
             GfxVendors::Integrated => {
                 Self::do_driver_action("nouveau", "rmmod")?;
                 for driver in VFIO_DRIVERS.iter() {
-                    Self::do_driver_action(driver, "rmmod")?;
+                    Self::do_driver_action(driver, "rmmod").or_else(|err| {
+                        if matches!(err, GfxError::VfioBuiltin) {
+                            warn!("{}", err);
+                            return Ok(());
+                        }
+                        Err(err)
+                    })?;
                 }
                 for driver in NVIDIA_DRIVERS.iter() {
                     Self::do_driver_action(driver, "rmmod")?;
@@ -468,7 +474,8 @@ impl CtrlGraphics {
         Ok(())
     }
 
-    fn graphical_session_alive(
+    /// Check if the user has any graphical uiser sessions that are active or online
+    fn graphical_user_sessions_exist(
         connection: &Connection,
         sessions: &[SessionInfo],
     ) -> Result<bool, RogError> {
@@ -513,7 +520,7 @@ impl CtrlGraphics {
                 sessions = tmp;
             }
 
-            if !Self::graphical_session_alive(&connection, &sessions)? {
+            if !Self::graphical_user_sessions_exist(&connection, &sessions)? {
                 break;
             }
 
@@ -547,6 +554,7 @@ impl CtrlGraphics {
         Ok(format!("Graphics mode changed to {} successfully", v))
     }
 
+    /// Before starting a new thread the old one *must* be cancelled
     fn cancel_thread(&self) {
         if let Ok(lock) = self.thread_kill.lock() {
             if let Some(tx) = lock.as_ref() {

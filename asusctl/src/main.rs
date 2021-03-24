@@ -143,6 +143,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if parsed.help {
         print_supported_help(&supported, &parsed);
+        println!("\nSee https://asus-linux.org/faq/ for additional help");
         std::process::exit(1);
     }
 

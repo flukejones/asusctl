@@ -42,7 +42,7 @@ per_key = true
 
 [[led_data]]
 prod_family = "ROG Strix"
-board_names = ["GX531", "G512LV", "G712LV"]
+board_names = ["GX531", "G512LV", "G712LV", "G712LW"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
 multizone = true
 per_key = false

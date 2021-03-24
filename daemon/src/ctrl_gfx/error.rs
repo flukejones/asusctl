@@ -12,6 +12,8 @@ pub enum GfxError {
     GsyncModeActive,
     VfioBuiltin,
     MissingModule(String),
+    Modprobe(String),
+    Command(String, std::io::Error),
 }
 
 impl fmt::Display for GfxError {
@@ -35,6 +37,8 @@ impl fmt::Display for GfxError {
                 "Can not switch to vfio mode if the modules are built in to kernel"
             ),
             GfxError::MissingModule(m) => write!(f, "The module {} is missing", m),
+            GfxError::Modprobe(detail) => write!(f, "Modprobe error: {}", detail),
+            GfxError::Command(func, error) => write!(f, "Command exec error: {}: {}", func, error),
         }
     }
 }
