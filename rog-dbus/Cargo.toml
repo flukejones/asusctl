@@ -1,6 +1,6 @@
 [package]
 name = "rog_dbus"
-version = "3.0.0"
+version = "3.1.0"
 license = "MPL-2.0"
 readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]

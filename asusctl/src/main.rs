@@ -389,6 +389,9 @@ fn handle_profile(
     if !cmd.next
         && !cmd.create
         && !cmd.list
+        && !cmd.active_name
+        && !cmd.active_data
+        && !cmd.profiles_data
         && cmd.remove.is_none()
         && cmd.curve.is_none()
         && cmd.max_percentage.is_none()
@@ -419,12 +422,34 @@ fn handle_profile(
 
     if cmd.next {
         dbus.proxies().profile().next_fan()?;
-    } else if cmd.list {
-        let profile_names = dbus.proxies().profile().profile_names()?;
-        println!("Available profiles are {}", profile_names);
-    } else if let Some(profile) = &cmd.remove {
+    }
+    if let Some(profile) = &cmd.remove {
         dbus.proxies().profile().remove(profile)?
-    } else {
+    }
+    if cmd.list {
+        let profile_names = dbus.proxies().profile().profile_names()?;
+        println!("Available profiles are {:?}", profile_names);
+    }
+    if cmd.active_name {
+        println!(
+            "Active profile: {:?}",
+            dbus.proxies().profile().active_profile_name()?
+        );
+    }
+    if cmd.active_data {
+        println!("Active profile:");
+        for s in dbus.proxies().profile().active_profile_data()?.lines() {
+            println!("{}", s);
+        }
+    }
+    if cmd.profiles_data {
+        println!("Profiles:");
+        for s in dbus.proxies().profile().all_profile_data()?.lines() {
+            println!("{}", s);
+        }
+    }
+
+    if cmd.profile.is_some() {
         dbus.proxies()
             .profile()
             .write_command(&ProfileEvent::Cli(cmd.clone()))?

@@ -3,7 +3,7 @@ use ctrl_gfx::*;
 use ctrl_rog_bios::CtrlRogBios;
 use log::{error, info, warn};
 use logind_zbus::{
-    types::{SessionClass, SessionInfo, SessionType},
+    types::{SessionClass, SessionInfo, SessionState, SessionType},
     ManagerProxy, SessionProxy,
 };
 use rog_types::gfx_vendors::{GfxRequiredUserAction, GfxVendors};
@@ -326,6 +326,9 @@ impl CtrlGraphics {
                 {
                     return Ok(());
                 }
+                if output.stderr.ends_with("is builtin.\n".as_bytes()) {
+                    return Err(GfxError::VfioBuiltin.into());
+                }
                 if output.stderr.ends_with("Permission denied\n".as_bytes()) {
                     warn!(
                         "{} {} failed: {:?}",
@@ -335,6 +338,11 @@ impl CtrlGraphics {
                     );
                     warn!("GFX: It may be safe to ignore the above error, run `lsmod |grep {}` to confirm modules loaded", driver);
                     return Ok(());
+                }
+                if String::from_utf8_lossy(&output.stderr)
+                    .contains(&format!("Module {} not found", driver))
+                {
+                    return Err(GfxError::MissingModule(driver.into()).into());
                 }
                 if count >= MAX_TRIES {
                     let msg = format!(
@@ -350,7 +358,7 @@ impl CtrlGraphics {
             }
 
             count += 1;
-            std::thread::sleep(std::time::Duration::from_millis(250));
+            std::thread::sleep(std::time::Duration::from_millis(50));
         }
     }
 
@@ -439,6 +447,7 @@ impl CtrlGraphics {
                 }
             }
             GfxVendors::Vfio => {
+                Self::do_driver_action("nouveau", "rmmod")?;
                 for driver in NVIDIA_DRIVERS.iter() {
                     Self::do_driver_action(driver, "rmmod")?;
                 }
@@ -446,6 +455,7 @@ impl CtrlGraphics {
                 Self::do_driver_action("vfio-pci", "modprobe")?;
             }
             GfxVendors::Integrated => {
+                Self::do_driver_action("nouveau", "rmmod")?;
                 for driver in VFIO_DRIVERS.iter() {
                     Self::do_driver_action(driver, "rmmod")?;
                 }
@@ -455,7 +465,6 @@ impl CtrlGraphics {
                 Self::unbind_remove_nvidia(&devices)?;
             }
         }
-
         Ok(())
     }
 
@@ -468,9 +477,10 @@ impl CtrlGraphics {
             if session_proxy.get_class()? == SessionClass::User {
                 match session_proxy.get_type()? {
                     SessionType::X11 | SessionType::Wayland | SessionType::MIR => {
-                        //if session_proxy.get_active()? {
-                        return Ok(true);
-                        //}
+                        match session_proxy.get_state()? {
+                            SessionState::Online | SessionState::Active => return Ok(true),
+                            SessionState::Closing | SessionState::Invalid => {}
+                        }
                     }
                     _ => {}
                 }
@@ -499,8 +509,7 @@ impl CtrlGraphics {
         loop {
             let tmp = manager.list_sessions()?;
             if !tmp.iter().eq(&sessions) {
-                warn!("GFX: Sessions list changed");
-                warn!("GFX: Old list:\n{:?}\nNew list:\n{:?}", &sessions, &tmp);
+                info!("GFX thread: Sessions list changed");
                 sessions = tmp;
             }
 
@@ -523,33 +532,18 @@ impl CtrlGraphics {
             sleep(SLEEP_PERIOD);
         }
 
-        info!("GFX: all graphical user sessions ended, continuing");
+        info!("GFX thread: all graphical user sessions ended, continuing");
         Self::do_display_manager_action("stop")?;
-
-        match Self::wait_display_manager_state("inactive") {
-            Ok(_) => info!("GFX: display-manager stopped"),
-            Err(err) => {
-                warn!("GFX: {}", err);
-                warn!("GFX: Retry stop display manager");
-                Self::do_display_manager_action("stop")?;
-                Self::wait_display_manager_state("inactive")?;
-            }
-        }
+        Self::wait_display_manager_state("inactive")?;
 
         Self::do_vendor_tasks(vendor, &devices, &bus)?;
-        Self::do_display_manager_action("start")?;
-
-        if Self::wait_display_manager_state("active").is_err() {
-            error!("GFX: display-manager failed to start normally, attempting restart");
-            Self::do_display_manager_action("restart")?;
-            Self::wait_display_manager_state("active")?;
-        }
+        Self::do_display_manager_action("restart")?;
         // Save selected mode in case of reboot
         Self::save_gfx_mode(vendor, config);
-        info!("GFX: display-manager started");
+        info!("GFX thread: display-manager started");
 
         let v: &str = vendor.into();
-        info!("GFX: Graphics mode changed to {} successfully", v);
+        info!("GFX thread: Graphics mode changed to {} successfully", v);
         Ok(format!("Graphics mode changed to {} successfully", v))
     }
 
@@ -560,7 +554,7 @@ impl CtrlGraphics {
                 info!("GFX: Cancelling previous thread");
                 tx.send(true)
                     .map_err(|err| {
-                        warn!("GFX: {}", err);
+                        warn!("GFX thread: {}", err);
                     })
                     .ok();
             }
@@ -619,6 +613,7 @@ impl CtrlGraphics {
             let devices = self.nvidia.clone();
             let bus = self.bus.clone();
             Self::do_vendor_tasks(vendor, &devices, &bus)?;
+            info!("GFX: Graphics mode changed to {}", <&str>::from(vendor));
         }
         // TODO: undo if failed? Save last mode, catch errors...
         Ok(action_required)

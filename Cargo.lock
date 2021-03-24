@@ -28,12 +28,13 @@ dependencies = [
  "daemon",
  "notify-rust",
  "rog_dbus",
+ "rog_types",
  "serde_json",
 ]
 
 [[package]]
 name = "asusctl"
-version = "3.1.4"
+version = "3.1.5"
 dependencies = [
  "daemon",
  "gumdrop",
@@ -196,7 +197,7 @@ dependencies = [
 
 [[package]]
 name = "daemon"
-version = "3.2.2"
+version = "3.2.3"
 dependencies = [
  "env_logger",
  "intel-pstate",
@@ -887,7 +888,7 @@ checksum = "24d5f089152e60f62d28b835fbff2cd2e8dc0baf1ac13343bef92ab7eed84548"
 
 [[package]]
 name = "rog_dbus"
-version = "3.0.0"
+version = "3.1.0"
 dependencies = [
  "rog_fan_curve",
  "rog_types",
@@ -908,7 +909,7 @@ dependencies = [
 
 [[package]]
 name = "rog_types"
-version = "3.1.1"
+version = "3.2.0"
 dependencies = [
  "gumdrop",
  "rog_fan_curve",

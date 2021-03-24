@@ -1,8 +1,8 @@
-use rog_types::{aura_modes::AuraEffect, gfx_vendors::GfxVendors};
+use rog_types::{aura_modes::AuraEffect, gfx_vendors::GfxVendors, profile::Profile};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-use crate::config::{Config, Profile};
+use crate::config::Config;
 
 /// for parsing old v2.1.2 config
 #[allow(dead_code)]

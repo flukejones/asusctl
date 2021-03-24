@@ -5,29 +5,26 @@
 `asusd` is a utility for Linux to control many aspects of various ASUS laptops
 but can also be used with non-asus laptops with reduced features.
 
+## Goals
+
+1. To provide an interface for rootless control of some system functions most users wish to control such as fan speeds, keyboard LEDs, graphics modes.
+2. Enable third-party apps to use the above with dbus methods
+3. To make the above as easy as possible for new users
+
+Point 3 means that the list of supported distros is very narrow - fedora is explicitly
+supported, while Ubuntu and openSUSE are level-2 support. All other distros are *not*
+supported (while asusd might still run fine on them). For best support use fedora 32+ Workstation.
+
 **NOTICE:**
+1. The following is *not* required for 5.11 kernel versions, as this version includes all the required patches.
+2. 2021 hardware has a new keyboard prod_id and the patch is included in 5.12+
 
-This app is developed and tested on fedora only. Support is not provided for Arch or Arch based distros.
+'hid-asus-rog` DKMS module from [here](https://download.opensuse.org/repositories/home:/luke_nukem:/asus/).
 
-**NOTICE:**
-The following is *not* required for 5.11 kernel versions, as this version includes
-all the required patches.
----
-This program requires the kernel patch [here](https://www.spinics.net/lists/linux-input/msg68977.html) to be applied.
-Alternatively you may use the dkms module for 'hid-asus-rog` from one of the
-repositories [here](https://download.opensuse.org/repositories/home:/luke_nukem:/asus/).
+The module enables the following in kernel:
 
-The patch enables the following in kernel:
-
+- Initialising the keyboard
 - All hotkeys (FN+Key combos)
-- Control of keyboard brightness using FN+Key combos (not RGB)
-- FN+F5 (fan) to toggle fan modes
-
-You will not get RGB control in kernel (yet), and `asusd` + `asusctl` is required
-to change modes and RGB settings.
-
-Many other patches for these laptops, AMD and Intel based, are working their way
-in to the kernel.
 
 ## Discord
 
@@ -52,13 +49,14 @@ will probably suffer another rename once it becomes generic enough to do so.
 - [X] User notifications daemon
 - [X] Setting/modifying built-in LED modes
 - [X] Per-key LED setting
-- [X] Fancy LED modes (See examples)
+- [X] Fancy LED modes (See examples) (currently being reworked)
 - [X] Saving settings for reload
 - [X] Logging - required for journalctl
-- [X] AniMatrix display on G14 models that include it
+- [X] AniMatrix display on G14 models that include it (currently being reworked)
 - [X] Set battery charge limit (with kernel supporting this)
-- [X] Fancy fan control on G14 + G15 thanks to @Yarn1
-- [X] Graphics mode switching between iGPU, dGPU, and On-Demand
+- [X] Fan curve control on G14 + G15 thanks to @Yarn1
+- [X] Graphics mode switching between iGPU, dGPU, on-demand, and vfio (for VM pass-through)
+  + [X] Requires only a logout/login
 - [X] Toggle bios setting for boot/POST sound
 - [X] Toggle bios setting for "dedicated gfx" mode on supported laptops (g-sync)
 
@@ -66,13 +64,15 @@ will probably suffer another rename once it becomes generic enough to do so.
 
 ## Graphics switching
 
-A new feature has been added to enable switching graphics modes. This can be disabled
-in the config with `"manage_gfx": false,`. Additionally there is an extra setting
-for laptops capable of g-sync dedicated gfx mode to enable the graphics switching
-to switch on dedicated gfx for "nvidia" mode.
+`asusd` can switch graphics modes between:
+- `integrated`, uses the iGPU only and force-disables the dGPU
+- `hybrid`, enables Nvidia prime-offload mode
+- `nvidia`, uses the Nvidia gpu only
+- `vfio`, binds the Nvidia gpu to vfio for VM pass-through
 
-The CLI option for this does not require root until it asks for it, and provides
-instructions.
+This can be disabled in the config with `"manage_gfx": false,`. Additionally there
+is an extra setting for laptops capable of g-sync dedicated gfx mode to enable the
+graphics switching to switch on dedicated gfx for "nvidia" mode.
 
 This switcher conflicts with other gpu switchers like optimus-manager, suse-prime
 or ubuntu-prime, system76-power, and bbswitch. If you have issues with `asusd`
@@ -109,22 +109,18 @@ Models GA401, GA502, GU502 support LED brightness change only (no RGB).
 If you model isn't getting the correct led modes, you can edit the file
 `/etc/asusd/asusd-ledmodes.toml`, the LED Mode numbers are as follows:
 
-```
-0   STATIC
-1   BREATHING
-2   STROBE
-3   RAINBOW
-4   STAR
-5   RAIN
-6   HIGHLIGHT
-7   LASER
-8   RIPPLE
-10  PULSE
-11  COMET
-12  FLASH
-13  MULTISTATIC
-255 PER_KEY
-```
+- Static
+- Breathe
+- Strobe
+- Rainbow
+- Star
+- Rain
+- Highlight
+- Laser
+- Ripple
+- Pulse
+- Comet
+- Flash
 
 use `cat /sys/class/dmi/id/product_name` to get details about your laptop.
 
@@ -182,25 +178,7 @@ can be added on request). You will need to install the alternative service from
 
 Run `sudo make uninstall` in the source repo, and remove `/etc/asusd/`.
 
-## Updating
-
-If there has been a config file format change your config will be overwritten. This will
-become less of an issue once the feature set is nailed down. Work is happening to enable
-parsing of older configs and transferring settings to new.
-
 # USAGE
-
-**NOTE! Fan mode toggling requires a newer kernel**. I'm unsure when the patches
-required for it got merged - I've tested with the 5.6.6 kernel and above only.
-To see if the fan-mode changed cat either:
-
-- `cat /sys/devices/platform/asus-nb-wmi/throttle_thermal_policy` or
-- `cat /sys/devices/platform/asus-nb-wmi/fan_boost_mode`
-
-The numbers are 0 = Normal/Balanced, 1 = Boost, 2 = Silent.
-
-Running the program as a daemon manually will require root. Standard (non-daemon)
-mode expects to be communicating with the daemon mode over dbus.
 
 Commands are given by:
 
@@ -221,23 +199,6 @@ Some commands may have subcommands:
 asusctl <command> <subcommand> --help
 ```
 
-## Daemon mode
-
-If the daemon service is enabled then on boot the following will be reloaded from save:
-
-- LED brightness
-- Last used built-in mode
-- fan-boost/thermal mode
-- battery charging limit
-
-The daemon also saves the settings per mode as the keyboard does not do this
-itself - this means cycling through modes with the Aura keys will use the
-settings that were used via CLI.
-
-Daemon mode creates a config file at `/etc/asusd/asusd.conf` which you can edit a
-little of. Most parts will be byte arrays, but you can adjust things like
-`mode_performance`.
-
 ## User NOTIFICATIONS via dbus
 
 If you have a notifications handler set up, or are using KDE or Gnome then you
@@ -248,10 +209,6 @@ systemctl --user enable asus-notify.service
 systemctl --user start asus-notify.service
 ```
 # OTHER
-
-## DBUS Input
-
-See [README_DBUS.md](./README_DBUS.md).
 
 ## AniMe input
 
@@ -278,11 +235,3 @@ omit_drivers+=" nvidia nvidia-drm nvidia-modeset nvidia-uvm "
 # License
 
 Mozilla Public License 2 (MPL-2.0)
-
-# Credits
-
-- [flukejones](https://github.com/flukejones/), project maintainer.
-- [tuxuser](https://github.com/tuxuser/)
-- [aspann](https://github.com/aspann)
-- [meumeu](https://github.com/Meumeu)
-- Anyone missed? Please contact me

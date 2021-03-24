@@ -1,6 +1,5 @@
 use log::{error, info, warn};
-use rog_fan_curve::Curve;
-use rog_types::gfx_vendors::GfxVendors;
+use rog_types::{gfx_vendors::GfxVendors, profile::Profile};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs::{File, OpenOptions};
@@ -134,47 +133,5 @@ impl Config {
         let json = serde_json::to_string_pretty(self).expect("Parse config to JSON failed");
         file.write_all(json.as_bytes())
             .unwrap_or_else(|err| error!("Could not write config: {}", err));
-    }
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct Profile {
-    pub min_percentage: u8,
-    pub max_percentage: u8,
-    pub turbo: bool,
-    pub fan_preset: u8,
-    pub fan_curve: Option<Curve>,
-}
-
-#[deprecated]
-pub type CPUSettings = Profile;
-
-impl Default for Profile {
-    fn default() -> Self {
-        Profile {
-            min_percentage: 0,
-            max_percentage: 100,
-            turbo: false,
-            fan_preset: 0,
-            fan_curve: None,
-        }
-    }
-}
-
-impl Profile {
-    pub fn new(
-        min_percentage: u8,
-        max_percentage: u8,
-        turbo: bool,
-        fan_preset: u8,
-        fan_curve: Option<Curve>,
-    ) -> Self {
-        Profile {
-            min_percentage,
-            max_percentage,
-            turbo,
-            fan_preset,
-            fan_curve,
-        }
     }
 }

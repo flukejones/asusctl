@@ -3,6 +3,48 @@ use rog_fan_curve::{Curve, Fan};
 use serde_derive::{Deserialize, Serialize};
 use std::str::FromStr;
 
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct Profile {
+    pub min_percentage: u8,
+    pub max_percentage: u8,
+    pub turbo: bool,
+    pub fan_preset: u8,
+    pub fan_curve: Option<Curve>,
+}
+
+#[deprecated]
+pub type CPUSettings = Profile;
+
+impl Default for Profile {
+    fn default() -> Self {
+        Profile {
+            min_percentage: 0,
+            max_percentage: 100,
+            turbo: false,
+            fan_preset: 0,
+            fan_curve: None,
+        }
+    }
+}
+
+impl Profile {
+    pub fn new(
+        min_percentage: u8,
+        max_percentage: u8,
+        turbo: bool,
+        fan_preset: u8,
+        fan_curve: Option<Curve>,
+    ) -> Self {
+        Profile {
+            min_percentage,
+            max_percentage,
+            turbo,
+            fan_preset,
+            fan_curve,
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ProfileEvent {
     Cli(ProfileCommand),
@@ -80,8 +122,16 @@ pub struct ProfileCommand {
     pub next: bool,
     #[options(help = "create the profile if it doesn't exist")]
     pub create: bool,
+    #[options(meta = "", help = "remove a profile by name")]
+    pub remove: Option<String>,
     #[options(help = "list available profiles")]
     pub list: bool,
+    #[options(help = "get active profile name")]
+    pub active_name: bool,
+    #[options(help = "get active profile data")]
+    pub active_data: bool,
+    #[options(help = "get all profile data")]
+    pub profiles_data: bool,
 
     #[options(meta = "", help = "enable or disable cpu turbo")]
     pub turbo: Option<bool>,
@@ -100,6 +150,4 @@ pub struct ProfileCommand {
     pub curve: Option<Curve>,
     #[options(free)]
     pub profile: Option<String>,
-    #[options(help = "remove a profile by name")]
-    pub remove: Option<String>,
 }

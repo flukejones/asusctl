@@ -1,10 +1,7 @@
 use crate::error::RogError;
-use crate::{
-    config::{Config, Profile},
-    GetSupported,
-};
+use crate::{config::Config, GetSupported};
 use log::{info, warn};
-use rog_types::profile::{FanLevel, ProfileEvent};
+use rog_types::profile::{FanLevel, Profile, ProfileEvent};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io::Write;
@@ -90,60 +87,61 @@ impl DbusFanAndCpu {
     }
 
     /// Fetch the active profile name
-    fn active_profile_name(&mut self) -> String {
+    fn active_profile_name(&mut self) -> zbus::fdo::Result<String> {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(mut cfg) = ctrl.config.try_lock() {
                 cfg.read();
-                return cfg.active_profile.clone();
+                return Ok(cfg.active_profile.clone());
             }
         }
-        "Failed".to_string()
+        Err(Error::Failed(
+            "Failed to get active profile name".to_string(),
+        ))
     }
 
+    // TODO: Profile can't implement Type because of Curve
     /// Fetch the active profile details
-    fn profile(&mut self) -> String {
+    fn profile(&mut self) -> zbus::fdo::Result<String> {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(mut cfg) = ctrl.config.try_lock() {
                 cfg.read();
                 if let Some(profile) = cfg.power_profiles.get(&cfg.active_profile) {
-                    if let Ok(json) = serde_json::to_string(profile) {
-                        return json;
+                    if let Ok(json) = serde_json::to_string_pretty(profile) {
+                        return Ok(json);
                     }
                 }
             }
         }
-        "Failed".to_string()
+        Err(Error::Failed(
+            "Failed to get active profile details".to_string(),
+        ))
     }
 
-    fn profiles(&mut self) -> String {
+    /// Fetch all profile data
+    fn profiles(&mut self) -> zbus::fdo::Result<String> {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(mut cfg) = ctrl.config.try_lock() {
                 cfg.read();
-                if let Ok(json) = serde_json::to_string(&cfg.power_profiles) {
-                    return json;
+                if let Ok(json) = serde_json::to_string_pretty(&cfg.power_profiles) {
+                    return Ok(json);
                 }
             }
         }
-        "Failed".to_string()
+        Err(Error::Failed(
+            "Failed to get all profile details".to_string(),
+        ))
     }
 
-    fn profile_names(&self) -> String {
+    fn profile_names(&self) -> zbus::fdo::Result<Vec<String>> {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(mut cfg) = ctrl.config.try_lock() {
                 cfg.read();
-
-                let profile_names: String = cfg
-                    .power_profiles
-                    .keys()
-                    .cloned()
-                    .collect::<Vec<String>>()
-                    .join(", ");
-
-                return profile_names;
+                let profile_names = cfg.power_profiles.keys().cloned().collect::<Vec<String>>();
+                return Ok(profile_names);
             }
         }
 
-        "Failed".to_string()
+        Err(Error::Failed("Failed to get all profile names".to_string()))
     }
 
     fn remove(&self, profile: &str) -> zbus::fdo::Result<()> {
@@ -172,7 +170,7 @@ impl DbusFanAndCpu {
             }
         }
 
-        return Err(Error::Failed("Failed to lock configuration".to_string()));
+        Err(Error::Failed("Failed to lock configuration".to_string()))
     }
 
     #[dbus_interface(signal)]
