@@ -81,6 +81,10 @@ stray configs blocking nvidia modules from loading in:
 - `/etc/modprobe.d/`
 - `/usr/lib/modprope.d/`
 
+**VFIO NOTE:** The vfio modules *must not* be compiled into the kernel, they need
+to be separate modules. If you don't plan to use vfio mode then you can ignore this
+otherwise you may need a custom built kernel.
+
 ### Power management udev rule
 
 If you have installed the Nvidia driver manually you will require the
@@ -89,8 +93,8 @@ If you have installed the Nvidia driver manually you will require the
 ### fedora and openSUSE
 
 You *may* need a file `/etc/dracut.conf.d/90-nvidia-dracut-G05.conf` installed
-to stop dracut including the nvidia modules in the ramdisk. This is espeically
-true if you manually installed the nvidia drivers.
+to stop dracut including the nvidia modules in the ramdisk if you manually
+installed the nvidia drivers.
 
 ```
 # filename /etc/dracut.conf.d/90-nvidia-dracut-G05.conf
@@ -122,7 +126,8 @@ If you model isn't getting the correct led modes, you can edit the file
 - Comet
 - Flash
 
-use `cat /sys/class/dmi/id/product_name` to get details about your laptop.
+use `cat /sys/class/dmi/id/product_name` to get details about your laptop. You
+must restart the `asusd.service` after editing.
 
 # Keybinds
 
@@ -151,8 +156,6 @@ Requirements are rust >= 1.40 installed from rustup.io if the distro provided ve
 Packaging and auto-builds are available [here](https://build.opensuse.org/package/show/home:luke_nukem:asus/asus-nb-ctrl)
 
 Download repositories are available [here](https://download.opensuse.org/repositories/home:/luke_nukem:/asus/)
-
-Alternatively check the releases page for f33 RPM.
 
 ---
 
@@ -208,6 +211,7 @@ can enable the user service to get basic notifications when something changes.
 systemctl --user enable asus-notify.service
 systemctl --user start asus-notify.service
 ```
+
 # OTHER
 
 ## AniMe input
