@@ -3,7 +3,6 @@ use rog_fan_curve::{Curve, Fan};
 use serde_derive::{Deserialize, Serialize};
 use std::str::FromStr;
 
-
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Profile {
     pub min_percentage: u8,

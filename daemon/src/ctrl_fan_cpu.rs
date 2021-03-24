@@ -1,10 +1,7 @@
 use crate::error::RogError;
-use crate::{
-    config::{Config},
-    GetSupported,
-};
+use crate::{config::Config, GetSupported};
 use log::{info, warn};
-use rog_types::profile::{FanLevel, ProfileEvent, Profile};
+use rog_types::profile::{FanLevel, Profile, ProfileEvent};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io::Write;
@@ -97,7 +94,9 @@ impl DbusFanAndCpu {
                 return Ok(cfg.active_profile.clone());
             }
         }
-        Err(Error::Failed("Failed to get active profile name".to_string()))
+        Err(Error::Failed(
+            "Failed to get active profile name".to_string(),
+        ))
     }
 
     // TODO: Profile can't implement Type because of Curve
@@ -113,7 +112,9 @@ impl DbusFanAndCpu {
                 }
             }
         }
-        Err(Error::Failed("Failed to get active profile details".to_string()))
+        Err(Error::Failed(
+            "Failed to get active profile details".to_string(),
+        ))
     }
 
     /// Fetch all profile data
@@ -126,18 +127,16 @@ impl DbusFanAndCpu {
                 }
             }
         }
-        Err(Error::Failed("Failed to get all profile details".to_string()))
+        Err(Error::Failed(
+            "Failed to get all profile details".to_string(),
+        ))
     }
 
     fn profile_names(&self) -> zbus::fdo::Result<Vec<String>> {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(mut cfg) = ctrl.config.try_lock() {
                 cfg.read();
-                let profile_names = cfg
-                    .power_profiles
-                    .keys()
-                    .cloned()
-                    .collect::<Vec<String>>();
+                let profile_names = cfg.power_profiles.keys().cloned().collect::<Vec<String>>();
                 return Ok(profile_names);
             }
         }

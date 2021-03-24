@@ -2,7 +2,10 @@ use ctrl_gfx::error::GfxError;
 use ctrl_gfx::*;
 use ctrl_rog_bios::CtrlRogBios;
 use log::{error, info, warn};
-use logind_zbus::{ManagerProxy, SessionProxy, types::{SessionClass, SessionInfo, SessionState, SessionType}};
+use logind_zbus::{
+    types::{SessionClass, SessionInfo, SessionState, SessionType},
+    ManagerProxy, SessionProxy,
+};
 use rog_types::gfx_vendors::{GfxRequiredUserAction, GfxVendors};
 use std::sync::mpsc;
 use std::{io::Write, ops::Add, path::Path, time::Instant};
@@ -323,10 +326,7 @@ impl CtrlGraphics {
                 {
                     return Ok(());
                 }
-                if output
-                    .stderr
-                    .ends_with("is builtin.\n".as_bytes())
-                {
+                if output.stderr.ends_with("is builtin.\n".as_bytes()) {
                     return Err(GfxError::VfioBuiltin.into());
                 }
                 if output.stderr.ends_with("Permission denied\n".as_bytes()) {
@@ -339,7 +339,9 @@ impl CtrlGraphics {
                     warn!("GFX: It may be safe to ignore the above error, run `lsmod |grep {}` to confirm modules loaded", driver);
                     return Ok(());
                 }
-                if String::from_utf8_lossy(&output.stderr).contains(&format!("Module {} not found", driver)) {
+                if String::from_utf8_lossy(&output.stderr)
+                    .contains(&format!("Module {} not found", driver))
+                {
                     return Err(GfxError::MissingModule(driver.into()).into());
                 }
                 if count >= MAX_TRIES {
@@ -445,6 +447,7 @@ impl CtrlGraphics {
                 }
             }
             GfxVendors::Vfio => {
+                Self::do_driver_action("nouveau", "rmmod")?;
                 for driver in NVIDIA_DRIVERS.iter() {
                     Self::do_driver_action(driver, "rmmod")?;
                 }
@@ -452,6 +455,7 @@ impl CtrlGraphics {
                 Self::do_driver_action("vfio-pci", "modprobe")?;
             }
             GfxVendors::Integrated => {
+                Self::do_driver_action("nouveau", "rmmod")?;
                 for driver in VFIO_DRIVERS.iter() {
                     Self::do_driver_action(driver, "rmmod")?;
                 }
@@ -539,7 +543,7 @@ impl CtrlGraphics {
         info!("GFX thread: display-manager started");
 
         let v: &str = vendor.into();
-        info!("GFX: Graphics mode changed to {} successfully", v);
+        info!("GFX thread: Graphics mode changed to {} successfully", v);
         Ok(format!("Graphics mode changed to {} successfully", v))
     }
 
@@ -609,6 +613,7 @@ impl CtrlGraphics {
             let devices = self.nvidia.clone();
             let bus = self.bus.clone();
             Self::do_vendor_tasks(vendor, &devices, &bus)?;
+            info!("GFX: Graphics mode changed to {}", <&str>::from(vendor));
         }
         // TODO: undo if failed? Save last mode, catch errors...
         Ok(action_required)

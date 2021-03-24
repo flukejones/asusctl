@@ -431,7 +431,10 @@ fn handle_profile(
         println!("Available profiles are {:?}", profile_names);
     }
     if cmd.active_name {
-        println!("Active profile: {:?}", dbus.proxies().profile().active_profile_name()?);
+        println!(
+            "Active profile: {:?}",
+            dbus.proxies().profile().active_profile_name()?
+        );
     }
     if cmd.active_data {
         println!("Active profile:");

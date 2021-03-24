@@ -34,10 +34,7 @@ impl fmt::Display for GfxError {
                 f,
                 "Can not switch to vfio mode if the modules are built in to kernel"
             ),
-            GfxError::MissingModule(m) => write!(
-                f,
-                "The module {} is missing", m
-            ),
+            GfxError::MissingModule(m) => write!(f, "The module {} is missing", m),
         }
     }
 }
