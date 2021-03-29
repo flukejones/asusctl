@@ -10,7 +10,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
         let count = 49;
         for _ in 0..count {
-            *key_colours.key(Key::ROG).unwrap().0 += 5;
+            *key_colours.key(Key::Rog).unwrap().0 += 5;
             *key_colours.key(Key::L).unwrap().0 += 5;
             *key_colours.key(Key::I).unwrap().0 += 5;
             *key_colours.key(Key::N).unwrap().0 += 5;
@@ -19,7 +19,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             dbus.proxies().led().set_per_key(&key_colours)?;
         }
         for _ in 0..count {
-            *key_colours.key(Key::ROG).unwrap().0 -= 5;
+            *key_colours.key(Key::Rog).unwrap().0 -= 5;
             *key_colours.key(Key::L).unwrap().0 -= 5;
             *key_colours.key(Key::I).unwrap().0 -= 5;
             *key_colours.key(Key::N).unwrap().0 -= 5;

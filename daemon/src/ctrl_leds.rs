@@ -248,7 +248,7 @@ impl crate::CtrlTask for CtrlKbdBacklight {
             }
             return Ok(());
         }
-        Err(RogError::ParseLED)
+        Err(RogError::ParseLed)
     }
 }
 

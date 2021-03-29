@@ -1,25 +1,29 @@
+mod anime_cli;
 mod aura_cli;
 
 use crate::aura_cli::{LedBrightness, SetAuraBuiltin};
+use anime_cli::{AniMeActions, AniMeCommand};
 use daemon::{
     ctrl_fan_cpu::FanCpuSupportedFunctions, ctrl_leds::LedSupportedFunctions,
     ctrl_rog_bios::RogBiosSupportedFunctions, ctrl_supported::SupportedFunctions,
 };
 use gumdrop::{Opt, Options};
+use rog_anime::{
+    AniMeDataBuffer, ANIME_DATA_LEN,
+    AnimeImage, Vec2,
+};
 use rog_dbus::AuraDbusClient;
 use rog_types::{
-    anime_matrix::{AniMeDataBuffer, FULL_PANE_LEN},
     aura_modes::{self, AuraEffect, AuraModeNum},
-    cli_options::{AniMeActions, AniMeStatusValue},
     gfx_vendors::GfxVendors,
     profile::{FanLevel, ProfileCommand, ProfileEvent},
 };
-use std::env::args;
+use std::{env::args, path::Path};
 use yansi_term::Colour::Green;
 use yansi_term::Colour::Red;
 
 #[derive(Default, Options)]
-struct CLIStart {
+struct CliStart {
     #[options(help_flag, help = "print help message")]
     help: bool,
     #[options(help = "show program version number")]
@@ -82,21 +86,6 @@ struct GraphicsCommand {
     force: bool,
 }
 
-#[derive(Options)]
-struct AniMeCommand {
-    #[options(help = "print help message")]
-    help: bool,
-    #[options(
-        meta = "",
-        help = "turn on/off the panel (accept/reject write requests)"
-    )]
-    turn: Option<AniMeStatusValue>,
-    #[options(meta = "", help = "turn on/off the panel at boot (with Asus effect)")]
-    boot: Option<AniMeStatusValue>,
-    #[options(command)]
-    command: Option<AniMeActions>,
-}
-
 #[derive(Options, Debug)]
 struct BiosCommand {
     #[options(help = "print help message")]
@@ -118,14 +107,14 @@ struct BiosCommand {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = args().skip(1).collect();
 
-    let parsed: CLIStart;
+    let parsed: CliStart;
     let missing_argument_k = gumdrop::Error::missing_argument(Opt::Short('k'));
-    match CLIStart::parse_args_default(&args) {
+    match CliStart::parse_args_default(&args) {
         Ok(p) => {
             parsed = p;
         }
         Err(err) if err.to_string() == missing_argument_k.to_string() => {
-            parsed = CLIStart {
+            parsed = CliStart {
                 kbd_bright: Some(LedBrightness::new(None)),
                 ..Default::default()
             };
@@ -175,9 +164,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if let Some(action) = cmd.command {
                 match action {
                     AniMeActions::Leds(anime_leds) => {
-                        let mut data = AniMeDataBuffer::new();
-                        data.set([anime_leds.led_brightness(); FULL_PANE_LEN]);
-                        dbus.proxies().anime().write_direct(data)?;
+                        let data = AniMeDataBuffer::from_vec(
+                            [anime_leds.led_brightness(); ANIME_DATA_LEN].to_vec(),
+                        );
+                        dbus.proxies().anime().write(data)?;
+                    }
+                    AniMeActions::Image(image) => {
+                        if image.help_requested() {
+                            println!("Missing arg or command\n\n{}", image.self_usage());
+                            if let Some(lst) = image.self_command_list() {
+                                println!("\n{}", lst);
+                            }
+                            std::process::exit(1);
+                        }
+
+                        let matrix = AnimeImage::from_png(
+                            Path::new(&image.path),
+                            Vec2::new(image.x_scale, image.y_scale),
+                            image.angle,
+                            Vec2::new(image.x_pos, image.y_pos),
+                            image.bright,
+                        )?;
+
+                        dbus.proxies()
+                            .anime()
+                            .write(<AniMeDataBuffer>::from(&matrix))
+                            .unwrap();
                     }
                 }
             }
@@ -190,9 +202,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 && parsed.chg_limit.is_none())
                 || parsed.help
             {
-                println!("{}", CLIStart::usage());
+                println!("{}", CliStart::usage());
                 println!();
-                println!("{}", CLIStart::command_list().unwrap());
+                println!("{}", CliStart::command_list().unwrap());
             }
         }
     }
@@ -224,7 +236,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn print_supported_help(supported: &SupportedFunctions, parsed: &CLIStart) {
+fn print_supported_help(supported: &SupportedFunctions, parsed: &CliStart) {
     // As help option don't work with `parse_args_default`
     // we will call `parse_args_default_or_exit` instead
     let usage: Vec<String> = parsed.self_usage().lines().map(|s| s.to_string()).collect();
@@ -311,10 +323,11 @@ fn do_gfx(
     }
     if command.pow {
         let res = dbus.proxies().gfx().gfx_get_pwr()?;
-        if res.contains("active") {
-            println!("Current power status: {}", Red.paint(&res));
-        } else {
-            println!("Current power status: {}", Green.paint(&res));
+        match res {
+            rog_types::gfx_vendors::GfxPower::Active => {
+                println!("Current power status: {}", Red.paint(<&str>::from(&res)))
+            }
+            _ => println!("Current power status: {}", Green.paint(<&str>::from(&res))),
         }
     }
     Ok(())

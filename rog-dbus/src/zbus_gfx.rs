@@ -21,7 +21,7 @@
 
 use std::sync::{Arc, Mutex};
 
-use rog_types::gfx_vendors::{GfxRequiredUserAction, GfxVendors};
+use rog_types::gfx_vendors::{GfxPower, GfxRequiredUserAction, GfxVendors};
 use zbus::{dbus_proxy, Connection, Result};
 
 #[dbus_proxy(
@@ -30,7 +30,7 @@ use zbus::{dbus_proxy, Connection, Result};
 )]
 trait Daemon {
     /// Power method
-    fn power(&self) -> zbus::Result<String>;
+    fn power(&self) -> zbus::Result<GfxPower>;
 
     /// SetVendor method
     fn set_vendor(&self, vendor: &GfxVendors) -> zbus::Result<GfxRequiredUserAction>;
@@ -60,7 +60,7 @@ impl<'a> GfxProxy<'a> {
     }
 
     #[inline]
-    pub fn gfx_get_pwr(&self) -> Result<String> {
+    pub fn gfx_get_pwr(&self) -> Result<GfxPower> {
         self.0.power()
     }
 

@@ -9,9 +9,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("     daemon version {}", daemon::VERSION);
     println!("   rog-dbus version {}", rog_dbus::VERSION);
 
-    // let mut cfg = Config::read_new()?;
-    // let mut last_profile = String::new();
-
     let (proxies, conn) = DbusProxies::new()?;
     let signals = Signals::new(&proxies)?;
 

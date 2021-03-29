@@ -10,7 +10,7 @@ use crate::ctrl_gfx::error::GfxError;
 pub enum RogError {
     ParseFanLevel,
     ParseVendor,
-    ParseLED,
+    ParseLed,
     MissingProfile(String),
     Udev(String, std::io::Error),
     Path(String, std::io::Error),
@@ -38,7 +38,7 @@ impl fmt::Display for RogError {
         match self {
             RogError::ParseFanLevel => write!(f, "Parse profile error"),
             RogError::ParseVendor => write!(f, "Parse gfx vendor error"),
-            RogError::ParseLED => write!(f, "Parse LED error"),
+            RogError::ParseLed => write!(f, "Parse LED error"),
             RogError::MissingProfile(profile) => write!(f, "Profile does not exist {}", profile),
             RogError::Udev(deets, error) => write!(f, "udev {}: {}", deets, error),
             RogError::Path(path, error) => write!(f, "Path {}: {}", path, error),
@@ -80,6 +80,7 @@ impl From<GraphicsError> for RogError {
     fn from(err: GraphicsError) -> Self {
         match err {
             GraphicsError::ParseVendor => RogError::GfxSwitching(GfxError::ParseVendor),
+            GraphicsError::ParsePower => RogError::GfxSwitching(GfxError::ParsePower),
         }
     }
 }

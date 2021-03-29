@@ -5,7 +5,7 @@ use daemon::{
 use daemon::{config_aura::AuraConfig, ctrl_charge::CtrlCharge};
 use daemon::{ctrl_anime::CtrlAnimeDisplay, ctrl_gfx::gfx::CtrlGraphics};
 use daemon::{
-    ctrl_fan_cpu::{CtrlFanAndCPU, DbusFanAndCpu},
+    ctrl_fan_cpu::{CtrlFanAndCpu, DbusFanAndCpu},
     laptops::LaptopLedData,
 };
 
@@ -134,7 +134,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
     // Collect tasks for task thread
     let mut tasks: Vec<Arc<Mutex<dyn CtrlTask + Send>>> = Vec::new();
 
-    if let Ok(mut ctrl) = CtrlFanAndCPU::new(config).map_err(|err| {
+    if let Ok(mut ctrl) = CtrlFanAndCpu::new(config).map_err(|err| {
         error!("Profile control: {}", err);
     }) {
         ctrl.reload()

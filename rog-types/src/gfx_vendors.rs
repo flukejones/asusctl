@@ -4,6 +4,38 @@ use std::str::FromStr;
 use zvariant_derive::Type;
 
 #[derive(Debug, Type, PartialEq, Copy, Clone, Deserialize, Serialize)]
+pub enum GfxPower {
+    Active,
+    Suspended,
+    Off,
+    Unknown,
+}
+
+impl FromStr for GfxPower {
+    type Err = GraphicsError;
+
+    fn from_str(s: &str) -> Result<Self, GraphicsError> {
+        match s.to_lowercase().trim() {
+            "active" => Ok(GfxPower::Active),
+            "suspended" => Ok(GfxPower::Suspended),
+            "off" => Ok(GfxPower::Off),
+            _ => Ok(GfxPower::Unknown),
+        }
+    }
+}
+
+impl From<&GfxPower> for &str {
+    fn from(gfx: &GfxPower) -> &'static str {
+        match gfx {
+            GfxPower::Active => "active",
+            GfxPower::Suspended => "suspended",
+            GfxPower::Off => "off",
+            GfxPower::Unknown => "unknown",
+        }
+    }
+}
+
+#[derive(Debug, Type, PartialEq, Copy, Clone, Deserialize, Serialize)]
 pub enum GfxVendors {
     Nvidia,
     Integrated,
