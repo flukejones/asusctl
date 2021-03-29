@@ -35,7 +35,7 @@ per_key = false
 
 [[led_data]]
 prod_family = "ROG Strix"
-board_names = ["G531GW"]
+board_names = ["G531GW", "G733QS", "G733QR"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
 multizone = false
 per_key = true
@@ -80,4 +80,11 @@ prod_family = "ROG"
 board_names = ["GL553VE"]
 standard = ["Static", "Breathe", "Strobe"]
 multizone = true
+per_key = false
+
+[[led_data]]
+prod_family = "ROG Zephyrus G14"
+board_names = ["GA401Q"]
+standard = ["Static", "Breathe", "Pulse"]
+multizone = false
 per_key = false

@@ -6,7 +6,7 @@ fn main() {
     let (client, _) = AuraDbusClient::new().unwrap();
 
     let bmp =
-        Bmp::from_slice(include_bytes!("non-skewed_r.bmp")).expect("Failed to parse BMP image");
+        Bmp::from_slice(include_bytes!("skewed_r.bmp")).expect("Failed to parse BMP image");
     let pixels: Vec<Pixel> = bmp.into_iter().collect();
     //assert_eq!(pixels.len(), 56 * 56);
 
@@ -22,21 +22,24 @@ fn main() {
     }
 
     // Throw an alignment border up
-    // {
-    //     let tmp = matrix.get_mut();
-    //     for x in tmp[0].iter_mut() {
-    //         *x = 0xff;
-    //     }
-    //     for row in tmp.iter_mut() {
-    //         row[row.len() - 1] = 0xff;
-    //     }
-    // }
+    {
+        let tmp = matrix.get_mut();
+        for x in tmp[0].iter_mut() {
+            *x = 0xff;
+        }
+        for (i,row) in tmp.iter_mut().enumerate() {
+            if i % 2 == 0 {
+                let l = row.len();
+                row[l - 1] = 0xff;
+            }
+        }
+    }
 
     matrix.debug_print();
 
-    let mut matrix: AniMePacketType = AniMePacketType::from(matrix);
+    //let mut matrix: AniMePacketType = AniMePacketType::from(matrix);
     // println!("{:?}", matrix[0].to_vec());
     // println!("{:?}", matrix[1].to_vec());
 
-    //client.proxies().anime().set_brightness(&mut matrix).unwrap();
+    client.proxies().anime().write_image(matrix).unwrap();
 }
