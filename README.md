@@ -85,6 +85,8 @@ stray configs blocking nvidia modules from loading in:
 to be separate modules. If you don't plan to use vfio mode then you can ignore this
 otherwise you may need a custom built kernel.
 
+To enable vfio switching you need to edit `/etc/asusd/asusd.conf` and change `"gfx_vfio_enable": false,` to true.
+
 ### Power management udev rule
 
 If you have installed the Nvidia driver manually you will require the

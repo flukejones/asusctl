@@ -623,7 +623,7 @@ impl CtrlGraphics {
             false
         };
 
-        if !vfio_enable {
+        if !vfio_enable && matches!(vendor, GfxVendors::Vfio) {
             return Err(GfxError::VfioDisabled.into());
         }
 

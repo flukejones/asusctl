@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add ledmodes for G733QS
 - Add ledmodes for GA401Q
 - Default to vfio disabled in configuration. Will now hard-error if enabled and
-  the kernel modules are builtin.
+  the kernel modules are builtin. To enable vfio switching `"gfx_vfio_enable": false,`
+  must be changed to `true` in `/etc/asusd/asusd.conf`
 
 # [3.2.4] - 2021-03-24
 ### Changed
