@@ -1,12 +1,11 @@
 use rog_dbus::AuraDbusClient;
-use rog_types::anime_matrix::{AniMeImageBuffer, AniMePacketType, HEIGHT, WIDTH};
+use rog_types::anime_matrix::{AniMeImageBuffer, HEIGHT, WIDTH};
 use tinybmp::{Bmp, Pixel};
 
 fn main() {
     let (client, _) = AuraDbusClient::new().unwrap();
 
-    let bmp =
-        Bmp::from_slice(include_bytes!("skewed_r.bmp")).expect("Failed to parse BMP image");
+    let bmp = Bmp::from_slice(include_bytes!("rust.bmp")).expect("Failed to parse BMP image");
     let pixels: Vec<Pixel> = bmp.into_iter().collect();
     //assert_eq!(pixels.len(), 56 * 56);
 
@@ -16,7 +15,7 @@ fn main() {
     // Aligned left
     for (i, px) in pixels.iter().enumerate() {
         if (px.x as usize / 2) < WIDTH && (px.y as usize) < HEIGHT && px.x % 2 == 0 {
-            let mut c = px.color as u32;
+            let c = px.color as u32;
             matrix.get_mut()[px.y as usize][px.x as usize / 2] = c as u8;
         }
     }
@@ -27,7 +26,7 @@ fn main() {
         for x in tmp[0].iter_mut() {
             *x = 0xff;
         }
-        for (i,row) in tmp.iter_mut().enumerate() {
+        for (i, row) in tmp.iter_mut().enumerate() {
             if i % 2 == 0 {
                 let l = row.len();
                 row[l - 1] = 0xff;

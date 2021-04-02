@@ -15,6 +15,7 @@ pub static AURA_CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
 pub struct Config {
     pub gfx_mode: GfxVendors,
     pub gfx_managed: bool,
+    pub gfx_vfio_enable: bool,
     pub active_profile: String,
     pub toggle_profiles: Vec<String>,
     #[serde(skip)]
@@ -33,6 +34,7 @@ impl Default for Config {
         Config {
             gfx_mode: GfxVendors::Hybrid,
             gfx_managed: true,
+            gfx_vfio_enable: false,
             active_profile: "normal".into(),
             toggle_profiles: vec!["normal".into(), "boost".into(), "silent".into()],
             curr_fan_mode: 0,
@@ -63,6 +65,11 @@ impl Config {
             } else {
                 if let Ok(data) = serde_json::from_str(&buf) {
                     return data;
+                } else if let Ok(data) = serde_json::from_str::<ConfigV324>(&buf) {
+                    let config = data.into_current();
+                    config.write();
+                    info!("Updated config version to: {}", VERSION);
+                    return config;
                 } else if let Ok(data) = serde_json::from_str::<ConfigV317>(&buf) {
                     let config = data.into_current();
                     config.write();

@@ -427,6 +427,7 @@ impl CtrlGraphics {
     /// The daemon needs direct access to this function when it detects that the
     pub fn do_vendor_tasks(
         vendor: GfxVendors,
+        vfio_enable: bool,
         devices: &[GraphicsDevice],
         bus: &PciBus,
     ) -> Result<(), RogError> {
@@ -439,31 +440,33 @@ impl CtrlGraphics {
 
         match vendor {
             GfxVendors::Nvidia | GfxVendors::Hybrid | GfxVendors::Compute => {
-                for driver in VFIO_DRIVERS.iter() {
-                    Self::do_driver_action(driver, "rmmod")?;
+                if vfio_enable {
+                    for driver in VFIO_DRIVERS.iter() {
+                        Self::do_driver_action(driver, "rmmod")?;
+                    }
                 }
                 for driver in NVIDIA_DRIVERS.iter() {
                     Self::do_driver_action(driver, "modprobe")?;
                 }
             }
             GfxVendors::Vfio => {
-                Self::do_driver_action("nouveau", "rmmod")?;
-                for driver in NVIDIA_DRIVERS.iter() {
-                    Self::do_driver_action(driver, "rmmod")?;
+                if vfio_enable {
+                    Self::do_driver_action("nouveau", "rmmod")?;
+                    for driver in NVIDIA_DRIVERS.iter() {
+                        Self::do_driver_action(driver, "rmmod")?;
+                    }
+                    Self::unbind_only(&devices)?;
+                    Self::do_driver_action("vfio-pci", "modprobe")?;
+                } else {
+                    return Err(GfxError::VfioDisabled.into());
                 }
-                Self::unbind_only(&devices)?;
-                Self::do_driver_action("vfio-pci", "modprobe")?;
             }
             GfxVendors::Integrated => {
                 Self::do_driver_action("nouveau", "rmmod")?;
-                for driver in VFIO_DRIVERS.iter() {
-                    Self::do_driver_action(driver, "rmmod").or_else(|err| {
-                        if matches!(err, GfxError::VfioBuiltin) {
-                            warn!("{}", err);
-                            return Ok(());
-                        }
-                        Err(err)
-                    })?;
+                if vfio_enable {
+                    for driver in VFIO_DRIVERS.iter() {
+                        Self::do_driver_action(driver, "rmmod")?;
+                    }
                 }
                 for driver in NVIDIA_DRIVERS.iter() {
                     Self::do_driver_action(driver, "rmmod")?;
@@ -543,7 +546,13 @@ impl CtrlGraphics {
         Self::do_display_manager_action("stop")?;
         Self::wait_display_manager_state("inactive")?;
 
-        Self::do_vendor_tasks(vendor, &devices, &bus)?;
+        let vfio_enable = if let Ok(config) = config.lock() {
+            config.gfx_vfio_enable
+        } else {
+            false
+        };
+
+        Self::do_vendor_tasks(vendor, vfio_enable, &devices, &bus)?;
         Self::do_display_manager_action("restart")?;
         // Save selected mode in case of reboot
         Self::save_gfx_mode(vendor, config);
@@ -607,6 +616,17 @@ impl CtrlGraphics {
                 return Err(GfxError::GsyncModeActive.into());
             }
         }
+
+        let vfio_enable = if let Ok(config) = self.config.lock() {
+            config.gfx_vfio_enable
+        } else {
+            false
+        };
+
+        if !vfio_enable && matches!(vendor, GfxVendors::Vfio) {
+            return Err(GfxError::VfioDisabled.into());
+        }
+
         // Must always cancel any thread running
         self.cancel_thread();
         // determine which method we need here
@@ -620,7 +640,7 @@ impl CtrlGraphics {
             info!("GFX: mode change does not require logout");
             let devices = self.nvidia.clone();
             let bus = self.bus.clone();
-            Self::do_vendor_tasks(vendor, &devices, &bus)?;
+            Self::do_vendor_tasks(vendor, vfio_enable, &devices, &bus)?;
             info!("GFX: Graphics mode changed to {}", <&str>::from(vendor));
         }
         // TODO: undo if failed? Save last mode, catch errors...
@@ -632,7 +652,14 @@ impl CtrlGraphics {
         let vendor = self.get_gfx_mode()?;
         let devices = self.nvidia.clone();
         let bus = self.bus.clone();
-        Self::do_vendor_tasks(vendor, &devices, &bus)?;
+
+        let vfio_enable = if let Ok(config) = self.config.lock() {
+            config.gfx_vfio_enable
+        } else {
+            false
+        };
+
+        Self::do_vendor_tasks(vendor, vfio_enable, &devices, &bus)?;
         Self::toggle_fallback_service(vendor)?;
         Ok(())
     }
