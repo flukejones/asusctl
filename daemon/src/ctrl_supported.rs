@@ -5,7 +5,7 @@ use zbus::dbus_interface;
 use crate::{
     ctrl_anime::{AnimeSupportedFunctions, CtrlAnimeDisplay},
     ctrl_charge::{ChargeSupportedFunctions, CtrlCharge},
-    ctrl_fan_cpu::{CtrlFanAndCPU, FanCpuSupportedFunctions},
+    ctrl_fan_cpu::{CtrlFanAndCpu, FanCpuSupportedFunctions},
     ctrl_leds::{CtrlKbdBacklight, LedSupportedFunctions},
     ctrl_rog_bios::{CtrlRogBios, RogBiosSupportedFunctions},
     GetSupported,
@@ -47,7 +47,7 @@ impl GetSupported for SupportedFunctions {
             keyboard_led: CtrlKbdBacklight::get_supported(),
             anime_ctrl: CtrlAnimeDisplay::get_supported(),
             charge_ctrl: CtrlCharge::get_supported(),
-            fan_cpu_ctrl: CtrlFanAndCPU::get_supported(),
+            fan_cpu_ctrl: CtrlFanAndCpu::get_supported(),
             rog_bios_ctrl: CtrlRogBios::get_supported(),
         }
     }

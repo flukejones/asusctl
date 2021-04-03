@@ -6,6 +6,7 @@ use crate::error::RogError;
 #[derive(Debug)]
 pub enum GfxError {
     ParseVendor,
+    ParsePower,
     Bus(String, std::io::Error),
     DisplayManagerAction(String, ExitStatus),
     DisplayManagerTimeout(String),
@@ -22,6 +23,7 @@ impl fmt::Display for GfxError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             GfxError::ParseVendor => write!(f, "Could not parse vendor name"),
+            GfxError::ParsePower => write!(f, "Could not parse dGPU power status"),
             GfxError::Bus(func, error) => write!(f, "Bus error: {}: {}", func, error),
             GfxError::DisplayManagerAction(action, status) => {
                 write!(f, "Display-manager action {} failed: {}", action, status)

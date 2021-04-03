@@ -14,12 +14,7 @@ const APPLY: u8 = 0xc4;
 const ON_OFF: u8 = 0x04;
 
 use log::{error, info, warn};
-use rog_types::{
-    anime_matrix::{
-        AniMeDataBuffer, AniMeImageBuffer, AniMePacketType, ANIME_PANE1_PREFIX, ANIME_PANE2_PREFIX,
-    },
-    error::AuraError,
-};
+use rog_anime::{AniMeDataBuffer, AniMePacketType};
 use rusb::{Device, DeviceHandle};
 use std::error::Error;
 use std::time::Duration;
@@ -45,11 +40,8 @@ pub struct CtrlAnimeDisplay {
 
 //AnimatrixWrite
 pub trait Dbus {
-    /// Write an image 34x56 pixels. Each pixel is 0-255 greyscale.
-    fn write_image(&self, input: AniMeImageBuffer);
-
     /// Write a direct stream of data
-    fn write_direct(&self, input: AniMeDataBuffer);
+    fn write(&self, input: AniMeDataBuffer);
 
     fn set_on_off(&self, status: bool);
 
@@ -70,16 +62,9 @@ impl crate::ZbusAdd for CtrlAnimeDisplay {
 
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl Dbus for CtrlAnimeDisplay {
-    /// Writes a 34x56 image
-    fn write_image(&self, input: AniMeImageBuffer) {
-        self.write_image_buffer(input)
-            .map_or_else(|err| warn!("{}", err), |()| info!("Writing image to Anime"));
-    }
-
     /// Writes a data stream of length
-    fn write_direct(&self, input: AniMeDataBuffer) {
-        self.write_data_buffer(input)
-            .map_or_else(|err| warn!("{}", err), |()| info!("Writing data to Anime"));
+    fn write(&self, input: AniMeDataBuffer) {
+        self.write_data_buffer(input);
     }
 
     fn set_on_off(&self, status: bool) {
@@ -98,16 +83,8 @@ impl Dbus for CtrlAnimeDisplay {
     }
 
     fn set_boot_on_off(&self, status: bool) {
-        let status_str = if status { "on" } else { "off" };
-
-        self.do_set_boot(status).map_or_else(
-            |err| warn!("{}", err),
-            |()| info!("Turning {} the AniMe at boot/shutdown", status_str),
-        );
-        self.do_apply().map_or_else(
-            |err| warn!("{}", err),
-            |()| info!("Turning {} the AniMe at boot/shutdown", status_str),
-        );
+        self.do_set_boot(status);
+        self.do_apply();
     }
 }
 
@@ -132,7 +109,7 @@ impl CtrlAnimeDisplay {
 
         info!("Device has an AniMe Matrix display");
         let ctrl = CtrlAnimeDisplay { handle: device };
-        ctrl.do_initialization()?;
+        ctrl.do_initialization();
 
         Ok(ctrl)
     }
@@ -167,48 +144,16 @@ impl CtrlAnimeDisplay {
         }
     }
     #[inline]
-    fn write_data_buffer(&self, buffer: AniMeDataBuffer) -> Result<(), AuraError> {
-        let mut image = AniMePacketType::from(buffer);
-        image[0][..7].copy_from_slice(&ANIME_PANE1_PREFIX);
-        image[1][..7].copy_from_slice(&ANIME_PANE2_PREFIX);
-
-        for row in image.iter() {
+    fn write_data_buffer(&self, buffer: AniMeDataBuffer) {
+        let data = AniMePacketType::from(buffer);
+        for row in data.iter() {
             self.write_bytes(row);
         }
-        self.do_flush()?;
-        Ok(())
-    }
-
-    /// Write an Animatrix image
-    ///
-    /// The expected USB input here is *two* Vectors, 640 bytes in length. The two vectors
-    /// are each one half of the full image write.
-    ///
-    /// After each write a flush is written, it is assumed that this tells the device to
-    /// go ahead and display the written bytes
-    ///
-    /// # Note:
-    /// The vectors are expected to contain the full sequence of bytes as follows
-    ///
-    /// - Write pane 1: 0x5e 0xc0 0x02 0x01 0x00 0x73 0x02 .. <led brightness>
-    /// - Write pane 2: 0x5e 0xc0 0x02 0x74 0x02 0x73 0x02 .. <led brightness>
-    ///
-    /// Where led brightness is 0..255, low to high
-    #[inline]
-    fn write_image_buffer(&self, buffer: AniMeImageBuffer) -> Result<(), AuraError> {
-        let mut image = AniMePacketType::from(buffer);
-        image[0][..7].copy_from_slice(&ANIME_PANE1_PREFIX);
-        image[1][..7].copy_from_slice(&ANIME_PANE2_PREFIX);
-
-        for row in image.iter() {
-            self.write_bytes(row);
-        }
-        self.do_flush()?;
-        Ok(())
+        self.do_flush();
     }
 
     #[inline]
-    fn do_initialization(&self) -> Result<(), AuraError> {
+    fn do_initialization(&self) {
         let mut init = [0; PACKET_SIZE];
         init[0] = DEV_PAGE; // This is the USB page we're using throughout
         for (idx, byte) in INIT_STR.as_bytes().iter().enumerate() {
@@ -224,22 +169,20 @@ impl CtrlAnimeDisplay {
         init[1] = INIT;
 
         self.write_bytes(&init);
-        Ok(())
     }
 
     #[inline]
-    fn do_flush(&self) -> Result<(), AuraError> {
+    fn do_flush(&self) {
         let mut flush = [0; PACKET_SIZE];
         flush[0] = DEV_PAGE;
         flush[1] = WRITE;
         flush[2] = 0x03;
 
         self.write_bytes(&flush);
-        Ok(())
     }
 
     #[inline]
-    fn do_set_boot(&self, status: bool) -> Result<(), AuraError> {
+    fn do_set_boot(&self, status: bool)  {
         let mut flush = [0; PACKET_SIZE];
         flush[0] = DEV_PAGE;
         flush[1] = SET;
@@ -247,11 +190,10 @@ impl CtrlAnimeDisplay {
         flush[3] = if status { 0x00 } else { 0x80 };
 
         self.write_bytes(&flush);
-        Ok(())
     }
 
     #[inline]
-    fn do_apply(&self) -> Result<(), AuraError> {
+    fn do_apply(&self) {
         let mut flush = [0; PACKET_SIZE];
         flush[0] = DEV_PAGE;
         flush[1] = APPLY;
@@ -259,6 +201,5 @@ impl CtrlAnimeDisplay {
         flush[3] = 0x80;
 
         self.write_bytes(&flush);
-        Ok(())
     }
 }

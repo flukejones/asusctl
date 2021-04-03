@@ -59,7 +59,7 @@ impl KeyColourArray {
             Key::VolDown => (0, 15),
             Key::VolUp => (0, 18),
             Key::MicMute => (0, 21),
-            Key::ROG => (0, 24),
+            Key::Rog => (0, 24),
             //
             Key::Esc => (1, 24),
             Key::F1 => (1, 30),
@@ -186,7 +186,7 @@ pub enum Key {
     VolUp,
     VolDown,
     MicMute,
-    ROG,
+    Rog,
     Esc,
     F1,
     F2,
@@ -287,6 +287,7 @@ pub trait KeyLayout {
     fn get_rows(&self) -> &Vec<[Key; 17]>;
 }
 
+#[allow(clippy::upper_case_acronyms)]
 pub struct GX502Layout(Vec<[Key; 17]>);
 
 impl KeyLayout for GX502Layout {
@@ -304,7 +305,7 @@ impl Default for GX502Layout {
                 Key::VolDown,
                 Key::VolUp,
                 Key::MicMute,
-                Key::ROG,
+                Key::Rog,
                 Key::None,
                 Key::None,
                 Key::None,

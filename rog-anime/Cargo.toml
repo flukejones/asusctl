@@ -1,18 +1,25 @@
 [package]
-name = "rog_types"
-version = "3.2.0"
+name = "rog_anime"
+version = "1.0.0"
 license = "MPL-2.0"
 readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]
 repository = "https://gitlab.com/asus-linux/asus-nb-ctrl"
 homepage = "https://gitlab.com/asus-linux/asus-nb-ctrl"
-description = "A small library of effect types and conversions for ROG Aura"
+description = "Types useful for translating images and other data for display on the ASUS AniMe Matrix display"
 edition = "2018"
 
 [dependencies]
-gumdrop = "^0.8"
-rog_fan_curve = { version = "^0.1", features = ["serde"] }
+png_pong = "^0.8.0"
+glam = "*"
+pix = "0.13"
+owo-colors = "2.0.0"
+
 serde = "^1.0"
 serde_derive = "^1.0"
 zvariant = "^2.5"
 zvariant_derive = "^2.5"
+
+[features]
+default = ["zbus"]
+zbus = []

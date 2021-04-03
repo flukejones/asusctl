@@ -6,11 +6,11 @@ use logind_zbus::{
     types::{SessionClass, SessionInfo, SessionState, SessionType},
     ManagerProxy, SessionProxy,
 };
-use rog_types::gfx_vendors::{GfxRequiredUserAction, GfxVendors};
-use std::sync::mpsc;
+use rog_types::gfx_vendors::{GfxPower, GfxRequiredUserAction, GfxVendors};
 use std::{io::Write, ops::Add, path::Path, time::Instant};
 use std::{iter::FromIterator, thread::JoinHandle};
 use std::{process::Command, thread::sleep, time::Duration};
+use std::{str::FromStr, sync::mpsc};
 use std::{sync::Arc, sync::Mutex};
 use sysfs_class::{PciDevice, SysClass};
 use system::{GraphicsDevice, PciBus};
@@ -33,7 +33,7 @@ pub struct CtrlGraphics {
 
 trait Dbus {
     fn vendor(&self) -> zbus::fdo::Result<GfxVendors>;
-    fn power(&self) -> String;
+    fn power(&self) -> zbus::fdo::Result<GfxPower>;
     fn set_vendor(&mut self, vendor: GfxVendors) -> zbus::fdo::Result<GfxRequiredUserAction>;
     fn notify_gfx(&self, vendor: &GfxVendors) -> zbus::Result<()>;
     fn notify_action(&self, action: &GfxRequiredUserAction) -> zbus::Result<()>;
@@ -48,8 +48,11 @@ impl Dbus for CtrlGraphics {
         })
     }
 
-    fn power(&self) -> String {
-        Self::get_runtime_status().unwrap_or_else(|err| format!("Get power status failed: {}", err))
+    fn power(&self) -> zbus::fdo::Result<GfxPower> {
+        Self::get_runtime_status().map_err(|err| {
+            error!("GFX: {}", err);
+            zbus::fdo::Error::Failed(format!("GFX fail: {}", err))
+        })
     }
 
     fn set_vendor(&mut self, vendor: GfxVendors) -> zbus::fdo::Result<GfxRequiredUserAction> {
@@ -178,10 +181,19 @@ impl CtrlGraphics {
         Ok(GfxVendors::Hybrid)
     }
 
-    fn get_runtime_status() -> Result<String, RogError> {
-        const PATH: &str = "/sys/bus/pci/devices/0000:01:00.0/power/runtime_status";
-        let buf = std::fs::read_to_string(PATH).map_err(|err| RogError::Read(PATH.into(), err))?;
-        Ok(buf)
+    fn get_runtime_status() -> Result<GfxPower, RogError> {
+        let path = Path::new("/sys/bus/pci/devices/0000:01:00.0/power/runtime_status");
+        if path.exists() {
+            let buf = std::fs::read_to_string(path).map_err(|err| {
+                RogError::Read(
+                    "/sys/bus/pci/devices/0000:01:00.0/power/runtime_status".to_string(),
+                    err,
+                )
+            })?;
+            Ok(GfxPower::from_str(&buf)?)
+        } else {
+            Ok(GfxPower::Off)
+        }
     }
 
     /// Some systems have a fallback service to load nouveau if nvidia fails

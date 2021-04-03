@@ -11,14 +11,8 @@ pub mod aura_modes;
 
 pub mod profile;
 
-/// Contains mostly only what is required for parsing CLI options
-pub mod cli_options;
-
 /// Enables you to create fancy RGB effects
 pub mod aura_perkey;
-
-/// Helper functions for the AniMe display
-pub mod anime_matrix;
 
 pub mod gfx_vendors;
 

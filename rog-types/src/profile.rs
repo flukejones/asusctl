@@ -13,7 +13,7 @@ pub struct Profile {
 }
 
 #[deprecated]
-pub type CPUSettings = Profile;
+pub type CpuSettings = Profile;
 
 impl Default for Profile {
     fn default() -> Self {

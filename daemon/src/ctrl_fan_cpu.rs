@@ -14,7 +14,7 @@ static FAN_TYPE_1_PATH: &str = "/sys/devices/platform/asus-nb-wmi/throttle_therm
 static FAN_TYPE_2_PATH: &str = "/sys/devices/platform/asus-nb-wmi/fan_boost_mode";
 static AMD_BOOST_PATH: &str = "/sys/devices/system/cpu/cpufreq/boost";
 
-pub struct CtrlFanAndCPU {
+pub struct CtrlFanAndCpu {
     pub path: &'static str,
     config: Arc<Mutex<Config>>,
 }
@@ -26,12 +26,12 @@ pub struct FanCpuSupportedFunctions {
     pub fan_curve_set: bool,
 }
 
-impl GetSupported for CtrlFanAndCPU {
+impl GetSupported for CtrlFanAndCpu {
     type A = FanCpuSupportedFunctions;
 
     fn get_supported() -> Self::A {
         FanCpuSupportedFunctions {
-            stock_fan_modes: CtrlFanAndCPU::get_fan_path().is_ok(),
+            stock_fan_modes: CtrlFanAndCpu::get_fan_path().is_ok(),
             min_max_freq: intel_pstate::PState::new().is_ok(),
             fan_curve_set: rog_fan_curve::Board::from_board_name().is_some(),
         }
@@ -39,11 +39,11 @@ impl GetSupported for CtrlFanAndCPU {
 }
 
 pub struct DbusFanAndCpu {
-    inner: Arc<Mutex<CtrlFanAndCPU>>,
+    inner: Arc<Mutex<CtrlFanAndCpu>>,
 }
 
 impl DbusFanAndCpu {
-    pub fn new(inner: Arc<Mutex<CtrlFanAndCPU>>) -> Self {
+    pub fn new(inner: Arc<Mutex<CtrlFanAndCpu>>) -> Self {
         Self { inner }
     }
 }
@@ -189,7 +189,7 @@ impl crate::ZbusAdd for DbusFanAndCpu {
     }
 }
 
-impl crate::Reloadable for CtrlFanAndCPU {
+impl crate::Reloadable for CtrlFanAndCpu {
     fn reload(&mut self) -> Result<(), RogError> {
         if let Ok(mut config) = self.config.clone().try_lock() {
             let profile = config.active_profile.clone();
@@ -203,11 +203,11 @@ impl crate::Reloadable for CtrlFanAndCPU {
     }
 }
 
-impl CtrlFanAndCPU {
+impl CtrlFanAndCpu {
     pub fn new(config: Arc<Mutex<Config>>) -> Result<Self, RogError> {
-        let path = CtrlFanAndCPU::get_fan_path()?;
+        let path = CtrlFanAndCpu::get_fan_path()?;
         info!("Device has thermal throttle control");
-        Ok(CtrlFanAndCPU { path, config })
+        Ok(CtrlFanAndCpu { path, config })
     }
 
     fn get_fan_path() -> Result<&'static str, RogError> {
