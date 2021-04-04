@@ -11,5 +11,8 @@ pub use anime_grid::*;
 mod anime_image;
 pub use anime_image::*;
 
+mod anime_diagonal;
+pub use anime_diagonal::*;
+
 /// Base errors that are possible
 pub mod error;

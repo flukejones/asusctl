@@ -180,7 +180,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                         let matrix = AnimeImage::from_png(
                             Path::new(&image.path),
-                            Vec2::new(image.x_scale, image.y_scale),
+                            Vec2::new(image.scale, image.scale),
                             image.angle,
                             Vec2::new(image.x_pos, image.y_pos),
                             image.bright,
