@@ -10,7 +10,6 @@ use rog_dbus::AuraDbusClient;
 
 fn main() {
     let (client, _) = AuraDbusClient::new().unwrap();
-    
 
     for step in (2..50).rev() {
         let mut matrix = AniMeDiagonal::new();

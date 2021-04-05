@@ -3,7 +3,7 @@ use std::{
 };
 
 use rog_anime::{
-    AniMeDataBuffer, {AnimeImage, Vec2},
+    AniMeDataBuffer, {AniMeImage, Vec2},
 };
 use rog_dbus::AuraDbusClient;
 
@@ -18,7 +18,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         exit(-1);
     }
 
-    let mut matrix = AnimeImage::from_png(
+    let mut matrix = AniMeImage::from_png(
         Path::new(&args[1]),
         Vec2::new(
             args[2].parse::<f32>().unwrap(),

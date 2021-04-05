@@ -1,7 +1,5 @@
 use std::path::Path;
 
-use glam::Vec2;
-
 use crate::{
     anime_data::{AniMeDataBuffer, ANIME_DATA_LEN},
     error::AnimeError,
@@ -28,11 +26,6 @@ impl AniMeDiagonal {
         &mut self.0
     }
 
-    // use with height - y
-    const fn dy(x: usize, y: usize) -> usize {
-        x / 2 + x % 2 + y
-    }
-
     fn get_row(&self, x: usize, y: usize, len: usize) -> Vec<u8> {
         let mut buf = Vec::with_capacity(len);
         for i in 0..len {
@@ -46,8 +39,6 @@ impl AniMeDiagonal {
     /// updated via scale, position, or angle then displayed again after `update()`.
     pub fn from_png(
         path: &Path,
-        scale: Vec2,
-        offset: Vec2,
         bright: f32,
     ) -> Result<Self, AnimeError> {
         use pix::el::Pixel;

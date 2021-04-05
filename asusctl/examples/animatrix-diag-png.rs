@@ -9,26 +9,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     let (client, _) = AuraDbusClient::new().unwrap();
 
     let args: Vec<String> = env::args().into_iter().collect();
-    if args.len() != 7 {
+    if args.len() != 3 {
         println!(
-            "Usage: <filepath> <x scale> <y scale> <x pos> <y pos> <brightness>"
+            "Usage: <filepath> <brightness>"
         );
-        println!("e.g, asusctl/examples/doom_large.png 0.9 0.9 0.4 0.0 0.0 0.8");
-        println!("All args except path and fineness are floats");
+        println!("e.g, asusctl/examples/doom_large.png 0.8");
         exit(-1);
     }
 
     let matrix = AniMeDiagonal::from_png(
         Path::new(&args[1]),
-        Vec2::new(
-            args[2].parse::<f32>().unwrap(),
-            args[3].parse::<f32>().unwrap(),
-        ),
-        Vec2::new(
-            args[4].parse::<f32>().unwrap(),
-            args[5].parse::<f32>().unwrap(),
-        ),
-        args[6].parse::<f32>().unwrap(),
+        args[2].parse::<f32>().unwrap(),
     )?;
 
     client

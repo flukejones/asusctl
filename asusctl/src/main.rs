@@ -10,7 +10,7 @@ use daemon::{
 use gumdrop::{Opt, Options};
 use rog_anime::{
     AniMeDataBuffer, ANIME_DATA_LEN,
-    AnimeImage, Vec2,
+    AniMeImage, Vec2,
 };
 use rog_dbus::AuraDbusClient;
 use rog_types::{
@@ -178,7 +178,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             std::process::exit(1);
                         }
 
-                        let matrix = AnimeImage::from_png(
+                        let matrix = AniMeImage::from_png(
                             Path::new(&image.path),
                             Vec2::new(image.scale, image.scale),
                             image.angle,
