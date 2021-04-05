@@ -79,10 +79,8 @@ pub struct AniMeImage {
     pub help: bool,
     #[options(meta = "", help = "full path to the png to display")]
     pub path: String,
-    #[options(meta = "", default = "0.0", help = "x scale 0.0-1.0")]
-    pub x_scale: f32,
-    #[options(meta = "", default = "0.0", help = "y scale 0.0-1.0")]
-    pub y_scale: f32,
+    #[options(meta = "", default = "1.0", help = "scale 1.0 == normal")]
+    pub scale: f32,
     #[options(meta = "", default = "0.0", help = "x position (float)")]
     pub x_pos: f32,
     #[options(meta = "", default = "0.0", help = "y position (float)")]

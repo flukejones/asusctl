@@ -1,6 +1,5 @@
 use crate::anime_data::{AniMeDataBuffer, ANIME_DATA_LEN};
 use crate::anime_image::LED_IMAGE_POSITIONS;
-use owo_colors::{OwoColorize, Rgb};
 
 const WIDTH: usize = 33;
 const HEIGHT: usize = 55;
@@ -44,38 +43,38 @@ impl AniMeGrid {
         }
     }
 
-    pub fn debug_print(&self) {
-        // this is the index from right. It is used to progressively shorten rows
-        let mut prog_row_len = WIDTH - 2;
+    // pub fn debug_print(&self) {
+    //     // this is the index from right. It is used to progressively shorten rows
+    //     let mut prog_row_len = WIDTH - 2;
 
-        for (count, row) in self.0.iter().enumerate() {
-            // Switch to next block (looks like )
-            if count % 2 != 0 {
-                // Row after 6 is only 1 less, then rows after 7 follow pattern
-                if count == 7 {
-                    prog_row_len -= 1;
-                } else {
-                    prog_row_len -= 2;
-                }
-            } else {
-                prog_row_len += 1; // if count 6, 0
-            }
+    //     for (count, row) in self.0.iter().enumerate() {
+    //         // Switch to next block (looks like )
+    //         if count % 2 != 0 {
+    //             // Row after 6 is only 1 less, then rows after 7 follow pattern
+    //             if count == 7 {
+    //                 prog_row_len -= 1;
+    //             } else {
+    //                 prog_row_len -= 2;
+    //             }
+    //         } else {
+    //             prog_row_len += 1; // if count 6, 0
+    //         }
 
-            let index = row.len() - prog_row_len;
+    //         let index = row.len() - prog_row_len;
 
-            if count % 2 == 0 {
-                print!("  ");
-            }
-            for (i, n) in row.iter().enumerate() {
-                if i >= index {
-                    print!(" {}", "XXX".color(Rgb(0, *n, 0)));
-                } else {
-                    print!("    ");
-                }
-            }
-            println!();
-        }
-    }
+    //         if count % 2 == 0 {
+    //             print!("  ");
+    //         }
+    //         for (i, n) in row.iter().enumerate() {
+    //             if i >= index {
+    //                 print!(" {}", "XXX".color(Rgb(0, *n, 0)));
+    //             } else {
+    //                 print!("    ");
+    //             }
+    //         }
+    //         println!();
+    //     }
+    // }
 }
 
 impl From<AniMeGrid> for AniMeDataBuffer {

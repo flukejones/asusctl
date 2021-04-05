@@ -20,3 +20,4 @@ yansi-term = "^0.1"
 tinybmp = "^0.2.3"
 glam = "*"
 rog_dbus = { path = "../rog-dbus" }
+gif = "^0.11.2"

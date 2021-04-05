@@ -1,7 +1,7 @@
 use std::{env, error::Error, path::Path, process::exit};
 
 use rog_anime::{
-    AniMeDataBuffer, {AnimeImage, Vec2},
+    AniMeDataBuffer, {AniMeImage, Vec2},
 };
 use rog_dbus::AuraDbusClient;
 
@@ -11,14 +11,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().into_iter().collect();
     if args.len() != 8 {
         println!(
-            "Usage: <filepath> <x scale> <y scale> <angle> <x pos> <y pos> <fineness> <brightness>"
+            "Usage: <filepath> <x scale> <y scale> <angle> <x pos> <y pos> <brightness>"
         );
-        println!("e.g, asusctl/examples/doom_large.png 0.9 0.9 0.4 0.0 0.0, 0.8");
-        println!("All args except path and fineness are floats");
+        println!("e.g, asusctl/examples/doom_large.png 0.9 0.9 0.4 0.0 0.0,0.8");
         exit(-1);
     }
 
-    let matrix = AnimeImage::from_png(
+    let matrix = AniMeImage::from_png(
         Path::new(&args[1]),
         Vec2::new(
             args[2].parse::<f32>().unwrap(),

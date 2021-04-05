@@ -70,6 +70,11 @@ will probably suffer another rename once it becomes generic enough to do so.
 - `nvidia`, uses the Nvidia gpu only
 - `vfio`, binds the Nvidia gpu to vfio for VM pass-through
 
+**Rebootless note:** You must edit `/etc/default/grub` to remove `nvidia-drm.modeset=1`
+from the line `GRUB_CMDLINE_LINUX=` and then recreate your grub config. In fedora
+you can do this with `sudo grub2-mkconfig -o /etc/grub2.cfg` - other distro may be
+similar but with a different config location.
+
 This can be disabled in the config with `"manage_gfx": false,`. Additionally there
 is an extra setting for laptops capable of g-sync dedicated gfx mode to enable the
 graphics switching to switch on dedicated gfx for "nvidia" mode.

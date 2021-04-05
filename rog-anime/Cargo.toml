@@ -13,7 +13,7 @@ edition = "2018"
 png_pong = "^0.8.0"
 glam = "*"
 pix = "0.13"
-owo-colors = "2.0.0"
+gif = "^0.11.2"
 
 serde = "^1.0"
 serde_derive = "^1.0"
