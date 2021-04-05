@@ -10,9 +10,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let args: Vec<String> = env::args().into_iter().collect();
     if args.len() != 8 {
-        println!(
-            "Usage: <filepath> <x scale> <y scale> <angle> <x pos> <y pos> <brightness>"
-        );
+        println!("Usage: <filepath> <x scale> <y scale> <angle> <x pos> <y pos> <brightness>");
         println!("e.g, asusctl/examples/doom_large.png 0.9 0.9 0.4 0.0 0.0,0.8");
         exit(-1);
     }

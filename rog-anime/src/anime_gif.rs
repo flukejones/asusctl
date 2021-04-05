@@ -1,10 +1,12 @@
 use serde_derive::{Deserialize, Serialize};
-use std::{fs::File, path::{Path}, time::Duration};
+use std::{fs::File, path::Path, time::Duration};
 
 use crate::{error::AnimeError, AniMeDataBuffer, AniMeDiagonal};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AniMeFrame {
+    /// Precomputed data for the frame. This can be transferred directly to the
+    /// the `asusd` daemon over dbus or converted to USB packet with `AniMePacketType::from(buffer)`
     data: AniMeDataBuffer,
     delay: Duration,
 }

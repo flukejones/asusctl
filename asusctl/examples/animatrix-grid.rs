@@ -13,12 +13,12 @@ fn main() {
 
     let mut i = 0;
     for (y, row) in tmp.iter_mut().enumerate() {
-        if y % 2 == 0 && i + 1 != row.len() -1 {
+        if y % 2 == 0 && i + 1 != row.len() - 1 {
             i += 1;
             dbg!(i);
         }
         row[row.len() - i] = 0x22;
-        if i > 5{
+        if i > 5 {
             row[row.len() - i + 5] = 0x22;
         }
         if i > 10 {
