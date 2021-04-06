@@ -55,11 +55,13 @@ impl AniMeSequence {
         Ok(Self::Image(Box::new(data)))
     }
 
-    pub fn png_gif(file: &Path,
+    pub fn png_gif(
+        file: &Path,
         // scale: Vec2,
         // angle: f32,
         // translation: Vec2,
-        brightness: f32,) -> Result<Self, AnimeError> {
+        brightness: f32,
+    ) -> Result<Self, AnimeError> {
         let frames = AniMeGif::create_png_gif(file, brightness)?;
         Ok(Self::Animation(frames))
     }
