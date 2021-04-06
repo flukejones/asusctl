@@ -1,7 +1,7 @@
-use std::error::Error;
-use std::fmt;
 use gif::DecodingError;
 use png_pong::decode::Error as PngError;
+use std::error::Error;
+use std::fmt;
 
 #[derive(Debug)]
 pub enum AnimeError {
@@ -9,7 +9,9 @@ pub enum AnimeError {
     Io(std::io::Error),
     Png(PngError),
     Gif(DecodingError),
-    Format
+    Format,
+    /// The input was incorrect size, expected size is `IncorrectSize(width, height)`
+    IncorrectSize(u32, u32),
 }
 
 impl fmt::Display for AnimeError {
@@ -21,6 +23,11 @@ impl fmt::Display for AnimeError {
             AnimeError::Png(e) => write!(f, "PNG error: {}", e),
             AnimeError::Gif(e) => write!(f, "GIF error: {}", e),
             AnimeError::Format => write!(f, "PNG file is not 8bit greyscale"),
+            AnimeError::IncorrectSize(width, height) => write!(
+                f,
+                "The input image size is incorrect, expected {}x{}",
+                width, height
+            ),
         }
     }
 }

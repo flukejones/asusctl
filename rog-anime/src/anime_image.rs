@@ -40,7 +40,7 @@ impl Led {
     const fn bright(&self) -> u8 {
         self.2
     }
-    
+
     fn set_bright(&mut self, a: u8) {
         self.2 = a;
     }
@@ -239,9 +239,7 @@ impl AniMeImage {
         let data = std::fs::read(path)?;
         let data = std::io::Cursor::new(data);
         let decoder = png_pong::Decoder::new(data)?.into_steps();
-        let png_pong::Step { raster, delay: _ } = decoder
-            .last()
-            .ok_or(AnimeError::NoFrames)??;
+        let png_pong::Step { raster, delay: _ } = decoder.last().ok_or(AnimeError::NoFrames)??;
 
         let width;
         let pixels = match raster {

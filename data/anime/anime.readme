@@ -1,0 +1,6 @@
+See https://blog.joshwalsh.me/asus-anime-matrix/ for details on how
+the diagonal layout works.
+
+`diagonal-template.*` is provided from the website above. It is best to
+export the final file to 36px height - no scaling is done in asusd or
+rog-anime crate for diagonal displays.

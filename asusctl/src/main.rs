@@ -8,10 +8,7 @@ use daemon::{
     ctrl_rog_bios::RogBiosSupportedFunctions, ctrl_supported::SupportedFunctions,
 };
 use gumdrop::{Opt, Options};
-use rog_anime::{
-    AniMeDataBuffer, ANIME_DATA_LEN,
-    AniMeImage, Vec2,
-};
+use rog_anime::{AniMeDataBuffer, AniMeImage, Vec2, ANIME_DATA_LEN};
 use rog_dbus::AuraDbusClient;
 use rog_types::{
     aura_modes::{self, AuraEffect, AuraModeNum},

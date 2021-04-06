@@ -182,7 +182,7 @@ impl CtrlAnimeDisplay {
     }
 
     #[inline]
-    fn do_set_boot(&self, status: bool)  {
+    fn do_set_boot(&self, status: bool) {
         let mut flush = [0; PACKET_SIZE];
         flush[0] = DEV_PAGE;
         flush[1] = SET;
