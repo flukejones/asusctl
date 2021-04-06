@@ -11,9 +11,9 @@ use crate::{
 const LED_PIXEL_LEN: usize = 1244;
 
 #[derive(Copy, Clone, Debug, Default)]
-struct Pixel {
-    color: u32,
-    alpha: f32,
+pub(crate) struct Pixel {
+    pub color: u32,
+    pub alpha: f32,
 }
 
 /// A single LED position and brightness. The intention of this struct
@@ -64,7 +64,7 @@ pub struct AniMeImage {
 }
 
 impl AniMeImage {
-    const fn new(
+    pub(crate) const fn new(
         scale: Vec2,
         angle: f32,
         translation: Vec2,
@@ -129,6 +129,10 @@ impl AniMeImage {
             1 | 3 => 35,
             _ => 36 - y / 2,
         }
+    }
+
+    pub(crate) fn get_mut(&mut self) -> &mut [Pixel] {
+        &mut self.img_pixels
     }
 
     /// Really only used to generate the output for including as a full const in `LED_IMAGE_POSITIONS`

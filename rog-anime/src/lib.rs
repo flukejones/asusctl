@@ -39,7 +39,7 @@ pub enum AniMeSequence {
 
 impl AniMeSequence {
     pub fn gif(file: &Path, brightness: f32) -> Result<Self, AnimeError> {
-        let frames = AniMeGif::new(file, brightness)?;
+        let frames = AniMeGif::create_diagonal_gif(file, brightness)?;
         Ok(Self::Animation(frames))
     }
 
@@ -53,6 +53,15 @@ impl AniMeSequence {
         let image = AniMeImage::from_png(file, scale, angle, translation, brightness)?;
         let data = <AniMeDataBuffer>::from(&image);
         Ok(Self::Image(Box::new(data)))
+    }
+
+    pub fn png_gif(file: &Path,
+        // scale: Vec2,
+        // angle: f32,
+        // translation: Vec2,
+        brightness: f32,) -> Result<Self, AnimeError> {
+        let frames = AniMeGif::create_png_gif(file, brightness)?;
+        Ok(Self::Animation(frames))
     }
 
     pub fn get_animation(&self) -> Option<&AniMeGif> {
