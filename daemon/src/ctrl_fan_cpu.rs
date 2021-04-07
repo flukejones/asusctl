@@ -3,13 +3,13 @@ use crate::{config::Config, GetSupported};
 use log::{info, warn};
 use rog_types::profile::{FanLevel, Profile, ProfileEvent};
 use serde_derive::{Deserialize, Serialize};
-use zvariant::ObjectPath;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
 use zbus::{dbus_interface, fdo::Error};
+use zvariant::ObjectPath;
 
 static FAN_TYPE_1_PATH: &str = "/sys/devices/platform/asus-nb-wmi/throttle_thermal_policy";
 static FAN_TYPE_2_PATH: &str = "/sys/devices/platform/asus-nb-wmi/fan_boost_mode";
@@ -181,7 +181,10 @@ impl DbusFanAndCpu {
 impl crate::ZbusAdd for DbusFanAndCpu {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
-            .at(&ObjectPath::from_str_unchecked("/org/asuslinux/Profile"), self)
+            .at(
+                &ObjectPath::from_str_unchecked("/org/asuslinux/Profile"),
+                self,
+            )
             .map_err(|err| {
                 warn!("DbusFanAndCpu: add_to_server {}", err);
                 err

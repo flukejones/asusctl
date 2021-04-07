@@ -7,7 +7,6 @@ use logind_zbus::{
     ManagerProxy, SessionProxy,
 };
 use rog_types::gfx_vendors::{GfxPower, GfxRequiredUserAction, GfxVendors};
-use zvariant::ObjectPath;
 use std::{io::Write, ops::Add, path::Path, time::Instant};
 use std::{iter::FromIterator, thread::JoinHandle};
 use std::{process::Command, thread::sleep, time::Duration};
@@ -16,6 +15,7 @@ use std::{sync::Arc, sync::Mutex};
 use sysfs_class::{PciDevice, SysClass};
 use system::{GraphicsDevice, PciBus};
 use zbus::{dbus_interface, Connection};
+use zvariant::ObjectPath;
 
 use crate::*;
 

@@ -12,7 +12,7 @@ fn main() {
     let (client, _) = AuraDbusClient::new().unwrap();
 
     for step in (2..50).rev() {
-        let mut matrix = AniMeDiagonal::new();
+        let mut matrix = AniMeDiagonal::new(None);
         for c in (0..60).into_iter().step_by(step) {
             for i in matrix.get_mut().iter_mut() {
                 i[c] = 50;

@@ -1,5 +1,7 @@
-use crate::anime_data::{AniMeDataBuffer, ANIME_DATA_LEN};
-use crate::anime_image::LED_IMAGE_POSITIONS;
+use std::time::Duration;
+
+use crate::data::{AniMeDataBuffer, ANIME_DATA_LEN};
+use crate::image::LED_IMAGE_POSITIONS;
 
 const WIDTH: usize = 33;
 const HEIGHT: usize = 55;
@@ -10,17 +12,17 @@ const HEIGHT: usize = 55;
 /// Width = 33
 /// height = 55
 #[derive(Debug, Clone)]
-pub struct AniMeGrid([[u8; WIDTH]; HEIGHT]);
+pub struct AniMeGrid([[u8; WIDTH]; HEIGHT], Option<Duration>);
 
 impl Default for AniMeGrid {
     fn default() -> Self {
-        Self::new()
+        Self::new(None)
     }
 }
 
 impl AniMeGrid {
-    pub fn new() -> Self {
-        AniMeGrid([[0u8; WIDTH]; HEIGHT])
+    pub fn new(duration: Option<Duration>) -> Self {
+        AniMeGrid([[0u8; WIDTH]; HEIGHT], duration)
     }
 
     pub fn set(&mut self, x: usize, y: usize, b: u8) {
@@ -97,11 +99,11 @@ impl From<AniMeGrid> for AniMeDataBuffer {
 
 #[cfg(test)]
 mod tests {
-    use crate::anime_grid::*;
+    use crate::grid::*;
 
     #[test]
     fn check_data_alignment() {
-        let mut matrix = AniMeGrid::new();
+        let mut matrix = AniMeGrid::new(None);
         {
             let tmp = matrix.get_mut();
             for row in tmp.iter_mut() {

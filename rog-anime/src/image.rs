@@ -4,7 +4,7 @@ pub use glam::Vec2;
 use glam::{Mat3, Vec3};
 
 use crate::{
-    anime_data::{AniMeDataBuffer, ANIME_DATA_LEN},
+    data::{AniMeDataBuffer, ANIME_DATA_LEN},
     error::AnimeError,
 };
 
@@ -252,7 +252,7 @@ impl AniMeImage {
                 width = ras.width();
                 ras.pixels()
                     .iter()
-                    .map(|px| crate::anime_image::Pixel {
+                    .map(|px| crate::image::Pixel {
                         color: <u8>::from(px.one()) as u32,
                         alpha: <f32>::from(px.alpha()),
                     })
@@ -261,7 +261,14 @@ impl AniMeImage {
             _ => return Err(AnimeError::Format),
         };
 
-        let mut matrix = AniMeImage::new(Vec2::new(scale, scale), angle, translation, bright, pixels, width);
+        let mut matrix = AniMeImage::new(
+            Vec2::new(scale, scale),
+            angle,
+            translation,
+            bright,
+            pixels,
+            width,
+        );
 
         matrix.update();
         Ok(matrix)
@@ -1539,7 +1546,7 @@ pub const LED_IMAGE_POSITIONS: [Option<Led>; LED_PIXEL_LEN] = [
 
 #[cfg(test)]
 mod tests {
-    use crate::anime_image::*;
+    use crate::image::*;
 
     #[test]
     fn led_positions() {

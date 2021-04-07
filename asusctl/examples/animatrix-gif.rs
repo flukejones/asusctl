@@ -1,6 +1,6 @@
 use std::{env, path::Path, thread::sleep};
 
-use rog_anime::AniMeBlock;
+use rog_anime::{Action, Sequences};
 use rog_dbus::AuraDbusClient;
 
 fn main() {
@@ -14,16 +14,21 @@ fn main() {
 
     let path = Path::new(&args[1]);
     let brightness = args[2].parse::<f32>().unwrap();
-    let gif = AniMeBlock::asus_gif(path, brightness).unwrap();
+    let mut seq = Sequences::new();
+    seq.add_asus_gif(path, None, brightness).unwrap();
 
     loop {
-        for frame in gif.get_animation().unwrap().frames() {
-            client
-                .proxies()
-                .anime()
-                .write(frame.frame().clone())
-                .unwrap();
-            sleep(frame.delay());
+        for action in seq.iter() {
+            if let Action::Animation(frames) = action {
+                for frame in frames.frames() {
+                    client
+                        .proxies()
+                        .anime()
+                        .write(frame.frame().clone())
+                        .unwrap();
+                    sleep(frame.delay());
+                }
+            }
         }
     }
 }

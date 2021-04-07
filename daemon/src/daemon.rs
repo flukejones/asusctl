@@ -175,10 +175,13 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         });
 
     object_server
-        .with(&ObjectPath::from_str_unchecked("/org/asuslinux/Charge"), |obj: &CtrlCharge| {
-            let x = obj.limit();
-            obj.notify_charge(x as u8)
-        })
+        .with(
+            &ObjectPath::from_str_unchecked("/org/asuslinux/Charge"),
+            |obj: &CtrlCharge| {
+                let x = obj.limit();
+                obj.notify_charge(x as u8)
+            },
+        )
         .map_err(|err| {
             warn!("object_server notify_charge error: {}", err);
         })

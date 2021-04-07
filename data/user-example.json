@@ -1,0 +1,45 @@
+{
+    "anime": [
+      {
+        "AsusAnimation": {
+          "file": "/usr/share/asusd/anime/asus/Controller.gif",
+          "duration": {
+            "secs": 5,
+            "nanos": 0
+          }
+        }
+      },
+      {
+        "ImageAnimation": {
+          "file": "/usr/share/asusd/anime/sonic.gif",
+          "scale": 0.9,
+          "angle": 0.65,
+          "translation": [
+            0.0,
+            0.0
+          ],
+          "duration": {
+            "secs": 5,
+            "nanos": 0
+          },
+          "brightness": 0.5
+        }
+      },
+      {
+        "Image": {
+          "file_path": "/usr/share/asusd/anime/doom.png",
+          "scale": 0.7,
+          "angle": 0.0,
+          "translation": [
+            0.0,
+            0.0
+          ],
+          "duration": {
+            "secs": 5,
+            "nanos": 0
+          },
+          "brightness": 0.6
+        }
+      }
+    ]
+  }

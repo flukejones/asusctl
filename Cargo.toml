@@ -1,5 +1,5 @@
 [workspace]
-members = ["asusctl", "asus-notify", "daemon", "rog-types", "rog-dbus", "rog-anime"]
+members = ["asusctl", "asus-notify", "daemon", "daemon-user", "rog-types", "rog-dbus", "rog-anime"]
 
 [profile.release]
 lto = true

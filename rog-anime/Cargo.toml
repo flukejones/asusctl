@@ -11,14 +11,16 @@ edition = "2018"
 
 [dependencies]
 png_pong = "^0.8.0"
-glam = "*"
 pix = "0.13"
 gif = "^0.11.2"
+
 
 serde = "^1.0"
 serde_derive = "^1.0"
 zvariant = "^2.5"
 zvariant_derive = "^2.5"
+
+glam = { version = "*", features = ["serde"] }
 
 [features]
 default = ["zbus"]

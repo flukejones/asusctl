@@ -1,25 +1,26 @@
-use std::path::Path;
+use std::{path::Path, time::Duration};
 
 use crate::{
-    anime_data::{AniMeDataBuffer, ANIME_DATA_LEN},
+    data::{AniMeDataBuffer, ANIME_DATA_LEN},
     error::AnimeError,
 };
 
 const WIDTH: usize = 74;
 const HEIGHT: usize = 36;
 
+/// Mostly intended to be used with ASUS gifs, but can be used for other purposes (like images)
 #[derive(Debug, Clone)]
-pub struct AniMeDiagonal([[u8; WIDTH]; HEIGHT]);
+pub struct AniMeDiagonal([[u8; WIDTH]; HEIGHT], Option<Duration>);
 
 impl Default for AniMeDiagonal {
     fn default() -> Self {
-        Self::new()
+        Self::new(None)
     }
 }
 
 impl AniMeDiagonal {
-    pub fn new() -> Self {
-        Self([[0u8; WIDTH]; HEIGHT])
+    pub fn new(duration: Option<Duration>) -> Self {
+        Self([[0u8; WIDTH]; HEIGHT], duration)
     }
 
     pub fn get_mut(&mut self) -> &mut [[u8; WIDTH]; HEIGHT] {
@@ -38,14 +39,18 @@ impl AniMeDiagonal {
 
     /// Generate the base image from inputs. The result can be displayed as is or
     /// updated via scale, position, or angle then displayed again after `update()`.
-    pub fn from_png(path: &Path, bright: f32) -> Result<Self, AnimeError> {
+    pub fn from_png(
+        path: &Path,
+        duration: Option<Duration>,
+        bright: f32,
+    ) -> Result<Self, AnimeError> {
         use pix::el::Pixel;
         let data = std::fs::read(path)?;
         let data = std::io::Cursor::new(data);
         let decoder = png_pong::Decoder::new(data)?.into_steps();
         let png_pong::Step { raster, delay: _ } = decoder.last().ok_or(AnimeError::NoFrames)??;
 
-        let mut matrix = AniMeDiagonal::new();
+        let mut matrix = AniMeDiagonal::new(duration);
 
         let width;
         match raster {

@@ -14,13 +14,13 @@ use rog_types::{
     aura_modes::{AuraEffect, AuraModeNum, LedBrightness},
     LED_MSG_LEN,
 };
-use zvariant::ObjectPath;
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
 use zbus::dbus_interface;
+use zvariant::ObjectPath;
 
 use crate::GetSupported;
 
