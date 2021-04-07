@@ -1,6 +1,7 @@
 use log::warn;
 use serde_derive::{Deserialize, Serialize};
 use zbus::dbus_interface;
+use zvariant::ObjectPath;
 
 use crate::{
     ctrl_anime::{AnimeSupportedFunctions, CtrlAnimeDisplay},
@@ -30,7 +31,7 @@ impl SupportedFunctions {
 impl crate::ZbusAdd for SupportedFunctions {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
-            .at("/org/asuslinux/Supported", self)
+            .at(&ObjectPath::from_str_unchecked("/org/asuslinux/Supported"), self)
             .map_err(|err| {
                 warn!("SupportedFunctions: add_to_server {}", err);
                 err

@@ -28,9 +28,9 @@ udev = "^0.6"
 log = "^0.4"
 env_logger = "^0.8"
 
-zbus = "^2.0.0-beta.3"
-zvariant = "^2.5"
-logind-zbus = "*"
+zbus = "^1.9.1"
+zvariant = "^2.6"
+logind-zbus = "^0.7.1"
 
 # serialisation
 serde = "^1.0"

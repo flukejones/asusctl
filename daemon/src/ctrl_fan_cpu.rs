@@ -3,6 +3,7 @@ use crate::{config::Config, GetSupported};
 use log::{info, warn};
 use rog_types::profile::{FanLevel, Profile, ProfileEvent};
 use serde_derive::{Deserialize, Serialize};
+use zvariant::ObjectPath;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
@@ -180,7 +181,7 @@ impl DbusFanAndCpu {
 impl crate::ZbusAdd for DbusFanAndCpu {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
-            .at("/org/asuslinux/Profile", self)
+            .at(&ObjectPath::from_str_unchecked("/org/asuslinux/Profile"), self)
             .map_err(|err| {
                 warn!("DbusFanAndCpu: add_to_server {}", err);
                 err

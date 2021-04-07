@@ -10,10 +10,19 @@ use crate::{
 
 const LED_PIXEL_LEN: usize = 1244;
 
-#[derive(Copy, Clone, Debug, Default)]
-struct Pixel {
-    color: u32,
-    alpha: f32,
+#[derive(Copy, Clone, Debug)]
+pub(crate) struct Pixel {
+    pub color: u32,
+    pub alpha: f32,
+}
+
+impl Default for Pixel {
+    fn default() -> Self {
+        Pixel {
+            color: 0,
+            alpha: 0.0,
+        }
+    }
 }
 
 /// A single LED position and brightness. The intention of this struct
@@ -64,7 +73,7 @@ pub struct AniMeImage {
 }
 
 impl AniMeImage {
-    const fn new(
+    pub(crate) const fn new(
         scale: Vec2,
         angle: f32,
         translation: Vec2,
@@ -131,6 +140,10 @@ impl AniMeImage {
         }
     }
 
+    pub(crate) fn get_mut(&mut self) -> &mut [Pixel] {
+        &mut self.img_pixels
+    }
+
     /// Really only used to generate the output for including as a full const in `LED_IMAGE_POSITIONS`
     pub fn generate() -> Vec<Option<Led>> {
         (0..AniMeImage::height())
@@ -172,18 +185,10 @@ impl AniMeImage {
                     for v in GROUP.iter() {
                         let sample = x0 + *u * du + *v * dv;
 
-                        let mut y = sample.y as i32;
-                        if y > height - 1 {
-                            y = height - 1
-                        } else if y < 0 {
-                            y = 0;
-                        }
-
-                        let mut x = sample.x as i32;
-                        if x > width - 1 {
-                            x = width - 1;
-                        } else if x < 0 {
-                            x = 0;
+                        let x = sample.x as i32;
+                        let y = sample.y as i32;
+                        if x > width - 1 || y > height - 1 || x < 0 || y < 0 {
+                            continue;
                         }
 
                         let p = self.img_pixels[(x + (y * width)) as usize];
@@ -230,7 +235,7 @@ impl AniMeImage {
     /// updated via scale, position, or angle then displayed again after `update()`.
     pub fn from_png(
         path: &Path,
-        scale: Vec2,
+        scale: f32,
         angle: f32,
         translation: Vec2,
         bright: f32,
@@ -256,7 +261,7 @@ impl AniMeImage {
             _ => return Err(AnimeError::Format),
         };
 
-        let mut matrix = AniMeImage::new(scale, angle, translation, bright, pixels, width);
+        let mut matrix = AniMeImage::new(Vec2::new(scale, scale), angle, translation, bright, pixels, width);
 
         matrix.update();
         Ok(matrix)

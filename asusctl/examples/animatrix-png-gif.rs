@@ -1,21 +1,20 @@
-use std::{env, error::Error, path::Path, process::exit};
+use std::{env, path::Path, thread::sleep};
 
-use rog_anime::{
-    AniMeDataBuffer, {AniMeImage, Vec2},
-};
+use glam::Vec2;
+use rog_anime::AniMeBlock;
 use rog_dbus::AuraDbusClient;
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() {
     let (client, _) = AuraDbusClient::new().unwrap();
 
     let args: Vec<String> = env::args().into_iter().collect();
     if args.len() != 7 {
         println!("Usage: <filepath> <scale> <angle> <x pos> <y pos> <brightness>");
-        println!("e.g, asusctl/examples/doom_large.png 0.9 0.4 0.0 0.0 0.8");
-        exit(-1);
+        println!("e.g, asusctl/examples/file.gif 0.9 0.4 0.0 0.0 0.8");
+        return;
     }
 
-    let matrix = AniMeImage::from_png(
+    let gif = AniMeBlock::image_gif(
         Path::new(&args[1]),
         args[2].parse::<f32>().unwrap(),
         args[3].parse::<f32>().unwrap(),
@@ -24,13 +23,17 @@ fn main() -> Result<(), Box<dyn Error>> {
             args[5].parse::<f32>().unwrap(),
         ),
         args[6].parse::<f32>().unwrap(),
-    )?;
+    )
+    .unwrap();
 
-    client
-        .proxies()
-        .anime()
-        .write(<AniMeDataBuffer>::from(&matrix))
-        .unwrap();
-
-    Ok(())
+    loop {
+        for frame in gif.get_animation().unwrap().frames() {
+            client
+                .proxies()
+                .anime()
+                .write(frame.frame().clone())
+                .unwrap();
+            sleep(frame.delay());
+        }
+    }
 }

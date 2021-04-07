@@ -14,6 +14,7 @@ use rog_types::{
     aura_modes::{AuraEffect, AuraModeNum, LedBrightness},
     LED_MSG_LEN,
 };
+use zvariant::ObjectPath;
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::Path;
@@ -82,7 +83,7 @@ trait Dbus {
 impl crate::ZbusAdd for DbusKbdBacklight {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
-            .at("/org/asuslinux/Led", self)
+            .at(&ObjectPath::from_str_unchecked("/org/asuslinux/Led"), self)
             .map_err(|err| {
                 error!("DbusKbdBacklight: add_to_server {}", err);
             })

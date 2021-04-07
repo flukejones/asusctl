@@ -28,7 +28,7 @@ pub mod error;
 //  packet data
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub enum AniMeSequence {
+pub enum AniMeBlock {
     /// Full gif sequence. Immutable.
     Animation(AniMeGif),
     /// Basic image, can have properties changed
@@ -37,15 +37,15 @@ pub enum AniMeSequence {
     Pause(Duration),
 }
 
-impl AniMeSequence {
-    pub fn gif(file: &Path, brightness: f32) -> Result<Self, AnimeError> {
-        let frames = AniMeGif::new(file, brightness)?;
+impl AniMeBlock {
+    pub fn asus_gif(file: &Path, brightness: f32) -> Result<Self, AnimeError> {
+        let frames = AniMeGif::create_diagonal_gif(file, brightness)?;
         Ok(Self::Animation(frames))
     }
 
     pub fn png(
         file: &Path,
-        scale: Vec2,
+        scale: f32,
         angle: f32,
         translation: Vec2,
         brightness: f32,
@@ -55,16 +55,34 @@ impl AniMeSequence {
         Ok(Self::Image(Box::new(data)))
     }
 
+    pub fn image_gif(
+        file: &Path,
+        scale: f32,
+        angle: f32,
+        translation: Vec2,
+        brightness: f32,
+    ) -> Result<Self, AnimeError> {
+        let frames = AniMeGif::create_png_gif(file, scale, angle, translation, brightness)?;
+        Ok(Self::Animation(frames))
+    }
+
     pub fn get_animation(&self) -> Option<&AniMeGif> {
         match self {
-            AniMeSequence::Animation(anim) => Some(anim),
+            AniMeBlock::Animation(anim) => Some(anim),
             _ => None,
         }
     }
 
     pub fn get_image(&self) -> Option<&AniMeDataBuffer> {
         match self {
-            AniMeSequence::Image(image) => Some(image),
+            AniMeBlock::Image(image) => Some(image),
+            _ => None,
+        }
+    }
+
+    pub fn get_pause(&self) -> Option<Duration> {
+        match self {
+            AniMeBlock::Pause(pause) => Some(*pause),
             _ => None,
         }
     }

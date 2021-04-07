@@ -1,6 +1,6 @@
-use std::{env, fs::File, path::Path, thread::sleep, time::Duration};
+use std::{env, path::Path, thread::sleep};
 
-use rog_anime::AniMeSequence;
+use rog_anime::AniMeBlock;
 use rog_dbus::AuraDbusClient;
 
 fn main() {
@@ -14,7 +14,7 @@ fn main() {
 
     let path = Path::new(&args[1]);
     let brightness = args[2].parse::<f32>().unwrap();
-    let gif = AniMeSequence::gif(path, brightness).unwrap();
+    let gif = AniMeBlock::asus_gif(path, brightness).unwrap();
 
     loop {
         for frame in gif.get_animation().unwrap().frames() {
