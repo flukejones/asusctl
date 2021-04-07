@@ -23,6 +23,7 @@ use daemon::ctrl_rog_bios::CtrlRogBios;
 use std::convert::Into;
 use zbus::fdo;
 use zbus::Connection;
+use zvariant::ObjectPath;
 
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut logger = env_logger::Builder::new();
@@ -157,7 +158,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
     // TODO: implement messaging between threads to check fails
     // These tasks generally read a sys path or file to check for a
     // change
-    let _handle = std::thread::Builder::new()
+    let handle = std::thread::Builder::new()
         .name("asusd watch".to_string())
         .spawn(move || loop {
             std::thread::sleep(std::time::Duration::from_millis(100));
@@ -174,7 +175,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         });
 
     object_server
-        .with("/org/asuslinux/Charge", |obj: &CtrlCharge| {
+        .with(&ObjectPath::from_str_unchecked("/org/asuslinux/Charge"), |obj: &CtrlCharge| {
             let x = obj.limit();
             obj.notify_charge(x as u8)
         })
@@ -184,8 +185,11 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         .ok();
 
     loop {
+        if let Err(err) = &handle {
+            error!("{}", err);
+        }
         if let Err(err) = object_server.try_handle_next() {
-            eprintln!("{}", err);
+            error!("{}", err);
         }
     }
 }

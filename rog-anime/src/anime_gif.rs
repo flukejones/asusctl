@@ -26,6 +26,7 @@ impl AniMeFrame {
 pub struct AniMeGif(Vec<AniMeFrame>);
 
 impl AniMeGif {
+    /// Create an animation using the 74x36 ASUS gif format
     pub fn create_diagonal_gif(file_name: &Path, brightness: f32) -> Result<Self, AnimeError> {
         let mut matrix = AniMeDiagonal::new();
 
@@ -61,7 +62,15 @@ impl AniMeGif {
         Ok(Self(frames))
     }
 
-    pub fn create_png_gif(file_name: &Path, brightness: f32) -> Result<Self, AnimeError> {
+    /// Create an animation using a gif of any size. This method must precompute the
+    /// result.
+    pub fn create_png_gif(
+        file_name: &Path,
+        scale: f32,
+        angle: f32,
+        translation: Vec2,
+        brightness: f32,
+    ) -> Result<Self, AnimeError> {
         let mut frames = Vec::new();
 
         let mut decoder = gif::DecodeOptions::new();
@@ -76,9 +85,9 @@ impl AniMeGif {
         let pixels: Vec<Pixel> =
             vec![Pixel::default(); (decoder.width() as u32 * decoder.height() as u32) as usize];
         let mut image = AniMeImage::new(
-            Vec2::new(1.0, 1.0),
-            0.0,
-            Vec2::new(0.0, 0.0),
+            Vec2::new(scale, scale),
+            angle,
+            translation,
             brightness,
             pixels,
             decoder.width() as u32,
@@ -89,14 +98,8 @@ impl AniMeGif {
             if matches!(frame.dispose, gif::DisposalMethod::Background) {
                 let pixels: Vec<Pixel> =
                     vec![Pixel::default(); (width as u32 * height as u32) as usize];
-                image = AniMeImage::new(
-                    Vec2::new(1.0, 1.0),
-                    0.0,
-                    Vec2::new(0.0, 0.0),
-                    brightness,
-                    pixels,
-                    width as u32,
-                );
+                image =
+                    AniMeImage::new(Vec2::new(scale,scale), angle, translation, brightness, pixels, width as u32);
             }
             for (y, row) in frame.buffer.chunks(frame.width as usize * 4).enumerate() {
                 for (x, px) in row.chunks(4).enumerate() {

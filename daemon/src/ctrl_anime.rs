@@ -16,6 +16,7 @@ const ON_OFF: u8 = 0x04;
 use log::{error, info, warn};
 use rog_anime::{AniMeDataBuffer, AniMePacketType};
 use rusb::{Device, DeviceHandle};
+use zvariant::ObjectPath;
 use std::error::Error;
 use std::time::Duration;
 use zbus::dbus_interface;
@@ -51,7 +52,7 @@ pub trait Dbus {
 impl crate::ZbusAdd for CtrlAnimeDisplay {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
-            .at("/org/asuslinux/Anime", self)
+            .at(&ObjectPath::from_str_unchecked("/org/asuslinux/Anime"), self)
             .map_err(|err| {
                 warn!("CtrlAnimeDisplay: add_to_server {}", err);
                 err

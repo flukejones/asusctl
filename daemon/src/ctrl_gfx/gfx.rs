@@ -7,6 +7,7 @@ use logind_zbus::{
     ManagerProxy, SessionProxy,
 };
 use rog_types::gfx_vendors::{GfxPower, GfxRequiredUserAction, GfxVendors};
+use zvariant::ObjectPath;
 use std::{io::Write, ops::Add, path::Path, time::Instant};
 use std::{iter::FromIterator, thread::JoinHandle};
 use std::{process::Command, thread::sleep, time::Duration};
@@ -78,7 +79,7 @@ impl Dbus for CtrlGraphics {
 impl ZbusAdd for CtrlGraphics {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
-            .at("/org/asuslinux/Gfx", self)
+            .at(&ObjectPath::from_str_unchecked("/org/asuslinux/Gfx"), self)
             .map_err(|err| {
                 warn!("GFX: CtrlGraphics: add_to_server {}", err);
                 err
@@ -495,7 +496,7 @@ impl CtrlGraphics {
         sessions: &[SessionInfo],
     ) -> Result<bool, RogError> {
         for session in sessions {
-            let session_proxy = SessionProxy::new(&connection, session)?;
+            let session_proxy = SessionProxy::new(connection, session)?;
             if session_proxy.get_class()? == SessionClass::User {
                 match session_proxy.get_type()? {
                     SessionType::X11 | SessionType::Wayland | SessionType::MIR => {
