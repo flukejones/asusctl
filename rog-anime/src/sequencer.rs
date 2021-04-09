@@ -3,7 +3,7 @@ use std::{path::Path, time::Duration};
 use glam::Vec2;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{error::AnimeError, AniMeDataBuffer, AniMeGif, AniMeImage};
+use crate::{AniMeDataBuffer, AniMeGif, AniMeImage, AnimTime, error::AnimeError};
 
 ///
 #[derive(Debug, Deserialize, Serialize)]
@@ -36,7 +36,7 @@ impl Sequences {
     pub fn add_asus_gif(
         &mut self,
         file: &Path,
-        duration: Option<Duration>,
+        duration: AnimTime,
         brightness: f32,
     ) -> Result<(), AnimeError> {
         let frames = AniMeGif::create_diagonal_gif(file, duration, brightness)?;
@@ -64,7 +64,7 @@ impl Sequences {
         scale: f32,
         angle: f32,
         translation: Vec2,
-        duration: Option<Duration>,
+        duration: AnimTime,
         brightness: f32,
     ) -> Result<(), AnimeError> {
         let frames =

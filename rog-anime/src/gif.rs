@@ -22,16 +22,30 @@ impl AniMeFrame {
     }
 }
 
+#[derive(Debug, Copy, Clone, Deserialize, Serialize)]
+pub enum AnimTime {
+    Time(Duration),
+    Cycles(u32),
+    Infinite,
+}
+
+impl Default for AnimTime {
+    fn default() -> Self {
+        Self::Infinite
+    }
+}
+
+
 /// A gif animation. This is a collection of frames from the gif, and a duration
 /// that the animation should be shown for.
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct AniMeGif(Vec<AniMeFrame>, Option<Duration>);
+pub struct AniMeGif(Vec<AniMeFrame>, AnimTime);
 
 impl AniMeGif {
     /// Create an animation using the 74x36 ASUS gif format
     pub fn create_diagonal_gif(
         file_name: &Path,
-        duration: Option<Duration>,
+        duration: AnimTime,
         brightness: f32,
     ) -> Result<Self, AnimeError> {
         let mut matrix = AniMeDiagonal::new(None);
@@ -75,7 +89,7 @@ impl AniMeGif {
         scale: f32,
         angle: f32,
         translation: Vec2,
-        duration: Option<Duration>,
+        duration: AnimTime,
         brightness: f32,
     ) -> Result<Self, AnimeError> {
         let mut frames = Vec::new();
@@ -142,7 +156,7 @@ impl AniMeGif {
         &self.0
     }
 
-    pub fn duration(&self) -> Option<Duration> {
+    pub fn duration(&self) -> AnimTime {
         self.1
     }
 }

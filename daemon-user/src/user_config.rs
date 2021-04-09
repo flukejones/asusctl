@@ -5,7 +5,7 @@ use std::{
     time::Duration,
 };
 
-use rog_anime::{Sequences, Vec2};
+use rog_anime::{AnimTime, Sequences, Vec2};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::error::Error;
@@ -20,7 +20,7 @@ pub enum AnimeAction {
     /// Full gif sequence. Immutable.
     AsusAnimation {
         file: PathBuf,
-        duration: Option<Duration>,
+        time: AnimTime,
         brightness: f32,
     },
     /// Basic image, can have properties changed
@@ -29,7 +29,7 @@ pub enum AnimeAction {
         scale: f32,
         angle: f32,
         translation: Vec2,
-        duration: Option<Duration>,
+        time: AnimTime,
         brightness: f32,
     },
     Image {
@@ -45,12 +45,12 @@ pub enum AnimeAction {
 
 impl UserConfig {
     pub fn new() -> Self {
-        Self {
+        let x = Self {
             anime: vec![
                 AnimeAction::AsusAnimation {
                     file: "/usr/share/asusd/anime/asus/rog/Sunset.gif".into(),
                     brightness: 0.5,
-                    duration: None,
+                    time: AnimTime::Cycles(1),
                 },
                 AnimeAction::ImageAnimation {
                     file: "/usr/share/asusd/anime/custom/sonic-run.gif".into(),
@@ -58,7 +58,7 @@ impl UserConfig {
                     angle: 0.65,
                     translation: Vec2::default(),
                     brightness: 0.5,
-                    duration: Some(Duration::from_secs(5)),
+                    time: AnimTime::Time(Duration::from_secs(5)),
                 },
                 AnimeAction::Image {
                     file: "/usr/share/asusd/anime/custom/rust.png".into(),
@@ -74,10 +74,12 @@ impl UserConfig {
                     angle: 0.0,
                     translation: Vec2::new(3.0, 2.0),
                     brightness: 0.5,
-                    duration: None,
+                    time: AnimTime::Cycles(2),
                 },
             ],
-        }
+        };
+        println!("{}", serde_json::to_string_pretty(&x).unwrap());
+        x
     }
 
     pub fn load_config(&mut self) -> Result<(), Error> {
@@ -122,7 +124,7 @@ impl UserConfig {
             match anime {
                 AnimeAction::AsusAnimation {
                     file,
-                    duration,
+                    time: duration,
                     brightness,
                 } => seq.add_asus_gif(&file, *duration, *brightness)?,
                 AnimeAction::ImageAnimation {
@@ -130,7 +132,7 @@ impl UserConfig {
                     scale,
                     angle,
                     translation,
-                    duration,
+                    time: duration,
                     brightness,
                 } => {
                     seq.add_image_gif(&file, *scale, *angle, *translation, *duration, *brightness)?
