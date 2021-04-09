@@ -6,7 +6,7 @@ use std::{
 };
 
 use glam::Vec2;
-use rog_anime::{Action, Sequences};
+use rog_anime::{Action, AnimTime, Sequences};
 use rog_dbus::AuraDbusClient;
 
 fn main() {
@@ -32,12 +32,12 @@ fn main() {
         ),
         if let Ok(time) = args[7].parse::<u64>() {
             if time != 0 {
-                Some(Duration::from_secs(time))
+                AnimTime::Time(Duration::from_secs(time))
             } else {
-                None
+                AnimTime::Infinite
             }
         } else {
-            None
+            AnimTime::Infinite
         },
         args[6].parse::<f32>().unwrap(),
     )
@@ -54,12 +54,12 @@ fn main() {
             ),
             if let Ok(time) = args[7].parse::<u64>() {
                 if time != 0 {
-                    Some(Duration::from_secs(time))
+                    AnimTime::Time(Duration::from_secs(time))
                 } else {
-                    None
+                    AnimTime::Infinite
                 }
             } else {
-                None
+                AnimTime::Infinite
             },
             args[6].parse::<f32>().unwrap(),
         )
@@ -69,6 +69,7 @@ fn main() {
     loop {
         for action in seq.iter() {
             if let Action::Animation(frames) = action {
+                let mut count = 0;
                 let start = Instant::now();
                 'outer: loop {
                     for frame in frames.frames() {
@@ -77,13 +78,18 @@ fn main() {
                             .anime()
                             .write(frame.frame().clone())
                             .unwrap();
-                        if let Some(time) = frames.duration() {
+                        if let AnimTime::Time(time) = frames.duration() {
                             if Instant::now().duration_since(start) > time {
+                                break 'outer;
+                            }
+                        } else if let AnimTime::Cycles(times) = frames.duration() {
+                            if count == times {
                                 break 'outer;
                             }
                         }
                         sleep(frame.delay());
                     }
+                    count +=1;
                 }
             }
         }

@@ -1,4 +1,4 @@
-use rog_anime::Action;
+use rog_anime::{Action, AnimTime};
 use rog_dbus::AuraDbusClient;
 use rog_user::user_config::*;
 
@@ -27,20 +27,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let start = Instant::now();
 
             match action {
-                Action::Animation(frames) => 'animation: loop {
-                    for frame in frames.frames() {
-                        client.proxies().anime().write(frame.frame().clone())?;
-                        if let Some(time) = frames.duration() {
-                            if Instant::now().duration_since(start) > time {
+                Action::Animation(frames) => {
+                    let mut count = 0;
+                    'animation: loop {
+                        for frame in frames.frames() {
+                            client.proxies().anime().write(frame.frame().clone())?;
+                            if let AnimTime::Time(time) = frames.duration() {
+                                if Instant::now().duration_since(start) > time {
+                                    break 'animation;
+                                }
+                            }
+                            sleep(frame.delay());
+                        }
+                        if let AnimTime::Cycles(times) = frames.duration() {
+                            count += 1;
+                            if count >= times {
                                 break 'animation;
                             }
                         }
-                        sleep(frame.delay());
                     }
-                    if frames.duration().is_none() {
-                        break 'animation;
-                    }
-                },
+                }
                 Action::Image(image) => {
                     client.proxies().anime().write(image.as_ref().clone())?;
                 }

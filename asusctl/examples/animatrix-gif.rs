@@ -15,7 +15,7 @@ fn main() {
     let path = Path::new(&args[1]);
     let brightness = args[2].parse::<f32>().unwrap();
     let mut seq = Sequences::new();
-    seq.add_asus_gif(path, None, brightness).unwrap();
+    seq.add_asus_gif(path, rog_anime::AnimTime::Infinite, brightness).unwrap();
 
     loop {
         for action in seq.iter() {
