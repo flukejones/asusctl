@@ -1,7 +1,6 @@
 use crate::{config::Config, error::RogError, GetSupported};
 use log::{error, info, warn};
 use serde_derive::{Deserialize, Serialize};
-use zvariant::ObjectPath;
 use std::fs::OpenOptions;
 use std::io::BufRead;
 use std::io::{Read, Write};
@@ -10,6 +9,7 @@ use std::process::Command;
 use std::sync::Arc;
 use std::sync::Mutex;
 use zbus::dbus_interface;
+use zvariant::ObjectPath;
 
 const INITRAMFS_PATH: &str = "/usr/sbin/update-initramfs";
 const DRACUT_PATH: &str = "/usr/bin/dracut";
@@ -102,7 +102,10 @@ impl CtrlRogBios {
 impl crate::ZbusAdd for CtrlRogBios {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
-            .at(&ObjectPath::from_str_unchecked("/org/asuslinux/RogBios"), self)
+            .at(
+                &ObjectPath::from_str_unchecked("/org/asuslinux/RogBios"),
+                self,
+            )
             .map_err(|err| {
                 warn!("CtrlRogBios: add_to_server {}", err);
                 err

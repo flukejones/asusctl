@@ -8,7 +8,7 @@ use rog_dbus::AuraDbusClient;
 
 fn main() {
     let (client, _) = AuraDbusClient::new().unwrap();
-    let mut matrix = AniMeGrid::new();
+    let mut matrix = AniMeGrid::new(None);
     let tmp = matrix.get_mut();
 
     let mut i = 0;

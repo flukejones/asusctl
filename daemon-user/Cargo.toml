@@ -1,0 +1,25 @@
+[package]
+name = "daemon-user"
+version = "1.0.0"
+authors = ["Luke D Jones <luke@ljones.dev>"]
+edition = "2018"
+description = "Usermode daemon for user settings, anime, per-key lighting"
+
+[lib]
+name = "rog_user"
+path = "src/lib.rs"
+
+[[bin]]
+name = "asusd-user"
+path = "src/main.rs"
+
+[dependencies]
+# serialisation
+serde = "^1.0"
+serde_json = "^1.0"
+serde_derive = "^1.0"
+
+rog_anime = { path = "../rog-anime" }
+rog_dbus = { path = "../rog-dbus" }
+
+dirs = "3.0.1"

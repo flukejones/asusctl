@@ -31,7 +31,10 @@ impl SupportedFunctions {
 impl crate::ZbusAdd for SupportedFunctions {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
-            .at(&ObjectPath::from_str_unchecked("/org/asuslinux/Supported"), self)
+            .at(
+                &ObjectPath::from_str_unchecked("/org/asuslinux/Supported"),
+                self,
+            )
             .map_err(|err| {
                 warn!("SupportedFunctions: add_to_server {}", err);
                 err

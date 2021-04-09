@@ -2,13 +2,13 @@ use crate::{config::Config, error::RogError, GetSupported};
 //use crate::dbus::DbusEvents;
 use log::{info, warn};
 use serde_derive::{Deserialize, Serialize};
-use zvariant::ObjectPath;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
 use zbus::dbus_interface;
+use zvariant::ObjectPath;
 
 static BAT_CHARGE_PATH: &str = "/sys/class/power_supply/BAT0/charge_control_end_threshold";
 
@@ -64,7 +64,10 @@ impl CtrlCharge {
 impl crate::ZbusAdd for CtrlCharge {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
-            .at(&ObjectPath::from_str_unchecked("/org/asuslinux/Charge"), self)
+            .at(
+                &ObjectPath::from_str_unchecked("/org/asuslinux/Charge"),
+                self,
+            )
             .map_err(|err| {
                 warn!("CtrlCharge: add_to_server {}", err);
                 err
