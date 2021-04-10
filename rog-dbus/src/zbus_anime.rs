@@ -19,7 +19,7 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use rog_anime::AniMeDataBuffer;
+use rog_anime::AnimeDataBuffer;
 use zbus::{dbus_proxy, Connection, Result};
 
 #[dbus_proxy(
@@ -60,7 +60,7 @@ impl<'a> AnimeProxy<'a> {
     }
 
     #[inline]
-    pub fn write(&self, input: AniMeDataBuffer) -> Result<()> {
+    pub fn write(&self, input: AnimeDataBuffer) -> Result<()> {
         self.0.write(input.get())
     }
 }

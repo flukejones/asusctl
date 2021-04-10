@@ -1,7 +1,7 @@
 use std::{path::Path, time::Duration};
 
 use crate::{
-    data::{AniMeDataBuffer, ANIME_DATA_LEN},
+    data::{AnimeDataBuffer, ANIME_DATA_LEN},
     error::AnimeError,
 };
 
@@ -10,19 +10,22 @@ const HEIGHT: usize = 36;
 
 /// Mostly intended to be used with ASUS gifs, but can be used for other purposes (like images)
 #[derive(Debug, Clone)]
-pub struct AniMeDiagonal([[u8; WIDTH]; HEIGHT], Option<Duration>);
+pub struct AnimeDiagonal([[u8; WIDTH]; HEIGHT], Option<Duration>);
 
-impl Default for AniMeDiagonal {
+impl Default for AnimeDiagonal {
+    #[inline]
     fn default() -> Self {
         Self::new(None)
     }
 }
 
-impl AniMeDiagonal {
+impl AnimeDiagonal {
+    #[inline]
     pub fn new(duration: Option<Duration>) -> Self {
         Self([[0u8; WIDTH]; HEIGHT], duration)
     }
 
+    #[inline]
     pub fn get_mut(&mut self) -> &mut [[u8; WIDTH]; HEIGHT] {
         &mut self.0
     }
@@ -39,6 +42,7 @@ impl AniMeDiagonal {
 
     /// Generate the base image from inputs. The result can be displayed as is or
     /// updated via scale, position, or angle then displayed again after `update()`.
+    #[inline]
     pub fn from_png(
         path: &Path,
         duration: Option<Duration>,
@@ -50,7 +54,7 @@ impl AniMeDiagonal {
         let decoder = png_pong::Decoder::new(data)?.into_steps();
         let png_pong::Step { raster, delay: _ } = decoder.last().ok_or(AnimeError::NoFrames)??;
 
-        let mut matrix = AniMeDiagonal::new(duration);
+        let mut matrix = AnimeDiagonal::new(duration);
 
         let width;
         match raster {
@@ -70,11 +74,11 @@ impl AniMeDiagonal {
     }
 }
 
-impl From<&AniMeDiagonal> for AniMeDataBuffer {
-    /// Do conversion from the nested Vec in AniMeMatrix to the two required
+impl From<&AnimeDiagonal> for AnimeDataBuffer {
+    /// Do conversion from the nested Vec in AnimeMatrix to the two required
     /// packets suitable for sending over USB
     #[inline]
-    fn from(anime: &AniMeDiagonal) -> Self {
+    fn from(anime: &AnimeDiagonal) -> Self {
         let mut buf = vec![0u8; ANIME_DATA_LEN];
 
         buf[1..=32].copy_from_slice(&anime.get_row(0, 3, 32));
@@ -133,6 +137,6 @@ impl From<&AniMeDiagonal> for AniMeDataBuffer {
         buf[1226..=1234].copy_from_slice(&anime.get_row(50, 0, 9));
         buf[1236..=1244].copy_from_slice(&anime.get_row(51, 0, 9));
 
-        AniMeDataBuffer::from_vec(buf)
+        AnimeDataBuffer::from_vec(buf)
     }
 }

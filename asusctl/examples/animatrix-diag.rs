@@ -1,6 +1,6 @@
 use std::{thread::sleep, time::Duration};
 
-use rog_anime::{AniMeDataBuffer, AniMeDiagonal};
+use rog_anime::{AnimeDataBuffer, AnimeDiagonal};
 use rog_dbus::AuraDbusClient;
 
 // In usable data:
@@ -12,7 +12,7 @@ fn main() {
     let (client, _) = AuraDbusClient::new().unwrap();
 
     for step in (2..50).rev() {
-        let mut matrix = AniMeDiagonal::new(None);
+        let mut matrix = AnimeDiagonal::new(None);
         for c in (0..60).into_iter().step_by(step) {
             for i in matrix.get_mut().iter_mut() {
                 i[c] = 50;
@@ -25,7 +25,7 @@ fn main() {
             }
         }
 
-        let m = <AniMeDataBuffer>::from(&matrix);
+        let m = <AnimeDataBuffer>::from(&matrix);
         client.proxies().anime().write(m).unwrap();
         sleep(Duration::from_millis(300));
     }

@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crate::data::{AniMeDataBuffer, ANIME_DATA_LEN};
+use crate::data::{AnimeDataBuffer, ANIME_DATA_LEN};
 use crate::image::LED_IMAGE_POSITIONS;
 
 const WIDTH: usize = 33;
@@ -8,35 +8,45 @@ const HEIGHT: usize = 55;
 
 /// Helper structure for writing images.
 ///
-///  See the examples for ways to write an image to `AniMeMatrix` format.
+///  See the examples for ways to write an image to `AnimeMatrix` format.
 /// Width = 33
 /// height = 55
+///
+/// **Note:** the columns in each odd row are offset by half a pixel left
 #[derive(Debug, Clone)]
-pub struct AniMeGrid([[u8; WIDTH]; HEIGHT], Option<Duration>);
+pub struct AnimeGrid([[u8; WIDTH]; HEIGHT], Option<Duration>);
 
-impl Default for AniMeGrid {
+impl Default for AnimeGrid {
+    #[inline]
     fn default() -> Self {
         Self::new(None)
     }
 }
 
-impl AniMeGrid {
+impl AnimeGrid {
+    #[inline]
     pub fn new(duration: Option<Duration>) -> Self {
-        AniMeGrid([[0u8; WIDTH]; HEIGHT], duration)
+        AnimeGrid([[0u8; WIDTH]; HEIGHT], duration)
     }
 
+    /// Set a position in the grid with a brightness value
+    #[inline]
     pub fn set(&mut self, x: usize, y: usize, b: u8) {
         self.0[y][x] = b;
     }
 
+    #[inline]
     pub fn get(&self) -> &[[u8; WIDTH]; HEIGHT] {
         &self.0
     }
 
+    #[inline]
     pub fn get_mut(&mut self) -> &mut [[u8; WIDTH]; HEIGHT] {
         &mut self.0
     }
 
+    /// Fill the grid with a value
+    #[inline]
     pub fn fill_with(&mut self, fill: u8) {
         for row in self.0.iter_mut() {
             for x in row.iter_mut() {
@@ -79,11 +89,11 @@ impl AniMeGrid {
     // }
 }
 
-impl From<AniMeGrid> for AniMeDataBuffer {
+impl From<AnimeGrid> for AnimeDataBuffer {
     /// Do conversion from the nested Vec in AniMeMatrix to the two required
     /// packets suitable for sending over USB
     #[inline]
-    fn from(anime: AniMeGrid) -> Self {
+    fn from(anime: AnimeGrid) -> Self {
         let mut buf = vec![0u8; ANIME_DATA_LEN];
 
         for (idx, pos) in LED_IMAGE_POSITIONS.iter().enumerate() {
@@ -93,7 +103,7 @@ impl From<AniMeGrid> for AniMeDataBuffer {
                 buf[idx + 1] = anime.0[y][x];
             }
         }
-        AniMeDataBuffer::from_vec(buf)
+        AnimeDataBuffer::from_vec(buf)
     }
 }
 
@@ -103,7 +113,7 @@ mod tests {
 
     #[test]
     fn check_data_alignment() {
-        let mut matrix = AniMeGrid::new(None);
+        let mut matrix = AnimeGrid::new(None);
         {
             let tmp = matrix.get_mut();
             for row in tmp.iter_mut() {
@@ -112,7 +122,7 @@ mod tests {
             }
         }
 
-        let matrix = <AniMeDataBuffer>::from(matrix);
+        let matrix = <AnimeDataBuffer>::from(matrix);
 
         let data_cmp = [
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

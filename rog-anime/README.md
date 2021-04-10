@@ -1,56 +1,97 @@
 # rog-anime
 
-## Features
+`rog-anime` is a crate for use with ASUS laptops that have an AniMe matrix display built in to them. The crate can be used with zbus to communicate with the `asusd` daemon from the project this crate is part of, or it can be used standalone to write the data directly to USB by transforming the data to USB HID packets using builtin functions.
 
-`zbus` is enabled by default.
+Supported so far is:
+- Sequences of data,
+- Data can be:
+  + Image<scale, rotate, position>
+  + ASUS style gif
+  + Plain image type gif
+  + Pause
+- Create USB HID packets for writing to the device
+
+This crate is mostly purpose built for use with [`asus-nb-ctrl`](https://gitlab.com/asus-linux/asus-nb-ctrl) which is a complete daemon and toolset for Linux on ASUS ROG/TUF machines, but can be used in general for example building a new controller for Windows OS.
+
+## Feature enablement
+
+`dbus` is enabled by default - this uses `zvariant` to enable sending some types over dbus interfaces.
 
 ## Example
 
 ```rust
-use std::{env, error::Error, path::Path, process::exit};
-
-use rog_dbus::AuraDbusClient;
-use rog_anime::{
-    anime_data::AniMeDataBuffer,
-    anime_image::{AnimeImage, Vec2},
+use std::{
+    env, error::Error, f32::consts::PI, path::Path, process::exit, thread::sleep, time::Duration,
 };
+
+use rog_anime::{
+    AniMeDataBuffer, {AniMeImage, Vec2},
+};
+use rog_dbus::AuraDbusClient;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let (client, _) = AuraDbusClient::new().unwrap();
 
-    let args: Vec<String> = env::args().into_iter().collect();
-    if args.len() != 8 {
-        println!(
-            "Usage: <filepath> <x scale> <y scale> <angle> <x pos> <y pos> <fineness> <brightness>"
-        );
-        println!("e.g, asusctl/examples/doom_large.png 0.9 0.9 0.4 0.0 0.0, 0.8");
-        println!("All args except path and fineness are floats");
-        exit(-1);
-    }
-
-    let image = AnimeImage::from_png(
-        Path::new(&args[1]),
-        Vec2::new(
-            args[2].parse::<f32>().unwrap(),
-            args[3].parse::<f32>().unwrap(),
-        ),
-        args[4].parse::<f32>().unwrap(),
-        Vec2::new(
-            args[5].parse::<f32>().unwrap(),
-            args[6].parse::<f32>().unwrap(),
-        ),
-        args[7].parse::<f32>().unwrap(),
+    let mut image = AniMeImage::from_png(
+        Path::new("./doom.png"),
+        0.9, // scale
+        0.0, // rotation
+        Vec2::new(0.0, 0.0), // position
+        0.3, // brightness
     )?;
 
-    /// This data can also be written direct to the USB device by transforming with
-    let data = AniMePacketType::from(image);
-    let data = <AniMeDataBuffer>::from(&image);
-    client
-        .proxies()
-        .anime()
-        .write(data)
-        .unwrap();
+    loop {
+        image.angle += 0.05;
+        if image.angle > PI * 2.0 {
+            image.angle = 0.0
+        }
+        image.update();
 
-    Ok(())
+        client
+            .proxies()
+            .anime()
+            .write(<AniMeDataBuffer>::from(&image))
+            .unwrap();
+        sleep(Duration::from_micros(500));
+    }
 }
 ```
+
+## Example, USB HID
+```rust
+let mut image = AniMeImage::from_png(
+        Path::new("./doom.png"),
+        0.9, // scale
+        0.0, // rotation
+        Vec2::new(0.0, 0.0), // position
+        0.3, // brightness
+    )?;
+
+// convert to intermediate packet format
+let buffer = <AniMeDataBuffer>::from(&image)
+// then to USB HID
+let data = AniMePacketType::from(buffer);
+// and then write direct
+for packet in data.iter() {
+    write_usb(packet); // some usb call here
+}
+```
+
+## data
+
+- `data/controller.gif` is an example ASUS diagonally orientated gif.
+- `data/diagonal-template.*` are templates for diagonal images or gifs.
+
+See https://blog.joshwalsh.me/asus-anime-matrix/ for details on how
+the diagonal layout works.
+
+`diagonal-template.*` is provided from the website above. It is best to
+export the final file to 36px height - no scaling is done in asusd or
+rog-anime crate for diagonal displays.
+
+## TODO:
+- Diagonal font and text
+- General font and text
+- System info for Linux and Windows
+- Audio EQ visual for Linux and Windows
+- Time+Date display

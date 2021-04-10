@@ -1,4 +1,4 @@
-use rog_anime::AniMeDataBuffer;
+use rog_anime::AnimeDataBuffer;
 use rog_dbus::AuraDbusClient;
 
 // In usable data:
@@ -6,7 +6,7 @@ use rog_dbus::AuraDbusClient;
 
 fn main() {
     let (client, _) = AuraDbusClient::new().unwrap();
-    let mut matrix = AniMeDataBuffer::new();
+    let mut matrix = AnimeDataBuffer::new();
     matrix.get_mut()[1] = 100; // start = 1
     for n in matrix.get_mut()[2..32].iter_mut() {
         *n = 250;

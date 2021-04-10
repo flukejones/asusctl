@@ -1,6 +1,6 @@
 use std::{env, error::Error, path::Path, process::exit};
 
-use rog_anime::{AniMeDataBuffer, AniMeDiagonal};
+use rog_anime::{AnimeDataBuffer, AnimeDiagonal};
 use rog_dbus::AuraDbusClient;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -14,12 +14,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     let matrix =
-        AniMeDiagonal::from_png(Path::new(&args[1]), None, args[2].parse::<f32>().unwrap())?;
+        AnimeDiagonal::from_png(Path::new(&args[1]), None, args[2].parse::<f32>().unwrap())?;
 
     client
         .proxies()
         .anime()
-        .write(<AniMeDataBuffer>::from(&matrix))
+        .write(<AnimeDataBuffer>::from(&matrix))
         .unwrap();
 
     Ok(())

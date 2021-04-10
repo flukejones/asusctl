@@ -6,8 +6,10 @@ use std::{
 use glam::Vec2;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{error::AnimeError, AniMeDataBuffer, AniMeGif, AniMeImage, AnimTime};
+use crate::{error::AnimeError, AnimeDataBuffer, AnimeGif, AnimeImage, AnimTime};
 
+/// All the possible AniMe actions that can be used. This enum is intended to be
+/// a helper for loading up `ActionData`.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum AnimeAction {
     /// Full gif sequence. Immutable.
@@ -36,13 +38,14 @@ pub enum AnimeAction {
     Pause(Duration),
 }
 
-///
+/// All the possible AniMe actions that can be used. The enum is intended to be
+/// used in a array allowing the user to cycle through a series of actions.
 #[derive(Debug, Deserialize, Serialize)]
 pub enum ActionData {
     /// Full gif sequence. Immutable.
-    Animation(AniMeGif),
+    Animation(AnimeGif),
     /// Basic image, can have properties changed and image updated via those properties
-    Image(Box<AniMeDataBuffer>),
+    Image(Box<AnimeDataBuffer>),
     /// A pause to be used between sequences
     Pause(Duration),
     /// Placeholder
@@ -55,15 +58,19 @@ pub enum ActionData {
     Matrix,
 }
 
-/// An optimised precomputed set of actions
+/// An optimised precomputed set of actions that the user can cycle through
 #[derive(Debug, Deserialize, Serialize, Default)]
 pub struct Sequences(Vec<ActionData>);
 
 impl Sequences {
+    #[inline]
     pub fn new() -> Self {
         Self(Vec::new())
     }
 
+    /// Use a base `AnimeAction` to generate the precomputed data and insert in to
+    /// the run buffer
+    #[inline]
     pub fn insert(&mut self, index: usize, action: &AnimeAction) -> Result<(), AnimeError> {
         match action {
             AnimeAction::AsusAnimation {
@@ -99,6 +106,10 @@ impl Sequences {
         Ok(())
     }
 
+    /// Remove an item at this position from the run buffer. If the `index` supplied
+    /// is not in range then `None` is returned, otherwise the `ActionData` at that location
+    /// is yeeted and returned.
+    #[inline]
     pub fn remove_item(&mut self, index: usize) -> Option<ActionData> {
         if index < self.0.len() {
             return Some(self.0.remove(index));
@@ -116,7 +127,7 @@ impl Sequences {
         if index > self.0.len() {
             index = self.0.len() - 1;
         }
-        let frames = AniMeGif::create_diagonal_gif(file, duration, brightness)?;
+        let frames = AnimeGif::create_diagonal_gif(file, duration, brightness)?;
         self.0.insert(index, ActionData::Animation(frames));
         Ok(())
     }
@@ -133,8 +144,8 @@ impl Sequences {
         if index > self.0.len() {
             index = self.0.len() - 1;
         }
-        let image = AniMeImage::from_png(file, scale, angle, translation, brightness)?;
-        let data = <AniMeDataBuffer>::from(&image);
+        let image = AnimeImage::from_png(file, scale, angle, translation, brightness)?;
+        let data = <AnimeDataBuffer>::from(&image);
         self.0.insert(index, ActionData::Image(Box::new(data)));
         Ok(())
     }
@@ -154,7 +165,7 @@ impl Sequences {
             index = self.0.len() - 1;
         }
         let frames =
-            AniMeGif::create_png_gif(file, scale, angle, translation, duration, brightness)?;
+            AnimeGif::create_png_gif(file, scale, angle, translation, duration, brightness)?;
         self.0.insert(index, ActionData::Animation(frames));
         Ok(())
     }
@@ -174,6 +185,7 @@ impl Sequences {
     }
 }
 
+/// Iteractor helper for iterating over all the actions in `Sequences`
 pub struct ActionIterator<'a> {
     actions: &'a Sequences,
     next_idx: usize,
@@ -182,6 +194,7 @@ pub struct ActionIterator<'a> {
 impl<'a> Iterator for ActionIterator<'a> {
     type Item = &'a ActionData;
 
+    #[inline]
     fn next(&mut self) -> Option<&'a ActionData> {
         if self.next_idx == self.actions.0.len() {
             self.next_idx = 0;

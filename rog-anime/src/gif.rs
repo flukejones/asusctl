@@ -2,35 +2,43 @@ use glam::Vec2;
 use serde_derive::{Deserialize, Serialize};
 use std::{fs::File, path::Path, time::Duration};
 
-use crate::{error::AnimeError, AniMeDataBuffer, AniMeDiagonal, AniMeImage, Pixel};
+use crate::{error::AnimeError, AnimeDataBuffer, AnimeDiagonal, AnimeImage, Pixel};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct AniMeFrame {
+pub struct AnimeFrame {
     /// Precomputed data for the frame. This can be transferred directly to the
-    /// the `asusd` daemon over dbus or converted to USB packet with `AniMePacketType::from(buffer)`
-    data: AniMeDataBuffer,
+    /// the `asusd` daemon over dbus or converted to USB packet with `AnimePacketType::from(buffer)`
+    data: AnimeDataBuffer,
     delay: Duration,
 }
 
-impl AniMeFrame {
-    pub fn frame(&self) -> &AniMeDataBuffer {
+impl AnimeFrame {
+    /// Get the inner data buffer of the gif frame
+    #[inline]
+    pub fn frame(&self) -> &AnimeDataBuffer {
         &self.data
     }
 
+    /// Get the `Duration` of the delay for this frame
+    #[inline]
     pub fn delay(&self) -> Duration {
         self.delay
     }
 }
 
+/// Defines the time or animation cycle count to use for a gif
 #[derive(Debug, Copy, Clone, Deserialize, Serialize)]
 pub enum AnimTime {
     /// Time in milliseconds for animation to run
     Time(Duration),
+    /// How many full animation loops to run
     Cycles(u32),
+    /// Run for infinite time
     Infinite,
 }
 
 impl Default for AnimTime {
+    #[inline]
     fn default() -> Self {
         Self::Infinite
     }
@@ -39,16 +47,17 @@ impl Default for AnimTime {
 /// A gif animation. This is a collection of frames from the gif, and a duration
 /// that the animation should be shown for.
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct AniMeGif(Vec<AniMeFrame>, AnimTime);
+pub struct AnimeGif(Vec<AnimeFrame>, AnimTime);
 
-impl AniMeGif {
+impl AnimeGif {
     /// Create an animation using the 74x36 ASUS gif format
+    #[inline]
     pub fn create_diagonal_gif(
         file_name: &Path,
         duration: AnimTime,
         brightness: f32,
     ) -> Result<Self, AnimeError> {
-        let mut matrix = AniMeDiagonal::new(None);
+        let mut matrix = AnimeDiagonal::new(None);
 
         let mut decoder = gif::DecodeOptions::new();
         // Configure the decoder such that it will expand the image to RGBA.
@@ -74,8 +83,8 @@ impl AniMeGif {
                 }
             }
 
-            frames.push(AniMeFrame {
-                data: <AniMeDataBuffer>::from(&matrix),
+            frames.push(AnimeFrame {
+                data: <AnimeDataBuffer>::from(&matrix),
                 delay: Duration::from_millis(wait as u64),
             });
         }
@@ -84,6 +93,7 @@ impl AniMeGif {
 
     /// Create an animation using a gif of any size. This method must precompute the
     /// result.
+    #[inline]
     pub fn create_png_gif(
         file_name: &Path,
         scale: f32,
@@ -105,7 +115,7 @@ impl AniMeGif {
         let width = decoder.width();
         let pixels: Vec<Pixel> =
             vec![Pixel::default(); (decoder.width() as u32 * decoder.height() as u32) as usize];
-        let mut image = AniMeImage::new(
+        let mut image = AnimeImage::new(
             Vec2::new(scale, scale),
             angle,
             translation,
@@ -119,7 +129,7 @@ impl AniMeGif {
             if matches!(frame.dispose, gif::DisposalMethod::Background) {
                 let pixels: Vec<Pixel> =
                     vec![Pixel::default(); (width as u32 * height as u32) as usize];
-                image = AniMeImage::new(
+                image = AnimeImage::new(
                     Vec2::new(scale, scale),
                     angle,
                     translation,
@@ -144,18 +154,22 @@ impl AniMeGif {
             }
             image.update();
 
-            frames.push(AniMeFrame {
-                data: <AniMeDataBuffer>::from(&image),
+            frames.push(AnimeFrame {
+                data: <AnimeDataBuffer>::from(&image),
                 delay: Duration::from_millis(wait as u64),
             });
         }
         Ok(Self(frames, duration))
     }
 
-    pub fn frames(&self) -> &[AniMeFrame] {
+    /// Get a slice of the frames this gif has
+    #[inline]
+    pub fn frames(&self) -> &[AnimeFrame] {
         &self.0
     }
 
+    /// Get the time/count for this gif
+    #[inline]
     pub fn duration(&self) -> AnimTime {
         self.1
     }
