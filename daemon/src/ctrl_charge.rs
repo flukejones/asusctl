@@ -1,7 +1,7 @@
 use crate::{config::Config, error::RogError, GetSupported};
 //use crate::dbus::DbusEvents;
 use log::{info, warn};
-use serde_derive::{Deserialize, Serialize};
+use rog_types::supported::ChargeSupportedFunctions;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
@@ -11,11 +11,6 @@ use zbus::dbus_interface;
 use zvariant::ObjectPath;
 
 static BAT_CHARGE_PATH: &str = "/sys/class/power_supply/BAT0/charge_control_end_threshold";
-
-#[derive(Serialize, Deserialize)]
-pub struct ChargeSupportedFunctions {
-    pub charge_level_set: bool,
-}
 
 impl GetSupported for CtrlCharge {
     type A = ChargeSupportedFunctions;

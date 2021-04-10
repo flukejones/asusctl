@@ -4,12 +4,13 @@ use zbus::dbus_interface;
 use zvariant::ObjectPath;
 
 use crate::{
-    ctrl_anime::{AnimeSupportedFunctions, CtrlAnimeDisplay},
-    ctrl_charge::{ChargeSupportedFunctions, CtrlCharge},
-    ctrl_fan_cpu::{CtrlFanAndCpu, FanCpuSupportedFunctions},
-    ctrl_leds::{CtrlKbdBacklight, LedSupportedFunctions},
-    ctrl_rog_bios::{CtrlRogBios, RogBiosSupportedFunctions},
-    GetSupported,
+    ctrl_anime::CtrlAnimeDisplay, ctrl_charge::CtrlCharge, ctrl_fan_cpu::CtrlFanAndCpu,
+    ctrl_leds::CtrlKbdBacklight, ctrl_rog_bios::CtrlRogBios, GetSupported,
+};
+
+use rog_types::supported::{
+    AnimeSupportedFunctions, ChargeSupportedFunctions, FanCpuSupportedFunctions,
+    LedSupportedFunctions, RogBiosSupportedFunctions,
 };
 
 #[derive(Serialize, Deserialize)]

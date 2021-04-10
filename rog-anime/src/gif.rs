@@ -24,6 +24,7 @@ impl AniMeFrame {
 
 #[derive(Debug, Copy, Clone, Deserialize, Serialize)]
 pub enum AnimTime {
+    /// Time in milliseconds for animation to run
     Time(Duration),
     Cycles(u32),
     Infinite,
@@ -34,7 +35,6 @@ impl Default for AnimTime {
         Self::Infinite
     }
 }
-
 
 /// A gif animation. This is a collection of frames from the gif, and a duration
 /// that the animation should be shown for.

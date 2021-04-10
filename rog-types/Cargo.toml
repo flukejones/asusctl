@@ -14,5 +14,5 @@ gumdrop = "^0.8"
 rog_fan_curve = { version = "^0.1", features = ["serde"] }
 serde = "^1.0"
 serde_derive = "^1.0"
-zvariant = "^2.5"
-zvariant_derive = "^2.5"
+zvariant = "^2.6"
+zvariant_derive = "^2.6"

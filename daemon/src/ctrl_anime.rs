@@ -15,6 +15,7 @@ const ON_OFF: u8 = 0x04;
 
 use log::{error, info, warn};
 use rog_anime::{AniMeDataBuffer, AniMePacketType};
+use rog_types::supported::AnimeSupportedFunctions;
 use rusb::{Device, DeviceHandle};
 use std::error::Error;
 use std::time::Duration;
@@ -22,10 +23,6 @@ use zbus::dbus_interface;
 use zvariant::ObjectPath;
 
 use crate::GetSupported;
-
-use serde_derive::{Deserialize, Serialize};
-#[derive(Serialize, Deserialize)]
-pub struct AnimeSupportedFunctions(pub bool);
 
 impl GetSupported for CtrlAnimeDisplay {
     type A = AnimeSupportedFunctions;

@@ -16,6 +16,8 @@ pub mod aura_perkey;
 
 pub mod gfx_vendors;
 
+pub mod supported;
+
 pub mod error;
 
 pub static VERSION: &str = env!("CARGO_PKG_VERSION");
