@@ -1,5 +1,5 @@
 use serde_derive::{Deserialize, Serialize};
-#[cfg(feature = "zbus")]
+#[cfg(feature = "z")]
 use zvariant_derive::Type;
 
 /// The first 7 bytes of a USB packet are accounted for by `USB_PREFIX1` and `USB_PREFIX2`
@@ -16,7 +16,7 @@ const USB_PREFIX2: [u8; 7] = [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x02];
 
 /// The minimal serializable data that can be transferred over wire types.
 /// Other data structures in `rog_anime` will convert to this.
-#[cfg_attr(feature = "zbus", derive(Type))]
+#[cfg_attr(feature = "z", derive(Type))]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AniMeDataBuffer(Vec<u8>);
 

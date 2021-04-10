@@ -2,6 +2,7 @@ use notify_rust::{Hint, Notification, NotificationHandle};
 use rog_dbus::{DbusProxies, Signals};
 use rog_types::profile::Profile;
 use std::error::Error;
+use std::thread::sleep;
 use std::time::Duration;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -18,9 +19,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut last_chrg_notif: Option<NotificationHandle> = None;
 
     let recv = proxies.setup_recv(conn);
+    let mut err_count = 0;
     loop {
-        std::thread::sleep(Duration::from_millis(100));
-        recv.next_signal().unwrap();
+        sleep(Duration::from_millis(100));
+        if let Err(err) = recv.next_signal() {
+            if err_count < 3 {
+                err_count += 1;
+                println!("{}", err);
+            }
+            if err_count == 3 {
+                err_count += 1;
+                println!("Max error count reached. Spooling silently.");
+            }
+            sleep(Duration::from_millis(2000));
+            continue;
+        }
+        err_count = 0;
 
         if let Ok(mut lock) = signals.gfx_vendor.lock() {
             if let Some(vendor) = lock.take() {

@@ -3,6 +3,9 @@ use png_pong::decode::Error as PngError;
 use std::error::Error;
 use std::fmt;
 
+#[cfg(feature = "z")]
+use zbus::fdo;
+
 #[derive(Debug)]
 pub enum AnimeError {
     NoFrames,
@@ -12,6 +15,8 @@ pub enum AnimeError {
     Format,
     /// The input was incorrect size, expected size is `IncorrectSize(width, height)`
     IncorrectSize(u32, u32),
+    #[cfg(feature = "z")]
+    Zbus(fdo::Error)
 }
 
 impl fmt::Display for AnimeError {
@@ -28,6 +33,8 @@ impl fmt::Display for AnimeError {
                 "The input image size is incorrect, expected {}x{}",
                 width, height
             ),
+            #[cfg(feature = "z")]
+            AnimeError::Zbus(e) => write!(f, "ZBUS error: {}", e),
         }
     }
 }
@@ -49,5 +56,12 @@ impl From<PngError> for AnimeError {
 impl From<DecodingError> for AnimeError {
     fn from(err: DecodingError) -> Self {
         AnimeError::Gif(err)
+    }
+}
+
+#[cfg(feature = "z")]
+impl From<AnimeError> for fdo::Error {
+    fn from(err: AnimeError) -> Self {
+        fdo::Error::Failed(format!("{}", err))
     }
 }

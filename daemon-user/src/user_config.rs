@@ -1,46 +1,17 @@
 use std::{
     fs::{create_dir, OpenOptions},
     io::{Read, Write},
-    path::PathBuf,
     time::Duration,
 };
 
-use rog_anime::{AnimTime, Sequences, Vec2};
+use rog_anime::{AnimTime, AnimeAction, Sequences, Vec2};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::error::Error;
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct UserConfig {
-    anime: Vec<AnimeAction>,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub enum AnimeAction {
-    /// Full gif sequence. Immutable.
-    AsusAnimation {
-        file: PathBuf,
-        time: AnimTime,
-        brightness: f32,
-    },
-    /// Basic image, can have properties changed
-    ImageAnimation {
-        file: PathBuf,
-        scale: f32,
-        angle: f32,
-        translation: Vec2,
-        time: AnimTime,
-        brightness: f32,
-    },
-    Image {
-        file: PathBuf,
-        scale: f32,
-        angle: f32,
-        translation: Vec2,
-        brightness: f32,
-    },
-    /// A pause to be used between sequences
-    Pause(Duration),
+    pub anime: Vec<AnimeAction>,
 }
 
 impl UserConfig {
@@ -114,38 +85,35 @@ impl UserConfig {
             }
         }
         Ok(())
-        //Err(Error::ConfigLoadFail)
+    }
+
+    pub fn write(&self) -> Result<(), Error> {
+        let mut path = if let Some(dir) = dirs::config_dir() {
+            dir
+        } else {
+            return Err(Error::XdgVars);
+        };
+
+        path.push("rog");
+        if !path.exists() {
+            create_dir(path.clone())?;
+        }
+
+        path.push("rog-user.cfg");
+
+        let mut file = OpenOptions::new().write(true).create(true).truncate(true).open(&path)?;
+
+        let json = serde_json::to_string_pretty(&self).unwrap();
+        dbg!(&json);
+        file.write_all(json.as_bytes())?;
+        Ok(())
     }
 
     pub fn create_anime(&self) -> Result<Sequences, Error> {
         let mut seq = Sequences::new();
 
-        for anime in self.anime.iter() {
-            match anime {
-                AnimeAction::AsusAnimation {
-                    file,
-                    time: duration,
-                    brightness,
-                } => seq.add_asus_gif(&file, *duration, *brightness)?,
-                AnimeAction::ImageAnimation {
-                    file,
-                    scale,
-                    angle,
-                    translation,
-                    time: duration,
-                    brightness,
-                } => {
-                    seq.add_image_gif(&file, *scale, *angle, *translation, *duration, *brightness)?
-                }
-                AnimeAction::Image {
-                    file,
-                    scale,
-                    angle,
-                    translation,
-                    brightness,
-                } => seq.add_png(&file, *scale, *angle, *translation, *brightness)?,
-                AnimeAction::Pause(duration) => seq.add_pause(*duration)?,
-            }
+        for (idx, action) in self.anime.iter().enumerate() {
+            seq.insert(idx, action)?;
         }
 
         Ok(seq)

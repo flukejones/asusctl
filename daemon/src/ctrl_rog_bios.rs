@@ -1,6 +1,6 @@
 use crate::{config::Config, error::RogError, GetSupported};
 use log::{error, info, warn};
-use serde_derive::{Deserialize, Serialize};
+use rog_types::supported::RogBiosSupportedFunctions;
 use std::fs::OpenOptions;
 use std::io::BufRead;
 use std::io::{Read, Write};
@@ -21,12 +21,6 @@ static ASUS_POST_LOGO_SOUND: &str =
 
 pub struct CtrlRogBios {
     _config: Arc<Mutex<Config>>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct RogBiosSupportedFunctions {
-    pub post_sound_toggle: bool,
-    pub dedicated_gfx_toggle: bool,
 }
 
 impl GetSupported for CtrlRogBios {

@@ -10,10 +10,7 @@ use crate::{
     laptops::{LaptopLedData, ASUS_KEYBOARD_DEVICES},
 };
 use log::{error, info, warn};
-use rog_types::{
-    aura_modes::{AuraEffect, AuraModeNum, LedBrightness},
-    LED_MSG_LEN,
-};
+use rog_types::{LED_MSG_LEN, aura_modes::{AuraEffect, AuraModeNum, LedBrightness}, supported::LedSupportedFunctions};
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::Path;
@@ -23,15 +20,6 @@ use zbus::dbus_interface;
 use zvariant::ObjectPath;
 
 use crate::GetSupported;
-
-use serde_derive::{Deserialize, Serialize};
-#[derive(Serialize, Deserialize)]
-pub struct LedSupportedFunctions {
-    pub brightness_set: bool,
-    pub stock_led_modes: Option<Vec<AuraModeNum>>,
-    pub multizone_led_mode: bool,
-    pub per_key_led_mode: bool,
-}
 
 impl GetSupported for CtrlKbdBacklight {
     type A = LedSupportedFunctions;

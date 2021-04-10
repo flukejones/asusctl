@@ -3,10 +3,6 @@ mod aura_cli;
 
 use crate::aura_cli::{LedBrightness, SetAuraBuiltin};
 use anime_cli::{AniMeActions, AniMeCommand};
-use daemon::{
-    ctrl_fan_cpu::FanCpuSupportedFunctions, ctrl_leds::LedSupportedFunctions,
-    ctrl_rog_bios::RogBiosSupportedFunctions, ctrl_supported::SupportedFunctions,
-};
 use gumdrop::{Opt, Options};
 use rog_anime::{AniMeDataBuffer, AniMeImage, Vec2, ANIME_DATA_LEN};
 use rog_dbus::AuraDbusClient;
@@ -14,6 +10,10 @@ use rog_types::{
     aura_modes::{self, AuraEffect, AuraModeNum},
     gfx_vendors::GfxVendors,
     profile::{FanLevel, ProfileCommand, ProfileEvent},
+    supported::{
+        FanCpuSupportedFunctions, LedSupportedFunctions, RogBiosSupportedFunctions,
+        SupportedFunctions,
+    },
 };
 use std::{env::args, path::Path};
 use yansi_term::Colour::Green;

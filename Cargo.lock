@@ -233,9 +233,13 @@ dependencies = [
  "dirs 3.0.1",
  "rog_anime",
  "rog_dbus",
+ "rog_types",
  "serde",
  "serde_derive",
  "serde_json",
+ "zbus",
+ "zvariant",
+ "zvariant_derive",
 ]
 
 [[package]]
@@ -909,6 +913,7 @@ dependencies = [
  "png_pong",
  "serde",
  "serde_derive",
+ "zbus",
  "zvariant",
  "zvariant_derive",
 ]

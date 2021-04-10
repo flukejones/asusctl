@@ -1,8 +1,7 @@
 use crate::error::RogError;
 use crate::{config::Config, GetSupported};
 use log::{info, warn};
-use rog_types::profile::{FanLevel, Profile, ProfileEvent};
-use serde_derive::{Deserialize, Serialize};
+use rog_types::{profile::{FanLevel, Profile, ProfileEvent}, supported::FanCpuSupportedFunctions};
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
@@ -18,13 +17,6 @@ static AMD_BOOST_PATH: &str = "/sys/devices/system/cpu/cpufreq/boost";
 pub struct CtrlFanAndCpu {
     pub path: &'static str,
     config: Arc<Mutex<Config>>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct FanCpuSupportedFunctions {
-    pub stock_fan_modes: bool,
-    pub min_max_freq: bool,
-    pub fan_curve_set: bool,
 }
 
 impl GetSupported for CtrlFanAndCpu {

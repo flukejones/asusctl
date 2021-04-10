@@ -17,11 +17,12 @@ gif = "^0.11.2"
 
 serde = "^1.0"
 serde_derive = "^1.0"
+zbus = "^1.9.1"
 zvariant = "^2.5"
 zvariant_derive = "^2.5"
 
 glam = { version = "*", features = ["serde"] }
 
 [features]
-default = ["zbus"]
-zbus = []
+default = ["z"]
+z = []
