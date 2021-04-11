@@ -19,6 +19,7 @@ path = "src/daemon.rs"
 
 [dependencies]
 rog_anime = { path = "../rog-anime" }
+rog_aura = { path = "../rog-aura" }
 rog_types = { path = "../rog-types" }
 rog_dbus = { path = "../rog-dbus" }
 rusb = "^0.8"

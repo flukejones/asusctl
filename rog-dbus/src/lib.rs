@@ -1,7 +1,6 @@
 pub static DBUS_NAME: &str = "org.asuslinux.Daemon";
 pub static DBUS_PATH: &str = "/org/asuslinux/Daemon";
 pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";
-pub const LED_MSG_LEN: usize = 17;
 
 pub mod zbus_anime;
 pub mod zbus_charge;
@@ -11,8 +10,8 @@ pub mod zbus_profile;
 pub mod zbus_rogbios;
 pub mod zbus_supported;
 
+use rog_aura::AuraEffect;
 use rog_types::{
-    aura_modes::AuraEffect,
     gfx_vendors::{GfxRequiredUserAction, GfxVendors},
 };
 use std::sync::{Arc, Mutex};

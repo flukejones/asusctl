@@ -1,0 +1,25 @@
+[package]
+name = "rog_aura"
+version = "1.0.0"
+license = "MPL-2.0"
+readme = "README.md"
+authors = ["Luke <luke@ljones.dev>"]
+repository = "https://gitlab.com/asus-linux/asusctl"
+homepage = "https://gitlab.com/asus-linux/asusctl"
+documentation = "https://docs.rs/rog-anime"
+description = "Types useful for fancy keyboards on ASUS ROG laptops"
+keywords = ["ROG", "ASUS", "Aura"]
+edition = "2018"
+exclude = ["data"]
+
+[features]
+default = ["dbus"]
+dbus = ["zbus", "zvariant", "zvariant_derive"]
+
+[dependencies]
+serde = "^1.0"
+serde_derive = "^1.0"
+
+zbus = { version = "^1.9.1", optional = true }
+zvariant = { version = "^2.6", optional = true }
+zvariant_derive = { version = "^2.6", optional = true }

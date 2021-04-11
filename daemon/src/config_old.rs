@@ -1,4 +1,5 @@
-use rog_types::{aura_modes::AuraEffect, gfx_vendors::GfxVendors, profile::Profile};
+use rog_aura::AuraEffect;
+use rog_types::{gfx_vendors::GfxVendors, profile::Profile};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 

@@ -1,5 +1,5 @@
 use gumdrop::Options;
-use rog_types::error::AuraError;
+use rog_aura::error::Error;
 use std::str::FromStr;
 
 #[derive(Copy, Clone, Debug)]
@@ -8,7 +8,7 @@ pub enum AnimeStatusValue {
     Off,
 }
 impl FromStr for AnimeStatusValue {
-    type Err = AuraError;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s = s.to_lowercase();
@@ -17,7 +17,7 @@ impl FromStr for AnimeStatusValue {
             "off" => Ok(AnimeStatusValue::Off),
             _ => {
                 print!("Invalid argument, must be one of: on, off");
-                Err(AuraError::ParseAnime)
+                Err(Error::ParseAnime)
             }
         }
     }

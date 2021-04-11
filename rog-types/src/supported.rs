@@ -1,6 +1,5 @@
+use rog_aura::AuraModeNum;
 use serde_derive::{Deserialize, Serialize};
-
-use crate::aura_modes::AuraModeNum;
 
 #[derive(Serialize, Deserialize)]
 pub struct SupportedFunctions {

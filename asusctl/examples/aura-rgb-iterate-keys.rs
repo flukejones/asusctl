@@ -1,5 +1,5 @@
 use rog_dbus::AuraDbusClient;
-use rog_types::aura_perkey::{GX502Layout, Key, KeyColourArray, KeyLayout};
+use rog_aura::{GX502Layout, Key, KeyColourArray, KeyLayout};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (dbus, _) = AuraDbusClient::new()?;

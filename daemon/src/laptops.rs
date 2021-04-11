@@ -1,5 +1,5 @@
 use log::{info, warn};
-use rog_types::aura_modes::AuraModeNum;
+use rog_aura::AuraModeNum;
 use serde_derive::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io::Read;

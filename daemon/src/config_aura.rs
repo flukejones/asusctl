@@ -1,6 +1,6 @@
 use crate::laptops::LaptopLedData;
 use log::{error, info, warn};
-use rog_types::aura_modes::{AuraEffect, AuraModeNum, AuraMultiZone, AuraZone, LedBrightness};
+use rog_aura::{AuraEffect, AuraModeNum, AuraMultiZone, AuraZone, LedBrightness};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs::{File, OpenOptions};

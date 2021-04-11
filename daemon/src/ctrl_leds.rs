@@ -1,7 +1,4 @@
 // Only these two packets must be 17 bytes
-static LED_APPLY: [u8; 17] = [0x5d, 0xb4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-static LED_SET: [u8; 17] = [0x5d, 0xb5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-
 static KBD_BRIGHT_PATH: &str = "/sys/class/leds/asus::kbd_backlight/brightness";
 
 use crate::{
@@ -10,7 +7,8 @@ use crate::{
     laptops::{LaptopLedData, ASUS_KEYBOARD_DEVICES},
 };
 use log::{error, info, warn};
-use rog_types::{LED_MSG_LEN, aura_modes::{AuraEffect, AuraModeNum, LedBrightness}, supported::LedSupportedFunctions};
+use rog_aura::{AuraEffect, AuraModeNum, LED_MSG_LEN, LedBrightness, usb::{LED_APPLY, LED_SET}};
+use rog_types::supported::LedSupportedFunctions;
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::Path;

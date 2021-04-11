@@ -6,8 +6,8 @@ use anime_cli::{AnimeActions, AnimeCommand};
 use gumdrop::{Opt, Options};
 use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2, ANIME_DATA_LEN};
 use rog_dbus::AuraDbusClient;
+use rog_aura::{self, AuraEffect, AuraModeNum};
 use rog_types::{
-    aura_modes::{self, AuraEffect, AuraModeNum},
     gfx_vendors::GfxVendors,
     profile::{FanLevel, ProfileCommand, ProfileEvent},
     supported::{
@@ -215,7 +215,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Some(level) => dbus
                 .proxies()
                 .led()
-                .set_led_brightness(<aura_modes::LedBrightness>::from(level))?,
+                .set_led_brightness(<rog_aura::LedBrightness>::from(level))?,
         }
     }
 

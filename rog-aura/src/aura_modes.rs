@@ -1,14 +1,14 @@
-// static LED_INIT1: [u8; 2] = [0x5d, 0xb9];
-// static LED_INIT2: &str = "]ASUS Tech.Inc."; // ] == 0x5d
-// static LED_INIT3: [u8; 6] = [0x5d, 0x05, 0x20, 0x31, 0, 0x08];
-// static LED_INIT4: &str = "^ASUS Tech.Inc."; // ^ == 0x5e
-// static LED_INIT5: [u8; 6] = [0x5e, 0x05, 0x20, 0x31, 0, 0x08];
+pub const LED_INIT1: [u8; 2] = [0x5d, 0xb9];
+pub const LED_INIT2: &str = "]ASUS Tech.Inc."; // ] == 0x5d
+pub const LED_INIT3: [u8; 6] = [0x5d, 0x05, 0x20, 0x31, 0, 0x08];
+pub const LED_INIT4: &str = "^ASUS Tech.Inc."; // ^ == 0x5e
+pub const LED_INIT5: [u8; 6] = [0x5e, 0x05, 0x20, 0x31, 0, 0x08];
 
-use crate::error::AuraError;
-use crate::LED_MSG_LEN;
 use serde_derive::{Deserialize, Serialize};
 use std::str::FromStr;
 use zvariant_derive::Type;
+
+use crate::{LED_MSG_LEN, error::Error};
 
 #[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize, Type)]
 pub enum LedBrightness {
@@ -46,15 +46,15 @@ impl Default for Colour {
 }
 
 impl FromStr for Colour {
-    type Err = AuraError;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.len() < 6 {
-            return Err(AuraError::ParseColour);
+            return Err(Error::ParseColour);
         }
-        let r = u8::from_str_radix(&s[0..2], 16).or(Err(AuraError::ParseColour))?;
-        let g = u8::from_str_radix(&s[2..4], 16).or(Err(AuraError::ParseColour))?;
-        let b = u8::from_str_radix(&s[4..6], 16).or(Err(AuraError::ParseColour))?;
+        let r = u8::from_str_radix(&s[0..2], 16).or(Err(Error::ParseColour))?;
+        let g = u8::from_str_radix(&s[2..4], 16).or(Err(Error::ParseColour))?;
+        let b = u8::from_str_radix(&s[4..6], 16).or(Err(Error::ParseColour))?;
         Ok(Colour(r, g, b))
     }
 }
@@ -71,7 +71,7 @@ impl Default for Speed {
     }
 }
 impl FromStr for Speed {
-    type Err = AuraError;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s = s.to_lowercase();
@@ -79,7 +79,7 @@ impl FromStr for Speed {
             "low" => Ok(Speed::Low),
             "med" => Ok(Speed::Med),
             "high" => Ok(Speed::High),
-            _ => Err(AuraError::ParseSpeed),
+            _ => Err(Error::ParseSpeed),
         }
     }
 }
@@ -100,7 +100,7 @@ impl Default for Direction {
     }
 }
 impl FromStr for Direction {
-    type Err = AuraError;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s = s.to_lowercase();
@@ -109,16 +109,9 @@ impl FromStr for Direction {
             "up" => Ok(Direction::Up),
             "down" => Ok(Direction::Down),
             "left" => Ok(Direction::Left),
-            _ => Err(AuraError::ParseDirection),
+            _ => Err(Error::ParseDirection),
         }
     }
-}
-
-/// Writes out the correct byte string for brightness
-pub const fn aura_brightness_bytes(brightness: u8) -> [u8; 17] {
-    [
-        0x5A, 0xBA, 0xC5, 0xC4, brightness, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    ]
 }
 
 #[derive(

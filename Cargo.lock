@@ -49,6 +49,7 @@ dependencies = [
  "glam",
  "gumdrop",
  "rog_anime",
+ "rog_aura",
  "rog_dbus",
  "rog_types",
  "serde_json",
@@ -212,6 +213,7 @@ dependencies = [
  "log",
  "logind-zbus",
  "rog_anime",
+ "rog_aura",
  "rog_dbus",
  "rog_fan_curve",
  "rog_types",
@@ -911,10 +913,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "rog_aura"
+version = "1.0.0"
+dependencies = [
+ "serde",
+ "serde_derive",
+ "zbus",
+ "zvariant",
+ "zvariant_derive",
+]
+
+[[package]]
 name = "rog_dbus"
 version = "3.2.0"
 dependencies = [
  "rog_anime",
+ "rog_aura",
  "rog_fan_curve",
  "rog_types",
  "serde_json",
@@ -937,6 +951,7 @@ name = "rog_types"
 version = "3.2.0"
 dependencies = [
  "gumdrop",
+ "rog_aura",
  "rog_fan_curve",
  "serde",
  "serde_derive",

@@ -1,8 +1,5 @@
 use gumdrop::Options;
-use rog_types::{
-    aura_modes::{AuraEffect, AuraModeNum, AuraZone, Colour, Direction, Speed},
-    error::AuraError,
-};
+use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour, Direction, Speed, error::Error};
 use std::str::FromStr;
 
 #[derive(Options)]
@@ -19,7 +16,7 @@ impl LedBrightness {
     }
 }
 impl FromStr for LedBrightness {
-    type Err = AuraError;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s = s.to_lowercase();
@@ -30,7 +27,7 @@ impl FromStr for LedBrightness {
             "high" => Ok(LedBrightness { level: Some(0x03) }),
             _ => {
                 print!("Invalid argument, must be one of: off, low, med, high");
-                Err(AuraError::ParseBrightness)
+                Err(Error::ParseBrightness)
             }
         }
     }
