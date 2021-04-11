@@ -8,7 +8,7 @@
 //! Step 1 need to applied only on fresh system boot.
 
 const INIT_STR: [u8; 15] = [
-    0x5e, b'A', b'S', b'U', b'S', b' ', b'T', b'E', b'C', b'H', b'.', b'I', b'N', b'C', b'.',
+    0x5e, b'A', b'S', b'U', b'S', b' ', b'T', b'e', b'c', b'h', b'.', b'I', b'n', b'c', b'.',
 ];
 const PACKET_SIZE: usize = 640;
 const DEV_PAGE: u8 = 0x5e;
