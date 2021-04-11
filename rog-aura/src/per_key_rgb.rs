@@ -33,7 +33,8 @@ impl KeyColourArray {
         KeyColourArray(set)
     }
 
-    /// Initialise and clear the keyboard for custom effects
+    /// Initialise and clear the keyboard for custom effects, this must be done for 
+    /// every time mode switches from builtin to custom
     #[inline]
     pub const fn get_init_msg() -> [u8; 64] {
         let mut init = [0u8; 64];

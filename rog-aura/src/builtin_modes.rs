@@ -6,11 +6,13 @@ pub const LED_INIT5: [u8; 6] = [0x5e, 0x05, 0x20, 0x31, 0, 0x08];
 
 use serde_derive::{Deserialize, Serialize};
 use std::str::FromStr;
+#[cfg(feature = "dbus")]
 use zvariant_derive::Type;
 
 use crate::{LED_MSG_LEN, error::Error};
 
-#[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize, Type)]
+#[cfg_attr(feature = "dbus", derive(Type))]
+#[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize)]
 pub enum LedBrightness {
     Off,
     Low,
@@ -36,7 +38,8 @@ impl From<u32> for LedBrightness {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Copy, Deserialize, Serialize, Type)]
+#[cfg_attr(feature = "dbus", derive(Type))]
+#[derive(Debug, Clone, PartialEq, Copy, Deserialize, Serialize)]
 pub struct Colour(pub u8, pub u8, pub u8);
 
 impl Default for Colour {
@@ -59,7 +62,8 @@ impl FromStr for Colour {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize, Type)]
+#[cfg_attr(feature = "dbus", derive(Type))]
+#[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize)]
 pub enum Speed {
     Low = 0xe1,
     Med = 0xeb,
@@ -87,7 +91,8 @@ impl FromStr for Speed {
 /// Used for Rainbow mode.
 ///
 /// Enum corresponds to the required integer value
-#[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize, Type)]
+#[cfg_attr(feature = "dbus", derive(Type))]
+#[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize)]
 pub enum Direction {
     Right,
     Left,
@@ -114,8 +119,10 @@ impl FromStr for Direction {
     }
 }
 
+/// Enum of modes that convert to the actual number required by a USB HID packet
+#[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(
-    Debug, Type, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Copy, Deserialize, Serialize,
+    Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Copy, Deserialize, Serialize,
 )]
 pub enum AuraModeNum {
     Static = 0,
@@ -190,95 +197,9 @@ impl From<u8> for AuraModeNum {
     }
 }
 
-#[derive(Deserialize, Serialize)]
-pub struct AuraMultiZone {
-    static_: [AuraEffect; 4],
-    breathe: [AuraEffect; 4],
-}
-
-impl AuraMultiZone {
-    pub fn set(&mut self, effect: AuraEffect) {
-        if effect.mode == AuraModeNum::Static {
-            match effect.zone {
-                AuraZone::None => {}
-                AuraZone::One => self.static_[0] = effect,
-                AuraZone::Two => self.static_[1] = effect,
-                AuraZone::Three => self.static_[2] = effect,
-                AuraZone::Four => self.static_[3] = effect,
-            }
-        } else if effect.mode == AuraModeNum::Breathe {
-            match effect.zone {
-                AuraZone::None => {}
-                AuraZone::One => self.breathe[0] = effect,
-                AuraZone::Two => self.breathe[1] = effect,
-                AuraZone::Three => self.breathe[2] = effect,
-                AuraZone::Four => self.breathe[3] = effect,
-            }
-        }
-    }
-
-    pub fn static_(&self) -> &[AuraEffect; 4] {
-        &self.static_
-    }
-
-    pub fn breathe(&self) -> &[AuraEffect; 4] {
-        &self.breathe
-    }
-}
-
-impl Default for AuraMultiZone {
-    fn default() -> Self {
-        Self {
-            static_: [
-                AuraEffect {
-                    mode: AuraModeNum::Static,
-                    zone: AuraZone::One,
-                    ..Default::default()
-                },
-                AuraEffect {
-                    mode: AuraModeNum::Static,
-                    zone: AuraZone::Two,
-                    ..Default::default()
-                },
-                AuraEffect {
-                    mode: AuraModeNum::Static,
-                    zone: AuraZone::Three,
-                    ..Default::default()
-                },
-                AuraEffect {
-                    mode: AuraModeNum::Static,
-                    zone: AuraZone::Four,
-                    ..Default::default()
-                },
-            ],
-            breathe: [
-                AuraEffect {
-                    mode: AuraModeNum::Breathe,
-                    zone: AuraZone::One,
-                    ..Default::default()
-                },
-                AuraEffect {
-                    mode: AuraModeNum::Breathe,
-                    zone: AuraZone::Two,
-                    ..Default::default()
-                },
-                AuraEffect {
-                    mode: AuraModeNum::Breathe,
-                    zone: AuraZone::Three,
-                    ..Default::default()
-                },
-                AuraEffect {
-                    mode: AuraModeNum::Breathe,
-                    zone: AuraZone::Four,
-                    ..Default::default()
-                },
-            ],
-        }
-    }
-}
-
 /// Base effects have no zoning, while multizone is 1-4
-#[derive(Debug, Type, Copy, Clone, PartialEq, Deserialize, Serialize)]
+#[cfg_attr(feature = "dbus", derive(Type))]
+#[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize)]
 pub enum AuraZone {
     None,
     One,
@@ -287,8 +208,12 @@ pub enum AuraZone {
     Four,
 }
 
-/// Default factory modes structure
-#[derive(Debug, Type, Clone, Deserialize, Serialize)]
+/// Default factory modes structure. This easily converts to an USB HID packet with:
+/// ```rust
+/// let bytes: [u8; LED_MSG_LEN] = mode.into();
+/// ```
+#[cfg_attr(feature = "dbus", derive(Type))]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AuraEffect {
     /// The effect type
     pub mode: AuraModeNum,
@@ -344,11 +269,11 @@ impl Default for AuraEffect {
 
 /// Parses `AuraEffect` in to packet data for writing to the USB interface
 ///
-/// Byte structure:
+/// Byte structure where colour is RGB, one byte per R, G, B:
 /// ```ignore
-/// | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10| 11| 12|
-/// |---|---|---|---|---|---|---|---|---|---|---|---|---|
-/// |5d |b3 |00 |03 |ff |00 |00 |00 |00 |00 |00 |ff |00 |
+/// | 0 | 1 | 2   | 3   | 4, 5, 6 | 7    | 8        | 9 | 10, 11, 12|
+/// |---|---|-----|-----|---------|------|----------|---|-----------|
+/// |5d |b3 |Zone |Mode |Colour 1 |Speed |Direction |00 |Colour 2   |
 /// ```
 impl From<&AuraEffect> for [u8; LED_MSG_LEN] {
     fn from(aura: &AuraEffect) -> Self {
@@ -365,7 +290,6 @@ impl From<&AuraEffect> for [u8; LED_MSG_LEN] {
         msg[10] = aura.colour2.0;
         msg[11] = aura.colour2.1;
         msg[12] = aura.colour2.2;
-
         msg
     }
 }

@@ -1,6 +1,6 @@
 use crate::laptops::LaptopLedData;
 use log::{error, info, warn};
-use rog_aura::{AuraEffect, AuraModeNum, AuraMultiZone, AuraZone, LedBrightness};
+use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs::{File, OpenOptions};
@@ -144,5 +144,93 @@ impl AuraConfig {
             }
         }
         None
+    }
+}
+
+
+#[derive(Deserialize, Serialize)]
+pub struct AuraMultiZone {
+    static_: [AuraEffect; 4],
+    breathe: [AuraEffect; 4],
+}
+
+impl AuraMultiZone {
+    pub fn set(&mut self, effect: AuraEffect) {
+        if effect.mode == AuraModeNum::Static {
+            match effect.zone {
+                AuraZone::None => {}
+                AuraZone::One => self.static_[0] = effect,
+                AuraZone::Two => self.static_[1] = effect,
+                AuraZone::Three => self.static_[2] = effect,
+                AuraZone::Four => self.static_[3] = effect,
+            }
+        } else if effect.mode == AuraModeNum::Breathe {
+            match effect.zone {
+                AuraZone::None => {}
+                AuraZone::One => self.breathe[0] = effect,
+                AuraZone::Two => self.breathe[1] = effect,
+                AuraZone::Three => self.breathe[2] = effect,
+                AuraZone::Four => self.breathe[3] = effect,
+            }
+        }
+    }
+
+    pub fn static_(&self) -> &[AuraEffect; 4] {
+        &self.static_
+    }
+
+    pub fn breathe(&self) -> &[AuraEffect; 4] {
+        &self.breathe
+    }
+}
+
+impl Default for AuraMultiZone {
+    fn default() -> Self {
+        Self {
+            static_: [
+                AuraEffect {
+                    mode: AuraModeNum::Static,
+                    zone: AuraZone::One,
+                    ..Default::default()
+                },
+                AuraEffect {
+                    mode: AuraModeNum::Static,
+                    zone: AuraZone::Two,
+                    ..Default::default()
+                },
+                AuraEffect {
+                    mode: AuraModeNum::Static,
+                    zone: AuraZone::Three,
+                    ..Default::default()
+                },
+                AuraEffect {
+                    mode: AuraModeNum::Static,
+                    zone: AuraZone::Four,
+                    ..Default::default()
+                },
+            ],
+            breathe: [
+                AuraEffect {
+                    mode: AuraModeNum::Breathe,
+                    zone: AuraZone::One,
+                    ..Default::default()
+                },
+                AuraEffect {
+                    mode: AuraModeNum::Breathe,
+                    zone: AuraZone::Two,
+                    ..Default::default()
+                },
+                AuraEffect {
+                    mode: AuraModeNum::Breathe,
+                    zone: AuraZone::Three,
+                    ..Default::default()
+                },
+                AuraEffect {
+                    mode: AuraModeNum::Breathe,
+                    zone: AuraZone::Four,
+                    ..Default::default()
+                },
+            ],
+        }
     }
 }

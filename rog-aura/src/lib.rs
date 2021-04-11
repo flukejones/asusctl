@@ -1,18 +1,13 @@
-/// The main data conversion for transfering in shortform over dbus or other,
-/// or writing directly to the USB device
-mod data;
-pub use data::*;
-
 /// A container of images/grids/gifs/pauses which can be iterated over to generate
 /// cool effects
 mod sequencer;
 pub use sequencer::*;
 
-mod aura_modes;
-pub use aura_modes::*;
+mod builtin_modes;
+pub use builtin_modes::*;
 
-mod aura_perkey;
-pub use aura_perkey::*;
+mod per_key_rgb;
+pub use per_key_rgb::*;
 
 pub mod usb;
 
