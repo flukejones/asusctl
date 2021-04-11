@@ -5,14 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+# [3.4.0] - 2021-04-11
 ### Changed
-- Display PNG images on AniMe with scale, position, angle, and brightness
-- AniMe display parts split out to individual crate in preparation for publishing
-  on crates.io
 - Revert zbus to 1.9.1
 - Use enum to show power states, and catch missing pci path for nvidia.
-- Partial user-daemon for anime/per-key done, asusd-user. Includes asusd-user systemd unit.
+- Partial user-daemon for anime/per-key done, `asusd-user`. Includes asusd-user systemd unit.
 - user-daemon provides dbus emthods to insert anime actions, remove from index, set leds on/off
+  + COnfig file is stored in `~/.config/rog/rog-user.cfg`
+- AniMe display parts split out to individual crate in preparation for publishing
+  on crates.io
 
 # [3.3.0] - 2021-04-3
 ### Changed

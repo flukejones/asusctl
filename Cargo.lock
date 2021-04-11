@@ -42,7 +42,7 @@ dependencies = [
 
 [[package]]
 name = "asusctl"
-version = "3.3.1"
+version = "3.4.0"
 dependencies = [
  "daemon",
  "gif",
@@ -205,7 +205,7 @@ dependencies = [
 
 [[package]]
 name = "daemon"
-version = "3.3.1"
+version = "3.4.0"
 dependencies = [
  "env_logger",
  "intel-pstate",
