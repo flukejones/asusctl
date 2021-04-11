@@ -168,6 +168,7 @@ impl CtrlGraphics {
     /// Save the selected `Vendor` mode to config
     fn save_gfx_mode(vendor: GfxVendors, config: Arc<Mutex<Config>>) {
         if let Ok(mut config) = config.lock() {
+            config.gfx_last_mode = config.gfx_mode;
             config.gfx_mode = vendor;
             config.write();
         }

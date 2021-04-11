@@ -105,9 +105,10 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
                 // Need to check if a laptop has the dedicated gfx switch
                 if CtrlRogBios::has_dedicated_gfx_toggle() {
                     if let Ok(ded) = CtrlRogBios::get_gfx_mode() {
-                        if let Ok(vendor) = ctrl.get_gfx_mode() {
-                            if ded == 1 && vendor != GfxVendors::Nvidia {
+                        if let Ok(mut config) = config.lock() {
+                            if ded == 1 {
                                 warn!("Dedicated GFX toggle is on but driver mode is not nvidia \nSetting to nvidia driver mode");
+                                config.gfx_last_mode = config.gfx_mode;
                                 let devices = ctrl.devices();
                                 let bus = ctrl.bus();
                                 CtrlGraphics::do_vendor_tasks(
@@ -118,6 +119,14 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
                                 )?;
                             } else if ded == 0 {
                                 info!("Dedicated GFX toggle is off");
+                                let devices = ctrl.devices();
+                                let bus = ctrl.bus();
+                                CtrlGraphics::do_vendor_tasks(
+                                    config.gfx_last_mode,
+                                    false,
+                                    &devices,
+                                    &bus,
+                                )?;
                             }
                         }
                     }
