@@ -2,9 +2,9 @@ mod anime_cli;
 mod aura_cli;
 
 use crate::aura_cli::{LedBrightness, SetAuraBuiltin};
-use anime_cli::{AniMeActions, AniMeCommand};
+use anime_cli::{AnimeActions, AnimeCommand};
 use gumdrop::{Opt, Options};
-use rog_anime::{AniMeDataBuffer, AniMeImage, Vec2, ANIME_DATA_LEN};
+use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2, ANIME_DATA_LEN};
 use rog_dbus::AuraDbusClient;
 use rog_types::{
     aura_modes::{self, AuraEffect, AuraModeNum},
@@ -49,7 +49,7 @@ enum CliCommand {
     #[options(help = "Set the graphics mode")]
     Graphics(GraphicsCommand),
     #[options(name = "anime", help = "Manage AniMe Matrix")]
-    AniMe(AniMeCommand),
+    Anime(AnimeCommand),
     #[options(help = "Change bios settings")]
     Bios(BiosCommand),
 }
@@ -145,7 +145,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(CliCommand::LedMode(mode)) => handle_led_mode(&dbus, &supported.keyboard_led, &mode)?,
         Some(CliCommand::Profile(cmd)) => handle_profile(&dbus, &supported.fan_cpu_ctrl, &cmd)?,
         Some(CliCommand::Graphics(cmd)) => do_gfx(&dbus, &supported.rog_bios_ctrl, cmd)?,
-        Some(CliCommand::AniMe(cmd)) => {
+        Some(CliCommand::Anime(cmd)) => {
             if (cmd.command.is_none() && cmd.boot.is_none() && cmd.turn.is_none()) || cmd.help {
                 println!("Missing arg or command\n\n{}", cmd.self_usage());
                 if let Some(lst) = cmd.self_command_list() {
@@ -160,13 +160,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             if let Some(action) = cmd.command {
                 match action {
-                    AniMeActions::Leds(anime_leds) => {
-                        let data = AniMeDataBuffer::from_vec(
+                    AnimeActions::Leds(anime_leds) => {
+                        let data = AnimeDataBuffer::from_vec(
                             [anime_leds.led_brightness(); ANIME_DATA_LEN].to_vec(),
                         );
                         dbus.proxies().anime().write(data)?;
                     }
-                    AniMeActions::Image(image) => {
+                    AnimeActions::Image(image) => {
                         if image.help_requested() {
                             println!("Missing arg or command\n\n{}", image.self_usage());
                             if let Some(lst) = image.self_command_list() {
@@ -175,7 +175,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             std::process::exit(1);
                         }
 
-                        let matrix = AniMeImage::from_png(
+                        let matrix = AnimeImage::from_png(
                             Path::new(&image.path),
                             image.scale,
                             image.angle,
@@ -185,7 +185,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                         dbus.proxies()
                             .anime()
-                            .write(<AniMeDataBuffer>::from(&matrix))
+                            .write(<AnimeDataBuffer>::from(&matrix))
                             .unwrap();
                     }
                 }

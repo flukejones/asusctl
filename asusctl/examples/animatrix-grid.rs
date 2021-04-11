@@ -1,4 +1,4 @@
-use rog_anime::{AniMeDataBuffer, AniMeGrid};
+use rog_anime::{AnimeDataBuffer, AnimeGrid};
 use rog_dbus::AuraDbusClient;
 
 // In usable data:
@@ -8,7 +8,7 @@ use rog_dbus::AuraDbusClient;
 
 fn main() {
     let (client, _) = AuraDbusClient::new().unwrap();
-    let mut matrix = AniMeGrid::new(None);
+    let mut matrix = AnimeGrid::new(None);
     let tmp = matrix.get_mut();
 
     let mut i = 0;
@@ -38,7 +38,7 @@ fn main() {
         }
     }
 
-    let matrix = <AniMeDataBuffer>::from(matrix);
+    let matrix = <AnimeDataBuffer>::from(matrix);
 
     client.proxies().anime().write(matrix).unwrap();
 }

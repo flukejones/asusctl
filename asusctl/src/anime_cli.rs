@@ -3,18 +3,18 @@ use rog_types::error::AuraError;
 use std::str::FromStr;
 
 #[derive(Copy, Clone, Debug)]
-pub enum AniMeStatusValue {
+pub enum AnimeStatusValue {
     On,
     Off,
 }
-impl FromStr for AniMeStatusValue {
+impl FromStr for AnimeStatusValue {
     type Err = AuraError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s = s.to_lowercase();
         match s.as_str() {
-            "on" => Ok(AniMeStatusValue::On),
-            "off" => Ok(AniMeStatusValue::Off),
+            "on" => Ok(AnimeStatusValue::On),
+            "off" => Ok(AnimeStatusValue::Off),
             _ => {
                 print!("Invalid argument, must be one of: on, off");
                 Err(AuraError::ParseAnime)
@@ -22,17 +22,17 @@ impl FromStr for AniMeStatusValue {
         }
     }
 }
-impl From<AniMeStatusValue> for bool {
-    fn from(value: AniMeStatusValue) -> Self {
+impl From<AnimeStatusValue> for bool {
+    fn from(value: AnimeStatusValue) -> Self {
         match value {
-            AniMeStatusValue::On => true,
-            AniMeStatusValue::Off => false,
+            AnimeStatusValue::On => true,
+            AnimeStatusValue::Off => false,
         }
     }
 }
 
 #[derive(Options)]
-pub struct AniMeLeds {
+pub struct AnimeLeds {
     #[options(help = "print help message")]
     help: bool,
     #[options(
@@ -44,37 +44,37 @@ pub struct AniMeLeds {
     )]
     led_brightness: u8,
 }
-impl AniMeLeds {
+impl AnimeLeds {
     pub fn led_brightness(&self) -> u8 {
         self.led_brightness
     }
 }
 
 #[derive(Options)]
-pub struct AniMeCommand {
+pub struct AnimeCommand {
     #[options(help = "print help message")]
     pub help: bool,
     #[options(
         meta = "",
         help = "turn on/off the panel (accept/reject write requests)"
     )]
-    pub turn: Option<AniMeStatusValue>,
+    pub turn: Option<AnimeStatusValue>,
     #[options(meta = "", help = "turn on/off the panel at boot (with Asus effect)")]
-    pub boot: Option<AniMeStatusValue>,
+    pub boot: Option<AnimeStatusValue>,
     #[options(command)]
-    pub command: Option<AniMeActions>,
+    pub command: Option<AnimeActions>,
 }
 
 #[derive(Options)]
-pub enum AniMeActions {
+pub enum AnimeActions {
     #[options(help = "change all leds brightness")]
-    Leds(AniMeLeds),
+    Leds(AnimeLeds),
     #[options(help = "display an 8bit greyscale png")]
-    Image(AniMeImage),
+    Image(AnimeImage),
 }
 
 #[derive(Options)]
-pub struct AniMeImage {
+pub struct AnimeImage {
     #[options(help = "print help message")]
     pub help: bool,
     #[options(meta = "", help = "full path to the png to display")]

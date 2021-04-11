@@ -18,6 +18,6 @@ yansi-term = "^0.1"
 
 [dev-dependencies]
 tinybmp = "^0.2.3"
-glam = "*"
+glam = "0.14.0"
 rog_dbus = { path = "../rog-dbus" }
 gif = "^0.11.2"

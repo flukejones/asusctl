@@ -21,7 +21,7 @@ path = "src/daemon.rs"
 rog_anime = { path = "../rog-anime" }
 rog_types = { path = "../rog-types" }
 rog_dbus = { path = "../rog-dbus" }
-rusb = "^0.7"
+rusb = "^0.8"
 udev = "^0.6"
 
 # cli and logging

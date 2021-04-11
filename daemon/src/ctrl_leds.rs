@@ -62,12 +62,6 @@ impl DbusKbdBacklight {
     }
 }
 
-trait Dbus {
-    fn set_led(&mut self, data: String);
-    fn ledmode(&self) -> String;
-    fn notify_led(&self, data: &str) -> zbus::Result<()>;
-}
-
 impl crate::ZbusAdd for DbusKbdBacklight {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server

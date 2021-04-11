@@ -4,12 +4,13 @@ pub use glam::Vec2;
 use glam::{Mat3, Vec3};
 
 use crate::{
-    data::{AniMeDataBuffer, ANIME_DATA_LEN},
+    data::{AnimeDataBuffer, ANIME_DATA_LEN},
     error::AnimeError,
 };
 
 const LED_PIXEL_LEN: usize = 1244;
 
+/// A single greyscale + alpha pixel in the image
 #[derive(Copy, Clone, Debug)]
 pub(crate) struct Pixel {
     pub color: u32,
@@ -17,6 +18,7 @@ pub(crate) struct Pixel {
 }
 
 impl Default for Pixel {
+    #[inline]
     fn default() -> Self {
         Pixel {
             color: 0,
@@ -58,10 +60,11 @@ impl Led {
 /// Container of `Led`, each of which specifies a position within the image
 /// The main use of this is to position and sample colours for the final image
 /// to show on AniMe
-pub struct AniMeImage {
+pub struct AnimeImage {
     pub scale: Vec2,
     /// Angle in radians
     pub angle: f32,
+    /// Position of the image ont he display
     pub translation: Vec2,
     /// Brightness of final image, `0.0` = off, `1.0` = full
     pub bright: f32,
@@ -69,10 +72,11 @@ pub struct AniMeImage {
     led_pos: [Option<Led>; LED_PIXEL_LEN],
     /// THe image data for sampling
     img_pixels: Vec<Pixel>,
+    /// width of the image
     width: u32,
 }
 
-impl AniMeImage {
+impl AnimeImage {
     pub(crate) const fn new(
         scale: Vec2,
         angle: f32,
@@ -119,6 +123,7 @@ impl AniMeImage {
         36 - (y + 1) / 2
     }
 
+    /// Physical display width
     fn phys_width() -> f32 {
         (32.0 - -0.5 + 1.0) * Self::scale_x()
     }
@@ -128,10 +133,12 @@ impl AniMeImage {
         55
     }
 
+    /// Physical display height
     fn phys_height() -> f32 {
         (54.0 + 1.0) * Self::scale_y()
     }
 
+    /// Find the actual width of the data including the dead pixels
     const fn pitch(y: u32) -> u32 {
         match y {
             0 | 2 | 4 => 33,
@@ -145,12 +152,13 @@ impl AniMeImage {
     }
 
     /// Really only used to generate the output for including as a full const in `LED_IMAGE_POSITIONS`
+    #[inline]
     pub fn generate() -> Vec<Option<Led>> {
-        (0..AniMeImage::height())
+        (0..AnimeImage::height())
             .flat_map(|y| {
-                (0..AniMeImage::pitch(y)).map(move |l| {
-                    if l < AniMeImage::width(y) {
-                        let x = AniMeImage::first_x(y) + l;
+                (0..AnimeImage::pitch(y)).map(move |l| {
+                    if l < AnimeImage::width(y) {
+                        let x = AnimeImage::first_x(y) + l;
                         Some(Led::new(x as f32 - 0.5 * (y % 2) as f32, y as f32))
                     } else {
                         None
@@ -163,6 +171,7 @@ impl AniMeImage {
     /// Called after setting new angle, position, or scale to refresh the image
     /// samples, the result can then been transformed to the appropriate data
     /// for displaying
+    #[inline]
     pub fn update(&mut self) {
         let width = self.width as i32;
         let height = self.img_pixels.len() as i32 / width;
@@ -204,12 +213,13 @@ impl AniMeImage {
         }
     }
 
+    /// Put the render window in place on the image
     fn put(&self, bmp_w: f32, bmp_h: f32) -> Mat3 {
         // Center of image
         let center = Mat3::from_translation(Vec2::new(-0.5 * bmp_w, -0.5 * bmp_h));
         // Find the scale required for cleanly showing the image
-        let h = AniMeImage::phys_height() / bmp_h;
-        let mut base_scale = AniMeImage::phys_width() / bmp_w;
+        let h = AnimeImage::phys_height() / bmp_h;
+        let mut base_scale = AnimeImage::phys_width() / bmp_w;
         if base_scale > h {
             base_scale = h;
         }
@@ -217,8 +227,8 @@ impl AniMeImage {
         let cm_from_px = Mat3::from_scale(Vec2::new(base_scale, base_scale));
 
         let led_from_cm = Mat3::from_scale(Vec2::new(
-            1.0 / AniMeImage::scale_x(),
-            1.0 / AniMeImage::scale_y(),
+            1.0 / AnimeImage::scale_x(),
+            1.0 / AnimeImage::scale_y(),
         ));
 
         let transform =
@@ -233,6 +243,7 @@ impl AniMeImage {
 
     /// Generate the base image from inputs. The result can be displayed as is or
     /// updated via scale, position, or angle then displayed again after `update()`.
+    #[inline]
     pub fn from_png(
         path: &Path,
         scale: f32,
@@ -261,7 +272,7 @@ impl AniMeImage {
             _ => return Err(AnimeError::Format),
         };
 
-        let mut matrix = AniMeImage::new(
+        let mut matrix = AnimeImage::new(
             Vec2::new(scale, scale),
             angle,
             translation,
@@ -275,11 +286,11 @@ impl AniMeImage {
     }
 }
 
-impl From<&AniMeImage> for AniMeDataBuffer {
+impl From<&AnimeImage> for AnimeDataBuffer {
     /// Do conversion from the nested Vec in AniMeMatrix to the two required
     /// packets suitable for sending over USB
     #[inline]
-    fn from(leds: &AniMeImage) -> Self {
+    fn from(leds: &AnimeImage) -> Self {
         let mut l: Vec<u8> = leds
             .led_pos
             .iter()
@@ -289,7 +300,7 @@ impl From<&AniMeImage> for AniMeDataBuffer {
         v.push(0);
         v.append(&mut l);
         v.append(&mut vec![0u8; 9]);
-        AniMeDataBuffer::from_vec(v)
+        AnimeDataBuffer::from_vec(v)
     }
 }
 
@@ -1550,7 +1561,7 @@ mod tests {
 
     #[test]
     fn led_positions() {
-        let leds = AniMeImage::generate();
+        let leds = AnimeImage::generate();
         assert_eq!(leds[0], Some(Led(0.0, 0.0, 0)));
         assert_eq!(leds[1], Some(Led(1.0, 0.0, 0)));
         assert_eq!(leds[2], Some(Led(2.0, 0.0, 0)));
@@ -1579,7 +1590,7 @@ mod tests {
 
     #[test]
     fn led_positions_const() {
-        let leds = AniMeImage::generate();
+        let leds = AnimeImage::generate();
         assert_eq!(leds[1], LED_IMAGE_POSITIONS[1]);
         assert_eq!(leds[34], LED_IMAGE_POSITIONS[34]);
         assert_eq!(leds[69], LED_IMAGE_POSITIONS[69]);
@@ -1593,44 +1604,44 @@ mod tests {
 
     #[test]
     fn row_starts() {
-        assert_eq!(AniMeImage::first_x(5), 0);
-        assert_eq!(AniMeImage::first_x(6), 0);
-        assert_eq!(AniMeImage::first_x(7), 1);
-        assert_eq!(AniMeImage::first_x(8), 1);
-        assert_eq!(AniMeImage::first_x(9), 2);
-        assert_eq!(AniMeImage::first_x(10), 2);
-        assert_eq!(AniMeImage::first_x(11), 3);
+        assert_eq!(AnimeImage::first_x(5), 0);
+        assert_eq!(AnimeImage::first_x(6), 0);
+        assert_eq!(AnimeImage::first_x(7), 1);
+        assert_eq!(AnimeImage::first_x(8), 1);
+        assert_eq!(AnimeImage::first_x(9), 2);
+        assert_eq!(AnimeImage::first_x(10), 2);
+        assert_eq!(AnimeImage::first_x(11), 3);
     }
 
     #[test]
     fn row_widths() {
-        assert_eq!(AniMeImage::width(5), 33);
-        assert_eq!(AniMeImage::width(6), 33);
-        assert_eq!(AniMeImage::width(7), 32);
-        assert_eq!(AniMeImage::width(8), 32);
-        assert_eq!(AniMeImage::width(9), 31);
-        assert_eq!(AniMeImage::width(10), 31);
-        assert_eq!(AniMeImage::width(11), 30);
-        assert_eq!(AniMeImage::width(12), 30);
-        assert_eq!(AniMeImage::width(13), 29);
-        assert_eq!(AniMeImage::width(14), 29);
-        assert_eq!(AniMeImage::width(15), 28);
-        assert_eq!(AniMeImage::width(16), 28);
-        assert_eq!(AniMeImage::width(17), 27);
-        assert_eq!(AniMeImage::width(18), 27);
+        assert_eq!(AnimeImage::width(5), 33);
+        assert_eq!(AnimeImage::width(6), 33);
+        assert_eq!(AnimeImage::width(7), 32);
+        assert_eq!(AnimeImage::width(8), 32);
+        assert_eq!(AnimeImage::width(9), 31);
+        assert_eq!(AnimeImage::width(10), 31);
+        assert_eq!(AnimeImage::width(11), 30);
+        assert_eq!(AnimeImage::width(12), 30);
+        assert_eq!(AnimeImage::width(13), 29);
+        assert_eq!(AnimeImage::width(14), 29);
+        assert_eq!(AnimeImage::width(15), 28);
+        assert_eq!(AnimeImage::width(16), 28);
+        assert_eq!(AnimeImage::width(17), 27);
+        assert_eq!(AnimeImage::width(18), 27);
     }
 
     #[test]
     fn row_pitch() {
-        assert_eq!(AniMeImage::pitch(5), 34);
-        assert_eq!(AniMeImage::pitch(6), 33);
-        assert_eq!(AniMeImage::pitch(7), 33);
-        assert_eq!(AniMeImage::pitch(8), 32);
-        assert_eq!(AniMeImage::pitch(9), 32);
-        assert_eq!(AniMeImage::pitch(10), 31);
-        assert_eq!(AniMeImage::pitch(11), 31);
-        assert_eq!(AniMeImage::pitch(12), 30);
-        assert_eq!(AniMeImage::pitch(13), 30);
-        assert_eq!(AniMeImage::pitch(14), 29);
+        assert_eq!(AnimeImage::pitch(5), 34);
+        assert_eq!(AnimeImage::pitch(6), 33);
+        assert_eq!(AnimeImage::pitch(7), 33);
+        assert_eq!(AnimeImage::pitch(8), 32);
+        assert_eq!(AnimeImage::pitch(9), 32);
+        assert_eq!(AnimeImage::pitch(10), 31);
+        assert_eq!(AnimeImage::pitch(11), 31);
+        assert_eq!(AnimeImage::pitch(12), 30);
+        assert_eq!(AnimeImage::pitch(13), 30);
+        assert_eq!(AnimeImage::pitch(14), 29);
     }
 }

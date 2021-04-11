@@ -1,5 +1,5 @@
 use serde_derive::{Deserialize, Serialize};
-#[cfg(feature = "z")]
+#[cfg(feature = "dbus")]
 use zvariant_derive::Type;
 
 /// The first 7 bytes of a USB packet are accounted for by `USB_PREFIX1` and `USB_PREFIX2`
@@ -16,40 +16,51 @@ const USB_PREFIX2: [u8; 7] = [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x02];
 
 /// The minimal serializable data that can be transferred over wire types.
 /// Other data structures in `rog_anime` will convert to this.
-#[cfg_attr(feature = "z", derive(Type))]
+#[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct AniMeDataBuffer(Vec<u8>);
+pub struct AnimeDataBuffer(Vec<u8>);
 
-impl Default for AniMeDataBuffer {
+impl Default for AnimeDataBuffer {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl AniMeDataBuffer {
+impl AnimeDataBuffer {
+    #[inline]
     pub fn new() -> Self {
-        AniMeDataBuffer(vec![0u8; ANIME_DATA_LEN])
+        AnimeDataBuffer(vec![0u8; ANIME_DATA_LEN])
     }
 
+    /// Get the inner data buffer
+    #[inline]
     pub fn get(&self) -> &[u8] {
         &self.0
     }
 
+    /// Get a mutable slice of the inner buffer
+    #[inline]
     pub fn get_mut(&mut self) -> &mut [u8] {
         &mut self.0
     }
 
+    /// Create from a vector of bytes
+    ///
+    /// # Panics
+    /// Will panic if the vector length is not `ANIME_DATA_LEN`
+    #[inline]
     pub fn from_vec(input: Vec<u8>) -> Self {
+        assert_eq!(input.len(), ANIME_DATA_LEN);
         Self(input)
     }
 }
 
 /// The two packets to be written to USB
-pub type AniMePacketType = [[u8; 640]; 2];
+pub type AnimePacketType = [[u8; 640]; 2];
 
-impl From<AniMeDataBuffer> for AniMePacketType {
+impl From<AnimeDataBuffer> for AnimePacketType {
     #[inline]
-    fn from(anime: AniMeDataBuffer) -> Self {
+    fn from(anime: AnimeDataBuffer) -> Self {
         assert!(anime.0.len() == ANIME_DATA_LEN);
         let mut buffers = [[0; 640]; 2];
         for (idx, chunk) in anime.0.as_slice().chunks(PANE_LEN).enumerate() {

@@ -1,28 +1,31 @@
 [package]
 name = "rog_anime"
-version = "1.0.0"
+version = "1.0.2"
 license = "MPL-2.0"
 readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]
 repository = "https://gitlab.com/asus-linux/asus-nb-ctrl"
 homepage = "https://gitlab.com/asus-linux/asus-nb-ctrl"
+documentation = "https://docs.rs/rog-anime"
 description = "Types useful for translating images and other data for display on the ASUS AniMe Matrix display"
+keywords = ["ROG", "ASUS", "AniMe"]
 edition = "2018"
+exclude = ["data"]
+
+[features]
+default = ["dbus"]
+dbus = ["zbus", "zvariant", "zvariant_derive"]
 
 [dependencies]
 png_pong = "^0.8.0"
 pix = "0.13"
 gif = "^0.11.2"
 
-
 serde = "^1.0"
 serde_derive = "^1.0"
-zbus = "^1.9.1"
-zvariant = "^2.5"
-zvariant_derive = "^2.5"
 
-glam = { version = "*", features = ["serde"] }
+glam = { version = "0.14.0", features = ["serde"] }
 
-[features]
-default = ["z"]
-z = []
+zbus = { version = "^1.9.1", optional = true }
+zvariant = { version = "^2.6", optional = true }
+zvariant_derive = { version = "^2.6", optional = true }
