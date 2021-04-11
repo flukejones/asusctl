@@ -87,13 +87,13 @@ vendor:
 	echo 'directory = "vendor"' >> .cargo/config
 	mv .cargo/config ./cargo-config
 	rm -rf .cargo
-	tar pcfJ vendor_asus-nb-ctrl_$(VERSION).tar.xz vendor
+	tar pcfJ vendor_asusctl_$(VERSION).tar.xz vendor
 	rm -rf vendor
 
 build:
 ifeq ($(VENDORED),1)
 	@echo "version = $(VERSION)"
-	tar pxf vendor_asus-nb-ctrl_$(VERSION).tar.xz
+	tar pxf vendor_asusctl_$(VERSION).tar.xz
 endif
 	cargo build $(ARGS)
 
