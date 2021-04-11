@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Split out all aura functionality that isn't dependent on the daemon in to a
   new crate `rog-aura`
 
+# [3.4.1] - 2021-04-11
+### Changed
+- Fix anime init sequence
+
 # [3.4.0] - 2021-04-11
 ### Changed
 - Revert zbus to 1.9.1
