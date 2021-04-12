@@ -111,7 +111,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
             let zbus = CtrlAnimeZbus(inner.clone());
             zbus.add_to_server(&mut object_server);
 
-            tasks.push(Box::new(CtrlAnimeTask(inner)));
+            tasks.push(Box::new(CtrlAnimeTask::new(inner)));
         }
         Err(err) => {
             error!("AniMe control: {}", err);

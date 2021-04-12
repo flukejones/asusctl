@@ -1,4 +1,5 @@
-use log::{error, warn};
+use crate::VERSION;
+use log::{error, info, warn};
 use rog_anime::{error::AnimeError, ActionData, AnimTime, AnimeAction, Vec2};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
@@ -8,28 +9,75 @@ use std::time::Duration;
 pub static ANIME_CONFIG_PATH: &str = "/etc/asusd/anime.conf";
 pub static ANIME_CACHE_PATH: &str = "/etc/asusd/anime-cache.conf";
 
+#[derive(Deserialize, Serialize)]
+pub struct AnimeConfigV341 {
+    pub system: Option<AnimeAction>,
+    pub boot: Option<AnimeAction>,
+    pub suspend: Option<AnimeAction>,
+    pub shutdown: Option<AnimeAction>,
+}
+
+impl AnimeConfigV341 {
+    pub(crate) fn into_current(self) -> AnimeConfig {
+        AnimeConfig {
+            system: if let Some(ani) = self.system {
+                vec![ani]
+            } else {
+                vec![]
+            },
+            boot: if let Some(ani) = self.boot {
+                vec![ani]
+            } else {
+                vec![]
+            },
+            wake: if let Some(ani) = self.suspend {
+                vec![ani]
+            } else {
+                vec![]
+            },
+            shutdown: if let Some(ani) = self.shutdown {
+                vec![ani]
+            } else {
+                vec![]
+            },
+            brightness: 1.0,
+        }
+    }
+}
+
 #[derive(Deserialize, Serialize, Default)]
 pub struct AnimeConfigCached {
-    pub system: Option<ActionData>,
-    pub boot: Option<ActionData>,
-    pub suspend: Option<ActionData>,
-    pub shutdown: Option<ActionData>,
+    pub system: Vec<ActionData>,
+    pub boot: Vec<ActionData>,
+    pub wake: Vec<ActionData>,
+    pub shutdown: Vec<ActionData>,
 }
 
 impl AnimeConfigCached {
     pub fn init_from_config(&mut self, config: &AnimeConfig) -> Result<(), AnimeError> {
-        if let Some(ref sys) = config.system {
-            self.system = Some(ActionData::from_anime_action(sys)?)
+        let mut sys = Vec::with_capacity(config.system.len());
+        for ani in config.system.iter() {
+            sys.push(ActionData::from_anime_action(ani)?);
         }
-        if let Some(ref boot) = config.boot {
-            self.boot = Some(ActionData::from_anime_action(boot)?)
+        self.system = sys;
+
+        let mut boot = Vec::with_capacity(config.boot.len());
+        for ani in config.boot.iter() {
+            boot.push(ActionData::from_anime_action(ani)?);
         }
-        if let Some(ref suspend) = config.boot {
-            self.suspend = Some(ActionData::from_anime_action(suspend)?)
+        self.boot = boot;
+
+        let mut wake = Vec::with_capacity(config.wake.len());
+        for ani in config.wake.iter() {
+            wake.push(ActionData::from_anime_action(ani)?);
         }
-        if let Some(ref shutdown) = config.boot {
-            self.shutdown = Some(ActionData::from_anime_action(shutdown)?)
+        self.wake = wake;
+
+        let mut shutdown = Vec::with_capacity(config.shutdown.len());
+        for ani in config.shutdown.iter() {
+            shutdown.push(ActionData::from_anime_action(ani)?);
         }
+        self.shutdown = shutdown;
         Ok(())
     }
 }
@@ -37,19 +85,21 @@ impl AnimeConfigCached {
 /// Config for base system actions for the anime display
 #[derive(Deserialize, Serialize)]
 pub struct AnimeConfig {
-    pub system: Option<AnimeAction>,
-    pub boot: Option<AnimeAction>,
-    pub suspend: Option<AnimeAction>,
-    pub shutdown: Option<AnimeAction>,
+    pub system: Vec<AnimeAction>,
+    pub boot: Vec<AnimeAction>,
+    pub wake: Vec<AnimeAction>,
+    pub shutdown: Vec<AnimeAction>,
+    pub brightness: f32,
 }
 
 impl Default for AnimeConfig {
     fn default() -> Self {
         AnimeConfig {
-            system: None,
-            boot: None,
-            suspend: None,
-            shutdown: None,
+            system: Vec::new(),
+            boot: Vec::new(),
+            wake: Vec::new(),
+            shutdown: Vec::new(),
+            brightness: 1.0,
         }
     }
 }
@@ -75,6 +125,11 @@ impl AnimeConfig {
             } else {
                 if let Ok(data) = serde_json::from_str(&buf) {
                     return data;
+                } else if let Ok(data) = serde_json::from_str::<AnimeConfigV341>(&buf) {
+                    let config = data.into_current();
+                    config.write();
+                    info!("Updated config version to: {}", VERSION);
+                    return config;
                 }
                 warn!("Could not deserialise {}", ANIME_CONFIG_PATH);
                 panic!("Please remove {} then restart asusd", ANIME_CONFIG_PATH);
@@ -86,20 +141,35 @@ impl AnimeConfig {
     fn create_default(file: &mut File) -> Self {
         // create a default config here
         let config = AnimeConfig {
-            system: None,
-            boot: Some(AnimeAction::ImageAnimation {
+            system: vec![],
+            boot: vec![AnimeAction::ImageAnimation {
                 file: "/usr/share/asusd/anime/custom/sonic-run.gif".into(),
                 scale: 0.9,
                 angle: 0.65,
                 translation: Vec2::default(),
-                brightness: 0.5,
+                brightness: 1.0,
                 time: AnimTime::Time(Duration::from_secs(5)),
-            }),
-            suspend: None,
-            shutdown: None,
+            }],
+            wake: vec![AnimeAction::ImageAnimation {
+                file: "/usr/share/asusd/anime/custom/sonic-run.gif".into(),
+                scale: 0.9,
+                angle: 0.65,
+                translation: Vec2::default(),
+                brightness: 1.0,
+                time: AnimTime::Time(Duration::from_secs(5)),
+            }],
+            shutdown: vec![AnimeAction::ImageAnimation {
+                file: "/usr/share/asusd/anime/custom/sonic-wait.gif".into(),
+                scale: 0.9,
+                angle: 0.0,
+                translation: Vec2::new(3.0, 2.0),
+                brightness: 1.0,
+                time: AnimTime::Infinite,
+            }],
+            brightness: 1.0,
         };
         // Should be okay to unwrap this as is since it is a Default
-        let json = serde_json::to_string(&config).unwrap();
+        let json = serde_json::to_string_pretty(&config).unwrap();
         file.write_all(json.as_bytes())
             .unwrap_or_else(|_| panic!("Could not write {}", ANIME_CONFIG_PATH));
         config

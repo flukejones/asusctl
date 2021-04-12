@@ -1,4 +1,5 @@
 use log::{error, info, warn};
+use logind_zbus::ManagerProxy;
 use rog_anime::{
     usb::{
         pkt_for_apply, pkt_for_flush, pkt_for_set_boot, pkt_for_set_on, pkts_for_init, PROD_ID,
@@ -14,8 +15,11 @@ use std::{
     thread::sleep,
     time::Instant,
 };
-use std::{sync::atomic::AtomicBool, time::Duration};
-use zbus::dbus_interface;
+use std::{
+    sync::atomic::{AtomicBool, Ordering},
+    time::Duration,
+};
+use zbus::{dbus_interface, Connection};
 use zvariant::ObjectPath;
 
 use crate::{
@@ -35,11 +39,11 @@ impl GetSupported for CtrlAnime {
 pub struct CtrlAnime {
     handle: DeviceHandle<rusb::GlobalContext>,
     cache: AnimeConfigCached,
-    _config: AnimeConfig,
+    config: AnimeConfig,
     // set to force thread to exit
-    thread_exit: AtomicBool,
+    thread_exit: Arc<AtomicBool>,
     // Set to false when the thread exits
-    thread_running: AtomicBool,
+    thread_running: Arc<AtomicBool>,
 }
 
 impl CtrlAnime {
@@ -68,9 +72,9 @@ impl CtrlAnime {
         let ctrl = CtrlAnime {
             handle: device,
             cache,
-            _config: config,
-            thread_exit: AtomicBool::new(false),
-            thread_running: AtomicBool::new(false),
+            config,
+            thread_exit: Arc::new(AtomicBool::new(false)),
+            thread_running: Arc::new(AtomicBool::new(false)),
         };
         ctrl.do_initialization();
 
@@ -87,103 +91,112 @@ impl CtrlAnime {
         Err(rusb::Error::NoDevice)
     }
 
-    // DOUBLE THREAD NEST!
-    fn run_thread(inner: Arc<Mutex<CtrlAnime>>, action: Option<ActionData>, mut once: bool) {
+    /// Start an action thread. This is classed as a singleton and there should be only
+    /// one running - so the thread uses atomics to signal run/exit.
+    ///
+    /// Because this also writes to the usb device, other write tries (display only) *must*
+    /// get the mutex lock and set the thread_exit atomic.
+    fn run_thread(inner: Arc<Mutex<CtrlAnime>>, actions: Vec<ActionData>, mut once: bool) {
+        if actions.is_empty() {
+            warn!("AniMe system actions was empty");
+            return;
+        }
+        // Loop rules:
+        // - Lock the mutex **only when required**. That is, the lock must be held for the shortest duration possible.
+        // - An AtomicBool used for thread exit should be checked in every loop, including nested
+
+        // The only reason for this outer thread is to prevent blocking while waiting for the
+        // next spawned thread to exit
         std::thread::Builder::new()
             .name("AniMe system thread start".into())
             .spawn(move || {
-                // Make the loop exit first
+                info!("AniMe system thread started");
+                // Getting copies of these Atomics is done *in* the thread to ensure
+                // we don't block other threads/main
+                let thread_exit;
+                let thread_running;
+                // First two loops are to ensure we *do* aquire a lock on the mutex
+                // The reason the loop is required is because the USB writes can block
+                // for up to 10ms. We can't fail to get the atomics.
                 loop {
                     if let Ok(lock) = inner.try_lock() {
-                        lock.thread_exit
-                            .store(true, std::sync::atomic::Ordering::SeqCst);
+                        thread_exit = lock.thread_exit.clone();
+                        thread_running = lock.thread_running.clone();
+                        // Make any running loop exit first
+                        thread_exit.store(true, Ordering::SeqCst);
                         break;
                     }
                 }
+
                 loop {
-                    if let Ok(lock) = inner.try_lock() {
-                        if !lock
-                            .thread_running
-                            .load(std::sync::atomic::Ordering::SeqCst)
-                        {
-                            lock.thread_exit
-                                .store(false, std::sync::atomic::Ordering::SeqCst);
-                            info!("AniMe system thread exited");
-                            break;
-                        }
+                    // wait for other threads to set not running so we know they exited
+                    if !thread_running.load(Ordering::SeqCst) {
+                        thread_exit.store(false, Ordering::SeqCst);
+                        info!("AniMe forced a thread to exit");
+                        break;
                     }
                 }
 
-                std::thread::Builder::new()
-                    .name("AniMe system actions".into())
-                    .spawn(move || {
-                        info!("AniMe system thread started");
-                        'main: loop {
-                            if let Ok(lock) = inner.try_lock() {
-                                if !once
-                                    && lock.thread_exit.load(std::sync::atomic::Ordering::SeqCst)
-                                {
-                                    break 'main;
-                                }
-                                if let Some(ref action) = action {
-                                    match action {
-                                        ActionData::Animation(frames) => {
-                                            let mut count = 0;
-                                            let start = Instant::now();
-                                            'animation: loop {
-                                                for frame in frames.frames() {
-                                                    lock.write_data_buffer(frame.frame().clone());
-                                                    if let AnimTime::Time(time) = frames.duration()
-                                                    {
-                                                        if Instant::now().duration_since(start)
-                                                            > time
-                                                        {
-                                                            break 'animation;
-                                                        }
-                                                    }
-                                                    sleep(frame.delay());
-                                                }
-                                                if let AnimTime::Cycles(times) = frames.duration() {
-                                                    count += 1;
-                                                    if count >= times {
-                                                        break 'animation;
-                                                    }
-                                                }
+                'main: loop {
+                    if thread_exit.load(Ordering::SeqCst) {
+                        break 'main;
+                    }
+                    for action in actions.iter() {
+                        match action {
+                            ActionData::Animation(frames) => {
+                                let mut count = 0;
+                                let start = Instant::now();
+                                'animation: loop {
+                                    for frame in frames.frames() {
+                                        if let Ok(lock) = inner.try_lock() {
+                                            lock.write_data_buffer(frame.frame().clone());
+                                        }
+                                        if let AnimTime::Time(time) = frames.duration() {
+                                            if Instant::now().duration_since(start) > time {
+                                                break 'animation;
                                             }
                                         }
-                                        ActionData::Image(image) => {
-                                            once = false;
-                                            lock.write_data_buffer(image.as_ref().clone())
+                                        sleep(frame.delay());
+                                        // Need to check for early exit condition here or it might run
+                                        // until end of gif or time
+                                        if thread_exit.load(Ordering::SeqCst) {
+                                            break 'main;
                                         }
-                                        ActionData::Pause(_) => {}
-                                        ActionData::AudioEq => {}
-                                        ActionData::SystemInfo => {}
-                                        ActionData::TimeDate => {}
-                                        ActionData::Matrix => {}
                                     }
-                                } else {
-                                    break 'main;
-                                }
-                                if once {
-                                    let data =
-                                        AnimeDataBuffer::from_vec([0u8; ANIME_DATA_LEN].to_vec());
-                                    lock.write_data_buffer(data);
-                                    break 'main;
+                                    if let AnimTime::Cycles(times) = frames.duration() {
+                                        count += 1;
+                                        if count >= times {
+                                            break 'animation;
+                                        }
+                                    }
                                 }
                             }
-                        }
-                        'exit: loop {
-                            if let Ok(lock) = inner.try_lock() {
-                                lock.thread_exit
-                                    .store(false, std::sync::atomic::Ordering::SeqCst);
-                                lock.thread_running
-                                    .store(false, std::sync::atomic::Ordering::SeqCst);
-                                break 'exit;
+                            ActionData::Image(image) => {
+                                once = false;
+                                if let Ok(lock) = inner.try_lock() {
+                                    lock.write_data_buffer(image.as_ref().clone())
+                                }
                             }
+                            ActionData::Pause(duration) => sleep(*duration),
+                            ActionData::AudioEq => {}
+                            ActionData::SystemInfo => {}
+                            ActionData::TimeDate => {}
+                            ActionData::Matrix => {}
                         }
-                    })
-                    .map(|err| info!("AniMe system thread: {:?}", err))
-                    .ok();
+                    }
+                    if once || actions.is_empty() {
+                        break 'main;
+                    }
+                }
+                // Clear the display on exit
+                if let Ok(lock) = inner.try_lock() {
+                    let data = AnimeDataBuffer::from_vec([0u8; ANIME_DATA_LEN].to_vec());
+                    lock.write_data_buffer(data);
+                }
+                // Loop ended, set the atmonics
+                thread_exit.store(false, Ordering::SeqCst);
+                thread_running.store(false, Ordering::SeqCst);
+                info!("AniMe system thread exited");
             })
             .map(|err| info!("AniMe system thread: {:?}", err))
             .ok();
@@ -206,7 +219,16 @@ impl CtrlAnime {
         }
     }
 
-    fn write_data_buffer(&self, buffer: AnimeDataBuffer) {
+    /// Write only a data packet. This will modify the leds brightness using the
+    /// global brightness set in config.
+    fn write_data_buffer(&self, mut buffer: AnimeDataBuffer) {
+        for led in buffer.get_mut()[7..].iter_mut() {
+            let mut bright = *led as f32 * self.config.brightness;
+            if bright > 254.0 {
+                bright = 254.0;
+            }
+            *led = bright as u8;
+        }
         let data = AnimePacketType::from(buffer);
         for row in data.iter() {
             self.write_bytes(row);
@@ -221,10 +243,87 @@ impl CtrlAnime {
     }
 }
 
-pub struct CtrlAnimeTask(pub Arc<Mutex<CtrlAnime>>);
+pub struct CtrlAnimeTask<'a> {
+    inner: Arc<Mutex<CtrlAnime>>,
+    _c: Connection,
+    manager: ManagerProxy<'a>,
+}
 
-impl crate::CtrlTask for CtrlAnimeTask {
+impl<'a> CtrlAnimeTask<'a> {
+    pub fn new(inner: Arc<Mutex<CtrlAnime>>) -> Self {
+        let connection = Connection::new_system().unwrap();
+
+        let manager = ManagerProxy::new(&connection).unwrap();
+
+        let c1 = inner.clone();
+        // Run this action when the system starts shutting down
+        manager
+            .connect_prepare_for_shutdown(move |shutdown| {
+                if shutdown {
+                    'outer: loop {
+                        if let Ok(lock) = c1.try_lock() {
+                            lock.thread_exit.store(true, Ordering::SeqCst);
+                            CtrlAnime::run_thread(c1.clone(), lock.cache.shutdown.clone(), false);
+                            break 'outer;
+                        }
+                    }
+                }
+                Ok(())
+            })
+            .map_err(|err| {
+                warn!("CtrlAnimeTask: new() {}", err);
+                err
+            })
+            .ok();
+
+        let c1 = inner.clone();
+        // Run this action when the system wakes up from sleep
+        manager
+            .connect_prepare_for_sleep(move |sleep| {
+                if !sleep {
+                    // wait a fraction for things to wake up properly
+                    std::thread::sleep(Duration::from_millis(100));
+                    'outer: loop {
+                        if let Ok(lock) = c1.try_lock() {
+                            lock.thread_exit.store(true, Ordering::SeqCst);
+                            CtrlAnime::run_thread(c1.clone(), lock.cache.wake.clone(), true);
+                            break 'outer;
+                        }
+                    }
+                }
+                Ok(())
+            })
+            .map_err(|err| {
+                warn!("CtrlAnimeTask: new() {}", err);
+                err
+            })
+            .ok();
+
+        Self {
+            inner,
+            _c: connection,
+            manager,
+        }
+    }
+}
+
+impl<'a> crate::CtrlTask for CtrlAnimeTask<'a> {
     fn do_task(&self) -> Result<(), RogError> {
+        if let Ok(mut lock) = self.inner.try_lock() {
+            // Refresh the config and cache incase the user has edited it
+            let config = AnimeConfig::load();
+            lock.cache
+                .init_from_config(&config)
+                .map_err(|err| {
+                    warn!("CtrlAnimeTask: do_task {}", err);
+                    err
+                })
+                .ok();
+        }
+
+        // Check for signals on each task iteration, this will run the callbacks
+        // if any signal is recieved
+        self.manager.next_signal()?;
         Ok(())
     }
 }
@@ -268,9 +367,24 @@ impl CtrlAnimeZbus {
     fn write(&self, input: AnimeDataBuffer) {
         'outer: loop {
             if let Ok(lock) = self.0.try_lock() {
-                lock.thread_exit
-                    .store(true, std::sync::atomic::Ordering::SeqCst);
+                lock.thread_exit.store(true, Ordering::SeqCst);
                 lock.write_data_buffer(input);
+                break 'outer;
+            }
+        }
+    }
+
+    fn set_brightness(&self, bright: f32) {
+        'outer: loop {
+            if let Ok(mut lock) = self.0.try_lock() {
+                let mut bright = bright;
+                if bright < 0.0 {
+                    bright = 0.0
+                } else if bright > 254.0 {
+                    bright = 254.0;
+                }
+                lock.config.brightness = bright;
+                lock.config.write();
                 break 'outer;
             }
         }
@@ -295,13 +409,16 @@ impl CtrlAnimeZbus {
         }
     }
 
-    fn run_main_loop(&self, on: bool) {
-        'outer: loop {
-            if let Ok(lock) = self.0.try_lock() {
-                lock.thread_exit
-                    .store(on, std::sync::atomic::Ordering::SeqCst);
-                CtrlAnime::run_thread(self.0.clone(), lock.cache.system.clone(), false);
-                break 'outer;
+    /// The main loop is the base system set action if the user isn't running
+    /// the user daemon
+    fn run_main_loop(&self, start: bool) {
+        if start {
+            'outer: loop {
+                if let Ok(lock) = self.0.try_lock() {
+                    lock.thread_exit.store(true, Ordering::SeqCst);
+                    CtrlAnime::run_thread(self.0.clone(), lock.cache.system.clone(), false);
+                    break 'outer;
+                }
             }
         }
     }
