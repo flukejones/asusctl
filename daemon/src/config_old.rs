@@ -1,4 +1,3 @@
-use rog_aura::AuraEffect;
 use rog_types::{gfx_vendors::GfxVendors, profile::Profile};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -65,7 +64,6 @@ impl ConfigV324 {
         }
     }
 }
-
 
 #[derive(Deserialize, Serialize)]
 pub struct ConfigV341 {

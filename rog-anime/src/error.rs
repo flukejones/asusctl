@@ -16,7 +16,7 @@ pub enum AnimeError {
     /// The input was incorrect size, expected size is `IncorrectSize(width, height)`
     IncorrectSize(u32, u32),
     #[cfg(feature = "dbus")]
-    Zbus(fdo::Error)
+    Zbus(fdo::Error),
 }
 
 impl fmt::Display for AnimeError {

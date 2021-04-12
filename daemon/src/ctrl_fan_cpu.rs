@@ -1,7 +1,10 @@
 use crate::error::RogError;
 use crate::{config::Config, GetSupported};
 use log::{info, warn};
-use rog_types::{profile::{FanLevel, Profile, ProfileEvent}, supported::FanCpuSupportedFunctions};
+use rog_types::{
+    profile::{FanLevel, Profile, ProfileEvent},
+    supported::FanCpuSupportedFunctions,
+};
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
@@ -31,18 +34,18 @@ impl GetSupported for CtrlFanAndCpu {
     }
 }
 
-pub struct DbusFanAndCpu {
+pub struct FanAndCpuZbus {
     inner: Arc<Mutex<CtrlFanAndCpu>>,
 }
 
-impl DbusFanAndCpu {
+impl FanAndCpuZbus {
     pub fn new(inner: Arc<Mutex<CtrlFanAndCpu>>) -> Self {
         Self { inner }
     }
 }
 
 #[dbus_interface(name = "org.asuslinux.Daemon")]
-impl DbusFanAndCpu {
+impl FanAndCpuZbus {
     /// Set profile details
     fn set_profile(&self, profile: String) {
         if let Ok(event) = serde_json::from_str(&profile) {
@@ -170,7 +173,7 @@ impl DbusFanAndCpu {
     fn notify_profile(&self, profile: &str) -> zbus::Result<()> {}
 }
 
-impl crate::ZbusAdd for DbusFanAndCpu {
+impl crate::ZbusAdd for FanAndCpuZbus {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
             .at(

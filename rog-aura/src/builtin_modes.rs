@@ -9,7 +9,7 @@ use std::str::FromStr;
 #[cfg(feature = "dbus")]
 use zvariant_derive::Type;
 
-use crate::{LED_MSG_LEN, error::Error};
+use crate::{error::Error, LED_MSG_LEN};
 
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize)]
@@ -121,9 +121,7 @@ impl FromStr for Direction {
 
 /// Enum of modes that convert to the actual number required by a USB HID packet
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(
-    Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Copy, Deserialize, Serialize,
-)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Copy, Deserialize, Serialize)]
 pub enum AuraModeNum {
     Static = 0,
     Breathe = 1,

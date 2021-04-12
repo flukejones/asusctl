@@ -1,11 +1,11 @@
-use daemon::ctrl_leds::{CtrlKbdBacklight, DbusKbdBacklight};
+use daemon::ctrl_leds::{CtrlKbdBacklight, CtrlKbdBacklightTask, DbusKbdBacklight};
 use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
 };
-use daemon::{config_aura::AuraConfig, ctrl_charge::CtrlCharge};
-use daemon::{ctrl_anime::CtrlAnimeDisplay, ctrl_gfx::gfx::CtrlGraphics};
+use daemon::{config_anime::AnimeConfig, config_aura::AuraConfig, ctrl_charge::CtrlCharge};
+use daemon::{ctrl_anime::*, ctrl_gfx::gfx::CtrlGraphics};
 use daemon::{
-    ctrl_fan_cpu::{CtrlFanAndCpu, DbusFanAndCpu},
+    ctrl_fan_cpu::{CtrlFanAndCpu, FanAndCpuZbus},
     laptops::LaptopLedData,
 };
 
@@ -41,26 +41,23 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-// Timing is such that:
-// - interrupt write is minimum 1ms (sometimes lower)
-// - read interrupt must timeout, minimum of 1ms
-// - for a single usb packet, 2ms total.
-// - to maintain constant times of 1ms, per-key colours should use
-//   the effect endpoint so that the complete colour block is written
-//   as fast as 1ms per row of the matrix inside it. (10ms total time)
+/// The actual main loop for the daemon
 fn start_daemon() -> Result<(), Box<dyn Error>> {
     let supported = SupportedFunctions::get_supported();
     print_board_info();
     println!("{}", serde_json::to_string_pretty(&supported).unwrap());
 
-    let config = Config::load();
-    let enable_gfx_switching = config.gfx_managed;
-    let config = Arc::new(Mutex::new(config));
-
+    // Collect tasks for task thread
+    let mut tasks: Vec<Box<dyn CtrlTask + Send>> = Vec::new();
+    // Start zbus server
     let connection = Connection::new_system()?;
     fdo::DBusProxy::new(&connection)?
         .request_name(DBUS_NAME, fdo::RequestNameFlags::ReplaceExisting.into())?;
     let mut object_server = zbus::ObjectServer::new(&connection);
+
+    let config = Config::load();
+    let enable_gfx_switching = config.gfx_managed;
+    let config = Arc::new(Mutex::new(config));
 
     supported.add_to_server(&mut object_server);
 
@@ -90,15 +87,52 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    match CtrlAnimeDisplay::new() {
+    match CtrlFanAndCpu::new(config.clone()) {
+        Ok(mut ctrl) => {
+            ctrl.reload()
+                .unwrap_or_else(|err| warn!("Profile control: {}", err));
+            let tmp = Arc::new(Mutex::new(ctrl));
+            FanAndCpuZbus::new(tmp).add_to_server(&mut object_server);
+        }
+        Err(err) => {
+            error!("Profile control: {}", err);
+        }
+    }
+
+    match CtrlAnime::new(AnimeConfig::load()) {
         Ok(ctrl) => {
-            ctrl.add_to_server(&mut object_server);
+            let inner = Arc::new(Mutex::new(ctrl));
+
+            let mut reload = CtrlAnimeReloader(inner.clone());
+            reload
+                .reload()
+                .unwrap_or_else(|err| warn!("AniMe: {}", err));
+
+            let zbus = CtrlAnimeZbus(inner.clone());
+            zbus.add_to_server(&mut object_server);
+
+            tasks.push(Box::new(CtrlAnimeTask(inner)));
         }
         Err(err) => {
             error!("AniMe control: {}", err);
         }
     }
 
+    let laptop = LaptopLedData::get_data();
+    let aura_config = AuraConfig::load(&laptop);
+    match CtrlKbdBacklight::new(laptop, aura_config) {
+        Ok(ctrl) => {
+            let tmp = Arc::new(Mutex::new(ctrl));
+            DbusKbdBacklight::new(tmp.clone()).add_to_server(&mut object_server);
+            let task = CtrlKbdBacklightTask(tmp);
+            tasks.push(Box::new(task));
+        }
+        Err(err) => {
+            error!("Keyboard control: {}", err);
+        }
+    }
+
+    // Graphics switching requires some checks on boot specifically for g-sync capable laptops
     if enable_gfx_switching {
         match CtrlGraphics::new(config.clone()) {
             Ok(mut ctrl) => {
@@ -141,48 +175,24 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    // Collect tasks for task thread
-    let mut tasks: Vec<Arc<Mutex<dyn CtrlTask + Send>>> = Vec::new();
-
-    if let Ok(mut ctrl) = CtrlFanAndCpu::new(config).map_err(|err| {
-        error!("Profile control: {}", err);
-    }) {
-        ctrl.reload()
-            .unwrap_or_else(|err| warn!("Profile control: {}", err));
-        let tmp = Arc::new(Mutex::new(ctrl));
-        DbusFanAndCpu::new(tmp).add_to_server(&mut object_server);
-    };
-
-    let laptop = LaptopLedData::get_data();
-    let aura_config = AuraConfig::load(&laptop);
-    if let Ok(ctrl) = CtrlKbdBacklight::new(laptop, aura_config).map_err(|err| {
-        error!("Keyboard control: {}", err);
-        err
-    }) {
-        let tmp = Arc::new(Mutex::new(ctrl));
-        DbusKbdBacklight::new(tmp.clone()).add_to_server(&mut object_server);
-        tasks.push(tmp);
-    }
-
     // TODO: implement messaging between threads to check fails
-    // These tasks generally read a sys path or file to check for a
-    // change
+
+    // Run tasks
     let handle = std::thread::Builder::new()
         .name("asusd watch".to_string())
         .spawn(move || loop {
             std::thread::sleep(std::time::Duration::from_millis(100));
 
             for ctrl in tasks.iter() {
-                if let Ok(mut lock) = ctrl.try_lock() {
-                    lock.do_task()
-                        .map_err(|err| {
-                            warn!("do_task error: {}", err);
-                        })
-                        .ok();
-                }
+                ctrl.do_task()
+                    .map_err(|err| {
+                        warn!("do_task error: {}", err);
+                    })
+                    .ok();
             }
         });
 
+    // Run zbus server
     object_server
         .with(
             &ObjectPath::from_str_unchecked("/org/asuslinux/Charge"),
@@ -196,6 +206,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         })
         .ok();
 
+    // Loop to check errors and iterate zbus server
     loop {
         if let Err(err) = &handle {
             error!("{}", err);

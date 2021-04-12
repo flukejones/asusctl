@@ -6,7 +6,7 @@ use std::{
 use glam::Vec2;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{error::AnimeError, AnimeDataBuffer, AnimeGif, AnimeImage, AnimTime};
+use crate::{error::AnimeError, AnimTime, AnimeDataBuffer, AnimeGif, AnimeImage};
 
 /// All the possible AniMe actions that can be used. This enum is intended to be
 /// a helper for loading up `ActionData`.
@@ -40,7 +40,7 @@ pub enum AnimeAction {
 
 /// All the possible AniMe actions that can be used. The enum is intended to be
 /// used in a array allowing the user to cycle through a series of actions.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum ActionData {
     /// Full gif sequence. Immutable.
     Animation(AnimeGif),
@@ -56,6 +56,50 @@ pub enum ActionData {
     TimeDate,
     /// Placeholder
     Matrix,
+}
+
+impl ActionData {
+    pub fn from_anime_action(action: &AnimeAction) -> Result<ActionData, AnimeError> {
+        let a = match action {
+            AnimeAction::AsusAnimation {
+                file,
+                time: duration,
+                brightness,
+            } => ActionData::Animation(AnimeGif::create_diagonal_gif(
+                &file,
+                *duration,
+                *brightness,
+            )?),
+            AnimeAction::ImageAnimation {
+                file,
+                scale,
+                angle,
+                translation,
+                time: duration,
+                brightness,
+            } => ActionData::Animation(AnimeGif::create_png_gif(
+                &file,
+                *scale,
+                *angle,
+                *translation,
+                *duration,
+                *brightness,
+            )?),
+            AnimeAction::Image {
+                file,
+                scale,
+                angle,
+                translation,
+                brightness,
+            } => {
+                let image = AnimeImage::from_png(&file, *scale, *angle, *translation, *brightness)?;
+                let data = <AnimeDataBuffer>::from(&image);
+                ActionData::Image(Box::new(data))
+            }
+            AnimeAction::Pause(duration) => ActionData::Pause(*duration),
+        };
+        Ok(a)
+    }
 }
 
 /// An optimised precomputed set of actions that the user can cycle through

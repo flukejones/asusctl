@@ -147,7 +147,6 @@ impl<'a> CtrlAnime<'static> {
     }
 }
 
-
 // The pattern for a zbus method is:
 // - Get config lock if required
 // - Set inner_early_return to stop the inner run loop temporarily

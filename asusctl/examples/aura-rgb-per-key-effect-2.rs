@@ -1,5 +1,5 @@
-use rog_dbus::AuraDbusClient;
 use rog_aura::{Key, KeyColourArray};
+use rog_dbus::AuraDbusClient;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (dbus, _) = AuraDbusClient::new()?;

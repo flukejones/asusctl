@@ -147,7 +147,6 @@ impl AuraConfig {
     }
 }
 
-
 #[derive(Deserialize, Serialize)]
 pub struct AuraMultiZone {
     static_: [AuraEffect; 4],

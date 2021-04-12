@@ -11,7 +11,7 @@ use crate::error::Error;
 /// used in a array allowing the user to cycle through a series of actions.
 #[derive(Debug, Deserialize, Serialize)]
 pub enum ActionData {
-    Static
+    Static,
 }
 
 /// An optimised precomputed set of actions that the user can cycle through

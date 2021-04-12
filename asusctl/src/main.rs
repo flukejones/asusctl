@@ -5,8 +5,8 @@ use crate::aura_cli::{LedBrightness, SetAuraBuiltin};
 use anime_cli::{AnimeActions, AnimeCommand};
 use gumdrop::{Opt, Options};
 use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2, ANIME_DATA_LEN};
-use rog_dbus::AuraDbusClient;
 use rog_aura::{self, AuraEffect, AuraModeNum};
+use rog_dbus::AuraDbusClient;
 use rog_types::{
     gfx_vendors::GfxVendors,
     profile::{FanLevel, ProfileCommand, ProfileEvent},

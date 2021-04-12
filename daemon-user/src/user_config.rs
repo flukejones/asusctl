@@ -101,7 +101,11 @@ impl UserConfig {
 
         path.push("rog-user.cfg");
 
-        let mut file = OpenOptions::new().write(true).create(true).truncate(true).open(&path)?;
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&path)?;
 
         let json = serde_json::to_string_pretty(&self).unwrap();
         dbg!(&json);

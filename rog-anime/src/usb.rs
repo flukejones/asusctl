@@ -24,7 +24,7 @@ pub const fn pkts_for_init() -> [[u8; PACKET_SIZE]; 2] {
     let mut count = 0;
     while count < INIT_STR.len() {
         packets[0][count] = INIT_STR[count];
-        count +=1;
+        count += 1;
     }
     //
     packets[1][0] = DEV_PAGE; // write it to be sure?

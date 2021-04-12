@@ -1,5 +1,5 @@
-use rog_dbus::AuraDbusClient;
 use rog_aura::{GX502Layout, Key, KeyColourArray, KeyLayout};
+use rog_dbus::AuraDbusClient;
 use std::collections::LinkedList;
 
 #[derive(Debug, Clone)]

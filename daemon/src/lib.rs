@@ -1,6 +1,7 @@
 #![deny(unused_must_use)]
 /// Configuration loading, saving
 pub mod config;
+pub mod config_anime;
 pub mod config_aura;
 pub(crate) mod config_old;
 /// Control of AniMe matrix display
@@ -48,7 +49,7 @@ pub trait ZbusAdd {
 }
 
 pub trait CtrlTask {
-    fn do_task(&mut self) -> Result<(), RogError>;
+    fn do_task(&self) -> Result<(), RogError>;
 }
 
 pub trait CtrlTaskComplex {

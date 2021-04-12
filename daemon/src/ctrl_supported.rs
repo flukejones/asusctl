@@ -4,7 +4,7 @@ use zbus::dbus_interface;
 use zvariant::ObjectPath;
 
 use crate::{
-    ctrl_anime::CtrlAnimeDisplay, ctrl_charge::CtrlCharge, ctrl_fan_cpu::CtrlFanAndCpu,
+    ctrl_anime::CtrlAnime, ctrl_charge::CtrlCharge, ctrl_fan_cpu::CtrlFanAndCpu,
     ctrl_leds::CtrlKbdBacklight, ctrl_rog_bios::CtrlRogBios, GetSupported,
 };
 
@@ -50,7 +50,7 @@ impl GetSupported for SupportedFunctions {
     fn get_supported() -> Self::A {
         SupportedFunctions {
             keyboard_led: CtrlKbdBacklight::get_supported(),
-            anime_ctrl: CtrlAnimeDisplay::get_supported(),
+            anime_ctrl: CtrlAnime::get_supported(),
             charge_ctrl: CtrlCharge::get_supported(),
             fan_cpu_ctrl: CtrlFanAndCpu::get_supported(),
             rog_bios_ctrl: CtrlRogBios::get_supported(),

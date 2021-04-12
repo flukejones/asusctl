@@ -18,27 +18,3 @@ impl fmt::Display for GraphicsError {
 }
 
 impl Error for GraphicsError {}
-
-#[derive(Debug)]
-pub enum AnimeError {
-    InvalidBitmap,
-    Io(std::io::Error),
-}
-
-impl fmt::Display for AnimeError {
-    // This trait requires `fmt` with this exact signature.
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            AnimeError::InvalidBitmap => write!(f, "Bitmap is invalid"),
-            AnimeError::Io(e) => write!(f, "Could not open: {}", e),
-        }
-    }
-}
-
-impl Error for AnimeError {}
-
-impl From<std::io::Error> for AnimeError {
-    fn from(err: std::io::Error) -> Self {
-        AnimeError::Io(err)
-    }
-}

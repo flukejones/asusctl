@@ -11,9 +11,7 @@ pub mod zbus_rogbios;
 pub mod zbus_supported;
 
 use rog_aura::AuraEffect;
-use rog_types::{
-    gfx_vendors::{GfxRequiredUserAction, GfxVendors},
-};
+use rog_types::gfx_vendors::{GfxRequiredUserAction, GfxVendors};
 use std::sync::{Arc, Mutex};
 use zbus::{Connection, Result, SignalReceiver};
 

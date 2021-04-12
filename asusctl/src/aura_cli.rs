@@ -1,5 +1,5 @@
 use gumdrop::Options;
-use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour, Direction, Speed, error::Error};
+use rog_aura::{error::Error, AuraEffect, AuraModeNum, AuraZone, Colour, Direction, Speed};
 use std::str::FromStr;
 
 #[derive(Options)]
