@@ -11,3 +11,5 @@ Restart=always
 RestartSec=1
 Type=dbus
 BusName=org.asuslinux.Daemon
+SELinuxContext=system_u:system_r:unconfined_t:s0
+#SELinuxContext=system_u:object_r:modules_object_t:s0
