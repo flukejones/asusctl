@@ -22,7 +22,7 @@ use zvariant::ObjectPath;
 
 use crate::GetSupported;
 
-impl GetSupported for CtrlKbdBacklight {
+impl GetSupported for CtrlKbdLed {
     type A = LedSupportedFunctions;
 
     fn get_supported() -> Self::A {
@@ -37,7 +37,7 @@ impl GetSupported for CtrlKbdBacklight {
         };
 
         LedSupportedFunctions {
-            brightness_set: CtrlKbdBacklight::get_kbd_bright_path().is_some(),
+            brightness_set: CtrlKbdLed::get_kbd_bright_path().is_some(),
             stock_led_modes,
             multizone_led_mode,
             per_key_led_mode,
@@ -45,7 +45,7 @@ impl GetSupported for CtrlKbdBacklight {
     }
 }
 
-pub struct CtrlKbdBacklight {
+pub struct CtrlKbdLed {
     led_node: Option<String>,
     pub bright_node: String,
     supported_modes: LaptopLedData,
@@ -53,9 +53,9 @@ pub struct CtrlKbdBacklight {
     config: AuraConfig,
 }
 
-pub struct CtrlKbdBacklightTask(pub Arc<Mutex<CtrlKbdBacklight>>);
+pub struct CtrlKbdLedTask(pub Arc<Mutex<CtrlKbdLed>>);
 
-impl crate::CtrlTask for CtrlKbdBacklightTask {
+impl crate::CtrlTask for CtrlKbdLedTask {
     fn do_task(&self) -> Result<(), RogError> {
         if let Ok(mut lock) = self.0.try_lock() {
             let mut file = OpenOptions::new()
@@ -84,22 +84,36 @@ impl crate::CtrlTask for CtrlKbdBacklightTask {
     }
 }
 
-pub struct DbusKbdBacklight {
-    inner: Arc<Mutex<CtrlKbdBacklight>>,
+pub struct CtrlKbdLedReloader(pub Arc<Mutex<CtrlKbdLed>>);
+
+impl crate::Reloadable for CtrlKbdLedReloader {
+    fn reload(&mut self) -> Result<(), RogError> {
+        if let Ok(mut lock) = self.0.try_lock() {
+            let current = lock.config.current_mode;
+            if let Some(mode) = lock.config.builtins.get(&current).cloned() {
+                lock.do_command(mode).ok();
+            }
+        }
+        Ok(())
+    }
 }
 
-impl DbusKbdBacklight {
-    pub fn new(inner: Arc<Mutex<CtrlKbdBacklight>>) -> Self {
+pub struct CtrlKbdLedZbus {
+    inner: Arc<Mutex<CtrlKbdLed>>,
+}
+
+impl CtrlKbdLedZbus {
+    pub fn new(inner: Arc<Mutex<CtrlKbdLed>>) -> Self {
         Self { inner }
     }
 }
 
-impl crate::ZbusAdd for DbusKbdBacklight {
+impl crate::ZbusAdd for CtrlKbdLedZbus {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
             .at(&ObjectPath::from_str_unchecked("/org/asuslinux/Led"), self)
             .map_err(|err| {
-                error!("DbusKbdBacklight: add_to_server {}", err);
+                error!("DbusKbdLed: add_to_server {}", err);
             })
             .ok();
     }
@@ -109,7 +123,7 @@ impl crate::ZbusAdd for DbusKbdBacklight {
 ///
 /// LED commands are split between Brightness, Modes, Per-Key
 #[dbus_interface(name = "org.asuslinux.Daemon")]
-impl DbusKbdBacklight {
+impl CtrlKbdLedZbus {
     fn set_brightness(&mut self, brightness: LedBrightness) {
         if let Ok(ctrl) = self.inner.try_lock() {
             ctrl.set_brightness(brightness)
@@ -200,7 +214,7 @@ impl DbusKbdBacklight {
     fn notify_led(&self, data: &str) -> zbus::Result<()>;
 }
 
-impl CtrlKbdBacklight {
+impl CtrlKbdLed {
     #[inline]
     pub fn new(supported_modes: LaptopLedData, config: AuraConfig) -> Result<Self, RogError> {
         // TODO: return error if *all* nodes are None
@@ -230,7 +244,7 @@ impl CtrlKbdBacklight {
             ));
         }
 
-        let ctrl = CtrlKbdBacklight {
+        let ctrl = CtrlKbdLed {
             led_node,
             bright_node: bright_node.unwrap(), // If was none then we already returned above
             supported_modes,

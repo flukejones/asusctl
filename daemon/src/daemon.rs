@@ -1,4 +1,4 @@
-use daemon::ctrl_leds::{CtrlKbdBacklight, CtrlKbdBacklightTask, DbusKbdBacklight};
+use daemon::ctrl_leds::{CtrlKbdLed, CtrlKbdLedTask, CtrlKbdLedZbus, CtrlKbdLedReloader};
 use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
 };
@@ -120,11 +120,17 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
 
     let laptop = LaptopLedData::get_data();
     let aura_config = AuraConfig::load(&laptop);
-    match CtrlKbdBacklight::new(laptop, aura_config) {
+    match CtrlKbdLed::new(laptop, aura_config) {
         Ok(ctrl) => {
-            let tmp = Arc::new(Mutex::new(ctrl));
-            DbusKbdBacklight::new(tmp.clone()).add_to_server(&mut object_server);
-            let task = CtrlKbdBacklightTask(tmp);
+            let inner = Arc::new(Mutex::new(ctrl));
+
+            let mut reload = CtrlKbdLedReloader(inner.clone());
+            reload
+                .reload()
+                .unwrap_or_else(|err| warn!("Keyboard LED control: {}", err));
+
+            CtrlKbdLedZbus::new(inner.clone()).add_to_server(&mut object_server);
+            let task = CtrlKbdLedTask(inner);
             tasks.push(Box::new(task));
         }
         Err(err) => {
