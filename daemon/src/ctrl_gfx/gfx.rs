@@ -282,10 +282,14 @@ impl CtrlGraphics {
     fn write_modprobe_conf(vendor: GfxVendors, devices: &[GraphicsDevice]) -> Result<(), RogError> {
         info!("GFX: Writing {}", MODPROBE_PATH);
         let content = match vendor {
-            GfxVendors::Nvidia | GfxVendors::Hybrid | GfxVendors::Compute => MODPROBE_BASE.to_vec(),
+            GfxVendors::Nvidia | GfxVendors::Hybrid => {
+                let mut base = MODPROBE_BASE.to_vec();
+                base.append(&mut MODPROBE_DRM_MODESET.to_vec());
+                base
+            },
             GfxVendors::Vfio => Self::get_vfio_conf(devices),
-            // GfxVendors::Compute => {}
             GfxVendors::Integrated => MODPROBE_INTEGRATED.to_vec(),
+            GfxVendors::Compute => MODPROBE_BASE.to_vec(),
         };
 
         let mut file = std::fs::OpenOptions::new()
@@ -419,8 +423,8 @@ impl CtrlGraphics {
     fn logout_required(&self, vendor: GfxVendors) -> GfxRequiredUserAction {
         if let Ok(config) = self.config.lock() {
             let current = config.gfx_mode;
-            if matches!(current, GfxVendors::Integrated | GfxVendors::Vfio)
-                && matches!(vendor, GfxVendors::Integrated | GfxVendors::Vfio)
+            if matches!(current, GfxVendors::Integrated | GfxVendors::Vfio | GfxVendors::Compute)
+                && matches!(vendor, GfxVendors::Integrated | GfxVendors::Vfio | GfxVendors::Compute)
             {
                 return GfxRequiredUserAction::None;
             }

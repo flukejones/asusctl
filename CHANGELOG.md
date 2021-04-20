@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Split out all aura functionality that isn't dependent on the daemon in to a
   new crate `rog-aura`
+- Correctly enable compute mode for nvidia plus no-reboot or logout if switching
+  from vfio/integrated/compute.
 
 # [3.4.1] - 2021-04-11
 ### Changed
