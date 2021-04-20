@@ -1,22 +1,92 @@
-use std::{
-    fs::{create_dir, OpenOptions},
-    io::{Read, Write},
-    time::Duration,
-};
+use std::{fs::{create_dir, OpenOptions}, io::{Read, Write}, time::Duration};
 
 use rog_anime::{AnimTime, AnimeAction, Sequences, Vec2};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::error::Error;
 
-#[derive(Debug, Default, Deserialize, Serialize)]
-pub struct UserConfig {
+#[derive(Debug, Deserialize, Serialize)]
+pub struct UserAnimeConfig {
+    pub name: String,
     pub anime: Vec<AnimeAction>,
 }
 
-impl UserConfig {
-    pub fn new() -> Self {
+impl UserAnimeConfig {
+    pub fn create_anime(&self) -> Result<Sequences, Error> {
+        let mut seq = Sequences::new();
+
+        for (idx, action) in self.anime.iter().enumerate() {
+            seq.insert(idx, action)?;
+        }
+
+        Ok(seq)
+    }
+
+    pub fn write(&self) -> Result<(), Error> {
+        let mut path = if let Some(dir) = dirs::config_dir() {
+            dir
+        } else {
+            return Err(Error::XdgVars);
+        };
+
+        path.push("rog");
+        if !path.exists() {
+            create_dir(path.clone())?;
+        }
+        let name = self.name.clone();
+        path.push(name + ".cfg");
+
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&path)?;
+
+        let json = serde_json::to_string_pretty(&self).unwrap();
+        file.write_all(json.as_bytes())?;
+        Ok(())
+    }
+
+    pub fn load_config(name: String) -> Result<UserAnimeConfig, Error> {
+        let mut path = if let Some(dir) = dirs::config_dir() {
+            dir
+        } else {
+            return Err(Error::XdgVars);
+        };
+
+        path.push("rog");
+        if !path.exists() {
+            create_dir(path.clone())?;
+        }
+
+        path.push(name + ".cfg");
+
+        let mut file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open(&path)?;
+
+        let mut buf = String::new();
+
+        if let Ok(read_len) = file.read_to_string(&mut buf) {
+            if read_len == 0 {
+                let default = UserAnimeConfig::default();
+                let json = serde_json::to_string_pretty(&default).unwrap();
+                file.write_all(json.as_bytes())?;
+                return Ok(default);
+            } else if let Ok(data) = serde_json::from_str::<UserAnimeConfig>(&buf) {
+                return Ok(data);
+            }
+        }
+        Err(Error::ConfigLoadFail)
+    }
+}
+
+impl Default for UserAnimeConfig {
+    fn default() -> Self {
         let x = Self {
+            name: "default".to_string(),
             anime: vec![
                 AnimeAction::AsusAnimation {
                     file: "/usr/share/asusd/anime/asus/rog/Sunset.gif".into(),
@@ -52,6 +122,20 @@ impl UserConfig {
         println!("{}", serde_json::to_string_pretty(&x).unwrap());
         x
     }
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct UserConfig {
+    /// Name of active anime config file in the user config directory
+    pub active_anime: String,
+}
+
+impl UserConfig {
+    pub fn new() -> Self {
+        Self {
+            active_anime: "anime-default".to_string()
+        }
+    }
 
     pub fn load_config(&mut self) -> Result<(), Error> {
         let mut path = if let Some(dir) = dirs::config_dir() {
@@ -80,7 +164,7 @@ impl UserConfig {
                 let json = serde_json::to_string_pretty(&self).unwrap();
                 file.write_all(json.as_bytes())?;
             } else if let Ok(data) = serde_json::from_str::<UserConfig>(&buf) {
-                self.anime = data.anime;
+                self.active_anime = data.active_anime;
                 return Ok(());
             }
         }
@@ -108,18 +192,7 @@ impl UserConfig {
             .open(&path)?;
 
         let json = serde_json::to_string_pretty(&self).unwrap();
-        dbg!(&json);
         file.write_all(json.as_bytes())?;
         Ok(())
-    }
-
-    pub fn create_anime(&self) -> Result<Sequences, Error> {
-        let mut seq = Sequences::new();
-
-        for (idx, action) in self.anime.iter().enumerate() {
-            seq.insert(idx, action)?;
-        }
-
-        Ok(seq)
     }
 }

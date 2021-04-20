@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   new crate `rog-aura`
 - Correctly enable compute mode for nvidia plus no-reboot or logout if switching
   from vfio/integrated/compute.
+- Add asusd config option to not save compute/vfio mode switch.
+- Enable basic multiple user anime configs (asusd-user must still be restarted)
 
 # [3.4.1] - 2021-04-11
 ### Changed

@@ -15,7 +15,7 @@ use zbus::dbus_interface;
 use zvariant::ObjectPath;
 use zvariant_derive::Type;
 
-use crate::{error::Error, user_config::UserConfig};
+use crate::{error::Error, user_config::{UserAnimeConfig, UserConfig}};
 
 #[derive(Debug, Clone, Deserialize, Serialize, Type)]
 pub enum TimeType {
@@ -111,7 +111,7 @@ impl<'a> CtrlAnimeInner<'static> {
 }
 
 pub struct CtrlAnime<'a> {
-    config: Arc<Mutex<UserConfig>>,
+    config: Arc<Mutex<UserAnimeConfig>>,
     client: AuraDbusClient<'a>,
     inner: Arc<Mutex<CtrlAnimeInner<'a>>>,
     /// Must be the same Atomic as in CtrlAnimeInner
@@ -120,7 +120,7 @@ pub struct CtrlAnime<'a> {
 
 impl<'a> CtrlAnime<'static> {
     pub fn new(
-        config: Arc<Mutex<UserConfig>>,
+        config: Arc<Mutex<UserAnimeConfig>>,
         inner: Arc<Mutex<CtrlAnimeInner<'static>>>,
         client: AuraDbusClient<'static>,
         inner_early_return: &'static AtomicBool,

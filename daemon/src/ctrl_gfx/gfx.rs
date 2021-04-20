@@ -286,7 +286,7 @@ impl CtrlGraphics {
                 let mut base = MODPROBE_BASE.to_vec();
                 base.append(&mut MODPROBE_DRM_MODESET.to_vec());
                 base
-            },
+            }
             GfxVendors::Vfio => Self::get_vfio_conf(devices),
             GfxVendors::Integrated => MODPROBE_INTEGRATED.to_vec(),
             GfxVendors::Compute => MODPROBE_BASE.to_vec(),
@@ -423,9 +423,13 @@ impl CtrlGraphics {
     fn logout_required(&self, vendor: GfxVendors) -> GfxRequiredUserAction {
         if let Ok(config) = self.config.lock() {
             let current = config.gfx_mode;
-            if matches!(current, GfxVendors::Integrated | GfxVendors::Vfio | GfxVendors::Compute)
-                && matches!(vendor, GfxVendors::Integrated | GfxVendors::Vfio | GfxVendors::Compute)
-            {
+            if matches!(
+                current,
+                GfxVendors::Integrated | GfxVendors::Vfio | GfxVendors::Compute
+            ) && matches!(
+                vendor,
+                GfxVendors::Integrated | GfxVendors::Vfio | GfxVendors::Compute
+            ) {
                 return GfxRequiredUserAction::None;
             }
         }
@@ -660,6 +664,13 @@ impl CtrlGraphics {
             let bus = self.bus.clone();
             Self::do_vendor_tasks(vendor, vfio_enable, &devices, &bus)?;
             info!("GFX: Graphics mode changed to {}", <&str>::from(vendor));
+            if let Ok(config) = self.config.lock() {
+                if matches!(vendor, GfxVendors::Compute | GfxVendors::Vfio)
+                    && config.gfx_save_compute_vfio
+                {
+                    Self::save_gfx_mode(vendor, self.config.clone());
+                }
+            }
         }
         // TODO: undo if failed? Save last mode, catch errors...
         Ok(action_required)

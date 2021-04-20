@@ -24,9 +24,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut config = UserConfig::new();
     config.load_config()?;
-    let anime = config.create_anime()?;
 
-    let config = Arc::new(Mutex::new(config));
+    let anime_config = UserAnimeConfig::load_config(config.active_anime)?;
+    let anime = anime_config.create_anime()?;
+
+    let anime_config = Arc::new(Mutex::new(anime_config));
 
     // Create server
     let connection = Connection::new_session()?;
@@ -45,7 +47,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Need new client object for dbus control part
         let (client, _) = AuraDbusClient::new().unwrap();
         let anime_control =
-            CtrlAnime::new(config, inner.clone(), client, &ANIME_INNER_EARLY_RETURN)?;
+            CtrlAnime::new(anime_config, inner.clone(), client, &ANIME_INNER_EARLY_RETURN)?;
         anime_control.add_to_server(&mut server);
         // Thread using inner
         let _anime_thread = thread::Builder::new()
