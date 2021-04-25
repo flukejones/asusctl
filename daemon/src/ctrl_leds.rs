@@ -7,7 +7,10 @@ use crate::{
     laptops::{LaptopLedData, ASUS_KEYBOARD_DEVICES},
 };
 use log::{error, info, warn};
-use rog_aura::{AuraEffect, LED_MSG_LEN, LedBrightness, usb::{LED_APPLY, LED_AWAKE_OFF, LED_AWAKE_ON, LED_SET, LED_SLEEP_OFF, LED_SLEEP_ON}};
+use rog_aura::{
+    usb::{LED_APPLY, LED_AWAKE_OFF, LED_AWAKE_ON, LED_SET, LED_SLEEP_OFF, LED_SLEEP_ON},
+    AuraEffect, LedBrightness, LED_MSG_LEN,
+};
 use rog_types::supported::LedSupportedFunctions;
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
@@ -312,11 +315,7 @@ impl CtrlKbdLed {
 
     /// Set the keyboard LED to active if laptop is awake
     fn set_awake_enable(&self, enabled: bool) -> Result<(), RogError> {
-        let bytes = if enabled {
-            LED_AWAKE_ON
-        } else {
-            LED_AWAKE_OFF
-        };
+        let bytes = if enabled { LED_AWAKE_ON } else { LED_AWAKE_OFF };
         self.write_bytes(&bytes)?;
         self.write_bytes(&LED_SET)?;
         // Changes won't persist unless apply is set
@@ -326,11 +325,7 @@ impl CtrlKbdLed {
 
     /// Set the keyboard suspend animation to on if plugged in
     fn set_sleep_anim_enable(&self, enabled: bool) -> Result<(), RogError> {
-        let bytes = if enabled {
-            LED_SLEEP_ON
-        } else {
-            LED_SLEEP_OFF
-        };
+        let bytes = if enabled { LED_SLEEP_ON } else { LED_SLEEP_OFF };
         self.write_bytes(&bytes)?;
         self.write_bytes(&LED_SET)?;
         // Changes won't persist unless apply is set

@@ -4,8 +4,8 @@ use zbus::dbus_interface;
 use zvariant::ObjectPath;
 
 use crate::{
-    ctrl_anime::CtrlAnime, ctrl_charge::CtrlCharge, ctrl_fan_cpu::CtrlFanAndCpu,
-    ctrl_leds::CtrlKbdLed, ctrl_rog_bios::CtrlRogBios, GetSupported,
+    ctrl_anime::CtrlAnime, ctrl_charge::CtrlCharge, ctrl_leds::CtrlKbdLed,
+    ctrl_profiles::CtrlFanAndCpu, ctrl_rog_bios::CtrlRogBios, GetSupported,
 };
 
 use rog_types::supported::{

@@ -426,18 +426,19 @@ fn handle_profile(
     cmd: &ProfileCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if !cmd.next
-        && !cmd.create
+        && !cmd.create // TODO
         && !cmd.list
+        && cmd.profile.is_none()
         && !cmd.active_name
         && !cmd.active_data
         && !cmd.profiles_data
         && cmd.remove.is_none()
-        && cmd.curve.is_none()
-        && cmd.max_percentage.is_none()
+        && cmd.curve.is_none() // TODO
+        && cmd.fan_preset.is_none() // TODO
+        && cmd.turbo.is_none() // TODO
+        && cmd.max_percentage.is_none() // TODO
         && cmd.min_percentage.is_none()
-        && cmd.fan_preset.is_none()
-        && cmd.profile.is_none()
-        && cmd.turbo.is_none()
+    // TODO
     {
         if !cmd.help {
             println!("Missing arg or command\n");
@@ -456,6 +457,9 @@ fn handle_profile(
         if let Some(lst) = cmd.self_command_list() {
             println!("\n{}", lst);
         }
+
+        println!("Note: turbo, frequency, fan preset and fan curve options will apply to");
+        println!("      to the currently active profile unless a profile name is specified");
         std::process::exit(1);
     }
 
@@ -488,10 +492,34 @@ fn handle_profile(
         }
     }
 
+    // This must come before the next block of actions so that changing a specific
+    // profile can be done
     if cmd.profile.is_some() {
         dbus.proxies()
             .profile()
-            .write_command(&ProfileEvent::Cli(cmd.clone()))?
+            .write_command(&ProfileEvent::Cli(cmd.clone()))?;
+        return Ok(());
+    }
+
+    if let Some(turbo) = cmd.turbo {
+        dbus.proxies().profile().set_turbo(turbo)?;
+    }
+
+    if let Some(min) = cmd.min_percentage {
+        dbus.proxies().profile().set_min_frequency(min)?;
+    }
+
+    if let Some(max) = cmd.max_percentage {
+        dbus.proxies().profile().set_max_frequency(max)?;
+    }
+
+    if let Some(ref preset) = cmd.fan_preset {
+        dbus.proxies().profile().set_fan_preset(preset.into())?;
+    }
+
+    if let Some(ref curve) = cmd.curve {
+        let s = curve.as_config_string();
+        dbus.proxies().profile().set_fan_curve(&s)?;
     }
 
     Ok(())

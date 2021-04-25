@@ -1,8 +1,3 @@
-use std::{
-    path::{Path, PathBuf},
-    time::Duration,
-};
-
 use serde_derive::{Deserialize, Serialize};
 
 use crate::error::Error;
@@ -27,7 +22,7 @@ impl Sequences {
     /// Use a base `AnimeAction` to generate the precomputed data and insert in to
     /// the run buffer
     #[inline]
-    pub fn insert(&mut self, index: usize) -> Result<(), Error> {
+    pub fn insert(&mut self, _index: usize) -> Result<(), Error> {
         Ok(())
     }
 

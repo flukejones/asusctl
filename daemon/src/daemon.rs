@@ -1,11 +1,11 @@
-use daemon::ctrl_leds::{CtrlKbdLed, CtrlKbdLedTask, CtrlKbdLedZbus, CtrlKbdLedReloader};
+use daemon::ctrl_leds::{CtrlKbdLed, CtrlKbdLedReloader, CtrlKbdLedTask, CtrlKbdLedZbus};
 use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
 };
 use daemon::{config_anime::AnimeConfig, config_aura::AuraConfig, ctrl_charge::CtrlCharge};
 use daemon::{ctrl_anime::*, ctrl_gfx::gfx::CtrlGraphics};
 use daemon::{
-    ctrl_fan_cpu::{CtrlFanAndCpu, FanAndCpuZbus},
+    ctrl_profiles::{zbus::FanAndCpuZbus, CtrlFanAndCpu},
     laptops::LaptopLedData,
 };
 

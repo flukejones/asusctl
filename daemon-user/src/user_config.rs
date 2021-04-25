@@ -1,4 +1,8 @@
-use std::{fs::{create_dir, OpenOptions}, io::{Read, Write}, time::Duration};
+use std::{
+    fs::{create_dir, OpenOptions},
+    io::{Read, Write},
+    time::Duration,
+};
 
 use rog_anime::{AnimTime, AnimeAction, Sequences, Vec2};
 use serde_derive::{Deserialize, Serialize};
@@ -133,7 +137,7 @@ pub struct UserConfig {
 impl UserConfig {
     pub fn new() -> Self {
         Self {
-            active_anime: "anime-default".to_string()
+            active_anime: "anime-default".to_string(),
         }
     }
 
