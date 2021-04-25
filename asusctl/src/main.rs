@@ -5,7 +5,7 @@ use crate::aura_cli::{LedBrightness, SetAuraBuiltin};
 use anime_cli::{AnimeActions, AnimeCommand};
 use gumdrop::{Opt, Options};
 use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2, ANIME_DATA_LEN};
-use rog_aura::{self, AuraEffect, AuraModeNum};
+use rog_aura::{self, AuraEffect};
 use rog_dbus::AuraDbusClient;
 use rog_types::{
     gfx_vendors::GfxVendors,
@@ -62,6 +62,16 @@ struct LedModeCommand {
     next_mode: bool,
     #[options(help = "switch to previous aura mode")]
     prev_mode: bool,
+    #[options(
+        meta = "",
+        help = "set the keyboard LED to enabled while the device is awake"
+    )]
+    awake_enable: Option<bool>,
+    #[options(
+        meta = "",
+        help = "set the keyboard LED suspend animation to enabled while the device is suspended"
+    )]
+    sleep_enable: Option<bool>,
     #[options(command)]
     command: Option<SetAuraBuiltin>,
 }
@@ -335,7 +345,12 @@ fn handle_led_mode(
     supported: &LedSupportedFunctions,
     mode: &LedModeCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if mode.command.is_none() && !mode.prev_mode && !mode.next_mode {
+    if mode.command.is_none()
+        && !mode.prev_mode
+        && !mode.next_mode
+        && mode.sleep_enable.is_none()
+        && mode.awake_enable.is_none()
+    {
         if !mode.help {
             println!("Missing arg or command\n");
         }
@@ -347,9 +362,13 @@ fn handle_led_mode(
             .lines()
             .map(|s| s.to_string())
             .collect();
-        for command in commands.iter().filter(|mode| {
+        for command in commands.iter().filter(|command| {
             if let Some(modes) = supported.stock_led_modes.as_ref() {
-                return modes.contains(&<AuraModeNum>::from(mode.as_str()));
+                for mode in modes {
+                    if command.contains(&(<&str>::from(mode)).to_lowercase()) {
+                        return true;
+                    }
+                }
             }
             if supported.multizone_led_mode {
                 return true;
@@ -389,6 +408,15 @@ fn handle_led_mode(
                 .set_led_mode(&<AuraEffect>::from(mode))?,
         }
     }
+
+    if let Some(enable) = mode.awake_enable {
+        dbus.proxies().led().set_awake_enabled(enable)?;
+    }
+
+    if let Some(enable) = mode.sleep_enable {
+        dbus.proxies().led().set_sleep_enabled(enable)?;
+    }
+
     Ok(())
 }
 

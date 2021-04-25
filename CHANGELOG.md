@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from vfio/integrated/compute.
 - Add asusd config option to not save compute/vfio mode switch.
 - Enable basic multiple user anime configs (asusd-user must still be restarted)
+- Keyboard LED control now includes:
+  + Enable/disable LED's while laptop is awake
+  + Enable/disable LED animation while laptop is suspended and AC plugged in
 
 # [3.4.1] - 2021-04-11
 ### Changed

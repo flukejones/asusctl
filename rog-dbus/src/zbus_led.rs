@@ -44,7 +44,12 @@ trait Daemon {
     /// SetLedMode method
     fn set_led_mode(&self, effect: &AuraEffect) -> zbus::Result<()>;
 
-    /// NotifyLed signal
+    /// SetAwakeEnabled method
+    fn set_awake_enabled(&self, enabled: bool) -> zbus::Result<()>;
+
+    /// SetSleepEnabled method
+    fn set_sleep_enabled(&self, enabled: bool) -> zbus::Result<()>;
+
     /// NotifyLed signal
     #[dbus_proxy(signal)]
     fn notify_led(&self, data: &str) -> zbus::Result<()>;
@@ -82,6 +87,20 @@ impl<'a> LedProxy<'a> {
     #[inline]
     pub fn set_led_brightness(&self, level: LedBrightness) -> Result<()> {
         self.0.set_brightness(level)?;
+        Ok(())
+    }
+
+    /// Set the keyboard LED to enabled while the device is awake
+    #[inline]
+    pub fn set_awake_enabled(&self, enabled: bool) -> Result<()> {
+        self.0.set_awake_enabled(enabled)?;
+        Ok(())
+    }
+
+    /// Set the keyboard LED suspend animation to enabled while the device is suspended
+    #[inline]
+    pub fn set_sleep_enabled(&self, enabled: bool) -> Result<()> {
+        self.0.set_sleep_enabled(enabled)?;
         Ok(())
     }
 
