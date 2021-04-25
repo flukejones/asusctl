@@ -5,7 +5,7 @@ use crate::aura_cli::{LedBrightness, SetAuraBuiltin};
 use anime_cli::{AnimeActions, AnimeCommand};
 use gumdrop::{Opt, Options};
 use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2, ANIME_DATA_LEN};
-use rog_aura::{self, AuraEffect, AuraModeNum};
+use rog_aura::{self, AuraEffect};
 use rog_dbus::AuraDbusClient;
 use rog_types::{
     gfx_vendors::GfxVendors,
@@ -62,6 +62,16 @@ struct LedModeCommand {
     next_mode: bool,
     #[options(help = "switch to previous aura mode")]
     prev_mode: bool,
+    #[options(
+        meta = "",
+        help = "set the keyboard LED to enabled while the device is awake"
+    )]
+    awake_enable: Option<bool>,
+    #[options(
+        meta = "",
+        help = "set the keyboard LED suspend animation to enabled while the device is suspended"
+    )]
+    sleep_enable: Option<bool>,
     #[options(command)]
     command: Option<SetAuraBuiltin>,
 }
@@ -335,7 +345,12 @@ fn handle_led_mode(
     supported: &LedSupportedFunctions,
     mode: &LedModeCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if mode.command.is_none() && !mode.prev_mode && !mode.next_mode {
+    if mode.command.is_none()
+        && !mode.prev_mode
+        && !mode.next_mode
+        && mode.sleep_enable.is_none()
+        && mode.awake_enable.is_none()
+    {
         if !mode.help {
             println!("Missing arg or command\n");
         }
@@ -347,9 +362,13 @@ fn handle_led_mode(
             .lines()
             .map(|s| s.to_string())
             .collect();
-        for command in commands.iter().filter(|mode| {
+        for command in commands.iter().filter(|command| {
             if let Some(modes) = supported.stock_led_modes.as_ref() {
-                return modes.contains(&<AuraModeNum>::from(mode.as_str()));
+                for mode in modes {
+                    if command.contains(&(<&str>::from(mode)).to_lowercase()) {
+                        return true;
+                    }
+                }
             }
             if supported.multizone_led_mode {
                 return true;
@@ -389,6 +408,15 @@ fn handle_led_mode(
                 .set_led_mode(&<AuraEffect>::from(mode))?,
         }
     }
+
+    if let Some(enable) = mode.awake_enable {
+        dbus.proxies().led().set_awake_enabled(enable)?;
+    }
+
+    if let Some(enable) = mode.sleep_enable {
+        dbus.proxies().led().set_sleep_enabled(enable)?;
+    }
+
     Ok(())
 }
 
@@ -398,18 +426,19 @@ fn handle_profile(
     cmd: &ProfileCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if !cmd.next
-        && !cmd.create
+        && !cmd.create // TODO
         && !cmd.list
+        && cmd.profile.is_none()
         && !cmd.active_name
         && !cmd.active_data
         && !cmd.profiles_data
         && cmd.remove.is_none()
-        && cmd.curve.is_none()
-        && cmd.max_percentage.is_none()
+        && cmd.curve.is_none() // TODO
+        && cmd.fan_preset.is_none() // TODO
+        && cmd.turbo.is_none() // TODO
+        && cmd.max_percentage.is_none() // TODO
         && cmd.min_percentage.is_none()
-        && cmd.fan_preset.is_none()
-        && cmd.profile.is_none()
-        && cmd.turbo.is_none()
+    // TODO
     {
         if !cmd.help {
             println!("Missing arg or command\n");
@@ -428,6 +457,9 @@ fn handle_profile(
         if let Some(lst) = cmd.self_command_list() {
             println!("\n{}", lst);
         }
+
+        println!("Note: turbo, frequency, fan preset and fan curve options will apply to");
+        println!("      to the currently active profile unless a profile name is specified");
         std::process::exit(1);
     }
 
@@ -460,10 +492,34 @@ fn handle_profile(
         }
     }
 
+    // This must come before the next block of actions so that changing a specific
+    // profile can be done
     if cmd.profile.is_some() {
         dbus.proxies()
             .profile()
-            .write_command(&ProfileEvent::Cli(cmd.clone()))?
+            .write_command(&ProfileEvent::Cli(cmd.clone()))?;
+        return Ok(());
+    }
+
+    if let Some(turbo) = cmd.turbo {
+        dbus.proxies().profile().set_turbo(turbo)?;
+    }
+
+    if let Some(min) = cmd.min_percentage {
+        dbus.proxies().profile().set_min_frequency(min)?;
+    }
+
+    if let Some(max) = cmd.max_percentage {
+        dbus.proxies().profile().set_max_frequency(max)?;
+    }
+
+    if let Some(ref preset) = cmd.fan_preset {
+        dbus.proxies().profile().set_fan_preset(preset.into())?;
+    }
+
+    if let Some(ref curve) = cmd.curve {
+        let s = curve.as_config_string();
+        dbus.proxies().profile().set_fan_curve(&s)?;
     }
 
     Ok(())

@@ -50,6 +50,21 @@ trait Daemon {
     /// SetProfile method
     fn set_profile(&self, profile: &str) -> zbus::Result<()>;
 
+    /// SetFanCurve method
+    fn set_fan_curve(&self, curve: &str) -> zbus::Result<()>;
+
+    /// SetFanPreset method
+    fn set_fan_preset(&self, preset: u8) -> zbus::Result<()>;
+
+    /// SetMaxFrequency method
+    fn set_max_frequency(&self, percentage: u8) -> zbus::Result<()>;
+
+    /// SetMinFrequency method
+    fn set_min_frequency(&self, percentage: u8) -> zbus::Result<()>;
+
+    /// SetTurbo method
+    fn set_turbo(&self, enable: bool) -> zbus::Result<()>;
+
     /// NotifyProfile signal
     #[dbus_proxy(signal)]
     fn notify_profile(&self, profile: &str) -> zbus::Result<()>;
@@ -87,12 +102,44 @@ impl<'a> ProfileProxy<'a> {
         self.0.next_profile()
     }
 
+    /// SetFanCurve, set fan curve for active profile
+    #[inline]
+    pub fn set_fan_curve(&self, curve: &str) -> zbus::Result<()> {
+        self.0.set_fan_curve(curve)
+    }
+
+    /// SetFanPreset, set fan preset for active profile
+    #[inline]
+    pub fn set_fan_preset(&self, preset: u8) -> zbus::Result<()> {
+        self.0.set_fan_preset(preset)
+    }
+
+    /// SetMaxFrequency, set max percentage of frequency for active profile
+    #[inline]
+    pub fn set_max_frequency(&self, percentage: u8) -> zbus::Result<()> {
+        self.0.set_max_frequency(percentage)
+    }
+
+    /// SetMinFrequency, set min percentage of frequency for active profile
+    #[inline]
+    pub fn set_min_frequency(&self, percentage: u8) -> zbus::Result<()> {
+        self.0.set_min_frequency(percentage)
+    }
+
+    /// SetTurbo, set turbo enable for active profile
+    #[inline]
+    pub fn set_turbo(&self, enable: bool) -> zbus::Result<()> {
+        self.0.set_turbo(enable)
+    }
+
+    // TODO: remove
     #[inline]
     pub fn write_fan_mode(&self, level: u8) -> Result<()> {
         self.0
             .set_profile(&serde_json::to_string(&ProfileEvent::ChangeMode(level)).unwrap())
     }
 
+    // TODO: remove
     #[inline]
     pub fn write_command(&self, cmd: &ProfileEvent) -> Result<()> {
         self.0.set_profile(&serde_json::to_string(cmd).unwrap())

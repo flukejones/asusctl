@@ -8,6 +8,10 @@ pub(crate) mod config_old;
 pub mod ctrl_anime;
 /// Control of battery charge level
 pub mod ctrl_charge;
+/// GPU switching and power
+pub mod ctrl_gfx;
+/// Keyboard LED brightness control, RGB, and LED display modes
+pub mod ctrl_leds;
 /// Control CPU min/max freq and turbo, fan mode, fan curves
 ///
 /// Intel machines can control:
@@ -19,11 +23,7 @@ pub mod ctrl_charge;
 /// - CPU turbo enable/disable
 /// - Fan mode (normal, boost, silent)
 /// - Fan min/max RPM curve
-pub mod ctrl_fan_cpu;
-/// GPU switching and power
-pub mod ctrl_gfx;
-/// Keyboard LED brightness control, RGB, and LED display modes
-pub mod ctrl_leds;
+pub mod ctrl_profiles;
 /// Control ASUS bios function such as boot sound, Optimus/Dedicated gfx mode
 pub mod ctrl_rog_bios;
 /// Laptop matching to determine capabilities

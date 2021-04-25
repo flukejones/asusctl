@@ -8,7 +8,7 @@ use crate::{
 };
 use log::{error, info, warn};
 use rog_aura::{
-    usb::{LED_APPLY, LED_SET},
+    usb::{LED_APPLY, LED_AWAKE_OFF, LED_AWAKE_ON, LED_SET, LED_SLEEP_OFF, LED_SLEEP_ON},
     AuraEffect, LedBrightness, LED_MSG_LEN,
 };
 use rog_types::supported::LedSupportedFunctions;
@@ -124,9 +124,28 @@ impl crate::ZbusAdd for CtrlKbdLedZbus {
 /// LED commands are split between Brightness, Modes, Per-Key
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl CtrlKbdLedZbus {
+    /// Set the keyboard brightness level (0-3)
     fn set_brightness(&mut self, brightness: LedBrightness) {
         if let Ok(ctrl) = self.inner.try_lock() {
             ctrl.set_brightness(brightness)
+                .map_err(|err| warn!("{}", err))
+                .ok();
+        }
+    }
+
+    /// Set the keyboard LED to enabled while the device is awake
+    fn set_awake_enabled(&mut self, enabled: bool) {
+        if let Ok(ctrl) = self.inner.try_lock() {
+            ctrl.set_awake_enable(enabled)
+                .map_err(|err| warn!("{}", err))
+                .ok();
+        }
+    }
+
+    /// Set the keyboard LED suspend animation to enabled while the device is suspended
+    fn set_sleep_enabled(&mut self, enabled: bool) {
+        if let Ok(ctrl) = self.inner.try_lock() {
+            ctrl.set_sleep_anim_enable(enabled)
                 .map_err(|err| warn!("{}", err))
                 .ok();
         }
@@ -261,7 +280,7 @@ impl CtrlKbdLed {
         None
     }
 
-    pub fn get_brightness(&self) -> Result<u8, RogError> {
+    fn get_brightness(&self) -> Result<u8, RogError> {
         let mut file = OpenOptions::new()
             .read(true)
             .open(&self.bright_node)
@@ -277,7 +296,7 @@ impl CtrlKbdLed {
         Ok(buf[0])
     }
 
-    pub fn set_brightness(&self, brightness: LedBrightness) -> Result<(), RogError> {
+    fn set_brightness(&self, brightness: LedBrightness) -> Result<(), RogError> {
         let path = Path::new(&self.bright_node);
         let mut file =
             OpenOptions::new()
@@ -291,6 +310,26 @@ impl CtrlKbdLed {
                 })?;
         file.write_all(&[brightness.as_char_code()])
             .map_err(|err| RogError::Read("buffer".into(), err))?;
+        Ok(())
+    }
+
+    /// Set the keyboard LED to active if laptop is awake
+    fn set_awake_enable(&self, enabled: bool) -> Result<(), RogError> {
+        let bytes = if enabled { LED_AWAKE_ON } else { LED_AWAKE_OFF };
+        self.write_bytes(&bytes)?;
+        self.write_bytes(&LED_SET)?;
+        // Changes won't persist unless apply is set
+        self.write_bytes(&LED_APPLY)?;
+        Ok(())
+    }
+
+    /// Set the keyboard suspend animation to on if plugged in
+    fn set_sleep_anim_enable(&self, enabled: bool) -> Result<(), RogError> {
+        let bytes = if enabled { LED_SLEEP_ON } else { LED_SLEEP_OFF };
+        self.write_bytes(&bytes)?;
+        self.write_bytes(&LED_SET)?;
+        // Changes won't persist unless apply is set
+        self.write_bytes(&LED_APPLY)?;
         Ok(())
     }
 

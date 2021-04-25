@@ -46,8 +46,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         )?));
         // Need new client object for dbus control part
         let (client, _) = AuraDbusClient::new().unwrap();
-        let anime_control =
-            CtrlAnime::new(anime_config, inner.clone(), client, &ANIME_INNER_EARLY_RETURN)?;
+        let anime_control = CtrlAnime::new(
+            anime_config,
+            inner.clone(),
+            client,
+            &ANIME_INNER_EARLY_RETURN,
+        )?;
         anime_control.add_to_server(&mut server);
         // Thread using inner
         let _anime_thread = thread::Builder::new()

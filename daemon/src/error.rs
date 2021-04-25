@@ -96,3 +96,10 @@ impl From<std::io::Error> for RogError {
         RogError::Io(err)
     }
 }
+
+impl From<RogError> for zbus::fdo::Error {
+    #[inline]
+    fn from(err: RogError) -> Self {
+        zbus::fdo::Error::Failed(format!("{}", err))
+    }
+}

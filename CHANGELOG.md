@@ -6,12 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
-- Split out all aura functionality that isn't dependent on the daemon in to a
-  new crate `rog-aura`
-- Correctly enable compute mode for nvidia plus no-reboot or logout if switching
-  from vfio/integrated/compute.
-- Add asusd config option to not save compute/vfio mode switch.
-- Enable basic multiple user anime configs (asusd-user must still be restarted)
++ Keyboard:
+  - Split out all aura functionality that isn't dependent on the daemon in to a
+    new crate `rog-aura`
+  - Keyboard LED control now includes:
+    + Enable/disable LED's while laptop is awake
+    + Enable/disable LED animation while laptop is suspended and AC plugged in
+  - Properly reload the last used keyboard mode on boot
++ Graphics:
+  - Correctly enable compute mode for nvidia plus no-reboot or logout if switching
+    from vfio/integrated/compute.
+  - Add asusd config option to not save compute/vfio mode switch.
++ Anime:
+  - Enable basic multiple user anime configs (asusd-user must still be restarted)
++ Profiles:
+  - Enable dbus methods for freq min/max, fan curve, fan preset, CPU turbo enable.
+    These options will apply to the active profile if no profile name is specified.    
 
 # [3.4.1] - 2021-04-11
 ### Changed
