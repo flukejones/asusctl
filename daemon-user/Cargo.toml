@@ -1,6 +1,6 @@
 [package]
 name = "daemon-user"
-version = "1.0.0"
+version = "1.1.0"
 authors = ["Luke D Jones <luke@ljones.dev>"]
 edition = "2018"
 description = "Usermode daemon for user settings, anime, per-key lighting"
