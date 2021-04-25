@@ -35,7 +35,7 @@ trait Daemon {
     /// NextProfile method
     fn next_profile(&self) -> zbus::Result<()>;
 
-    /// Profile method
+    /// Profile, get the active profile
     fn profile(&self) -> zbus::Result<String>;
 
     /// Profiles method
