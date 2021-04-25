@@ -14,8 +14,7 @@ use std::{str::FromStr, sync::mpsc};
 use std::{sync::Arc, sync::Mutex};
 use sysfs_class::{PciDevice, SysClass};
 use system::{GraphicsDevice, PciBus};
-use zbus::{dbus_interface, Connection};
-use zvariant::ObjectPath;
+use ::zbus::{Connection};
 
 use crate::*;
 
@@ -30,62 +29,6 @@ pub struct CtrlGraphics {
     other: Vec<GraphicsDevice>,
     config: Arc<Mutex<Config>>,
     thread_kill: Arc<Mutex<Option<mpsc::Sender<bool>>>>,
-}
-
-trait Dbus {
-    fn vendor(&self) -> zbus::fdo::Result<GfxVendors>;
-    fn power(&self) -> zbus::fdo::Result<GfxPower>;
-    fn set_vendor(&mut self, vendor: GfxVendors) -> zbus::fdo::Result<GfxRequiredUserAction>;
-    fn notify_gfx(&self, vendor: &GfxVendors) -> zbus::Result<()>;
-    fn notify_action(&self, action: &GfxRequiredUserAction) -> zbus::Result<()>;
-}
-
-#[dbus_interface(name = "org.asuslinux.Daemon")]
-impl Dbus for CtrlGraphics {
-    fn vendor(&self) -> zbus::fdo::Result<GfxVendors> {
-        self.get_gfx_mode().map_err(|err| {
-            error!("GFX: {}", err);
-            zbus::fdo::Error::Failed(format!("GFX fail: {}", err))
-        })
-    }
-
-    fn power(&self) -> zbus::fdo::Result<GfxPower> {
-        Self::get_runtime_status().map_err(|err| {
-            error!("GFX: {}", err);
-            zbus::fdo::Error::Failed(format!("GFX fail: {}", err))
-        })
-    }
-
-    fn set_vendor(&mut self, vendor: GfxVendors) -> zbus::fdo::Result<GfxRequiredUserAction> {
-        info!("GFX: Switching gfx mode to {}", <&str>::from(vendor));
-        let msg = self.set_gfx_config(vendor).map_err(|err| {
-            error!("GFX: {}", err);
-            zbus::fdo::Error::Failed(format!("GFX fail: {}", err))
-        })?;
-        self.notify_gfx(&vendor)
-            .unwrap_or_else(|err| warn!("GFX: {}", err));
-        self.notify_action(&msg)
-            .unwrap_or_else(|err| warn!("GFX: {}", err));
-        Ok(msg)
-    }
-
-    #[dbus_interface(signal)]
-    fn notify_gfx(&self, vendor: &GfxVendors) -> zbus::Result<()> {}
-
-    #[dbus_interface(signal)]
-    fn notify_action(&self, action: &GfxRequiredUserAction) -> zbus::Result<()> {}
-}
-
-impl ZbusAdd for CtrlGraphics {
-    fn add_to_server(self, server: &mut zbus::ObjectServer) {
-        server
-            .at(&ObjectPath::from_str_unchecked("/org/asuslinux/Gfx"), self)
-            .map_err(|err| {
-                warn!("GFX: CtrlGraphics: add_to_server {}", err);
-                err
-            })
-            .ok();
-    }
 }
 
 impl Reloadable for CtrlGraphics {
@@ -183,7 +126,7 @@ impl CtrlGraphics {
         Ok(GfxVendors::Hybrid)
     }
 
-    fn get_runtime_status() -> Result<GfxPower, RogError> {
+    pub(super) fn get_runtime_status() -> Result<GfxPower, RogError> {
         let path = Path::new("/sys/bus/pci/devices/0000:01:00.0/power/runtime_status");
         if path.exists() {
             let buf = std::fs::read_to_string(path).map_err(|err| {

@@ -3,9 +3,9 @@ use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
 };
 use daemon::{config_anime::AnimeConfig, config_aura::AuraConfig, ctrl_charge::CtrlCharge};
-use daemon::{ctrl_anime::*, ctrl_gfx::gfx::CtrlGraphics};
+use daemon::{ctrl_anime::*, ctrl_gfx::controller::CtrlGraphics};
 use daemon::{
-    ctrl_profiles::{zbus::FanAndCpuZbus, CtrlFanAndCpu},
+    ctrl_profiles::{zbus::FanAndCpuZbus, controller::CtrlFanAndCpu},
     laptops::LaptopLedData,
 };
 

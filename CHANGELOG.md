@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enable basic multiple user anime configs (asusd-user must still be restarted)
 + Profiles:
   - Enable dbus methods for freq min/max, fan curve, fan preset, CPU turbo enable.
-    These options will apply to the active profile if no profile name is specified.    
+    These options will apply to the active profile if no profile name is specified.
 
 # [3.4.1] - 2021-04-11
 ### Changed
