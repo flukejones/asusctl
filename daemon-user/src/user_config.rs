@@ -63,7 +63,7 @@ impl UserAnimeConfig {
             create_dir(path.clone())?;
         }
 
-        path.push(name + ".cfg");
+        path.push(name.clone() + ".cfg");
 
         let mut file = OpenOptions::new()
             .read(true)
@@ -75,7 +75,7 @@ impl UserAnimeConfig {
 
         if let Ok(read_len) = file.read_to_string(&mut buf) {
             if read_len == 0 {
-                let default = UserAnimeConfig::default();
+                let default = UserAnimeConfig { name, ..Default::default() };
                 let json = serde_json::to_string_pretty(&default).unwrap();
                 file.write_all(json.as_bytes())?;
                 return Ok(default);
@@ -89,7 +89,7 @@ impl UserAnimeConfig {
 
 impl Default for UserAnimeConfig {
     fn default() -> Self {
-        let x = Self {
+        Self {
             name: "default".to_string(),
             anime: vec![
                 AnimeAction::AsusAnimation {
@@ -122,9 +122,7 @@ impl Default for UserAnimeConfig {
                     time: AnimTime::Cycles(2),
                 },
             ],
-        };
-        println!("{}", serde_json::to_string_pretty(&x).unwrap());
-        x
+        }
     }
 }
 
