@@ -6,7 +6,7 @@ use std::sync::Mutex;
 use zbus::{dbus_interface, fdo::Error};
 use zvariant::ObjectPath;
 
-use super::CtrlFanAndCpu;
+use super::controller::CtrlFanAndCpu;
 
 pub struct FanAndCpuZbus {
     inner: Arc<Mutex<CtrlFanAndCpu>>,

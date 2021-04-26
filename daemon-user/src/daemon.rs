@@ -16,7 +16,9 @@ use std::sync::atomic::AtomicBool;
 static ANIME_INNER_EARLY_RETURN: AtomicBool = AtomicBool::new(false);
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("   rog-dbus version {}", rog_dbus::VERSION);
+    println!("user daemon v{}", rog_user::VERSION);
+    println!("  rog-anime v{}", rog_anime::VERSION);
+    println!("   rog-dbus v{}", rog_dbus::VERSION);
 
     let (client, _) = AuraDbusClient::new().unwrap();
     let supported = client.proxies().supported().get_supported_functions()?;

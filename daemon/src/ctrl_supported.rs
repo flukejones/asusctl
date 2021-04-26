@@ -3,10 +3,7 @@ use serde_derive::{Deserialize, Serialize};
 use zbus::dbus_interface;
 use zvariant::ObjectPath;
 
-use crate::{
-    ctrl_anime::CtrlAnime, ctrl_charge::CtrlCharge, ctrl_leds::CtrlKbdLed,
-    ctrl_profiles::CtrlFanAndCpu, ctrl_rog_bios::CtrlRogBios, GetSupported,
-};
+use crate::{GetSupported, ctrl_anime::CtrlAnime, ctrl_charge::CtrlCharge, ctrl_leds::CtrlKbdLed, ctrl_profiles::controller::CtrlFanAndCpu, ctrl_rog_bios::CtrlRogBios};
 
 use rog_types::supported::{
     AnimeSupportedFunctions, ChargeSupportedFunctions, FanCpuSupportedFunctions,

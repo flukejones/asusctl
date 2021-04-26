@@ -1,8 +1,10 @@
 pub mod error;
 
-pub mod gfx;
+pub mod controller;
 
 pub mod system;
+
+pub mod zbus_gfx;
 
 const NVIDIA_DRIVERS: [&str; 4] = ["nvidia_drm", "nvidia_modeset", "nvidia_uvm", "nvidia"];
 
