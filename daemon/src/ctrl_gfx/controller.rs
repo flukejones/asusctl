@@ -1,3 +1,4 @@
+use ::zbus::Connection;
 use ctrl_gfx::error::GfxError;
 use ctrl_gfx::*;
 use ctrl_rog_bios::CtrlRogBios;
@@ -14,7 +15,6 @@ use std::{str::FromStr, sync::mpsc};
 use std::{sync::Arc, sync::Mutex};
 use sysfs_class::{PciDevice, SysClass};
 use system::{GraphicsDevice, PciBus};
-use ::zbus::{Connection};
 
 use crate::*;
 
@@ -607,11 +607,14 @@ impl CtrlGraphics {
             let bus = self.bus.clone();
             Self::do_vendor_tasks(vendor, vfio_enable, &devices, &bus)?;
             info!("GFX: Graphics mode changed to {}", <&str>::from(vendor));
-            if let Ok(config) = self.config.lock() {
-                if matches!(vendor, GfxVendors::Compute | GfxVendors::Vfio)
-                    && config.gfx_save_compute_vfio
-                {
-                    Self::save_gfx_mode(vendor, self.config.clone());
+            if matches!(vendor, GfxVendors::Compute | GfxVendors::Vfio) {
+                loop {
+                    if let Ok(config) = self.config.try_lock() {
+                        if config.gfx_save_compute_vfio {
+                            Self::save_gfx_mode(vendor, self.config.clone());
+                        }
+                        return Ok(action_required);
+                    }
                 }
             }
         }
@@ -625,7 +628,7 @@ impl CtrlGraphics {
         let devices = self.nvidia.clone();
         let bus = self.bus.clone();
 
-        let vfio_enable = if let Ok(config) = self.config.lock() {
+        let vfio_enable = if let Ok(config) = self.config.try_lock() {
             config.gfx_vfio_enable
         } else {
             false
