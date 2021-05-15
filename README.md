@@ -118,22 +118,9 @@ and run `dracut -f` after creating it.
 Models GA401, GA502, GU502 support LED brightness change only (no RGB).
 
 If you model isn't getting the correct led modes, you can edit the file
-`/etc/asusd/asusd-ledmodes.toml`, the LED Mode numbers are as follows:
+`/etc/asusd/asusd-ledmodes.toml`.
 
-- Static
-- Breathe
-- Strobe
-- Rainbow
-- Star
-- Rain
-- Highlight
-- Laser
-- Ripple
-- Pulse
-- Comet
-- Flash
-
-use `cat /sys/class/dmi/id/product_name` to get details about your laptop. You
+Use `cat /sys/class/dmi/id/product_name` to get details about your laptop. You
 must restart the `asusd.service` after editing.
 
 # Keybinds
@@ -152,7 +139,7 @@ To switch Fan/Thermal profiles you need to bind the Fn+F5 key to `asusctl profil
 
 # BUILDING
 
-Requirements are rust >= 1.40 installed from rustup.io if the distro provided version is too old, and `make`.
+Requirements are rust >= 1.47 installed from rustup.io if the distro provided version is too old, and `make`.
 
 **Ubuntu*:** `apt install libclang-dev libudev-dev`
 
@@ -160,9 +147,7 @@ Requirements are rust >= 1.40 installed from rustup.io if the distro provided ve
 
 ## Installing
 
-Packaging and auto-builds are available [here](https://build.opensuse.org/package/show/home:luke_nukem:asus/asusctl)
-
-Download repositories are available [here](https://download.opensuse.org/repositories/home:/luke_nukem:/asus/)
+Download repositories are available [here](https://download.opensuse.org/repositories/home:/luke_nukem:/asus/) for the main distros.
 
 ---
 
@@ -221,27 +206,9 @@ systemctl --user start asus-notify.service
 
 # OTHER
 
-## AniMe input
-
-You will want to look at what MeuMeu has done with [https://github.com/Meumeu/ZephyrusBling/](https://github.com/Meumeu/ZephyrusBling/)
-
 ## Supporting more laptops
 
 Please file a support request.
-
-## Notes:
-
-- If charge limit or fan modes are not working, then you may require a kernel newer than 5.6.10.
-- AniMe device check is performed on start, if your device has one it will be detected.
-- GA14/GA401 and GA15/GA502/GU502, You will need kernel [patches](https://lab.retarded.farm/zappel/asus-rog-zephyrus-g14/-/tree/master/kernel_patches), these are on their way to the kernel upstream.
-- On fedora manually installed Nvidia driver requires a dracut config as follows:
-```
-# filename/etc/dracut.conf.d/90-nvidia-dracut-G05.conf
-# Omit the nvidia driver from the ramdisk, to avoid needing to regenerate
-# the ramdisk on updates, and to ensure the power-management udev rules run
-# on module load
-omit_drivers+=" nvidia nvidia-drm nvidia-modeset nvidia-uvm "
-```
 
 # License & Trademarks
 
