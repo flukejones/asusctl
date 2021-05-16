@@ -83,7 +83,7 @@ If you have an AniMe device a few system-level config options are enabled for yo
 
 Some default examples are provided but are minimal. The full range of configuration options will be covered in another section of this manual.
 
-## Led keyboard control
+### Led keyboard control
 
 The LED controller (e.g, aura) enables setting many of the factory modes available if a laptop supports them. It also enables per-key RGB settings but this is a WIP and will likely be similar to how AniMe sequences can be created.
 
