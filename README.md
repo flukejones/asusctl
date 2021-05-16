@@ -1,4 +1,4 @@
-# ASUS NB Ctrl
+# `asusctl` for ASUS ROG
 
 [![](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate/?hosted_button_id=4V2DEPS7K6APC) - [Asus Linux Website](https://asus-linux.org/)
 
@@ -10,21 +10,18 @@ but can also be used with non-asus laptops with reduced features.
 1. To provide an interface for rootless control of some system functions most users wish to control such as fan speeds, keyboard LEDs, graphics modes.
 2. Enable third-party apps to use the above with dbus methods
 3. To make the above as easy as possible for new users
+4. Respect the users resources: be small, light, and fast
 
 Point 3 means that the list of supported distros is very narrow - fedora is explicitly
 supported, while Ubuntu and openSUSE are level-2 support. All other distros are *not*
 supported (while asusd might still run fine on them). For best support use fedora 32+ Workstation.
 
+Point 4? asusd currently uses a tiny fraction of cpu time, and less than 1Mb of ram, the way
+a system-level daemon should.
+
 **NOTICE:**
-1. The following is *not* required for 5.11 kernel versions, as this version includes all the required patches.
-2. 2021 hardware has a new keyboard prod_id and the patch is included in 5.12+
 
-'hid-asus-rog` DKMS module from [here](https://download.opensuse.org/repositories/home:/luke_nukem:/asus/).
-
-The module enables the following in kernel:
-
-- Initialising the keyboard
-- All hotkeys (FN+Key combos)
+Various patches are required for keyboard support. See [this post](https://asus-linux.org/blog/updates-2021-05-06/) for details on status and which kernels will have which patches.
 
 ## Discord
 
@@ -60,83 +57,6 @@ will probably suffer another rename once it becomes generic enough to do so.
 - [X] Toggle bios setting for boot/POST sound
 - [X] Toggle bios setting for "dedicated gfx" mode on supported laptops (g-sync)
 
-# FUNCTIONS
-
-## Graphics switching
-
-`asusd` can switch graphics modes between:
-- `integrated`, uses the iGPU only and force-disables the dGPU
-- `hybrid`, enables Nvidia prime-offload mode
-- `nvidia`, uses the Nvidia gpu only
-- `vfio`, binds the Nvidia gpu to vfio for VM pass-through
-
-**Rebootless note:** You must edit `/etc/default/grub` to remove `nvidia-drm.modeset=1`
-from the line `GRUB_CMDLINE_LINUX=` and then recreate your grub config. In fedora
-you can do this with `sudo grub2-mkconfig -o /etc/grub2.cfg` - other distro may be
-similar but with a different config location.
-
-This can be disabled in the config with `"manage_gfx": false,`. Additionally there
-is an extra setting for laptops capable of g-sync dedicated gfx mode to enable the
-graphics switching to switch on dedicated gfx for "nvidia" mode.
-
-This switcher conflicts with other gpu switchers like optimus-manager, suse-prime
-or ubuntu-prime, system76-power, and bbswitch. If you have issues with `asusd`
-always defaulting to `integrated` mode on boot then you will need to check for
-stray configs blocking nvidia modules from loading in:
-- `/etc/modprobe.d/`
-- `/usr/lib/modprope.d/`
-
-**VFIO NOTE:** The vfio modules *must not* be compiled into the kernel, they need
-to be separate modules. If you don't plan to use vfio mode then you can ignore this
-otherwise you may need a custom built kernel.
-
-To enable vfio switching you need to edit `/etc/asusd/asusd.conf` and change `"gfx_vfio_enable": false,` to true.
-
-### Power management udev rule
-
-If you have installed the Nvidia driver manually you will require the
-`data/90-asusd-nvidia-pm.rules` udev rule to be installed in `/etc/udev/rules.d/`.
-
-### fedora and openSUSE
-
-You *may* need a file `/etc/dracut.conf.d/90-nvidia-dracut-G05.conf` installed
-to stop dracut including the nvidia modules in the ramdisk if you manually
-installed the nvidia drivers.
-
-```
-# filename /etc/dracut.conf.d/90-nvidia-dracut-G05.conf
-# Omit the nvidia driver from the ramdisk, to avoid needing to regenerate
-# the ramdisk on updates, and to ensure the power-management udev rules run
-# on module load
-omit_drivers+=" nvidia nvidia-drm nvidia-modeset nvidia-uvm "
-```
-
-and run `dracut -f` after creating it.
-
-## KEYBOARD BACKLIGHT MODES
-
-Models GA401, GA502, GU502 support LED brightness change only (no RGB).
-
-If you model isn't getting the correct led modes, you can edit the file
-`/etc/asusd/asusd-ledmodes.toml`.
-
-Use `cat /sys/class/dmi/id/product_name` to get details about your laptop. You
-must restart the `asusd.service` after editing.
-
-# Keybinds
-
-To switch to next/previous Aura modes you will need to bind both the aura keys (if available) to one of:
-**Next**
-```
-asusctl led-mode -n
-```
-**Previous**
-```
-asusctl led-mode -p
-```
-
-To switch Fan/Thermal profiles you need to bind the Fn+F5 key to `asusctl profile -n`.
-
 # BUILDING
 
 Requirements are rust >= 1.47 installed from rustup.io if the distro provided version is too old, and `make`.
@@ -147,7 +67,7 @@ Requirements are rust >= 1.47 installed from rustup.io if the distro provided ve
 
 ## Installing
 
-Download repositories are available [here](https://download.opensuse.org/repositories/home:/luke_nukem:/asus/) for the main distros.
+Download repositories are available [here](https://download.opensuse.org/repositories/home:/luke_nukem:/asus/) for the latest versions of Fedora, Ubuntu, and openSUSE.
 
 ---
 
@@ -172,37 +92,6 @@ can be added on request). You will need to install the alternative service from
 ## Uninstalling
 
 Run `sudo make uninstall` in the source repo, and remove `/etc/asusd/`.
-
-# USAGE
-
-Commands are given by:
-
-```
-asusctl <option> <command> <command-options>
-```
-
-Help is available through:
-
-```
-asusctl --help
-asusctl <command> --help
-```
-
-Some commands may have subcommands:
-
-```
-asusctl <command> <subcommand> --help
-```
-
-## User NOTIFICATIONS via dbus
-
-If you have a notifications handler set up, or are using KDE or Gnome then you
-can enable the user service to get basic notifications when something changes.
-
-```
-systemctl --user enable asus-notify.service
-systemctl --user start asus-notify.service
-```
 
 # OTHER
 
