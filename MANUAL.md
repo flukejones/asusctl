@@ -276,6 +276,8 @@ Each object in the array can be one of:
 
 ##### Pause
 
+A `Pause` is handy for after an `Image` to hold the `Image` on the AniMe for a period.
+
 ```json
     {
       "Pause": {
@@ -326,6 +328,12 @@ A cycle is how many gif loops to run:
 A plain non-float integer.
 
 ## asusctl
+
+`asusctl` is a commandline interface which intends to be the main method of interacting with `asusd`. I can be used in any place a terminal app can be used.
+
+This program will query `asusd` for the `Support` level of the laptop and show or hide options according to this support level.
+
+Most commands are self-explanatory.
 
 ### CLI Usage and help
 
