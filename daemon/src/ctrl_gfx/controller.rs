@@ -607,16 +607,6 @@ impl CtrlGraphics {
             let bus = self.bus.clone();
             Self::do_vendor_tasks(vendor, vfio_enable, &devices, &bus)?;
             info!("GFX: Graphics mode changed to {}", <&str>::from(vendor));
-            if matches!(vendor, GfxVendors::Compute | GfxVendors::Vfio) {
-                loop {
-                    if let Ok(config) = self.config.try_lock() {
-                        if config.gfx_save_compute_vfio {
-                            Self::save_gfx_mode(vendor, self.config.clone());
-                        }
-                        return Ok(action_required);
-                    }
-                }
-            }
         }
         // TODO: undo if failed? Save last mode, catch errors...
         Ok(action_required)
