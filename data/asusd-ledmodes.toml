@@ -88,3 +88,10 @@ board_names = ["GA401Q"]
 standard = ["Static", "Breathe", "Pulse"]
 multizone = false
 per_key = false
+
+[[led_data]]
+prod_family = "ROG Zephyrus"
+board_names = ["GX550L"]
+standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
+multizone = false
+per_key = true
