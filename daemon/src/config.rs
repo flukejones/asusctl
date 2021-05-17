@@ -14,7 +14,9 @@ pub static AURA_CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
 #[derive(Deserialize, Serialize)]
 pub struct Config {
     pub gfx_mode: GfxVendors,
-    pub gfx_last_mode: GfxVendors,
+    /// Only for informational purposes.
+    #[serde(skip)]
+    pub gfx_tmp_mode: Option<GfxVendors>,
     pub gfx_managed: bool,
     pub gfx_vfio_enable: bool,
     pub active_profile: String,
@@ -34,7 +36,7 @@ impl Default for Config {
 
         Config {
             gfx_mode: GfxVendors::Hybrid,
-            gfx_last_mode: GfxVendors::Hybrid,
+            gfx_tmp_mode: None,
             gfx_managed: true,
             gfx_vfio_enable: false,
             active_profile: "normal".into(),

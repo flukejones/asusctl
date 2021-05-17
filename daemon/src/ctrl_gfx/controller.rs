@@ -111,7 +111,6 @@ impl CtrlGraphics {
     /// Save the selected `Vendor` mode to config
     fn save_gfx_mode(vendor: GfxVendors, config: Arc<Mutex<Config>>) {
         if let Ok(mut config) = config.lock() {
-            config.gfx_last_mode = config.gfx_mode;
             config.gfx_mode = vendor;
             config.write();
         }
@@ -120,6 +119,9 @@ impl CtrlGraphics {
     /// Associated method to get which vendor mode is set
     pub fn get_gfx_mode(&self) -> Result<GfxVendors, RogError> {
         if let Ok(config) = self.config.lock() {
+            if let Some(mode) = config.gfx_tmp_mode {
+                return Ok(mode);    
+            }
             return Ok(config.gfx_mode);
         }
         // TODO: Error here
@@ -511,7 +513,11 @@ impl CtrlGraphics {
         Self::do_display_manager_action("stop")?;
         Self::wait_display_manager_state("inactive")?;
 
-        let vfio_enable = if let Ok(config) = config.lock() {
+        let vfio_enable = if let Ok(mut config) = config.try_lock() {
+            // Since we have a lock, reset tmp to none. This thread should only ever run
+            // for Integrated, Hybrid, or Nvidia. Tmp is also only for informational
+            config.gfx_tmp_mode = None;
+            //
             config.gfx_vfio_enable
         } else {
             false
@@ -582,7 +588,7 @@ impl CtrlGraphics {
             }
         }
 
-        let vfio_enable = if let Ok(config) = self.config.lock() {
+        let vfio_enable = if let Ok(config) = self.config.try_lock() {
             config.gfx_vfio_enable
         } else {
             false
@@ -607,6 +613,11 @@ impl CtrlGraphics {
             let bus = self.bus.clone();
             Self::do_vendor_tasks(vendor, vfio_enable, &devices, &bus)?;
             info!("GFX: Graphics mode changed to {}", <&str>::from(vendor));
+            if matches!(vendor, GfxVendors::Vfio | GfxVendors::Compute) {
+                if let Ok(mut config) = self.config.try_lock() {
+                    config.gfx_tmp_mode = Some(vendor);
+                };
+            }
         }
         // TODO: undo if failed? Save last mode, catch errors...
         Ok(action_required)

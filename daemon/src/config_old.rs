@@ -25,7 +25,7 @@ impl ConfigV317 {
     pub(crate) fn into_current(self) -> Config {
         Config {
             gfx_mode: GfxVendors::Hybrid,
-            gfx_last_mode: GfxVendors::Hybrid,
+            gfx_tmp_mode: None,
             gfx_managed: self.gfx_managed,
             gfx_vfio_enable: false,
             active_profile: self.active_profile,
@@ -53,7 +53,7 @@ impl ConfigV324 {
     pub(crate) fn into_current(self) -> Config {
         Config {
             gfx_mode: GfxVendors::Hybrid,
-            gfx_last_mode: GfxVendors::Hybrid,
+            gfx_tmp_mode: None,
             gfx_managed: self.gfx_managed,
             gfx_vfio_enable: false,
             active_profile: self.active_profile,
@@ -82,7 +82,7 @@ impl ConfigV341 {
     pub(crate) fn into_current(self) -> Config {
         Config {
             gfx_mode: GfxVendors::Hybrid,
-            gfx_last_mode: GfxVendors::Hybrid,
+            gfx_tmp_mode: None,
             gfx_managed: self.gfx_managed,
             gfx_vfio_enable: false,
             active_profile: self.active_profile,
@@ -114,7 +114,7 @@ impl ConfigV352 {
     pub(crate) fn into_current(self) -> Config {
         Config {
             gfx_mode: GfxVendors::Hybrid,
-            gfx_last_mode: GfxVendors::Hybrid,
+            gfx_tmp_mode: None,
             gfx_managed: self.gfx_managed,
             gfx_vfio_enable: false,
             active_profile: self.active_profile,
