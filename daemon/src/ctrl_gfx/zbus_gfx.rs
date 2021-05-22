@@ -1,7 +1,7 @@
+use ::zbus::dbus_interface;
+use log::{error, info, warn};
 use rog_types::gfx_vendors::{GfxPower, GfxRequiredUserAction, GfxVendors};
-use ::zbus::{dbus_interface};
 use zvariant::ObjectPath;
-use log::{error, warn, info};
 
 use crate::ZbusAdd;
 

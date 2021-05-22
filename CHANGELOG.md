@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Add GX550L led modes
 - Don't save compute/vfio modes. Option in config for this is removed.
+- Store a temporary non-serialised option in config for if compute/vfio is active
+  for informational purposes only (will not apply on boot)
+- Save state for LEDs enabled + sleep animation enabled
+- Save state for AnimMe enabled + boot animation enabled
 
 # [3.5.2] - 2021-05-15
 ### Changed

@@ -41,6 +41,31 @@ impl AnimeConfigV341 {
                 vec![]
             },
             brightness: 1.0,
+            awake_enabled: true,
+            boot_anim_enabled: true,
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct AnimeConfigV352 {
+    pub system: Vec<AnimeAction>,
+    pub boot: Vec<AnimeAction>,
+    pub wake: Vec<AnimeAction>,
+    pub shutdown: Vec<AnimeAction>,
+    pub brightness: f32,
+}
+
+impl AnimeConfigV352 {
+    pub(crate) fn into_current(self) -> AnimeConfig {
+        AnimeConfig {
+            system: self.system,
+            boot: self.boot,
+            wake: self.wake,
+            shutdown: self.shutdown,
+            brightness: 1.0,
+            awake_enabled: true,
+            boot_anim_enabled: true,
         }
     }
 }
@@ -90,6 +115,8 @@ pub struct AnimeConfig {
     pub wake: Vec<AnimeAction>,
     pub shutdown: Vec<AnimeAction>,
     pub brightness: f32,
+    pub awake_enabled: bool,
+    pub boot_anim_enabled: bool,
 }
 
 impl Default for AnimeConfig {
@@ -100,6 +127,8 @@ impl Default for AnimeConfig {
             wake: Vec::new(),
             shutdown: Vec::new(),
             brightness: 1.0,
+            awake_enabled: true,
+            boot_anim_enabled: true,
         }
     }
 }
@@ -126,6 +155,11 @@ impl AnimeConfig {
                 if let Ok(data) = serde_json::from_str(&buf) {
                     return data;
                 } else if let Ok(data) = serde_json::from_str::<AnimeConfigV341>(&buf) {
+                    let config = data.into_current();
+                    config.write();
+                    info!("Updated config version to: {}", VERSION);
+                    return config;
+                } else if let Ok(data) = serde_json::from_str::<AnimeConfigV352>(&buf) {
                     let config = data.into_current();
                     config.write();
                     info!("Updated config version to: {}", VERSION);
@@ -167,6 +201,8 @@ impl AnimeConfig {
                 time: AnimTime::Infinite,
             }],
             brightness: 1.0,
+            awake_enabled: true,
+            boot_anim_enabled: true,
         };
         // Should be okay to unwrap this as is since it is a Default
         let json = serde_json::to_string_pretty(&config).unwrap();

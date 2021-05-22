@@ -15,22 +15,18 @@ pub const fn aura_brightness_bytes(brightness: u8) -> [u8; 17] {
     ]
 }
 
-/// Enable the keyboard when laptop is awake
-pub const LED_AWAKE_ON: [u8; 17] = [
+pub const LED_AWAKE_ON_SLEEP_OFF: [u8; 17] = [
     0x5d, 0xbd, 0x01, 0xcf, 0x17, 0x0b, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
 
-/// Disable the keyboard when laptop is awake
-pub const LED_AWAKE_OFF: [u8; 17] = [
-    0x5d, 0xbd, 0x01, 0xc3, 0x13, 0x09, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-];
-
-/// Enable animations when the laptop is suspended while plugged in
-pub const LED_SLEEP_ON: [u8; 17] = [
+pub const LED_AWAKE_ON_SLEEP_ON: [u8; 17] = [
     0x5d, 0xbd, 0x01, 0xff, 0x1f, 0x0f, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
 
-/// Disable animations when the laptop is suspended while plugged in
-pub const LED_SLEEP_OFF: [u8; 17] = [
-    0x5d, 0xbd, 0x01, 0xcf, 0x17, 0x0b, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+pub const LED_AWAKE_OFF_SLEEP_OFF: [u8; 17] = [
+    0x5d, 0xbd, 0x01, 0xc3, 0x13, 0x09, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+];
+
+pub const LED_AWAKE_OFF_SLEEP_ON: [u8; 17] = [
+    0x5d, 0xbd, 0x01, 0xf3, 0x1b, 0x0d, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];

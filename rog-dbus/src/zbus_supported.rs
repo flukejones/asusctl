@@ -19,6 +19,7 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
+use rog_types::supported::SupportedFunctions;
 use zbus::{dbus_proxy, Connection, Result};
 
 #[dbus_proxy(
@@ -27,7 +28,7 @@ use zbus::{dbus_proxy, Connection, Result};
 )]
 trait Daemon {
     /// SupportedFunctions method
-    fn supported_functions(&self) -> zbus::Result<String>;
+    fn supported_functions(&self) -> zbus::Result<SupportedFunctions>;
 }
 
 pub struct SupportProxy<'a>(DaemonProxy<'a>);
@@ -43,7 +44,7 @@ impl<'a> SupportProxy<'a> {
     }
 
     #[inline]
-    pub fn get_supported_functions(&self) -> Result<String> {
+    pub fn get_supported_functions(&self) -> Result<SupportedFunctions> {
         self.0.supported_functions()
     }
 }

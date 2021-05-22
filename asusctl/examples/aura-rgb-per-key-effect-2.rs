@@ -1,8 +1,8 @@
 use rog_aura::{Key, KeyColourArray};
-use rog_dbus::AuraDbusClient;
+use rog_dbus::RogDbusClient;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let (dbus, _) = AuraDbusClient::new()?;
+    let (dbus, _) = RogDbusClient::new()?;
 
     let mut key_colours = KeyColourArray::new();
 

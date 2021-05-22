@@ -1,6 +1,6 @@
 [package]
 name = "rog_aura"
-version = "1.0.1"
+version = "1.1.0"
 license = "MPL-2.0"
 readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]
@@ -14,12 +14,11 @@ exclude = ["data"]
 
 [features]
 default = ["dbus"]
-dbus = ["zbus", "zvariant", "zvariant_derive"]
+dbus = ["zvariant", "zvariant_derive"]
 
 [dependencies]
 serde = "^1.0"
 serde_derive = "^1.0"
 
-zbus = { version = "^1.9.1", optional = true }
 zvariant = { version = "^2.6", optional = true }
 zvariant_derive = { version = "^2.6", optional = true }

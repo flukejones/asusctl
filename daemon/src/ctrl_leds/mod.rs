@@ -1,3 +1,2 @@
-pub mod zbus;
-
 pub mod controller;
+pub mod zbus;

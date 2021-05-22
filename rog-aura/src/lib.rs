@@ -14,3 +14,5 @@ pub mod usb;
 pub mod error;
 
 pub const LED_MSG_LEN: usize = 17;
+
+pub static VERSION: &str = env!("CARGO_PKG_VERSION");

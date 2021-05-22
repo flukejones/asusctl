@@ -1,0 +1,18 @@
+[package]
+name = "rog_profiles"
+version = "0.1.0"
+authors = ["Luke D. Jones <luke@ljones.dev>"]
+edition = "2018"
+
+[features]
+default = ["dbus"]
+dbus = ["zvariant", "zvariant_derive"]
+
+[dependencies]
+rog_fan_curve = { version = "^0.1", features = ["serde"] }
+serde = "^1.0"
+serde_derive = "^1.0"
+intel-pstate = "^0.2"
+
+zvariant = { version = "^2.6", optional = true }
+zvariant_derive = { version = "^2.6", optional = true }

@@ -1,5 +1,5 @@
 use log::warn;
-use rog_fan_curve::Curve;
+use rog_profiles::profiles::Profile;
 
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -20,115 +20,36 @@ impl FanAndCpuZbus {
 
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl FanAndCpuZbus {
-    /// Set profile details
+    /// Create new profile and make active
     fn set_profile(&self, profile: String) {
-        if let Ok(event) = serde_json::from_str(&profile) {
-            if let Ok(mut ctrl) = self.inner.try_lock() {
-                if let Ok(mut cfg) = ctrl.config.clone().try_lock() {
-                    cfg.read();
-                    ctrl.handle_profile_event(&event, &mut cfg)
+        if let Ok(mut ctrl) = self.inner.try_lock() {
+            ctrl.set_active(&profile)
+                .unwrap_or_else(|err| warn!("{}", err));
+            // Do notification
+            if let Ok(cfg) = ctrl.config.clone().try_lock() {
+                // Do notify
+                if let Some(profile) = cfg.power_profiles.get(&cfg.active_profile) {
+                    self.notify_profile(&profile)
                         .unwrap_or_else(|err| warn!("{}", err));
-                    if let Some(profile) = cfg.power_profiles.get(&cfg.active_profile) {
-                        if let Ok(json) = serde_json::to_string(profile) {
-                            self.notify_profile(&json)
-                                .unwrap_or_else(|err| warn!("{}", err));
-                        }
-                    }
                 }
             }
         }
     }
 
-    /// Modify the active profile
-    fn set_turbo(&self, enable: bool) -> zbus::fdo::Result<()> {
+    /// New or modify profile details and make active, will create if it does not exist
+    fn new_or_modify(&self, profile: Profile) {
         if let Ok(mut ctrl) = self.inner.try_lock() {
-            if let Ok(mut cfg) = ctrl.config.clone().try_lock() {
-                // Update the profile then set it
-                cfg.read();
-                let profile = cfg.active_profile.clone();
-                if let Some(profile) = cfg.power_profiles.get_mut(&profile) {
-                    profile.turbo = enable;
+            ctrl.new_or_modify(&profile)
+                .unwrap_or_else(|err| warn!("{}", err));
+            // Do notification
+            if let Ok(cfg) = ctrl.config.clone().try_lock() {
+                // Do notify
+                if let Some(profile) = cfg.power_profiles.get(&cfg.active_profile) {
+                    self.notify_profile(&profile)
+                        .unwrap_or_else(|err| warn!("{}", err));
                 }
-                ctrl.set(&profile, &mut cfg)?;
-                return Ok(());
             }
         }
-        Ok(())
-    }
-
-    /// Modify the active profile
-    fn set_min_frequency(&self, percentage: u8) -> zbus::fdo::Result<()> {
-        if let Ok(mut ctrl) = self.inner.try_lock() {
-            if let Ok(mut cfg) = ctrl.config.clone().try_lock() {
-                // Update the profile then set it
-                cfg.read();
-                let profile = cfg.active_profile.clone();
-                if let Some(profile) = cfg.power_profiles.get_mut(&profile) {
-                    profile.min_percentage = percentage;
-                }
-                ctrl.set(&profile, &mut cfg)?;
-                return Ok(());
-            }
-        }
-        Ok(())
-    }
-
-    /// Modify the active profile
-    fn set_max_frequency(&self, percentage: u8) -> zbus::fdo::Result<()> {
-        if let Ok(mut ctrl) = self.inner.try_lock() {
-            if let Ok(mut cfg) = ctrl.config.clone().try_lock() {
-                // Update the profile then set it
-                cfg.read();
-                let profile = cfg.active_profile.clone();
-                if let Some(profile) = cfg.power_profiles.get_mut(&profile) {
-                    profile.max_percentage = percentage;
-                }
-                ctrl.set(&profile, &mut cfg)?;
-                return Ok(());
-            }
-        }
-        Ok(())
-    }
-
-    /// Modify the active profile
-    fn set_fan_preset(&self, preset: u8) -> zbus::fdo::Result<()> {
-        if preset > 2 {
-            return Err(zbus::fdo::Error::InvalidArgs(
-                "Fan preset must be 0, 1, or 2".to_string(),
-            ));
-        }
-        if let Ok(mut ctrl) = self.inner.try_lock() {
-            if let Ok(mut cfg) = ctrl.config.clone().try_lock() {
-                // Update the profile then set it
-                cfg.read();
-                let profile = cfg.active_profile.clone();
-                if let Some(profile) = cfg.power_profiles.get_mut(&profile) {
-                    profile.fan_preset = preset;
-                }
-                ctrl.set(&profile, &mut cfg)?;
-                return Ok(());
-            }
-        }
-        Ok(())
-    }
-
-    /// Modify the active profile
-    fn set_fan_curve(&self, curve: String) -> zbus::fdo::Result<()> {
-        let curve = Curve::from_config_str(&curve)
-            .map_err(|err| zbus::fdo::Error::InvalidArgs(format!("Fan curve error: {}", err)))?;
-        if let Ok(mut ctrl) = self.inner.try_lock() {
-            if let Ok(mut cfg) = ctrl.config.clone().try_lock() {
-                // Update the profile then set it
-                cfg.read();
-                let profile = cfg.active_profile.clone();
-                if let Some(profile) = cfg.power_profiles.get_mut(&profile) {
-                    profile.fan_curve = Some(curve);
-                }
-                ctrl.set(&profile, &mut cfg)?;
-                return Ok(());
-            }
-        }
-        Ok(())
     }
 
     /// Fetch the active profile name
@@ -139,17 +60,15 @@ impl FanAndCpuZbus {
                 ctrl.do_next_profile(&mut cfg)
                     .unwrap_or_else(|err| warn!("{}", err));
                 if let Some(profile) = cfg.power_profiles.get(&cfg.active_profile) {
-                    if let Ok(json) = serde_json::to_string(profile) {
-                        self.notify_profile(&json)
-                            .unwrap_or_else(|err| warn!("{}", err));
-                    }
+                    self.notify_profile(&profile)
+                        .unwrap_or_else(|err| warn!("{}", err));
                 }
             }
         }
     }
 
     /// Fetch the active profile name
-    fn active_profile_name(&mut self) -> zbus::fdo::Result<String> {
+    fn active_name(&mut self) -> zbus::fdo::Result<String> {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(mut cfg) = ctrl.config.try_lock() {
                 cfg.read();
@@ -163,14 +82,12 @@ impl FanAndCpuZbus {
 
     // TODO: Profile can't implement Type because of Curve
     /// Fetch the active profile details
-    fn profile(&mut self) -> zbus::fdo::Result<String> {
+    fn active_data(&mut self) -> zbus::fdo::Result<Profile> {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(mut cfg) = ctrl.config.try_lock() {
                 cfg.read();
                 if let Some(profile) = cfg.power_profiles.get(&cfg.active_profile) {
-                    if let Ok(json) = serde_json::to_string_pretty(profile) {
-                        return Ok(json);
-                    }
+                    return Ok(profile.clone());
                 }
             }
         }
@@ -180,13 +97,11 @@ impl FanAndCpuZbus {
     }
 
     /// Fetch all profile data
-    fn profiles(&mut self) -> zbus::fdo::Result<String> {
+    fn profiles(&mut self) -> zbus::fdo::Result<Vec<Profile>> {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(mut cfg) = ctrl.config.try_lock() {
                 cfg.read();
-                if let Ok(json) = serde_json::to_string_pretty(&cfg.power_profiles) {
-                    return Ok(json);
-                }
+                return Ok(cfg.power_profiles.values().cloned().collect());
             }
         }
         Err(Error::Failed(
@@ -236,7 +151,7 @@ impl FanAndCpuZbus {
     }
 
     #[dbus_interface(signal)]
-    fn notify_profile(&self, profile: &str) -> zbus::Result<()> {}
+    fn notify_profile(&self, profile: &Profile) -> zbus::Result<()> {}
 }
 
 impl crate::ZbusAdd for FanAndCpuZbus {

@@ -2,15 +2,19 @@ use log::warn;
 use serde_derive::{Deserialize, Serialize};
 use zbus::dbus_interface;
 use zvariant::ObjectPath;
+use zvariant_derive::Type;
 
-use crate::{GetSupported, ctrl_anime::CtrlAnime, ctrl_charge::CtrlCharge, ctrl_leds::CtrlKbdLed, ctrl_profiles::controller::CtrlFanAndCpu, ctrl_rog_bios::CtrlRogBios};
+use crate::{
+    ctrl_anime::CtrlAnime, ctrl_charge::CtrlCharge, ctrl_leds::controller::CtrlKbdLed,
+    ctrl_profiles::controller::CtrlFanAndCpu, ctrl_rog_bios::CtrlRogBios, GetSupported,
+};
 
 use rog_types::supported::{
     AnimeSupportedFunctions, ChargeSupportedFunctions, FanCpuSupportedFunctions,
     LedSupportedFunctions, RogBiosSupportedFunctions,
 };
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Type)]
 pub struct SupportedFunctions {
     pub anime_ctrl: AnimeSupportedFunctions,
     pub charge_ctrl: ChargeSupportedFunctions,
@@ -21,8 +25,8 @@ pub struct SupportedFunctions {
 
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl SupportedFunctions {
-    fn supported_functions(&self) -> String {
-        serde_json::to_string_pretty(self).unwrap()
+    fn supported_functions(&self) -> &SupportedFunctions {
+        self
     }
 }
 
@@ -46,8 +50,8 @@ impl GetSupported for SupportedFunctions {
 
     fn get_supported() -> Self::A {
         SupportedFunctions {
-            keyboard_led: CtrlKbdLed::get_supported(),
             anime_ctrl: CtrlAnime::get_supported(),
+            keyboard_led: CtrlKbdLed::get_supported(),
             charge_ctrl: CtrlCharge::get_supported(),
             fan_cpu_ctrl: CtrlFanAndCpu::get_supported(),
             rog_bios_ctrl: CtrlRogBios::get_supported(),

@@ -1,5 +1,4 @@
-use rog_dbus::AuraDbusClient;
-use rog_types::supported::SupportedFunctions;
+use rog_dbus::RogDbusClient;
 use rog_user::{
     ctrl_anime::{CtrlAnime, CtrlAnimeInner},
     user_config::*,
@@ -16,13 +15,13 @@ use std::sync::atomic::AtomicBool;
 static ANIME_INNER_EARLY_RETURN: AtomicBool = AtomicBool::new(false);
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("user daemon v{}", rog_user::VERSION);
-    println!("  rog-anime v{}", rog_anime::VERSION);
-    println!("   rog-dbus v{}", rog_dbus::VERSION);
+    println!(" user daemon v{}", rog_user::VERSION);
+    println!("   rog-anime v{}", rog_anime::VERSION);
+    println!("    rog-dbus v{}", rog_dbus::VERSION);
+    println!("   rog-types v{}", rog_types::VERSION);
 
-    let (client, _) = AuraDbusClient::new().unwrap();
+    let (client, _) = RogDbusClient::new().unwrap();
     let supported = client.proxies().supported().get_supported_functions()?;
-    let supported = serde_json::from_str::<SupportedFunctions>(&&supported).unwrap();
 
     let mut config = UserConfig::new();
     config.load_config()?;
@@ -47,7 +46,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             &ANIME_INNER_EARLY_RETURN,
         )?));
         // Need new client object for dbus control part
-        let (client, _) = AuraDbusClient::new().unwrap();
+        let (client, _) = RogDbusClient::new().unwrap();
         let anime_control = CtrlAnime::new(
             anime_config,
             inner.clone(),

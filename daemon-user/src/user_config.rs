@@ -75,7 +75,10 @@ impl UserAnimeConfig {
 
         if let Ok(read_len) = file.read_to_string(&mut buf) {
             if read_len == 0 {
-                let default = UserAnimeConfig { name, ..Default::default() };
+                let default = UserAnimeConfig {
+                    name,
+                    ..Default::default()
+                };
                 let json = serde_json::to_string_pretty(&default).unwrap();
                 file.write_all(json.as_bytes())?;
                 return Ok(default);

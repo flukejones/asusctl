@@ -19,9 +19,9 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use std::sync::{Arc, Mutex};
+use std::sync::mpsc::Sender;
 
-use rog_types::profile::ProfileEvent;
+use rog_profiles::profiles::Profile;
 use zbus::{dbus_proxy, Connection, Result};
 
 #[dbus_proxy(
@@ -29,14 +29,14 @@ use zbus::{dbus_proxy, Connection, Result};
     default_path = "/org/asuslinux/Profile"
 )]
 trait Daemon {
-    /// ActiveProfileName method
-    fn active_profile_name(&self) -> zbus::Result<String>;
-
     /// NextProfile method
     fn next_profile(&self) -> zbus::Result<()>;
 
     /// Profile, get the active profile
-    fn profile(&self) -> zbus::Result<String>;
+    fn active_name(&self) -> zbus::Result<String>;
+
+    /// Get the active `Profile` data
+    fn active_data(&self) -> zbus::Result<Profile>;
 
     /// Profiles method
     fn profiles(&self) -> zbus::Result<String>;
@@ -48,26 +48,11 @@ trait Daemon {
     fn remove(&self, profile: &str) -> zbus::Result<()>;
 
     /// SetProfile method
-    fn set_profile(&self, profile: &str) -> zbus::Result<()>;
-
-    /// SetFanCurve method
-    fn set_fan_curve(&self, curve: &str) -> zbus::Result<()>;
-
-    /// SetFanPreset method
-    fn set_fan_preset(&self, preset: u8) -> zbus::Result<()>;
-
-    /// SetMaxFrequency method
-    fn set_max_frequency(&self, percentage: u8) -> zbus::Result<()>;
-
-    /// SetMinFrequency method
-    fn set_min_frequency(&self, percentage: u8) -> zbus::Result<()>;
-
-    /// SetTurbo method
-    fn set_turbo(&self, enable: bool) -> zbus::Result<()>;
+    fn new_or_modify(&self, profile: &Profile) -> zbus::Result<()>;
 
     /// NotifyProfile signal
     #[dbus_proxy(signal)]
-    fn notify_profile(&self, profile: &str) -> zbus::Result<()>;
+    fn notify_profile(&self, profile: Profile) -> zbus::Result<()>;
 }
 
 pub struct ProfileProxy<'a>(DaemonProxy<'a>);
@@ -83,13 +68,13 @@ impl<'a> ProfileProxy<'a> {
     }
 
     #[inline]
-    pub fn active_profile_name(&self) -> Result<String> {
-        self.0.active_profile_name()
+    pub fn active_name(&self) -> Result<String> {
+        self.0.active_name()
     }
 
     #[inline]
-    pub fn active_profile_data(&self) -> Result<String> {
-        self.0.profile()
+    pub fn active_data(&self) -> Result<Profile> {
+        self.0.active_data()
     }
 
     #[inline]
@@ -100,49 +85,6 @@ impl<'a> ProfileProxy<'a> {
     #[inline]
     pub fn next_fan(&self) -> Result<()> {
         self.0.next_profile()
-    }
-
-    /// SetFanCurve, set fan curve for active profile
-    #[inline]
-    pub fn set_fan_curve(&self, curve: &str) -> zbus::Result<()> {
-        self.0.set_fan_curve(curve)
-    }
-
-    /// SetFanPreset, set fan preset for active profile
-    #[inline]
-    pub fn set_fan_preset(&self, preset: u8) -> zbus::Result<()> {
-        self.0.set_fan_preset(preset)
-    }
-
-    /// SetMaxFrequency, set max percentage of frequency for active profile
-    #[inline]
-    pub fn set_max_frequency(&self, percentage: u8) -> zbus::Result<()> {
-        self.0.set_max_frequency(percentage)
-    }
-
-    /// SetMinFrequency, set min percentage of frequency for active profile
-    #[inline]
-    pub fn set_min_frequency(&self, percentage: u8) -> zbus::Result<()> {
-        self.0.set_min_frequency(percentage)
-    }
-
-    /// SetTurbo, set turbo enable for active profile
-    #[inline]
-    pub fn set_turbo(&self, enable: bool) -> zbus::Result<()> {
-        self.0.set_turbo(enable)
-    }
-
-    // TODO: remove
-    #[inline]
-    pub fn write_fan_mode(&self, level: u8) -> Result<()> {
-        self.0
-            .set_profile(&serde_json::to_string(&ProfileEvent::ChangeMode(level)).unwrap())
-    }
-
-    // TODO: remove
-    #[inline]
-    pub fn write_command(&self, cmd: &ProfileEvent) -> Result<()> {
-        self.0.set_profile(&serde_json::to_string(cmd).unwrap())
     }
 
     #[inline]
@@ -156,14 +98,15 @@ impl<'a> ProfileProxy<'a> {
     }
 
     #[inline]
-    pub fn connect_notify_profile(
-        &self,
-        charge: Arc<Mutex<Option<String>>>,
-    ) -> zbus::fdo::Result<()> {
+    pub fn new_or_modify(&self, profile: &Profile) -> Result<()> {
+        self.0.new_or_modify(profile)
+    }
+
+    #[inline]
+    pub fn connect_notify_profile(&self, send: Sender<Profile>) -> zbus::fdo::Result<()> {
         self.0.connect_notify_profile(move |data| {
-            if let Ok(mut lock) = charge.lock() {
-                *lock = Some(data.to_owned());
-            }
+            send.send(data)
+                .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
             Ok(())
         })
     }

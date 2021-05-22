@@ -1,15 +1,17 @@
 mod anime_cli;
 mod aura_cli;
+mod profiles_cli;
 
 use crate::aura_cli::{LedBrightness, SetAuraBuiltin};
 use anime_cli::{AnimeActions, AnimeCommand};
 use gumdrop::{Opt, Options};
+use profiles_cli::ProfileCommand;
 use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2, ANIME_DATA_LEN};
 use rog_aura::{self, AuraEffect};
-use rog_dbus::AuraDbusClient;
+use rog_dbus::RogDbusClient;
+use rog_profiles::profiles::Profile;
 use rog_types::{
     gfx_vendors::GfxVendors,
-    profile::{FanLevel, ProfileCommand, ProfileEvent},
     supported::{
         FanCpuSupportedFunctions, LedSupportedFunctions, RogBiosSupportedFunctions,
         SupportedFunctions,
@@ -29,11 +31,6 @@ struct CliStart {
     show_supported: bool,
     #[options(meta = "", help = "<off, low, med, high>")]
     kbd_bright: Option<LedBrightness>,
-    #[options(
-        meta = "",
-        help = "<silent, normal, boost>, set fan mode independent of profile"
-    )]
-    fan_mode: Option<FanLevel>,
     #[options(meta = "", help = "<20-100>")]
     chg_limit: Option<u8>,
     #[options(command)]
@@ -132,10 +129,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    let (dbus, _) = AuraDbusClient::new()?;
+    let (dbus, _) = RogDbusClient::new()?;
 
-    let supported_tmp = dbus.proxies().supported().get_supported_functions()?;
-    let supported = serde_json::from_str::<SupportedFunctions>(&supported_tmp)?;
+    let supported = dbus.proxies().supported().get_supported_functions()?;
 
     if parsed.help {
         print_supported_help(&supported, &parsed);
@@ -147,7 +143,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("  asusctl v{}", env!("CARGO_PKG_VERSION"));
         println!(" rog-dbus v{}", rog_dbus::VERSION);
         println!("rog-types v{}", rog_types::VERSION);
-        println!("   daemon v{}", daemon::VERSION);
         return Ok(());
     }
 
@@ -203,10 +198,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Some(CliCommand::Bios(cmd)) => handle_bios_option(&dbus, &supported.rog_bios_ctrl, &cmd)?,
         None => {
-            if (!parsed.show_supported
-                && parsed.kbd_bright.is_none()
-                && parsed.fan_mode.is_none()
-                && parsed.chg_limit.is_none())
+            if (!parsed.show_supported && parsed.kbd_bright.is_none() && parsed.chg_limit.is_none())
                 || parsed.help
             {
                 println!("{}", CliStart::usage());
@@ -231,15 +223,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if parsed.show_supported {
         let dat = dbus.proxies().supported().get_supported_functions()?;
-        println!("Supported laptop functions:\n{}", dat);
+        println!("Supported laptop functions:\n{:?}", dat);
     }
 
-    if let Some(fan_level) = parsed.fan_mode {
-        dbus.proxies().profile().write_fan_mode(fan_level.into())?;
-    }
     if let Some(chg_limit) = parsed.chg_limit {
         dbus.proxies().charge().write_limit(chg_limit)?;
     }
+
     Ok(())
 }
 
@@ -269,7 +259,7 @@ fn print_supported_help(supported: &SupportedFunctions, parsed: &CliStart) {
         {
             return false;
         }
-        if line.contains("led-mode") && supported.keyboard_led.stock_led_modes.is_none() {
+        if line.contains("led-mode") && !supported.keyboard_led.stock_led_modes.is_empty() {
             return false;
         }
         if line.contains("bios")
@@ -295,7 +285,7 @@ fn print_supported_help(supported: &SupportedFunctions, parsed: &CliStart) {
 }
 
 fn do_gfx(
-    dbus: &AuraDbusClient,
+    dbus: &RogDbusClient,
     supported: &RogBiosSupportedFunctions,
     command: GraphicsCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -341,7 +331,7 @@ fn do_gfx(
 }
 
 fn handle_led_mode(
-    dbus: &AuraDbusClient,
+    dbus: &RogDbusClient,
     supported: &LedSupportedFunctions,
     mode: &LedModeCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -363,11 +353,9 @@ fn handle_led_mode(
             .map(|s| s.to_string())
             .collect();
         for command in commands.iter().filter(|command| {
-            if let Some(modes) = supported.stock_led_modes.as_ref() {
-                for mode in modes {
-                    if command.contains(&(<&str>::from(mode)).to_lowercase()) {
-                        return true;
-                    }
+            for mode in &supported.stock_led_modes {
+                if command.contains(<&str>::from(mode)) {
+                    return true;
                 }
             }
             if supported.multizone_led_mode {
@@ -421,7 +409,7 @@ fn handle_led_mode(
 }
 
 fn handle_profile(
-    dbus: &AuraDbusClient,
+    dbus: &RogDbusClient,
     supported: &FanCpuSupportedFunctions,
     cmd: &ProfileCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -476,14 +464,12 @@ fn handle_profile(
     if cmd.active_name {
         println!(
             "Active profile: {:?}",
-            dbus.proxies().profile().active_profile_name()?
+            dbus.proxies().profile().active_name()?
         );
     }
     if cmd.active_data {
         println!("Active profile:");
-        for s in dbus.proxies().profile().active_profile_data()?.lines() {
-            println!("{}", s);
-        }
+        println!("{:?}", dbus.proxies().profile().active_data()?);
     }
     if cmd.profiles_data {
         println!("Profiles:");
@@ -492,41 +478,48 @@ fn handle_profile(
         }
     }
 
-    // This must come before the next block of actions so that changing a specific
-    // profile can be done
-    if cmd.profile.is_some() {
-        dbus.proxies()
-            .profile()
-            .write_command(&ProfileEvent::Cli(cmd.clone()))?;
-        return Ok(());
+    let mut set_profile = false;
+    let mut profile;
+    if cmd.create {
+        profile = Profile::default();
+        set_profile = true;
+    } else {
+        profile = dbus.proxies().profile().active_data()?;
     }
 
     if let Some(turbo) = cmd.turbo {
-        dbus.proxies().profile().set_turbo(turbo)?;
+        set_profile = true;
+        profile.turbo = turbo;
     }
-
     if let Some(min) = cmd.min_percentage {
-        dbus.proxies().profile().set_min_frequency(min)?;
+        set_profile = true;
+        profile.min_percentage = min;
     }
-
     if let Some(max) = cmd.max_percentage {
-        dbus.proxies().profile().set_max_frequency(max)?;
+        set_profile = true;
+        profile.max_percentage = max;
     }
-
-    if let Some(ref preset) = cmd.fan_preset {
-        dbus.proxies().profile().set_fan_preset(preset.into())?;
+    if let Some(preset) = cmd.fan_preset {
+        set_profile = true;
+        profile.fan_preset = preset;
     }
-
     if let Some(ref curve) = cmd.curve {
-        let s = curve.as_config_string();
-        dbus.proxies().profile().set_fan_curve(&s)?;
+        set_profile = true;
+        profile.fan_curve = curve.as_config_string();
+    }
+    if let Some(ref name) = cmd.profile {
+        set_profile = true;
+        profile.name = name.clone();
+    }
+    if set_profile {
+        dbus.proxies().profile().new_or_modify(&profile)?;
     }
 
     Ok(())
 }
 
 fn handle_bios_option(
-    dbus: &AuraDbusClient,
+    dbus: &RogDbusClient,
     supported: &RogBiosSupportedFunctions,
     cmd: &BiosCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -545,8 +538,8 @@ fn handle_bios_option(
                 .collect();
 
             for line in usage.iter().filter(|line| {
-                !(line.contains("sound") && !supported.post_sound_toggle)
-                    || !(line.contains("GPU") && !supported.dedicated_gfx_toggle)
+                !line.contains("sound") && !supported.post_sound_toggle
+                    || !line.contains("GPU") && !supported.dedicated_gfx_toggle
             }) {
                 println!("{}", line);
             }
