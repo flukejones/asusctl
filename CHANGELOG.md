@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+# [3.6.0] - 2021-05-15
 ### Changed
 - Add GX550L led modes
 - Don't save compute/vfio modes. Option in config for this is removed.
@@ -12,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for informational purposes only (will not apply on boot)
 - Save state for LEDs enabled + sleep animation enabled
 - Save state for AnimMe enabled + boot animation enabled
+- Add extra config options and dbus methods
+- Add power state signals for anime and led
+- Refactor to use channels for dbus signal handler send/recv
+- Split out profiles independant parts to a rog-profiles crate
+- Cleanup dependencies
+- Fix some dbus Supported issues
 
 # [3.5.2] - 2021-05-15
 ### Changed
