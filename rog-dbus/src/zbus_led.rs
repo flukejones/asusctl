@@ -19,11 +19,11 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use std::sync::{Arc, Mutex};
+use std::sync::mpsc::Sender;
 
 use zbus::{dbus_proxy, Connection, Result};
 
-use rog_aura::{AuraEffect, KeyColourArray, LedBrightness};
+use rog_aura::{AuraEffect, KeyColourArray, LedBrightness, LedPowerStates};
 
 const BLOCKING_TIME: u64 = 40; // 100ms = 10 FPS, max 50ms = 20 FPS, 40ms = 25 FPS
 
@@ -52,7 +52,10 @@ trait Daemon {
 
     /// NotifyLed signal
     #[dbus_proxy(signal)]
-    fn notify_led(&self, data: &str) -> zbus::Result<()>;
+    fn notify_led(&self, data: AuraEffect) -> zbus::Result<()>;
+
+    #[dbus_proxy(signal)]
+    fn notify_power_states(&self, data: LedPowerStates) -> zbus::Result<()>;
 
     /// LedBrightness property
     #[dbus_proxy(property)]
@@ -65,6 +68,12 @@ trait Daemon {
     /// LedModes property
     #[dbus_proxy(property)]
     fn led_modes(&self) -> zbus::Result<String>;
+
+    #[dbus_proxy(property)]
+    fn awake_enabled(&self) -> zbus::Result<bool>;
+
+    #[dbus_proxy(property)]
+    fn sleep_enabled(&self) -> zbus::Result<bool>;
 }
 
 pub struct LedProxy<'a>(DaemonProxy<'a>);
@@ -119,6 +128,16 @@ impl<'a> LedProxy<'a> {
         self.0.set_led_mode(mode)
     }
 
+    #[inline]
+    pub fn awake_enabled(&self) -> Result<bool> {
+        self.0.awake_enabled()
+    }
+
+    #[inline]
+    pub fn sleep_enabled(&self) -> Result<bool> {
+        self.0.sleep_enabled()
+    }
+
     /// Write a single colour block.
     ///
     /// Intentionally blocks for 10ms after sending to allow the block to
@@ -152,13 +171,22 @@ impl<'a> LedProxy<'a> {
     }
 
     #[inline]
-    pub fn connect_notify_led(&self, led: Arc<Mutex<Option<AuraEffect>>>) -> zbus::fdo::Result<()> {
+    pub fn connect_notify_led(&self, send: Sender<AuraEffect>) -> zbus::fdo::Result<()> {
         self.0.connect_notify_led(move |data| {
-            if let Ok(mut lock) = led.lock() {
-                if let Ok(dat) = serde_json::from_str(&data) {
-                    *lock = Some(dat);
-                }
-            }
+            send.send(data)
+                .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
+            Ok(())
+        })
+    }
+
+    #[inline]
+    pub fn connect_notify_power_states(
+        &self,
+        send: Sender<LedPowerStates>,
+    ) -> zbus::fdo::Result<()> {
+        self.0.connect_notify_power_states(move |data| {
+            send.send(data)
+                .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
             Ok(())
         })
     }

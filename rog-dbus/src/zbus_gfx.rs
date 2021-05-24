@@ -19,7 +19,7 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use std::sync::{Arc, Mutex};
+use std::sync::mpsc::Sender;
 
 use rog_types::gfx_vendors::{GfxPower, GfxRequiredUserAction, GfxVendors};
 use zbus::{dbus_proxy, Connection, Result};
@@ -77,25 +77,20 @@ impl<'a> GfxProxy<'a> {
     #[inline]
     pub fn connect_notify_action(
         &self,
-        action: Arc<Mutex<Option<GfxRequiredUserAction>>>,
+        send: Sender<GfxRequiredUserAction>,
     ) -> zbus::fdo::Result<()> {
         self.0.connect_notify_action(move |data| {
-            if let Ok(mut lock) = action.lock() {
-                *lock = Some(data);
-            }
+            send.send(data)
+                .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
             Ok(())
         })
     }
 
     #[inline]
-    pub fn connect_notify_gfx(
-        &self,
-        vendor: Arc<Mutex<Option<GfxVendors>>>,
-    ) -> zbus::fdo::Result<()> {
+    pub fn connect_notify_gfx(&self, send: Sender<GfxVendors>) -> zbus::fdo::Result<()> {
         self.0.connect_notify_gfx(move |data| {
-            if let Ok(mut lock) = vendor.lock() {
-                *lock = Some(data);
-            }
+            send.send(data)
+                .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
             Ok(())
         })
     }

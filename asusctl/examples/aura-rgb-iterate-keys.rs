@@ -1,8 +1,8 @@
 use rog_aura::{GX502Layout, Key, KeyColourArray, KeyLayout};
-use rog_dbus::AuraDbusClient;
+use rog_dbus::RogDbusClient;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let (dbus, _) = AuraDbusClient::new()?;
+    let (dbus, _) = RogDbusClient::new()?;
 
     let mut key_colours = KeyColourArray::new();
     let layout = GX502Layout::default();

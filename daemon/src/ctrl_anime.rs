@@ -5,7 +5,7 @@ use rog_anime::{
         pkt_for_apply, pkt_for_flush, pkt_for_set_boot, pkt_for_set_on, pkts_for_init, PROD_ID,
         VENDOR_ID,
     },
-    ActionData, AnimTime, AnimeDataBuffer, AnimePacketType, ANIME_DATA_LEN,
+    ActionData, AnimTime, AnimeDataBuffer, AnimePacketType, AnimePowerStates, ANIME_DATA_LEN,
 };
 use rog_types::supported::AnimeSupportedFunctions;
 use rusb::{Device, DeviceHandle};
@@ -333,6 +333,11 @@ pub struct CtrlAnimeReloader(pub Arc<Mutex<CtrlAnime>>);
 impl crate::Reloadable for CtrlAnimeReloader {
     fn reload(&mut self) -> Result<(), RogError> {
         if let Ok(lock) = self.0.try_lock() {
+            lock.write_bytes(&pkt_for_set_on(lock.config.awake_enabled));
+            lock.write_bytes(&pkt_for_apply());
+            lock.write_bytes(&pkt_for_set_boot(lock.config.boot_anim_enabled));
+            lock.write_bytes(&pkt_for_apply());
+
             let action = lock.cache.boot.clone();
             CtrlAnime::run_thread(self.0.clone(), action, true);
         }
@@ -392,8 +397,17 @@ impl CtrlAnimeZbus {
 
     fn set_on_off(&self, status: bool) {
         'outer: loop {
-            if let Ok(lock) = self.0.try_lock() {
+            if let Ok(mut lock) = self.0.try_lock() {
                 lock.write_bytes(&pkt_for_set_on(status));
+                lock.config.awake_enabled = status;
+                lock.config.write();
+
+                let states = AnimePowerStates {
+                    enabled: lock.config.awake_enabled,
+                    boot_anim_enabled: lock.config.boot_anim_enabled,
+                };
+                self.notify_power_states(&states)
+                    .unwrap_or_else(|err| warn!("{}", err));
                 break 'outer;
             }
         }
@@ -401,9 +415,18 @@ impl CtrlAnimeZbus {
 
     fn set_boot_on_off(&self, on: bool) {
         'outer: loop {
-            if let Ok(lock) = self.0.try_lock() {
+            if let Ok(mut lock) = self.0.try_lock() {
                 lock.write_bytes(&pkt_for_set_boot(on));
                 lock.write_bytes(&pkt_for_apply());
+                lock.config.boot_anim_enabled = on;
+                lock.config.write();
+
+                let states = AnimePowerStates {
+                    enabled: lock.config.awake_enabled,
+                    boot_anim_enabled: lock.config.boot_anim_enabled,
+                };
+                self.notify_power_states(&states)
+                    .unwrap_or_else(|err| warn!("{}", err));
                 break 'outer;
             }
         }
@@ -422,4 +445,23 @@ impl CtrlAnimeZbus {
             }
         }
     }
+
+    #[dbus_interface(property)]
+    fn awake_enabled(&self) -> bool {
+        if let Ok(ctrl) = self.0.try_lock() {
+            return ctrl.config.awake_enabled;
+        }
+        true
+    }
+
+    #[dbus_interface(property)]
+    fn boot_enabled(&self) -> bool {
+        if let Ok(ctrl) = self.0.try_lock() {
+            return ctrl.config.boot_anim_enabled;
+        }
+        true
+    }
+
+    #[dbus_interface(signal)]
+    fn notify_power_states(&self, data: &AnimePowerStates) -> zbus::Result<()>;
 }

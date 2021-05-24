@@ -1,7 +1,7 @@
 use std::{thread::sleep, time::Duration};
 
 use rog_anime::{AnimeDataBuffer, AnimeDiagonal};
-use rog_dbus::AuraDbusClient;
+use rog_dbus::RogDbusClient;
 
 // In usable data:
 // Top row start at 1, ends at 32
@@ -9,7 +9,7 @@ use rog_dbus::AuraDbusClient;
 // 74w x 36h diagonal used by the windows app
 
 fn main() {
-    let (client, _) = AuraDbusClient::new().unwrap();
+    let (client, _) = RogDbusClient::new().unwrap();
 
     for step in (2..50).rev() {
         let mut matrix = AnimeDiagonal::new(None);

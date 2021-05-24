@@ -19,7 +19,9 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use rog_anime::AnimeDataBuffer;
+use std::sync::mpsc::Sender;
+
+use rog_anime::{AnimeDataBuffer, AnimePowerStates};
 use zbus::{dbus_proxy, Connection, Result};
 
 #[dbus_proxy(
@@ -35,6 +37,15 @@ trait Daemon {
 
     /// WriteDirect method
     fn write(&self, input: &[u8]) -> zbus::Result<()>;
+
+    #[dbus_proxy(property)]
+    fn awake_enabled(&self) -> zbus::Result<bool>;
+
+    #[dbus_proxy(property)]
+    fn boot_enabled(&self) -> zbus::Result<bool>;
+
+    #[dbus_proxy(signal)]
+    fn notify_power_states(&self, data: AnimePowerStates) -> zbus::Result<()>;
 }
 
 pub struct AnimeProxy<'a>(DaemonProxy<'a>);
@@ -62,5 +73,27 @@ impl<'a> AnimeProxy<'a> {
     #[inline]
     pub fn write(&self, input: AnimeDataBuffer) -> Result<()> {
         self.0.write(input.get())
+    }
+
+    #[inline]
+    pub fn awake_enabled(&self) -> Result<bool> {
+        self.0.awake_enabled()
+    }
+
+    #[inline]
+    pub fn boot_enabled(&self) -> Result<bool> {
+        self.0.boot_enabled()
+    }
+
+    #[inline]
+    pub fn connect_notify_power_states(
+        &self,
+        send: Sender<AnimePowerStates>,
+    ) -> zbus::fdo::Result<()> {
+        self.0.connect_notify_power_states(move |data| {
+            send.send(data)
+                .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
+            Ok(())
+        })
     }
 }

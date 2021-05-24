@@ -1,11 +1,13 @@
-use daemon::ctrl_leds::{CtrlKbdLed, CtrlKbdLedReloader, CtrlKbdLedTask, CtrlKbdLedZbus};
+use daemon::ctrl_leds::controller::{
+    CtrlKbdLed, CtrlKbdLedReloader, CtrlKbdLedTask, CtrlKbdLedZbus,
+};
 use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
 };
 use daemon::{config_anime::AnimeConfig, config_aura::AuraConfig, ctrl_charge::CtrlCharge};
 use daemon::{ctrl_anime::*, ctrl_gfx::controller::CtrlGraphics};
 use daemon::{
-    ctrl_profiles::{zbus::FanAndCpuZbus, controller::CtrlFanAndCpu},
+    ctrl_profiles::{controller::CtrlFanAndCpu, zbus::FanAndCpuZbus},
     laptops::LaptopLedData,
 };
 
@@ -33,9 +35,12 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
         .filter(None, LevelFilter::Info)
         .init();
 
-    info!("   daemon v{}", daemon::VERSION);
-    info!(" rog-dbus v{}", rog_dbus::VERSION);
-    info!("rog-types v{}", rog_types::VERSION);
+    info!("      daemon v{}", daemon::VERSION);
+    info!("   rog-anime v{}", rog_anime::VERSION);
+    info!("    rog-aura v{}", rog_aura::VERSION);
+    info!("    rog-dbus v{}", rog_dbus::VERSION);
+    info!("rog-profiles v{}", rog_profiles::VERSION);
+    info!("   rog-types v{}", rog_types::VERSION);
 
     start_daemon()?;
     Ok(())

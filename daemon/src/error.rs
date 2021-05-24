@@ -1,5 +1,5 @@
-use intel_pstate::PStateError;
 use rog_fan_curve::CurveError;
+use rog_profiles::error::ProfileError;
 use rog_types::error::GraphicsError;
 use std::convert::From;
 use std::fmt;
@@ -18,13 +18,13 @@ pub enum RogError {
     Write(String, std::io::Error),
     NotSupported,
     NotFound(String),
-    IntelPstate(PStateError),
     FanCurve(CurveError),
     DoTask(String),
     MissingFunction(String),
     MissingLedBrightNode(String, std::io::Error),
     ReloadFail(String),
     GfxSwitching(GfxError),
+    Profiles(ProfileError),
     Initramfs(String),
     Modprobe(String),
     Command(String, std::io::Error),
@@ -46,13 +46,13 @@ impl fmt::Display for RogError {
             RogError::Write(path, error) => write!(f, "Write {}: {}", path, error),
             RogError::NotSupported => write!(f, "Not supported"),
             RogError::NotFound(deets) => write!(f, "Not found: {}", deets),
-            RogError::IntelPstate(err) => write!(f, "Intel pstate error: {}", err),
             RogError::FanCurve(err) => write!(f, "Custom fan-curve error: {}", err),
             RogError::DoTask(deets) => write!(f, "Task error: {}", deets),
             RogError::MissingFunction(deets) => write!(f, "Missing functionality: {}", deets),
             RogError::MissingLedBrightNode(path, error) => write!(f, "Led node at {} is missing, please check you have the required patch or dkms module installed: {}", path, error),
             RogError::ReloadFail(deets) => write!(f, "Task error: {}", deets),
             RogError::GfxSwitching(deets) => write!(f, "Graphics switching error: {}", deets),
+            RogError::Profiles(deets) => write!(f, "Profile error: {}", deets),
             RogError::Initramfs(detail) => write!(f, "Initiramfs error: {}", detail),
             RogError::Modprobe(detail) => write!(f, "Modprobe error: {}", detail),
             RogError::Command(func, error) => write!(f, "Command exec error: {}: {}", func, error),
@@ -63,12 +63,6 @@ impl fmt::Display for RogError {
 }
 
 impl std::error::Error for RogError {}
-
-impl From<PStateError> for RogError {
-    fn from(err: PStateError) -> Self {
-        RogError::IntelPstate(err)
-    }
-}
 
 impl From<CurveError> for RogError {
     fn from(err: CurveError) -> Self {
@@ -82,6 +76,12 @@ impl From<GraphicsError> for RogError {
             GraphicsError::ParseVendor => RogError::GfxSwitching(GfxError::ParseVendor),
             GraphicsError::ParsePower => RogError::GfxSwitching(GfxError::ParsePower),
         }
+    }
+}
+
+impl From<ProfileError> for RogError {
+    fn from(err: ProfileError) -> Self {
+        RogError::Profiles(err)
     }
 }
 

@@ -1,5 +1,5 @@
 use rog_anime::{ActionData, AnimTime, AnimeAction, Sequences, Vec2};
-use rog_dbus::AuraDbusClient;
+use rog_dbus::RogDbusClient;
 //use crate::dbus::DbusEvents;
 use serde_derive::{Deserialize, Serialize};
 use std::time::Duration;
@@ -28,14 +28,14 @@ pub enum TimeType {
 /// and a zbus server behind `Arc<Mutex<T>>`
 pub struct CtrlAnimeInner<'a> {
     sequences: Sequences,
-    client: AuraDbusClient<'a>,
+    client: RogDbusClient<'a>,
     do_early_return: &'a AtomicBool,
 }
 
 impl<'a> CtrlAnimeInner<'static> {
     pub fn new(
         sequences: Sequences,
-        client: AuraDbusClient<'static>,
+        client: RogDbusClient<'static>,
         do_early_return: &'static AtomicBool,
     ) -> Result<Self, Error> {
         Ok(Self {
@@ -112,7 +112,7 @@ impl<'a> CtrlAnimeInner<'static> {
 
 pub struct CtrlAnime<'a> {
     config: Arc<Mutex<UserAnimeConfig>>,
-    client: AuraDbusClient<'a>,
+    client: RogDbusClient<'a>,
     inner: Arc<Mutex<CtrlAnimeInner<'a>>>,
     /// Must be the same Atomic as in CtrlAnimeInner
     inner_early_return: &'a AtomicBool,
@@ -122,13 +122,13 @@ impl<'a> CtrlAnime<'static> {
     pub fn new(
         config: Arc<Mutex<UserAnimeConfig>>,
         inner: Arc<Mutex<CtrlAnimeInner<'static>>>,
-        client: AuraDbusClient<'static>,
+        client: RogDbusClient<'static>,
         inner_early_return: &'static AtomicBool,
     ) -> Result<Self, Error> {
         Ok(CtrlAnime {
             config,
-            inner,
             client,
+            inner,
             inner_early_return,
         })
     }
@@ -180,7 +180,10 @@ impl CtrlAnime<'static> {
             self.inner_early_return.store(true, Ordering::SeqCst);
 
             if let Ok(mut controller) = self.inner.lock() {
-                controller.sequences.insert(index as usize, &action)?;
+                controller
+                    .sequences
+                    .insert(index as usize, &action)
+                    .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
             }
             config.anime.push(action);
             config.write()?;
@@ -227,7 +230,10 @@ impl CtrlAnime<'static> {
             self.inner_early_return.store(true, Ordering::SeqCst);
 
             if let Ok(mut controller) = self.inner.lock() {
-                controller.sequences.insert(index as usize, &action)?;
+                controller
+                    .sequences
+                    .insert(index as usize, &action)
+                    .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
             }
             config.anime.push(action);
             config.write()?;
@@ -265,7 +271,10 @@ impl CtrlAnime<'static> {
             self.inner_early_return.store(true, Ordering::SeqCst);
 
             if let Ok(mut controller) = self.inner.lock() {
-                controller.sequences.insert(index as usize, &action)?;
+                controller
+                    .sequences
+                    .insert(index as usize, &action)
+                    .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
             }
             config.anime.push(action);
             config.write()?;
@@ -287,7 +296,10 @@ impl CtrlAnime<'static> {
             self.inner_early_return.store(true, Ordering::SeqCst);
 
             if let Ok(mut controller) = self.inner.lock() {
-                controller.sequences.insert(index as usize, &action)?;
+                controller
+                    .sequences
+                    .insert(index as usize, &action)
+                    .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
             }
             config.anime.push(action);
             config.write()?;

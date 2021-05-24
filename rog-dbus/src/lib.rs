@@ -10,9 +10,11 @@ pub mod zbus_profile;
 pub mod zbus_rogbios;
 pub mod zbus_supported;
 
-use rog_aura::AuraEffect;
+use rog_anime::AnimePowerStates;
+use rog_aura::{AuraEffect, LedPowerStates};
+use rog_profiles::profiles::Profile;
 use rog_types::gfx_vendors::{GfxRequiredUserAction, GfxVendors};
-use std::sync::{Arc, Mutex};
+use std::sync::mpsc::{channel, Receiver};
 use zbus::{Connection, Result, SignalReceiver};
 
 pub static VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -45,9 +47,9 @@ impl<'a> DbusProxies<'a> {
         ))
     }
 
-    pub fn setup_recv(&'a self, conn: Connection) -> SignalReceiver {
+    pub fn setup_recv(&'a self, conn: Connection) -> SignalReceiver<'a, 'a> {
         let mut recv = SignalReceiver::new(conn);
-        //recv.receive_for(&self.proxy_anime);
+        recv.receive_for(self.anime.proxy());
         recv.receive_for(self.led.proxy());
         recv.receive_for(self.charge.proxy());
         recv.receive_for(self.gfx.proxy());
@@ -86,66 +88,89 @@ impl<'a> DbusProxies<'a> {
 
 // Signals separated out
 pub struct Signals {
-    pub gfx_vendor: Arc<Mutex<Option<GfxVendors>>>,
-    pub gfx_action: Arc<Mutex<Option<GfxRequiredUserAction>>>,
-    pub profile: Arc<Mutex<Option<String>>>,
-    pub led_mode: Arc<Mutex<Option<AuraEffect>>>,
-    pub charge: Arc<Mutex<Option<u8>>>,
+    pub gfx_vendor: Receiver<GfxVendors>,
+    pub gfx_action: Receiver<GfxRequiredUserAction>,
+    pub profile: Receiver<Profile>,
+    pub led_mode: Receiver<AuraEffect>,
+    pub led_power_state: Receiver<LedPowerStates>,
+    pub anime_power_state: Receiver<AnimePowerStates>,
+    pub charge: Receiver<u8>,
 }
 
 impl Signals {
     #[inline]
     pub fn new(proxies: &DbusProxies) -> Result<Self> {
-        //
-        let charge_signal = Arc::new(Mutex::new(None));
-        proxies
-            .charge
-            .connect_notify_charge(charge_signal.clone())?;
-
-        //
-        let ledmode_signal = Arc::new(Mutex::new(None));
-        proxies.led.connect_notify_led(ledmode_signal.clone())?;
-
-        let gfx_action_signal = Arc::new(Mutex::new(None));
-        proxies
-            .gfx
-            .connect_notify_action(gfx_action_signal.clone())?;
-
-        let gfx_vendor_signal = Arc::new(Mutex::new(None));
-        proxies.gfx.connect_notify_gfx(gfx_vendor_signal.clone())?;
-
-        let profile_signal = Arc::new(Mutex::new(None));
-        proxies
-            .profile
-            .connect_notify_profile(profile_signal.clone())?;
-
         Ok(Signals {
-            gfx_vendor: gfx_vendor_signal,
-            gfx_action: gfx_action_signal,
-            profile: profile_signal,
-            led_mode: ledmode_signal,
-            charge: charge_signal,
+            gfx_vendor: {
+                let (tx, rx) = channel();
+                proxies.gfx.connect_notify_gfx(tx)?;
+                rx
+            },
+            gfx_action: {
+                let (tx, rx) = channel();
+                proxies.gfx.connect_notify_action(tx)?;
+                rx
+            },
+            profile: {
+                let (tx, rx) = channel();
+                proxies.profile.connect_notify_profile(tx)?;
+                rx
+            },
+            charge: {
+                let (tx, rx) = channel();
+                proxies.charge.connect_notify_charge(tx)?;
+                rx
+            },
+            led_mode: {
+                let (tx, rx) = channel();
+                proxies.led.connect_notify_led(tx)?;
+                rx
+            },
+            led_power_state: {
+                let (tx, rx) = channel();
+                proxies.led.connect_notify_power_states(tx)?;
+                rx
+            },
+            anime_power_state: {
+                let (tx, rx) = channel();
+                proxies.anime.connect_notify_power_states(tx)?;
+                rx
+            },
         })
     }
 }
 
 /// This is the main way to communicate with the DBUS interface
-pub struct AuraDbusClient<'a> {
+pub struct RogDbusClient<'a> {
     proxies: DbusProxies<'a>,
     signals: Signals,
 }
 
-impl<'a> AuraDbusClient<'a> {
+impl<'a> RogDbusClient<'a> {
     #[inline]
     pub fn new() -> Result<(Self, Connection)> {
         let (proxies, conn) = DbusProxies::new()?;
         let signals = Signals::new(&proxies)?;
 
-        Ok((AuraDbusClient { proxies, signals }, conn))
+        Ok((RogDbusClient { proxies, signals }, conn))
     }
 
     pub fn proxies(&self) -> &DbusProxies {
         &self.proxies
+    }
+
+    pub fn signals(&self) -> &Signals {
+        &self.signals
+    }
+
+    pub fn setup_recv(&'a self, conn: Connection) -> SignalReceiver<'a, 'a> {
+        let mut recv = SignalReceiver::new(conn);
+        recv.receive_for(self.proxies.anime.proxy());
+        recv.receive_for(self.proxies.led.proxy());
+        recv.receive_for(self.proxies.charge.proxy());
+        recv.receive_for(self.proxies.gfx.proxy());
+        recv.receive_for(self.proxies.profile.proxy());
+        recv
     }
 
     /*
@@ -155,10 +180,8 @@ impl<'a> AuraDbusClient<'a> {
         loop {
             if let Ok(res) = self.proxies.gfx.proxy().next_signal() {
                 if res.is_none() {
-                    if let Ok(lock) = self.signals.gfx_action.lock() {
-                        if let Some(stuff) = lock.as_ref() {
-                            return Ok(*stuff);
-                        }
+                    if let Ok(stuff) = self.signals.gfx_action.try_recv() {
+                        return Ok(stuff);
                     }
                     // return Ok("Failed for unknown reason".to_owned());
                 }

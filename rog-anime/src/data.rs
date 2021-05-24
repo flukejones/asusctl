@@ -14,6 +14,14 @@ pub const ANIME_DATA_LEN: usize = PANE_LEN * 2;
 const USB_PREFIX1: [u8; 7] = [0x5e, 0xc0, 0x02, 0x01, 0x00, 0x73, 0x02];
 const USB_PREFIX2: [u8; 7] = [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x02];
 
+#[cfg_attr(feature = "dbus", derive(Type))]
+#[derive(Debug, PartialEq, Copy, Clone, Deserialize, Serialize)]
+
+pub struct AnimePowerStates {
+    pub enabled: bool,
+    pub boot_anim_enabled: bool,
+}
+
 /// The minimal serializable data that can be transferred over wire types.
 /// Other data structures in `rog_anime` will convert to this.
 #[cfg_attr(feature = "dbus", derive(Type))]

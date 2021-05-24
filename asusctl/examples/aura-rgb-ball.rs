@@ -1,5 +1,5 @@
 use rog_aura::{GX502Layout, Key, KeyColourArray, KeyLayout};
-use rog_dbus::AuraDbusClient;
+use rog_dbus::RogDbusClient;
 use std::collections::LinkedList;
 
 #[derive(Debug, Clone)]
@@ -52,7 +52,7 @@ impl Ball {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let (dbus, _) = AuraDbusClient::new()?;
+    let (dbus, _) = RogDbusClient::new()?;
 
     let mut colours = KeyColourArray::new();
 

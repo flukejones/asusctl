@@ -1,5 +1,6 @@
 use log::{error, info, warn};
-use rog_types::{gfx_vendors::GfxVendors, profile::Profile};
+use rog_profiles::profiles::{FanLevel, Profile};
+use rog_types::gfx_vendors::GfxVendors;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs::{File, OpenOptions};
@@ -30,9 +31,39 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         let mut pwr = BTreeMap::new();
-        pwr.insert("normal".into(), Profile::new(0, 100, true, 0, None));
-        pwr.insert("boost".into(), Profile::new(0, 100, true, 1, None));
-        pwr.insert("silent".into(), Profile::new(0, 100, true, 2, None));
+        pwr.insert(
+            "normal".into(),
+            Profile::new(
+                "normal".into(),
+                0,
+                100,
+                true,
+                FanLevel::Normal,
+                "".to_string(),
+            ),
+        );
+        pwr.insert(
+            "boost".into(),
+            Profile::new(
+                "boost".into(),
+                0,
+                100,
+                true,
+                FanLevel::Boost,
+                "".to_string(),
+            ),
+        );
+        pwr.insert(
+            "silent".into(),
+            Profile::new(
+                "silent".into(),
+                0,
+                100,
+                true,
+                FanLevel::Silent,
+                "".to_string(),
+            ),
+        );
 
         Config {
             gfx_mode: GfxVendors::Hybrid,
@@ -56,12 +87,7 @@ impl Config {
             .write(true)
             .create(true)
             .open(&CONFIG_PATH)
-            .unwrap_or_else(|_| {
-                panic!(
-                    "The file {} or directory /etc/asusd/ is missing",
-                    CONFIG_PATH
-                )
-            }); // okay to cause panic here
+            .unwrap_or_else(|_| panic!("The directory /etc/asusd/ is missing")); // okay to cause panic here
         let mut buf = String::new();
         if let Ok(read_len) = file.read_to_string(&mut buf) {
             if read_len == 0 {

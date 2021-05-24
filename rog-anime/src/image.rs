@@ -180,36 +180,34 @@ impl AnimeImage {
         let du = led_from_px * Vec3::new(-0.5, 0.5, 0.0);
         let dv = led_from_px * Vec3::new(0.5, 0.5, 0.0);
 
-        for led in self.led_pos.iter_mut() {
-            if let Some(led) = led {
-                let mut sum = 0.0;
-                let mut alpha = 0.0;
-                let mut count = 0;
+        for led in self.led_pos.iter_mut().flatten() {
+            let mut sum = 0.0;
+            let mut alpha = 0.0;
+            let mut count = 0;
 
-                let pos = Vec3::new(led.x(), led.y(), 1.0);
-                let x0 = led_from_px.mul_vec3(pos + Vec3::new(0.0, -0.5, 0.0));
+            let pos = Vec3::new(led.x(), led.y(), 1.0);
+            let x0 = led_from_px.mul_vec3(pos + Vec3::new(0.0, -0.5, 0.0));
 
-                const GROUP: [f32; 4] = [0.0, 0.5, 1.0, 1.5];
-                for u in GROUP.iter() {
-                    for v in GROUP.iter() {
-                        let sample = x0 + *u * du + *v * dv;
+            const GROUP: [f32; 4] = [0.0, 0.5, 1.0, 1.5];
+            for u in GROUP.iter() {
+                for v in GROUP.iter() {
+                    let sample = x0 + *u * du + *v * dv;
 
-                        let x = sample.x as i32;
-                        let y = sample.y as i32;
-                        if x > width - 1 || y > height - 1 || x < 0 || y < 0 {
-                            continue;
-                        }
-
-                        let p = self.img_pixels[(x + (y * width)) as usize];
-                        sum += p.color as f32;
-                        alpha += p.alpha;
-                        count += 1;
+                    let x = sample.x as i32;
+                    let y = sample.y as i32;
+                    if x > width - 1 || y > height - 1 || x < 0 || y < 0 {
+                        continue;
                     }
+
+                    let p = self.img_pixels[(x + (y * width)) as usize];
+                    sum += p.color as f32;
+                    alpha += p.alpha;
+                    count += 1;
                 }
-                alpha /= count as f32;
-                sum /= count as f32;
-                led.set_bright((sum * self.bright * alpha) as u8);
             }
+            alpha /= count as f32;
+            sum /= count as f32;
+            led.set_bright((sum * self.bright * alpha) as u8);
         }
     }
 

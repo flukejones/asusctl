@@ -1,6 +1,6 @@
 use notify_rust::{Hint, Notification, NotificationHandle};
 use rog_dbus::{DbusProxies, Signals};
-use rog_types::profile::Profile;
+use rog_profiles::profiles::{FanLevel, Profile};
 use std::error::Error;
 use std::thread::sleep;
 use std::time::Duration;
@@ -36,73 +36,59 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         err_count = 0;
 
-        if let Ok(mut lock) = signals.gfx_vendor.lock() {
-            if let Some(vendor) = lock.take() {
-                if let Some(notif) = last_gfx_notif.take() {
-                    notif.close();
-                }
-                let x = do_notif(&format!(
-                    "Graphics mode changed to {}",
-                    <&str>::from(vendor)
-                ))?;
-                last_gfx_notif = Some(x);
+        if let Ok(vendor) = signals.gfx_vendor.try_recv() {
+            if let Some(notif) = last_gfx_notif.take() {
+                notif.close();
             }
+            let x = do_notif(&format!(
+                "Graphics mode changed to {}",
+                <&str>::from(vendor)
+            ))?;
+            last_gfx_notif = Some(x);
         }
 
-        if let Ok(mut lock) = signals.charge.lock() {
-            if let Some(limit) = lock.take() {
-                if let Some(notif) = last_chrg_notif.take() {
-                    notif.close();
-                }
-                let x = do_notif(&format!("Battery charge limit changed to {}", limit))?;
-                last_chrg_notif = Some(x);
+        if let Ok(limit) = signals.charge.try_recv() {
+            if let Some(notif) = last_chrg_notif.take() {
+                notif.close();
             }
+            let x = do_notif(&format!("Battery charge limit changed to {}", limit))?;
+            last_chrg_notif = Some(x);
         }
 
-        if let Ok(mut lock) = signals.profile.lock() {
-            if let Some(profile) = lock.take() {
-                if let Some(notif) = last_profile_notif.take() {
-                    notif.close();
-                }
-                if let Ok(profile) = serde_json::from_str(&profile) {
-                    let profile: Profile = profile;
-                    if let Ok(name) = proxies.profile().active_profile_name() {
-                        let x = do_thermal_notif(&profile, &name)?;
-                        last_profile_notif = Some(x);
-                    }
-                }
+        if let Ok(profile) = signals.profile.try_recv() {
+            if let Some(notif) = last_profile_notif.take() {
+                notif.close();
             }
+            let x = do_thermal_notif(&profile)?;
+            last_profile_notif = Some(x);
         }
 
-        if let Ok(mut lock) = signals.led_mode.lock() {
-            if let Some(ledmode) = lock.take() {
-                if let Some(notif) = last_led_notif.take() {
-                    notif.close();
-                }
-                let x = do_notif(&format!(
-                    "Keyboard LED mode changed to {}",
-                    ledmode.mode_name()
-                ))?;
-                last_led_notif = Some(x);
+        if let Ok(ledmode) = signals.led_mode.try_recv() {
+            if let Some(notif) = last_led_notif.take() {
+                notif.close();
             }
+            let x = do_notif(&format!(
+                "Keyboard LED mode changed to {}",
+                ledmode.mode_name()
+            ))?;
+            last_led_notif = Some(x);
         }
     }
 }
 
-fn do_thermal_notif(profile: &Profile, label: &str) -> Result<NotificationHandle, Box<dyn Error>> {
+fn do_thermal_notif(profile: &Profile) -> Result<NotificationHandle, Box<dyn Error>> {
     let fan = profile.fan_preset;
     let turbo = if profile.turbo { "enabled" } else { "disabled" };
     let icon = match fan {
-        0 => "asus_notif_yellow",
-        1 => "asus_notif_red",
-        2 => "asus_notif_green",
-        _ => "asus_notif_red",
+        FanLevel::Normal => "asus_notif_yellow",
+        FanLevel::Boost => "asus_notif_red",
+        FanLevel::Silent => "asus_notif_green",
     };
     let x = Notification::new()
         .summary("ASUS ROG")
         .body(&format!(
             "Thermal profile changed to {}, turbo {}",
-            label.to_uppercase(),
+            profile.name.to_uppercase(),
             turbo
         ))
         .hint(Hint::Resident(true))

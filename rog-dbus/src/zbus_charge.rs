@@ -19,7 +19,7 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use std::sync::{Arc, Mutex};
+use std::sync::mpsc::Sender;
 
 use zbus::{dbus_proxy, Connection, Result};
 
@@ -62,11 +62,10 @@ impl<'a> ChargeProxy<'a> {
     }
 
     #[inline]
-    pub fn connect_notify_charge(&self, charge: Arc<Mutex<Option<u8>>>) -> zbus::fdo::Result<()> {
+    pub fn connect_notify_charge(&self, send: Sender<u8>) -> zbus::fdo::Result<()> {
         self.0.connect_notify_charge(move |data| {
-            if let Ok(mut lock) = charge.lock() {
-                *lock = Some(data);
-            }
+            send.send(data)
+                .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
             Ok(())
         })
     }

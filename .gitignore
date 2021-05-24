@@ -1,2 +1,6 @@
 /target
 vendor.tar.xz
+cargo-config
+.idea
+vendor-*
+vendor_*

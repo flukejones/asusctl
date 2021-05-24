@@ -1,11 +1,11 @@
 use rog_anime::AnimeDataBuffer;
-use rog_dbus::AuraDbusClient;
+use rog_dbus::RogDbusClient;
 
 // In usable data:
 // Top row start at 1, ends at 32
 
 fn main() {
-    let (client, _) = AuraDbusClient::new().unwrap();
+    let (client, _) = RogDbusClient::new().unwrap();
     let mut matrix = AnimeDataBuffer::new();
     matrix.get_mut()[1] = 100; // start = 1
     for n in matrix.get_mut()[2..32].iter_mut() {

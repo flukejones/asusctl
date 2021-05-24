@@ -10,6 +10,7 @@ edition = "2018"
 # serialisation
 serde_json = "^1.0"
 rog_dbus = { path = "../rog-dbus" }
+rog_profiles = { path = "../rog-profiles" }
 rog_types = { path = "../rog-types" }
 daemon = { path = "../daemon" }
 

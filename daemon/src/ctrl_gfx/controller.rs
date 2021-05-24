@@ -120,7 +120,7 @@ impl CtrlGraphics {
     pub fn get_gfx_mode(&self) -> Result<GfxVendors, RogError> {
         if let Ok(config) = self.config.lock() {
             if let Some(mode) = config.gfx_tmp_mode {
-                return Ok(mode);    
+                return Ok(mode);
             }
             return Ok(config.gfx_mode);
         }

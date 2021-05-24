@@ -309,11 +309,9 @@ impl CtrlRogBios {
 
                     let mut buf = Vec::new();
                     // remove modules
-                    for line in std::io::BufReader::new(file).lines() {
-                        if let Ok(l) = line {
-                            if !modules.contains(&l.as_ref()) {
-                                buf.append(&mut l.as_bytes().to_vec());
-                            }
+                    for line in std::io::BufReader::new(file).lines().flatten() {
+                        if !modules.contains(&line.as_str()) {
+                            buf.append(&mut line.as_bytes().to_vec());
                         }
                     }
 

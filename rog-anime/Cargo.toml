@@ -14,7 +14,7 @@ exclude = ["data"]
 
 [features]
 default = ["dbus"]
-dbus = ["zbus", "zvariant", "zvariant_derive"]
+dbus = ["zvariant", "zvariant_derive"]
 
 [dependencies]
 png_pong = "^0.8.0"
@@ -26,6 +26,5 @@ serde_derive = "^1.0"
 
 glam = { version = "0.14.0", features = ["serde"] }
 
-zbus = { version = "^1.9.1", optional = true }
 zvariant = { version = "^2.6", optional = true }
 zvariant_derive = { version = "^2.6", optional = true }
