@@ -43,39 +43,39 @@ impl CtrlFanAndCpu {
     }
 
     /// Toggle to next profile in list
-    pub(super) fn do_next_profile(&mut self, config: &mut Config) -> Result<(), RogError> {
-        config.read();
+    pub(super) fn do_next_profile(&mut self) -> Result<(), RogError> {
+        if let Ok(mut config) = self.config.clone().try_lock() {
+            config.read();
 
-        let mut i = config
-            .toggle_profiles
-            .iter()
-            .position(|x| x == &config.active_profile)
-            .map(|i| i + 1)
-            .unwrap_or(0);
-        if i >= config.toggle_profiles.len() {
-            i = 0;
+            let mut i = config
+                .toggle_profiles
+                .binary_search(&config.active_profile)
+                .unwrap_or(0)
+                + 1;
+            if i >= config.toggle_profiles.len() {
+                i = 0;
+            }
+
+            let profile = config.toggle_profiles[i].clone();
+
+            if let Some(existing) = config.power_profiles.get(&profile) {
+                existing.set_system_all()?;
+                config.active_profile = existing.name.clone();
+                config.write();
+                info!("Profile was changed to: {}", profile);
+            }
         }
-
-        let new_profile = config
-            .toggle_profiles
-            .get(i)
-            .unwrap_or(&config.active_profile)
-            .clone();
-
-        self.set_active(&new_profile)?;
-
-        info!("Profile was changed: {}", &new_profile);
         Ok(())
     }
 
     pub(super) fn set_active(&mut self, profile: &str) -> Result<(), RogError> {
         if let Ok(mut cfg) = self.config.clone().try_lock() {
             cfg.read();
-
-            if let Some(existing) = cfg.power_profiles.get_mut(profile) {
+            if let Some(existing) = cfg.power_profiles.get(profile) {
                 existing.set_system_all()?;
                 cfg.active_profile = existing.name.clone();
                 cfg.write();
+                info!("Profile was changed to: {}", profile);
             }
         }
         Ok(())

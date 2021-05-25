@@ -25,15 +25,8 @@ impl FanAndCpuZbus {
         if let Ok(mut ctrl) = self.inner.try_lock() {
             ctrl.set_active(&profile)
                 .unwrap_or_else(|err| warn!("{}", err));
-            // Do notification
-            if let Ok(cfg) = ctrl.config.clone().try_lock() {
-                // Do notify
-                if let Some(profile) = cfg.power_profiles.get(&cfg.active_profile) {
-                    self.notify_profile(&profile)
-                        .unwrap_or_else(|err| warn!("{}", err));
-                }
-            }
         }
+        self.do_notification();
     }
 
     /// New or modify profile details and make active, will create if it does not exist
@@ -41,30 +34,17 @@ impl FanAndCpuZbus {
         if let Ok(mut ctrl) = self.inner.try_lock() {
             ctrl.new_or_modify(&profile)
                 .unwrap_or_else(|err| warn!("{}", err));
-            // Do notification
-            if let Ok(cfg) = ctrl.config.clone().try_lock() {
-                // Do notify
-                if let Some(profile) = cfg.power_profiles.get(&cfg.active_profile) {
-                    self.notify_profile(&profile)
-                        .unwrap_or_else(|err| warn!("{}", err));
-                }
-            }
         }
+        self.do_notification();
     }
 
     /// Fetch the active profile name
     fn next_profile(&mut self) {
         if let Ok(mut ctrl) = self.inner.try_lock() {
-            if let Ok(mut cfg) = ctrl.config.clone().try_lock() {
-                cfg.read();
-                ctrl.do_next_profile(&mut cfg)
-                    .unwrap_or_else(|err| warn!("{}", err));
-                if let Some(profile) = cfg.power_profiles.get(&cfg.active_profile) {
-                    self.notify_profile(&profile)
-                        .unwrap_or_else(|err| warn!("{}", err));
-                }
-            }
+            ctrl.do_next_profile()
+                .unwrap_or_else(|err| warn!("{}", err));
         }
+        self.do_notification();
     }
 
     /// Fetch the active profile name
@@ -152,6 +132,19 @@ impl FanAndCpuZbus {
 
     #[dbus_interface(signal)]
     fn notify_profile(&self, profile: &Profile) -> zbus::Result<()> {}
+}
+
+impl FanAndCpuZbus {
+    fn do_notification(&self) {
+        if let Ok(ctrl) = self.inner.try_lock() {
+            if let Ok(cfg) = ctrl.config.clone().try_lock() {
+                if let Some(profile) = cfg.power_profiles.get(&cfg.active_profile) {
+                    self.notify_profile(&profile)
+                        .unwrap_or_else(|err| warn!("{}", err));
+                }
+            }
+        }
+    }
 }
 
 impl crate::ZbusAdd for FanAndCpuZbus {

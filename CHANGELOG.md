@@ -6,7 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-# [3.6.0] - 2021-05-15
+# [3.6.1] - 2021-05-25
+### Changed
+- Bugfix for cycling through profiles
+
+# [3.6.0] - 2021-05-24
 ### Changed
 - Add GX550L led modes
 - Don't save compute/vfio modes. Option in config for this is removed.
