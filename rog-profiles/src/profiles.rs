@@ -112,7 +112,7 @@ impl Profile {
 
     pub fn set_system_all(&self) -> Result<(), ProfileError> {
         self.set_system_pstate()?;
-        if !self.fan_curve.is_empty() {
+        if self.fan_curve.is_empty() {
             self.set_system_fan_mode()?;
         } else {
             self.set_system_fan_curve()?;

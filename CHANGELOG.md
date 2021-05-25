@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # [3.6.1] - 2021-05-25
 ### Changed
+- Bugfix: write correct fan modes for profiles
+- Bugfix: apply created profiles
+
+# [3.6.1] - 2021-05-25
+### Changed
 - Bugfix for cycling through profiles
 
 # [3.6.0] - 2021-05-24

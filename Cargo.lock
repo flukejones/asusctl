@@ -207,7 +207,7 @@ dependencies = [
 
 [[package]]
 name = "daemon"
-version = "3.6.1"
+version = "3.6.2"
 dependencies = [
  "env_logger",
  "log",

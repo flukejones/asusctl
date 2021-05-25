@@ -69,12 +69,12 @@ impl CtrlFanAndCpu {
     }
 
     pub(super) fn set_active(&mut self, profile: &str) -> Result<(), RogError> {
-        if let Ok(mut cfg) = self.config.clone().try_lock() {
-            cfg.read();
-            if let Some(existing) = cfg.power_profiles.get(profile) {
+        if let Ok(mut config) = self.config.clone().try_lock() {
+            config.read();
+            if let Some(existing) = config.power_profiles.get(profile) {
                 existing.set_system_all()?;
-                cfg.active_profile = existing.name.clone();
-                cfg.write();
+                config.active_profile = existing.name.clone();
+                config.write();
                 info!("Profile was changed to: {}", profile);
             }
         }
@@ -82,18 +82,20 @@ impl CtrlFanAndCpu {
     }
 
     pub(super) fn new_or_modify(&mut self, profile: &Profile) -> Result<(), RogError> {
-        if let Ok(mut cfg) = self.config.clone().try_lock() {
-            cfg.read();
+        if let Ok(mut config) = self.config.clone().try_lock() {
+            config.read();
 
-            if let Some(existing) = cfg.power_profiles.get_mut(&profile.name) {
+            if let Some(existing) = config.power_profiles.get_mut(&profile.name) {
                 *existing = profile.clone();
                 existing.set_system_all()?;
             } else {
-                cfg.power_profiles
+                config.power_profiles
                     .insert(profile.name.clone(), profile.clone());
+                profile.set_system_all()?;
             }
-            cfg.active_profile = profile.name.clone();
-            cfg.write();
+            
+            config.active_profile = profile.name.clone();
+            config.write();
         }
         Ok(())
     }

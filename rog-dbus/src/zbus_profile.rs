@@ -39,7 +39,7 @@ trait Daemon {
     fn active_data(&self) -> zbus::Result<Profile>;
 
     /// Profiles method
-    fn profiles(&self) -> zbus::Result<String>;
+    fn profiles(&self) -> zbus::Result<Vec<Profile>>;
 
     /// ProfileNames method
     fn profile_names(&self) -> zbus::Result<Vec<String>>;
@@ -78,7 +78,7 @@ impl<'a> ProfileProxy<'a> {
     }
 
     #[inline]
-    pub fn all_profile_data(&self) -> Result<String> {
+    pub fn all_profile_data(&self) -> Result<Vec<Profile>> {
         self.0.profiles()
     }
 

@@ -473,8 +473,8 @@ fn handle_profile(
     }
     if cmd.profiles_data {
         println!("Profiles:");
-        for s in dbus.proxies().profile().all_profile_data()?.lines() {
-            println!("{}", s);
+        for s in dbus.proxies().profile().all_profile_data()? {
+            println!("{:?}", s);
         }
     }
 
