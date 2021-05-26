@@ -223,7 +223,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if parsed.show_supported {
         let dat = dbus.proxies().supported().get_supported_functions()?;
-        println!("Supported laptop functions:\n{:?}", dat);
+        println!("Supported laptop functions:\n\n{}", dat);
     }
 
     if let Some(chg_limit) = parsed.chg_limit {
