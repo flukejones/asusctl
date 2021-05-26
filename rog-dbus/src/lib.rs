@@ -54,6 +54,8 @@ impl<'a> DbusProxies<'a> {
         recv.receive_for(self.charge.proxy());
         recv.receive_for(self.gfx.proxy());
         recv.receive_for(self.profile.proxy());
+        recv.receive_for(self.rog_bios.proxy());
+        recv.receive_for(self.supported.proxy());
         recv
     }
 
@@ -95,6 +97,8 @@ pub struct Signals {
     pub led_power_state: Receiver<LedPowerStates>,
     pub anime_power_state: Receiver<AnimePowerStates>,
     pub charge: Receiver<u8>,
+    pub bios_gsync: Receiver<bool>,
+    pub bios_sound: Receiver<bool>,
 }
 
 impl Signals {
@@ -136,6 +140,16 @@ impl Signals {
                 proxies.anime.connect_notify_power_states(tx)?;
                 rx
             },
+            bios_gsync: {
+                let (tx, rx) = channel();
+                proxies.rog_bios.connect_notify_dedicated_graphic_mode(tx)?;
+                rx
+            },
+            bios_sound: {
+                let (tx, rx) = channel();
+                proxies.rog_bios.connect_notify_post_boot_sound(tx)?;
+                rx
+            },
         })
     }
 }
@@ -170,6 +184,8 @@ impl<'a> RogDbusClient<'a> {
         recv.receive_for(self.proxies.charge.proxy());
         recv.receive_for(self.proxies.gfx.proxy());
         recv.receive_for(self.proxies.profile.proxy());
+        recv.receive_for(self.proxies.rog_bios.proxy());
+        recv.receive_for(self.proxies.supported.proxy());
         recv
     }
 

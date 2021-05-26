@@ -19,7 +19,7 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use std::sync::{Arc, Mutex};
+use std::sync::{mpsc::Sender};
 
 use zbus::{dbus_proxy, Connection, Result};
 
@@ -84,25 +84,20 @@ impl<'a> RogBiosProxy<'a> {
     #[inline]
     pub fn connect_notify_dedicated_graphic_mode(
         &self,
-        dedicated: Arc<Mutex<Option<bool>>>,
+        send: Sender<bool>,
     ) -> zbus::fdo::Result<()> {
         self.0.connect_notify_dedicated_graphic_mode(move |data| {
-            if let Ok(mut lock) = dedicated.lock() {
-                *lock = Some(data);
-            }
+            send.send(data)
+                .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
             Ok(())
         })
     }
 
     #[inline]
-    pub fn connect_notify_post_boot_sound(
-        &self,
-        sound: Arc<Mutex<Option<bool>>>,
-    ) -> zbus::fdo::Result<()> {
+    pub fn connect_notify_post_boot_sound(&self, send: Sender<bool>) -> zbus::fdo::Result<()> {
         self.0.connect_notify_post_boot_sound(move |data| {
-            if let Ok(mut lock) = sound.lock() {
-                *lock = Some(data);
-            }
+            send.send(data)
+                .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
             Ok(())
         })
     }
