@@ -1,22 +1,33 @@
 use notify_rust::{Hint, Notification, NotificationHandle};
+use rog_aura::AuraEffect;
 use rog_dbus::{DbusProxies, Signals};
 use rog_profiles::profiles::{FanLevel, Profile};
+use rog_types::gfx_vendors::GfxVendors;
 use std::error::Error;
 use std::thread::sleep;
 use std::time::Duration;
 
+const NOTIF_HEADER: &str = "ROG Control";
+
+macro_rules! notify {
+    ($notifier:ident, $last_notif:ident, $data:expr) => {
+        if let Some(notif) = $last_notif.take() {
+            notif.close();
+        }
+        if let Ok(x) = $notifier($data) {
+            $last_notif = Some(x);
+        }
+    };
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("asus-notify version {}", env!("CARGO_PKG_VERSION"));
-    println!("     daemon version {}", daemon::VERSION);
     println!("   rog-dbus version {}", rog_dbus::VERSION);
 
     let (proxies, conn) = DbusProxies::new()?;
     let signals = Signals::new(&proxies)?;
 
-    let mut last_profile_notif: Option<NotificationHandle> = None;
-    let mut last_led_notif: Option<NotificationHandle> = None;
-    let mut last_gfx_notif: Option<NotificationHandle> = None;
-    let mut last_chrg_notif: Option<NotificationHandle> = None;
+    let mut last_notification: Option<NotificationHandle> = None;
 
     let recv = proxies.setup_recv(conn);
     let mut err_count = 0;
@@ -36,42 +47,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         err_count = 0;
 
-        if let Ok(vendor) = signals.gfx_vendor.try_recv() {
-            if let Some(notif) = last_gfx_notif.take() {
-                notif.close();
-            }
-            let x = do_notif(&format!(
-                "Graphics mode changed to {}",
-                <&str>::from(vendor)
-            ))?;
-            last_gfx_notif = Some(x);
+        if let Ok(data) = signals.led_mode.try_recv() {
+            notify!(do_led_notif, last_notification, &data);
         }
-
-        if let Ok(limit) = signals.charge.try_recv() {
-            if let Some(notif) = last_chrg_notif.take() {
-                notif.close();
-            }
-            let x = do_notif(&format!("Battery charge limit changed to {}", limit))?;
-            last_chrg_notif = Some(x);
+        if let Ok(data) = signals.profile.try_recv() {
+            notify!(do_thermal_notif, last_notification, &data);
         }
-
-        if let Ok(profile) = signals.profile.try_recv() {
-            if let Some(notif) = last_profile_notif.take() {
-                notif.close();
-            }
-            let x = do_thermal_notif(&profile)?;
-            last_profile_notif = Some(x);
+        if let Ok(data) = signals.charge.try_recv() {
+            notify!(do_charge_notif, last_notification, &data);
         }
-
-        if let Ok(ledmode) = signals.led_mode.try_recv() {
-            if let Some(notif) = last_led_notif.take() {
-                notif.close();
-            }
-            let x = do_notif(&format!(
-                "Keyboard LED mode changed to {}",
-                ledmode.mode_name()
-            ))?;
-            last_led_notif = Some(x);
+        if let Ok(data) = signals.gfx_vendor.try_recv() {
+            notify!(do_gfx_notif, last_notification, &data);
         }
     }
 }
@@ -100,11 +86,30 @@ fn do_thermal_notif(profile: &Profile) -> Result<NotificationHandle, Box<dyn Err
     Ok(x)
 }
 
-fn do_notif(body: &str) -> Result<NotificationHandle, Box<dyn Error>> {
-    let x = Notification::new()
-        .summary("ASUS ROG")
-        .body(body)
-        .timeout(2000)
-        .show()?;
-    Ok(x)
+macro_rules! base_notification {
+    ($body:expr) => {
+        Notification::new()
+            .summary(NOTIF_HEADER)
+            .body($body)
+            .timeout(2000)
+            .show()
+    };
+}
+
+fn do_led_notif(ledmode: &AuraEffect) -> Result<NotificationHandle, notify_rust::error::Error> {
+    base_notification!(&format!(
+        "Keyboard LED mode changed to {}",
+        ledmode.mode_name()
+    ))
+}
+
+fn do_charge_notif(limit: &u8) -> Result<NotificationHandle, notify_rust::error::Error> {
+    base_notification!(&format!("Battery charge limit changed to {}", limit))
+}
+
+fn do_gfx_notif(vendor: &GfxVendors) -> Result<NotificationHandle, notify_rust::error::Error> {
+    base_notification!(&format!(
+        "Graphics mode changed to {}",
+        <&str>::from(vendor)
+    ))
 }

@@ -31,10 +31,10 @@ checksum = "23b62fc65de8e4e7f52534fb52b0f3ed04746ae267519eef2a83941e8085068b"
 
 [[package]]
 name = "asus-notify"
-version = "3.0.0"
+version = "3.0.1"
 dependencies = [
- "daemon",
  "notify-rust",
+ "rog_aura",
  "rog_dbus",
  "rog_profiles",
  "rog_types",

@@ -59,7 +59,7 @@ impl Default for Config {
                 "silent".into(),
                 0,
                 100,
-                true,
+                false,
                 FanLevel::Silent,
                 "".to_string(),
             ),

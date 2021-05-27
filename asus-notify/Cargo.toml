@@ -1,6 +1,6 @@
 [package]
 name = "asus-notify"
-version = "3.0.0"
+version = "3.0.1"
 authors = ["Luke D Jones <luke@ljones.dev>"]
 edition = "2018"
 
@@ -10,9 +10,9 @@ edition = "2018"
 # serialisation
 serde_json = "^1.0"
 rog_dbus = { path = "../rog-dbus" }
-rog_profiles = { path = "../rog-profiles" }
+rog_aura = { path = "../rog-aura" }
 rog_types = { path = "../rog-types" }
-daemon = { path = "../daemon" }
+rog_profiles = { path = "../rog-profiles" }
 
 [dependencies.notify-rust]
 version = "^4.3"
