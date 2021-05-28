@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Set PM to auto for Nvidia always
+- Extra info output for gfx dev scan
+- Extra info in log for G-Sync to help prevent user confusion around gfx switching
 
 # [3.6.1] - 2021-05-25
 ### Changed

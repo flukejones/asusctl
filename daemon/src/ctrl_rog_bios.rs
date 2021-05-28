@@ -121,7 +121,8 @@ impl CtrlRogBios {
                 CtrlRogBios::set_path_mutable(ASUS_SWITCH_GRAPHIC_MODE)?;
             }
             Err(err) => {
-                info!("ROG Switchable Graphics (bios) not detected: {}", err);
+                info!("G-Sync Switchable Graphics not detected: {}", err);
+                info!("If your laptop is not a G-Sync enabled laptop then you can ignore this. Standard graphics switching will still work.");
             }
         }
 
@@ -130,7 +131,7 @@ impl CtrlRogBios {
                 CtrlRogBios::set_path_mutable(ASUS_POST_LOGO_SOUND)?;
             }
             Err(err) => {
-                info!("ROG boot sound toggle (bios) not detected: {}", err);
+                info!("Switch for POST boot sound not detected: {}", err);
             }
         }
 

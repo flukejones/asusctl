@@ -1,3 +1,4 @@
+use sysfs_class::RuntimePM;
 use ::zbus::Connection;
 use ctrl_gfx::error::GfxError;
 use ctrl_gfx::*;
@@ -66,7 +67,10 @@ impl CtrlGraphics {
         let mut nvidia = Vec::new();
         let mut other = Vec::new();
         for dev in devs.iter() {
-            let c = dev.class()?;
+            let c = dev.class().map_err(|err|{
+                error!("GFX: device error: {}, {}", dev.path().to_string_lossy(), err);
+                err
+            })?;
             if 0x03 == (c >> 16) & 0xFF {
                 match dev.vendor()? {
                     0x1002 => {
@@ -75,6 +79,7 @@ impl CtrlGraphics {
                     }
                     0x10DE => {
                         info!("GFX: {}: NVIDIA graphics", dev.id());
+                        dev.set_runtime_pm(sysfs_class::RuntimePowerManagement::On)?;
                         nvidia.push(GraphicsDevice::new(dev.id().to_owned(), functions(&dev)));
                     }
                     0x8086 => {
@@ -400,6 +405,18 @@ impl CtrlGraphics {
     ) -> Result<(), RogError> {
         // Rescan before doing remove or add drivers
         bus.rescan()?;
+        // Make sure the power management is set to auto for nvidia devices
+        let devs = PciDevice::all()?;
+        for dev in devs.iter() {
+            let c = dev.class().map_err(|err|{
+                error!("GFX: device error: {}, {}", dev.path().to_string_lossy(), err);
+                err
+            })?;
+            if 0x03 == (c >> 16) & 0xFF && dev.vendor()? == 0x10DE {
+                info!("GFX: {}: NVIDIA graphics, setting PM to auto", dev.id());
+                dev.set_runtime_pm(sysfs_class::RuntimePowerManagement::On)?;
+            }
+        }
         //
         Self::write_xorg_conf(vendor)?;
         // Write different modprobe to enable boot control to work
