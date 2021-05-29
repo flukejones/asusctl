@@ -28,8 +28,8 @@ impl GetSupported for CtrlRogBios {
 
     fn get_supported() -> Self::A {
         RogBiosSupportedFunctions {
-            post_sound_toggle: CtrlRogBios::check_path_exists(ASUS_POST_LOGO_SOUND).is_ok(),
-            dedicated_gfx_toggle: CtrlRogBios::check_path_exists(ASUS_SWITCH_GRAPHIC_MODE).is_ok(),
+            post_sound_toggle: Path::new(ASUS_POST_LOGO_SOUND).exists(),
+            dedicated_gfx_toggle: Path::new(ASUS_SWITCH_GRAPHIC_MODE).exists(),
         }
     }
 }
@@ -62,8 +62,6 @@ impl CtrlRogBios {
 
     #[dbus_interface(signal)]
     pub fn notify_dedicated_graphic_mode(&self, dedicated: bool) -> zbus::Result<()> {}
-
-    // // // // // // // // // //
 
     pub fn set_post_boot_sound(&mut self, on: bool) {
         Self::set_boot_sound(on)
@@ -116,23 +114,17 @@ impl crate::Reloadable for CtrlRogBios {
 
 impl CtrlRogBios {
     pub fn new(config: Arc<Mutex<Config>>) -> Result<Self, RogError> {
-        match CtrlRogBios::check_path_exists(ASUS_SWITCH_GRAPHIC_MODE) {
-            Ok(_) => {
-                CtrlRogBios::set_path_mutable(ASUS_SWITCH_GRAPHIC_MODE)?;
-            }
-            Err(err) => {
-                info!("G-Sync Switchable Graphics not detected: {}", err);
-                info!("If your laptop is not a G-Sync enabled laptop then you can ignore this. Standard graphics switching will still work.");
-            }
+        if Path::new(ASUS_SWITCH_GRAPHIC_MODE).exists() {
+            CtrlRogBios::set_path_mutable(ASUS_SWITCH_GRAPHIC_MODE)?;
+        } else {
+            info!("G-Sync Switchable Graphics not detected");
+            info!("If your laptop is not a G-Sync enabled laptop then you can ignore this. Standard graphics switching will still work.");
         }
 
-        match CtrlRogBios::check_path_exists(ASUS_POST_LOGO_SOUND) {
-            Ok(_) => {
-                CtrlRogBios::set_path_mutable(ASUS_POST_LOGO_SOUND)?;
-            }
-            Err(err) => {
-                info!("Switch for POST boot sound not detected: {}", err);
-            }
+        if Path::new(ASUS_POST_LOGO_SOUND).exists() {
+            CtrlRogBios::set_path_mutable(ASUS_POST_LOGO_SOUND)?;
+        } else {
+            info!("Switch for POST boot sound not detected");
         }
 
         Ok(CtrlRogBios { _config: config })
@@ -148,19 +140,8 @@ impl CtrlRogBios {
         Ok(())
     }
 
-    fn check_path_exists(path: &str) -> Result<(), RogError> {
-        if Path::new(path).exists() {
-            Ok(())
-        } else {
-            Err(RogError::MissingFunction(path.into()))
-        }
-    }
-
     pub fn has_dedicated_gfx_toggle() -> bool {
-        if CtrlRogBios::check_path_exists(ASUS_SWITCH_GRAPHIC_MODE).is_ok() {
-            return true;
-        }
-        false
+        Path::new(ASUS_SWITCH_GRAPHIC_MODE).exists()
     }
 
     pub fn get_gfx_mode() -> Result<i8, RogError> {
@@ -201,17 +182,6 @@ impl CtrlRogBios {
             .map_err(|err| RogError::Path(path.into(), err))?;
 
         self.update_initramfs(dedicated)?;
-
-        // if let Ok(ded) = CtrlRogBios::get_gfx_mode() {
-        //     if let Ok(vendor) = CtrlGraphics::get_vendor() {
-        //         if ded == 1 && vendor != "nvidia" {
-        //             warn!("Dedicated GFX toggle is on but driver mode is not nvidia \nSetting to nvidia driver mode");
-        //             CtrlGraphics::set_gfx_config(&GfxVendors::Nvidia)
-        //                 .unwrap_or_else(|err| warn!("Gfx controller: {}", err));
-        //         }
-        //     }
-        // }
-
         Ok(())
     }
 
