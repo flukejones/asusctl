@@ -379,6 +379,7 @@ impl CtrlAnimeZbus {
         }
     }
 
+    /// Set the global AniMe brightness
     fn set_brightness(&self, bright: f32) {
         'outer: loop {
             if let Ok(mut lock) = self.0.try_lock() {
@@ -395,6 +396,7 @@ impl CtrlAnimeZbus {
         }
     }
 
+    /// Set whether the AniMe is displaying images/data
     fn set_on_off(&self, status: bool) {
         'outer: loop {
             if let Ok(mut lock) = self.0.try_lock() {
@@ -413,6 +415,7 @@ impl CtrlAnimeZbus {
         }
     }
 
+    /// Set whether the AniMe will show boot, suspend, or off animations
     fn set_boot_on_off(&self, on: bool) {
         'outer: loop {
             if let Ok(mut lock) = self.0.try_lock() {
@@ -446,6 +449,7 @@ impl CtrlAnimeZbus {
         }
     }
 
+    /// Get status of if the AniMe LEDs are on
     #[dbus_interface(property)]
     fn awake_enabled(&self) -> bool {
         if let Ok(ctrl) = self.0.try_lock() {
@@ -454,6 +458,7 @@ impl CtrlAnimeZbus {
         true
     }
 
+    /// Get the status of if factory system-status animations are enabled
     #[dbus_interface(property)]
     fn boot_enabled(&self) -> bool {
         if let Ok(ctrl) = self.0.try_lock() {
@@ -462,6 +467,7 @@ impl CtrlAnimeZbus {
         true
     }
 
+    /// Notify listeners of the status of AniMe LED power and factory system-status animations
     #[dbus_interface(signal)]
     fn notify_power_states(&self, data: &AnimePowerStates) -> zbus::Result<()>;
 }

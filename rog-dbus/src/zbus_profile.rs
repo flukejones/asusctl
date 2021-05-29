@@ -63,6 +63,7 @@ impl<'a> ProfileProxy<'a> {
         Ok(ProfileProxy(DaemonProxy::new(&conn)?))
     }
 
+    #[inline]
     pub fn proxy(&self) -> &DaemonProxy<'a> {
         &self.0
     }

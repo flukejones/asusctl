@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set PM to auto for Nvidia always
 - Extra info output for gfx dev scan
 - Extra info in log for G-Sync to help prevent user confusion around gfx switching
+- Add GA503Q led modes
 
 # [3.6.1] - 2021-05-25
 ### Changed

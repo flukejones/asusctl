@@ -340,13 +340,13 @@ impl CtrlAnime<'static> {
     pub fn set_state(&mut self, on: bool) -> zbus::fdo::Result<()> {
         // Operations here need to be in specific order
         if on {
-            self.client.proxies().anime().toggle_on(on)?;
+            self.client.proxies().anime().set_led_power(on)?;
             // Let the inner loop run
             self.inner_early_return.store(false, Ordering::SeqCst);
         } else {
             // Must make the inner run loop return early
             self.inner_early_return.store(true, Ordering::SeqCst);
-            self.client.proxies().anime().toggle_on(on)?;
+            self.client.proxies().anime().set_led_power(on)?;
         }
         Ok(())
     }

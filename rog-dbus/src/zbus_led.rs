@@ -84,6 +84,7 @@ impl<'a> LedProxy<'a> {
         Ok(LedProxy(DaemonProxy::new(&conn)?))
     }
 
+    #[inline]
     pub fn proxy(&self) -> &DaemonProxy<'a> {
         &self.0
     }

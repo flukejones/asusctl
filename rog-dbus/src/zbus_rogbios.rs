@@ -57,6 +57,7 @@ impl<'a> RogBiosProxy<'a> {
         Ok(RogBiosProxy(DaemonProxy::new(&conn)?))
     }
 
+    #[inline]
     pub fn proxy(&self) -> &DaemonProxy<'a> {
         &self.0
     }

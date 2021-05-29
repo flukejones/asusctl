@@ -39,6 +39,7 @@ impl<'a> SupportProxy<'a> {
         Ok(SupportProxy(DaemonProxy::new(&conn)?))
     }
 
+    #[inline]
     pub fn proxy(&self) -> &DaemonProxy<'a> {
         &self.0
     }
