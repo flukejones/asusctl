@@ -161,7 +161,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 dbus.proxies().anime().set_led_power(anime_turn.into())?
             }
             if let Some(anime_boot) = cmd.boot {
-                dbus.proxies().anime().set_system_animations(anime_boot.into())?
+                dbus.proxies()
+                    .anime()
+                    .set_system_animations(anime_boot.into())?
             }
             if let Some(action) = cmd.command {
                 match action {

@@ -1,7 +1,4 @@
-use std::{
-    path::{Path, PathBuf},
-    time::Duration,
-};
+use std::{path::PathBuf, time::Duration};
 
 use glam::Vec2;
 use serde_derive::{Deserialize, Serialize};
@@ -11,14 +8,14 @@ use crate::{error::AnimeError, AnimTime, AnimeDataBuffer, AnimeGif, AnimeImage};
 /// All the possible AniMe actions that can be used. This enum is intended to be
 /// a helper for loading up `ActionData`.
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub enum AnimeAction {
+pub enum ActionLoader {
     /// Full gif sequence. Immutable.
     AsusAnimation {
         file: PathBuf,
         time: AnimTime,
         brightness: f32,
     },
-    /// Basic image, can have properties changed
+    /// Animated gif. If the file is a png a static gif is created using the `time` properties
     ImageAnimation {
         file: PathBuf,
         scale: f32,
@@ -32,6 +29,7 @@ pub enum AnimeAction {
         scale: f32,
         angle: f32,
         translation: Vec2,
+        time: Option<AnimTime>,
         brightness: f32,
     },
     /// A pause to be used between sequences
@@ -59,9 +57,9 @@ pub enum ActionData {
 }
 
 impl ActionData {
-    pub fn from_anime_action(action: &AnimeAction) -> Result<ActionData, AnimeError> {
+    pub fn from_anime_action(action: &ActionLoader) -> Result<ActionData, AnimeError> {
         let a = match action {
-            AnimeAction::AsusAnimation {
+            ActionLoader::AsusAnimation {
                 file,
                 time: duration,
                 brightness,
@@ -70,33 +68,59 @@ impl ActionData {
                 *duration,
                 *brightness,
             )?),
-            AnimeAction::ImageAnimation {
+            ActionLoader::ImageAnimation {
                 file,
                 scale,
                 angle,
                 translation,
                 time: duration,
                 brightness,
-            } => ActionData::Animation(AnimeGif::create_png_gif(
-                &file,
-                *scale,
-                *angle,
-                *translation,
-                *duration,
-                *brightness,
-            )?),
-            AnimeAction::Image {
+            } => {
+                if let Some(ext) = file.extension() {
+                    if ext.to_string_lossy().to_lowercase() == "png" {
+                        return Ok(ActionData::Animation(AnimeGif::create_png_static(
+                            &file,
+                            *scale,
+                            *angle,
+                            *translation,
+                            *duration,
+                            *brightness,
+                        )?));
+                    }
+                }
+                ActionData::Animation(AnimeGif::create_png_gif(
+                    &file,
+                    *scale,
+                    *angle,
+                    *translation,
+                    *duration,
+                    *brightness,
+                )?)
+            }
+            ActionLoader::Image {
                 file,
                 scale,
                 angle,
                 translation,
                 brightness,
+                time,
             } => {
+                if let Some(time) = time {
+                    return Ok(ActionData::Animation(AnimeGif::create_png_static(
+                        &file,
+                        *scale,
+                        *angle,
+                        *translation,
+                        *time,
+                        *brightness,
+                    )?));
+                }
+                // If no time then create a plain static image
                 let image = AnimeImage::from_png(&file, *scale, *angle, *translation, *brightness)?;
                 let data = <AnimeDataBuffer>::from(&image);
                 ActionData::Image(Box::new(data))
             }
-            AnimeAction::Pause(duration) => ActionData::Pause(*duration),
+            ActionLoader::Pause(duration) => ActionData::Pause(*duration),
         };
         Ok(a)
     }
@@ -115,38 +139,8 @@ impl Sequences {
     /// Use a base `AnimeAction` to generate the precomputed data and insert in to
     /// the run buffer
     #[inline]
-    pub fn insert(&mut self, index: usize, action: &AnimeAction) -> Result<(), AnimeError> {
-        match action {
-            AnimeAction::AsusAnimation {
-                file,
-                time: duration,
-                brightness,
-            } => self.insert_asus_gif(index, &file, *duration, *brightness)?,
-            AnimeAction::ImageAnimation {
-                file,
-                scale,
-                angle,
-                translation,
-                time: duration,
-                brightness,
-            } => self.insert_image_gif(
-                index,
-                &file,
-                *scale,
-                *angle,
-                *translation,
-                *duration,
-                *brightness,
-            )?,
-            AnimeAction::Image {
-                file,
-                scale,
-                angle,
-                translation,
-                brightness,
-            } => self.insert_png(index, &file, *scale, *angle, *translation, *brightness)?,
-            AnimeAction::Pause(duration) => self.insert_pause(index, *duration),
-        };
+    pub fn insert(&mut self, index: usize, action: &ActionLoader) -> Result<(), AnimeError> {
+        self.0.insert(index, ActionData::from_anime_action(action)?);
         Ok(())
     }
 
@@ -159,66 +153,6 @@ impl Sequences {
             return Some(self.0.remove(index));
         }
         None
-    }
-
-    fn insert_asus_gif(
-        &mut self,
-        mut index: usize,
-        file: &Path,
-        duration: AnimTime,
-        brightness: f32,
-    ) -> Result<(), AnimeError> {
-        if index > self.0.len() {
-            index = self.0.len() - 1;
-        }
-        let frames = AnimeGif::create_diagonal_gif(file, duration, brightness)?;
-        self.0.insert(index, ActionData::Animation(frames));
-        Ok(())
-    }
-
-    fn insert_png(
-        &mut self,
-        mut index: usize,
-        file: &Path,
-        scale: f32,
-        angle: f32,
-        translation: Vec2,
-        brightness: f32,
-    ) -> Result<(), AnimeError> {
-        if index > self.0.len() {
-            index = self.0.len() - 1;
-        }
-        let image = AnimeImage::from_png(file, scale, angle, translation, brightness)?;
-        let data = <AnimeDataBuffer>::from(&image);
-        self.0.insert(index, ActionData::Image(Box::new(data)));
-        Ok(())
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    fn insert_image_gif(
-        &mut self,
-        mut index: usize,
-        file: &Path,
-        scale: f32,
-        angle: f32,
-        translation: Vec2,
-        duration: AnimTime,
-        brightness: f32,
-    ) -> Result<(), AnimeError> {
-        if index > self.0.len() {
-            index = self.0.len() - 1;
-        }
-        let frames =
-            AnimeGif::create_png_gif(file, scale, angle, translation, duration, brightness)?;
-        self.0.insert(index, ActionData::Animation(frames));
-        Ok(())
-    }
-
-    fn insert_pause(&mut self, mut index: usize, duration: Duration) {
-        if index > self.0.len() {
-            index = self.0.len() - 1;
-        }
-        self.0.insert(index, ActionData::Pause(duration));
     }
 
     pub fn iter(&self) -> ActionIterator {

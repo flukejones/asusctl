@@ -11,9 +11,6 @@ use zbus::{fdo, Connection};
 
 use std::sync::atomic::AtomicBool;
 
-/// The anime loop needs an atomic to make it exit early if required
-static ANIME_INNER_EARLY_RETURN: AtomicBool = AtomicBool::new(false);
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!(" user daemon v{}", rog_user::VERSION);
     println!("   rog-anime v{}", rog_anime::VERSION);
@@ -39,20 +36,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Set up the anime data and run loop/thread
     if supported.anime_ctrl.0 {
+        let early_return = Arc::new(AtomicBool::new(false));
         // Inner behind mutex required for thread safety
         let inner = Arc::new(Mutex::new(CtrlAnimeInner::new(
             anime,
             client,
-            &ANIME_INNER_EARLY_RETURN,
+            early_return.clone(),
         )?));
         // Need new client object for dbus control part
         let (client, _) = RogDbusClient::new().unwrap();
-        let anime_control = CtrlAnime::new(
-            anime_config,
-            inner.clone(),
-            client,
-            &ANIME_INNER_EARLY_RETURN,
-        )?;
+        let anime_control = CtrlAnime::new(anime_config, inner.clone(), client, early_return)?;
         anime_control.add_to_server(&mut server);
         // Thread using inner
         let _anime_thread = thread::Builder::new()

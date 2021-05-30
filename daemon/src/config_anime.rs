@@ -1,6 +1,7 @@
 use crate::VERSION;
 use log::{error, info, warn};
-use rog_anime::{error::AnimeError, ActionData, AnimTime, AnimeAction, Vec2};
+use rog_anime::Fade;
+use rog_anime::{error::AnimeError, ActionData, ActionLoader, AnimTime, Vec2};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
@@ -11,10 +12,10 @@ pub static ANIME_CACHE_PATH: &str = "/etc/asusd/anime-cache.conf";
 
 #[derive(Deserialize, Serialize)]
 pub struct AnimeConfigV341 {
-    pub system: Option<AnimeAction>,
-    pub boot: Option<AnimeAction>,
-    pub suspend: Option<AnimeAction>,
-    pub shutdown: Option<AnimeAction>,
+    pub system: Option<ActionLoader>,
+    pub boot: Option<ActionLoader>,
+    pub suspend: Option<ActionLoader>,
+    pub shutdown: Option<ActionLoader>,
 }
 
 impl AnimeConfigV341 {
@@ -49,10 +50,10 @@ impl AnimeConfigV341 {
 
 #[derive(Deserialize, Serialize)]
 pub struct AnimeConfigV352 {
-    pub system: Vec<AnimeAction>,
-    pub boot: Vec<AnimeAction>,
-    pub wake: Vec<AnimeAction>,
-    pub shutdown: Vec<AnimeAction>,
+    pub system: Vec<ActionLoader>,
+    pub boot: Vec<ActionLoader>,
+    pub wake: Vec<ActionLoader>,
+    pub shutdown: Vec<ActionLoader>,
     pub brightness: f32,
 }
 
@@ -110,10 +111,10 @@ impl AnimeConfigCached {
 /// Config for base system actions for the anime display
 #[derive(Deserialize, Serialize)]
 pub struct AnimeConfig {
-    pub system: Vec<AnimeAction>,
-    pub boot: Vec<AnimeAction>,
-    pub wake: Vec<AnimeAction>,
-    pub shutdown: Vec<AnimeAction>,
+    pub system: Vec<ActionLoader>,
+    pub boot: Vec<ActionLoader>,
+    pub wake: Vec<ActionLoader>,
+    pub shutdown: Vec<ActionLoader>,
     pub brightness: f32,
     pub awake_enabled: bool,
     pub boot_anim_enabled: bool,
@@ -165,8 +166,11 @@ impl AnimeConfig {
                     info!("Updated config version to: {}", VERSION);
                     return config;
                 }
-                warn!("Could not deserialise {}", ANIME_CONFIG_PATH);
-                panic!("Please remove {} then restart asusd", ANIME_CONFIG_PATH);
+                AnimeConfig::write_backup(buf);
+                warn!(
+                    "Could not deserialise {}. Backed up as *-old",
+                    ANIME_CONFIG_PATH
+                );
             }
         }
         AnimeConfig::create_default(&mut file)
@@ -176,23 +180,31 @@ impl AnimeConfig {
         // create a default config here
         let config = AnimeConfig {
             system: vec![],
-            boot: vec![AnimeAction::ImageAnimation {
+            boot: vec![ActionLoader::ImageAnimation {
                 file: "/usr/share/asusd/anime/custom/sonic-run.gif".into(),
                 scale: 0.9,
                 angle: 0.65,
                 translation: Vec2::default(),
                 brightness: 1.0,
-                time: AnimTime::Time(Duration::from_secs(5)),
+                time: AnimTime::Fade(Fade::new(
+                    Duration::from_secs(2),
+                    Some(Duration::from_secs(2)),
+                    Duration::from_secs(2),
+                )),
             }],
-            wake: vec![AnimeAction::ImageAnimation {
+            wake: vec![ActionLoader::ImageAnimation {
                 file: "/usr/share/asusd/anime/custom/sonic-run.gif".into(),
                 scale: 0.9,
                 angle: 0.65,
                 translation: Vec2::default(),
                 brightness: 1.0,
-                time: AnimTime::Time(Duration::from_secs(5)),
+                time: AnimTime::Fade(Fade::new(
+                    Duration::from_secs(2),
+                    Some(Duration::from_secs(2)),
+                    Duration::from_secs(2),
+                )),
             }],
-            shutdown: vec![AnimeAction::ImageAnimation {
+            shutdown: vec![ActionLoader::ImageAnimation {
                 file: "/usr/share/asusd/anime/custom/sonic-wait.gif".into(),
                 scale: 0.9,
                 angle: 0.0,
@@ -232,6 +244,14 @@ impl AnimeConfig {
         let mut file = File::create(ANIME_CONFIG_PATH).expect("Couldn't overwrite config");
         let json = serde_json::to_string_pretty(self).expect("Parse config to JSON failed");
         file.write_all(json.as_bytes())
+            .unwrap_or_else(|err| error!("Could not write config: {}", err));
+    }
+
+    fn write_backup(buf: String) {
+        let mut path = ANIME_CONFIG_PATH.to_string();
+        path.push_str("-old");
+        let mut file = File::create(&path).expect("Couldn't overwrite config");
+        file.write_all(buf.as_bytes())
             .unwrap_or_else(|err| error!("Could not write config: {}", err));
     }
 }

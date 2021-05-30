@@ -89,11 +89,12 @@ impl CtrlFanAndCpu {
                 *existing = profile.clone();
                 existing.set_system_all()?;
             } else {
-                config.power_profiles
+                config
+                    .power_profiles
                     .insert(profile.name.clone(), profile.clone());
                 profile.set_system_all()?;
             }
-            
+
             config.active_profile = profile.name.clone();
             config.write();
         }

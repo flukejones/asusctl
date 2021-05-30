@@ -1,5 +1,5 @@
-use std::sync::mpsc::Sender;
 use rog_anime::{AnimeDataBuffer, AnimePowerStates};
+use std::sync::mpsc::Sender;
 use zbus::{dbus_proxy, Connection, Result};
 
 #[dbus_proxy(

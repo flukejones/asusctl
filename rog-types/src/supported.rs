@@ -1,7 +1,7 @@
 use rog_aura::AuraModeNum;
 use serde_derive::{Deserialize, Serialize};
-use zvariant_derive::Type;
 use std::fmt;
+use zvariant_derive::Type;
 
 #[derive(Serialize, Deserialize, Type, Debug)]
 pub struct SupportedFunctions {
@@ -60,7 +60,11 @@ impl fmt::Display for AnimeSupportedFunctions {
 impl fmt::Display for ChargeSupportedFunctions {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Charge:")?;
-        writeln!(f, "\tBattery charge limit control: {}", self.charge_level_set)
+        writeln!(
+            f,
+            "\tBattery charge limit control: {}",
+            self.charge_level_set
+        )
     }
 }
 impl fmt::Display for FanCpuSupportedFunctions {

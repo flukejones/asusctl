@@ -5,7 +5,7 @@ use rog_anime::{
         pkt_for_apply, pkt_for_flush, pkt_for_set_boot, pkt_for_set_on, pkts_for_init, PROD_ID,
         VENDOR_ID,
     },
-    ActionData, AnimTime, AnimeDataBuffer, AnimePacketType, AnimePowerStates, ANIME_DATA_LEN,
+    ActionData, AnimeDataBuffer, AnimePacketType, AnimePowerStates, ANIME_DATA_LEN,
 };
 use rog_types::supported::AnimeSupportedFunctions;
 use rusb::{Device, DeviceHandle};
@@ -13,7 +13,6 @@ use std::{
     error::Error,
     sync::{Arc, Mutex},
     thread::sleep,
-    time::Instant,
 };
 use std::{
     sync::atomic::{AtomicBool, Ordering},
@@ -144,31 +143,15 @@ impl CtrlAnime {
                     for action in actions.iter() {
                         match action {
                             ActionData::Animation(frames) => {
-                                let mut count = 0;
-                                let start = Instant::now();
-                                'animation: loop {
-                                    for frame in frames.frames() {
-                                        if let Ok(lock) = inner.try_lock() {
-                                            lock.write_data_buffer(frame.frame().clone());
-                                        }
-                                        if let AnimTime::Time(time) = frames.duration() {
-                                            if Instant::now().duration_since(start) > time {
-                                                break 'animation;
-                                            }
-                                        }
-                                        sleep(frame.delay());
-                                        // Need to check for early exit condition here or it might run
-                                        // until end of gif or time
-                                        if thread_exit.load(Ordering::SeqCst) {
-                                            break 'main;
-                                        }
+                                rog_anime::run_animation(frames, thread_exit.clone(), &|frame| {
+                                    if let Ok(lock) = inner.try_lock() {
+                                        lock.write_data_buffer(frame);
                                     }
-                                    if let AnimTime::Cycles(times) = frames.duration() {
-                                        count += 1;
-                                        if count >= times {
-                                            break 'animation;
-                                        }
-                                    }
+                                })
+                                .unwrap();
+
+                                if thread_exit.load(Ordering::SeqCst) {
+                                    break 'main;
                                 }
                             }
                             ActionData::Image(image) => {

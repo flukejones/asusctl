@@ -1,6 +1,6 @@
 use std::{env, path::Path, thread::sleep};
 
-use rog_anime::{ActionData, AnimeAction, Sequences};
+use rog_anime::{ActionData, ActionLoader, Sequences};
 use rog_dbus::RogDbusClient;
 
 fn main() {
@@ -17,7 +17,7 @@ fn main() {
     let mut seq = Sequences::new();
     seq.insert(
         0,
-        &AnimeAction::AsusAnimation {
+        &ActionLoader::AsusAnimation {
             file: path.into(),
             time: rog_anime::AnimTime::Infinite,
             brightness,
