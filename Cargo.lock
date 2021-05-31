@@ -207,7 +207,7 @@ dependencies = [
 
 [[package]]
 name = "daemon"
-version = "3.6.2"
+version = "3.6.3"
 dependencies = [
  "env_logger",
  "log",
@@ -232,7 +232,7 @@ dependencies = [
 
 [[package]]
 name = "daemon-user"
-version = "1.1.1"
+version = "1.2.0"
 dependencies = [
  "dirs 3.0.1",
  "rog_anime",
@@ -863,7 +863,7 @@ checksum = "24d5f089152e60f62d28b835fbff2cd2e8dc0baf1ac13343bef92ab7eed84548"
 
 [[package]]
 name = "rog_anime"
-version = "1.0.4"
+version = "1.0.5"
 dependencies = [
  "gif",
  "glam",

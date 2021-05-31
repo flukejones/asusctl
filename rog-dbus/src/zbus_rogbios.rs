@@ -19,7 +19,7 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use std::sync::{mpsc::Sender};
+use std::sync::mpsc::Sender;
 
 use zbus::{dbus_proxy, Connection, Result};
 
@@ -57,6 +57,7 @@ impl<'a> RogBiosProxy<'a> {
         Ok(RogBiosProxy(DaemonProxy::new(&conn)?))
     }
 
+    #[inline]
     pub fn proxy(&self) -> &DaemonProxy<'a> {
         &self.0
     }

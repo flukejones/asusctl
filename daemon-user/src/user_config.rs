@@ -4,7 +4,7 @@ use std::{
     time::Duration,
 };
 
-use rog_anime::{AnimTime, AnimeAction, Sequences, Vec2};
+use rog_anime::{ActionLoader, AnimTime, Fade, Sequences, Vec2};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::error::Error;
@@ -12,7 +12,7 @@ use crate::error::Error;
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UserAnimeConfig {
     pub name: String,
-    pub anime: Vec<AnimeAction>,
+    pub anime: Vec<ActionLoader>,
 }
 
 impl UserAnimeConfig {
@@ -95,34 +95,47 @@ impl Default for UserAnimeConfig {
         Self {
             name: "default".to_string(),
             anime: vec![
-                AnimeAction::AsusAnimation {
+                ActionLoader::AsusAnimation {
                     file: "/usr/share/asusd/anime/asus/rog/Sunset.gif".into(),
                     brightness: 0.5,
-                    time: AnimTime::Cycles(1),
+                    time: AnimTime::Fade(Fade::new(
+                        Duration::from_secs(6),
+                        None,
+                        Duration::from_secs(3),
+                    )),
                 },
-                AnimeAction::ImageAnimation {
+                ActionLoader::ImageAnimation {
                     file: "/usr/share/asusd/anime/custom/sonic-run.gif".into(),
                     scale: 0.9,
                     angle: 0.65,
                     translation: Vec2::default(),
                     brightness: 0.5,
-                    time: AnimTime::Time(Duration::from_secs(5)),
+                    time: AnimTime::Fade(Fade::new(
+                        Duration::from_secs(2),
+                        Some(Duration::from_secs(2)),
+                        Duration::from_secs(2),
+                    )),
                 },
-                AnimeAction::Image {
+                ActionLoader::Image {
                     file: "/usr/share/asusd/anime/custom/rust.png".into(),
                     scale: 1.0,
                     angle: 0.0,
                     translation: Vec2::default(),
+                    time: Some(AnimTime::Fade(Fade::new(
+                        Duration::from_secs(2),
+                        Some(Duration::from_secs(1)),
+                        Duration::from_secs(2),
+                    ))),
                     brightness: 0.6,
                 },
-                AnimeAction::Pause(Duration::from_secs(6)),
-                AnimeAction::ImageAnimation {
+                ActionLoader::Pause(Duration::from_secs(1)),
+                ActionLoader::ImageAnimation {
                     file: "/usr/share/asusd/anime/custom/sonic-wait.gif".into(),
                     scale: 0.9,
                     angle: 0.0,
                     translation: Vec2::new(3.0, 2.0),
                     brightness: 0.5,
-                    time: AnimTime::Cycles(2),
+                    time: AnimTime::Count(2),
                 },
             ],
         }

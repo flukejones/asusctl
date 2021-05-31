@@ -269,6 +269,7 @@ Each object in the array can be one of:
           <FLOAT>,
           <FLOAT>
         ],
+        "time": <TIME>,
         "brightness": <FLOAT>
       }
     },
@@ -322,6 +323,27 @@ A cycle is how many gif loops to run:
 ```json
         "time": "Infinite",
 ```
+`Fade` allows an image or gif to fade in and out, and remain at max brightness to n time:
+```json
+        "time": {
+          "Fade": {
+            "fade_in": {
+              "secs": 2,
+              "nanos": 0
+            },
+            "show_for": {
+              "secs": 1,
+              "nanos": 0
+            },
+            "fade_out": {
+              "secs": 2,
+              "nanos": 0
+            }
+          }
+        },
+```
+`show_for` can be `null`, if it is `null` then the `show_for` becomes `gif_time_length - fade_in - fade_out`.
+This is period for which the gif or image will be max brightness (as set).
 
 **<INT>**
 

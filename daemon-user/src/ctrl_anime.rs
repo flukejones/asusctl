@@ -1,6 +1,5 @@
-use rog_anime::{ActionData, AnimTime, AnimeAction, Sequences, Vec2};
+use rog_anime::{ActionData, ActionLoader, AnimTime, Fade, Sequences, Vec2};
 use rog_dbus::RogDbusClient;
-//use crate::dbus::DbusEvents;
 use serde_derive::{Deserialize, Serialize};
 use std::time::Duration;
 use std::{
@@ -18,6 +17,44 @@ use zvariant_derive::Type;
 use crate::{error::Error, user_config::UserAnimeConfig};
 
 #[derive(Debug, Clone, Deserialize, Serialize, Type)]
+pub struct Timer {
+    type_of: TimeType,
+    /// If time type is Timer then this is milliseonds, otherwise it is animation loop count
+    count: u64,
+    /// Used only for `TimeType::Timer`, milliseonds to fade the image in for
+    fade_in: Option<u64>,
+    /// Used only for `TimeType::Timer`, milliseonds to fade the image out for
+    fade_out: Option<u64>,
+}
+
+impl From<Timer> for AnimTime {
+    fn from(time: Timer) -> Self {
+        match time.type_of {
+            TimeType::Timer => {
+                if time.fade_in.is_some() || time.fade_out.is_some() {
+                    let fade_in = time
+                        .fade_in
+                        .map_or(Duration::from_secs(0), Duration::from_millis);
+                    let fade_out = time
+                        .fade_out
+                        .map_or(Duration::from_secs(0), Duration::from_millis);
+                    let show_for = if time.count != 0 {
+                        Some(Duration::from_millis(time.count))
+                    } else {
+                        None
+                    };
+                    AnimTime::Fade(Fade::new(fade_in, show_for, fade_out))
+                } else {
+                    AnimTime::Time(Duration::from_millis(time.count))
+                }
+            }
+            TimeType::Count => AnimTime::Count(time.count as u32),
+            TimeType::Infinite => AnimTime::Infinite,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, Type)]
 pub enum TimeType {
     Timer,
     Count,
@@ -29,14 +66,14 @@ pub enum TimeType {
 pub struct CtrlAnimeInner<'a> {
     sequences: Sequences,
     client: RogDbusClient<'a>,
-    do_early_return: &'a AtomicBool,
+    do_early_return: Arc<AtomicBool>,
 }
 
 impl<'a> CtrlAnimeInner<'static> {
     pub fn new(
         sequences: Sequences,
         client: RogDbusClient<'static>,
-        do_early_return: &'static AtomicBool,
+        do_early_return: Arc<AtomicBool>,
     ) -> Result<Self, Error> {
         Ok(Self {
             sequences,
@@ -45,7 +82,7 @@ impl<'a> CtrlAnimeInner<'static> {
         })
     }
     /// To be called on each main loop iteration to pump out commands to the anime
-    pub fn run(&self) -> Result<(), Error> {
+    pub fn run(&'a self) -> Result<(), Error> {
         if self.do_early_return.load(Ordering::SeqCst) {
             return Ok(());
         }
@@ -53,32 +90,10 @@ impl<'a> CtrlAnimeInner<'static> {
         for action in self.sequences.iter() {
             match action {
                 ActionData::Animation(frames) => {
-                    let mut count = 0;
-                    let start = Instant::now();
-                    'animation: loop {
-                        for frame in frames.frames() {
-                            if self.do_early_return.load(Ordering::SeqCst) {
-                                return Ok(());
-                            }
-                            self.client
-                                .proxies()
-                                .anime()
-                                .write(frame.frame().clone())
-                                .unwrap();
-                            if let AnimTime::Time(time) = frames.duration() {
-                                if Instant::now().duration_since(start) > time {
-                                    break 'animation;
-                                }
-                            }
-                            sleep(frame.delay());
-                        }
-                        if let AnimTime::Cycles(times) = frames.duration() {
-                            count += 1;
-                            if count >= times {
-                                break 'animation;
-                            }
-                        }
-                    }
+                    rog_anime::run_animation(frames, self.do_early_return.clone(), &|output| {
+                        self.client.proxies().anime().write(output).unwrap()
+                    })
+                    .unwrap();
                 }
                 ActionData::Image(image) => {
                     self.client
@@ -115,7 +130,7 @@ pub struct CtrlAnime<'a> {
     client: RogDbusClient<'a>,
     inner: Arc<Mutex<CtrlAnimeInner<'a>>>,
     /// Must be the same Atomic as in CtrlAnimeInner
-    inner_early_return: &'a AtomicBool,
+    inner_early_return: Arc<AtomicBool>,
 }
 
 impl<'a> CtrlAnime<'static> {
@@ -123,7 +138,7 @@ impl<'a> CtrlAnime<'static> {
         config: Arc<Mutex<UserAnimeConfig>>,
         inner: Arc<Mutex<CtrlAnimeInner<'static>>>,
         client: RogDbusClient<'static>,
-        inner_early_return: &'static AtomicBool,
+        inner_early_return: Arc<AtomicBool>,
     ) -> Result<Self, Error> {
         Ok(CtrlAnime {
             config,
@@ -159,18 +174,13 @@ impl CtrlAnime<'static> {
         &mut self,
         index: u32,
         file: String,
-        time: TimeType,
-        count: u32,
+        time: Timer,
         brightness: f32,
     ) -> zbus::fdo::Result<String> {
         if let Ok(mut config) = self.config.try_lock() {
-            let time: AnimTime = match time {
-                TimeType::Timer => AnimTime::Time(Duration::from_millis(count as u64)),
-                TimeType::Count => AnimTime::Cycles(count),
-                TimeType::Infinite => AnimTime::Infinite,
-            };
+            let time: AnimTime = time.into();
             let file = Path::new(&file);
-            let action = AnimeAction::AsusAnimation {
+            let action = ActionLoader::AsusAnimation {
                 file: file.into(),
                 brightness,
                 time,
@@ -205,19 +215,14 @@ impl CtrlAnime<'static> {
         scale: f32,
         angle: f32,
         xy: (f32, f32),
-        time: TimeType,
-        count: u32,
+        time: Timer,
         brightness: f32,
     ) -> zbus::fdo::Result<String> {
         if let Ok(mut config) = self.config.try_lock() {
-            let time: AnimTime = match time {
-                TimeType::Timer => AnimTime::Time(Duration::from_millis(count as u64)),
-                TimeType::Count => AnimTime::Cycles(count),
-                TimeType::Infinite => AnimTime::Infinite,
-            };
+            let time: AnimTime = time.into();
             let file = Path::new(&file);
             let translation = Vec2::new(xy.0, xy.1);
-            let action = AnimeAction::ImageAnimation {
+            let action = ActionLoader::ImageAnimation {
                 file: file.into(),
                 scale,
                 angle,
@@ -248,6 +253,7 @@ impl CtrlAnime<'static> {
         Err(zbus::fdo::Error::Failed("UserConfig lock fail".into()))
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_image(
         &mut self,
         index: u32,
@@ -255,16 +261,19 @@ impl CtrlAnime<'static> {
         scale: f32,
         angle: f32,
         xy: (f32, f32),
+        time: Option<Timer>,
         brightness: f32,
     ) -> zbus::fdo::Result<String> {
         if let Ok(mut config) = self.config.try_lock() {
             let file = Path::new(&file);
-            let action = AnimeAction::Image {
+            let time = time.map(|time| time.into());
+            let action = ActionLoader::Image {
                 file: file.into(),
                 scale,
                 angle,
                 translation: Vec2::new(xy.0, xy.1),
                 brightness,
+                time,
             };
 
             // Must make the inner run loop return early
@@ -291,7 +300,7 @@ impl CtrlAnime<'static> {
 
     pub fn insert_pause(&mut self, index: u32, millis: u64) -> zbus::fdo::Result<String> {
         if let Ok(mut config) = self.config.try_lock() {
-            let action = AnimeAction::Pause(Duration::from_millis(millis));
+            let action = ActionLoader::Pause(Duration::from_millis(millis));
             // Must make the inner run loop return early
             self.inner_early_return.store(true, Ordering::SeqCst);
 
@@ -340,13 +349,13 @@ impl CtrlAnime<'static> {
     pub fn set_state(&mut self, on: bool) -> zbus::fdo::Result<()> {
         // Operations here need to be in specific order
         if on {
-            self.client.proxies().anime().toggle_on(on)?;
+            self.client.proxies().anime().set_led_power(on)?;
             // Let the inner loop run
             self.inner_early_return.store(false, Ordering::SeqCst);
         } else {
             // Must make the inner run loop return early
             self.inner_early_return.store(true, Ordering::SeqCst);
-            self.client.proxies().anime().toggle_on(on)?;
+            self.client.proxies().anime().set_led_power(on)?;
         }
         Ok(())
     }

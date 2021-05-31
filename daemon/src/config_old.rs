@@ -7,6 +7,7 @@ use std::collections::BTreeMap;
 use crate::config::Config;
 
 /// for parsing old v3.1.7 config
+#[allow(dead_code)]
 #[derive(Deserialize)]
 pub(crate) struct ConfigV317 {
     pub gfx_mode: GfxVendors,
@@ -26,7 +27,7 @@ pub(crate) struct ConfigV317 {
 impl ConfigV317 {
     pub(crate) fn into_current(self) -> Config {
         Config {
-            gfx_mode: GfxVendors::Hybrid,
+            gfx_mode: self.gfx_mode,
             gfx_tmp_mode: None,
             gfx_managed: self.gfx_managed,
             gfx_vfio_enable: false,

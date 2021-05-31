@@ -47,6 +47,7 @@ impl<'a> ChargeProxy<'a> {
         Ok(ChargeProxy(DaemonProxy::new(&conn)?))
     }
 
+    #[inline]
     pub fn proxy(&self) -> &DaemonProxy<'a> {
         &self.0
     }

@@ -1,4 +1,3 @@
-use sysfs_class::RuntimePM;
 use ::zbus::Connection;
 use ctrl_gfx::error::GfxError;
 use ctrl_gfx::*;
@@ -14,6 +13,7 @@ use std::{iter::FromIterator, thread::JoinHandle};
 use std::{process::Command, thread::sleep, time::Duration};
 use std::{str::FromStr, sync::mpsc};
 use std::{sync::Arc, sync::Mutex};
+use sysfs_class::RuntimePM;
 use sysfs_class::{PciDevice, SysClass};
 use system::{GraphicsDevice, PciBus};
 
@@ -67,8 +67,12 @@ impl CtrlGraphics {
         let mut nvidia = Vec::new();
         let mut other = Vec::new();
         for dev in devs.iter() {
-            let c = dev.class().map_err(|err|{
-                error!("GFX: device error: {}, {}", dev.path().to_string_lossy(), err);
+            let c = dev.class().map_err(|err| {
+                error!(
+                    "GFX: device error: {}, {}",
+                    dev.path().to_string_lossy(),
+                    err
+                );
                 err
             })?;
             if 0x03 == (c >> 16) & 0xFF {
@@ -408,8 +412,12 @@ impl CtrlGraphics {
         // Make sure the power management is set to auto for nvidia devices
         let devs = PciDevice::all()?;
         for dev in devs.iter() {
-            let c = dev.class().map_err(|err|{
-                error!("GFX: device error: {}, {}", dev.path().to_string_lossy(), err);
+            let c = dev.class().map_err(|err| {
+                error!(
+                    "GFX: device error: {}, {}",
+                    dev.path().to_string_lossy(),
+                    err
+                );
                 err
             })?;
             if 0x03 == (c >> 16) & 0xFF && dev.vendor()? == 0x10DE {

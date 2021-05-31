@@ -55,6 +55,7 @@ impl<'a> GfxProxy<'a> {
         Ok(GfxProxy(DaemonProxy::new(&conn)?))
     }
 
+    #[inline]
     pub fn proxy(&self) -> &DaemonProxy<'a> {
         &self.0
     }

@@ -5,7 +5,7 @@ use rog_anime::{
         pkt_for_apply, pkt_for_flush, pkt_for_set_boot, pkt_for_set_on, pkts_for_init, PROD_ID,
         VENDOR_ID,
     },
-    ActionData, AnimTime, AnimeDataBuffer, AnimePacketType, AnimePowerStates, ANIME_DATA_LEN,
+    ActionData, AnimeDataBuffer, AnimePacketType, AnimePowerStates, ANIME_DATA_LEN,
 };
 use rog_types::supported::AnimeSupportedFunctions;
 use rusb::{Device, DeviceHandle};
@@ -13,7 +13,6 @@ use std::{
     error::Error,
     sync::{Arc, Mutex},
     thread::sleep,
-    time::Instant,
 };
 use std::{
     sync::atomic::{AtomicBool, Ordering},
@@ -144,31 +143,15 @@ impl CtrlAnime {
                     for action in actions.iter() {
                         match action {
                             ActionData::Animation(frames) => {
-                                let mut count = 0;
-                                let start = Instant::now();
-                                'animation: loop {
-                                    for frame in frames.frames() {
-                                        if let Ok(lock) = inner.try_lock() {
-                                            lock.write_data_buffer(frame.frame().clone());
-                                        }
-                                        if let AnimTime::Time(time) = frames.duration() {
-                                            if Instant::now().duration_since(start) > time {
-                                                break 'animation;
-                                            }
-                                        }
-                                        sleep(frame.delay());
-                                        // Need to check for early exit condition here or it might run
-                                        // until end of gif or time
-                                        if thread_exit.load(Ordering::SeqCst) {
-                                            break 'main;
-                                        }
+                                rog_anime::run_animation(frames, thread_exit.clone(), &|frame| {
+                                    if let Ok(lock) = inner.try_lock() {
+                                        lock.write_data_buffer(frame);
                                     }
-                                    if let AnimTime::Cycles(times) = frames.duration() {
-                                        count += 1;
-                                        if count >= times {
-                                            break 'animation;
-                                        }
-                                    }
+                                })
+                                .unwrap();
+
+                                if thread_exit.load(Ordering::SeqCst) {
+                                    break 'main;
                                 }
                             }
                             ActionData::Image(image) => {
@@ -379,6 +362,7 @@ impl CtrlAnimeZbus {
         }
     }
 
+    /// Set the global AniMe brightness
     fn set_brightness(&self, bright: f32) {
         'outer: loop {
             if let Ok(mut lock) = self.0.try_lock() {
@@ -395,6 +379,7 @@ impl CtrlAnimeZbus {
         }
     }
 
+    /// Set whether the AniMe is displaying images/data
     fn set_on_off(&self, status: bool) {
         'outer: loop {
             if let Ok(mut lock) = self.0.try_lock() {
@@ -413,6 +398,7 @@ impl CtrlAnimeZbus {
         }
     }
 
+    /// Set whether the AniMe will show boot, suspend, or off animations
     fn set_boot_on_off(&self, on: bool) {
         'outer: loop {
             if let Ok(mut lock) = self.0.try_lock() {
@@ -446,6 +432,7 @@ impl CtrlAnimeZbus {
         }
     }
 
+    /// Get status of if the AniMe LEDs are on
     #[dbus_interface(property)]
     fn awake_enabled(&self) -> bool {
         if let Ok(ctrl) = self.0.try_lock() {
@@ -454,6 +441,7 @@ impl CtrlAnimeZbus {
         true
     }
 
+    /// Get the status of if factory system-status animations are enabled
     #[dbus_interface(property)]
     fn boot_enabled(&self) -> bool {
         if let Ok(ctrl) = self.0.try_lock() {
@@ -462,6 +450,7 @@ impl CtrlAnimeZbus {
         true
     }
 
+    /// Notify listeners of the status of AniMe LED power and factory system-status animations
     #[dbus_interface(signal)]
     fn notify_power_states(&self, data: &AnimePowerStates) -> zbus::Result<()>;
 }
