@@ -552,7 +552,7 @@ impl CtrlGraphics {
             {
                 Self::do_vendor_tasks(GfxVendors::Integrated, vfio_enable, &devices, &bus)?;
                 Self::do_display_manager_action("restart")?;
-                sleep(Duration::from_millis(1000)); // Allow some time for the desktop to start
+                sleep(Duration::from_millis(1500)); // Allow some time for the desktop to start
                 Self::do_vendor_tasks(vendor, vfio_enable, &devices, &bus)?;
                 config.gfx_tmp_mode = Some(vendor);
                 mode_to_save = GfxVendors::Integrated;
@@ -650,10 +650,12 @@ impl CtrlGraphics {
             let bus = self.bus.clone();
             Self::do_vendor_tasks(vendor, vfio_enable, &devices, &bus)?;
             info!("GFX: Graphics mode changed to {}", <&str>::from(vendor));
-            if matches!(vendor, GfxVendors::Vfio | GfxVendors::Compute) {
-                if let Ok(mut config) = self.config.try_lock() {
+            if let Ok(mut config) = self.config.try_lock() {
+                if matches!(vendor, GfxVendors::Vfio | GfxVendors::Compute) {
                     config.gfx_tmp_mode = Some(vendor);
-                };
+                } else {
+                    config.gfx_tmp_mode = None;
+                }
             }
         }
         // TODO: undo if failed? Save last mode, catch errors...
