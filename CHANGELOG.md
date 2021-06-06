@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Extra info in log for G-Sync to help prevent user confusion around gfx switching
 - Add GA503Q led modes
 - Added ability to fade in/out gifs and images for anime. This does break anime configs. See manual for details.
+- Added task to CtrlLed to set the keyboard LED brightness on wake from suspend
+  + requires a kernel patch which will be upstreamed and in fedora rog kernel
 
 # [3.6.1] - 2021-05-25
 ### Changed

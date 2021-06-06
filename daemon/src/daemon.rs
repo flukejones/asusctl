@@ -135,7 +135,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
                 .unwrap_or_else(|err| warn!("Keyboard LED control: {}", err));
 
             CtrlKbdLedZbus::new(inner.clone()).add_to_server(&mut object_server);
-            let task = CtrlKbdLedTask(inner);
+            let task = CtrlKbdLedTask::new(inner);
             tasks.push(Box::new(task));
         }
         Err(err) => {

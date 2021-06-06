@@ -5,8 +5,10 @@ use crate::{
     config_aura::AuraConfig,
     error::RogError,
     laptops::{LaptopLedData, ASUS_KEYBOARD_DEVICES},
+    CtrlTask,
 };
 use log::{info, warn};
+use logind_zbus::ManagerProxy;
 use rog_aura::{
     usb::{
         LED_APPLY, LED_AWAKE_OFF_SLEEP_OFF, LED_AWAKE_OFF_SLEEP_ON, LED_AWAKE_ON_SLEEP_OFF,
@@ -15,11 +17,12 @@ use rog_aura::{
     AuraEffect, LedBrightness, LED_MSG_LEN,
 };
 use rog_types::supported::LedSupportedFunctions;
-use std::fs::OpenOptions;
+use std::{fs::OpenOptions, thread::{self, spawn}, time::Duration};
 use std::io::{Read, Write};
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
+use zbus::Connection;
 
 use crate::GetSupported;
 
@@ -50,32 +53,79 @@ pub struct CtrlKbdLed {
     pub config: AuraConfig,
 }
 
-pub struct CtrlKbdLedTask(pub Arc<Mutex<CtrlKbdLed>>);
+pub struct CtrlKbdLedTask<'a> {
+    inner: Arc<Mutex<CtrlKbdLed>>,
+    _c: Connection,
+    manager: ManagerProxy<'a>,
+}
 
-impl crate::CtrlTask for CtrlKbdLedTask {
-    fn do_task(&self) -> Result<(), RogError> {
-        if let Ok(mut lock) = self.0.try_lock() {
-            let mut file = OpenOptions::new()
-                .read(true)
-                .open(&lock.bright_node)
-                .map_err(|err| match err.kind() {
-                    std::io::ErrorKind::NotFound => {
-                        RogError::MissingLedBrightNode((&lock.bright_node).into(), err)
-                    }
-                    _ => RogError::Path((&lock.bright_node).into(), err),
-                })?;
-            let mut buf = [0u8; 1];
-            file.read_exact(&mut buf)
-                .map_err(|err| RogError::Read("buffer".into(), err))?;
-            if let Some(num) = char::from(buf[0]).to_digit(10) {
-                if lock.config.brightness != num.into() {
-                    lock.config.read();
-                    lock.config.brightness = num.into();
-                    lock.config.write();
+impl<'a> CtrlKbdLedTask<'a> {
+    pub fn new(inner: Arc<Mutex<CtrlKbdLed>>) -> Self {
+        let connection = Connection::new_system().unwrap();
+
+        let manager = ManagerProxy::new(&connection).unwrap();
+
+        let c1 = inner.clone();
+        // Run this action when the system wakes up from sleep
+        manager
+            .connect_prepare_for_sleep(move |sleep| {
+                if !sleep {
+                    let c1 = c1.clone();
+                    spawn(move || {
+                        // wait a fraction for things to wake up properly
+                        //std::thread::sleep(Duration::from_millis(100));
+                        loop {
+                        if let Ok(ref mut lock) = c1.try_lock() {
+                            lock.set_brightness(lock.config.brightness).ok();
+                            break;
+                        }}
+                    });
+                }                    
+                Ok(())
+            })
+            .map_err(|err| {
+                warn!("CtrlAnimeTask: new() {}", err);
+                err
+            })
+            .ok();
+
+        Self {
+            inner,
+            _c: connection,
+            manager,
+        }
+    }
+
+    fn update_config(lock: &mut CtrlKbdLed) -> Result<(), RogError> {
+        let mut file = OpenOptions::new()
+            .read(true)
+            .open(&lock.bright_node)
+            .map_err(|err| match err.kind() {
+                std::io::ErrorKind::NotFound => {
+                    RogError::MissingLedBrightNode((&lock.bright_node).into(), err)
                 }
-                return Ok(());
+                _ => RogError::Path((&lock.bright_node).into(), err),
+            })?;
+        let mut buf = [0u8; 1];
+        file.read_exact(&mut buf)
+            .map_err(|err| RogError::Read("buffer".into(), err))?;
+        if let Some(num) = char::from(buf[0]).to_digit(10) {
+            if lock.config.brightness != num.into() {
+                lock.config.read();
+                lock.config.brightness = num.into();
+                lock.config.write();
             }
-            return Err(RogError::ParseLed);
+            return Ok(());
+        }
+        Err(RogError::ParseLed)
+    }
+}
+
+impl<'a> CtrlTask for CtrlKbdLedTask<'a> {
+    fn do_task(&self) -> Result<(), RogError> {
+        self.manager.next_signal()?;
+        if let Ok(ref mut lock) = self.inner.try_lock() {
+            return Self::update_config(lock);
         }
         Ok(())
     }
