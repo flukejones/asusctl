@@ -538,18 +538,15 @@ impl CtrlGraphics {
         Self::do_display_manager_action("stop")?;
         Self::wait_display_manager_state("inactive")?;
 
-        let vfio_enable = if let Ok(mut config) = config.try_lock() {
+        let mut  mode_to_save = vendor;
+        // Need to change to integrated before we can change to vfio or compute
+        if let Ok(mut config) = config.try_lock() {
             // Since we have a lock, reset tmp to none. This thread should only ever run
             // for Integrated, Hybrid, or Nvidia. Tmp is also only for informational
             config.gfx_tmp_mode = None;
             //
-            config.gfx_vfio_enable
-        } else {
-            false
-        };
-
-        // Need to change to integrated before we can change to vfio or compute
-        if let Ok(config) = config.try_lock() {
+            let vfio_enable = config.gfx_vfio_enable;
+            
             if matches!(vendor, GfxVendors::Compute | GfxVendors::Vfio)
                 && matches!(config.gfx_mode, GfxVendors::Nvidia | GfxVendors::Hybrid)
             {
@@ -557,14 +554,16 @@ impl CtrlGraphics {
                 Self::do_display_manager_action("restart")?;
                 sleep(Duration::from_millis(1000)); // Allow some time for the desktop to start
                 Self::do_vendor_tasks(vendor, vfio_enable, &devices, &bus)?;
+                config.gfx_tmp_mode = Some(vendor);
+                mode_to_save = GfxVendors::Integrated;
+            } else {
+                Self::do_vendor_tasks(vendor, vfio_enable, &devices, &bus)?;
+                Self::do_display_manager_action("restart")?;
             }
-        } else {
-            Self::do_vendor_tasks(vendor, vfio_enable, &devices, &bus)?;
-            Self::do_display_manager_action("restart")?;
         }
 
         // Save selected mode in case of reboot
-        Self::save_gfx_mode(vendor, config);
+        Self::save_gfx_mode(mode_to_save, config);
         info!("GFX thread: display-manager started");
 
         let v: &str = vendor.into();

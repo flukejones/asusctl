@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   + requires a kernel patch which will be upstreamed and in fedora rog kernel
 - Make gfx change from nvidia to vfio/compute also force-change to integrated _then_
   to requested mode
+- Fix invalid gfx status when switching from some modes
+- Fix copy over of serde skipped config values on config reload
 
 # [3.6.1] - 2021-05-25
 ### Changed

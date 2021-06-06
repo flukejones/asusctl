@@ -142,22 +142,14 @@ impl Config {
             if l == 0 {
                 warn!("File is empty {}", CONFIG_PATH);
             } else {
-                let x: Config = serde_json::from_str(&buf)
+                let mut x: Config = serde_json::from_str(&buf)
                     .unwrap_or_else(|_| panic!("Could not deserialise {}", CONFIG_PATH));
+                // copy over serde skipped values
+                x.gfx_tmp_mode = self.gfx_tmp_mode;
+                x.curr_fan_mode = self.curr_fan_mode;
                 *self = x;
             }
         }
-    }
-
-    pub fn read_new() -> Result<Config, Box<dyn std::error::Error>> {
-        let mut file = OpenOptions::new()
-            .read(true)
-            .open(&CONFIG_PATH)
-            .unwrap_or_else(|err| panic!("Error reading {}: {}", CONFIG_PATH, err));
-        let mut buf = String::new();
-        file.read_to_string(&mut buf)?;
-        let x: Config = serde_json::from_str(&buf)?;
-        Ok(x)
     }
 
     pub fn write(&self) {
