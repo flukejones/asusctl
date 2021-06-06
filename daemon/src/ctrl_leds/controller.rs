@@ -17,7 +17,7 @@ use rog_aura::{
     AuraEffect, LedBrightness, LED_MSG_LEN,
 };
 use rog_types::supported::LedSupportedFunctions;
-use std::{fs::OpenOptions, thread::{self, spawn}, time::Duration};
+use std::{fs::OpenOptions, thread::spawn};
 use std::io::{Read, Write};
 use std::path::Path;
 use std::sync::Arc;

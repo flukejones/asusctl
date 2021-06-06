@@ -548,8 +548,21 @@ impl CtrlGraphics {
             false
         };
 
-        Self::do_vendor_tasks(vendor, vfio_enable, &devices, &bus)?;
-        Self::do_display_manager_action("restart")?;
+        // Need to change to integrated before we can change to vfio or compute
+        if let Ok(config) = config.try_lock() {
+            if matches!(vendor, GfxVendors::Compute | GfxVendors::Vfio)
+                && matches!(config.gfx_mode, GfxVendors::Nvidia | GfxVendors::Hybrid)
+            {
+                Self::do_vendor_tasks(GfxVendors::Integrated, vfio_enable, &devices, &bus)?;
+                Self::do_display_manager_action("restart")?;
+                sleep(Duration::from_millis(1000)); // Allow some time for the desktop to start
+                Self::do_vendor_tasks(vendor, vfio_enable, &devices, &bus)?;
+            }
+        } else {
+            Self::do_vendor_tasks(vendor, vfio_enable, &devices, &bus)?;
+            Self::do_display_manager_action("restart")?;
+        }
+
         // Save selected mode in case of reboot
         Self::save_gfx_mode(vendor, config);
         info!("GFX thread: display-manager started");

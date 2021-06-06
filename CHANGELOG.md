@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added ability to fade in/out gifs and images for anime. This does break anime configs. See manual for details.
 - Added task to CtrlLed to set the keyboard LED brightness on wake from suspend
   + requires a kernel patch which will be upstreamed and in fedora rog kernel
+- Make gfx change from nvidia to vfio/compute also force-change to integrated _then_
+  to requested mode
 
 # [3.6.1] - 2021-05-25
 ### Changed
