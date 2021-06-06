@@ -155,7 +155,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
                                 warn!("Dedicated GFX toggle is on but driver mode is not nvidia \nSetting to nvidia driver mode");
                                 let devices = ctrl.devices();
                                 let bus = ctrl.bus();
-                                CtrlGraphics::do_vendor_tasks(
+                                CtrlGraphics::do_mode_setup_tasks(
                                     GfxVendors::Nvidia,
                                     false,
                                     &devices,
@@ -165,7 +165,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
                                 info!("Dedicated GFX toggle is off");
                                 let devices = ctrl.devices();
                                 let bus = ctrl.bus();
-                                CtrlGraphics::do_vendor_tasks(
+                                CtrlGraphics::do_mode_setup_tasks(
                                     config.gfx_mode,
                                     false,
                                     &devices,

@@ -10,13 +10,10 @@ use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2, ANIME_DATA_LEN};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClient;
 use rog_profiles::profiles::Profile;
-use rog_types::{
-    gfx_vendors::GfxVendors,
-    supported::{
+use rog_types::{gfx_vendors::{GfxRequiredUserAction, GfxVendors}, supported::{
         FanCpuSupportedFunctions, LedSupportedFunctions, RogBiosSupportedFunctions,
         SupportedFunctions,
-    },
-};
+    }};
 use std::{env::args, path::Path};
 use yansi_term::Colour::Green;
 use yansi_term::Colour::Red;
@@ -309,11 +306,27 @@ fn do_gfx(
             err
         })?;
         let res = dbus.gfx_wait_changed()?;
-        println!(
-            "Graphics mode changed to {}. User action required is: {}",
-            <&str>::from(mode),
-            <&str>::from(&res)
-        );
+        match res {
+            GfxRequiredUserAction::Integrated => {
+                println!(
+                    "You must change to Integrated before you can change to {}",
+                    <&str>::from(mode)
+                );
+            },
+            GfxRequiredUserAction::Logout | GfxRequiredUserAction::Reboot => {
+                println!(
+                    "Graphics mode changed to {}. User action required is: {}",
+                    <&str>::from(mode),
+                    <&str>::from(&res)
+                );
+            },
+            GfxRequiredUserAction::None => {
+                println!(
+                    "Graphics mode changed to {}",
+                    <&str>::from(mode)
+                );
+            },
+        }
         std::process::exit(0)
     }
     if command.get {
