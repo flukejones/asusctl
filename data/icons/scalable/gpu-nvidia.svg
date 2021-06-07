@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Generator: Gravit.io -->
+
+<svg
+   style="isolation:isolate"
+   viewBox="0 0 82.410369 82.410377"
+   width="82.41037pt"
+   height="82.410378pt"
+   version="1.1"
+   id="svg17"
+   sodipodi:docname="gpu-nvidia.svg"
+   inkscape:version="1.1 (c68e22c387, 2021-05-23)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview19"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="pt"
+     showgrid="false"
+     inkscape:zoom="4.96875"
+     inkscape:cx="14.389937"
+     inkscape:cy="54.742138"
+     inkscape:window-width="2048"
+     inkscape:window-height="1083"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg17" />
+  <defs
+     id="defs5">
+    <clipPath
+       id="_clipPath_GAg6mcrkdqJgsmZOjvo6JT6R1d3r9FoI">
+      <rect
+         width="128"
+         height="128"
+         id="rect2"
+         x="0"
+         y="0" />
+    </clipPath>
+  </defs>
+  <path
+     style="fill:#76b900;fill-opacity:1;stroke:#000000;stroke-width:0.75;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 15.92217,76.9033 V 71.771223 H 13.28066 10.63915 V 69.129715 66.488208 H 5.507075 0.375 v -2.037735 -2.037735 h 5.132075 5.132075 v -5.73585 -5.73585 H 5.507075 0.375 V 48.903302 46.865566 H 5.507075 10.63915 V 41.205189 35.544811 H 5.507075 0.375 V 33.431604 31.318396 H 5.507075 10.63915 V 25.658019 19.997641 H 5.507075 0.375 V 17.959906 15.92217 h 5.132075 5.132075 v -2.641509 -2.64151 h 2.64151 2.64151 V 5.5070763 0.375 h 2.037736 2.037735 v 5.1320763 5.1320747 h 5.660378 5.660377 V 5.5070763 0.375 h 2.113207 2.113208 v 5.1320763 5.1320747 h 5.660377 5.660378 V 5.5070763 0.375 h 1.947066 1.947063 l 0.09711,1.8490563 c 0.07996,1.52246 0.251242,6.717377 0.253724,7.695141 0.0014,0.5274167 -0.04609,0.5197837 3.905982,0.6286047 1.618867,0.04457 3.945285,0.123799 5.16981,0.176053 l 2.226412,0.09501 V 5.5969303 0.375 h 2.037735 2.037743 v 5.1320763 5.1320747 h 2.641507 2.641508 v 2.64151 2.641509 h 5.132077 5.13207 v 2.037736 2.037735 h -5.13207 -5.132077 v 5.660378 5.660377 h 5.132077 5.13207 v 2.113208 2.113207 h -5.13207 -5.132077 v 5.660378 5.660377 h 5.132077 5.13207 v 2.037736 2.037736 h -5.13207 -5.132077 v 5.73585 5.73585 h 5.132077 5.13207 v 2.037735 2.037735 h -5.13207 -5.132077 v 2.641507 2.641508 H 69.129718 66.488211 V 76.9033 82.035378 H 64.450468 62.412733 V 76.9033 71.771223 h -5.73585 -5.735846 V 76.9033 82.035378 H 48.903301 46.865566 V 76.9033 71.771223 H 41.205188 35.544811 V 76.9033 82.035378 H 33.431603 31.318396 V 76.9033 71.771223 H 25.658019 19.997641 V 76.9033 82.035378 H 17.959906 15.92217 Z"
+     id="path1355" />
+</svg>

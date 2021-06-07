@@ -2,8 +2,10 @@ use notify_rust::{Hint, Notification, NotificationHandle};
 use rog_aura::AuraEffect;
 use rog_dbus::{DbusProxies, Signals};
 use rog_profiles::profiles::{FanLevel, Profile};
+use rog_types::gfx_vendors::GfxRequiredUserAction;
 use rog_types::gfx_vendors::GfxVendors;
 use std::error::Error;
+use std::process;
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -17,6 +19,16 @@ macro_rules! notify {
         if let Ok(x) = $notifier($data) {
             $last_notif = Some(x);
         }
+    };
+}
+
+macro_rules! base_notification {
+    ($body:expr) => {
+        Notification::new()
+            .summary(NOTIF_HEADER)
+            .body($body)
+            .timeout(2000)
+            .show()
     };
 }
 
@@ -59,6 +71,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if let Ok(data) = signals.gfx_vendor.try_recv() {
             notify!(do_gfx_notif, last_notification, &data);
         }
+        if let Ok(data) = signals.gfx_action.try_recv() {
+            match data {
+                GfxRequiredUserAction::Logout | GfxRequiredUserAction::Reboot => {
+                    do_gfx_action_notif(&data)?;
+                }
+                GfxRequiredUserAction::Integrated => {
+                    base_notification!(
+                        "You must be in integrated mode first to switch to the requested mode"
+                    )?;
+                }
+                GfxRequiredUserAction::None => {}
+            }
+        }
     }
 }
 
@@ -86,16 +111,6 @@ fn do_thermal_notif(profile: &Profile) -> Result<NotificationHandle, Box<dyn Err
     Ok(x)
 }
 
-macro_rules! base_notification {
-    ($body:expr) => {
-        Notification::new()
-            .summary(NOTIF_HEADER)
-            .body($body)
-            .timeout(2000)
-            .show()
-    };
-}
-
 fn do_led_notif(ledmode: &AuraEffect) -> Result<NotificationHandle, notify_rust::error::Error> {
     base_notification!(&format!(
         "Keyboard LED mode changed to {}",
@@ -108,8 +123,50 @@ fn do_charge_notif(limit: &u8) -> Result<NotificationHandle, notify_rust::error:
 }
 
 fn do_gfx_notif(vendor: &GfxVendors) -> Result<NotificationHandle, notify_rust::error::Error> {
-    base_notification!(&format!(
-        "Graphics mode changed to {}",
-        <&str>::from(vendor)
-    ))
+    let icon = match vendor {
+        GfxVendors::Nvidia => "/usr/share/icons/hicolor/scalable/status/gpu-nvidia.svg",
+        GfxVendors::Integrated => "/usr/share/icons/hicolor/scalable/status/gpu-integrated.svg",
+        GfxVendors::Compute => "/usr/share/icons/hicolor/scalable/status/gpu-compute.svg",
+        GfxVendors::Vfio => "/usr/share/icons/hicolor/scalable/status/gpu-vfio.svg",
+        GfxVendors::Hybrid => "/usr/share/icons/hicolor/scalable/status/gpu-hybrid.svg",
+    };
+    Notification::new()
+        .summary(NOTIF_HEADER)
+        .body(&format!(
+            "Graphics mode changed to {}",
+            <&str>::from(vendor)
+        ))
+        .timeout(2000)
+        .icon(icon)
+        .show()
+}
+
+fn do_gfx_action_notif(vendor: &GfxRequiredUserAction) -> Result<(), notify_rust::error::Error> {
+    let mut notif = Notification::new()
+        .summary(NOTIF_HEADER)
+        .timeout(2000)
+        .urgency(notify_rust::Urgency::Critical)
+        .icon("/usr/share/icons/hicolor/scalable/status/notification-reboot.svg")
+        .finalize();
+
+    if matches!(vendor, GfxRequiredUserAction::Logout) {
+        notif.action("logout", "Logout now?");
+    } else if matches!(vendor, GfxRequiredUserAction::Reboot) {
+        notif.action("reboot", "Reboot now?");
+    }
+
+    notif.body("Graphics mode changed");
+    notif.show()?.wait_for_action(|action| match action {
+        "logout" => {
+            process::Command::new("gnome-session-quit").spawn().ok();
+        }
+        "reboot" => {
+            process::Command::new("systemctl")
+                .arg("reboot")
+                .spawn()
+                .ok();
+        }
+        _ => (),
+    });
+    Ok(())
 }
