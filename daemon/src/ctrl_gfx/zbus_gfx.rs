@@ -25,7 +25,7 @@ impl CtrlGraphics {
 
     fn set_vendor(&mut self, vendor: GfxVendors) -> zbus::fdo::Result<GfxRequiredUserAction> {
         info!("GFX: Switching gfx mode to {}", <&str>::from(vendor));
-        let msg = self.set_gfx_config(vendor).map_err(|err| {
+        let msg = self.set_gfx_mode(vendor).map_err(|err| {
             error!("GFX: {}", err);
             zbus::fdo::Error::Failed(format!("GFX fail: {}", err))
         })?;

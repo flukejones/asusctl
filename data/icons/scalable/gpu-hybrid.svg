@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Generator: Gravit.io -->
+
+<svg
+   style="isolation:isolate"
+   viewBox="0 0 82.733002 82.733002"
+   width="82.733002pt"
+   height="82.733002pt"
+   version="1.1"
+   id="svg19"
+   sodipodi:docname="gpu-hybrid.svg"
+   inkscape:version="1.1 (c68e22c387, 2021-05-23)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview21"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="pt"
+     showgrid="false"
+     inkscape:zoom="4.96875"
+     inkscape:cx="15.798742"
+     inkscape:cy="54.742138"
+     inkscape:window-width="2048"
+     inkscape:window-height="1083"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg19" />
+  <defs
+     id="defs5">
+    <clipPath
+       id="_clipPath_uVSrFPVusaaYDISWhfCjIlGBeb9FaZAr">
+      <rect
+         width="128"
+         height="128"
+         id="rect2"
+         x="0"
+         y="0" />
+    </clipPath>
+  </defs>
+  <g
+     clip-path="url(#_clipPath_uVSrFPVusaaYDISWhfCjIlGBeb9FaZAr)"
+     id="g17"
+     transform="translate(-22.624,-23)">
+    <rect
+       width="128"
+       height="128"
+       style="fill:#000000"
+       fill-opacity="0"
+       id="rect7"
+       x="0"
+       y="0" />
+    <g
+       id="g15">
+      <path
+         d="m 38.137,23 v 10.342 h -5.171 v 5.17 H 22.624 v 5.171 H 32.966 V 54.025 H 22.624 v 5.171 H 32.966 V 69.537 H 22.624 v 5.171 H 32.966 V 85.05 H 22.624 v 5.17 h 10.342 v 5.171 h 5.171 v 10.342 h 5.171 V 95.391 h 10.341 v 10.342 H 58.82 V 95.391 h 10.342 v 10.342 h 5.17 V 95.391 h 10.342 v 10.342 h 5.171 V 95.391 h 5.171 V 90.22 h 10.341 V 85.05 H 95.016 V 74.708 h 10.341 V 69.537 H 95.016 V 59.196 h 10.341 V 54.025 H 95.016 V 43.683 h 10.341 V 38.512 H 95.016 v -5.17 H 89.845 V 23 H 84.674 V 33.342 H 74.332 V 23 h -5.17 V 33.342 H 58.82 V 23 H 53.649 V 33.342 H 43.308 V 23 Z"
+         fill="rgb(77,77,77)"
+         id="path9"
+         style="fill:#ed1c24;fill-opacity:1;stroke:#000000;stroke-opacity:1;stroke-width:0.75;stroke-miterlimit:4;stroke-dasharray:none" />
+      <rect
+         x="38.146"
+         y="38.512001"
+         width="51.708"
+         height="51.708"
+         fill="rgb(77,77,77)"
+         id="rect11"
+         style="fill:#76b900;fill-opacity:1;stroke:#000000;stroke-opacity:1" />
+      <path
+         d="m 51.464,79 h 5.663 V 66.118 H 70.916 V 79 h 5.62 V 49 h -5.62 V 61.147 H 57.127 V 49 h -5.663 z"
+         fill="rgb(221,221,221)"
+         id="path13"
+         style="fill:#ececec;stroke:#000000;stroke-opacity:1;stroke-width:0.5;stroke-miterlimit:4;stroke-dasharray:none" />
+    </g>
+  </g>
+</svg>

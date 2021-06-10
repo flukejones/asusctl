@@ -86,6 +86,7 @@ impl From<GfxVendors> for &str {
 pub enum GfxRequiredUserAction {
     Logout,
     Reboot,
+    Integrated,
     None,
 }
 
@@ -94,6 +95,7 @@ impl From<&GfxRequiredUserAction> for &str {
         match gfx {
             GfxRequiredUserAction::Logout => "logout",
             GfxRequiredUserAction::Reboot => "reboot",
+            GfxRequiredUserAction::Integrated => "switch to integrated first",
             GfxRequiredUserAction::None => "no action",
         }
     }

@@ -8,8 +8,8 @@ use logind_zbus::{
     ManagerProxy, SessionProxy,
 };
 use rog_types::gfx_vendors::{GfxPower, GfxRequiredUserAction, GfxVendors};
+use std::iter::FromIterator;
 use std::{io::Write, ops::Add, path::Path, time::Instant};
-use std::{iter::FromIterator, thread::JoinHandle};
 use std::{process::Command, thread::sleep, time::Duration};
 use std::{str::FromStr, sync::mpsc};
 use std::{sync::Arc, sync::Mutex};
@@ -126,7 +126,7 @@ impl CtrlGraphics {
     }
 
     /// Associated method to get which vendor mode is set
-    pub fn get_gfx_mode(&self) -> Result<GfxVendors, RogError> {
+    pub(super) fn get_gfx_mode(&self) -> Result<GfxVendors, RogError> {
         if let Ok(config) = self.config.lock() {
             if let Some(mode) = config.gfx_tmp_mode {
                 return Ok(mode);
@@ -275,6 +275,7 @@ impl CtrlGraphics {
             .map_err(|err| RogError::Command("device unbind error".into(), err))
     }
 
+    /// Add or remove driver modules
     fn do_driver_action(driver: &str, action: &str) -> Result<(), GfxError> {
         let mut cmd = Command::new(action);
         cmd.arg(driver);
@@ -359,14 +360,15 @@ impl CtrlGraphics {
 
         let mut count = 0;
 
-        while count <= 5 {
+        while count <= (4 * 3) {
+            // 3 seconds max
             let output = cmd
                 .output()
                 .map_err(|err| RogError::Command(format!("{:?}", cmd), err))?;
             if output.stdout.starts_with(state.as_bytes()) {
                 return Ok(());
             }
-            std::thread::sleep(std::time::Duration::from_millis(500));
+            std::thread::sleep(std::time::Duration::from_millis(250));
             count += 1;
         }
         Err(GfxError::DisplayManagerTimeout(state.into()).into())
@@ -374,9 +376,10 @@ impl CtrlGraphics {
 
     /// Determine if we need to logout/thread. Integrated<->Vfio mode does not
     /// require logout.
-    fn logout_required(&self, vendor: GfxVendors) -> GfxRequiredUserAction {
+    fn is_logout_required(&self, vendor: GfxVendors) -> GfxRequiredUserAction {
         if let Ok(config) = self.config.lock() {
             let current = config.gfx_mode;
+            // Modes that can switch without logout
             if matches!(
                 current,
                 GfxVendors::Integrated | GfxVendors::Vfio | GfxVendors::Compute
@@ -386,22 +389,28 @@ impl CtrlGraphics {
             ) {
                 return GfxRequiredUserAction::None;
             }
+            // Modes that require a switch to integrated first
+            if matches!(current, GfxVendors::Nvidia | GfxVendors::Hybrid)
+                && matches!(vendor, GfxVendors::Compute | GfxVendors::Vfio)
+            {
+                return GfxRequiredUserAction::Integrated;
+            }
         }
         GfxRequiredUserAction::Logout
     }
 
-    /// Write the config changes and add/remove drivers and devices depending
-    /// on selected mode:
+    /// Do a full setup flow for the chosen mode:
     ///
     /// Tasks:
+    /// - rescan for devices
     /// - write xorg config
     /// - write modprobe config
-    /// - rescan for devices
     ///   + add drivers
     ///   + or remove drivers and devices
     ///
     /// The daemon needs direct access to this function when it detects that the
-    pub fn do_vendor_tasks(
+    /// bios has G-Sync switch is enabled
+    pub fn do_mode_setup_tasks(
         vendor: GfxVendors,
         vfio_enable: bool,
         devices: &[GraphicsDevice],
@@ -425,8 +434,14 @@ impl CtrlGraphics {
                 dev.set_runtime_pm(sysfs_class::RuntimePowerManagement::On)?;
             }
         }
-        //
-        Self::write_xorg_conf(vendor)?;
+        // Only these modes should have xorg config
+        if matches!(
+            vendor,
+            GfxVendors::Nvidia | GfxVendors::Hybrid | GfxVendors::Integrated
+        ) {
+            Self::write_xorg_conf(vendor)?;
+        }
+
         // Write different modprobe to enable boot control to work
         Self::write_modprobe_conf(vendor, devices)?;
 
@@ -492,7 +507,7 @@ impl CtrlGraphics {
     }
 
     /// Spools until all user sessions are ended then switches to requested mode
-    fn fire_starter(
+    fn create_mode_change_thread(
         vendor: GfxVendors,
         devices: Vec<GraphicsDevice>,
         bus: PciBus,
@@ -538,7 +553,7 @@ impl CtrlGraphics {
         Self::do_display_manager_action("stop")?;
         Self::wait_display_manager_state("inactive")?;
 
-        let mut  mode_to_save = vendor;
+        let mut mode_to_save = vendor;
         // Need to change to integrated before we can change to vfio or compute
         if let Ok(mut config) = config.try_lock() {
             // Since we have a lock, reset tmp to none. This thread should only ever run
@@ -546,18 +561,17 @@ impl CtrlGraphics {
             config.gfx_tmp_mode = None;
             //
             let vfio_enable = config.gfx_vfio_enable;
-            
+
+            // Failsafe. In the event this loop is run with a switch from nvidia in use
+            // to vfio or compute do a forced switch to integrated instead to prevent issues
             if matches!(vendor, GfxVendors::Compute | GfxVendors::Vfio)
                 && matches!(config.gfx_mode, GfxVendors::Nvidia | GfxVendors::Hybrid)
             {
-                Self::do_vendor_tasks(GfxVendors::Integrated, vfio_enable, &devices, &bus)?;
+                Self::do_mode_setup_tasks(GfxVendors::Integrated, vfio_enable, &devices, &bus)?;
                 Self::do_display_manager_action("restart")?;
-                sleep(Duration::from_millis(1500)); // Allow some time for the desktop to start
-                Self::do_vendor_tasks(vendor, vfio_enable, &devices, &bus)?;
-                config.gfx_tmp_mode = Some(vendor);
                 mode_to_save = GfxVendors::Integrated;
             } else {
-                Self::do_vendor_tasks(vendor, vfio_enable, &devices, &bus)?;
+                Self::do_mode_setup_tasks(vendor, vfio_enable, &devices, &bus)?;
                 Self::do_display_manager_action("restart")?;
             }
         }
@@ -572,7 +586,7 @@ impl CtrlGraphics {
     }
 
     /// Before starting a new thread the old one *must* be cancelled
-    fn cancel_thread(&self) {
+    fn cancel_mode_change_thread(&self) {
         if let Ok(lock) = self.thread_kill.lock() {
             if let Some(tx) = lock.as_ref() {
                 // Cancel the running thread
@@ -587,7 +601,7 @@ impl CtrlGraphics {
     }
 
     /// The thread is used only in cases where a logout is required
-    fn setup_thread(&mut self, vendor: GfxVendors) {
+    fn setup_mode_change_thread(&mut self, vendor: GfxVendors) {
         let config = self.config.clone();
         let devices = self.nvidia.clone();
         let bus = self.bus.clone();
@@ -595,16 +609,16 @@ impl CtrlGraphics {
         if let Ok(mut lock) = self.thread_kill.lock() {
             *lock = Some(tx);
         }
-        let killer = self.thread_kill.clone();
+        let thread_kill = self.thread_kill.clone();
 
-        let _join: JoinHandle<()> = std::thread::spawn(move || {
-            Self::fire_starter(vendor, devices, bus, rx, config)
+        std::thread::spawn(move || {
+            Self::create_mode_change_thread(vendor, devices, bus, rx, config)
                 .map_err(|err| {
                     error!("GFX: {}", err);
                 })
                 .ok();
             // clear the tx/rx when done
-            if let Ok(mut lock) = killer.try_lock() {
+            if let Ok(mut lock) = thread_kill.try_lock() {
                 *lock = None;
             }
         });
@@ -615,10 +629,7 @@ impl CtrlGraphics {
     /// to switch modes.
     ///
     /// For manually calling (not on boot/startup) via dbus
-    pub fn set_gfx_config(
-        &mut self,
-        vendor: GfxVendors,
-    ) -> Result<GfxRequiredUserAction, RogError> {
+    pub fn set_gfx_mode(&mut self, vendor: GfxVendors) -> Result<GfxRequiredUserAction, RogError> {
         if let Ok(gsync) = CtrlRogBios::get_gfx_mode() {
             if gsync == 1 {
                 return Err(GfxError::GsyncModeActive.into());
@@ -636,29 +647,40 @@ impl CtrlGraphics {
         }
 
         // Must always cancel any thread running
-        self.cancel_thread();
+        self.cancel_mode_change_thread();
         // determine which method we need here
-        let action_required = self.logout_required(vendor);
-        if matches!(action_required, GfxRequiredUserAction::Logout) {
-            // Yeah need the thread to check if all users are logged out
-            info!("GFX: mode change requires a logout to complete");
-            self.setup_thread(vendor);
-        } else {
-            // Okay cool, we can switch on/off vfio
-            info!("GFX: mode change does not require logout");
-            let devices = self.nvidia.clone();
-            let bus = self.bus.clone();
-            Self::do_vendor_tasks(vendor, vfio_enable, &devices, &bus)?;
-            info!("GFX: Graphics mode changed to {}", <&str>::from(vendor));
-            if let Ok(mut config) = self.config.try_lock() {
-                if matches!(vendor, GfxVendors::Vfio | GfxVendors::Compute) {
-                    config.gfx_tmp_mode = Some(vendor);
-                } else {
+        let action_required = self.is_logout_required(vendor);
+
+        match action_required {
+            GfxRequiredUserAction::Logout => {
+                info!("GFX: mode change requires a logout to complete");
+                self.setup_mode_change_thread(vendor);
+            }
+            GfxRequiredUserAction::Reboot => {
+                info!("GFX: mode change requires reboot");
+                let devices = self.nvidia.clone();
+                let bus = self.bus.clone();
+                Self::do_mode_setup_tasks(vendor, vfio_enable, &devices, &bus)?;
+                info!("GFX: Graphics mode changed to {}", <&str>::from(vendor));
+            }
+            GfxRequiredUserAction::Integrated => {
+                info!("GFX: mode change requires user to be in Integrated mode first");
+            }
+            GfxRequiredUserAction::None => {
+                info!("GFX: mode change does not require logout");
+                let devices = self.nvidia.clone();
+                let bus = self.bus.clone();
+                Self::do_mode_setup_tasks(vendor, vfio_enable, &devices, &bus)?;
+                info!("GFX: Graphics mode changed to {}", <&str>::from(vendor));
+                if let Ok(mut config) = self.config.try_lock() {
                     config.gfx_tmp_mode = None;
+                    if matches!(vendor, GfxVendors::Vfio | GfxVendors::Compute) {
+                        config.gfx_tmp_mode = Some(vendor);
+                    }
                 }
             }
         }
-        // TODO: undo if failed? Save last mode, catch errors...
+
         Ok(action_required)
     }
 
@@ -674,7 +696,7 @@ impl CtrlGraphics {
             false
         };
 
-        Self::do_vendor_tasks(vendor, vfio_enable, &devices, &bus)?;
+        Self::do_mode_setup_tasks(vendor, vfio_enable, &devices, &bus)?;
         Self::toggle_fallback_service(vendor)?;
         Ok(())
     }

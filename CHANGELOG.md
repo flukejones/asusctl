@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+# [3.7.1] - 2021-06-11
+### Changed
+- Refine graphics mode switching:
+  + Disallow switching to compute or vfio mode unless existing mode is "Integrated"
+
 # [3.7.0] - 2021-06-06
 ### Changed
 - Set PM to auto for Nvidia always
