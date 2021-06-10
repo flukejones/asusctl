@@ -662,7 +662,7 @@ impl CtrlGraphics {
                 let bus = self.bus.clone();
                 Self::do_mode_setup_tasks(vendor, vfio_enable, &devices, &bus)?;
                 info!("GFX: Graphics mode changed to {}", <&str>::from(vendor));
-            },
+            }
             GfxRequiredUserAction::Integrated => {
                 info!("GFX: mode change requires user to be in Integrated mode first");
             }

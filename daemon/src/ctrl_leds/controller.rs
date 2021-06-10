@@ -17,11 +17,11 @@ use rog_aura::{
     AuraEffect, LedBrightness, LED_MSG_LEN,
 };
 use rog_types::supported::LedSupportedFunctions;
-use std::{fs::OpenOptions, thread::spawn};
 use std::io::{Read, Write};
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::{fs::OpenOptions, thread::spawn};
 use zbus::Connection;
 
 use crate::GetSupported;
@@ -75,12 +75,13 @@ impl<'a> CtrlKbdLedTask<'a> {
                         // wait a fraction for things to wake up properly
                         //std::thread::sleep(Duration::from_millis(100));
                         loop {
-                        if let Ok(ref mut lock) = c1.try_lock() {
-                            lock.set_brightness(lock.config.brightness).ok();
-                            break;
-                        }}
+                            if let Ok(ref mut lock) = c1.try_lock() {
+                                lock.set_brightness(lock.config.brightness).ok();
+                                break;
+                            }
+                        }
                     });
-                }                    
+                }
                 Ok(())
             })
             .map_err(|err| {
