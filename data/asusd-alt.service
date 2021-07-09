@@ -3,6 +3,7 @@ Description=ASUS Notebook Control
 After=basic.target syslog.target
 
 [Service]
+Environment=IS_SERVICE=1
 ExecStart=/usr/bin/asusd
 Restart=on-failure
 Type=dbus
