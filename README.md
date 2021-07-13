@@ -25,7 +25,7 @@ Various patches are required for keyboard support. See [this post](https://asus-
 
 ## Discord
 
-[Discord server link](https://discord.gg/ngbdKabAnP)
+[Discord server link](https://discord.gg/4ZKGd7Un5t)
 
 ## SUPPORTED LAPTOPS
 
