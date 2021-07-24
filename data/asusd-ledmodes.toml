@@ -35,7 +35,7 @@ per_key = false
 
 [[led_data]]
 prod_family = "ROG Strix"
-board_names = ["G531GW", "G733QS", "G733QR"]
+board_names = ["G531GW", "G533QR", "G733QS", "G733QR"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
 multizone = false
 per_key = true
