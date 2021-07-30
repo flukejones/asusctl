@@ -20,6 +20,7 @@ use std::error::Error;
 use std::io::Write;
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::env;
 
 use daemon::ctrl_rog_bios::CtrlRogBios;
 use std::convert::Into;
@@ -34,6 +35,18 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
         .format(|buf, record| writeln!(buf, "{}: {}", record.level(), record.args()))
         .filter(None, LevelFilter::Info)
         .init();
+
+    let is_service = match env::var_os("IS_SERVICE") {
+        Some(val) => val == "1",
+        None => false,
+    };
+
+    if !is_service {
+        println!("asusd schould be only run from the right systemd service");
+        println!("do not run in your terminal, if you need an logs please use journalctl -b -u asusd");
+        println!("asusd will now exit");
+        return Ok(());
+    }
 
     info!("      daemon v{}", daemon::VERSION);
     info!("   rog-anime v{}", rog_anime::VERSION);

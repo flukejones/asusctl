@@ -5,6 +5,7 @@ StartLimitBurst=2
 Before=display-manager.service
 
 [Service]
+Environment=IS_SERVICE=1
 ExecStart=/usr/bin/asusd
 Restart=on-failure
 Restart=always
