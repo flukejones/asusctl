@@ -83,7 +83,7 @@ impl GraphicsDevice {
                     Ok(driver) => {
                         info!("{}: Unbinding {}", driver.id(), func.id());
                         unsafe {
-                            driver.unbind(&func).map_err(|err| {
+                            driver.unbind(func).map_err(|err| {
                                 error!("gfx unbind: {}", err);
                                 err
                             })?;
@@ -109,7 +109,7 @@ impl GraphicsDevice {
                     Ok(driver) => {
                         info!("{}: Binding {}", driver.id(), func.id());
                         unsafe {
-                            driver.bind(&func).map_err(|err| {
+                            driver.bind(func).map_err(|err| {
                                 error!("gfx bind: {}", err);
                                 err
                             })?;

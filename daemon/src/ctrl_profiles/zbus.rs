@@ -139,7 +139,7 @@ impl FanAndCpuZbus {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(cfg) = ctrl.config.clone().try_lock() {
                 if let Some(profile) = cfg.power_profiles.get(&cfg.active_profile) {
-                    self.notify_profile(&profile)
+                    self.notify_profile(profile)
                         .unwrap_or_else(|err| warn!("{}", err));
                 }
             }

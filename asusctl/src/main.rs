@@ -14,7 +14,6 @@ use rog_types::{
     gfx_vendors::{GfxRequiredUserAction, GfxVendors},
     supported::{
         FanCpuSupportedFunctions, LedSupportedFunctions, RogBiosSupportedFunctions,
-        SupportedFunctions,
     },
 };
 use std::{env::args, path::Path};
@@ -133,12 +132,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let supported = dbus.proxies().supported().get_supported_functions()?;
 
-    if parsed.help {
-        print_supported_help(&supported, &parsed);
-        println!("\nSee https://asus-linux.org/faq/ for additional help");
-        std::process::exit(1);
-    }
-
     if parsed.version {
         println!("  asusctl v{}", env!("CARGO_PKG_VERSION"));
         println!(" rog-dbus v{}", rog_dbus::VERSION);
@@ -232,53 +225,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
-}
-
-/// Print the root help for base commands if the commands are supported
-fn print_supported_help(supported: &SupportedFunctions, parsed: &CliStart) {
-    // As help option don't work with `parse_args_default`
-    // we will call `parse_args_default_or_exit` instead
-    let usage: Vec<String> = parsed.self_usage().lines().map(|s| s.to_string()).collect();
-    for line in usage.iter().filter(|line| {
-        if line.contains("--fan-mode") && !supported.fan_cpu_ctrl.stock_fan_modes {
-            return false;
-        }
-        if line.contains("--chg-limit") && !supported.charge_ctrl.charge_level_set {
-            return false;
-        }
-        true
-    }) {
-        println!("{}", line);
-    }
-
-    // command strings are in order of the struct
-    let commands: Vec<String> = CliCommand::usage().lines().map(|s| s.to_string()).collect();
-    println!("\nCommands available");
-    for line in commands.iter().filter(|line| {
-        if line.contains("profile") {
-            return supported.fan_cpu_ctrl.stock_fan_modes || supported.fan_cpu_ctrl.fan_curve_set;
-        }
-        if line.contains("led-mode") {
-            return supported.keyboard_led.stock_led_modes.is_empty();
-        }
-        if line.contains("bios") {
-            return supported.rog_bios_ctrl.dedicated_gfx_toggle
-                || supported.rog_bios_ctrl.post_sound_toggle;
-        }
-        if line.contains("anime") {
-            return supported.anime_ctrl.0;
-        }
-        false
-    }) {
-        println!("{}", line);
-    }
-
-    if !supported.fan_cpu_ctrl.stock_fan_modes {
-        println!("Note: Fan mode control is not supported by this laptop");
-    }
-    if !supported.charge_ctrl.charge_level_set {
-        println!("Note: Charge control is not supported by this laptop");
-    }
 }
 
 fn do_gfx(
@@ -489,12 +435,21 @@ fn handle_profile(
     }
 
     let mut set_profile = false;
-    let mut profile;
+    let mut profile = Profile::default();
     if cmd.create {
-        profile = Profile::default();
         set_profile = true;
-    } else {
-        profile = dbus.proxies().profile().active_data()?;
+    } else if let Some(ref name) = cmd.profile {
+        let profiles = dbus.proxies().profile().all_profile_data()?;
+        for p in profiles {
+            if p.name == *name {
+                profile = p;
+                break;
+            }
+        }
+        if profile.name != *name {
+            println!("The requested profile doesn't exist, you may need to create it");
+            std::process::exit(-1);
+        }
     }
 
     if let Some(turbo) = cmd.turbo {
