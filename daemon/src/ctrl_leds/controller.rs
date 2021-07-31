@@ -370,7 +370,7 @@ impl CtrlKbdLed {
 
             self.config.read();
             if let Some(data) = self.config.builtins.get(&next) {
-                self.write_mode(&data)?;
+                self.write_mode(data)?;
                 self.config.current_mode = next;
             }
             self.config.write();
@@ -381,7 +381,7 @@ impl CtrlKbdLed {
 
     #[inline]
     fn write_mode(&self, mode: &AuraEffect) -> Result<(), RogError> {
-        if !self.supported_modes.standard.contains(&mode.mode()) {
+        if !self.supported_modes.standard.contains(mode.mode()) {
             return Err(RogError::NotSupported);
         }
         let bytes: [u8; LED_MSG_LEN] = mode.into();

@@ -39,7 +39,7 @@ impl Sequences {
 
     pub fn iter(&self) -> ActionIterator {
         ActionIterator {
-            actions: &self,
+            actions: self,
             next_idx: 0,
         }
     }

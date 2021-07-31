@@ -90,7 +90,7 @@ impl AuraConfig {
         let mut buf = String::new();
         if let Ok(read_len) = file.read_to_string(&mut buf) {
             if read_len == 0 {
-                return AuraConfig::create_default(&mut file, &supported_led_modes);
+                return AuraConfig::create_default(&mut file, supported_led_modes);
             } else {
                 if let Ok(data) = serde_json::from_str(&buf) {
                     return data;
@@ -109,7 +109,7 @@ impl AuraConfig {
                 panic!("Please remove {} then restart asusd", AURA_CONFIG_PATH);
             }
         }
-        AuraConfig::create_default(&mut file, &supported_led_modes)
+        AuraConfig::create_default(&mut file, supported_led_modes)
     }
 
     fn create_default(file: &mut File, support_data: &LaptopLedData) -> Self {

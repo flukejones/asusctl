@@ -8,7 +8,6 @@ use logind_zbus::{
     ManagerProxy, SessionProxy,
 };
 use rog_types::gfx_vendors::{GfxPower, GfxRequiredUserAction, GfxVendors};
-use std::iter::FromIterator;
 use std::{io::Write, ops::Add, path::Path, time::Instant};
 use std::{process::Command, thread::sleep, time::Duration};
 use std::{str::FromStr, sync::mpsc};
@@ -79,20 +78,20 @@ impl CtrlGraphics {
                 match dev.vendor()? {
                     0x1002 => {
                         info!("GFX: {}: AMD graphics", dev.id());
-                        amd.push(GraphicsDevice::new(dev.id().to_owned(), functions(&dev)));
+                        amd.push(GraphicsDevice::new(dev.id().to_owned(), functions(dev)));
                     }
                     0x10DE => {
                         info!("GFX: {}: NVIDIA graphics", dev.id());
                         dev.set_runtime_pm(sysfs_class::RuntimePowerManagement::On)?;
-                        nvidia.push(GraphicsDevice::new(dev.id().to_owned(), functions(&dev)));
+                        nvidia.push(GraphicsDevice::new(dev.id().to_owned(), functions(dev)));
                     }
                     0x8086 => {
                         info!("GFX: {}: Intel graphics", dev.id());
-                        intel.push(GraphicsDevice::new(dev.id().to_owned(), functions(&dev)));
+                        intel.push(GraphicsDevice::new(dev.id().to_owned(), functions(dev)));
                     }
                     vendor => {
                         info!("GFX: {}: Other({:X}) graphics", dev.id(), vendor);
-                        other.push(GraphicsDevice::new(dev.id().to_owned(), functions(&dev)));
+                        other.push(GraphicsDevice::new(dev.id().to_owned(), functions(dev)));
                     }
                 }
             }
@@ -265,13 +264,13 @@ impl CtrlGraphics {
         let unbinds = devices.iter().map(|dev| dev.unbind());
         // Remove NVIDIA graphics devices and their functions
         let removes = devices.iter().map(|dev| dev.remove());
-        Result::from_iter(unbinds.chain(removes))
+        unbinds.chain(removes).collect::<Result<_, _>>()
             .map_err(|err| RogError::Command("device unbind error".into(), err))
     }
 
     fn unbind_only(devices: &[GraphicsDevice]) -> Result<(), RogError> {
         let unbinds = devices.iter().map(|dev| dev.unbind());
-        Result::from_iter(unbinds)
+        unbinds.collect::<Result<_, _>>()
             .map_err(|err| RogError::Command("device unbind error".into(), err))
     }
 
@@ -462,7 +461,7 @@ impl CtrlGraphics {
                     for driver in NVIDIA_DRIVERS.iter() {
                         Self::do_driver_action(driver, "rmmod")?;
                     }
-                    Self::unbind_only(&devices)?;
+                    Self::unbind_only(devices)?;
                     Self::do_driver_action("vfio-pci", "modprobe")?;
                 } else {
                     return Err(GfxError::VfioDisabled.into());
@@ -478,7 +477,7 @@ impl CtrlGraphics {
                 for driver in NVIDIA_DRIVERS.iter() {
                     Self::do_driver_action(driver, "rmmod")?;
                 }
-                Self::unbind_remove_nvidia(&devices)?;
+                Self::unbind_remove_nvidia(devices)?;
             }
         }
         Ok(())
