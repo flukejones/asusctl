@@ -1,7 +1,6 @@
 use crate::error::RogError;
 use crate::{config::Config, GetSupported};
 use log::{info, warn};
-use rog_profiles::error::ProfileError;
 use rog_profiles::profiles::Profile;
 use rog_types::supported::FanCpuSupportedFunctions;
 use std::sync::Arc;
