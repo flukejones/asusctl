@@ -8,7 +8,6 @@ use crate::ctrl_gfx::error::GfxError;
 
 #[derive(Debug)]
 pub enum RogError {
-    ParseFanLevel,
     ParseVendor,
     ParseLed,
     MissingProfile(String),
@@ -36,7 +35,6 @@ impl fmt::Display for RogError {
     // This trait requires `fmt` with this exact signature.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            RogError::ParseFanLevel => write!(f, "Parse profile error"),
             RogError::ParseVendor => write!(f, "Parse gfx vendor error"),
             RogError::ParseLed => write!(f, "Parse LED error"),
             RogError::MissingProfile(profile) => write!(f, "Profile does not exist {}", profile),

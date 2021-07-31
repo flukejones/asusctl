@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Fix missing CLI command help for some supported options
+- Fix incorrectly selecting profile by name, where the active profile was being copied to the selected profile
 
 # [3.7.1] - 2021-06-11
 ### Changed

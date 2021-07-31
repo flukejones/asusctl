@@ -489,12 +489,21 @@ fn handle_profile(
     }
 
     let mut set_profile = false;
-    let mut profile;
+    let mut profile = Profile::default();
     if cmd.create {
-        profile = Profile::default();
         set_profile = true;
-    } else {
-        profile = dbus.proxies().profile().active_data()?;
+    } else if let Some(ref name) = cmd.profile {
+        let profiles = dbus.proxies().profile().all_profile_data()?;
+        for p in profiles {
+            if p.name == *name {
+                profile = p;
+                break;
+            }
+        }
+        if profile.name != *name {
+            println!("The requested profile doesn't exist, you may need to create it");
+            std::process::exit(-1);
+        }
     }
 
     if let Some(turbo) = cmd.turbo {
