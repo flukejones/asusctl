@@ -224,8 +224,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if parsed.show_supported {
-        let dat = dbus.proxies().supported().get_supported_functions()?;
-        println!("Supported laptop functions:\n\n{}", dat);
+        println!("Supported laptop functions:\n\n{}", supported);
     }
 
     if let Some(chg_limit) = parsed.chg_limit {
@@ -235,6 +234,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// Print the root help for base commands if the commands are supported
 fn print_supported_help(supported: &SupportedFunctions, parsed: &CliStart) {
     // As help option don't work with `parse_args_default`
     // we will call `parse_args_default_or_exit` instead
@@ -255,25 +255,20 @@ fn print_supported_help(supported: &SupportedFunctions, parsed: &CliStart) {
     let commands: Vec<String> = CliCommand::usage().lines().map(|s| s.to_string()).collect();
     println!("\nCommands available");
     for line in commands.iter().filter(|line| {
-        if line.contains("profile")
-            && !supported.fan_cpu_ctrl.stock_fan_modes
-            && !supported.fan_cpu_ctrl.fan_curve_set
-        {
-            return false;
+        if line.contains("profile") {
+            return supported.fan_cpu_ctrl.stock_fan_modes || supported.fan_cpu_ctrl.fan_curve_set;
         }
-        if line.contains("led-mode") && !supported.keyboard_led.stock_led_modes.is_empty() {
-            return false;
+        if line.contains("led-mode") {
+            return supported.keyboard_led.stock_led_modes.is_empty();
         }
-        if line.contains("bios")
-            && (!supported.rog_bios_ctrl.dedicated_gfx_toggle
-                || !supported.rog_bios_ctrl.post_sound_toggle)
-        {
-            return false;
+        if line.contains("bios") {
+            return supported.rog_bios_ctrl.dedicated_gfx_toggle
+                || supported.rog_bios_ctrl.post_sound_toggle;
         }
-        if line.contains("anime") && !supported.anime_ctrl.0 {
-            return false;
+        if line.contains("anime") {
+            return supported.anime_ctrl.0;
         }
-        true
+        false
     }) {
         println!("{}", line);
     }
@@ -369,7 +364,9 @@ fn handle_led_mode(
             .collect();
         for command in commands.iter().filter(|command| {
             for mode in &supported.stock_led_modes {
-                if command.contains(<&str>::from(mode)) {
+                dbg!(mode);
+                dbg!(command);
+                if command.contains(&<&str>::from(mode).to_lowercase()) {
                     return true;
                 }
             }
