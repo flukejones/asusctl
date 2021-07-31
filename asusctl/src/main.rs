@@ -364,8 +364,6 @@ fn handle_led_mode(
             .collect();
         for command in commands.iter().filter(|command| {
             for mode in &supported.stock_led_modes {
-                dbg!(mode);
-                dbg!(command);
                 if command.contains(&<&str>::from(mode).to_lowercase()) {
                     return true;
                 }
