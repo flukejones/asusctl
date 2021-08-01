@@ -153,7 +153,7 @@ impl AuraConfig {
             .unwrap_or_else(|err| error!("Could not write config: {}", err));
     }
 
-    /// Multipurpose, will accecpt AuraEffect with zones and put in the correct store
+    /// Multipurpose, will accept AuraEffect with zones and put in the correct store
     pub fn set_builtin(&mut self, effect: AuraEffect) {
         match effect.zone() {
             AuraZone::None => {
