@@ -64,7 +64,7 @@ impl ActionData {
                 time: duration,
                 brightness,
             } => ActionData::Animation(AnimeGif::create_diagonal_gif(
-                &file,
+                file,
                 *duration,
                 *brightness,
             )?),
@@ -79,7 +79,7 @@ impl ActionData {
                 if let Some(ext) = file.extension() {
                     if ext.to_string_lossy().to_lowercase() == "png" {
                         return Ok(ActionData::Animation(AnimeGif::create_png_static(
-                            &file,
+                            file,
                             *scale,
                             *angle,
                             *translation,
@@ -89,7 +89,7 @@ impl ActionData {
                     }
                 }
                 ActionData::Animation(AnimeGif::create_png_gif(
-                    &file,
+                    file,
                     *scale,
                     *angle,
                     *translation,
@@ -107,7 +107,7 @@ impl ActionData {
             } => {
                 if let Some(time) = time {
                     return Ok(ActionData::Animation(AnimeGif::create_png_static(
-                        &file,
+                        file,
                         *scale,
                         *angle,
                         *translation,
@@ -116,7 +116,7 @@ impl ActionData {
                     )?));
                 }
                 // If no time then create a plain static image
-                let image = AnimeImage::from_png(&file, *scale, *angle, *translation, *brightness)?;
+                let image = AnimeImage::from_png(file, *scale, *angle, *translation, *brightness)?;
                 let data = <AnimeDataBuffer>::from(&image);
                 ActionData::Image(Box::new(data))
             }
@@ -157,7 +157,7 @@ impl Sequences {
 
     pub fn iter(&self) -> ActionIterator {
         ActionIterator {
-            actions: &self,
+            actions: self,
             next_idx: 0,
         }
     }

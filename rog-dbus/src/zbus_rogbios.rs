@@ -54,7 +54,7 @@ pub struct RogBiosProxy<'a>(DaemonProxy<'a>);
 impl<'a> RogBiosProxy<'a> {
     #[inline]
     pub fn new(conn: &Connection) -> Result<Self> {
-        Ok(RogBiosProxy(DaemonProxy::new(&conn)?))
+        Ok(RogBiosProxy(DaemonProxy::new(conn)?))
     }
 
     #[inline]

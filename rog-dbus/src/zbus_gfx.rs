@@ -52,7 +52,7 @@ pub struct GfxProxy<'a>(DaemonProxy<'a>);
 impl<'a> GfxProxy<'a> {
     #[inline]
     pub fn new(conn: &Connection) -> Result<Self> {
-        Ok(GfxProxy(DaemonProxy::new(&conn)?))
+        Ok(GfxProxy(DaemonProxy::new(conn)?))
     }
 
     #[inline]

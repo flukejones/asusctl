@@ -133,9 +133,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let supported = dbus.proxies().supported().get_supported_functions()?;
 
     if parsed.version {
-        println!("  asusctl v{}", env!("CARGO_PKG_VERSION"));
-        println!(" rog-dbus v{}", rog_dbus::VERSION);
-        println!("rog-types v{}", rog_types::VERSION);
+        println!("\nApp and daemon versions:");
+        println!("     asusctl v{}", env!("CARGO_PKG_VERSION"));
+        println!("       asusd v{}", daemon::VERSION);
+        println!("\nComponent crate versions:");
+        println!("   rog-anime v{}", rog_anime::VERSION);
+        println!("    rog-aura v{}", rog_aura::VERSION);
+        println!("    rog-dbus v{}", rog_dbus::VERSION);
+        println!("rog-profiles v{}", rog_profiles::VERSION);
+        println!("   rog-types v{}", rog_types::VERSION);
         return Ok(());
     }
 

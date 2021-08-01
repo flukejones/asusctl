@@ -5,9 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+# [3.7.2] - 2021-08-02
+### Added
+- Enable multizone support on Strix 513IH
+- Add G513QY ledmodes
 ### Changed
 - Fix missing CLI command help for some supported options
 - Fix incorrectly selecting profile by name, where the active profile was being copied to the selected profile
+- Add `asusd` version back to `asusctl -v` report
+- Fix various clippy warnings
 
 # [3.7.1] - 2021-06-11
 ### Changed

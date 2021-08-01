@@ -81,7 +81,7 @@ pub struct LedProxy<'a>(DaemonProxy<'a>);
 impl<'a> LedProxy<'a> {
     #[inline]
     pub fn new(conn: &Connection) -> Result<Self> {
-        Ok(LedProxy(DaemonProxy::new(&conn)?))
+        Ok(LedProxy(DaemonProxy::new(conn)?))
     }
 
     #[inline]

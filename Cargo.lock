@@ -43,8 +43,9 @@ dependencies = [
 
 [[package]]
 name = "asusctl"
-version = "3.5.0"
+version = "3.5.1"
 dependencies = [
+ "daemon",
  "gif",
  "glam",
  "gumdrop",
@@ -206,7 +207,7 @@ dependencies = [
 
 [[package]]
 name = "daemon"
-version = "3.7.1"
+version = "3.7.2"
 dependencies = [
  "env_logger",
  "log",
@@ -918,7 +919,7 @@ dependencies = [
 
 [[package]]
 name = "rog_dbus"
-version = "3.5.0"
+version = "3.5.1"
 dependencies = [
  "rog_anime",
  "rog_aura",
@@ -940,7 +941,7 @@ dependencies = [
 
 [[package]]
 name = "rog_profiles"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "intel-pstate",
  "rog_fan_curve",
