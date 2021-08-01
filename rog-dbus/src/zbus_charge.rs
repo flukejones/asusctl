@@ -44,7 +44,7 @@ pub struct ChargeProxy<'a>(DaemonProxy<'a>);
 impl<'a> ChargeProxy<'a> {
     #[inline]
     pub fn new(conn: &Connection) -> Result<Self> {
-        Ok(ChargeProxy(DaemonProxy::new(&conn)?))
+        Ok(ChargeProxy(DaemonProxy::new(conn)?))
     }
 
     #[inline]

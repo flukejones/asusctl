@@ -36,7 +36,7 @@ pub struct SupportProxy<'a>(DaemonProxy<'a>);
 impl<'a> SupportProxy<'a> {
     #[inline]
     pub fn new(conn: &Connection) -> Result<Self> {
-        Ok(SupportProxy(DaemonProxy::new(&conn)?))
+        Ok(SupportProxy(DaemonProxy::new(conn)?))
     }
 
     #[inline]

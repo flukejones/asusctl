@@ -60,7 +60,7 @@ pub struct ProfileProxy<'a>(DaemonProxy<'a>);
 impl<'a> ProfileProxy<'a> {
     #[inline]
     pub fn new(conn: &Connection) -> Result<Self> {
-        Ok(ProfileProxy(DaemonProxy::new(&conn)?))
+        Ok(ProfileProxy(DaemonProxy::new(conn)?))
     }
 
     #[inline]

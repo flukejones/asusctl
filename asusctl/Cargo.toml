@@ -1,6 +1,6 @@
 [package]
 name = "asusctl"
-version = "3.5.0"
+version = "3.5.1"
 authors = ["Luke D Jones <luke@ljones.dev>"]
 edition = "2018"
 
@@ -12,6 +12,7 @@ rog_aura = { path = "../rog-aura" }
 rog_dbus = { path = "../rog-dbus" }
 rog_profiles = { path = "../rog-profiles" }
 rog_types = { path = "../rog-types" }
+daemon = { path = "../daemon" }
 rog_fan_curve = { version = "^0.1", features = ["serde"] }
 gumdrop = "^0.8"
 yansi-term = "^0.1"

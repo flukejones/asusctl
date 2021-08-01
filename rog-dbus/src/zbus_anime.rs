@@ -37,7 +37,7 @@ pub struct AnimeProxy<'a>(DaemonProxy<'a>);
 impl<'a> AnimeProxy<'a> {
     #[inline]
     pub fn new(conn: &Connection) -> Result<Self> {
-        Ok(AnimeProxy(DaemonProxy::new(&conn)?))
+        Ok(AnimeProxy(DaemonProxy::new(conn)?))
     }
 
     #[inline]

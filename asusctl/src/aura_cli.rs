@@ -124,6 +124,8 @@ pub struct MultiColourSpeed {
 /// Byte value for setting the built-in mode.
 ///
 /// Enum corresponds to the required integer value
+///
+// NOTE: The option names here must match those in rog-aura crate
 #[derive(Options)]
 pub enum SetAuraBuiltin {
     #[options(help = "set a single static colour")]
@@ -135,7 +137,7 @@ pub enum SetAuraBuiltin {
     #[options(help = "rainbow cycling in one of four directions")]
     Rainbow(SingleSpeedDirection),
     #[options(help = "rain pattern mimicking raindrops")]
-    Star(TwoColourSpeed),
+    Stars(TwoColourSpeed),
     #[options(help = "rain pattern of three preset colours")]
     Rain(SingleSpeed),
     #[options(help = "pressed keys are highlighted to fade")]
@@ -233,7 +235,7 @@ impl From<&SetAuraBuiltin> for AuraEffect {
                 data.mode = AuraModeNum::Rainbow;
                 data
             }
-            SetAuraBuiltin::Star(x) => {
+            SetAuraBuiltin::Stars(x) => {
                 let mut data: AuraEffect = x.into();
                 data.mode = AuraModeNum::Star;
                 data
