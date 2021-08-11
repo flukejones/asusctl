@@ -102,11 +102,12 @@ pub fn run_animation(
 
     let mut timed = false;
     let mut run_time = frames.total_frame_time();
-    println!("Real gif run length = {:?}", run_time);
     if let AnimTime::Fade(time) = frames.duration() {
         if let Some(middle) = time.show_for() {
             run_time = middle + time.total_fade_time();
         }
+        // add a small buffer
+        run_time += Duration::from_millis(250);
         timed = true;
     } else if let AnimTime::Time(time) = frames.duration() {
         run_time = time;

@@ -128,6 +128,34 @@ impl AnimeGif {
         Ok(Self(frames, duration))
     }
 
+    /// Create an animation using the 74x36 ASUS gif format from a png
+    #[inline]
+    pub fn create_diagonal_png(
+        file_name: &Path,
+        duration: AnimTime,
+        brightness: f32,
+    ) -> Result<Self, AnimeError> {
+        let image = AnimeDiagonal::from_png(file_name, None, brightness)?;
+
+        let mut total = Duration::from_millis(1000);
+        if let AnimTime::Fade(fade) = duration {
+            total = fade.total_fade_time();
+            if let Some(middle) = fade.show_for {
+                total += middle;
+            }
+        }
+        // Make frame delay 30ms, and find frame count
+        let frame_count = total.as_millis() / 30;
+
+        let single = AnimeFrame {
+            data: <AnimeDataBuffer>::from(&image),
+            delay: Duration::from_millis(30),
+        };
+        let frames = vec![single; frame_count as usize];
+
+        Ok(Self(frames, duration))
+    }
+
     /// Create an animation using a gif of any size. This method must precompute the
     /// result.
     #[inline]

@@ -3,7 +3,7 @@ use std::{path::PathBuf, time::Duration};
 use glam::Vec2;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{error::AnimeError, AnimTime, AnimeDataBuffer, AnimeGif, AnimeImage};
+use crate::{error::AnimeError, AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage};
 
 /// All the possible AniMe actions that can be used. This enum is intended to be
 /// a helper for loading up `ActionData`.
@@ -11,6 +11,12 @@ use crate::{error::AnimeError, AnimTime, AnimeDataBuffer, AnimeGif, AnimeImage};
 pub enum ActionLoader {
     /// Full gif sequence. Immutable.
     AsusAnimation {
+        file: PathBuf,
+        time: AnimTime,
+        brightness: f32,
+    },
+    /// Image designed to be pixel perfect using the slanted template
+    AsusImage {
         file: PathBuf,
         time: AnimTime,
         brightness: f32,
@@ -29,7 +35,7 @@ pub enum ActionLoader {
         scale: f32,
         angle: f32,
         translation: Vec2,
-        time: Option<AnimTime>,
+        time: AnimTime,
         brightness: f32,
     },
     /// A pause to be used between sequences
@@ -61,19 +67,29 @@ impl ActionData {
         let a = match action {
             ActionLoader::AsusAnimation {
                 file,
-                time: duration,
+                time,
                 brightness,
-            } => ActionData::Animation(AnimeGif::create_diagonal_gif(
+            } => ActionData::Animation(AnimeGif::create_diagonal_gif(file, *time, *brightness)?),
+            ActionLoader::AsusImage {
                 file,
-                *duration,
-                *brightness,
-            )?),
+                time,
+                brightness,
+            } => match time {
+                AnimTime::Infinite => {
+                    let image = AnimeDiagonal::from_png(file, None, *brightness)?;
+                    let data = <AnimeDataBuffer>::from(&image);
+                    ActionData::Image(Box::new(data))
+                }
+                _ => {
+                    ActionData::Animation(AnimeGif::create_diagonal_png(file, *time, *brightness)?)
+                }
+            },
             ActionLoader::ImageAnimation {
                 file,
                 scale,
                 angle,
                 translation,
-                time: duration,
+                time,
                 brightness,
             } => {
                 if let Some(ext) = file.extension() {
@@ -83,7 +99,7 @@ impl ActionData {
                             *scale,
                             *angle,
                             *translation,
-                            *duration,
+                            *time,
                             *brightness,
                         )?));
                     }
@@ -93,7 +109,7 @@ impl ActionData {
                     *scale,
                     *angle,
                     *translation,
-                    *duration,
+                    *time,
                     *brightness,
                 )?)
             }
@@ -105,20 +121,23 @@ impl ActionData {
                 brightness,
                 time,
             } => {
-                if let Some(time) = time {
-                    return Ok(ActionData::Animation(AnimeGif::create_png_static(
+                match time {
+                    AnimTime::Infinite => {
+                        // If no time then create a plain static image
+                        let image =
+                            AnimeImage::from_png(file, *scale, *angle, *translation, *brightness)?;
+                        let data = <AnimeDataBuffer>::from(&image);
+                        ActionData::Image(Box::new(data))
+                    }
+                    _ => ActionData::Animation(AnimeGif::create_png_static(
                         file,
                         *scale,
                         *angle,
                         *translation,
                         *time,
                         *brightness,
-                    )?));
+                    )?),
                 }
-                // If no time then create a plain static image
-                let image = AnimeImage::from_png(file, *scale, *angle, *translation, *brightness)?;
-                let data = <AnimeDataBuffer>::from(&image);
-                ActionData::Image(Box::new(data))
             }
             ActionLoader::Pause(duration) => ActionData::Pause(*duration),
         };

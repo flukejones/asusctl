@@ -48,7 +48,6 @@ impl AnimeDiagonal {
         duration: Option<Duration>,
         bright: f32,
     ) -> Result<Self, AnimeError> {
-        use pix::el::Pixel;
         let data = std::fs::read(path)?;
         let data = std::io::Cursor::new(data);
         let decoder = png_pong::Decoder::new(data)?.into_steps();
@@ -56,21 +55,77 @@ impl AnimeDiagonal {
 
         let mut matrix = AnimeDiagonal::new(duration);
 
-        let width;
         match raster {
+            png_pong::PngRaster::Gray8(ras) => {
+                Self::pixels_from_8bit(ras, &mut matrix, bright, true)
+            }
             png_pong::PngRaster::Graya8(ras) => {
-                width = ras.width();
-                for (y, row) in ras.pixels().chunks(width as usize).enumerate() {
-                    for (x, px) in row.iter().enumerate() {
-                        let v = <u8>::from(px.one() * bright);
-                        matrix.0[y][x] = v;
-                    }
-                }
+                Self::pixels_from_8bit(ras, &mut matrix, bright, true)
+            }
+            png_pong::PngRaster::Rgb8(ras) => {
+                Self::pixels_from_8bit(ras, &mut matrix, bright, false)
+            }
+            png_pong::PngRaster::Rgba8(ras) => {
+                Self::pixels_from_8bit(ras, &mut matrix, bright, false)
+            }
+            png_pong::PngRaster::Gray16(ras) => {
+                Self::pixels_from_16bit(ras, &mut matrix, bright, true)
+            }
+            png_pong::PngRaster::Rgb16(ras) => {
+                Self::pixels_from_16bit(ras, &mut matrix, bright, false)
+            }
+            png_pong::PngRaster::Graya16(ras) => {
+                Self::pixels_from_16bit(ras, &mut matrix, bright, true)
+            }
+            png_pong::PngRaster::Rgba16(ras) => {
+                Self::pixels_from_16bit(ras, &mut matrix, bright, false)
             }
             _ => return Err(AnimeError::Format),
         };
 
         Ok(matrix)
+    }
+
+    fn pixels_from_8bit<P>(ras: pix::Raster<P>, matrix: &mut AnimeDiagonal, bright: f32, grey: bool)
+    where
+        P: pix::el::Pixel<Chan = pix::chan::Ch8>,
+    {
+        let width = ras.width();
+        for (y, row) in ras.pixels().chunks(width as usize).enumerate() {
+            for (x, px) in row.iter().enumerate() {
+                let v = if grey {
+                    <u8>::from(px.one()) as f32
+                } else {
+                    (<u8>::from(px.one()) / 3) as f32
+                        + (<u8>::from(px.two()) / 3) as f32
+                        + (<u8>::from(px.three()) / 3) as f32
+                };
+                matrix.0[y][x] = (v * bright) as u8;
+            }
+        }
+    }
+
+    fn pixels_from_16bit<P>(
+        ras: pix::Raster<P>,
+        matrix: &mut AnimeDiagonal,
+        bright: f32,
+        grey: bool,
+    ) where
+        P: pix::el::Pixel<Chan = pix::chan::Ch16>,
+    {
+        let width = ras.width();
+        for (y, row) in ras.pixels().chunks(width as usize).enumerate() {
+            for (x, px) in row.iter().enumerate() {
+                let v = if grey {
+                    (<u16>::from(px.one()) >> 8) as f32
+                } else {
+                    ((<u16>::from(px.one()) / 3) >> 8) as f32
+                        + ((<u16>::from(px.two()) / 3) >> 8) as f32
+                        + ((<u16>::from(px.three()) / 3) >> 8) as f32
+                };
+                matrix.0[y][x] = (v * bright) as u8;
+            }
+        }
     }
 }
 

@@ -13,7 +13,8 @@ use rog_profiles::profiles::Profile;
 use rog_types::{
     gfx_vendors::{GfxRequiredUserAction, GfxVendors},
     supported::{
-        FanCpuSupportedFunctions, LedSupportedFunctions, RogBiosSupportedFunctions,
+        AnimeSupportedFunctions, FanCpuSupportedFunctions, LedSupportedFunctions,
+        RogBiosSupportedFunctions,
     },
 };
 use std::{env::args, path::Path};
@@ -149,54 +150,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(CliCommand::LedMode(mode)) => handle_led_mode(&dbus, &supported.keyboard_led, &mode)?,
         Some(CliCommand::Profile(cmd)) => handle_profile(&dbus, &supported.fan_cpu_ctrl, &cmd)?,
         Some(CliCommand::Graphics(cmd)) => do_gfx(&dbus, &supported.rog_bios_ctrl, cmd)?,
-        Some(CliCommand::Anime(cmd)) => {
-            if (cmd.command.is_none() && cmd.boot.is_none() && cmd.turn.is_none()) || cmd.help {
-                println!("Missing arg or command\n\n{}", cmd.self_usage());
-                if let Some(lst) = cmd.self_command_list() {
-                    println!("\n{}", lst);
-                }
-            }
-            if let Some(anime_turn) = cmd.turn {
-                dbus.proxies().anime().set_led_power(anime_turn.into())?
-            }
-            if let Some(anime_boot) = cmd.boot {
-                dbus.proxies()
-                    .anime()
-                    .set_system_animations(anime_boot.into())?
-            }
-            if let Some(action) = cmd.command {
-                match action {
-                    AnimeActions::Leds(anime_leds) => {
-                        let data = AnimeDataBuffer::from_vec(
-                            [anime_leds.led_brightness(); ANIME_DATA_LEN].to_vec(),
-                        );
-                        dbus.proxies().anime().write(data)?;
-                    }
-                    AnimeActions::Image(image) => {
-                        if image.help_requested() {
-                            println!("Missing arg or command\n\n{}", image.self_usage());
-                            if let Some(lst) = image.self_command_list() {
-                                println!("\n{}", lst);
-                            }
-                            std::process::exit(1);
-                        }
-
-                        let matrix = AnimeImage::from_png(
-                            Path::new(&image.path),
-                            image.scale,
-                            image.angle,
-                            Vec2::new(image.x_pos, image.y_pos),
-                            image.bright,
-                        )?;
-
-                        dbus.proxies()
-                            .anime()
-                            .write(<AnimeDataBuffer>::from(&matrix))
-                            .unwrap();
-                    }
-                }
-            }
-        }
+        Some(CliCommand::Anime(cmd)) => handle_anime(&dbus, &supported.anime_ctrl, &cmd)?,
         Some(CliCommand::Bios(cmd)) => handle_bios_option(&dbus, &supported.rog_bios_ctrl, &cmd)?,
         None => {
             if (!parsed.show_supported && parsed.kbd_bright.is_none() && parsed.chg_limit.is_none())
@@ -287,6 +241,60 @@ fn do_gfx(
                 println!("Current power status: {}", Red.paint(<&str>::from(&res)))
             }
             _ => println!("Current power status: {}", Green.paint(<&str>::from(&res))),
+        }
+    }
+    Ok(())
+}
+
+fn handle_anime(
+    dbus: &RogDbusClient,
+    _supported: &AnimeSupportedFunctions,
+    cmd: &AnimeCommand,
+) -> Result<(), Box<dyn std::error::Error>> {
+    if (cmd.command.is_none() && cmd.boot.is_none() && cmd.turn.is_none()) || cmd.help {
+        println!("Missing arg or command\n\n{}", cmd.self_usage());
+        if let Some(lst) = cmd.self_command_list() {
+            println!("\n{}", lst);
+        }
+    }
+    if let Some(anime_turn) = cmd.turn {
+        dbus.proxies().anime().set_led_power(anime_turn.into())?
+    }
+    if let Some(anime_boot) = cmd.boot {
+        dbus.proxies()
+            .anime()
+            .set_system_animations(anime_boot.into())?
+    }
+    if let Some(action) = cmd.command.as_ref() {
+        match action {
+            AnimeActions::Leds(anime_leds) => {
+                let data = AnimeDataBuffer::from_vec(
+                    [anime_leds.led_brightness(); ANIME_DATA_LEN].to_vec(),
+                );
+                dbus.proxies().anime().write(data)?;
+            }
+            AnimeActions::Image(image) => {
+                if image.help_requested() || image.path.is_empty() {
+                    println!("Missing arg or command\n\n{}", image.self_usage());
+                    if let Some(lst) = image.self_command_list() {
+                        println!("\n{}", lst);
+                    }
+                    std::process::exit(1);
+                }
+
+                let matrix = AnimeImage::from_png(
+                    Path::new(&image.path),
+                    image.scale,
+                    image.angle,
+                    Vec2::new(image.x_pos, image.y_pos),
+                    image.bright,
+                )?;
+
+                dbus.proxies()
+                    .anime()
+                    .write(<AnimeDataBuffer>::from(&matrix))
+                    .unwrap();
+            }
         }
     }
     Ok(())

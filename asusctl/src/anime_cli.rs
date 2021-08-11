@@ -69,7 +69,7 @@ pub struct AnimeCommand {
 pub enum AnimeActions {
     #[options(help = "change all leds brightness")]
     Leds(AnimeLeds),
-    #[options(help = "display an 8bit greyscale png")]
+    #[options(help = "display an image png")]
     Image(AnimeImage),
 }
 

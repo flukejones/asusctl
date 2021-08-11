@@ -261,12 +261,12 @@ impl CtrlAnime<'static> {
         scale: f32,
         angle: f32,
         xy: (f32, f32),
-        time: Option<Timer>,
+        time: Timer,
         brightness: f32,
     ) -> zbus::fdo::Result<String> {
         if let Ok(mut config) = self.config.try_lock() {
             let file = Path::new(&file);
-            let time = time.map(|time| time.into());
+            let time = time.into();
             let action = ActionLoader::Image {
                 file: file.into(),
                 scale,

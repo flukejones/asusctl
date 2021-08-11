@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- AniMe:
+  + Support 8bit RGB, RGBA, 16bit Greyscalw, RGB, RGBA
+  + add `AsusImage` type for slanted-template pixel-perfect images
+  + `BREAKING:` plain `Image` with time period is changed and old anime configs break as a result (sorry)
 
 # [3.7.2] - 2021-08-02
 ### Added
