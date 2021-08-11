@@ -94,14 +94,18 @@ struct GraphicsCommand {
 struct BiosCommand {
     #[options(help = "print help message")]
     help: bool,
-    #[options(meta = "", no_long, help = "set bios POST sound <true/false>")]
+    #[options(
+        meta = "",
+        no_long,
+        help = "set bios POST sound: asusctl -p <true/false>"
+    )]
     post_sound_set: Option<bool>,
     #[options(no_long, help = "read bios POST sound")]
     post_sound_get: bool,
     #[options(
         meta = "",
         no_long,
-        help = "activate dGPU dedicated/G-Sync <true/false>"
+        help = "activate dGPU dedicated/G-Sync: asusctl -d <true/false>, reboot required"
     )]
     dedicated_gfx_set: Option<bool>,
     #[options(no_long, help = "get GPU mode")]
