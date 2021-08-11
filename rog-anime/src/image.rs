@@ -249,7 +249,6 @@ impl AnimeImage {
         translation: Vec2,
         bright: f32,
     ) -> Result<Self, AnimeError> {
-        use pix::el::Pixel;
         let data = std::fs::read(path)?;
         let data = std::io::Cursor::new(data);
         let decoder = png_pong::Decoder::new(data)?.into_steps();
@@ -257,15 +256,37 @@ impl AnimeImage {
 
         let width;
         let pixels = match raster {
+            png_pong::PngRaster::Gray8(ras) => {
+                width = ras.width();
+                Self::pixels_from_8bit(ras, true)
+            }
             png_pong::PngRaster::Graya8(ras) => {
                 width = ras.width();
-                ras.pixels()
-                    .iter()
-                    .map(|px| crate::image::Pixel {
-                        color: <u8>::from(px.one()) as u32,
-                        alpha: <f32>::from(px.alpha()),
-                    })
-                    .collect()
+                Self::pixels_from_8bit(ras, true)
+            }
+            png_pong::PngRaster::Rgb8(ras) => {
+                width = ras.width();
+                Self::pixels_from_8bit(ras, false)
+            }
+            png_pong::PngRaster::Rgba8(ras) => {
+                width = ras.width();
+                Self::pixels_from_8bit(ras, false)
+            }
+            png_pong::PngRaster::Gray16(ras) => {
+                width = ras.width();
+                Self::pixels_from_16bit(ras, true)
+            }
+            png_pong::PngRaster::Rgb16(ras) => {
+                width = ras.width();
+                Self::pixels_from_16bit(ras, false)
+            }
+            png_pong::PngRaster::Graya16(ras) => {
+                width = ras.width();
+                Self::pixels_from_16bit(ras, true)
+            }
+            png_pong::PngRaster::Rgba16(ras) => {
+                width = ras.width();
+                Self::pixels_from_16bit(ras, false)
             }
             _ => return Err(AnimeError::Format),
         };
@@ -282,10 +303,48 @@ impl AnimeImage {
         matrix.update();
         Ok(matrix)
     }
+
+    fn pixels_from_8bit<P>(ras: pix::Raster<P>, grey: bool) -> Vec<Pixel>
+    where
+        P: pix::el::Pixel<Chan = pix::chan::Ch8>,
+    {
+        ras.pixels()
+            .iter()
+            .map(|px| crate::image::Pixel {
+                color: if grey {
+                    <u8>::from(px.one()) as u32
+                } else {
+                    (<u8>::from(px.one()) / 3) as u32
+                        + (<u8>::from(px.two()) / 3) as u32
+                        + (<u8>::from(px.three()) / 3) as u32
+                },
+                alpha: <f32>::from(px.alpha()),
+            })
+            .collect()
+    }
+
+    fn pixels_from_16bit<P>(ras: pix::Raster<P>, grey: bool) -> Vec<Pixel>
+    where
+        P: pix::el::Pixel<Chan = pix::chan::Ch16>,
+    {
+        ras.pixels()
+            .iter()
+            .map(|px| crate::image::Pixel {
+                color: if grey {
+                    (<u16>::from(px.one()) >> 8) as u32
+                } else {
+                    ((<u16>::from(px.one()) / 3) >> 8) as u32
+                        + ((<u16>::from(px.two()) / 3) >> 8) as u32
+                        + ((<u16>::from(px.three()) / 3) >> 8) as u32
+                },
+                alpha: <f32>::from(px.alpha()),
+            })
+            .collect()
+    }
 }
 
 impl From<&AnimeImage> for AnimeDataBuffer {
-    /// Do conversion from the nested Vec in AniMeMatrix to the two required
+    /// Do conversion from the nested Vec in AnimeDataBuffer to the two required
     /// packets suitable for sending over USB
     #[inline]
     fn from(leds: &AnimeImage) -> Self {

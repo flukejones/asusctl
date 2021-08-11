@@ -236,6 +236,18 @@ Each object in the array can be one of:
       }
 ```
 
+##### AsusImage
+
+Virtually the same as `AsusAnimation` but for png files, typically created in the same "slanted" style using a template (`diagonal-template.png`) as the ASUS gifs for pixel perfection.
+
+```json
+      "AsusImage": {
+        "file": "<FILE_PATH>",
+        "time": <TIME>,
+        "brightness": <FLOAT>
+      }
+```
+
 ##### ImageAnimation
 
 `ImageAnimation` can play *any* gif of any size.
@@ -319,7 +331,7 @@ A cycle is how many gif loops to run:
           "Cycles": 2
         },
 ```
-`Infinite` means that this gif will never end: 
+`Infinite` means that this gif will never end:
 ```json
         "time": "Infinite",
 ```

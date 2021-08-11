@@ -95,6 +95,15 @@ impl Default for UserAnimeConfig {
         Self {
             name: "default".to_string(),
             anime: vec![
+                ActionLoader::AsusImage {
+                    file: "/usr/share/asusd/anime/custom/diagonal-template.png".into(),
+                    brightness: 1.0,
+                    time: AnimTime::Fade(Fade::new(
+                        Duration::from_secs(2),
+                        None,
+                        Duration::from_secs(2),
+                    )),
+                },
                 ActionLoader::AsusAnimation {
                     file: "/usr/share/asusd/anime/asus/rog/Sunset.gif".into(),
                     brightness: 0.5,
@@ -121,11 +130,11 @@ impl Default for UserAnimeConfig {
                     scale: 1.0,
                     angle: 0.0,
                     translation: Vec2::default(),
-                    time: Some(AnimTime::Fade(Fade::new(
+                    time: AnimTime::Fade(Fade::new(
                         Duration::from_secs(2),
                         Some(Duration::from_secs(1)),
                         Duration::from_secs(2),
-                    ))),
+                    )),
                     brightness: 0.6,
                 },
                 ActionLoader::Pause(Duration::from_secs(1)),
