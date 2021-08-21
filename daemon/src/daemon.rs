@@ -74,8 +74,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
     let mut tasks: Vec<Box<dyn CtrlTask + Send>> = Vec::new();
     // Start zbus server
     let connection = Connection::new_system()?;
-    fdo::DBusProxy::new(&connection)?
-        .request_name(DBUS_NAME, fdo::RequestNameFlags::ReplaceExisting.into())?;
+    let fdo_connection = fdo::DBusProxy::new(&connection)?;
     let mut object_server = ObjectServer::new(&connection);
 
     let config = Config::load();
@@ -194,6 +193,9 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
     //         warn!("object_server notify_charge error: {}", err);
     //     })
     //     .ok();
+
+    // Request dbus name after finishing initalizing all functions
+    fdo_connection.request_name(DBUS_NAME, fdo::RequestNameFlags::ReplaceExisting.into())?;
 
     // Loop to check errors and iterate zbus server
     loop {
