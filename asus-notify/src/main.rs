@@ -1,7 +1,7 @@
 use notify_rust::{Hint, Notification, NotificationHandle};
 use rog_aura::AuraEffect;
 use rog_dbus::{DbusProxies, Signals};
-use rog_profiles::profiles::{FanLevel, Profile};
+use rog_profiles::Profile;
 use rog_types::gfx_vendors::GfxRequiredUserAction;
 use rog_types::gfx_vendors::GfxVendors;
 use std::error::Error;
@@ -88,19 +88,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn do_thermal_notif(profile: &Profile) -> Result<NotificationHandle, Box<dyn Error>> {
-    let fan = profile.fan_preset;
-    let turbo = if profile.turbo { "enabled" } else { "disabled" };
-    let icon = match fan {
-        FanLevel::Normal => "asus_notif_yellow",
-        FanLevel::Boost => "asus_notif_red",
-        FanLevel::Silent => "asus_notif_green",
+    let icon = match profile {
+        Profile::Balanced => "asus_notif_yellow",
+        Profile::Performance => "asus_notif_red",
+        Profile::Quiet => "asus_notif_green",
     };
+    let profile: &str = (*profile).into();
     let x = Notification::new()
         .summary("ASUS ROG")
         .body(&format!(
-            "Thermal profile changed to {}, turbo {}",
-            profile.name.to_uppercase(),
-            turbo
+            "Thermal profile changed to {}",
+            profile.to_uppercase(),
         ))
         .hint(Hint::Resident(true))
         .timeout(2000)

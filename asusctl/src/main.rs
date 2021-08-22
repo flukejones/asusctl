@@ -9,11 +9,10 @@ use profiles_cli::ProfileCommand;
 use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2, ANIME_DATA_LEN};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClient;
-use rog_profiles::profiles::Profile;
 use rog_types::{
     gfx_vendors::{GfxRequiredUserAction, GfxVendors},
     supported::{
-        AnimeSupportedFunctions, FanCpuSupportedFunctions, LedSupportedFunctions,
+        AnimeSupportedFunctions, LedSupportedFunctions, PlatformProfileFunctions,
         RogBiosSupportedFunctions,
     },
 };
@@ -152,7 +151,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     match parsed.command {
         Some(CliCommand::LedMode(mode)) => handle_led_mode(&dbus, &supported.keyboard_led, &mode)?,
-        Some(CliCommand::Profile(cmd)) => handle_profile(&dbus, &supported.fan_cpu_ctrl, &cmd)?,
+        Some(CliCommand::Profile(cmd)) => handle_profile(&dbus, &supported.platform_profile, &cmd)?,
         Some(CliCommand::Graphics(cmd)) => do_gfx(&dbus, &supported.rog_bios_ctrl, cmd)?,
         Some(CliCommand::Anime(cmd)) => handle_anime(&dbus, &supported.anime_ctrl, &cmd)?,
         Some(CliCommand::Bios(cmd)) => handle_bios_option(&dbus, &supported.rog_bios_ctrl, &cmd)?,
@@ -384,24 +383,10 @@ fn handle_led_mode(
 
 fn handle_profile(
     dbus: &RogDbusClient,
-    supported: &FanCpuSupportedFunctions,
+    supported: &PlatformProfileFunctions,
     cmd: &ProfileCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if !cmd.next
-        && !cmd.create // TODO
-        && !cmd.list
-        && cmd.profile.is_none()
-        && !cmd.active_name
-        && !cmd.active_data
-        && !cmd.profiles_data
-        && cmd.remove.is_none()
-        && cmd.curve.is_none() // TODO
-        && cmd.fan_preset.is_none() // TODO
-        && cmd.turbo.is_none() // TODO
-        && cmd.max_percentage.is_none() // TODO
-        && cmd.min_percentage.is_none()
-    // TODO
-    {
+    if !cmd.next && !cmd.list && !cmd.active_name && !cmd.active_data && !cmd.profiles_data {
         if !cmd.help {
             println!("Missing arg or command\n");
         }
@@ -411,7 +396,7 @@ fn handle_profile(
             .collect();
         for line in usage
             .iter()
-            .filter(|line| !line.contains("--curve") || supported.fan_curve_set)
+            .filter(|line| !line.contains("--curve") || supported.fan_curves)
         {
             println!("{}", line);
         }
@@ -426,78 +411,8 @@ fn handle_profile(
     }
 
     if cmd.next {
-        dbus.proxies().profile().next_fan()?;
+        dbus.proxies().profile().next_profile()?;
     }
-    if let Some(profile) = &cmd.remove {
-        dbus.proxies().profile().remove(profile)?
-    }
-    if cmd.list {
-        let profile_names = dbus.proxies().profile().profile_names()?;
-        println!("Available profiles are {:?}", profile_names);
-    }
-    if cmd.active_name {
-        println!(
-            "Active profile: {:?}",
-            dbus.proxies().profile().active_name()?
-        );
-    }
-    if cmd.active_data {
-        println!("Active profile:");
-        println!("{:?}", dbus.proxies().profile().active_data()?);
-    }
-    if cmd.profiles_data {
-        println!("Profiles:");
-        for s in dbus.proxies().profile().all_profile_data()? {
-            println!("{:?}", s);
-        }
-    }
-
-    let mut set_profile = false;
-    let mut profile = Profile::default();
-    if cmd.create {
-        set_profile = true;
-    } else if let Some(ref name) = cmd.profile {
-        let profiles = dbus.proxies().profile().all_profile_data()?;
-        for p in profiles {
-            if p.name == *name {
-                profile = p;
-                break;
-            }
-        }
-        if profile.name != *name {
-            println!("The requested profile doesn't exist, you may need to create it");
-            std::process::exit(-1);
-        }
-    }
-
-    if let Some(turbo) = cmd.turbo {
-        set_profile = true;
-        profile.turbo = turbo;
-    }
-    if let Some(min) = cmd.min_percentage {
-        set_profile = true;
-        profile.min_percentage = min;
-    }
-    if let Some(max) = cmd.max_percentage {
-        set_profile = true;
-        profile.max_percentage = max;
-    }
-    if let Some(preset) = cmd.fan_preset {
-        set_profile = true;
-        profile.fan_preset = preset;
-    }
-    if let Some(ref curve) = cmd.curve {
-        set_profile = true;
-        profile.fan_curve = curve.as_config_string();
-    }
-    if let Some(ref name) = cmd.profile {
-        set_profile = true;
-        profile.name = name.clone();
-    }
-    if set_profile {
-        dbus.proxies().profile().new_or_modify(&profile)?;
-    }
-
     Ok(())
 }
 

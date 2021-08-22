@@ -1,5 +1,3 @@
-use rog_fan_curve::Curve;
-use rog_profiles::profiles::Profile;
 use rog_types::gfx_vendors::GfxVendors;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -31,11 +29,7 @@ impl ConfigV317 {
             gfx_tmp_mode: None,
             gfx_managed: self.gfx_managed,
             gfx_vfio_enable: false,
-            active_profile: self.active_profile,
-            toggle_profiles: self.toggle_profiles,
-            curr_fan_mode: self.curr_fan_mode,
             bat_charge_limit: self.bat_charge_limit,
-            power_profiles: ProfileV317::transform_map(self.power_profiles),
         }
     }
 }
@@ -59,11 +53,7 @@ impl ConfigV324 {
             gfx_tmp_mode: None,
             gfx_managed: self.gfx_managed,
             gfx_vfio_enable: false,
-            active_profile: self.active_profile,
-            toggle_profiles: self.toggle_profiles,
-            curr_fan_mode: self.curr_fan_mode,
             bat_charge_limit: self.bat_charge_limit,
-            power_profiles: ProfileV317::transform_map(self.power_profiles),
         }
     }
 }
@@ -88,11 +78,7 @@ impl ConfigV341 {
             gfx_tmp_mode: None,
             gfx_managed: self.gfx_managed,
             gfx_vfio_enable: false,
-            active_profile: self.active_profile,
-            toggle_profiles: self.toggle_profiles,
-            curr_fan_mode: self.curr_fan_mode,
             bat_charge_limit: self.bat_charge_limit,
-            power_profiles: ProfileV317::transform_map(self.power_profiles),
         }
     }
 }
@@ -119,13 +105,25 @@ impl ConfigV352 {
             gfx_tmp_mode: None,
             gfx_managed: self.gfx_managed,
             gfx_vfio_enable: false,
-            active_profile: self.active_profile,
-            toggle_profiles: self.toggle_profiles,
-            curr_fan_mode: self.curr_fan_mode,
             bat_charge_limit: self.bat_charge_limit,
-            power_profiles: ProfileV317::transform_map(self.power_profiles),
         }
     }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct ConfigV372 {
+    pub gfx_mode: GfxVendors,
+    /// Only for informational purposes.
+    #[serde(skip)]
+    pub gfx_tmp_mode: Option<GfxVendors>,
+    pub gfx_managed: bool,
+    pub gfx_vfio_enable: bool,
+    pub active_profile: String,
+    pub toggle_profiles: Vec<String>,
+    #[serde(skip)]
+    pub curr_fan_mode: u8,
+    pub bat_charge_limit: u8,
+    pub power_profiles: BTreeMap<String, ProfileV317>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -134,28 +132,5 @@ pub struct ProfileV317 {
     pub max_percentage: u8,
     pub turbo: bool,
     pub fan_preset: u8,
-    pub fan_curve: Option<Curve>,
-}
-
-impl ProfileV317 {
-    fn into_current(self, name: String) -> Profile {
-        Profile {
-            name,
-            min_percentage: self.min_percentage,
-            max_percentage: self.max_percentage,
-            turbo: self.turbo,
-            fan_preset: self.fan_preset.into(),
-            fan_curve: self
-                .fan_curve
-                .map_or_else(|| "".to_string(), |c| c.as_config_string()),
-        }
-    }
-
-    fn transform_map(map: BTreeMap<String, ProfileV317>) -> BTreeMap<String, Profile> {
-        let mut new_map = BTreeMap::new();
-        map.iter().for_each(|(k, v)| {
-            new_map.insert(k.to_string(), v.clone().into_current(k.to_string()));
-        });
-        new_map
-    }
+    pub fan_curve: Option<()>,
 }

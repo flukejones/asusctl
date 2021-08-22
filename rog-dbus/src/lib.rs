@@ -12,7 +12,7 @@ pub mod zbus_supported;
 
 use rog_anime::AnimePowerStates;
 use rog_aura::{AuraEffect, LedPowerStates};
-use rog_profiles::profiles::Profile;
+use rog_profiles::Profile;
 use rog_types::gfx_vendors::{GfxRequiredUserAction, GfxVendors};
 use std::sync::mpsc::{channel, Receiver};
 use zbus::{Connection, Result, SignalReceiver};

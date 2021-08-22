@@ -4,7 +4,7 @@ pub mod controller;
 
 pub mod system;
 
-pub mod zbus_gfx;
+pub mod zbus;
 
 const NVIDIA_DRIVERS: [&str; 4] = ["nvidia_drm", "nvidia_modeset", "nvidia_uvm", "nvidia"];
 

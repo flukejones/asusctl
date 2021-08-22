@@ -16,4 +16,4 @@ rog_profiles = { path = "../rog-profiles" }
 rog_types = { path = "../rog-types" }
 zbus = "^1.9"
 zbus_macros = "^1.9"
-zvariant = "^2.5"
+zvariant = "^2.8"

@@ -264,13 +264,16 @@ impl CtrlGraphics {
         let unbinds = devices.iter().map(|dev| dev.unbind());
         // Remove NVIDIA graphics devices and their functions
         let removes = devices.iter().map(|dev| dev.remove());
-        unbinds.chain(removes).collect::<Result<_, _>>()
+        unbinds
+            .chain(removes)
+            .collect::<Result<_, _>>()
             .map_err(|err| RogError::Command("device unbind error".into(), err))
     }
 
     fn unbind_only(devices: &[GraphicsDevice]) -> Result<(), RogError> {
         let unbinds = devices.iter().map(|dev| dev.unbind());
-        unbinds.collect::<Result<_, _>>()
+        unbinds
+            .collect::<Result<_, _>>()
             .map_err(|err| RogError::Command("device unbind error".into(), err))
     }
 

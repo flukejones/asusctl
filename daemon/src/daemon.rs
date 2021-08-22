@@ -1,32 +1,37 @@
-use daemon::ctrl_leds::controller::{
+use daemon::ctrl_anime::config::AnimeConfig;
+use daemon::ctrl_anime::zbus::CtrlAnimeZbus;
+use daemon::ctrl_aura::config::AuraConfig;
+use daemon::ctrl_aura::controller::{
     CtrlKbdLed, CtrlKbdLedReloader, CtrlKbdLedTask, CtrlKbdLedZbus,
 };
+use daemon::ctrl_charge::CtrlCharge;
+use daemon::ctrl_profiles::config::ProfileConfig;
+use daemon::ctrl_profiles::controller::CtrlPlatformTask;
 use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
 };
-use daemon::{config_anime::AnimeConfig, config_aura::AuraConfig, ctrl_charge::CtrlCharge};
 use daemon::{ctrl_anime::*, ctrl_gfx::controller::CtrlGraphics};
 use daemon::{
-    ctrl_profiles::{controller::CtrlFanAndCpu, zbus::FanAndCpuZbus},
+    ctrl_profiles::{controller::CtrlPlatformProfile, zbus::ProfileZbus},
     laptops::LaptopLedData,
 };
 
+use ::zbus::{fdo, Connection, ObjectServer};
 use daemon::{CtrlTask, Reloadable, ZbusAdd};
 use log::LevelFilter;
 use log::{error, info, warn};
 use rog_dbus::DBUS_NAME;
 use rog_types::gfx_vendors::GfxVendors;
+use std::env;
 use std::error::Error;
 use std::io::Write;
 use std::sync::Arc;
 use std::sync::Mutex;
-use std::env;
 
 use daemon::ctrl_rog_bios::CtrlRogBios;
-use std::convert::Into;
-use zbus::fdo;
-use zbus::Connection;
 use zvariant::ObjectPath;
+
+static PROFILE_CONFIG_PATH: &str = "/etc/asusd/profile.conf";
 
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut logger = env_logger::Builder::new();
@@ -43,7 +48,9 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if !is_service {
         println!("asusd schould be only run from the right systemd service");
-        println!("do not run in your terminal, if you need an logs please use journalctl -b -u asusd");
+        println!(
+            "do not run in your terminal, if you need an logs please use journalctl -b -u asusd"
+        );
         println!("asusd will now exit");
         return Ok(());
     }
@@ -71,7 +78,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
     let connection = Connection::new_system()?;
     fdo::DBusProxy::new(&connection)?
         .request_name(DBUS_NAME, fdo::RequestNameFlags::ReplaceExisting.into())?;
-    let mut object_server = zbus::ObjectServer::new(&connection);
+    let mut object_server = ObjectServer::new(&connection);
 
     let config = Config::load();
     let enable_gfx_switching = config.gfx_managed;
@@ -105,12 +112,16 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    match CtrlFanAndCpu::new(config.clone()) {
+    let profile_config = Arc::new(Mutex::new(ProfileConfig::load(PROFILE_CONFIG_PATH.into())));
+    match CtrlPlatformProfile::new(profile_config.clone()) {
         Ok(mut ctrl) => {
             ctrl.reload()
                 .unwrap_or_else(|err| warn!("Profile control: {}", err));
+
             let tmp = Arc::new(Mutex::new(ctrl));
-            FanAndCpuZbus::new(tmp).add_to_server(&mut object_server);
+            ProfileZbus::new(tmp).add_to_server(&mut object_server);
+
+            tasks.push(Box::new(CtrlPlatformTask::new(profile_config)));
         }
         Err(err) => {
             error!("Profile control: {}", err);

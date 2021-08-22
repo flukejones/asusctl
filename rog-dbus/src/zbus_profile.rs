@@ -21,7 +21,7 @@
 
 use std::sync::mpsc::Sender;
 
-use rog_profiles::profiles::Profile;
+use rog_profiles::{FanCurve, Profile};
 use zbus::{dbus_proxy, Connection, Result};
 
 #[dbus_proxy(
@@ -29,26 +29,29 @@ use zbus::{dbus_proxy, Connection, Result};
     default_path = "/org/asuslinux/Profile"
 )]
 trait Daemon {
+    /// Profiles method
+    fn profiles(&self) -> zbus::Result<Vec<Profile>>;
+
     /// NextProfile method
     fn next_profile(&self) -> zbus::Result<()>;
 
     /// Profile, get the active profile
-    fn active_name(&self) -> zbus::Result<String>;
+    fn active_profile(&self) -> zbus::Result<Profile>;
+
+    /// Set the specific profile as active
+    fn set_active_profile(&self, profile: Profile) -> zbus::Result<()>;
+
+    /// Get enabled fan curves
+    fn enabled_fan_profiles(&self) -> zbus::Result<Vec<Profile>>;
 
     /// Get the active `Profile` data
-    fn active_data(&self) -> zbus::Result<Profile>;
+    fn active_fan_data(&self) -> zbus::Result<FanCurve>;
 
-    /// Profiles method
-    fn profiles(&self) -> zbus::Result<Vec<Profile>>;
+    /// Get all fan curve data
+    fn fan_curves(&self) -> zbus::Result<Vec<FanCurve>>;
 
-    /// ProfileNames method
-    fn profile_names(&self) -> zbus::Result<Vec<String>>;
-
-    /// Remove method
-    fn remove(&self, profile: &str) -> zbus::Result<()>;
-
-    /// SetProfile method
-    fn new_or_modify(&self, profile: &Profile) -> zbus::Result<()>;
+    /// Set a fan curve. If a field is empty then the exisiting saved curve is used
+    fn set_fan_curve(&self, curve: FanCurve) -> zbus::Result<()>;
 
     /// NotifyProfile signal
     #[dbus_proxy(signal)]
@@ -69,38 +72,13 @@ impl<'a> ProfileProxy<'a> {
     }
 
     #[inline]
-    pub fn active_name(&self) -> Result<String> {
-        self.0.active_name()
-    }
-
-    #[inline]
-    pub fn active_data(&self) -> Result<Profile> {
-        self.0.active_data()
-    }
-
-    #[inline]
-    pub fn all_profile_data(&self) -> Result<Vec<Profile>> {
+    pub fn profiles(&self) -> Result<Vec<Profile>> {
         self.0.profiles()
     }
 
     #[inline]
-    pub fn next_fan(&self) -> Result<()> {
+    pub fn next_profile(&self) -> Result<()> {
         self.0.next_profile()
-    }
-
-    #[inline]
-    pub fn profile_names(&self) -> Result<Vec<String>> {
-        self.0.profile_names()
-    }
-
-    #[inline]
-    pub fn remove(&self, profile: &str) -> Result<()> {
-        self.0.remove(profile)
-    }
-
-    #[inline]
-    pub fn new_or_modify(&self, profile: &Profile) -> Result<()> {
-        self.0.new_or_modify(profile)
     }
 
     #[inline]

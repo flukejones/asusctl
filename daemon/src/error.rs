@@ -1,4 +1,3 @@
-use rog_fan_curve::CurveError;
 use rog_profiles::error::ProfileError;
 use rog_types::error::GraphicsError;
 use std::convert::From;
@@ -17,7 +16,6 @@ pub enum RogError {
     Write(String, std::io::Error),
     NotSupported,
     NotFound(String),
-    FanCurve(CurveError),
     DoTask(String),
     MissingFunction(String),
     MissingLedBrightNode(String, std::io::Error),
@@ -44,7 +42,6 @@ impl fmt::Display for RogError {
             RogError::Write(path, error) => write!(f, "Write {}: {}", path, error),
             RogError::NotSupported => write!(f, "Not supported"),
             RogError::NotFound(deets) => write!(f, "Not found: {}", deets),
-            RogError::FanCurve(err) => write!(f, "Custom fan-curve error: {}", err),
             RogError::DoTask(deets) => write!(f, "Task error: {}", deets),
             RogError::MissingFunction(deets) => write!(f, "Missing functionality: {}", deets),
             RogError::MissingLedBrightNode(path, error) => write!(f, "Led node at {} is missing, please check you have the required patch or dkms module installed: {}", path, error),
@@ -61,12 +58,6 @@ impl fmt::Display for RogError {
 }
 
 impl std::error::Error for RogError {}
-
-impl From<CurveError> for RogError {
-    fn from(err: CurveError) -> Self {
-        RogError::FanCurve(err)
-    }
-}
 
 impl From<GraphicsError> for RogError {
     fn from(err: GraphicsError) -> Self {

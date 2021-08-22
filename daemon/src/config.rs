@@ -1,8 +1,6 @@
 use log::{error, info, warn};
-use rog_profiles::profiles::{FanLevel, Profile};
 use rog_types::gfx_vendors::GfxVendors;
 use serde_derive::{Deserialize, Serialize};
-use std::collections::BTreeMap;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 
@@ -20,61 +18,18 @@ pub struct Config {
     pub gfx_tmp_mode: Option<GfxVendors>,
     pub gfx_managed: bool,
     pub gfx_vfio_enable: bool,
-    pub active_profile: String,
-    pub toggle_profiles: Vec<String>,
-    #[serde(skip)]
-    pub curr_fan_mode: u8,
+    /// Save charge limit for restoring on boot
     pub bat_charge_limit: u8,
-    pub power_profiles: BTreeMap<String, Profile>,
 }
 
 impl Default for Config {
     fn default() -> Self {
-        let mut pwr = BTreeMap::new();
-        pwr.insert(
-            "normal".into(),
-            Profile::new(
-                "normal".into(),
-                0,
-                100,
-                true,
-                FanLevel::Normal,
-                "".to_string(),
-            ),
-        );
-        pwr.insert(
-            "boost".into(),
-            Profile::new(
-                "boost".into(),
-                0,
-                100,
-                true,
-                FanLevel::Boost,
-                "".to_string(),
-            ),
-        );
-        pwr.insert(
-            "silent".into(),
-            Profile::new(
-                "silent".into(),
-                0,
-                100,
-                false,
-                FanLevel::Silent,
-                "".to_string(),
-            ),
-        );
-
         Config {
             gfx_mode: GfxVendors::Hybrid,
             gfx_tmp_mode: None,
             gfx_managed: true,
             gfx_vfio_enable: false,
-            active_profile: "normal".into(),
-            toggle_profiles: vec!["normal".into(), "boost".into(), "silent".into()],
-            curr_fan_mode: 0,
             bat_charge_limit: 100,
-            power_profiles: pwr,
         }
     }
 }
@@ -125,6 +80,7 @@ impl Config {
 
     fn create_default(file: &mut File) -> Self {
         let config = Config::default();
+
         // Should be okay to unwrap this as is since it is a Default
         let json = serde_json::to_string_pretty(&config).unwrap();
         file.write_all(json.as_bytes())
@@ -146,7 +102,6 @@ impl Config {
                     .unwrap_or_else(|_| panic!("Could not deserialise {}", CONFIG_PATH));
                 // copy over serde skipped values
                 x.gfx_tmp_mode = self.gfx_tmp_mode;
-                x.curr_fan_mode = self.curr_fan_mode;
                 *self = x;
             }
         }
