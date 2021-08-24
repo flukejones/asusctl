@@ -1,9 +1,9 @@
+use ::zbus::Connection;
 use log::{error, info, warn};
 use logind_zbus::{
     types::{SessionClass, SessionInfo, SessionState, SessionType},
     ManagerProxy, SessionProxy,
 };
-use ::zbus::Connection;
 use std::{io::Write, ops::Add, path::Path, time::Instant};
 use std::{process::Command, thread::sleep, time::Duration};
 use std::{str::FromStr, sync::mpsc};
@@ -11,7 +11,12 @@ use std::{sync::Arc, sync::Mutex};
 use sysfs_class::RuntimePM;
 use sysfs_class::{PciDevice, SysClass};
 
-use crate::{*, error::GfxError, system::{GraphicsDevice, PciBus}};
+use crate::{
+    error::GfxError,
+    special::{get_asus_gsync_gfx_mode, has_asus_gsync_gfx_mode},
+    system::{GraphicsDevice, PciBus},
+    *,
+};
 
 use super::config::GfxConfig;
 use super::gfx_vendors::{GfxPower, GfxRequiredUserAction, GfxVendors};
@@ -137,12 +142,8 @@ impl CtrlGraphics {
     pub(super) fn get_runtime_status() -> Result<GfxPower, GfxError> {
         let path = Path::new(NVIDIA_RUNTIME_STATUS_PATH);
         if path.exists() {
-            let buf = std::fs::read_to_string(path).map_err(|err| {
-                GfxError::Read(
-                    path.to_string_lossy().to_string(),
-                    err,
-                )
-            })?;
+            let buf = std::fs::read_to_string(path)
+                .map_err(|err| GfxError::Read(path.to_string_lossy().to_string(), err))?;
             Ok(GfxPower::from_str(&buf)?)
         } else {
             Ok(GfxPower::Off)
@@ -630,11 +631,13 @@ impl CtrlGraphics {
     ///
     /// For manually calling (not on boot/startup) via dbus
     pub fn set_gfx_mode(&mut self, vendor: GfxVendors) -> Result<GfxRequiredUserAction, GfxError> {
-        // if let Ok(gsync) = CtrlRogBios::get_gfx_mode() {
-        //     if gsync == 1 {
-        //         return Err(GfxError::GsyncModeActive.into());
-        //     }
-        // }
+        if has_asus_gsync_gfx_mode() {
+            if let Ok(gsync) = get_asus_gsync_gfx_mode() {
+                if gsync == 1 {
+                    return Err(GfxError::AsusGsyncModeActive);
+                }
+            }
+        }
 
         let vfio_enable = if let Ok(config) = self.config.try_lock() {
             config.gfx_vfio_enable

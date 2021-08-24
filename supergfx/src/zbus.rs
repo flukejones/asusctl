@@ -2,7 +2,7 @@ use log::{error, info, warn};
 use zvariant::ObjectPath;
 use ::zbus::dbus_interface;
 
-use crate::{gfx_vendors::{GfxPower, GfxRequiredUserAction, GfxVendors}};
+use crate::gfx_vendors::{GfxPower, GfxRequiredUserAction, GfxVendors};
 
 use super::controller::CtrlGraphics;
 

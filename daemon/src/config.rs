@@ -60,8 +60,8 @@ impl Config {
             if l == 0 {
                 warn!("File is empty {}", CONFIG_PATH);
             } else {
-                serde_json::from_str(&buf)
-                    .unwrap_or_else(|_| panic!("Could not deserialise {}", CONFIG_PATH))
+                *self = serde_json::from_str(&buf)
+                    .unwrap_or_else(|_| panic!("Could not deserialise {}", CONFIG_PATH));
             }
         }
     }

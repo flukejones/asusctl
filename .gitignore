@@ -4,3 +4,4 @@ cargo-config
 .idea
 vendor-*
 vendor_*
+.vscode-ctags

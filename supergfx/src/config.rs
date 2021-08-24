@@ -5,9 +5,6 @@ use std::io::{Read, Write};
 
 use crate::gfx_vendors::GfxVendors;
 
-pub static CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
-pub static AURA_CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
-
 #[derive(Deserialize, Serialize)]
 pub struct GfxConfig {
     #[serde(skip)]
