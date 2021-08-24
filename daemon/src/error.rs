@@ -1,9 +1,8 @@
 use rog_profiles::error::ProfileError;
 use rog_types::error::GraphicsError;
+use supergfxctl::error::GfxError;
 use std::convert::From;
 use std::fmt;
-
-use crate::ctrl_gfx::error::GfxError;
 
 #[derive(Debug)]
 pub enum RogError {
@@ -24,7 +23,6 @@ pub enum RogError {
     Profiles(ProfileError),
     Initramfs(String),
     Modprobe(String),
-    Command(String, std::io::Error),
     Io(std::io::Error),
     Zbus(zbus::Error),
 }
@@ -50,7 +48,6 @@ impl fmt::Display for RogError {
             RogError::Profiles(deets) => write!(f, "Profile error: {}", deets),
             RogError::Initramfs(detail) => write!(f, "Initiramfs error: {}", detail),
             RogError::Modprobe(detail) => write!(f, "Modprobe error: {}", detail),
-            RogError::Command(func, error) => write!(f, "Command exec error: {}: {}", func, error),
             RogError::Io(detail) => write!(f, "std::io error: {}", detail),
             RogError::Zbus(detail) => write!(f, "Zbus error: {}", detail),
         }

@@ -1,7 +1,8 @@
-use crate::error::GraphicsError;
 use serde_derive::{Deserialize, Serialize};
 use std::str::FromStr;
 use zvariant_derive::Type;
+
+use crate::error::GfxError;
 
 #[derive(Debug, Type, PartialEq, Copy, Clone, Deserialize, Serialize)]
 pub enum GfxPower {
@@ -12,9 +13,9 @@ pub enum GfxPower {
 }
 
 impl FromStr for GfxPower {
-    type Err = GraphicsError;
+    type Err = GfxError;
 
-    fn from_str(s: &str) -> Result<Self, GraphicsError> {
+    fn from_str(s: &str) -> Result<Self, GfxError> {
         match s.to_lowercase().trim() {
             "active" => Ok(GfxPower::Active),
             "suspended" => Ok(GfxPower::Suspended),
@@ -45,9 +46,9 @@ pub enum GfxVendors {
 }
 
 impl FromStr for GfxVendors {
-    type Err = GraphicsError;
+    type Err = GfxError;
 
-    fn from_str(s: &str) -> Result<Self, GraphicsError> {
+    fn from_str(s: &str) -> Result<Self, GfxError> {
         match s.to_lowercase().as_str() {
             "nvidia" => Ok(GfxVendors::Nvidia),
             "hybrid" => Ok(GfxVendors::Hybrid),
@@ -59,7 +60,7 @@ impl FromStr for GfxVendors {
             "compute\n" => Ok(GfxVendors::Compute),
             "vfio\n" => Ok(GfxVendors::Vfio),
             "integrated\n" => Ok(GfxVendors::Integrated),
-            _ => Err(GraphicsError::ParseVendor),
+            _ => Err(GfxError::ParseVendor),
         }
     }
 }

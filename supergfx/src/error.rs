@@ -1,8 +1,6 @@
 use std::fmt;
 use std::{error, process::ExitStatus};
 
-use crate::error::RogError;
-
 #[derive(Debug)]
 pub enum GfxError {
     ParseVendor,
@@ -16,6 +14,11 @@ pub enum GfxError {
     MissingModule(String),
     Modprobe(String),
     Command(String, std::io::Error),
+    Path(String, std::io::Error),
+    Read(String, std::io::Error),
+    Write(String, std::io::Error),
+    Io(std::io::Error),
+    Zbus(zbus::Error),
 }
 
 impl fmt::Display for GfxError {
@@ -45,14 +48,25 @@ impl fmt::Display for GfxError {
             GfxError::MissingModule(m) => write!(f, "The module {} is missing", m),
             GfxError::Modprobe(detail) => write!(f, "Modprobe error: {}", detail),
             GfxError::Command(func, error) => write!(f, "Command exec error: {}: {}", func, error),
+            GfxError::Path(path, error) => write!(f, "Path {}: {}", path, error),
+            GfxError::Read(path, error) => write!(f, "Read {}: {}", path, error),
+            GfxError::Write(path, error) => write!(f, "Write {}: {}", path, error),
+            GfxError::Io(detail) => write!(f, "std::io error: {}", detail),
+            GfxError::Zbus(detail) => write!(f, "Zbus error: {}", detail),
         }
     }
 }
 
 impl error::Error for GfxError {}
 
-impl From<GfxError> for RogError {
-    fn from(err: GfxError) -> Self {
-        RogError::GfxSwitching(err)
+impl From<zbus::Error> for GfxError {
+    fn from(err: zbus::Error) -> Self {
+        GfxError::Zbus(err)
+    }
+}
+
+impl From<std::io::Error> for GfxError {
+    fn from(err: std::io::Error) -> Self {
+        GfxError::Io(err)
     }
 }

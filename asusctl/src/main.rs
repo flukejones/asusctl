@@ -10,12 +10,12 @@ use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2, ANIME_DATA_LEN};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClient;
 use rog_types::{
-    gfx_vendors::{GfxRequiredUserAction, GfxVendors},
     supported::{
         AnimeSupportedFunctions, LedSupportedFunctions, PlatformProfileFunctions,
         RogBiosSupportedFunctions,
     },
 };
+use supergfxctl::gfx_vendors::{GfxPower, GfxRequiredUserAction, GfxVendors};
 use std::{env::args, path::Path};
 use yansi_term::Colour::Green;
 use yansi_term::Colour::Red;
@@ -240,7 +240,7 @@ fn do_gfx(
     if command.pow {
         let res = dbus.proxies().gfx().gfx_get_pwr()?;
         match res {
-            rog_types::gfx_vendors::GfxPower::Active => {
+            GfxPower::Active => {
                 println!("Current power status: {}", Red.paint(<&str>::from(&res)))
             }
             _ => println!("Current power status: {}", Green.paint(<&str>::from(&res))),

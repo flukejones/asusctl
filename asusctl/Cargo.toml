@@ -15,6 +15,7 @@ rog_types = { path = "../rog-types" }
 daemon = { path = "../daemon" }
 gumdrop = "^0.8"
 yansi-term = "^0.1"
+supergfxctl = { path = "../supergfx" }
 
 [dev-dependencies]
 tinybmp = "^0.2.3"

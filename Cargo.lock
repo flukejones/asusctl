@@ -39,6 +39,7 @@ dependencies = [
  "rog_profiles",
  "rog_types",
  "serde_json",
+ "supergfxctl",
 ]
 
 [[package]]
@@ -54,6 +55,7 @@ dependencies = [
  "rog_dbus",
  "rog_profiles",
  "rog_types",
+ "supergfxctl",
  "tinybmp",
  "yansi-term",
 ]
@@ -219,6 +221,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
+ "supergfxctl",
  "sysfs-class",
  "toml",
  "udev",
@@ -922,6 +925,7 @@ dependencies = [
  "rog_aura",
  "rog_profiles",
  "rog_types",
+ "supergfxctl",
  "zbus",
  "zbus_macros",
  "zvariant",
@@ -1060,6 +1064,21 @@ checksum = "3384590878eb0cab3b128e844412e2d010821e7e091211b9d87324173ada7db8"
 dependencies = [
  "quote 0.3.15",
  "syn 0.11.11",
+]
+
+[[package]]
+name = "supergfxctl"
+version = "1.1.0"
+dependencies = [
+ "log",
+ "logind-zbus",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "sysfs-class",
+ "zbus",
+ "zvariant",
+ "zvariant_derive",
 ]
 
 [[package]]

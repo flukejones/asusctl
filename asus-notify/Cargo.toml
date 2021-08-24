@@ -13,6 +13,7 @@ rog_dbus = { path = "../rog-dbus" }
 rog_aura = { path = "../rog-aura" }
 rog_types = { path = "../rog-types" }
 rog_profiles = { path = "../rog-profiles" }
+supergfxctl = { path = "../supergfx" }
 
 [dependencies.notify-rust]
 version = "^4.3"

@@ -21,7 +21,7 @@
 
 use std::sync::mpsc::Sender;
 
-use rog_types::gfx_vendors::{GfxPower, GfxRequiredUserAction, GfxVendors};
+use supergfxctl::gfx_vendors::{GfxPower, GfxRequiredUserAction, GfxVendors};
 use zbus::{dbus_proxy, Connection, Result};
 
 #[dbus_proxy(

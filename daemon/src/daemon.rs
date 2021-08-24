@@ -10,18 +10,20 @@ use daemon::ctrl_profiles::controller::CtrlPlatformTask;
 use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
 };
-use daemon::{ctrl_anime::*, ctrl_gfx::controller::CtrlGraphics};
+use daemon::{ctrl_anime::*};
 use daemon::{
     ctrl_profiles::{controller::CtrlPlatformProfile, zbus::ProfileZbus},
     laptops::LaptopLedData,
 };
 
+use supergfxctl::config::GfxConfig;
+use supergfxctl::controller::CtrlGraphics;
+use supergfxctl::gfx_vendors::GfxVendors;
 use ::zbus::{fdo, Connection, ObjectServer};
 use daemon::{CtrlTask, Reloadable, ZbusAdd};
 use log::LevelFilter;
 use log::{error, info, warn};
 use rog_dbus::DBUS_NAME;
-use rog_types::gfx_vendors::GfxVendors;
 use std::env;
 use std::error::Error;
 use std::io::Write;
@@ -32,6 +34,7 @@ use daemon::ctrl_rog_bios::CtrlRogBios;
 use zvariant::ObjectPath;
 
 static PROFILE_CONFIG_PATH: &str = "/etc/asusd/profile.conf";
+static GFX_CONFIG_PATH: &str = "/etc/asusd/supergfx.conf";
 
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut logger = env_logger::Builder::new();
@@ -81,8 +84,11 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
     let mut object_server = ObjectServer::new(&connection);
 
     let config = Config::load();
-    let enable_gfx_switching = config.gfx_managed;
     let config = Arc::new(Mutex::new(config));
+
+    let gfx_config = GfxConfig::load(GFX_CONFIG_PATH.into());
+    let enable_gfx_switching = gfx_config.gfx_managed;
+    let gfx_config = Arc::new(Mutex::new(gfx_config));
 
     supported.add_to_server(&mut object_server);
 
@@ -169,12 +175,12 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
 
     // Graphics switching requires some checks on boot specifically for g-sync capable laptops
     if enable_gfx_switching {
-        match CtrlGraphics::new(config.clone()) {
+        match CtrlGraphics::new(gfx_config.clone()) {
             Ok(mut ctrl) => {
                 // Need to check if a laptop has the dedicated gfx switch
                 if CtrlRogBios::has_dedicated_gfx_toggle() {
                     if let Ok(ded) = CtrlRogBios::get_gfx_mode() {
-                        if let Ok(config) = config.lock() {
+                        if let Ok(config) = gfx_config.lock() {
                             if ded == 1 {
                                 warn!("Dedicated GFX toggle is on but driver mode is not nvidia \nSetting to nvidia driver mode");
                                 let devices = ctrl.devices();

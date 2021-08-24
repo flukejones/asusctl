@@ -8,8 +8,6 @@ pub mod ctrl_anime;
 pub mod ctrl_aura;
 /// Control of battery charge level
 pub mod ctrl_charge;
-/// GPU switching and power
-pub mod ctrl_gfx;
 /// Control CPU min/max freq and turbo, fan mode, fan curves
 ///
 /// Intel machines can control:

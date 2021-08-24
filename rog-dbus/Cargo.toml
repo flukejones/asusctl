@@ -14,6 +14,7 @@ rog_anime = { path = "../rog-anime" }
 rog_aura = { path = "../rog-aura" }
 rog_profiles = { path = "../rog-profiles" }
 rog_types = { path = "../rog-types" }
+supergfxctl = { path = "../supergfx" }
 zbus = "^1.9"
 zbus_macros = "^1.9"
 zvariant = "^2.8"
