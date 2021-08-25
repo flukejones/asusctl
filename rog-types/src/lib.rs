@@ -8,6 +8,4 @@ pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";
 
 pub mod supported;
 
-pub mod error;
-
 pub static VERSION: &str = env!("CARGO_PKG_VERSION");

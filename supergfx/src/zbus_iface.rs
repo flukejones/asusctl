@@ -1,12 +1,15 @@
+use ::zbus::dbus_interface;
 use log::{error, info, warn};
 use zvariant::ObjectPath;
-use ::zbus::dbus_interface;
 
-use crate::gfx_vendors::{GfxPower, GfxRequiredUserAction, GfxVendors};
+use crate::{
+    gfx_vendors::{GfxPower, GfxRequiredUserAction, GfxVendors},
+    DBUS_IFACE_PATH,
+};
 
 use super::controller::CtrlGraphics;
 
-#[dbus_interface(name = "org.asuslinux.Daemon")]
+#[dbus_interface(name = "org.supergfxctl.Daemon")]
 impl CtrlGraphics {
     fn vendor(&self) -> zbus::fdo::Result<GfxVendors> {
         self.get_gfx_mode().map_err(|err| {
@@ -28,10 +31,13 @@ impl CtrlGraphics {
             error!("GFX: {}", err);
             zbus::fdo::Error::Failed(format!("GFX fail: {}", err))
         })?;
-        self.notify_gfx(&vendor)
-            .unwrap_or_else(|err| warn!("GFX: {}", err));
+
         self.notify_action(&msg)
             .unwrap_or_else(|err| warn!("GFX: {}", err));
+
+        self.notify_gfx(&vendor)
+            .unwrap_or_else(|err| warn!("GFX: {}", err));
+
         Ok(msg)
     }
 
@@ -45,7 +51,7 @@ impl CtrlGraphics {
 impl CtrlGraphics {
     pub fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
-            .at(&ObjectPath::from_str_unchecked("/org/asuslinux/Gfx"), self)
+            .at(&ObjectPath::from_str_unchecked(DBUS_IFACE_PATH), self)
             .map_err(|err| {
                 warn!("GFX: CtrlGraphics: add_to_server {}", err);
                 err

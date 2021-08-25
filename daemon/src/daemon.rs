@@ -1,5 +1,6 @@
 use daemon::ctrl_anime::config::AnimeConfig;
 use daemon::ctrl_anime::zbus::CtrlAnimeZbus;
+use daemon::ctrl_anime::*;
 use daemon::ctrl_aura::config::AuraConfig;
 use daemon::ctrl_aura::controller::{
     CtrlKbdLed, CtrlKbdLedReloader, CtrlKbdLedTask, CtrlKbdLedZbus,
@@ -10,15 +11,11 @@ use daemon::ctrl_profiles::controller::CtrlPlatformTask;
 use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
 };
-use daemon::{ctrl_anime::*};
 use daemon::{
     ctrl_profiles::{controller::CtrlPlatformProfile, zbus::ProfileZbus},
     laptops::LaptopLedData,
 };
 
-use supergfxctl::config::GfxConfig;
-use supergfxctl::controller::CtrlGraphics;
-use supergfxctl::gfx_vendors::GfxVendors;
 use ::zbus::{fdo, Connection, ObjectServer};
 use daemon::{CtrlTask, Reloadable, ZbusAdd};
 use log::LevelFilter;
@@ -34,7 +31,6 @@ use daemon::ctrl_rog_bios::CtrlRogBios;
 use zvariant::ObjectPath;
 
 static PROFILE_CONFIG_PATH: &str = "/etc/asusd/profile.conf";
-static GFX_CONFIG_PATH: &str = "/etc/asusd/supergfx.conf";
 
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut logger = env_logger::Builder::new();
@@ -86,10 +82,6 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
     let config = Config::load();
     let config = Arc::new(Mutex::new(config));
 
-    let gfx_config = GfxConfig::load(GFX_CONFIG_PATH.into());
-    let enable_gfx_switching = gfx_config.gfx_managed;
-    let gfx_config = Arc::new(Mutex::new(gfx_config));
-
     supported.add_to_server(&mut object_server);
 
     match CtrlRogBios::new(config.clone()) {
@@ -105,7 +97,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    match CtrlCharge::new(config.clone()) {
+    match CtrlCharge::new(config) {
         Ok(mut ctrl) => {
             // Do a reload of any settings
             ctrl.reload()
@@ -170,48 +162,6 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
         Err(err) => {
             error!("Keyboard control: {}", err);
-        }
-    }
-
-    // Graphics switching requires some checks on boot specifically for g-sync capable laptops
-    if enable_gfx_switching {
-        match CtrlGraphics::new(gfx_config.clone()) {
-            Ok(mut ctrl) => {
-                // Need to check if a laptop has the dedicated gfx switch
-                if CtrlRogBios::has_dedicated_gfx_toggle() {
-                    if let Ok(ded) = CtrlRogBios::get_gfx_mode() {
-                        if let Ok(config) = gfx_config.lock() {
-                            if ded == 1 {
-                                warn!("Dedicated GFX toggle is on but driver mode is not nvidia \nSetting to nvidia driver mode");
-                                let devices = ctrl.devices();
-                                let bus = ctrl.bus();
-                                CtrlGraphics::do_mode_setup_tasks(
-                                    GfxVendors::Nvidia,
-                                    false,
-                                    &devices,
-                                    &bus,
-                                )?;
-                            } else if ded == 0 {
-                                info!("Dedicated GFX toggle is off");
-                                let devices = ctrl.devices();
-                                let bus = ctrl.bus();
-                                CtrlGraphics::do_mode_setup_tasks(
-                                    config.gfx_mode,
-                                    false,
-                                    &devices,
-                                    &bus,
-                                )?;
-                            }
-                        }
-                    }
-                }
-                ctrl.reload()
-                    .unwrap_or_else(|err| error!("Gfx controller: {}", err));
-                ctrl.add_to_server(&mut object_server);
-            }
-            Err(err) => {
-                error!("Gfx control: {}", err);
-            }
         }
     }
 

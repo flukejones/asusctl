@@ -1,0 +1,16 @@
+[Unit]
+Description=SUPERGFX
+StartLimitInterval=200
+StartLimitBurst=2
+Before=display-manager.service
+
+[Service]
+Environment=IS_SUPERGFX_SERVICE=1
+ExecStart=/usr/bin/supergfxd
+Restart=on-failure
+Restart=always
+RestartSec=1
+Type=dbus
+BusName=org.supergfxctl.Daemon
+SELinuxContext=system_u:system_r:unconfined_t:s0
+#SELinuxContext=system_u:object_r:modules_object_t:s0

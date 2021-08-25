@@ -1,6 +1,4 @@
 use rog_profiles::error::ProfileError;
-use rog_types::error::GraphicsError;
-use supergfxctl::error::GfxError;
 use std::convert::From;
 use std::fmt;
 
@@ -19,7 +17,6 @@ pub enum RogError {
     MissingFunction(String),
     MissingLedBrightNode(String, std::io::Error),
     ReloadFail(String),
-    GfxSwitching(GfxError),
     Profiles(ProfileError),
     Initramfs(String),
     Modprobe(String),
@@ -44,7 +41,6 @@ impl fmt::Display for RogError {
             RogError::MissingFunction(deets) => write!(f, "Missing functionality: {}", deets),
             RogError::MissingLedBrightNode(path, error) => write!(f, "Led node at {} is missing, please check you have the required patch or dkms module installed: {}", path, error),
             RogError::ReloadFail(deets) => write!(f, "Task error: {}", deets),
-            RogError::GfxSwitching(deets) => write!(f, "Graphics switching error: {}", deets),
             RogError::Profiles(deets) => write!(f, "Profile error: {}", deets),
             RogError::Initramfs(detail) => write!(f, "Initiramfs error: {}", detail),
             RogError::Modprobe(detail) => write!(f, "Modprobe error: {}", detail),
@@ -55,15 +51,6 @@ impl fmt::Display for RogError {
 }
 
 impl std::error::Error for RogError {}
-
-impl From<GraphicsError> for RogError {
-    fn from(err: GraphicsError) -> Self {
-        match err {
-            GraphicsError::ParseVendor => RogError::GfxSwitching(GfxError::ParseVendor),
-            GraphicsError::ParsePower => RogError::GfxSwitching(GfxError::ParsePower),
-        }
-    }
-}
 
 impl From<ProfileError> for RogError {
     fn from(err: ProfileError) -> Self {

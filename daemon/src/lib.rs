@@ -1,7 +1,6 @@
 #![deny(unused_must_use)]
 /// Configuration loading, saving
 pub mod config;
-pub(crate) mod config_old;
 /// Control of AniMe matrix display
 pub mod ctrl_anime;
 /// Keyboard LED brightness control, RGB, and LED display modes

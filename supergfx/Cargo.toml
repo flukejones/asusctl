@@ -12,6 +12,26 @@ keywords = ["graphics", "nvidia", "switching"]
 edition = "2018"
 exclude = ["data"]
 
+[features]
+daemon = ["env_logger"]
+cli = ["gumdrop"]
+default = ["daemon", "cli"]
+
+[lib]
+name = "supergfxctl"
+path = "src/lib.rs"
+
+[[bin]]
+name = "supergfxd"
+path = "src/daemon.rs"
+required-features = ["daemon"]
+
+[[bin]]
+name = "supergfxctl"
+path = "src/cli.rs"
+required-features = ["cli"]
+default-features = ["cli"]
+
 [dependencies]
 serde = "^1.0"
 serde_derive = "^1.0"
@@ -24,3 +44,6 @@ zvariant_derive = "^2.8"
 logind-zbus = "^0.7.1"
 
 sysfs-class = "^0.1.2"
+
+env_logger = { version = "^0.8", optional = true }
+gumdrop = { version = "^0.8", optional = true }

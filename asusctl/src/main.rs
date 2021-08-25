@@ -9,16 +9,17 @@ use profiles_cli::ProfileCommand;
 use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2, ANIME_DATA_LEN};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClient;
-use rog_types::{
-    supported::{
-        AnimeSupportedFunctions, LedSupportedFunctions, PlatformProfileFunctions,
-        RogBiosSupportedFunctions,
-    },
+use rog_types::supported::{
+    AnimeSupportedFunctions, LedSupportedFunctions, PlatformProfileFunctions,
+    RogBiosSupportedFunctions,
 };
-use supergfxctl::gfx_vendors::{GfxPower, GfxRequiredUserAction, GfxVendors};
-use std::{env::args, path::Path};
-use yansi_term::Colour::Green;
-use yansi_term::Colour::Red;
+use std::{env::args, path::Path, sync::mpsc::channel};
+use supergfxctl::{
+    gfx_vendors::{GfxRequiredUserAction, GfxVendors},
+    special::{get_asus_gsync_gfx_mode, has_asus_gsync_gfx_mode},
+    zbus_proxy::GfxProxy,
+};
+use zbus::Connection;
 
 #[derive(Default, Options)]
 struct CliStart {
@@ -152,7 +153,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     match parsed.command {
         Some(CliCommand::LedMode(mode)) => handle_led_mode(&dbus, &supported.keyboard_led, &mode)?,
         Some(CliCommand::Profile(cmd)) => handle_profile(&dbus, &supported.platform_profile, &cmd)?,
-        Some(CliCommand::Graphics(cmd)) => do_gfx(&dbus, &supported.rog_bios_ctrl, cmd)?,
+        Some(CliCommand::Graphics(cmd)) => do_gfx(cmd)?,
         Some(CliCommand::Anime(cmd)) => handle_anime(&dbus, &supported.anime_ctrl, &cmd)?,
         Some(CliCommand::Bios(cmd)) => handle_bios_option(&dbus, &supported.rog_bios_ctrl, &cmd)?,
         None => {
@@ -190,62 +191,67 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn do_gfx(
-    dbus: &RogDbusClient,
-    supported: &RogBiosSupportedFunctions,
-    command: GraphicsCommand,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn do_gfx(command: GraphicsCommand) -> Result<(), Box<dyn std::error::Error>> {
     if command.mode.is_none() && !command.get && !command.pow && !command.force || command.help {
         println!("{}", command.self_usage());
     }
 
+    let conn = Connection::new_system()?;
+    let proxy = GfxProxy::new(&conn)?;
+
+    let (tx, rx) = channel();
+    proxy.connect_notify_action(tx)?;
+
     if let Some(mode) = command.mode {
-        if supported.dedicated_gfx_toggle && dbus.proxies().rog_bios().get_dedicated_gfx()? == 1 {
+        if has_asus_gsync_gfx_mode() && get_asus_gsync_gfx_mode()? == 1 {
             println!("You can not change modes until you turn dedicated/G-Sync off and reboot");
             std::process::exit(-1);
         }
 
         println!("If anything fails check `journalctl -b -u asusd`\n");
 
-        dbus.proxies().gfx().gfx_write_mode(&mode).map_err(|err|{
+        proxy.gfx_write_mode(&mode).map_err(|err|{
             println!("Graphics mode change error. You may be in an invalid state.");
             println!("Check mode with `asusctl graphics -g` and switch to opposite\nmode to correct it, e.g: if integrated, switch to hybrid, or if nvidia, switch to integrated.\n");
             err
         })?;
-        let res = dbus.gfx_wait_changed()?;
-        match res {
-            GfxRequiredUserAction::Integrated => {
-                println!(
-                    "You must change to Integrated before you can change to {}",
-                    <&str>::from(mode)
-                );
+
+        loop {
+            proxy.next_signal()?;
+
+            if let Ok(res) = rx.try_recv() {
+                match res {
+                    GfxRequiredUserAction::Integrated => {
+                        println!(
+                            "You must change to Integrated before you can change to {}",
+                            <&str>::from(mode)
+                        );
+                    }
+                    GfxRequiredUserAction::Logout | GfxRequiredUserAction::Reboot => {
+                        println!(
+                            "Graphics mode changed to {}. User action required is: {}",
+                            <&str>::from(mode),
+                            <&str>::from(&res)
+                        );
+                    }
+                    GfxRequiredUserAction::None => {
+                        println!("Graphics mode changed to {}", <&str>::from(mode));
+                    }
+                }
             }
-            GfxRequiredUserAction::Logout | GfxRequiredUserAction::Reboot => {
-                println!(
-                    "Graphics mode changed to {}. User action required is: {}",
-                    <&str>::from(mode),
-                    <&str>::from(&res)
-                );
-            }
-            GfxRequiredUserAction::None => {
-                println!("Graphics mode changed to {}", <&str>::from(mode));
-            }
+            std::process::exit(0)
         }
-        std::process::exit(0)
     }
+
     if command.get {
-        let res = dbus.proxies().gfx().gfx_get_mode()?;
+        let res = proxy.gfx_get_mode()?;
         println!("Current graphics mode: {}", <&str>::from(res));
     }
     if command.pow {
-        let res = dbus.proxies().gfx().gfx_get_pwr()?;
-        match res {
-            GfxPower::Active => {
-                println!("Current power status: {}", Red.paint(<&str>::from(&res)))
-            }
-            _ => println!("Current power status: {}", Green.paint(<&str>::from(&res))),
-        }
+        let res = proxy.gfx_get_pwr()?;
+        println!("Current power status: {}", <&str>::from(&res));
     }
+
     Ok(())
 }
 

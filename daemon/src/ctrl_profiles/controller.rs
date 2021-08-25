@@ -40,19 +40,23 @@ impl GetSupported for CtrlPlatformProfile {
 
     fn get_supported() -> Self::A {
         if !Profile::is_platform_profile_supported() {
-            warn!(r#"
+            warn!(
+                r#"
 platform_profile kernel interface not found, your laptop does not support this, or the iterface is missing.
 To enable profile support you require a kernel with the following patch applied:
 https://lkml.org/lkml/2021/8/18/1022
-"#);
+"#
+            );
         }
         if !FanCurves::is_fan_curves_supported() {
-            info!(r#"
+            info!(
+                r#"
 fan curves kernel interface not found, your laptop does not support this, or the iterface is missing.
 To enable fan-curve support you require a kernel with the following patch applied:
 https://lkml.org/lkml/2021/8/20/232
 Please note that as of 24/08/2021 this is not final.
-"#);
+"#
+            );
         }
         PlatformProfileFunctions {
             platform_profile: Profile::is_platform_profile_supported(),

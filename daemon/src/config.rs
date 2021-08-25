@@ -3,7 +3,6 @@ use serde_derive::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 
-use crate::config_old::*;
 use crate::VERSION;
 
 pub static CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
@@ -36,9 +35,6 @@ impl Config {
                 config = Self::new();
             } else if let Ok(data) = serde_json::from_str(&buf) {
                 config = data;
-            } else if let Ok(data) = serde_json::from_str::<ConfigV352>(&buf) {
-                config = data.into_current();
-                info!("Updated config version to: {}", VERSION);
             } else {
                 warn!("Could not deserialise {}", CONFIG_PATH);
                 panic!("Please remove {} then restart asusd", CONFIG_PATH);

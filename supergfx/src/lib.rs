@@ -1,12 +1,17 @@
-pub mod error;
 pub mod config;
-pub mod gfx_vendors;
 pub mod controller;
-pub mod system;
+pub mod error;
+pub mod gfx_vendors;
 /// Special-case functions for check/read/write of key functions on unique laptops
 /// such as the G-Sync mode available on some ASUS ROG laptops
-pub(crate) mod special;
-pub mod zbus;
+pub mod special;
+pub mod system;
+pub mod zbus_iface;
+pub mod zbus_proxy;
+
+pub const GFX_CONFIG_PATH: &str = "/etc/supergfxd.conf";
+pub const DBUS_DEST_NAME: &str = "org.supergfxctl.Daemon";
+pub const DBUS_IFACE_PATH: &str = "/org/supergfxctl/Gfx";
 
 const NVIDIA_DRIVERS: [&str; 4] = ["nvidia_drm", "nvidia_modeset", "nvidia_uvm", "nvidia"];
 

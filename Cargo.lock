@@ -40,6 +40,7 @@ dependencies = [
  "rog_types",
  "serde_json",
  "supergfxctl",
+ "zbus",
 ]
 
 [[package]]
@@ -57,7 +58,7 @@ dependencies = [
  "rog_types",
  "supergfxctl",
  "tinybmp",
- "yansi-term",
+ "zbus",
 ]
 
 [[package]]
@@ -221,7 +222,6 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "supergfxctl",
  "sysfs-class",
  "toml",
  "udev",
@@ -1070,6 +1070,8 @@ dependencies = [
 name = "supergfxctl"
 version = "1.1.0"
 dependencies = [
+ "env_logger",
+ "gumdrop",
  "log",
  "logind-zbus",
  "serde",
@@ -1312,15 +1314,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e1945e12e16b951721d7976520b0832496ef79c31602c7a29d950de79ba74621"
 dependencies = [
  "bitflags 0.9.1",
-]
-
-[[package]]
-name = "yansi-term"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe5c30ade05e61656247b2e334a031dfd0cc466fadef865bdcdea8d537951bf1"
-dependencies = [
- "winapi",
 ]
 
 [[package]]
