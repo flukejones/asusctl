@@ -1,6 +1,6 @@
 use crate::{config::Config, error::RogError, GetSupported};
 use log::{error, info, warn};
-use rog_types::supported::RogBiosSupportedFunctions;
+use rog_supported::RogBiosSupportedFunctions;
 use std::fs::OpenOptions;
 use std::io::BufRead;
 use std::io::{Read, Write};

@@ -12,10 +12,10 @@ use zbus::{fdo, Connection};
 use std::sync::atomic::AtomicBool;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!(" user daemon v{}", rog_user::VERSION);
-    println!("   rog-anime v{}", rog_anime::VERSION);
-    println!("    rog-dbus v{}", rog_dbus::VERSION);
-    println!("   rog-types v{}", rog_types::VERSION);
+    println!("  user daemon v{}", rog_user::VERSION);
+    println!("    rog-anime v{}", rog_anime::VERSION);
+    println!("     rog-dbus v{}", rog_dbus::VERSION);
+    println!("rog-supported v{}", rog_supported::VERSION);
 
     let (client, _) = RogDbusClient::new().unwrap();
     let supported = client.proxies().supported().get_supported_functions()?;

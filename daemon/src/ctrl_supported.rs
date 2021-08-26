@@ -9,7 +9,7 @@ use crate::{
     ctrl_profiles::controller::CtrlPlatformProfile, ctrl_rog_bios::CtrlRogBios, GetSupported,
 };
 
-use rog_types::supported::{
+use rog_supported::{
     AnimeSupportedFunctions, ChargeSupportedFunctions, LedSupportedFunctions,
     PlatformProfileFunctions, RogBiosSupportedFunctions,
 };

@@ -13,7 +13,7 @@ edition = "2018"
 rog_anime = { path = "../rog-anime" }
 rog_aura = { path = "../rog-aura" }
 rog_profiles = { path = "../rog-profiles" }
-rog_types = { path = "../rog-types" }
+rog_supported = { path = "../rog-supported" }
 supergfxctl = { path = "../supergfx" }
 zbus = "^1.9"
 zbus_macros = "^1.9"

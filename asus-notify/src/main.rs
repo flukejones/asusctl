@@ -37,6 +37,7 @@ macro_rules! base_notification {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("asus-notify version {}", env!("CARGO_PKG_VERSION"));
     println!("   rog-dbus version {}", rog_dbus::VERSION);
+    println!("supergfxctl version {}", supergfxctl::VERSION);
 
     let (proxies, conn) = DbusProxies::new()?;
     let signals = Signals::new(&proxies)?;

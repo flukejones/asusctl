@@ -9,7 +9,7 @@ use profiles_cli::ProfileCommand;
 use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2, ANIME_DATA_LEN};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClient;
-use rog_types::supported::{
+use rog_supported::{
     AnimeSupportedFunctions, LedSupportedFunctions, PlatformProfileFunctions,
     RogBiosSupportedFunctions,
 };
@@ -139,14 +139,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if parsed.version {
         println!("\nApp and daemon versions:");
-        println!("     asusctl v{}", env!("CARGO_PKG_VERSION"));
-        println!("       asusd v{}", daemon::VERSION);
+        println!("      asusctl v{}", env!("CARGO_PKG_VERSION"));
+        println!("        asusd v{}", daemon::VERSION);
         println!("\nComponent crate versions:");
-        println!("   rog-anime v{}", rog_anime::VERSION);
-        println!("    rog-aura v{}", rog_aura::VERSION);
-        println!("    rog-dbus v{}", rog_dbus::VERSION);
-        println!("rog-profiles v{}", rog_profiles::VERSION);
-        println!("   rog-types v{}", rog_types::VERSION);
+        println!("    rog-anime v{}", rog_anime::VERSION);
+        println!("     rog-aura v{}", rog_aura::VERSION);
+        println!("     rog-dbus v{}", rog_dbus::VERSION);
+        println!(" rog-profiles v{}", rog_profiles::VERSION);
+        println!("rog-supported v{}", rog_supported::VERSION);
+        println!("  supergfxctl v{}", supergfxctl::VERSION);
         return Ok(());
     }
 

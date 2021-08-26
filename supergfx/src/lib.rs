@@ -9,7 +9,8 @@ pub mod system;
 pub mod zbus_iface;
 pub mod zbus_proxy;
 
-pub const GFX_CONFIG_PATH: &str = "/etc/supergfxd.conf";
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const CONFIG_PATH: &str = "/etc/supergfxd.conf";
 pub const DBUS_DEST_NAME: &str = "org.supergfxctl.Daemon";
 pub const DBUS_IFACE_PATH: &str = "/org/supergfxctl/Gfx";
 

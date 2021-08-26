@@ -3,7 +3,7 @@ use crate::GetSupported;
 use log::{info, warn};
 use rog_profiles::error::ProfileError;
 use rog_profiles::{FanCurves, Profile};
-use rog_types::supported::PlatformProfileFunctions;
+use rog_supported::PlatformProfileFunctions;
 use std::sync::Arc;
 use std::sync::Mutex;
 

@@ -19,7 +19,7 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use rog_types::supported::SupportedFunctions;
+use rog_supported::SupportedFunctions;
 use zbus::{dbus_proxy, Connection, Result};
 
 #[dbus_proxy(

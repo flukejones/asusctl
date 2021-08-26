@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   + Support 8bit RGB, RGBA, 16bit Greyscalw, RGB, RGBA
   + add `AsusImage` type for slanted-template pixel-perfect images
   + `BREAKING:` plain `Image` with time period is changed and old anime configs break as a result (sorry)
+### Changed
+- Graphics control:
+  + BREAKING: graphics control is pulled out of asusd and moved to new crate; supergfxctl
 
 # [3.7.2] - 2021-08-02
 ### Added

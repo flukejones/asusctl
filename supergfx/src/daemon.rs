@@ -12,7 +12,7 @@ use supergfxctl::{
     error::GfxError,
     gfx_vendors::GfxVendors,
     special::{get_asus_gsync_gfx_mode, has_asus_gsync_gfx_mode},
-    DBUS_DEST_NAME, GFX_CONFIG_PATH,
+    CONFIG_PATH, DBUS_DEST_NAME,
 };
 use zbus::{fdo, Connection, ObjectServer};
 
@@ -51,7 +51,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
 
     let mut object_server = ObjectServer::new(&connection);
 
-    let config = GfxConfig::load(GFX_CONFIG_PATH.into());
+    let config = GfxConfig::load(CONFIG_PATH.into());
     let enable_gfx_switching = config.gfx_managed;
     let config = Arc::new(Mutex::new(config));
 

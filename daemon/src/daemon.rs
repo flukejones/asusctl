@@ -54,12 +54,12 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    info!("      daemon v{}", daemon::VERSION);
-    info!("   rog-anime v{}", rog_anime::VERSION);
-    info!("    rog-aura v{}", rog_aura::VERSION);
-    info!("    rog-dbus v{}", rog_dbus::VERSION);
-    info!("rog-profiles v{}", rog_profiles::VERSION);
-    info!("   rog-types v{}", rog_types::VERSION);
+    info!("       daemon v{}", daemon::VERSION);
+    info!("    rog-anime v{}", rog_anime::VERSION);
+    info!("     rog-aura v{}", rog_aura::VERSION);
+    info!("     rog-dbus v{}", rog_dbus::VERSION);
+    info!(" rog-profiles v{}", rog_profiles::VERSION);
+    info!("rog-supported v{}", rog_supported::VERSION);
 
     start_daemon()?;
     Ok(())

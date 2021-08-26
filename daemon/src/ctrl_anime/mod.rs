@@ -11,7 +11,7 @@ use rog_anime::{
     },
     ActionData, AnimeDataBuffer, AnimePacketType, ANIME_DATA_LEN,
 };
-use rog_types::supported::AnimeSupportedFunctions;
+use rog_supported::AnimeSupportedFunctions;
 use rusb::{Device, DeviceHandle};
 use std::{
     error::Error,
