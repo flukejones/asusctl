@@ -2,7 +2,7 @@
 Description=ASUS Notebook Control
 StartLimitInterval=200
 StartLimitBurst=2
-Before=display-manager.service
+Before=multi-user.target
 
 [Service]
 Environment=IS_SERVICE=1
