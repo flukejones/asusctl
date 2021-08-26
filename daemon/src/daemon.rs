@@ -28,7 +28,6 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 use daemon::ctrl_rog_bios::CtrlRogBios;
-use zvariant::ObjectPath;
 
 static PROFILE_CONFIG_PATH: &str = "/etc/asusd/profile.conf";
 
@@ -183,18 +182,18 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         });
 
     // Run zbus server
-    object_server
-        .with(
-            &ObjectPath::from_str_unchecked("/org/asuslinux/Charge"),
-            |obj: &CtrlCharge| {
-                let x = obj.limit();
-                obj.notify_charge(x as u8)
-            },
-        )
-        .map_err(|err| {
-            warn!("object_server notify_charge error: {}", err);
-        })
-        .ok();
+    // object_server
+    //     .with(
+    //         &ObjectPath::from_str_unchecked("/org/asuslinux/Charge"),
+    //         |obj: &CtrlCharge| {
+    //             let x = obj.limit();
+    //             obj.notify_charge(x as u8)
+    //         },
+    //     )
+    //     .map_err(|err| {
+    //         warn!("object_server notify_charge error: {}", err);
+    //     })
+    //     .ok();
 
     // Loop to check errors and iterate zbus server
     loop {

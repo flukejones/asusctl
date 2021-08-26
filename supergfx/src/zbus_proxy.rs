@@ -19,7 +19,7 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use std::sync::mpsc::{Receiver, Sender};
+use std::sync::mpsc::{Sender};
 
 use zbus::{dbus_proxy, Connection, Message, Result};
 

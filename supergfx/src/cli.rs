@@ -1,3 +1,5 @@
+//! Basic CLI tool to control the `supergfxd` daemon
+
 use std::{env::args, sync::mpsc::channel};
 use supergfxctl::{
     gfx_vendors::{GfxRequiredUserAction, GfxVendors},
@@ -59,6 +61,7 @@ fn do_gfx(command: CliStart) -> Result<(), Box<dyn std::error::Error>> {
         }
 
         println!("If anything fails check `journalctl -b -u supergfxd`\n");
+        println!("Note that nvidia-drm.modeset=0 is required in kernel cmdline to enable the nvidia drivers to be unloaded on demand`\n");
 
         proxy.gfx_write_mode(&mode).map_err(|err|{
             println!("Graphics mode change error. You may be in an invalid state.");

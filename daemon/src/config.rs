@@ -1,9 +1,7 @@
-use log::{error, info, warn};
+use log::{error, warn};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
-
-use crate::VERSION;
 
 pub static CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
 

@@ -69,7 +69,7 @@ install:
 
 	$(INSTALL_DATA) "./data/_asusctl" "$(DESTDIR)$(zshcpl)/_asusctl"
 	$(INSTALL_DATA) "./data/completions/asusctl.fish" "$(DESTDIR)$(datarootdir)/fish/vendor_completions.d/asusctl.fish"
-	cd data && find "./anime" -type f -exec install -Dm 755 "{}" "$(DESTDIR)$(datarootdir)/asusd/{}" \;
+	cd rog-anime/data && find "./anime" -type f -exec install -Dm 755 "{}" "$(DESTDIR)$(datarootdir)/asusd/{}" \;
 
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_SD)" "$(DESTDIR)$(bindir)/$(BIN_SD)"
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_SC)" "$(DESTDIR)$(bindir)/$(BIN_SC)"

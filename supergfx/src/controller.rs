@@ -543,7 +543,7 @@ impl CtrlGraphics {
             // exit if 3 minutes pass
             if Instant::now().duration_since(start_time).as_secs() > 180 {
                 warn!("{}", THREAD_TIMEOUT_MSG);
-                return Ok(THREAD_TIMEOUT_MSG.into());
+                return Err(GfxError::DisplayManagerTimeout(THREAD_TIMEOUT_MSG.into()));
             }
 
             // Don't spin at max speed
