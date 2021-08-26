@@ -1069,9 +1069,8 @@ dependencies = [
 [[package]]
 name = "supergfxctl"
 version = "2.0.0"
+source = "git+https://gitlab.com/asus-linux/supergfxctl.git?tag=2.0.0#3f040cd3ec334242631122cd038aa361cc860be6"
 dependencies = [
- "env_logger",
- "gumdrop",
  "log",
  "logind-zbus",
  "serde",

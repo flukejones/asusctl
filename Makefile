@@ -15,11 +15,7 @@ BIN_C := asusctl
 BIN_D := asusd
 BIN_U := asusd-user
 BIN_N := asus-notify
-BIN_SD := supergfxd
-BIN_SC := supergfxctl
 LEDCFG := asusd-ledmodes.toml
-X11CFG := 90-nvidia-screen-G05.conf
-PMRULES := 90-asusd-nvidia-pm.rules
 
 SRC := Cargo.toml Cargo.lock Makefile $(shell find -type f -wholename '**/src/*.rs')
 
@@ -71,13 +67,6 @@ install:
 	$(INSTALL_DATA) "./data/completions/asusctl.fish" "$(DESTDIR)$(datarootdir)/fish/vendor_completions.d/asusctl.fish"
 	cd rog-anime/data && find "./anime" -type f -exec install -Dm 755 "{}" "$(DESTDIR)$(datarootdir)/asusd/{}" \;
 
-	$(INSTALL_PROGRAM) "./target/release/$(BIN_SD)" "$(DESTDIR)$(bindir)/$(BIN_SD)"
-	$(INSTALL_PROGRAM) "./target/release/$(BIN_SC)" "$(DESTDIR)$(bindir)/$(BIN_SC)"
-	$(INSTALL_DATA) "./supergfx/data/$(BIN_SD).service" "$(DESTDIR)$(libdir)/systemd/system/$(BIN_SD).service"
-	$(INSTALL_DATA) "./supergfx/data/org.supergfxctl.Daemon.conf" "$(DESTDIR)$(datarootdir)/dbus-1/system.d/org.supergfxctl.Daemon.conf"
-	$(INSTALL_DATA) "./supergfx/data/$(X11CFG)" "$(DESTDIR)$(datarootdir)/X11/xorg.conf.d/$(X11CFG)"
-	$(INSTALL_DATA) "./supergfx/data/$(PMRULES)" "$(DESTDIR)$(libdir)/udev/rules.d/$(PMRULES)"
-
 uninstall:
 	rm -f "$(DESTDIR)$(bindir)/$(BIN_C)"
 	rm -f "$(DESTDIR)$(bindir)/$(BIN_D)"
@@ -101,10 +90,6 @@ uninstall:
 	rm -f "$(DESTDIR)$(zshcpl)/_asusctl"
 	rm -f "$(DESTDIR)$(datarootdir)/fish/vendor_completions.d/asusctl.fish"
 	rm -rf "$(DESTDIR)$(datarootdir)/asusd"
-	rm -f "$(DESTDIR)$(bindir)/$(BIN_SC)"
-	rm -f "$(DESTDIR)$(bindir)/$(BIN_SD)"
-	rm -f "$(DESTDIR)$(libdir)/systemd/system/$(BIN_SD).service"
-	rm -f "$(DESTDIR)$(datarootdir)/dbus-1/system.d/org.supergfxctl.Daemon.conf"
 
 update:
 	cargo update

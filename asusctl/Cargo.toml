@@ -15,7 +15,7 @@ rog_profiles = { path = "../rog-profiles" }
 rog_supported = { path = "../rog-supported" }
 daemon = { path = "../daemon" }
 gumdrop = "^0.8"
-supergfxctl = { path = "../supergfx" }
+supergfxctl = { git = "https://gitlab.com/asus-linux/supergfxctl.git", tag = "2.0.0" }
 
 [dev-dependencies]
 tinybmp = "^0.2.3"

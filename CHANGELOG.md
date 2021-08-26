@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   + `BREAKING:` plain `Image` with time period is changed and old anime configs break as a result (sorry)
 ### BREAKING CHANGES
 - Graphics control:
-  + graphics control is pulled out of asusd and moved to new crate; supergfxctl
+  + graphics control is pulled out of asusd and moved to new package; https://gitlab.com/asus-linux/supergfxctl
 - Proflies:
   + profiles now depend on power-profile-daemon plus kernel patches for support of platform_profile
     - if your system supports fan-curves you will also require upcoming kernel patches for this
