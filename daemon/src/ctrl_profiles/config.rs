@@ -1,5 +1,4 @@
 use log::{error, warn};
-use rog_profiles::error::ProfileError;
 use rog_profiles::{FanCurves, Profile};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
@@ -16,27 +15,22 @@ pub struct ProfileConfig {
 }
 
 impl ProfileConfig {
-    fn new(config_path: String) -> Result<Self, ProfileError> {
+    fn new(config_path: String) -> Self {
         let mut platform = ProfileConfig {
             config_path,
             active: Profile::Balanced,
             fan_curves: None,
         };
 
-        if !Profile::is_platform_profile_supported() {
-            return Err(ProfileError::NotSupported);
-        }
-
         if FanCurves::is_fan_curves_supported() {
             let mut curves = FanCurves::default();
             curves.update_from_platform();
             platform.fan_curves = Some(curves);
         }
-        Ok(platform)
-    }
-}
 
-impl ProfileConfig {
+        platform
+    }
+
     pub fn load(config_path: String) -> Self {
         let mut file = OpenOptions::new()
             .read(true)
@@ -48,7 +42,7 @@ impl ProfileConfig {
         let mut config;
         if let Ok(read_len) = file.read_to_string(&mut buf) {
             if read_len == 0 {
-                config = Self::new(config_path).unwrap();
+                config = Self::new(config_path);
             } else if let Ok(data) = serde_json::from_str(&buf) {
                 config = data;
                 config.config_path = config_path;
@@ -57,7 +51,7 @@ impl ProfileConfig {
                 panic!("Please remove {} then restart service", config_path);
             }
         } else {
-            config = Self::new(config_path).unwrap()
+            config = Self::new(config_path)
         }
         config.write();
         config

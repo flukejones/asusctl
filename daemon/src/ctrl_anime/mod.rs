@@ -13,7 +13,7 @@ use rog_anime::{
 };
 use rog_supported::AnimeSupportedFunctions;
 use rusb::{Device, DeviceHandle};
-use std::{cell::{RefCell}, error::Error, sync::{Arc, Mutex}, thread::sleep};
+use std::{cell::RefCell, error::Error, sync::{Arc, Mutex}, thread::sleep};
 use std::{
     sync::atomic::{AtomicBool, Ordering},
     time::Duration,
@@ -32,6 +32,7 @@ impl GetSupported for CtrlAnime {
 }
 
 pub struct CtrlAnime {
+    _node: String,
     handle: RefCell<DeviceHandle<rusb::GlobalContext>>,
     cache: AnimeConfigCached,
     config: AnimeConfig,
@@ -44,6 +45,7 @@ pub struct CtrlAnime {
 impl CtrlAnime {
     #[inline]
     pub fn new(config: AnimeConfig) -> Result<CtrlAnime, Box<dyn Error>> {
+        let node = Self::find_node("193b")?;
         let device = Self::get_dev_handle()?;
 
         info!("Device has an AniMe Matrix display");
@@ -51,6 +53,7 @@ impl CtrlAnime {
         cache.init_from_config(&config)?;
 
         let ctrl = CtrlAnime {
+            _node: node,
             handle: RefCell::new(device),
             cache,
             config,
@@ -60,6 +63,34 @@ impl CtrlAnime {
         ctrl.do_initialization();
 
         Ok(ctrl)
+    }
+
+    fn find_node(id_product: &str) -> Result<String, RogError> {
+        let mut enumerator = udev::Enumerator::new().map_err(|err| {
+            warn!("{}", err);
+            RogError::Udev("enumerator failed".into(), err)
+        })?;
+        enumerator.match_subsystem("usb").map_err(|err| {
+            warn!("{}", err);
+            RogError::Udev("match_subsystem failed".into(), err)
+        })?;
+
+        for device in enumerator.scan_devices().map_err(|err| {
+            warn!("{}", err);
+            RogError::Udev("scan_devices failed".into(), err)
+        })? {
+            if let Some(attr) = device.attribute_value("idProduct") {
+                if attr == id_product {
+                    if let Some(dev_node) = device.devnode() {
+                        info!("Using device at: {:?} for AniMe control", dev_node);
+                        return Ok(dev_node.to_string_lossy().to_string());
+                    }
+                }
+            }
+        }
+        Err(RogError::MissingFunction(
+            "ASUS AniMe device node not found".into(),
+        ))
     }
 
     fn get_dev_handle() -> Result<DeviceHandle<rusb::GlobalContext>, Box<dyn Error>> {
@@ -188,6 +219,11 @@ impl CtrlAnime {
     }
 
     fn write_bytes(&self, message: &[u8]) {
+        // if let Ok(mut file) = OpenOptions::new().write(true).open(&self.node) {
+        //     println!("write: {:02x?}", &message);
+        //     return file
+        //         .write_all(message).unwrap();
+        // }
         let mut error = false;
 
         match self.handle.borrow().write_control(
