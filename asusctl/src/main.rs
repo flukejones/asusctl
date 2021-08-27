@@ -31,6 +31,10 @@ struct CliStart {
     show_supported: bool,
     #[options(meta = "", help = "<off, low, med, high>")]
     kbd_bright: Option<LedBrightness>,
+    #[options(help = "Toggle to next keyboard brightness")]
+    next_kbd_bright: bool,
+    #[options(help = "Toggle to previous keyboard brightness")]
+    prev_kbd_bright: bool,
     #[options(meta = "", help = "<20-100>")]
     chg_limit: Option<u8>,
     #[options(command)]
@@ -158,8 +162,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(CliCommand::Anime(cmd)) => handle_anime(&dbus, &supported.anime_ctrl, &cmd)?,
         Some(CliCommand::Bios(cmd)) => handle_bios_option(&dbus, &supported.rog_bios_ctrl, &cmd)?,
         None => {
-            if (!parsed.show_supported && parsed.kbd_bright.is_none() && parsed.chg_limit.is_none())
-                || parsed.help
+            if (!parsed.show_supported && parsed.kbd_bright.is_none() && parsed.chg_limit.is_none()
+                && !parsed.next_kbd_bright && !parsed.prev_kbd_bright) || parsed.help
             {
                 println!("{}", CliStart::usage());
                 println!();
@@ -179,6 +183,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .led()
                 .set_led_brightness(<rog_aura::LedBrightness>::from(level))?,
         }
+    }
+
+    if parsed.next_kbd_bright {
+        dbus.proxies().led().next_led_brightness()?;
+    }
+
+    if parsed.prev_kbd_bright {
+        dbus.proxies().led().prev_led_brightness()?;
     }
 
     if parsed.show_supported {

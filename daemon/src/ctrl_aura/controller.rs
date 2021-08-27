@@ -239,6 +239,28 @@ impl CtrlKbdLed {
         Ok(())
     }
 
+    pub fn next_brightness(&mut self)  -> Result<(), RogError> {
+        let mut bright = (self.config.brightness as u32) + 1;
+        if bright > 3 {
+            bright = 0;
+        }
+        self.config.brightness = <LedBrightness>::from(bright);
+        self.config.write();
+        self.set_brightness(self.config.brightness)
+    }
+
+    pub fn prev_brightness(&mut self)  -> Result<(), RogError> {
+        let mut bright = self.config.brightness as u32;
+        if bright == 0 {
+            bright = 3;
+        } else {
+            bright -= 1;
+        }
+        self.config.brightness = <LedBrightness>::from(bright);
+        self.config.write();
+        self.set_brightness(self.config.brightness)
+    }
+
     /// Set if awake/on LED active, and/or sleep animation active
     pub(super) fn set_states_enabled(&self, awake: bool, sleep: bool) -> Result<(), RogError> {
         let bytes = if awake && sleep {

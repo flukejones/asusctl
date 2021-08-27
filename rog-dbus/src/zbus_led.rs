@@ -38,6 +38,12 @@ trait Daemon {
     /// PrevLedMode method
     fn prev_led_mode(&self) -> zbus::Result<()>;
 
+    /// Toggle to next led brightness
+    fn next_led_brightness(&self) -> zbus::Result<()>;
+
+    /// Toggle to previous led brightness
+    fn prev_led_brightness(&self) -> zbus::Result<()>;
+
     /// SetBrightness method
     fn set_brightness(&self, brightness: LedBrightness) -> zbus::Result<()>;
 
@@ -122,6 +128,16 @@ impl<'a> LedProxy<'a> {
     #[inline]
     pub fn prev_led_mode(&self) -> Result<()> {
         self.0.prev_led_mode()
+    }
+
+    #[inline]
+    pub fn next_led_brightness(&self) -> Result<()> {
+        self.0.next_led_brightness()
+    }
+
+    #[inline]
+    pub fn prev_led_brightness(&self) -> Result<()> {
+        self.0.prev_led_brightness()
     }
 
     #[inline]
