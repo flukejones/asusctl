@@ -146,6 +146,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .get_supported_functions()
         .map_err(|e| {
             println!("\nIs asusd running?\n\n{}", e);
+            println!();
+            println!("Please use `journalctl -b -u asusd` and `systemctl status asusd` for more information");
             e
         })?;
 
@@ -162,6 +164,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         print_laptop_info();
         println!();
         println!("Supported laptop functions:\n\n{}", supported);
+        println!();
+        println!("Please use `journalctl -b -u asusd` and `systemctl status asusd` for more information")
     }
 
     Ok(())
@@ -195,11 +199,11 @@ fn do_parsed(
     dbus: &RogDbusClient,
 ) -> Result<(), Box<dyn std::error::Error>> {
     match &parsed.command {
-        Some(CliCommand::LedMode(mode)) => handle_led_mode(dbus, &supported.keyboard_led, &mode)?,
-        Some(CliCommand::Profile(cmd)) => handle_profile(dbus, &supported.platform_profile, &cmd)?,
+        Some(CliCommand::LedMode(mode)) => handle_led_mode(dbus, &supported.keyboard_led, mode)?,
+        Some(CliCommand::Profile(cmd)) => handle_profile(dbus, &supported.platform_profile, cmd)?,
         Some(CliCommand::Graphics(cmd)) => do_gfx(cmd)?,
-        Some(CliCommand::Anime(cmd)) => handle_anime(dbus, &supported.anime_ctrl, &cmd)?,
-        Some(CliCommand::Bios(cmd)) => handle_bios_option(dbus, &supported.rog_bios_ctrl, &cmd)?,
+        Some(CliCommand::Anime(cmd)) => handle_anime(dbus, &supported.anime_ctrl, cmd)?,
+        Some(CliCommand::Bios(cmd)) => handle_bios_option(dbus, &supported.rog_bios_ctrl, cmd)?,
         None => {
             if (!parsed.show_supported
                 && parsed.kbd_bright.is_none()

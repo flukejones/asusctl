@@ -5,6 +5,11 @@
 `asusd` is a utility for Linux to control many aspects of various ASUS laptops
 but can also be used with non-asus laptops with reduced features.
 
+## Kernel patches required
+
+1. https://lkml.org/lkml/2021/8/20/232
+2. https://lkml.org/lkml/2021/8/18/1022
+
 ## Goals
 
 1. To provide an interface for rootless control of some system functions most users wish to control such as fan speeds, keyboard LEDs, graphics modes.
@@ -48,12 +53,9 @@ will probably suffer another rename once it becomes generic enough to do so.
 - [X] Per-key LED setting
 - [X] Fancy LED modes (See examples) (currently being reworked)
 - [X] Saving settings for reload
-- [X] Logging - required for journalctl
-- [X] AniMatrix display on G14 models that include it (currently being reworked)
+- [X] AniMatrix display on G14 models that include it
 - [X] Set battery charge limit (with kernel supporting this)
-- [X] Fan curve control on G14 + G15 thanks to @Yarn1
-- [X] Graphics mode switching between iGPU, dGPU, on-demand, and vfio (for VM pass-through)
-  + [X] Requires only a logout/login
+- [X] Fan curve control on G14 + G15. Requires kernel patch (should reach 5.15 kernel)
 - [X] Toggle bios setting for boot/POST sound
 - [X] Toggle bios setting for "dedicated gfx" mode on supported laptops (g-sync)
 
@@ -83,11 +85,6 @@ $ systemctl daemon-reload && systemctl restart asusd
 ```
 
 You may also need to activate the service for debian install. If running Pop!_OS, I suggest disabling `system76-power` gnome-shell extension and systemd service.
-
-If you would like to run this daemon on another non-ASUS laptop you can. You'll
-have all features available except the LED and AniMe control (further controllers
-can be added on request). You will need to install the alternative service from
-`data/asusd-alt.service`.
 
 ## Uninstalling
 
