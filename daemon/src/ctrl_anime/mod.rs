@@ -13,11 +13,7 @@ use rog_anime::{
 };
 use rog_supported::AnimeSupportedFunctions;
 use rusb::{Device, DeviceHandle};
-use std::{
-    error::Error,
-    sync::{Arc, Mutex},
-    thread::sleep,
-};
+use std::{cell::{RefCell}, error::Error, sync::{Arc, Mutex}, thread::sleep};
 use std::{
     sync::atomic::{AtomicBool, Ordering},
     time::Duration,
@@ -36,7 +32,7 @@ impl GetSupported for CtrlAnime {
 }
 
 pub struct CtrlAnime {
-    handle: DeviceHandle<rusb::GlobalContext>,
+    handle: RefCell<DeviceHandle<rusb::GlobalContext>>,
     cache: AnimeConfigCached,
     config: AnimeConfig,
     // set to force thread to exit
@@ -48,6 +44,25 @@ pub struct CtrlAnime {
 impl CtrlAnime {
     #[inline]
     pub fn new(config: AnimeConfig) -> Result<CtrlAnime, Box<dyn Error>> {
+        let device = Self::get_dev_handle()?;
+
+        info!("Device has an AniMe Matrix display");
+        let mut cache = AnimeConfigCached::default();
+        cache.init_from_config(&config)?;
+
+        let ctrl = CtrlAnime {
+            handle: RefCell::new(device),
+            cache,
+            config,
+            thread_exit: Arc::new(AtomicBool::new(false)),
+            thread_running: Arc::new(AtomicBool::new(false)),
+        };
+        ctrl.do_initialization();
+
+        Ok(ctrl)
+    }
+
+    fn get_dev_handle() -> Result<DeviceHandle<rusb::GlobalContext>, Box<dyn Error>> {
         // We don't expect this ID to ever change
         let device = CtrlAnime::get_device(0x0b05, 0x193b)?;
 
@@ -64,20 +79,7 @@ impl CtrlAnime {
             err
         })?;
 
-        info!("Device has an AniMe Matrix display");
-        let mut cache = AnimeConfigCached::default();
-        cache.init_from_config(&config)?;
-
-        let ctrl = CtrlAnime {
-            handle: device,
-            cache,
-            config,
-            thread_exit: Arc::new(AtomicBool::new(false)),
-            thread_running: Arc::new(AtomicBool::new(false)),
-        };
-        ctrl.do_initialization();
-
-        Ok(ctrl)
+        Ok(device)
     }
 
     fn get_device(vendor: u16, product: u16) -> Result<Device<rusb::GlobalContext>, rusb::Error> {
@@ -186,7 +188,9 @@ impl CtrlAnime {
     }
 
     fn write_bytes(&self, message: &[u8]) {
-        match self.handle.write_control(
+        let mut error = false;
+
+        match self.handle.borrow().write_control(
             0x21,  // request_type
             0x09,  // request
             0x35e, // value
@@ -197,8 +201,23 @@ impl CtrlAnime {
             Ok(_) => {}
             Err(err) => match err {
                 rusb::Error::Timeout => {}
-                _ => error!("Failed to write to led interrupt: {}", err),
+                _ => {
+                    error = true;
+                    error!("Failed to write to led interrupt: {}", err);
+                }
             },
+        }
+
+        if error {
+            warn!("Will attempt to get AniMe device handle again");
+            match Self::get_dev_handle() {
+                Ok(dev) => {
+                    self.handle.replace(dev);
+                }
+                Err(err) => {
+                    error!("Failed to get AniMe device: {}", err);
+                }
+            }
         }
     }
 
