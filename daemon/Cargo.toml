@@ -1,6 +1,6 @@
 [package]
 name = "daemon"
-version = "3.7.2"
+version = "4.0.0"
 license = "MPL-2.0"
 readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]
@@ -20,7 +20,7 @@ path = "src/daemon.rs"
 [dependencies]
 rog_anime = { path = "../rog-anime" }
 rog_aura = { path = "../rog-aura" }
-rog_types = { path = "../rog-types" }
+rog_supported = { path = "../rog-supported" }
 rog_profiles = { path = "../rog-profiles" }
 rog_dbus = { path = "../rog-dbus" }
 rusb = "^0.8"
@@ -43,4 +43,3 @@ toml = "^0.5"
 
 # Device control
 sysfs-class = "^0.1.2" # used for backlight control and baord ID
-rog_fan_curve = { version = "0.1", features = ["serde"] }

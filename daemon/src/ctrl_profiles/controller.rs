@@ -1,116 +1,118 @@
 use crate::error::RogError;
-use crate::{config::Config, GetSupported};
+use crate::GetSupported;
 use log::{info, warn};
-use rog_profiles::profiles::Profile;
-use rog_types::supported::FanCpuSupportedFunctions;
+use rog_profiles::error::ProfileError;
+use rog_profiles::{FanCurves, Profile};
+use rog_supported::PlatformProfileFunctions;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-pub struct CtrlFanAndCpu {
-    pub config: Arc<Mutex<Config>>,
+use super::config::ProfileConfig;
+
+pub struct CtrlPlatformTask {
+    config: Arc<Mutex<ProfileConfig>>,
 }
 
-impl GetSupported for CtrlFanAndCpu {
-    type A = FanCpuSupportedFunctions;
+impl CtrlPlatformTask {
+    pub fn new(config: Arc<Mutex<ProfileConfig>>) -> Self {
+        Self { config }
+    }
+}
+
+impl crate::CtrlTask for CtrlPlatformTask {
+    fn do_task(&self) -> Result<(), RogError> {
+        if let Ok(mut lock) = self.config.try_lock() {
+            // Refresh the config in-case the user has edited it
+            if let Some(curves) = &mut lock.fan_curves {
+                curves.update_from_platform();
+            }
+        }
+        Ok(())
+    }
+}
+
+pub struct CtrlPlatformProfile {
+    pub config: Arc<Mutex<ProfileConfig>>,
+}
+
+impl GetSupported for CtrlPlatformProfile {
+    type A = PlatformProfileFunctions;
 
     fn get_supported() -> Self::A {
-        FanCpuSupportedFunctions {
-            stock_fan_modes: Profile::get_fan_path().is_ok(),
-            min_max_freq: Profile::get_intel_supported(),
-            fan_curve_set: rog_fan_curve::Board::from_board_name().is_some(),
+        if !Profile::is_platform_profile_supported() {
+            warn!(
+                r#"
+platform_profile kernel interface not found, your laptop does not support this, or the iterface is missing.
+To enable profile support you require a kernel with the following patch applied:
+https://lkml.org/lkml/2021/8/18/1022
+"#
+            );
+        }
+        if !FanCurves::is_fan_curves_supported() {
+            info!(
+                r#"
+fan curves kernel interface not found, your laptop does not support this, or the iterface is missing.
+To enable fan-curve support you require a kernel with the following patch applied:
+https://lkml.org/lkml/2021/8/20/232
+Please note that as of 24/08/2021 this is not final.
+"#
+            );
+        }
+        PlatformProfileFunctions {
+            platform_profile: Profile::is_platform_profile_supported(),
+            fan_curves: FanCurves::is_fan_curves_supported(),
         }
     }
 }
 
-impl crate::Reloadable for CtrlFanAndCpu {
-    /// Fetcht he active profile and use that to set all related components up
+impl crate::Reloadable for CtrlPlatformProfile {
+    /// Fetch the active profile and use that to set all related components up
     fn reload(&mut self) -> Result<(), RogError> {
-        if let Ok(mut cfg) = self.config.clone().try_lock() {
-            let active = cfg.active_profile.clone();
-            if let Some(existing) = cfg.power_profiles.get_mut(&active) {
-                existing.set_system_all()?;
+        if let Ok(cfg) = self.config.clone().try_lock() {
+            if let Some(curves) = &cfg.fan_curves {
+                curves.update_platform();
             }
         }
         Ok(())
     }
 }
 
-impl CtrlFanAndCpu {
-    pub fn new(config: Arc<Mutex<Config>>) -> Result<Self, RogError> {
-        Profile::get_fan_path()?;
-        info!("Device has fan control available");
-        Ok(CtrlFanAndCpu { config })
+impl CtrlPlatformProfile {
+    pub fn new(config: Arc<Mutex<ProfileConfig>>) -> Result<Self, RogError> {
+        if Profile::is_platform_profile_supported() {
+            info!("Device has profile control available");
+            return Ok(CtrlPlatformProfile { config });
+        }
+        Err(ProfileError::NotSupported.into())
     }
 
-    /// Toggle to next profile in list
-    pub(super) fn do_next_profile(&mut self) -> Result<(), RogError> {
+    pub fn save_config(&self) {
+        if let Ok(lock) = self.config.lock() {
+            lock.write();
+        }
+    }
+
+    /// Toggle to next profile in list. This will first read the config, switch, then write out
+    pub(super) fn set_next_profile(&mut self) -> Result<(), RogError> {
         if let Ok(mut config) = self.config.clone().try_lock() {
             // Read first just incase the user has modified the config before calling this
             config.read();
 
-            let mut toggle_index = config
-                .toggle_profiles
-                .binary_search(&config.active_profile)
-                .unwrap_or(0)
-                + 1;
-            if toggle_index >= config.toggle_profiles.len() {
-                toggle_index = 0;
+            match config.active {
+                Profile::Balanced => {
+                    Profile::set_profile(Profile::Performance);
+                    config.active = Profile::Performance;
+                }
+                Profile::Performance => {
+                    Profile::set_profile(Profile::Quiet);
+                    config.active = Profile::Quiet;
+                }
+                Profile::Quiet => {
+                    Profile::set_profile(Profile::Balanced);
+                    config.active = Profile::Balanced;
+                }
             }
 
-            let profile = config.toggle_profiles[toggle_index].clone();
-
-            if let Some(existing) = config.power_profiles.get(&profile) {
-                existing.set_system_all()?;
-                config.active_profile = existing.name.clone();
-                config.write();
-                info!("Profile was changed to: {}", &profile);
-            } else {
-                warn!(
-                    "toggle_profile {} does not exist in power_profiles",
-                    &profile
-                );
-                return Err(RogError::MissingProfile(profile.to_string()));
-            }
-        }
-        Ok(())
-    }
-
-    pub(super) fn set_active(&mut self, profile: &str) -> Result<(), RogError> {
-        if let Ok(mut config) = self.config.clone().try_lock() {
-            // Read first just incase the user has modified the config before calling this
-            config.read();
-            if let Some(existing) = config.power_profiles.get(profile) {
-                existing.set_system_all()?;
-                config.active_profile = existing.name.clone();
-                config.write();
-                info!("Profile was changed to: {}", profile);
-            } else {
-                warn!(
-                    "toggle_profile {} does not exist in power_profiles",
-                    profile
-                );
-                return Err(RogError::MissingProfile(profile.to_string()));
-            }
-        }
-        Ok(())
-    }
-
-    /// Create a new profile if the requested name doesn't exist, or modify existing
-    pub(super) fn new_or_modify(&mut self, profile: &Profile) -> Result<(), RogError> {
-        if let Ok(mut config) = self.config.clone().try_lock() {
-            config.read();
-
-            if let Some(existing) = config.power_profiles.get_mut(&profile.name) {
-                *existing = profile.clone();
-                existing.set_system_all()?;
-            } else {
-                config
-                    .power_profiles
-                    .insert(profile.name.clone(), profile.clone());
-                profile.set_system_all()?;
-            }
-
-            config.active_profile = profile.name.clone();
             config.write();
         }
         Ok(())

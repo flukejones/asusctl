@@ -105,6 +105,20 @@ impl CtrlKbdLedZbus {
         }
     }
 
+    fn next_led_brightness(&self) {
+        if let Ok(mut ctrl) = self.0.try_lock() {
+            ctrl.next_brightness()
+                .unwrap_or_else(|err| warn!("{}", err));
+        }
+    }
+
+    fn prev_led_brightness(&self) {
+        if let Ok(mut ctrl) = self.0.try_lock() {
+            ctrl.prev_brightness()
+                .unwrap_or_else(|err| warn!("{}", err));
+        }
+    }
+
     #[dbus_interface(property)]
     fn awake_enabled(&self) -> bool {
         if let Ok(ctrl) = self.0.try_lock() {

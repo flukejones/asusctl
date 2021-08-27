@@ -5,20 +5,20 @@ use zvariant::ObjectPath;
 use zvariant_derive::Type;
 
 use crate::{
-    ctrl_anime::CtrlAnime, ctrl_charge::CtrlCharge, ctrl_leds::controller::CtrlKbdLed,
-    ctrl_profiles::controller::CtrlFanAndCpu, ctrl_rog_bios::CtrlRogBios, GetSupported,
+    ctrl_anime::CtrlAnime, ctrl_aura::controller::CtrlKbdLed, ctrl_charge::CtrlCharge,
+    ctrl_profiles::controller::CtrlPlatformProfile, ctrl_rog_bios::CtrlRogBios, GetSupported,
 };
 
-use rog_types::supported::{
-    AnimeSupportedFunctions, ChargeSupportedFunctions, FanCpuSupportedFunctions,
-    LedSupportedFunctions, RogBiosSupportedFunctions,
+use rog_supported::{
+    AnimeSupportedFunctions, ChargeSupportedFunctions, LedSupportedFunctions,
+    PlatformProfileFunctions, RogBiosSupportedFunctions,
 };
 
 #[derive(Serialize, Deserialize, Type)]
 pub struct SupportedFunctions {
     pub anime_ctrl: AnimeSupportedFunctions,
     pub charge_ctrl: ChargeSupportedFunctions,
-    pub fan_cpu_ctrl: FanCpuSupportedFunctions,
+    pub platform_profile: PlatformProfileFunctions,
     pub keyboard_led: LedSupportedFunctions,
     pub rog_bios_ctrl: RogBiosSupportedFunctions,
 }
@@ -53,7 +53,7 @@ impl GetSupported for SupportedFunctions {
             anime_ctrl: CtrlAnime::get_supported(),
             keyboard_led: CtrlKbdLed::get_supported(),
             charge_ctrl: CtrlCharge::get_supported(),
-            fan_cpu_ctrl: CtrlFanAndCpu::get_supported(),
+            platform_profile: CtrlPlatformProfile::get_supported(),
             rog_bios_ctrl: CtrlRogBios::get_supported(),
         }
     }

@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   + Support 8bit RGB, RGBA, 16bit Greyscalw, RGB, RGBA
   + add `AsusImage` type for slanted-template pixel-perfect images
   + `BREAKING:` plain `Image` with time period is changed and old anime configs break as a result (sorry)
+- LED:
+  + By popular request LED prev/next cycle is added
+### BREAKING CHANGES
+- Graphics control:
+  + graphics control is pulled out of asusd and moved to new package; https://gitlab.com/asus-linux/supergfxctl
+- Proflies:
+  + profiles now depend on power-profile-daemon plus kernel patches for support of platform_profile
+    - if your system supports fan-curves you will also require upcoming kernel patches for this
+  + profiles are now moved to a new file
 
 # [3.7.2] - 2021-08-02
 ### Added

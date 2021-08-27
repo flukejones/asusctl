@@ -31,19 +31,21 @@ checksum = "23b62fc65de8e4e7f52534fb52b0f3ed04746ae267519eef2a83941e8085068b"
 
 [[package]]
 name = "asus-notify"
-version = "3.0.1"
+version = "3.0.2"
 dependencies = [
  "notify-rust",
  "rog_aura",
  "rog_dbus",
  "rog_profiles",
- "rog_types",
+ "rog_supported",
  "serde_json",
+ "supergfxctl",
+ "zbus",
 ]
 
 [[package]]
 name = "asusctl"
-version = "3.5.1"
+version = "4.0.0"
 dependencies = [
  "daemon",
  "gif",
@@ -52,11 +54,11 @@ dependencies = [
  "rog_anime",
  "rog_aura",
  "rog_dbus",
- "rog_fan_curve 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "rog_profiles",
- "rog_types",
+ "rog_supported",
+ "supergfxctl",
  "tinybmp",
- "yansi-term",
+ "zbus",
 ]
 
 [[package]]
@@ -109,9 +111,9 @@ checksum = "4efd02e230a02e18f92fc2735f44597385ed02ad8f831e7c1c1156ee5e1ab3a5"
 
 [[package]]
 name = "bitflags"
-version = "1.2.1"
+version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
+checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "blake2b_simd"
@@ -206,7 +208,7 @@ dependencies = [
 
 [[package]]
 name = "daemon"
-version = "3.7.2"
+version = "4.0.0"
 dependencies = [
  "env_logger",
  "log",
@@ -214,9 +216,8 @@ dependencies = [
  "rog_anime",
  "rog_aura",
  "rog_dbus",
- "rog_fan_curve 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "rog_profiles",
- "rog_types",
+ "rog_supported",
  "rusb",
  "serde",
  "serde_derive",
@@ -236,7 +237,7 @@ dependencies = [
  "dirs 3.0.2",
  "rog_anime",
  "rog_dbus",
- "rog_types",
+ "rog_supported",
  "serde",
  "serde_derive",
  "serde_json",
@@ -253,7 +254,7 @@ checksum = "fcc3dd5e9e9c0b295d6e1e4d811fb6f157d5ffd784b8d202fc62eac8035a770b"
 dependencies = [
  "proc-macro2",
  "quote 1.0.9",
- "syn 1.0.74",
+ "syn 1.0.75",
 ]
 
 [[package]]
@@ -305,7 +306,7 @@ checksum = "946ee94e3dbf58fdd324f9ce245c7b238d46a66f00e86a020b71996349e46cce"
 dependencies = [
  "proc-macro2",
  "quote 1.0.9",
- "syn 1.0.74",
+ "syn 1.0.75",
 ]
 
 [[package]]
@@ -403,7 +404,7 @@ dependencies = [
  "proc-macro-hack",
  "proc-macro2",
  "quote 1.0.9",
- "syn 1.0.74",
+ "syn 1.0.75",
 ]
 
 [[package]]
@@ -497,7 +498,7 @@ checksum = "915ef07c710d84733522461de2a734d4d62a3fd39a4d4f404c2f385ef8618d05"
 dependencies = [
  "proc-macro2",
  "quote 1.0.9",
- "syn 1.0.74",
+ "syn 1.0.75",
 ]
 
 [[package]]
@@ -525,20 +526,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "intel-pstate"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0dbd48c2f4886e44c137f4acb6ba3cf8df15154a2c996a65ee5e57c54a04c01f"
-dependencies = [
- "smart-default",
- "thiserror",
-]
-
-[[package]]
 name = "itoa"
-version = "0.4.7"
+version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd25036021b0de88a0aff6b850051563c6516d0bf53f8638938edbb9de732736"
+checksum = "b71991ff56294aa922b450139ee08b3bfc70982c6b2c7562771375cf73542dd4"
 
 [[package]]
 name = "lazy_static"
@@ -548,9 +539,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.99"
+version = "0.2.101"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7f823d141fe0a24df1e23b4af4e3c7ba9e5966ec514ea068c93024aa7deb765"
+checksum = "3cb00336871be5ed2c8ed44b60ae9959dc5b9f08539422ed43f09e34ecaeba21"
 
 [[package]]
 name = "libudev-sys"
@@ -620,9 +611,9 @@ dependencies = [
 
 [[package]]
 name = "memchr"
-version = "2.4.0"
+version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b16bd47d9e329435e309c58469fe0791c2d0d1ba96ec0954152a5ae2b04387dc"
+checksum = "308cc39be01b73d0d18f82a0e7b2a3df85245f84af96fdddc5d202d27e47b86a"
 
 [[package]]
 name = "miniz_oxide"
@@ -650,7 +641,7 @@ version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "50e4785f2c3b7589a0d0c1dd60285e1188adac4006e8abd6dd578e1567027363"
 dependencies = [
- "bitflags 1.2.1",
+ "bitflags 1.3.2",
  "cc",
  "cfg-if 0.1.10",
  "libc",
@@ -861,7 +852,7 @@ version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8383f39639269cde97d255a32bdb68c047337295414940c68bdd30c2e13203ff"
 dependencies = [
- "bitflags 1.2.1",
+ "bitflags 1.3.2",
 ]
 
 [[package]]
@@ -928,37 +919,22 @@ dependencies = [
 
 [[package]]
 name = "rog_dbus"
-version = "3.5.1"
+version = "4.0.0"
 dependencies = [
  "rog_anime",
  "rog_aura",
  "rog_profiles",
- "rog_types",
+ "rog_supported",
+ "supergfxctl",
  "zbus",
  "zbus_macros",
  "zvariant",
 ]
 
 [[package]]
-name = "rog_fan_curve"
-version = "0.1.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a810b86236d51df31d9098ba1a1876c9f470573f903d13b78f5ee48d4e99ee90"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "rog_fan_curve"
-version = "0.1.10"
-source = "git+https://github.com/Yarn/rog_fan_curve.git#d46ead0db7c8c4870dae960c3a43b4ac6ab57c2d"
-
-[[package]]
 name = "rog_profiles"
-version = "0.1.2"
+version = "1.0.0"
 dependencies = [
- "intel-pstate",
- "rog_fan_curve 0.1.10 (git+https://github.com/Yarn/rog_fan_curve.git)",
  "serde",
  "serde_derive",
  "zvariant",
@@ -966,8 +942,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "rog_types"
-version = "3.2.0"
+name = "rog_supported"
+version = "4.0.0"
 dependencies = [
  "rog_aura",
  "serde",
@@ -1012,22 +988,22 @@ checksum = "ea6a9290e3c9cf0f18145ef7ffa62d68ee0bf5fcd651017e586dc7fd5da448c2"
 
 [[package]]
 name = "serde"
-version = "1.0.127"
+version = "1.0.129"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f03b9878abf6d14e6779d3f24f07b2cfa90352cfec4acc5aab8f1ac7f146fae8"
+checksum = "d1f72836d2aa753853178eda473a3b9d8e4eefdaf20523b919677e6de489f8f1"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.127"
+version = "1.0.129"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a024926d3432516606328597e0f224a51355a493b49fdd67e9209187cbe55ecc"
+checksum = "e57ae87ad533d9a56427558b516d0adac283614e347abf85b0dc0cbbf0a249f3"
 dependencies = [
  "proc-macro2",
  "quote 1.0.9",
- "syn 1.0.74",
+ "syn 1.0.75",
 ]
 
 [[package]]
@@ -1049,7 +1025,7 @@ checksum = "98d0516900518c29efa217c298fa1f4e6c6ffc85ae29fd7f4ee48f176e1a9ed5"
 dependencies = [
  "proc-macro2",
  "quote 1.0.9",
- "syn 1.0.74",
+ "syn 1.0.75",
 ]
 
 [[package]]
@@ -1057,17 +1033,6 @@ name = "slab"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c307a32c1c5c437f38c7fd45d753050587732ba8628319fbdf12a7e289ccc590"
-
-[[package]]
-name = "smart-default"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "133659a15339456eeeb07572eb02a91c91e9815e9cbc89566944d2c8d3efdbf6"
-dependencies = [
- "proc-macro2",
- "quote 1.0.9",
- "syn 1.0.74",
-]
 
 [[package]]
 name = "socket2"
@@ -1102,6 +1067,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "supergfxctl"
+version = "2.0.0"
+source = "git+https://gitlab.com/asus-linux/supergfxctl.git?tag=2.0.0#3f040cd3ec334242631122cd038aa361cc860be6"
+dependencies = [
+ "log",
+ "logind-zbus",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "sysfs-class",
+ "zbus",
+ "zvariant",
+ "zvariant_derive",
+]
+
+[[package]]
 name = "syn"
 version = "0.11.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1114,9 +1095,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.74"
+version = "1.0.75"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1873d832550d4588c3dbc20f01361ab00bfe741048f71e3fecf145a7cc18b29c"
+checksum = "b7f58f7e8eaa0009c5fec437aabf511bd9933e4b2d7407bd05273c01a8906ea7"
 dependencies = [
  "proc-macro2",
  "quote 1.0.9",
@@ -1167,7 +1148,7 @@ checksum = "060d69a0afe7796bf42e9e2ff91f5ee691fb15c53d38b4b62a9a53eb23164745"
 dependencies = [
  "proc-macro2",
  "quote 1.0.9",
- "syn 1.0.74",
+ "syn 1.0.75",
 ]
 
 [[package]]
@@ -1335,15 +1316,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "yansi-term"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe5c30ade05e61656247b2e334a031dfd0cc466fadef865bdcdea8d537951bf1"
-dependencies = [
- "winapi",
-]
-
-[[package]]
 name = "zbus"
 version = "1.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1375,7 +1347,7 @@ dependencies = [
  "proc-macro-crate 0.1.5",
  "proc-macro2",
  "quote 1.0.9",
- "syn 1.0.74",
+ "syn 1.0.75",
 ]
 
 [[package]]
@@ -1400,5 +1372,5 @@ dependencies = [
  "proc-macro-crate 1.0.0",
  "proc-macro2",
  "quote 1.0.9",
- "syn 1.0.74",
+ "syn 1.0.75",
 ]

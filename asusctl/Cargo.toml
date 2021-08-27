@@ -1,21 +1,21 @@
 [package]
 name = "asusctl"
-version = "3.5.1"
+version = "4.0.0"
 authors = ["Luke D Jones <luke@ljones.dev>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+zbus = "^1.9.1"
 rog_anime = { path = "../rog-anime" }
 rog_aura = { path = "../rog-aura" }
 rog_dbus = { path = "../rog-dbus" }
 rog_profiles = { path = "../rog-profiles" }
-rog_types = { path = "../rog-types" }
+rog_supported = { path = "../rog-supported" }
 daemon = { path = "../daemon" }
-rog_fan_curve = { version = "^0.1", features = ["serde"] }
 gumdrop = "^0.8"
-yansi-term = "^0.1"
+supergfxctl = { git = "https://gitlab.com/asus-linux/supergfxctl.git", tag = "2.0.0" }
 
 [dev-dependencies]
 tinybmp = "^0.2.3"

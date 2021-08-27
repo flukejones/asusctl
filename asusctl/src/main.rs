@@ -9,17 +9,17 @@ use profiles_cli::ProfileCommand;
 use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2, ANIME_DATA_LEN};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClient;
-use rog_profiles::profiles::Profile;
-use rog_types::{
-    gfx_vendors::{GfxRequiredUserAction, GfxVendors},
-    supported::{
-        AnimeSupportedFunctions, FanCpuSupportedFunctions, LedSupportedFunctions,
-        RogBiosSupportedFunctions,
-    },
+use rog_supported::{
+    AnimeSupportedFunctions, LedSupportedFunctions, PlatformProfileFunctions,
+    RogBiosSupportedFunctions,
 };
-use std::{env::args, path::Path};
-use yansi_term::Colour::Green;
-use yansi_term::Colour::Red;
+use std::{env::args, path::Path, sync::mpsc::channel};
+use supergfxctl::{
+    gfx_vendors::{GfxRequiredUserAction, GfxVendors},
+    special::{get_asus_gsync_gfx_mode, has_asus_gsync_gfx_mode},
+    zbus_proxy::GfxProxy,
+};
+use zbus::Connection;
 
 #[derive(Default, Options)]
 struct CliStart {
@@ -31,6 +31,10 @@ struct CliStart {
     show_supported: bool,
     #[options(meta = "", help = "<off, low, med, high>")]
     kbd_bright: Option<LedBrightness>,
+    #[options(help = "Toggle to next keyboard brightness")]
+    next_kbd_bright: bool,
+    #[options(help = "Toggle to previous keyboard brightness")]
+    prev_kbd_bright: bool,
     #[options(meta = "", help = "<20-100>")]
     chg_limit: Option<u8>,
     #[options(command)]
@@ -139,26 +143,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if parsed.version {
         println!("\nApp and daemon versions:");
-        println!("     asusctl v{}", env!("CARGO_PKG_VERSION"));
-        println!("       asusd v{}", daemon::VERSION);
+        println!("      asusctl v{}", env!("CARGO_PKG_VERSION"));
+        println!("        asusd v{}", daemon::VERSION);
         println!("\nComponent crate versions:");
-        println!("   rog-anime v{}", rog_anime::VERSION);
-        println!("    rog-aura v{}", rog_aura::VERSION);
-        println!("    rog-dbus v{}", rog_dbus::VERSION);
-        println!("rog-profiles v{}", rog_profiles::VERSION);
-        println!("   rog-types v{}", rog_types::VERSION);
+        println!("    rog-anime v{}", rog_anime::VERSION);
+        println!("     rog-aura v{}", rog_aura::VERSION);
+        println!("     rog-dbus v{}", rog_dbus::VERSION);
+        println!(" rog-profiles v{}", rog_profiles::VERSION);
+        println!("rog-supported v{}", rog_supported::VERSION);
+        println!("  supergfxctl v{}", supergfxctl::VERSION);
         return Ok(());
     }
 
     match parsed.command {
         Some(CliCommand::LedMode(mode)) => handle_led_mode(&dbus, &supported.keyboard_led, &mode)?,
-        Some(CliCommand::Profile(cmd)) => handle_profile(&dbus, &supported.fan_cpu_ctrl, &cmd)?,
-        Some(CliCommand::Graphics(cmd)) => do_gfx(&dbus, &supported.rog_bios_ctrl, cmd)?,
+        Some(CliCommand::Profile(cmd)) => handle_profile(&dbus, &supported.platform_profile, &cmd)?,
+        Some(CliCommand::Graphics(cmd)) => do_gfx(cmd)?,
         Some(CliCommand::Anime(cmd)) => handle_anime(&dbus, &supported.anime_ctrl, &cmd)?,
         Some(CliCommand::Bios(cmd)) => handle_bios_option(&dbus, &supported.rog_bios_ctrl, &cmd)?,
         None => {
-            if (!parsed.show_supported && parsed.kbd_bright.is_none() && parsed.chg_limit.is_none())
-                || parsed.help
+            if (!parsed.show_supported && parsed.kbd_bright.is_none() && parsed.chg_limit.is_none()
+                && !parsed.next_kbd_bright && !parsed.prev_kbd_bright) || parsed.help
             {
                 println!("{}", CliStart::usage());
                 println!();
@@ -180,6 +185,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    if parsed.next_kbd_bright {
+        dbus.proxies().led().next_led_brightness()?;
+    }
+
+    if parsed.prev_kbd_bright {
+        dbus.proxies().led().prev_led_brightness()?;
+    }
+
     if parsed.show_supported {
         println!("Supported laptop functions:\n\n{}", supported);
     }
@@ -191,62 +204,67 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn do_gfx(
-    dbus: &RogDbusClient,
-    supported: &RogBiosSupportedFunctions,
-    command: GraphicsCommand,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn do_gfx(command: GraphicsCommand) -> Result<(), Box<dyn std::error::Error>> {
     if command.mode.is_none() && !command.get && !command.pow && !command.force || command.help {
         println!("{}", command.self_usage());
     }
 
+    let conn = Connection::new_system()?;
+    let proxy = GfxProxy::new(&conn)?;
+
+    let (tx, rx) = channel();
+    proxy.connect_notify_action(tx)?;
+
     if let Some(mode) = command.mode {
-        if supported.dedicated_gfx_toggle && dbus.proxies().rog_bios().get_dedicated_gfx()? == 1 {
+        if has_asus_gsync_gfx_mode() && get_asus_gsync_gfx_mode()? == 1 {
             println!("You can not change modes until you turn dedicated/G-Sync off and reboot");
             std::process::exit(-1);
         }
 
         println!("If anything fails check `journalctl -b -u asusd`\n");
 
-        dbus.proxies().gfx().gfx_write_mode(&mode).map_err(|err|{
+        proxy.gfx_write_mode(&mode).map_err(|err|{
             println!("Graphics mode change error. You may be in an invalid state.");
             println!("Check mode with `asusctl graphics -g` and switch to opposite\nmode to correct it, e.g: if integrated, switch to hybrid, or if nvidia, switch to integrated.\n");
             err
         })?;
-        let res = dbus.gfx_wait_changed()?;
-        match res {
-            GfxRequiredUserAction::Integrated => {
-                println!(
-                    "You must change to Integrated before you can change to {}",
-                    <&str>::from(mode)
-                );
+
+        loop {
+            proxy.next_signal()?;
+
+            if let Ok(res) = rx.try_recv() {
+                match res {
+                    GfxRequiredUserAction::Integrated => {
+                        println!(
+                            "You must change to Integrated before you can change to {}",
+                            <&str>::from(mode)
+                        );
+                    }
+                    GfxRequiredUserAction::Logout | GfxRequiredUserAction::Reboot => {
+                        println!(
+                            "Graphics mode changed to {}. User action required is: {}",
+                            <&str>::from(mode),
+                            <&str>::from(&res)
+                        );
+                    }
+                    GfxRequiredUserAction::None => {
+                        println!("Graphics mode changed to {}", <&str>::from(mode));
+                    }
+                }
             }
-            GfxRequiredUserAction::Logout | GfxRequiredUserAction::Reboot => {
-                println!(
-                    "Graphics mode changed to {}. User action required is: {}",
-                    <&str>::from(mode),
-                    <&str>::from(&res)
-                );
-            }
-            GfxRequiredUserAction::None => {
-                println!("Graphics mode changed to {}", <&str>::from(mode));
-            }
+            std::process::exit(0)
         }
-        std::process::exit(0)
     }
+
     if command.get {
-        let res = dbus.proxies().gfx().gfx_get_mode()?;
+        let res = proxy.gfx_get_mode()?;
         println!("Current graphics mode: {}", <&str>::from(res));
     }
     if command.pow {
-        let res = dbus.proxies().gfx().gfx_get_pwr()?;
-        match res {
-            rog_types::gfx_vendors::GfxPower::Active => {
-                println!("Current power status: {}", Red.paint(<&str>::from(&res)))
-            }
-            _ => println!("Current power status: {}", Green.paint(<&str>::from(&res))),
-        }
+        let res = proxy.gfx_get_pwr()?;
+        println!("Current power status: {}", <&str>::from(&res));
     }
+
     Ok(())
 }
 
@@ -384,24 +402,10 @@ fn handle_led_mode(
 
 fn handle_profile(
     dbus: &RogDbusClient,
-    supported: &FanCpuSupportedFunctions,
+    supported: &PlatformProfileFunctions,
     cmd: &ProfileCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if !cmd.next
-        && !cmd.create // TODO
-        && !cmd.list
-        && cmd.profile.is_none()
-        && !cmd.active_name
-        && !cmd.active_data
-        && !cmd.profiles_data
-        && cmd.remove.is_none()
-        && cmd.curve.is_none() // TODO
-        && cmd.fan_preset.is_none() // TODO
-        && cmd.turbo.is_none() // TODO
-        && cmd.max_percentage.is_none() // TODO
-        && cmd.min_percentage.is_none()
-    // TODO
-    {
+    if !cmd.next && !cmd.list && !cmd.active_name && !cmd.active_data && !cmd.profiles_data {
         if !cmd.help {
             println!("Missing arg or command\n");
         }
@@ -411,7 +415,7 @@ fn handle_profile(
             .collect();
         for line in usage
             .iter()
-            .filter(|line| !line.contains("--curve") || supported.fan_curve_set)
+            .filter(|line| !line.contains("--curve") || supported.fan_curves)
         {
             println!("{}", line);
         }
@@ -426,78 +430,8 @@ fn handle_profile(
     }
 
     if cmd.next {
-        dbus.proxies().profile().next_fan()?;
+        dbus.proxies().profile().next_profile()?;
     }
-    if let Some(profile) = &cmd.remove {
-        dbus.proxies().profile().remove(profile)?
-    }
-    if cmd.list {
-        let profile_names = dbus.proxies().profile().profile_names()?;
-        println!("Available profiles are {:?}", profile_names);
-    }
-    if cmd.active_name {
-        println!(
-            "Active profile: {:?}",
-            dbus.proxies().profile().active_name()?
-        );
-    }
-    if cmd.active_data {
-        println!("Active profile:");
-        println!("{:?}", dbus.proxies().profile().active_data()?);
-    }
-    if cmd.profiles_data {
-        println!("Profiles:");
-        for s in dbus.proxies().profile().all_profile_data()? {
-            println!("{:?}", s);
-        }
-    }
-
-    let mut set_profile = false;
-    let mut profile = Profile::default();
-    if cmd.create {
-        set_profile = true;
-    } else if let Some(ref name) = cmd.profile {
-        let profiles = dbus.proxies().profile().all_profile_data()?;
-        for p in profiles {
-            if p.name == *name {
-                profile = p;
-                break;
-            }
-        }
-        if profile.name != *name {
-            println!("The requested profile doesn't exist, you may need to create it");
-            std::process::exit(-1);
-        }
-    }
-
-    if let Some(turbo) = cmd.turbo {
-        set_profile = true;
-        profile.turbo = turbo;
-    }
-    if let Some(min) = cmd.min_percentage {
-        set_profile = true;
-        profile.min_percentage = min;
-    }
-    if let Some(max) = cmd.max_percentage {
-        set_profile = true;
-        profile.max_percentage = max;
-    }
-    if let Some(preset) = cmd.fan_preset {
-        set_profile = true;
-        profile.fan_preset = preset;
-    }
-    if let Some(ref curve) = cmd.curve {
-        set_profile = true;
-        profile.fan_curve = curve.as_config_string();
-    }
-    if let Some(ref name) = cmd.profile {
-        set_profile = true;
-        profile.name = name.clone();
-    }
-    if set_profile {
-        dbus.proxies().profile().new_or_modify(&profile)?;
-    }
-
     Ok(())
 }
 

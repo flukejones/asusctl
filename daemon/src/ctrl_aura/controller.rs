@@ -2,7 +2,6 @@
 static KBD_BRIGHT_PATH: &str = "/sys/class/leds/asus::kbd_backlight/brightness";
 
 use crate::{
-    config_aura::AuraConfig,
     error::RogError,
     laptops::{LaptopLedData, ASUS_KEYBOARD_DEVICES},
     CtrlTask,
@@ -16,7 +15,7 @@ use rog_aura::{
     },
     AuraEffect, LedBrightness, LED_MSG_LEN,
 };
-use rog_types::supported::LedSupportedFunctions;
+use rog_supported::LedSupportedFunctions;
 use std::io::{Read, Write};
 use std::path::Path;
 use std::sync::Arc;
@@ -25,6 +24,8 @@ use std::{fs::OpenOptions, thread::spawn};
 use zbus::Connection;
 
 use crate::GetSupported;
+
+use super::config::AuraConfig;
 
 impl GetSupported for CtrlKbdLed {
     type A = LedSupportedFunctions;
@@ -236,6 +237,28 @@ impl CtrlKbdLed {
         file.write_all(&[brightness.as_char_code()])
             .map_err(|err| RogError::Read("buffer".into(), err))?;
         Ok(())
+    }
+
+    pub fn next_brightness(&mut self)  -> Result<(), RogError> {
+        let mut bright = (self.config.brightness as u32) + 1;
+        if bright > 3 {
+            bright = 0;
+        }
+        self.config.brightness = <LedBrightness>::from(bright);
+        self.config.write();
+        self.set_brightness(self.config.brightness)
+    }
+
+    pub fn prev_brightness(&mut self)  -> Result<(), RogError> {
+        let mut bright = self.config.brightness as u32;
+        if bright == 0 {
+            bright = 3;
+        } else {
+            bright -= 1;
+        }
+        self.config.brightness = <LedBrightness>::from(bright);
+        self.config.write();
+        self.set_brightness(self.config.brightness)
     }
 
     /// Set if awake/on LED active, and/or sleep animation active

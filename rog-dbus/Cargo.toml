@@ -1,6 +1,6 @@
 [package]
 name = "rog_dbus"
-version = "3.5.1"
+version = "4.0.0"
 license = "MPL-2.0"
 readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]
@@ -13,7 +13,8 @@ edition = "2018"
 rog_anime = { path = "../rog-anime" }
 rog_aura = { path = "../rog-aura" }
 rog_profiles = { path = "../rog-profiles" }
-rog_types = { path = "../rog-types" }
+rog_supported = { path = "../rog-supported" }
+supergfxctl = { git = "https://gitlab.com/asus-linux/supergfxctl.git", tag = "2.0.0" }
 zbus = "^1.9"
 zbus_macros = "^1.9"
-zvariant = "^2.5"
+zvariant = "^2.8"

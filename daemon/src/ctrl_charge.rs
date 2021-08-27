@@ -1,7 +1,7 @@
 use crate::{config::Config, error::RogError, GetSupported};
 //use crate::dbus::DbusEvents;
 use log::{info, warn};
-use rog_types::supported::ChargeSupportedFunctions;
+use rog_supported::ChargeSupportedFunctions;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
@@ -10,7 +10,9 @@ use std::sync::Mutex;
 use zbus::dbus_interface;
 use zvariant::ObjectPath;
 
-static BAT_CHARGE_PATH: &str = "/sys/class/power_supply/BAT0/charge_control_end_threshold";
+static BAT_CHARGE_PATH0: &str = "/sys/class/power_supply/BAT0/charge_control_end_threshold";
+static BAT_CHARGE_PATH1: &str = "/sys/class/power_supply/BAT1/charge_control_end_threshold";
+static BAT_CHARGE_PATH2: &str = "/sys/class/power_supply/BAT2/charge_control_end_threshold";
 
 impl GetSupported for CtrlCharge {
     type A = ChargeSupportedFunctions;
@@ -88,8 +90,12 @@ impl CtrlCharge {
     }
 
     fn get_battery_path() -> Result<&'static str, RogError> {
-        if Path::new(BAT_CHARGE_PATH).exists() {
-            Ok(BAT_CHARGE_PATH)
+        if Path::new(BAT_CHARGE_PATH0).exists() {
+            Ok(BAT_CHARGE_PATH0)
+        } else if Path::new(BAT_CHARGE_PATH1).exists() {
+            Ok(BAT_CHARGE_PATH1)
+        } else if Path::new(BAT_CHARGE_PATH2).exists() {
+            Ok(BAT_CHARGE_PATH2)
         } else {
             Err(RogError::MissingFunction(
                 "Charge control not available, you may require a v5.8.10 series kernel or newer"
@@ -106,12 +112,14 @@ impl CtrlCharge {
             );
         }
 
+        let path = Self::get_battery_path()?;
+
         let mut file = OpenOptions::new()
             .write(true)
-            .open(BAT_CHARGE_PATH)
-            .map_err(|err| RogError::Path(BAT_CHARGE_PATH.into(), err))?;
+            .open(path)
+            .map_err(|err| RogError::Path(path.into(), err))?;
         file.write_all(limit.to_string().as_bytes())
-            .map_err(|err| RogError::Write(BAT_CHARGE_PATH.into(), err))?;
+            .map_err(|err| RogError::Write(path.into(), err))?;
         info!("Battery charge limit: {}", limit);
 
         config.read();

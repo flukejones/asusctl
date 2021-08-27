@@ -1,3 +1,5 @@
+pub static VERSION: &str = env!("CARGO_PKG_VERSION");
+
 use rog_aura::AuraModeNum;
 use serde_derive::{Deserialize, Serialize};
 use std::fmt;
@@ -7,7 +9,7 @@ use zvariant_derive::Type;
 pub struct SupportedFunctions {
     pub anime_ctrl: AnimeSupportedFunctions,
     pub charge_ctrl: ChargeSupportedFunctions,
-    pub fan_cpu_ctrl: FanCpuSupportedFunctions,
+    pub platform_profile: PlatformProfileFunctions,
     pub keyboard_led: LedSupportedFunctions,
     pub rog_bios_ctrl: RogBiosSupportedFunctions,
 }
@@ -21,10 +23,9 @@ pub struct ChargeSupportedFunctions {
 }
 
 #[derive(Serialize, Deserialize, Type, Debug)]
-pub struct FanCpuSupportedFunctions {
-    pub stock_fan_modes: bool,
-    pub min_max_freq: bool,
-    pub fan_curve_set: bool,
+pub struct PlatformProfileFunctions {
+    pub platform_profile: bool,
+    pub fan_curves: bool,
 }
 
 #[derive(Serialize, Deserialize, Type, Debug)]
@@ -45,7 +46,7 @@ impl fmt::Display for SupportedFunctions {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "{}", self.anime_ctrl)?;
         writeln!(f, "{}", self.charge_ctrl)?;
-        writeln!(f, "{}", self.fan_cpu_ctrl)?;
+        writeln!(f, "{}", self.platform_profile)?;
         writeln!(f, "{}", self.keyboard_led)?;
         writeln!(f, "{}", self.rog_bios_ctrl)
     }
@@ -67,12 +68,11 @@ impl fmt::Display for ChargeSupportedFunctions {
         )
     }
 }
-impl fmt::Display for FanCpuSupportedFunctions {
+impl fmt::Display for PlatformProfileFunctions {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "Fan:")?;
-        writeln!(f, "\tStock fan modes: {}", self.stock_fan_modes)?;
-        writeln!(f, "\tMin/max frequency: {}", self.min_max_freq)?;
-        writeln!(f, "\tFan curve control: {}", self.fan_curve_set)
+        writeln!(f, "Platform profiles:")?;
+        writeln!(f, "\tplatform: {}", self.platform_profile)?;
+        writeln!(f, "\tfan curves: {}", self.fan_curves)
     }
 }
 impl fmt::Display for LedSupportedFunctions {

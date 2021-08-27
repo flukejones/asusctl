@@ -1,6 +1,6 @@
 [package]
 name = "rog_profiles"
-version = "0.1.2"
+version = "1.0.0"
 authors = ["Luke D. Jones <luke@ljones.dev>"]
 edition = "2018"
 
@@ -9,10 +9,8 @@ default = ["dbus"]
 dbus = ["zvariant", "zvariant_derive"]
 
 [dependencies]
-rog_fan_curve = { git = "https://github.com/Yarn/rog_fan_curve.git" }
 serde = "^1.0"
 serde_derive = "^1.0"
-intel-pstate = "^0.2"
 
 zvariant = { version = "^2.6", optional = true }
 zvariant_derive = { version = "^2.6", optional = true }

@@ -1,32 +1,35 @@
-use daemon::ctrl_leds::controller::{
+use daemon::ctrl_anime::config::AnimeConfig;
+use daemon::ctrl_anime::zbus::CtrlAnimeZbus;
+use daemon::ctrl_anime::*;
+use daemon::ctrl_aura::config::AuraConfig;
+use daemon::ctrl_aura::controller::{
     CtrlKbdLed, CtrlKbdLedReloader, CtrlKbdLedTask, CtrlKbdLedZbus,
 };
+use daemon::ctrl_charge::CtrlCharge;
+use daemon::ctrl_profiles::config::ProfileConfig;
+use daemon::ctrl_profiles::controller::CtrlPlatformTask;
 use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
 };
-use daemon::{config_anime::AnimeConfig, config_aura::AuraConfig, ctrl_charge::CtrlCharge};
-use daemon::{ctrl_anime::*, ctrl_gfx::controller::CtrlGraphics};
 use daemon::{
-    ctrl_profiles::{controller::CtrlFanAndCpu, zbus::FanAndCpuZbus},
+    ctrl_profiles::{controller::CtrlPlatformProfile, zbus::ProfileZbus},
     laptops::LaptopLedData,
 };
 
+use ::zbus::{fdo, Connection, ObjectServer};
 use daemon::{CtrlTask, Reloadable, ZbusAdd};
 use log::LevelFilter;
 use log::{error, info, warn};
 use rog_dbus::DBUS_NAME;
-use rog_types::gfx_vendors::GfxVendors;
+use std::env;
 use std::error::Error;
 use std::io::Write;
 use std::sync::Arc;
 use std::sync::Mutex;
-use std::env;
 
 use daemon::ctrl_rog_bios::CtrlRogBios;
-use std::convert::Into;
-use zbus::fdo;
-use zbus::Connection;
-use zvariant::ObjectPath;
+
+static PROFILE_CONFIG_PATH: &str = "/etc/asusd/profile.conf";
 
 pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut logger = env_logger::Builder::new();
@@ -43,17 +46,19 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if !is_service {
         println!("asusd schould be only run from the right systemd service");
-        println!("do not run in your terminal, if you need an logs please use journalctl -b -u asusd");
+        println!(
+            "do not run in your terminal, if you need an logs please use journalctl -b -u asusd"
+        );
         println!("asusd will now exit");
         return Ok(());
     }
 
-    info!("      daemon v{}", daemon::VERSION);
-    info!("   rog-anime v{}", rog_anime::VERSION);
-    info!("    rog-aura v{}", rog_aura::VERSION);
-    info!("    rog-dbus v{}", rog_dbus::VERSION);
-    info!("rog-profiles v{}", rog_profiles::VERSION);
-    info!("   rog-types v{}", rog_types::VERSION);
+    info!("       daemon v{}", daemon::VERSION);
+    info!("    rog-anime v{}", rog_anime::VERSION);
+    info!("     rog-aura v{}", rog_aura::VERSION);
+    info!("     rog-dbus v{}", rog_dbus::VERSION);
+    info!(" rog-profiles v{}", rog_profiles::VERSION);
+    info!("rog-supported v{}", rog_supported::VERSION);
 
     start_daemon()?;
     Ok(())
@@ -71,10 +76,9 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
     let connection = Connection::new_system()?;
     fdo::DBusProxy::new(&connection)?
         .request_name(DBUS_NAME, fdo::RequestNameFlags::ReplaceExisting.into())?;
-    let mut object_server = zbus::ObjectServer::new(&connection);
+    let mut object_server = ObjectServer::new(&connection);
 
     let config = Config::load();
-    let enable_gfx_switching = config.gfx_managed;
     let config = Arc::new(Mutex::new(config));
 
     supported.add_to_server(&mut object_server);
@@ -92,7 +96,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    match CtrlCharge::new(config.clone()) {
+    match CtrlCharge::new(config) {
         Ok(mut ctrl) => {
             // Do a reload of any settings
             ctrl.reload()
@@ -105,12 +109,16 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    match CtrlFanAndCpu::new(config.clone()) {
+    let profile_config = Arc::new(Mutex::new(ProfileConfig::load(PROFILE_CONFIG_PATH.into())));
+    match CtrlPlatformProfile::new(profile_config.clone()) {
         Ok(mut ctrl) => {
             ctrl.reload()
                 .unwrap_or_else(|err| warn!("Profile control: {}", err));
+
             let tmp = Arc::new(Mutex::new(ctrl));
-            FanAndCpuZbus::new(tmp).add_to_server(&mut object_server);
+            ProfileZbus::new(tmp).add_to_server(&mut object_server);
+
+            tasks.push(Box::new(CtrlPlatformTask::new(profile_config)));
         }
         Err(err) => {
             error!("Profile control: {}", err);
@@ -156,48 +164,6 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    // Graphics switching requires some checks on boot specifically for g-sync capable laptops
-    if enable_gfx_switching {
-        match CtrlGraphics::new(config.clone()) {
-            Ok(mut ctrl) => {
-                // Need to check if a laptop has the dedicated gfx switch
-                if CtrlRogBios::has_dedicated_gfx_toggle() {
-                    if let Ok(ded) = CtrlRogBios::get_gfx_mode() {
-                        if let Ok(config) = config.lock() {
-                            if ded == 1 {
-                                warn!("Dedicated GFX toggle is on but driver mode is not nvidia \nSetting to nvidia driver mode");
-                                let devices = ctrl.devices();
-                                let bus = ctrl.bus();
-                                CtrlGraphics::do_mode_setup_tasks(
-                                    GfxVendors::Nvidia,
-                                    false,
-                                    &devices,
-                                    &bus,
-                                )?;
-                            } else if ded == 0 {
-                                info!("Dedicated GFX toggle is off");
-                                let devices = ctrl.devices();
-                                let bus = ctrl.bus();
-                                CtrlGraphics::do_mode_setup_tasks(
-                                    config.gfx_mode,
-                                    false,
-                                    &devices,
-                                    &bus,
-                                )?;
-                            }
-                        }
-                    }
-                }
-                ctrl.reload()
-                    .unwrap_or_else(|err| error!("Gfx controller: {}", err));
-                ctrl.add_to_server(&mut object_server);
-            }
-            Err(err) => {
-                error!("Gfx control: {}", err);
-            }
-        }
-    }
-
     // TODO: implement messaging between threads to check fails
 
     // Run tasks
@@ -216,18 +182,18 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         });
 
     // Run zbus server
-    object_server
-        .with(
-            &ObjectPath::from_str_unchecked("/org/asuslinux/Charge"),
-            |obj: &CtrlCharge| {
-                let x = obj.limit();
-                obj.notify_charge(x as u8)
-            },
-        )
-        .map_err(|err| {
-            warn!("object_server notify_charge error: {}", err);
-        })
-        .ok();
+    // object_server
+    //     .with(
+    //         &ObjectPath::from_str_unchecked("/org/asuslinux/Charge"),
+    //         |obj: &CtrlCharge| {
+    //             let x = obj.limit();
+    //             obj.notify_charge(x as u8)
+    //         },
+    //     )
+    //     .map_err(|err| {
+    //         warn!("object_server notify_charge error: {}", err);
+    //     })
+    //     .ok();
 
     // Loop to check errors and iterate zbus server
     loop {

@@ -1,18 +1,20 @@
 [package]
 name = "asus-notify"
-version = "3.0.1"
+version = "3.0.2"
 authors = ["Luke D Jones <luke@ljones.dev>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+zbus = "^1.9"
 # serialisation
 serde_json = "^1.0"
 rog_dbus = { path = "../rog-dbus" }
 rog_aura = { path = "../rog-aura" }
-rog_types = { path = "../rog-types" }
+rog_supported = { path = "../rog-supported" }
 rog_profiles = { path = "../rog-profiles" }
+supergfxctl = { git = "https://gitlab.com/asus-linux/supergfxctl.git", tag = "2.0.0" }
 
 [dependencies.notify-rust]
 version = "^4.3"

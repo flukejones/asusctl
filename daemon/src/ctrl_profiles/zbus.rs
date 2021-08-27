@@ -1,58 +1,54 @@
 use log::warn;
-use rog_profiles::profiles::Profile;
+use rog_profiles::FanCurve;
+use rog_profiles::Profile;
 
 use std::sync::Arc;
 use std::sync::Mutex;
 use zbus::{dbus_interface, fdo::Error};
 use zvariant::ObjectPath;
 
-use super::controller::CtrlFanAndCpu;
+use super::controller::CtrlPlatformProfile;
 
-pub struct FanAndCpuZbus {
-    inner: Arc<Mutex<CtrlFanAndCpu>>,
+static UNSUPPORTED_MSG: &str =
+    "Fan curves are not supported on this laptop or you require a patched kernel";
+
+pub struct ProfileZbus {
+    inner: Arc<Mutex<CtrlPlatformProfile>>,
 }
 
-impl FanAndCpuZbus {
-    pub fn new(inner: Arc<Mutex<CtrlFanAndCpu>>) -> Self {
+impl ProfileZbus {
+    pub fn new(inner: Arc<Mutex<CtrlPlatformProfile>>) -> Self {
         Self { inner }
     }
 }
 
 #[dbus_interface(name = "org.asuslinux.Daemon")]
-impl FanAndCpuZbus {
-    /// Create new profile and make active
-    fn set_profile(&self, profile: String) {
-        if let Ok(mut ctrl) = self.inner.try_lock() {
-            ctrl.set_active(&profile)
-                .unwrap_or_else(|err| warn!("{}", err));
+impl ProfileZbus {
+    /// Fetch profile names
+    fn profiles(&mut self) -> zbus::fdo::Result<Vec<Profile>> {
+        if let Ok(profiles) = Profile::get_profile_names() {
+            return Ok(profiles);
         }
-        self.do_notification();
+        Err(Error::Failed(
+            "Failed to get all profile details".to_string(),
+        ))
     }
 
-    /// New or modify profile details and make active, will create if it does not exist
-    fn new_or_modify(&self, profile: Profile) {
-        if let Ok(mut ctrl) = self.inner.try_lock() {
-            ctrl.new_or_modify(&profile)
-                .unwrap_or_else(|err| warn!("{}", err));
-        }
-        self.do_notification();
-    }
-
-    /// Fetch the active profile name
+    /// Toggle to next platform_profile. Names provided by `Profiles`
     fn next_profile(&mut self) {
         if let Ok(mut ctrl) = self.inner.try_lock() {
-            ctrl.do_next_profile()
+            ctrl.set_next_profile()
                 .unwrap_or_else(|err| warn!("{}", err));
         }
         self.do_notification();
     }
 
     /// Fetch the active profile name
-    fn active_name(&mut self) -> zbus::fdo::Result<String> {
+    fn active_profile(&mut self) -> zbus::fdo::Result<Profile> {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(mut cfg) = ctrl.config.try_lock() {
                 cfg.read();
-                return Ok(cfg.active_profile.clone());
+                return Ok(cfg.active);
             }
         }
         Err(Error::Failed(
@@ -60,94 +56,96 @@ impl FanAndCpuZbus {
         ))
     }
 
-    // TODO: Profile can't implement Type because of Curve
-    /// Fetch the active profile details
-    fn active_data(&mut self) -> zbus::fdo::Result<Profile> {
+    /// Set this platform_profile name as active
+    fn set_active_profile(&self, profile: Profile) {
+        if let Ok(ctrl) = self.inner.try_lock() {
+            if let Ok(mut cfg) = ctrl.config.try_lock() {
+                // Read first just incase the user has modified the config before calling this
+                cfg.read();
+                Profile::set_profile(profile);
+                cfg.active = profile;
+            }
+            ctrl.save_config();
+        }
+        self.do_notification();
+    }
+
+    /// Get a list of profiles that have fan-curves enabled.
+    fn enabled_fan_profiles(&mut self) -> zbus::fdo::Result<Vec<Profile>> {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(mut cfg) = ctrl.config.try_lock() {
                 cfg.read();
-                if let Some(profile) = cfg.power_profiles.get(&cfg.active_profile) {
-                    return Ok(profile.clone());
+                if let Some(curves) = &cfg.fan_curves {
+                    return Ok(curves.get_enabled_curve_names().to_vec());
                 }
+                return Err(Error::Failed(UNSUPPORTED_MSG.to_string()));
             }
         }
         Err(Error::Failed(
-            "Failed to get active profile details".to_string(),
+            "Failed to get enabled fan curve names".to_string(),
         ))
     }
 
-    /// Fetch all profile data
-    fn profiles(&mut self) -> zbus::fdo::Result<Vec<Profile>> {
+    /// Get the fan-curve data for the currently active Profile
+    fn active_fan_curve_data(&mut self) -> zbus::fdo::Result<FanCurve> {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(mut cfg) = ctrl.config.try_lock() {
                 cfg.read();
-                return Ok(cfg.power_profiles.values().cloned().collect());
+                if let Some(curves) = &cfg.fan_curves {
+                    return Ok((*curves.get_active_fan_curves()).clone());
+                }
+                return Err(Error::Failed(UNSUPPORTED_MSG.to_string()));
             }
         }
-        Err(Error::Failed(
-            "Failed to get all profile details".to_string(),
-        ))
+        Err(Error::Failed("Failed to get fan curve data".to_string()))
     }
 
-    fn profile_names(&self) -> zbus::fdo::Result<Vec<String>> {
+    /// Get fan-curve data for each Profile as an array of objects
+    fn fan_curves(&self) -> zbus::fdo::Result<Vec<FanCurve>> {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(mut cfg) = ctrl.config.try_lock() {
                 cfg.read();
-                let profile_names = cfg.power_profiles.keys().cloned().collect::<Vec<String>>();
-                return Ok(profile_names);
+                if let Some(curves) = &cfg.fan_curves {
+                    return Ok(curves.get_all_fan_curves());
+                }
+                return Err(Error::Failed(UNSUPPORTED_MSG.to_string()));
             }
         }
-
-        Err(Error::Failed("Failed to get all profile names".to_string()))
+        Err(Error::Failed("Failed to get all fan curves".to_string()))
     }
 
-    fn remove(&self, profile: &str) -> zbus::fdo::Result<()> {
+    /// Set this fan-curve data
+    fn set_fan_curve(&self, curve: FanCurve) -> zbus::fdo::Result<()> {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(mut cfg) = ctrl.config.try_lock() {
                 cfg.read();
-
-                if !cfg.power_profiles.contains_key(profile) {
-                    return Err(Error::Failed("Invalid profile specified".to_string()));
+                if let Some(curves) = &mut cfg.fan_curves {
+                    curves.set_fan_curve(curve);
                 }
-
-                if cfg.power_profiles.keys().len() == 1 {
-                    return Err(Error::Failed("Cannot delete the last profile".to_string()));
-                }
-
-                if cfg.active_profile == *profile {
-                    return Err(Error::Failed(
-                        "Cannot delete the active profile".to_string(),
-                    ));
-                }
-
-                cfg.power_profiles.remove(profile);
-                cfg.write();
-
-                return Ok(());
+                return Err(Error::Failed(UNSUPPORTED_MSG.to_string()));
             }
+            ctrl.save_config();
         }
 
-        Err(Error::Failed("Failed to lock configuration".to_string()))
+        Err(Error::Failed("Failed to set fan curves".to_string()))
     }
 
     #[dbus_interface(signal)]
     fn notify_profile(&self, profile: &Profile) -> zbus::Result<()> {}
 }
 
-impl FanAndCpuZbus {
+impl ProfileZbus {
     fn do_notification(&self) {
         if let Ok(ctrl) = self.inner.try_lock() {
             if let Ok(cfg) = ctrl.config.clone().try_lock() {
-                if let Some(profile) = cfg.power_profiles.get(&cfg.active_profile) {
-                    self.notify_profile(profile)
-                        .unwrap_or_else(|err| warn!("{}", err));
-                }
+                self.notify_profile(&cfg.active)
+                    .unwrap_or_else(|err| warn!("{}", err));
             }
         }
     }
 }
 
-impl crate::ZbusAdd for FanAndCpuZbus {
+impl crate::ZbusAdd for ProfileZbus {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
         server
             .at(

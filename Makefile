@@ -16,8 +16,6 @@ BIN_D := asusd
 BIN_U := asusd-user
 BIN_N := asus-notify
 LEDCFG := asusd-ledmodes.toml
-X11CFG := 90-nvidia-screen-G05.conf
-PMRULES := 90-asusd-nvidia-pm.rules
 
 SRC := Cargo.toml Cargo.lock Makefile $(shell find -type f -wholename '**/src/*.rs')
 
@@ -45,14 +43,15 @@ install:
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_D)" "$(DESTDIR)$(bindir)/$(BIN_D)"
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_U)" "$(DESTDIR)$(bindir)/$(BIN_U)"
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_N)" "$(DESTDIR)$(bindir)/$(BIN_N)"
-	$(INSTALL_DATA) "./data/$(PMRULES)" "$(DESTDIR)$(libdir)/udev/rules.d/$(PMRULES)"
+
 	$(INSTALL_DATA) "./data/$(BIN_D).rules" "$(DESTDIR)$(libdir)/udev/rules.d/99-$(BIN_D).rules"
 	$(INSTALL_DATA) "./data/$(LEDCFG)" "$(DESTDIR)/etc/asusd/$(LEDCFG)"
 	$(INSTALL_DATA) "./data/$(BIN_D).conf" "$(DESTDIR)$(datarootdir)/dbus-1/system.d/$(BIN_D).conf"
-	$(INSTALL_DATA) "./data/$(X11CFG)" "$(DESTDIR)$(datarootdir)/X11/xorg.conf.d/$(X11CFG)"
+
 	$(INSTALL_DATA) "./data/$(BIN_D).service" "$(DESTDIR)$(libdir)/systemd/system/$(BIN_D).service"
 	$(INSTALL_DATA) "./data/$(BIN_N).service" "$(DESTDIR)$(libdir)/systemd/user/$(BIN_N).service"
 	$(INSTALL_DATA) "./data/$(BIN_U).service" "$(DESTDIR)$(libdir)/systemd/user/$(BIN_U).service"
+
 	$(INSTALL_DATA) "./data/icons/asus_notif_yellow.png" "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/asus_notif_yellow.png"
 	$(INSTALL_DATA) "./data/icons/asus_notif_green.png" "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/asus_notif_green.png"
 	$(INSTALL_DATA) "./data/icons/asus_notif_red.png" "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/asus_notif_red.png"
@@ -63,9 +62,10 @@ install:
 	$(INSTALL_DATA) "./data/icons/scalable/gpu-nvidia.svg" "$(DESTDIR)$(datarootdir)/icons/hicolor/scalable/status/gpu-nvidia.svg"
 	$(INSTALL_DATA) "./data/icons/scalable/gpu-vfio.svg" "$(DESTDIR)$(datarootdir)/icons/hicolor/scalable/status/gpu-vfio.svg"
 	$(INSTALL_DATA) "./data/icons/scalable/notification-reboot.svg" "$(DESTDIR)$(datarootdir)/icons/hicolor/scalable/status/notification-reboot.svg"
+
 	$(INSTALL_DATA) "./data/_asusctl" "$(DESTDIR)$(zshcpl)/_asusctl"
 	$(INSTALL_DATA) "./data/completions/asusctl.fish" "$(DESTDIR)$(datarootdir)/fish/vendor_completions.d/asusctl.fish"
-	cd data && find "./anime" -type f -exec install -Dm 755 "{}" "$(DESTDIR)$(datarootdir)/asusd/{}" \;
+	cd rog-anime/data && find "./anime" -type f -exec install -Dm 755 "{}" "$(DESTDIR)$(datarootdir)/asusd/{}" \;
 
 uninstall:
 	rm -f "$(DESTDIR)$(bindir)/$(BIN_C)"

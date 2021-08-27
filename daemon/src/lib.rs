@@ -1,17 +1,12 @@
 #![deny(unused_must_use)]
 /// Configuration loading, saving
 pub mod config;
-pub mod config_anime;
-pub mod config_aura;
-pub(crate) mod config_old;
 /// Control of AniMe matrix display
 pub mod ctrl_anime;
+/// Keyboard LED brightness control, RGB, and LED display modes
+pub mod ctrl_aura;
 /// Control of battery charge level
 pub mod ctrl_charge;
-/// GPU switching and power
-pub mod ctrl_gfx;
-/// Keyboard LED brightness control, RGB, and LED display modes
-pub mod ctrl_leds;
 /// Control CPU min/max freq and turbo, fan mode, fan curves
 ///
 /// Intel machines can control:
