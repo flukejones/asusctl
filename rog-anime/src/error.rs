@@ -12,6 +12,7 @@ pub enum AnimeError {
     Format,
     /// The input was incorrect size, expected size is `IncorrectSize(width, height)`
     IncorrectSize(u32, u32),
+    Dbus(String),
 }
 
 impl fmt::Display for AnimeError {
@@ -28,6 +29,7 @@ impl fmt::Display for AnimeError {
                 "The input image size is incorrect, expected {}x{}",
                 width, height
             ),
+            AnimeError::Dbus(detail) => write!(f, "{}", detail),
         }
     }
 }

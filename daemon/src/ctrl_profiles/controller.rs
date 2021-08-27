@@ -100,15 +100,15 @@ impl CtrlPlatformProfile {
 
             match config.active {
                 Profile::Balanced => {
-                    Profile::set_profile(Profile::Performance);
+                    Profile::set_profile(Profile::Performance)?;
                     config.active = Profile::Performance;
                 }
                 Profile::Performance => {
-                    Profile::set_profile(Profile::Quiet);
+                    Profile::set_profile(Profile::Quiet)?;
                     config.active = Profile::Quiet;
                 }
                 Profile::Quiet => {
-                    Profile::set_profile(Profile::Balanced);
+                    Profile::set_profile(Profile::Balanced)?;
                     config.active = Profile::Balanced;
                 }
             }

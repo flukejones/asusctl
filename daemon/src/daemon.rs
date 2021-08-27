@@ -68,7 +68,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
 fn start_daemon() -> Result<(), Box<dyn Error>> {
     let supported = SupportedFunctions::get_supported();
     print_board_info();
-    println!("{}", serde_json::to_string_pretty(&supported).unwrap());
+    println!("{}", serde_json::to_string_pretty(&supported)?);
 
     // Collect tasks for task thread
     let mut tasks: Vec<Box<dyn CtrlTask + Send>> = Vec::new();

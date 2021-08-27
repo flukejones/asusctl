@@ -9,6 +9,7 @@ use profiles_cli::ProfileCommand;
 use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2, ANIME_DATA_LEN};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClient;
+use rog_supported::SupportedFunctions;
 use rog_supported::{
     AnimeSupportedFunctions, LedSupportedFunctions, PlatformProfileFunctions,
     RogBiosSupportedFunctions,
@@ -139,40 +140,84 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let (dbus, _) = RogDbusClient::new()?;
 
-    let supported = dbus.proxies().supported().get_supported_functions()?;
+    let supported = dbus
+        .proxies()
+        .supported()
+        .get_supported_functions()
+        .map_err(|e| {
+            println!("\nIs asusd running?\n\n{}", e);
+            e
+        })?;
 
     if parsed.version {
-        println!("\nApp and daemon versions:");
-        println!("      asusctl v{}", env!("CARGO_PKG_VERSION"));
-        println!("        asusd v{}", daemon::VERSION);
-        println!("\nComponent crate versions:");
-        println!("    rog-anime v{}", rog_anime::VERSION);
-        println!("     rog-aura v{}", rog_aura::VERSION);
-        println!("     rog-dbus v{}", rog_dbus::VERSION);
-        println!(" rog-profiles v{}", rog_profiles::VERSION);
-        println!("rog-supported v{}", rog_supported::VERSION);
-        println!("  supergfxctl v{}", supergfxctl::VERSION);
+        print_versions();
         return Ok(());
     }
 
-    match parsed.command {
-        Some(CliCommand::LedMode(mode)) => handle_led_mode(&dbus, &supported.keyboard_led, &mode)?,
-        Some(CliCommand::Profile(cmd)) => handle_profile(&dbus, &supported.platform_profile, &cmd)?,
+    if let Err(err) = do_parsed(&parsed, &supported, &dbus) {
+        println!("Error: {}", err);
+        println!();
+        print_versions();
+        println!();
+        print_laptop_info();
+        println!();
+        println!("Supported laptop functions:\n\n{}", supported);
+    }
+
+    Ok(())
+}
+
+fn print_versions() {
+    println!("\nApp and daemon versions:");
+    println!("      asusctl v{}", env!("CARGO_PKG_VERSION"));
+    println!("        asusd v{}", daemon::VERSION);
+    println!("\nComponent crate versions:");
+    println!("    rog-anime v{}", rog_anime::VERSION);
+    println!("     rog-aura v{}", rog_aura::VERSION);
+    println!("     rog-dbus v{}", rog_dbus::VERSION);
+    println!(" rog-profiles v{}", rog_profiles::VERSION);
+    println!("rog-supported v{}", rog_supported::VERSION);
+    println!("  supergfxctl v{}", supergfxctl::VERSION);
+}
+
+fn print_laptop_info() {
+    let dmi = sysfs_class::DmiId::default();
+    let board_name = dmi.board_name().expect("Could not get board_name");
+    let prod_family = dmi.product_family().expect("Could not get product_family");
+
+    println!("Product family: {}", prod_family.trim());
+    println!("Board name: {}", board_name.trim());
+}
+
+fn do_parsed(
+    parsed: &CliStart,
+    supported: &SupportedFunctions,
+    dbus: &RogDbusClient,
+) -> Result<(), Box<dyn std::error::Error>> {
+    match &parsed.command {
+        Some(CliCommand::LedMode(mode)) => handle_led_mode(dbus, &supported.keyboard_led, &mode)?,
+        Some(CliCommand::Profile(cmd)) => handle_profile(dbus, &supported.platform_profile, &cmd)?,
         Some(CliCommand::Graphics(cmd)) => do_gfx(cmd)?,
-        Some(CliCommand::Anime(cmd)) => handle_anime(&dbus, &supported.anime_ctrl, &cmd)?,
-        Some(CliCommand::Bios(cmd)) => handle_bios_option(&dbus, &supported.rog_bios_ctrl, &cmd)?,
+        Some(CliCommand::Anime(cmd)) => handle_anime(dbus, &supported.anime_ctrl, &cmd)?,
+        Some(CliCommand::Bios(cmd)) => handle_bios_option(dbus, &supported.rog_bios_ctrl, &cmd)?,
         None => {
-            if (!parsed.show_supported && parsed.kbd_bright.is_none() && parsed.chg_limit.is_none()
-                && !parsed.next_kbd_bright && !parsed.prev_kbd_bright) || parsed.help
+            if (!parsed.show_supported
+                && parsed.kbd_bright.is_none()
+                && parsed.chg_limit.is_none()
+                && !parsed.next_kbd_bright
+                && !parsed.prev_kbd_bright)
+                || parsed.help
             {
                 println!("{}", CliStart::usage());
                 println!();
-                println!("{}", CliStart::command_list().unwrap());
+                if let Some(cmdlist) = CliStart::command_list() {
+                    println!("{}", cmdlist);
+                }
             }
         }
     }
 
-    if let Some(brightness) = parsed.kbd_bright {
+    if let Some(brightness) = &parsed.kbd_bright {
         match brightness.level() {
             None => {
                 let level = dbus.proxies().led().get_led_brightness()?;
@@ -204,7 +249,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn do_gfx(command: GraphicsCommand) -> Result<(), Box<dyn std::error::Error>> {
+fn do_gfx(command: &GraphicsCommand) -> Result<(), Box<dyn std::error::Error>> {
     if command.mode.is_none() && !command.get && !command.pow && !command.force || command.help {
         println!("{}", command.self_usage());
     }
@@ -314,8 +359,7 @@ fn handle_anime(
 
                 dbus.proxies()
                     .anime()
-                    .write(<AnimeDataBuffer>::from(&matrix))
-                    .unwrap();
+                    .write(<AnimeDataBuffer>::from(&matrix))?;
             }
         }
     }
@@ -339,23 +383,21 @@ fn handle_led_mode(
         println!("{}\n", mode.self_usage());
         println!("Commands available");
 
-        let commands: Vec<String> = LedModeCommand::command_list()
-            .unwrap()
-            .lines()
-            .map(|s| s.to_string())
-            .collect();
-        for command in commands.iter().filter(|command| {
-            for mode in &supported.stock_led_modes {
-                if command.contains(&<&str>::from(mode).to_lowercase()) {
+        if let Some(cmdlist) = LedModeCommand::command_list() {
+            let commands: Vec<String> = cmdlist.lines().map(|s| s.to_string()).collect();
+            for command in commands.iter().filter(|command| {
+                for mode in &supported.stock_led_modes {
+                    if command.contains(&<&str>::from(mode).to_lowercase()) {
+                        return true;
+                    }
+                }
+                if supported.multizone_led_mode {
                     return true;
                 }
+                false
+            }) {
+                println!("{}", command);
             }
-            if supported.multizone_led_mode {
-                return true;
-            }
-            false
-        }) {
-            println!("{}", command);
         }
 
         println!("\nHelp can also be requested on modes, e.g: static --help");

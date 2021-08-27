@@ -57,6 +57,7 @@ dependencies = [
  "rog_profiles",
  "rog_supported",
  "supergfxctl",
+ "sysfs-class",
  "tinybmp",
  "zbus",
 ]

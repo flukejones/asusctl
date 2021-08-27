@@ -1,3 +1,4 @@
+use rog_anime::error::AnimeError;
 use rog_anime::{ActionData, ActionLoader, AnimTime, Fade, Sequences, Vec2};
 use rog_dbus::RogDbusClient;
 use serde_derive::{Deserialize, Serialize};
@@ -91,16 +92,19 @@ impl<'a> CtrlAnimeInner<'static> {
             match action {
                 ActionData::Animation(frames) => {
                     rog_anime::run_animation(frames, self.do_early_return.clone(), &|output| {
-                        self.client.proxies().anime().write(output).unwrap()
-                    })
-                    .unwrap();
+                        self.client
+                            .proxies()
+                            .anime()
+                            .write(output)
+                            .map_err(|e| AnimeError::Dbus(format!("{}", e)))
+                    })?;
                 }
                 ActionData::Image(image) => {
                     self.client
                         .proxies()
                         .anime()
                         .write(image.as_ref().clone())
-                        .unwrap();
+                        .ok();
                 }
                 ActionData::Pause(duration) => {
                     let start = Instant::now();

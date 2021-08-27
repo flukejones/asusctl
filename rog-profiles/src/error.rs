@@ -27,3 +27,9 @@ impl fmt::Display for ProfileError {
 }
 
 impl std::error::Error for ProfileError {}
+
+impl From<std::io::Error> for ProfileError {
+    fn from(err: std::io::Error) -> Self {
+        ProfileError::Io(err)
+    }
+}

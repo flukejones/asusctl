@@ -17,6 +17,8 @@ daemon = { path = "../daemon" }
 gumdrop = "^0.8"
 supergfxctl = { git = "https://gitlab.com/asus-linux/supergfxctl.git", tag = "2.0.0" }
 
+sysfs-class = "^0.1.2"
+
 [dev-dependencies]
 tinybmp = "^0.2.3"
 glam = "0.14.0"

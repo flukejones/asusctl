@@ -62,7 +62,9 @@ impl ProfileZbus {
             if let Ok(mut cfg) = ctrl.config.try_lock() {
                 // Read first just incase the user has modified the config before calling this
                 cfg.read();
-                Profile::set_profile(profile);
+                Profile::set_profile(profile)
+                    .map_err(|e| warn!("Profile::set_profile, {}", e))
+                    .ok();
                 cfg.active = profile;
             }
             ctrl.save_config();

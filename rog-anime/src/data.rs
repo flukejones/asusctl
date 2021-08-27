@@ -95,7 +95,7 @@ impl From<AnimeDataBuffer> for AnimePacketType {
 pub fn run_animation(
     frames: &AnimeGif,
     do_early_return: Arc<AtomicBool>,
-    callback: &dyn Fn(AnimeDataBuffer),
+    callback: &dyn Fn(AnimeDataBuffer) -> Result<(), AnimeError>,
 ) -> Result<(), AnimeError> {
     let mut count = 0;
     let start = Instant::now();
@@ -164,7 +164,7 @@ pub fn run_animation(
                 }
             }
 
-            callback(output);
+            callback(output)?;
 
             if timed && Instant::now().duration_since(start) > run_time {
                 break 'animation;

@@ -168,7 +168,7 @@ impl CtrlRogBios {
             .map_err(|err| RogError::Path(path.into(), err))?;
 
         let mut data = Vec::new();
-        file.read_to_end(&mut data).unwrap();
+        file.read_to_end(&mut data)?;
 
         let idx = data.len() - 1;
         if dedicated {
@@ -269,7 +269,7 @@ impl CtrlRogBios {
                             RogError::Write(module_include.to_string_lossy().to_string(), err)
                         })?;
                     // add nvidia modules to module_include
-                    file.write_all(modules.concat().as_bytes()).unwrap();
+                    file.write_all(modules.concat().as_bytes())?;
                 } else {
                     let file = std::fs::OpenOptions::new()
                         .read(true)
@@ -292,7 +292,7 @@ impl CtrlRogBios {
                         .map_err(|err| {
                             RogError::Write(module_include.to_string_lossy().to_string(), err)
                         })?;
-                    std::io::BufWriter::new(file).write_all(&buf).unwrap();
+                    std::io::BufWriter::new(file).write_all(&buf)?;
                 }
             }
 

@@ -41,7 +41,7 @@ impl Profile {
             .unwrap_or_else(|_| panic!("{} not found", &PLATFORM_PROFILE));
 
         let mut buf = String::new();
-        file.read_to_string(&mut buf).unwrap();
+        file.read_to_string(&mut buf)?;
         Ok(buf.as_str().into())
     }
 
@@ -52,17 +52,18 @@ impl Profile {
             .unwrap_or_else(|_| panic!("{} not found", &PLATFORM_PROFILES));
 
         let mut buf = String::new();
-        file.read_to_string(&mut buf).unwrap();
+        file.read_to_string(&mut buf)?;
         Ok(buf.rsplit(' ').map(|p| p.into()).collect())
     }
 
-    pub fn set_profile(profile: Profile) {
+    pub fn set_profile(profile: Profile) -> Result<(), ProfileError> {
         let mut file = OpenOptions::new()
             .write(true)
             .open(PLATFORM_PROFILE)
             .unwrap_or_else(|_| panic!("{} not found", PLATFORM_PROFILE));
 
-        file.write_all(<&str>::from(profile).as_bytes()).unwrap();
+        file.write_all(<&str>::from(profile).as_bytes())?;
+        Ok(())
     }
 }
 

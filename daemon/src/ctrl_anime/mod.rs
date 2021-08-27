@@ -13,7 +13,12 @@ use rog_anime::{
 };
 use rog_supported::AnimeSupportedFunctions;
 use rusb::{Device, DeviceHandle};
-use std::{cell::RefCell, error::Error, sync::{Arc, Mutex}, thread::sleep};
+use std::{
+    cell::RefCell,
+    error::Error,
+    sync::{Arc, Mutex},
+    thread::sleep,
+};
 use std::{
     sync::atomic::{AtomicBool, Ordering},
     time::Duration,
@@ -176,12 +181,17 @@ impl CtrlAnime {
                     for action in actions.iter() {
                         match action {
                             ActionData::Animation(frames) => {
-                                rog_anime::run_animation(frames, thread_exit.clone(), &|frame| {
+                                if rog_anime::run_animation(frames, thread_exit.clone(), &|frame| {
                                     if let Ok(lock) = inner.try_lock() {
                                         lock.write_data_buffer(frame);
                                     }
+                                    Ok(())
                                 })
-                                .unwrap();
+                                .map_err(|err| warn!("rog_anime::run_animation: {}", err))
+                                .is_err()
+                                {
+                                    break 'main;
+                                };
 
                                 if thread_exit.load(Ordering::SeqCst) {
                                     break 'main;
@@ -289,9 +299,11 @@ pub struct CtrlAnimeTask<'a> {
 
 impl<'a> CtrlAnimeTask<'a> {
     pub fn new(inner: Arc<Mutex<CtrlAnime>>) -> Self {
-        let connection = Connection::new_system().unwrap();
+        let connection =
+            Connection::new_system().expect("CtrlAnimeTask could not create dbus connection");
 
-        let manager = ManagerProxy::new(&connection).unwrap();
+        let manager =
+            ManagerProxy::new(&connection).expect("CtrlAnimeTask could not create ManagerProxy");
 
         let c1 = inner.clone();
         // Run this action when the system starts shutting down

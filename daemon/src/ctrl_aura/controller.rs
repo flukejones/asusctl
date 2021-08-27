@@ -62,9 +62,11 @@ pub struct CtrlKbdLedTask<'a> {
 
 impl<'a> CtrlKbdLedTask<'a> {
     pub fn new(inner: Arc<Mutex<CtrlKbdLed>>) -> Self {
-        let connection = Connection::new_system().unwrap();
+        let connection =
+            Connection::new_system().expect("CtrlKbdLedTask could not create dbus connection");
 
-        let manager = ManagerProxy::new(&connection).unwrap();
+        let manager =
+            ManagerProxy::new(&connection).expect("CtrlKbdLedTask could not create ManagerProxy");
 
         let c1 = inner.clone();
         // Run this action when the system wakes up from sleep
@@ -239,7 +241,7 @@ impl CtrlKbdLed {
         Ok(())
     }
 
-    pub fn next_brightness(&mut self)  -> Result<(), RogError> {
+    pub fn next_brightness(&mut self) -> Result<(), RogError> {
         let mut bright = (self.config.brightness as u32) + 1;
         if bright > 3 {
             bright = 0;
@@ -249,7 +251,7 @@ impl CtrlKbdLed {
         self.set_brightness(self.config.brightness)
     }
 
-    pub fn prev_brightness(&mut self)  -> Result<(), RogError> {
+    pub fn prev_brightness(&mut self) -> Result<(), RogError> {
         let mut bright = self.config.brightness as u32;
         if bright == 0 {
             bright = 3;

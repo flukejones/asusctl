@@ -10,10 +10,8 @@ pub const ASUS_KEYBOARD_DEVICES: [&str; 4] = ["1866", "1869", "1854", "19b6"];
 pub fn print_board_info() {
     let dmi = sysfs_class::DmiId::default();
     let board_name = dmi.board_name().expect("Could not get board_name");
-    let prod_name = dmi.product_name().expect("Could not get product_name");
     let prod_family = dmi.product_family().expect("Could not get product_family");
 
-    info!("Product name: {}", prod_name.trim());
     info!("Product family: {}", prod_family.trim());
     info!("Board name: {}", board_name.trim());
 }
