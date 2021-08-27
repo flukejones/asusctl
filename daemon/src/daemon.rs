@@ -180,20 +180,6 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
             }
         });
 
-    // Run zbus server
-    // object_server
-    //     .with(
-    //         &ObjectPath::from_str_unchecked("/org/asuslinux/Charge"),
-    //         |obj: &CtrlCharge| {
-    //             let x = obj.limit();
-    //             obj.notify_charge(x as u8)
-    //         },
-    //     )
-    //     .map_err(|err| {
-    //         warn!("object_server notify_charge error: {}", err);
-    //     })
-    //     .ok();
-
     // Request dbus name after finishing initalizing all functions
     fdo_connection.request_name(DBUS_NAME, fdo::RequestNameFlags::ReplaceExisting.into())?;
 
