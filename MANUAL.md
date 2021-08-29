@@ -16,56 +16,14 @@ but can also be used with non-asus laptops with reduced features.
 
 The functionality that `asusd` exposes is:
 
-- graphics switching
 - anime control
 - led keyboard control (aura)
 - charge limiting
 - bios/efivar control
-- profiles (fan/cpu)
+- power profile switching
+- fan curves (if supported, this is auto-detected)
 
 each of these will be detailed in sections.
-
-### Graphics switching
-
-`asusd` can switch graphics modes between:
-- `integrated`, uses the iGPU only and force-disables the dGPU
-- `compute`, enables Nvidia without Xorg. Useful for ML/Cuda
-- `hybrid`, enables Nvidia prime-offload mode
-- `nvidia`, uses the Nvidia gpu only
-- `vfio`, binds the Nvidia gpu to vfio for VM pass-through
-
-Switching to/from Hybrid and Nvidia modes requires a logout only (no reboot). Switching between integrated/compute/vfio does not require a logout and is instant.
-
-#### Required actions in distro
-
-**Rebootless note:** You must edit `/etc/default/grub` to remove `nvidia-drm.modeset=1`
-from the line `GRUB_CMDLINE_LINUX=` and then recreate your grub config. In fedora
-you can do this with `sudo grub2-mkconfig -o /etc/grub2.cfg` - other distro may be
-similar but with a different config location. It's possible that graphics driver updates
-may change this.
-
-This switcher conflicts with other gpu switchers like optimus-manager, suse-prime
-or ubuntu-prime, system76-power, and bbswitch. If you have issues with `asusd`
-always defaulting to `integrated` mode on boot then you will need to check for
-stray configs blocking nvidia modules from loading in:
-- `/etc/modprobe.d/`
-- `/usr/lib/modprope.d/`
-
-#### Config options
-
-1. `"gfx_mode": "<MODE>",`: MODE can be <Integrated, Hybrid, Compute, Nvidia, vfio>
-2. `"gfx_last_mode": "Nvidia",`: currently unused
-3. `"gfx_managed": true,`: enable or disable graphics switching controller
-4. `"gfx_vfio_enable": false,`: enable vfio switching for Nvidia GPU passthrough
-5. `"gfx_save_compute_vfio": false,`: wether or not to save the vfio state (so it sticks between boots)
-
-#### Graphics switching notes
-
-**G-Sync note:** Some laptops are capable of using the dGPU as the sole GPU in the system which is generally to enable g-sync on the laptop display panel. This is controlled by the bios/efivar control and will be covered in that section.
-
-**vfio note:** The vfio modules *must not* be compiled into the kernel, they need
-to be separate modules. If you don't plan to use vfio mode then you can ignore this
-otherwise you may need a custom built kernel.
 
 ### AniMe control
 
@@ -139,55 +97,27 @@ These options are not written to the config file as they are stored in efivars. 
 
 ### Profiles
 
-Profiles provide a method setting up various basic CPU and fan settings in profile blocks which can then be switched between or cycled through. The CPU controls so far are:
+asusctl can support setting a power profile via platform_profile drivers. This requires [power-profiles-daemon](https://gitlab.freedesktop.org/hadess/power-profiles-daemon) v0.9.0 minimum. It also requires the kernel patch for platform_profile support to be applied form [here](https://lkml.org/lkml/2021/8/18/1022) - this patch is included in the "rog" kernels we build for fedora and arch, and will hit kernel 5.15 upstream.
 
-- Min/Max percentage of CPU frequency (Intel only for now)
-- CPU turbo boost enable or disable
-- Fan presets. These are 0: Normal, 1: Boost, 2: Silent.
-- Fan curves, override fan-preset. AMD only.
-
-#### Config options
-
-Example:
-```json
-  "toggle_profiles": [
-    "normal",
-    "boost",
-    "silent"
-  ],
-  "power_profiles": {
-    "boost": {
-      "min_percentage": 0,
-      "max_percentage": 100,
-      "turbo": true,
-      "fan_preset": 1,
-      "fan_curve": null
-    },
-    "normal": {
-      "min_percentage": 0,
-      "max_percentage": 100,
-      "turbo": true,
-      "fan_preset": 0,
-      "fan_curve": null
-    },
-    "silent": {
-      "min_percentage": 0,
-      "max_percentage": 100,
-      "turbo": true,
-      "fan_preset": 2,
-      "fan_curve": null
-    }
-  }
-```
-
-1. `"toggle_profiles": [],`: these are the profile names that will be cycled through when using a provided next/prev dbus method.
-2. `"power_profiles": {}`: all the available profiles.
+A common use of asusctl is to bind the `fn+f5` (fan) key to `asusctl profile -n` to cycle through the 3 profiles:
+1. Balanced
+2. Performance
+3. Quiet
 
 #### Fan curves
 
-**fan_curve note:** This is a WIP. Currently it relies on `acpi_call` kernel module which is ancient and hacky, not intended for this purpose. A proper kernel driver is in progress.
+Fan curve support requires a laptop that supports it (this is detected automatically) and the kernel patch from [here](https://lkml.org/lkml/2021/8/29/50) which is still in review as of 29/09/21. As with Profiles, this is included in the kernels we build, and will hit 5.15 kernel upstream.
 
-See [this document](https://github.com/cronosun/atrofac/blob/master/ADVANCED.md#limits) for details on the string format required, e.g, `"fan_curve": "30c:0%,40c:5%,50c:10%,60c:20%,70c:35%,80c:55%,90c:65%,100c:65%"`.
+The fan curve format can be of varying formats:
+
+- `30c:0%,40c:5%,50c:10%,60c:20%,70c:35%,80c:55%,90c:65%,100c:65%"`
+- `30:0,40:5,50:10,60:20,70:35,80:55,90:65,100:65"`
+- `30 0,40 5,50 10,60 20,70 35,80 55,90 65,100 65"`
+- `30 0 40 5 50 10 60 20 70 35 80 55 90 65 100 65"`
+
+the order must always be the same "temperature:percentage", lowest from left to rigth being highest.
+
+The config file is located at `/etc/asusd/profile.conf` and is self-descriptive. On first run it is populated with the system EC defaults.
 
 ### Support controller
 

@@ -128,7 +128,7 @@ pub struct FanCurve {
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Deserialize, Serialize, Debug)]
 pub struct FanCurves {
-    active_curves: Vec<Profile>,
+    enabled: Vec<Profile>,
     balanced: FanCurve,
     performance: FanCurve,
     quiet: FanCurve,
@@ -137,7 +137,7 @@ pub struct FanCurves {
 impl Default for FanCurves {
     fn default() -> Self {
         let mut curves = Self {
-            active_curves: Default::default(),
+            enabled: Default::default(),
             balanced: Default::default(),
             performance: Default::default(),
             quiet: Default::default(),
@@ -188,7 +188,7 @@ impl FanCurves {
     }
 
     pub fn get_enabled_curve_names(&self) -> &[Profile] {
-        &self.active_curves
+        &self.enabled
     }
 
     pub fn get_all_fan_curves(&self) -> Vec<FanCurve> {

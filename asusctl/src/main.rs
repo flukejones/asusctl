@@ -1,8 +1,10 @@
 mod anime_cli;
 mod aura_cli;
+mod cli_opts;
 mod profiles_cli;
 
 use crate::aura_cli::{LedBrightness, SetAuraBuiltin};
+use crate::cli_opts::*;
 use anime_cli::{AnimeActions, AnimeCommand};
 use gumdrop::{Opt, Options};
 use profiles_cli::ProfileCommand;
@@ -16,106 +18,15 @@ use rog_supported::{
 };
 use std::{env::args, path::Path, sync::mpsc::channel};
 use supergfxctl::{
-    gfx_vendors::{GfxRequiredUserAction, GfxVendors},
+    gfx_vendors::GfxRequiredUserAction,
     special::{get_asus_gsync_gfx_mode, has_asus_gsync_gfx_mode},
     zbus_proxy::GfxProxy,
 };
 use zbus::Connection;
 
-#[derive(Default, Options)]
-struct CliStart {
-    #[options(help_flag, help = "print help message")]
-    help: bool,
-    #[options(help = "show program version number")]
-    version: bool,
-    #[options(help = "show supported functions of this laptop")]
-    show_supported: bool,
-    #[options(meta = "", help = "<off, low, med, high>")]
-    kbd_bright: Option<LedBrightness>,
-    #[options(help = "Toggle to next keyboard brightness")]
-    next_kbd_bright: bool,
-    #[options(help = "Toggle to previous keyboard brightness")]
-    prev_kbd_bright: bool,
-    #[options(meta = "", help = "<20-100>")]
-    chg_limit: Option<u8>,
-    #[options(command)]
-    command: Option<CliCommand>,
-}
-
-#[derive(Options)]
-enum CliCommand {
-    #[options(help = "Set the keyboard lighting from built-in modes")]
-    LedMode(LedModeCommand),
-    #[options(help = "Create and configure profiles")]
-    Profile(ProfileCommand),
-    #[options(help = "Set the graphics mode")]
-    Graphics(GraphicsCommand),
-    #[options(name = "anime", help = "Manage AniMe Matrix")]
-    Anime(AnimeCommand),
-    #[options(help = "Change bios settings")]
-    Bios(BiosCommand),
-}
-
-#[derive(Options)]
-struct LedModeCommand {
-    #[options(help = "print help message")]
-    help: bool,
-    #[options(help = "switch to next aura mode")]
-    next_mode: bool,
-    #[options(help = "switch to previous aura mode")]
-    prev_mode: bool,
-    #[options(
-        meta = "",
-        help = "set the keyboard LED to enabled while the device is awake"
-    )]
-    awake_enable: Option<bool>,
-    #[options(
-        meta = "",
-        help = "set the keyboard LED suspend animation to enabled while the device is suspended"
-    )]
-    sleep_enable: Option<bool>,
-    #[options(command)]
-    command: Option<SetAuraBuiltin>,
-}
-
-#[derive(Options)]
-struct GraphicsCommand {
-    #[options(help = "print help message")]
-    help: bool,
-    #[options(
-        meta = "",
-        help = "Set graphics mode: <nvidia, hybrid, compute, integrated>"
-    )]
-    mode: Option<GfxVendors>,
-    #[options(help = "Get the current mode")]
-    get: bool,
-    #[options(help = "Get the current power status")]
-    pow: bool,
-    #[options(help = "Do not ask for confirmation")]
-    force: bool,
-}
-
-#[derive(Options, Debug)]
-struct BiosCommand {
-    #[options(help = "print help message")]
-    help: bool,
-    #[options(
-        meta = "",
-        no_long,
-        help = "set bios POST sound: asusctl -p <true/false>"
-    )]
-    post_sound_set: Option<bool>,
-    #[options(no_long, help = "read bios POST sound")]
-    post_sound_get: bool,
-    #[options(
-        meta = "",
-        no_long,
-        help = "activate dGPU dedicated/G-Sync: asusctl -d <true/false>, reboot required"
-    )]
-    dedicated_gfx_set: Option<bool>,
-    #[options(no_long, help = "get GPU mode")]
-    dedicated_gfx_get: bool,
-}
+const PLEASE: &str =
+    "Please use `systemctl status asusd` and `journalctl -b -u asusd` for more information";
+const CONFIG_ADVICE: &str = "A config file need to be removed so a new one can be generated";
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = args().skip(1).collect();
@@ -138,41 +49,54 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    let (dbus, _) = RogDbusClient::new()?;
+    let (dbus, _) = RogDbusClient::new().map_err(|e| {
+        println!("\nIs asusd running?\n");
+        println!("{}", PLEASE);
+        println!("{}\n", CONFIG_ADVICE);
+        e
+    })?;
 
     let supported = dbus
         .proxies()
         .supported()
         .get_supported_functions()
         .map_err(|e| {
-            println!("\nIs asusd running?\n\n{}", e);
-            println!();
-            println!("Please use `journalctl -b -u asusd` and `systemctl status asusd` for more information");
+            println!("\nIs asusd running?\n");
+            println!("{}", PLEASE);
+            println!("{}\n", CONFIG_ADVICE);
             e
         })?;
 
     if parsed.version {
         print_versions();
+        println!();
+        print_laptop_info();
+        println!("{}\n", PLEASE);
         return Ok(());
     }
 
     if let Err(err) = do_parsed(&parsed, &supported, &dbus) {
-        println!("Error: {}", err);
-        println!();
-        print_versions();
-        println!();
-        print_laptop_info();
-        println!();
-        println!("Supported laptop functions:\n\n{}", supported);
-        println!();
-        println!("Please use `journalctl -b -u asusd` and `systemctl status asusd` for more information")
+        print_error_help(err, &supported);
     }
 
     Ok(())
 }
 
+fn print_error_help(err: Box<dyn std::error::Error>, supported: &SupportedFunctions) {
+    println!("Error: {}\n", err);
+    print_versions();
+    println!();
+    print_laptop_info();
+    println!();
+    println!("Supported laptop functions:\n\n{}", supported);
+    println!();
+    println!("{}", PLEASE);
+    println!("The above may give some indication that an option is not supported");
+    println!("or that a config file must be removed or fixed");
+}
+
 fn print_versions() {
-    println!("\nApp and daemon versions:");
+    println!("App and daemon versions:");
     println!("      asusctl v{}", env!("CARGO_PKG_VERSION"));
     println!("        asusd v{}", daemon::VERSION);
     println!("\nComponent crate versions:");
