@@ -71,6 +71,14 @@ Requirements are rust >= 1.47 installed from rustup.io if the distro provided ve
 
 Download repositories are available [here](https://download.opensuse.org/repositories/home:/luke_nukem:/asus/) for the latest versions of Fedora, Ubuntu, and openSUSE.
 
+### Ubuntu
+
+    sudo su -c "echo 'deb https://download.opensuse.org/repositories/home:/luke_nukem:/asus/xUbuntu_21.04/ /' > /etc/apt/sources.list.d/luke_nukem.list"
+    curl -fsSL https://download.opensuse.org/repositories/home:/luke_nukem:/asus/xUbuntu_21.04/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/home_luke_nukem.gpg > /dev/null
+    sudo apt-get update
+    sudo apt-get install asusctl dkms-hid-asus-rog
+
+
 ---
 
 Run `make` then `sudo make install` then reboot.
