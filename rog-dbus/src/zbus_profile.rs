@@ -21,7 +21,7 @@
 
 use std::sync::mpsc::Sender;
 
-use rog_profiles::{FanCurve, Profile};
+use rog_profiles::{Profile, fan_curves::FanCurveSet};
 use zbus::{dbus_proxy, Connection, Result};
 
 #[dbus_proxy(
@@ -45,13 +45,13 @@ trait Daemon {
     fn enabled_fan_profiles(&self) -> zbus::Result<Vec<Profile>>;
 
     /// Get the active `Profile` data
-    fn active_fan_data(&self) -> zbus::Result<FanCurve>;
+    fn active_fan_data(&self) -> zbus::Result<FanCurveSet>;
 
     /// Get all fan curve data
-    fn fan_curves(&self) -> zbus::Result<Vec<FanCurve>>;
+    fn fan_curves(&self) -> zbus::Result<Vec<FanCurveSet>>;
 
     /// Set a fan curve. If a field is empty then the exisiting saved curve is used
-    fn set_fan_curve(&self, curve: FanCurve) -> zbus::Result<()>;
+    fn set_fan_curve(&self, curve: FanCurveSet) -> zbus::Result<()>;
 
     /// NotifyProfile signal
     #[dbus_proxy(signal)]

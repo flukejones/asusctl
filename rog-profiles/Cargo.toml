@@ -9,6 +9,7 @@ default = ["dbus"]
 dbus = ["zvariant", "zvariant_derive"]
 
 [dependencies]
+udev = "^0.6"
 serde = "^1.0"
 serde_derive = "^1.0"
 

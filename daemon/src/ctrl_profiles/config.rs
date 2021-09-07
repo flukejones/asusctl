@@ -1,4 +1,5 @@
 use log::{error, warn};
+use rog_profiles::fan_curves::FanCurveSet;
 use rog_profiles::{FanCurves, Profile};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
@@ -22,10 +23,11 @@ impl ProfileConfig {
             fan_curves: None,
         };
 
-        if FanCurves::is_fan_curves_supported() {
-            let mut curves = FanCurves::default();
-            curves.update_from_platform();
-            platform.fan_curves = Some(curves);
+        if let Ok(res) = FanCurveSet::is_supported() {
+            if res {
+                let mut curves = FanCurves::default();
+                platform.fan_curves = Some(curves);
+            }
         }
 
         platform
