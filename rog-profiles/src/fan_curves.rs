@@ -4,7 +4,7 @@ use udev::Device;
 #[cfg(feature = "dbus")]
 use zvariant_derive::Type;
 
-use crate::error::ProfileError;
+use crate::{FanCurvePU, error::ProfileError, write_to_fan};
 
 pub fn pwm_str(fan: char, index: char) -> String {
     let mut buf = "pwm1_auto_point1_pwm".to_string();
@@ -29,6 +29,7 @@ pub fn temp_str(fan: char, index: char) -> String {
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Deserialize, Serialize, Default, Debug, Clone)]
 pub struct CurveData {
+    pub fan: FanCurvePU,
     pub pwm: [u8; 8],
     pub temp: [u8; 8],
 }
@@ -63,7 +64,12 @@ impl FanCurveSet {
                 cpu: CurveData::default(),
                 gpu: CurveData::default(),
             };
+
+            fans.cpu.fan = FanCurvePU::CPU;
+            fans.cpu.fan = FanCurvePU::GPU;
+
             fans.init_from_device(&device);
+
             return Ok((fans, device));
         }
 
@@ -109,39 +115,11 @@ impl FanCurveSet {
         }
     }
 
-    fn write_to_fan(curve: &CurveData, pwm_num: char, device: &mut Device) {
-        let mut pwm = "pwmN_auto_pointN_pwm".to_string();
-
-        for (index,out) in curve.pwm.iter().enumerate() {
-            unsafe {
-                let buf = pwm.as_bytes_mut();
-                buf[3] = pwm_num as u8;
-                // Should be quite safe to unwrap as we're not going over 8
-                buf[15] = char::from_digit(index as u32, 10).unwrap() as u8;
-            }
-            let out = out.to_string();
-            device.set_attribute_value(&pwm, &out).unwrap();
-        }
-
-        let mut pwm = "pwmN_auto_pointN_temp".to_string();
-
-        for (index,out) in curve.temp.iter().enumerate() {
-            unsafe {
-                let buf = pwm.as_bytes_mut();
-                buf[3] = pwm_num as u8;
-                // Should be quite safe to unwrap as we're not going over 8
-                buf[15] = char::from_digit(index as u32, 10).unwrap() as u8;
-            }
-            let out = out.to_string();
-            device.set_attribute_value(&pwm, &out).unwrap();
-        }
-    }
-
     pub fn write_cpu_fan(&self, device: &mut Device) {
-        Self::write_to_fan(&self.cpu, '1', device);
+        write_to_fan(&self.cpu, '1', device);
     }
 
     pub fn write_gpu_fan(&self, device: &mut Device) {
-        Self::write_to_fan(&self.gpu, '2', device);
+        write_to_fan(&self.gpu, '2', device);
     }
 }

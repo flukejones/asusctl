@@ -57,7 +57,7 @@ impl crate::Reloadable for CtrlPlatformProfile {
     fn reload(&mut self) -> Result<(), RogError> {
             if let Some(curves) = &self.config.fan_curves {
                 if let Ok(mut device) = FanCurveSet::get_device() {
-                    curves.write_to_platform(self.config.active, &mut device);
+                    curves.write_to_platform(self.config.active_profile, &mut device);
                 }
             }
         Ok(())
@@ -86,18 +86,18 @@ impl CtrlPlatformProfile {
         // Read first just incase the user has modified the config before calling this
         self.config.read();
 
-        match self.config.active {
+        match self.config.active_profile {
             Profile::Balanced => {
                 Profile::set_profile(Profile::Performance)?;
-                self.config.active = Profile::Performance;
+                self.config.active_profile = Profile::Performance;
             }
             Profile::Performance => {
                 Profile::set_profile(Profile::Quiet)?;
-                self.config.active = Profile::Quiet;
+                self.config.active_profile = Profile::Quiet;
             }
             Profile::Quiet => {
                 Profile::set_profile(Profile::Balanced)?;
-                self.config.active = Profile::Balanced;
+                self.config.active_profile = Profile::Balanced;
             }
         }
 

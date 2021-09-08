@@ -10,7 +10,7 @@ pub struct ProfileConfig {
     #[serde(skip)]
     config_path: String,
     /// For restore on boot
-    pub active: Profile,
+    pub active_profile: Profile,
     /// States to restore
     pub fan_curves: Option<FanCurves>,
 }
@@ -19,13 +19,13 @@ impl ProfileConfig {
     fn new(config_path: String) -> Self {
         let mut platform = ProfileConfig {
             config_path,
-            active: Profile::Balanced,
+            active_profile: Profile::Balanced,
             fan_curves: None,
         };
 
         if let Ok(res) = FanCurveSet::is_supported() {
             if res {
-                let mut curves = FanCurves::default();
+                let curves = FanCurves::default();
                 platform.fan_curves = Some(curves);
             }
         }
