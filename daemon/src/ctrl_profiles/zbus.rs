@@ -1,6 +1,6 @@
 use log::warn;
-use rog_profiles::fan_curves::CurveData;
-use rog_profiles::fan_curves::FanCurveSet;
+use rog_profiles::fan_curve_set::CurveData;
+use rog_profiles::fan_curve_set::FanCurveSet;
 use rog_profiles::Profile;
 
 use std::sync::Arc;

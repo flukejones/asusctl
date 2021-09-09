@@ -4,7 +4,7 @@ use udev::Device;
 #[cfg(feature = "dbus")]
 use zvariant_derive::Type;
 
-use crate::{FanCurvePU, error::ProfileError, write_to_fan};
+use crate::{error::ProfileError, write_to_fan, FanCurvePU};
 
 pub fn pwm_str(fan: char, index: char) -> String {
     let mut buf = "pwm1_auto_point1_pwm".to_string();
@@ -34,11 +34,29 @@ pub struct CurveData {
     pub temp: [u8; 8],
 }
 
+/// A `FanCurveSet` contains both CPU and GPU fan curve data
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Deserialize, Serialize, Default, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct FanCurveSet {
     pub cpu: CurveData,
     pub gpu: CurveData,
+}
+
+impl Default for FanCurveSet {
+    fn default() -> Self {
+        Self {
+            cpu: CurveData {
+                fan: FanCurvePU::CPU,
+                pwm: [0u8; 8],
+                temp: [0u8; 8],
+            },
+            gpu: CurveData {
+                fan: FanCurvePU::GPU,
+                pwm: [0u8; 8],
+                temp: [0u8; 8],
+            },
+        }
+    }
 }
 
 impl FanCurveSet {
@@ -58,6 +76,14 @@ impl FanCurveSet {
         Err(ProfileError::NotSupported)
     }
 
+    pub fn is_supported() -> Result<bool, ProfileError> {
+        if Self::get_device().is_ok() {
+            return Ok(true);
+        }
+
+        Ok(false)
+    }
+
     pub fn new() -> Result<(Self, Device), ProfileError> {
         if let Ok(device) = Self::get_device() {
             let mut fans = Self {
@@ -68,24 +94,12 @@ impl FanCurveSet {
             fans.cpu.fan = FanCurvePU::CPU;
             fans.cpu.fan = FanCurvePU::GPU;
 
-            fans.init_from_device(&device);
+            fans.read_from_device(&device);
 
             return Ok((fans, device));
         }
 
         Err(ProfileError::NotSupported)
-    }
-
-    pub fn is_supported() -> Result<bool, ProfileError> {
-        if Self::get_device().is_ok() {
-            return Ok(true);
-        }
-
-        Ok(false)
-    }
-
-    pub fn update_from_device(&mut self, device: &Device) {
-        self.init_from_device(device);
     }
 
     fn set_val_from_attr(tmp: &str, device: &Device, buf: &mut [u8; 8]) {
@@ -97,7 +111,7 @@ impl FanCurveSet {
         }
     }
 
-    pub fn init_from_device(&mut self, device: &Device) {
+    pub fn read_from_device(&mut self, device: &Device) {
         for attr in device.attributes() {
             let tmp = attr.name().to_string_lossy();
             if tmp.starts_with("pwm1") && tmp.ends_with("_temp") {

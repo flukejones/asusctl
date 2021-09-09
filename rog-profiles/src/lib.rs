@@ -1,14 +1,14 @@
 pub mod error;
-pub mod fan_curves;
+pub mod fan_curve_set;
 
 use std::{
     fs::OpenOptions,
     io::{Read, Write},
-    path::{Path},
+    path::Path,
 };
 
 use error::ProfileError;
-use fan_curves::{CurveData, FanCurveSet};
+use fan_curve_set::{CurveData, FanCurveSet};
 use serde_derive::{Deserialize, Serialize};
 
 use udev::Device;
@@ -135,19 +135,18 @@ impl Default for FanCurvePU {
 /// Main purpose of `FanCurves` is to enable retoring state on system boot
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Deserialize, Serialize, Debug, Default)]
-pub struct FanCurves {
+pub struct FanCurveProfiles {
     enabled: Vec<Profile>,
     balanced: FanCurveSet,
     performance: FanCurveSet,
     quiet: FanCurveSet,
 }
 
-
-impl FanCurves {
+impl FanCurveProfiles {
     ///
-     pub fn init_from_platform(&mut self, profile: Profile, device: &Device) {
+    pub fn read_from_dev_profile(&mut self, profile: Profile, device: &Device) {
         let mut tmp = FanCurveSet::default();
-        tmp.init_from_device(device);
+        tmp.read_from_device(device);
         match profile {
             Profile::Balanced => self.balanced = tmp,
             Profile::Performance => self.performance = tmp,
@@ -214,7 +213,12 @@ impl FanCurves {
         }
     }
 
-    pub fn write_and_set_fan_curve(&mut self, curve: CurveData, profile: Profile, device: &mut Device) {
+    pub fn write_and_set_fan_curve(
+        &mut self,
+        curve: CurveData,
+        profile: Profile,
+        device: &mut Device,
+    ) {
         match curve.fan {
             FanCurvePU::CPU => write_to_fan(&curve, '1', device),
             FanCurvePU::GPU => write_to_fan(&curve, '2', device),
@@ -236,29 +240,31 @@ impl FanCurves {
     }
 }
 
-
 pub fn write_to_fan(curve: &CurveData, pwm_num: char, device: &mut Device) {
     let mut pwm = "pwmN_auto_pointN_pwm".to_string();
 
-    for (index,out) in curve.pwm.iter().enumerate() {
+    dbg!(&device);
+    for (index, out) in curve.pwm.iter().enumerate() {
         unsafe {
             let buf = pwm.as_bytes_mut();
             buf[3] = pwm_num as u8;
             // Should be quite safe to unwrap as we're not going over 8
-            buf[15] = char::from_digit(index as u32, 10).unwrap() as u8;
+            buf[15] = char::from_digit(index as u32 + 1, 10).unwrap() as u8;
         }
         let out = out.to_string();
+        dbg!(&pwm);
+        dbg!(&out);
         device.set_attribute_value(&pwm, &out).unwrap();
     }
 
     let mut pwm = "pwmN_auto_pointN_temp".to_string();
 
-    for (index,out) in curve.temp.iter().enumerate() {
+    for (index, out) in curve.temp.iter().enumerate() {
         unsafe {
             let buf = pwm.as_bytes_mut();
             buf[3] = pwm_num as u8;
             // Should be quite safe to unwrap as we're not going over 8
-            buf[15] = char::from_digit(index as u32, 10).unwrap() as u8;
+            buf[15] = char::from_digit(index as u32 + 1, 10).unwrap() as u8;
         }
         let out = out.to_string();
         device.set_attribute_value(&pwm, &out).unwrap();

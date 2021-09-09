@@ -375,7 +375,9 @@ fn handle_profile(
     supported: &PlatformProfileFunctions,
     cmd: &ProfileCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if !cmd.next && !cmd.list && !cmd.active_name && !cmd.active_data && !cmd.profiles_data {
+    println!("Warning: Profiles should work fine but now depend on power-profiles-daemon v0.9+");
+    println!("Warning: Fan-curve support is coming in a 4.1.x release");
+    if !cmd.next && !cmd.list {
         if !cmd.help {
             println!("Missing arg or command\n");
         }
@@ -394,13 +396,17 @@ fn handle_profile(
             println!("\n{}", lst);
         }
 
-        println!("Note: turbo, frequency, fan preset and fan curve options will apply to");
-        println!("      to the currently active profile unless a profile name is specified");
+        // println!("Note: turbo, frequency, fan preset and fan curve options will apply to");
+        // println!("      to the currently active profile unless a profile name is specified");
         std::process::exit(1);
     }
 
     if cmd.next {
         dbus.proxies().profile().next_profile()?;
+    }
+    if cmd.list {
+        let res = dbus.proxies().profile().profiles()?;
+        res.iter().for_each(|p| println!("{:?}", p));
     }
     Ok(())
 }

@@ -20,7 +20,7 @@ use daemon::{CtrlTask, Reloadable, ZbusAdd};
 use log::LevelFilter;
 use log::{error, info, warn};
 use rog_dbus::DBUS_NAME;
-use rog_profiles::fan_curves::FanCurveSet;
+use rog_profiles::fan_curve_set::FanCurveSet;
 use std::env;
 use std::error::Error;
 use std::io::Write;

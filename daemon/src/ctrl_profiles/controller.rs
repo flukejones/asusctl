@@ -2,8 +2,8 @@ use crate::error::RogError;
 use crate::GetSupported;
 use log::{info, warn};
 use rog_profiles::error::ProfileError;
-use rog_profiles::fan_curves::FanCurveSet;
-use rog_profiles::{Profile};
+use rog_profiles::fan_curve_set::FanCurveSet;
+use rog_profiles::Profile;
 use rog_supported::PlatformProfileFunctions;
 use udev::Device;
 
@@ -55,21 +55,33 @@ Please note that as of 24/08/2021 this is not final.
 impl crate::Reloadable for CtrlPlatformProfile {
     /// Fetch the active profile and use that to set all related components up
     fn reload(&mut self) -> Result<(), RogError> {
-            if let Some(curves) = &self.config.fan_curves {
-                if let Ok(mut device) = FanCurveSet::get_device() {
-                    curves.write_to_platform(self.config.active_profile, &mut device);
-                }
+        if let Some(curves) = &self.config.fan_curves {
+            if let Ok(mut device) = FanCurveSet::get_device() {
+                curves.write_to_platform(self.config.active_profile, &mut device);
             }
+        }
         Ok(())
     }
 }
 
 impl CtrlPlatformProfile {
-    pub fn new(config: ProfileConfig, fan_device: Option<Device>) -> Result<Self, RogError> {
+    pub fn new(mut config: ProfileConfig, fan_device: Option<Device>) -> Result<Self, RogError> {
         if Profile::is_platform_profile_supported() {
             info!("Device has profile control available");
+
+            if let Some(ref device) = fan_device {
+                let profile = config.active_profile;
+                config
+                    .fan_curves
+                    .as_mut()
+                    .unwrap()
+                    .read_from_dev_profile(profile, device);
+            }
+            config.write();
+
             return Ok(CtrlPlatformProfile { config, fan_device });
         }
+
         Err(ProfileError::NotSupported.into())
     }
 

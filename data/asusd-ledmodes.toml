@@ -109,3 +109,10 @@ board_names = ["GX550L"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
 multizone = false
 per_key = true
+
+[[led_data]]
+prod_family = "ROG Zephyrus Duo 15 SE"
+board_name = ["GX551Q"]
+standard ["Static", "Breathe", "Pulse", "Rainbow", "Strobe"]
+multizone = false
+per_key = true
