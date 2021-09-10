@@ -938,6 +938,7 @@ version = "1.0.0"
 dependencies = [
  "serde",
  "serde_derive",
+ "udev",
  "zvariant",
  "zvariant_derive",
 ]

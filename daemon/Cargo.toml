@@ -39,7 +39,7 @@ logind-zbus = "^0.7.1"
 serde = "^1.0"
 serde_derive = "^1.0"
 serde_json = "^1.0"
-toml = "^0.5"
+toml = "^0.5.8"
 
 # Device control
 sysfs-class = "^0.1.2" # used for backlight control and baord ID

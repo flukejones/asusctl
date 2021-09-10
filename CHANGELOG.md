@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   + `BREAKING:` plain `Image` with time period is changed and old anime configs break as a result (sorry)
 - LED:
   + By popular request LED prev/next cycle is added
+  + Add led modes for GX551Q
 ### BREAKING CHANGES
 - Graphics control:
   + graphics control is pulled out of asusd and moved to new package; https://gitlab.com/asus-linux/supergfxctl
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   + profiles now depend on power-profile-daemon plus kernel patches for support of platform_profile
     - if your system supports fan-curves you will also require upcoming kernel patches for this
   + profiles are now moved to a new file
+  + fan-curves are only partially completed due to this release needing to be done sooner
 
 # [3.7.2] - 2021-08-02
 ### Added

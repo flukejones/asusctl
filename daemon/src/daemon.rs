@@ -7,7 +7,6 @@ use daemon::ctrl_aura::controller::{
 };
 use daemon::ctrl_charge::CtrlCharge;
 use daemon::ctrl_profiles::config::ProfileConfig;
-use daemon::ctrl_profiles::controller::CtrlPlatformTask;
 use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
 };
@@ -21,6 +20,7 @@ use daemon::{CtrlTask, Reloadable, ZbusAdd};
 use log::LevelFilter;
 use log::{error, info, warn};
 use rog_dbus::DBUS_NAME;
+use rog_profiles::fan_curve_set::FanCurveSet;
 use std::env;
 use std::error::Error;
 use std::io::Write;
@@ -108,16 +108,19 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    let profile_config = Arc::new(Mutex::new(ProfileConfig::load(PROFILE_CONFIG_PATH.into())));
-    match CtrlPlatformProfile::new(profile_config.clone()) {
+    let fan_device = if let Ok(res) = FanCurveSet::get_device() {
+        Some(res)
+    } else {
+        None
+    };
+    let profile_config = ProfileConfig::load(PROFILE_CONFIG_PATH.into());
+    match CtrlPlatformProfile::new(profile_config, fan_device) {
         Ok(mut ctrl) => {
             ctrl.reload()
                 .unwrap_or_else(|err| warn!("Profile control: {}", err));
 
             let tmp = Arc::new(Mutex::new(ctrl));
             ProfileZbus::new(tmp).add_to_server(&mut object_server);
-
-            tasks.push(Box::new(CtrlPlatformTask::new(profile_config)));
         }
         Err(err) => {
             error!("Profile control: {}", err);

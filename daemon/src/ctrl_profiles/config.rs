@@ -1,5 +1,6 @@
 use log::{error, warn};
-use rog_profiles::{FanCurves, Profile};
+use rog_profiles::fan_curve_set::FanCurveSet;
+use rog_profiles::{FanCurveProfiles, Profile};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
@@ -9,23 +10,24 @@ pub struct ProfileConfig {
     #[serde(skip)]
     config_path: String,
     /// For restore on boot
-    pub active: Profile,
+    pub active_profile: Profile,
     /// States to restore
-    pub fan_curves: Option<FanCurves>,
+    pub fan_curves: Option<FanCurveProfiles>,
 }
 
 impl ProfileConfig {
     fn new(config_path: String) -> Self {
         let mut platform = ProfileConfig {
             config_path,
-            active: Profile::Balanced,
+            active_profile: Profile::get_active_profile().unwrap_or(Profile::Balanced),
             fan_curves: None,
         };
 
-        if FanCurves::is_fan_curves_supported() {
-            let mut curves = FanCurves::default();
-            curves.update_from_platform();
-            platform.fan_curves = Some(curves);
+        if let Ok(res) = FanCurveSet::is_supported() {
+            if res {
+                let curves = FanCurveProfiles::default();
+                platform.fan_curves = Some(curves);
+            }
         }
 
         platform
@@ -43,7 +45,7 @@ impl ProfileConfig {
         if let Ok(read_len) = file.read_to_string(&mut buf) {
             if read_len == 0 {
                 config = Self::new(config_path);
-            } else if let Ok(data) = serde_json::from_str(&buf) {
+            } else if let Ok(data) = toml::from_str(&buf) {
                 config = data;
                 config.config_path = config_path;
             } else {
@@ -68,7 +70,7 @@ impl ProfileConfig {
             if l == 0 {
                 warn!("File is empty {}", self.config_path);
             } else {
-                let mut data: ProfileConfig = serde_json::from_str(&buf)
+                let mut data: ProfileConfig = toml::from_str(&buf)
                     .unwrap_or_else(|_| panic!("Could not deserialise {}", self.config_path));
                 // copy over serde skipped values
                 data.config_path = self.config_path.clone();
@@ -79,8 +81,8 @@ impl ProfileConfig {
 
     pub fn write(&self) {
         let mut file = File::create(&self.config_path).expect("Couldn't overwrite config");
-        let json = serde_json::to_string_pretty(self).expect("Parse config to JSON failed");
-        file.write_all(json.as_bytes())
+        let data = toml::to_string(self).expect("Parse config to toml failed");
+        file.write_all(data.as_bytes())
             .unwrap_or_else(|err| error!("Could not write config: {}", err));
     }
 }

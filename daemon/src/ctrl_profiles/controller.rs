@@ -2,37 +2,16 @@ use crate::error::RogError;
 use crate::GetSupported;
 use log::{info, warn};
 use rog_profiles::error::ProfileError;
-use rog_profiles::{FanCurves, Profile};
+use rog_profiles::fan_curve_set::FanCurveSet;
+use rog_profiles::Profile;
 use rog_supported::PlatformProfileFunctions;
-use std::sync::Arc;
-use std::sync::Mutex;
+use udev::Device;
 
 use super::config::ProfileConfig;
 
-pub struct CtrlPlatformTask {
-    config: Arc<Mutex<ProfileConfig>>,
-}
-
-impl CtrlPlatformTask {
-    pub fn new(config: Arc<Mutex<ProfileConfig>>) -> Self {
-        Self { config }
-    }
-}
-
-impl crate::CtrlTask for CtrlPlatformTask {
-    fn do_task(&self) -> Result<(), RogError> {
-        if let Ok(mut lock) = self.config.try_lock() {
-            // Refresh the config in-case the user has edited it
-            if let Some(curves) = &mut lock.fan_curves {
-                curves.update_from_platform();
-            }
-        }
-        Ok(())
-    }
-}
-
 pub struct CtrlPlatformProfile {
-    pub config: Arc<Mutex<ProfileConfig>>,
+    pub config: ProfileConfig,
+    pub fan_device: Option<Device>,
 }
 
 impl GetSupported for CtrlPlatformProfile {
@@ -48,7 +27,14 @@ https://lkml.org/lkml/2021/8/18/1022
 "#
             );
         }
-        if !FanCurves::is_fan_curves_supported() {
+
+        let res = FanCurveSet::is_supported();
+        let mut fan_curve_supported = res.is_err();
+        if let Ok(r) = res {
+            fan_curve_supported = r;
+        };
+
+        if fan_curve_supported {
             info!(
                 r#"
 fan curves kernel interface not found, your laptop does not support this, or the interface is missing.
@@ -58,9 +44,10 @@ Please note that as of 24/08/2021 this is not final.
 "#
             );
         }
+
         PlatformProfileFunctions {
             platform_profile: Profile::is_platform_profile_supported(),
-            fan_curves: FanCurves::is_fan_curves_supported(),
+            fan_curves: fan_curve_supported,
         }
     }
 }
@@ -68,9 +55,9 @@ Please note that as of 24/08/2021 this is not final.
 impl crate::Reloadable for CtrlPlatformProfile {
     /// Fetch the active profile and use that to set all related components up
     fn reload(&mut self) -> Result<(), RogError> {
-        if let Ok(cfg) = self.config.clone().try_lock() {
-            if let Some(curves) = &cfg.fan_curves {
-                curves.update_platform();
+        if let Some(curves) = &self.config.fan_curves {
+            if let Ok(mut device) = FanCurveSet::get_device() {
+                curves.write_to_platform(self.config.active_profile, &mut device);
             }
         }
         Ok(())
@@ -78,43 +65,56 @@ impl crate::Reloadable for CtrlPlatformProfile {
 }
 
 impl CtrlPlatformProfile {
-    pub fn new(config: Arc<Mutex<ProfileConfig>>) -> Result<Self, RogError> {
+    pub fn new(mut config: ProfileConfig, fan_device: Option<Device>) -> Result<Self, RogError> {
         if Profile::is_platform_profile_supported() {
             info!("Device has profile control available");
-            return Ok(CtrlPlatformProfile { config });
+
+            if let Some(ref device) = fan_device {
+                let profile = config.active_profile;
+                config
+                    .fan_curves
+                    .as_mut()
+                    .unwrap()
+                    .read_from_dev_profile(profile, device);
+            }
+            config.write();
+
+            return Ok(CtrlPlatformProfile { config, fan_device });
         }
+
         Err(ProfileError::NotSupported.into())
     }
 
+    pub fn get_device(&self) -> Option<Device> {
+        self.fan_device.clone()
+    }
+
     pub fn save_config(&self) {
-        if let Ok(lock) = self.config.lock() {
-            lock.write();
-        }
+        self.config.write();
     }
 
     /// Toggle to next profile in list. This will first read the config, switch, then write out
     pub(super) fn set_next_profile(&mut self) -> Result<(), RogError> {
-        if let Ok(mut config) = self.config.clone().try_lock() {
-            // Read first just incase the user has modified the config before calling this
-            config.read();
+        // Read first just incase the user has modified the config before calling this
+        self.config.read();
 
-            match config.active {
-                Profile::Balanced => {
-                    Profile::set_profile(Profile::Performance)?;
-                    config.active = Profile::Performance;
-                }
-                Profile::Performance => {
-                    Profile::set_profile(Profile::Quiet)?;
-                    config.active = Profile::Quiet;
-                }
-                Profile::Quiet => {
-                    Profile::set_profile(Profile::Balanced)?;
-                    config.active = Profile::Balanced;
-                }
+        match self.config.active_profile {
+            Profile::Balanced => {
+                Profile::set_profile(Profile::Performance)?;
+                self.config.active_profile = Profile::Performance;
             }
-
-            config.write();
+            Profile::Performance => {
+                Profile::set_profile(Profile::Quiet)?;
+                self.config.active_profile = Profile::Quiet;
+            }
+            Profile::Quiet => {
+                Profile::set_profile(Profile::Balanced)?;
+                self.config.active_profile = Profile::Balanced;
+            }
         }
+
+        self.config.write();
+
         Ok(())
     }
 }

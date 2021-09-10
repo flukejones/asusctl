@@ -1,25 +1,41 @@
 pub mod error;
+pub mod fan_curve_set;
 
 use std::{
     fs::OpenOptions,
     io::{Read, Write},
-    path::{Path, PathBuf},
+    path::Path,
 };
 
 use error::ProfileError;
+use fan_curve_set::{CurveData, FanCurveSet};
 use serde_derive::{Deserialize, Serialize};
 
+use udev::Device;
 #[cfg(feature = "dbus")]
 use zvariant_derive::Type;
 
 pub static PLATFORM_PROFILE: &str = "/sys/firmware/acpi/platform_profile";
 pub static PLATFORM_PROFILES: &str = "/sys/firmware/acpi/platform_profile_choices";
 
-pub static FAN_CURVE_BASE_PATH: &str = "/sys/devices/platform/asus-nb-wmi/";
-pub static FAN_CURVE_ACTIVE_FILE: &str = "enabled_fan_curve_profiles";
-pub static FAN_CURVE_FILENAME_PART: &str = "_fan_curve_";
-
 pub static VERSION: &str = env!("CARGO_PKG_VERSION");
+
+pub fn find_fan_curve_node() -> Result<Option<Device>, ProfileError> {
+    let mut enumerator = udev::Enumerator::new()?;
+    enumerator.match_subsystem("hwmon")?;
+
+    for device in enumerator.scan_devices()? {
+        if device.parent_with_subsystem("platform")?.is_some() {
+            if let Some(name) = device.attribute_value("name") {
+                if name == "asus_custom_fan_curve" {
+                    return Ok(Some(device));
+                }
+            }
+        }
+    }
+
+    Err(ProfileError::NotSupported)
+}
 
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Deserialize, Serialize, Debug, Clone, Copy)]
@@ -116,82 +132,47 @@ impl Default for FanCurvePU {
     }
 }
 
-#[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Deserialize, Serialize, Default, Debug, Clone)]
-pub struct FanCurve {
-    pub profile: Profile,
-    pub cpu: String,
-    pub gpu: String,
-}
-
 /// Main purpose of `FanCurves` is to enable retoring state on system boot
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Deserialize, Serialize, Debug)]
-pub struct FanCurves {
+#[derive(Deserialize, Serialize, Debug, Default)]
+pub struct FanCurveProfiles {
     enabled: Vec<Profile>,
-    balanced: FanCurve,
-    performance: FanCurve,
-    quiet: FanCurve,
+    balanced: FanCurveSet,
+    performance: FanCurveSet,
+    quiet: FanCurveSet,
 }
 
-impl Default for FanCurves {
-    fn default() -> Self {
-        let mut curves = Self {
-            enabled: Default::default(),
-            balanced: Default::default(),
-            performance: Default::default(),
-            quiet: Default::default(),
+impl FanCurveProfiles {
+    ///
+    pub fn read_from_dev_profile(&mut self, profile: Profile, device: &Device) {
+        let mut tmp = FanCurveSet::default();
+        tmp.read_from_device(device);
+        match profile {
+            Profile::Balanced => self.balanced = tmp,
+            Profile::Performance => self.performance = tmp,
+            Profile::Quiet => self.quiet = tmp,
+        }
+    }
+
+    pub fn write_to_platform(&self, profile: Profile, device: &mut Device) {
+        let fans = match profile {
+            Profile::Balanced => &self.balanced,
+            Profile::Performance => &self.performance,
+            Profile::Quiet => &self.quiet,
         };
-        curves.balanced.profile = Profile::Balanced;
-        curves.performance.profile = Profile::Performance;
-        curves.quiet.profile = Profile::Quiet;
-        curves
-    }
-}
-
-impl FanCurves {
-    pub fn is_fan_curves_supported() -> bool {
-        let mut path = PathBuf::new();
-        path.push(FAN_CURVE_BASE_PATH);
-        path.push(FAN_CURVE_ACTIVE_FILE);
-        path.exists()
+        fans.write_cpu_fan(device);
+        fans.write_gpu_fan(device);
     }
 
-    pub fn update_from_platform(&mut self) {
-        self.balanced.cpu = Self::get_fan_curve_from_file(Profile::Balanced, FanCurvePU::CPU);
-        self.balanced.gpu = Self::get_fan_curve_from_file(Profile::Balanced, FanCurvePU::GPU);
-
-        self.performance.cpu = Self::get_fan_curve_from_file(Profile::Performance, FanCurvePU::CPU);
-        self.performance.gpu = Self::get_fan_curve_from_file(Profile::Performance, FanCurvePU::GPU);
-
-        self.quiet.cpu = Self::get_fan_curve_from_file(Profile::Quiet, FanCurvePU::CPU);
-        self.quiet.gpu = Self::get_fan_curve_from_file(Profile::Quiet, FanCurvePU::GPU);
-    }
-
-    pub fn update_platform(&self) {
-        Self::set_fan_curve_for_platform(Profile::Balanced, FanCurvePU::CPU, &self.balanced.cpu);
-        Self::set_fan_curve_for_platform(Profile::Balanced, FanCurvePU::GPU, &self.balanced.gpu);
-
-        Self::set_fan_curve_for_platform(
-            Profile::Performance,
-            FanCurvePU::CPU,
-            &self.performance.cpu,
-        );
-        Self::set_fan_curve_for_platform(
-            Profile::Performance,
-            FanCurvePU::GPU,
-            &self.performance.gpu,
-        );
-
-        Self::set_fan_curve_for_platform(Profile::Quiet, FanCurvePU::CPU, &self.quiet.cpu);
-        Self::set_fan_curve_for_platform(Profile::Quiet, FanCurvePU::GPU, &self.quiet.gpu);
-    }
-
-    pub fn get_enabled_curve_names(&self) -> &[Profile] {
+    pub fn get_enabled_curve_profiles(&self) -> &[Profile] {
         &self.enabled
     }
 
-    pub fn get_all_fan_curves(&self) -> Vec<FanCurve> {
+    pub fn set_enabled_curve_profiles(&mut self, profiles: Vec<Profile>) {
+        self.enabled = profiles
+    }
+
+    pub fn get_all_fan_curves(&self) -> Vec<FanCurveSet> {
         vec![
             self.balanced.clone(),
             self.performance.clone(),
@@ -199,7 +180,7 @@ impl FanCurves {
         ]
     }
 
-    pub fn get_active_fan_curves(&self) -> &FanCurve {
+    pub fn get_active_fan_curves(&self) -> &FanCurveSet {
         match Profile::get_active_profile().unwrap() {
             Profile::Balanced => &self.balanced,
             Profile::Performance => &self.performance,
@@ -207,7 +188,7 @@ impl FanCurves {
         }
     }
 
-    pub fn get_fan_curves_for(&self, name: Profile) -> &FanCurve {
+    pub fn get_fan_curves_for(&self, name: Profile) -> &FanCurveSet {
         match name {
             Profile::Balanced => &self.balanced,
             Profile::Performance => &self.performance,
@@ -215,23 +196,7 @@ impl FanCurves {
         }
     }
 
-    fn get_fan_curve_from_file(name: Profile, pu: FanCurvePU) -> String {
-        let mut file: String = FAN_CURVE_BASE_PATH.into();
-        file.push_str(pu.into());
-        file.push_str(FAN_CURVE_FILENAME_PART);
-        file.push_str(name.into());
-
-        let mut file = OpenOptions::new()
-            .read(true)
-            .open(&file)
-            .unwrap_or_else(|_| panic!("{} not found", &file));
-
-        let mut buf = String::new();
-        file.read_to_string(&mut buf).unwrap();
-        buf.trim().to_string()
-    }
-
-    pub fn get_fan_curve_for(&self, name: &Profile, pu: &FanCurvePU) -> &str {
+    pub fn get_fan_curve_for(&self, name: &Profile, pu: &FanCurvePU) -> &CurveData {
         match name {
             Profile::Balanced => match pu {
                 FanCurvePU::CPU => &self.balanced.cpu,
@@ -248,38 +213,60 @@ impl FanCurves {
         }
     }
 
-    fn set_fan_curve_for_platform(name: Profile, pu: FanCurvePU, curve: &str) {
-        let mut file: String = FAN_CURVE_BASE_PATH.into();
-        file.push_str(pu.into());
-        file.push_str(FAN_CURVE_FILENAME_PART);
-        file.push_str(name.into());
+    pub fn write_and_set_fan_curve(
+        &mut self,
+        curve: CurveData,
+        profile: Profile,
+        device: &mut Device,
+    ) {
+        match curve.fan {
+            FanCurvePU::CPU => write_to_fan(&curve, '1', device),
+            FanCurvePU::GPU => write_to_fan(&curve, '2', device),
+        }
+        match profile {
+            Profile::Balanced => match curve.fan {
+                FanCurvePU::CPU => self.balanced.cpu = curve,
+                FanCurvePU::GPU => self.balanced.gpu = curve,
+            },
+            Profile::Performance => match curve.fan {
+                FanCurvePU::CPU => self.performance.cpu = curve,
+                FanCurvePU::GPU => self.performance.gpu = curve,
+            },
+            Profile::Quiet => match curve.fan {
+                FanCurvePU::CPU => self.quiet.cpu = curve,
+                FanCurvePU::GPU => self.quiet.gpu = curve,
+            },
+        }
+    }
+}
 
-        let mut file = OpenOptions::new()
-            .write(true)
-            .open(&file)
-            .unwrap_or_else(|_| panic!("{} not found", &file));
+pub fn write_to_fan(curve: &CurveData, pwm_num: char, device: &mut Device) {
+    let mut pwm = "pwmN_auto_pointN_pwm".to_string();
 
-        file.write_all(curve.as_bytes()).unwrap();
+    dbg!(&device);
+    for (index, out) in curve.pwm.iter().enumerate() {
+        unsafe {
+            let buf = pwm.as_bytes_mut();
+            buf[3] = pwm_num as u8;
+            // Should be quite safe to unwrap as we're not going over 8
+            buf[15] = char::from_digit(index as u32 + 1, 10).unwrap() as u8;
+        }
+        let out = out.to_string();
+        dbg!(&pwm);
+        dbg!(&out);
+        device.set_attribute_value(&pwm, &out).unwrap();
     }
 
-    pub fn set_fan_curve(&mut self, curve: FanCurve) {
-        // First, set the profiles.
-        Self::set_fan_curve_for_platform(curve.profile, FanCurvePU::CPU, &curve.cpu);
-        match curve.profile {
-            Profile::Balanced => self.balanced.cpu = curve.cpu,
-            Profile::Performance => self.performance.cpu = curve.cpu,
-            Profile::Quiet => self.quiet.cpu = curve.cpu,
-        };
+    let mut pwm = "pwmN_auto_pointN_temp".to_string();
 
-        Self::set_fan_curve_for_platform(curve.profile, FanCurvePU::GPU, &curve.gpu);
-        match curve.profile {
-            Profile::Balanced => self.balanced.gpu = curve.gpu,
-            Profile::Performance => self.performance.gpu = curve.gpu,
-            Profile::Quiet => self.quiet.cpu = curve.gpu,
-        };
-
-        // Any curve that was blank will have been reset, so repopulate the settings
-        // Note: successfully set curves will just be re-read in.
-        self.update_from_platform();
+    for (index, out) in curve.temp.iter().enumerate() {
+        unsafe {
+            let buf = pwm.as_bytes_mut();
+            buf[3] = pwm_num as u8;
+            // Should be quite safe to unwrap as we're not going over 8
+            buf[15] = char::from_digit(index as u32 + 1, 10).unwrap() as u8;
+        }
+        let out = out.to_string();
+        device.set_attribute_value(&pwm, &out).unwrap();
     }
 }

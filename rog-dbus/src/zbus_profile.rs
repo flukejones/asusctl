@@ -21,7 +21,7 @@
 
 use std::sync::mpsc::Sender;
 
-use rog_profiles::{FanCurve, Profile};
+use rog_profiles::{fan_curve_set::FanCurveSet, Profile};
 use zbus::{dbus_proxy, Connection, Result};
 
 #[dbus_proxy(
@@ -29,29 +29,29 @@ use zbus::{dbus_proxy, Connection, Result};
     default_path = "/org/asuslinux/Profile"
 )]
 trait Daemon {
-    /// Profiles method
-    fn profiles(&self) -> zbus::Result<Vec<Profile>>;
-
-    /// NextProfile method
-    fn next_profile(&self) -> zbus::Result<()>;
+    /// Get the active `Profile` data
+    fn active_fan_curve_data(&self) -> zbus::Result<FanCurveSet>;
 
     /// Profile, get the active profile
     fn active_profile(&self) -> zbus::Result<Profile>;
 
-    /// Set the specific profile as active
-    fn set_active_profile(&self, profile: Profile) -> zbus::Result<()>;
-
     /// Get enabled fan curves
     fn enabled_fan_profiles(&self) -> zbus::Result<Vec<Profile>>;
 
-    /// Get the active `Profile` data
-    fn active_fan_data(&self) -> zbus::Result<FanCurve>;
-
     /// Get all fan curve data
-    fn fan_curves(&self) -> zbus::Result<Vec<FanCurve>>;
+    fn fan_curves(&self) -> zbus::Result<Vec<FanCurveSet>>;
+
+    /// NextProfile method
+    fn next_profile(&self) -> zbus::Result<()>;
+
+    /// Profiles method
+    fn profiles(&self) -> zbus::Result<Vec<Profile>>;
+
+    /// Set the specific profile as active
+    fn set_active_profile(&self, profile: Profile) -> zbus::Result<()>;
 
     /// Set a fan curve. If a field is empty then the exisiting saved curve is used
-    fn set_fan_curve(&self, curve: FanCurve) -> zbus::Result<()>;
+    fn set_fan_curve(&self, curve: FanCurveSet) -> zbus::Result<()>;
 
     /// NotifyProfile signal
     #[dbus_proxy(signal)]
