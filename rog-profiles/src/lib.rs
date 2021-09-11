@@ -243,7 +243,6 @@ impl FanCurveProfiles {
 pub fn write_to_fan(curve: &CurveData, pwm_num: char, device: &mut Device) {
     let mut pwm = "pwmN_auto_pointN_pwm".to_string();
 
-    dbg!(&device);
     for (index, out) in curve.pwm.iter().enumerate() {
         unsafe {
             let buf = pwm.as_bytes_mut();
@@ -252,8 +251,6 @@ pub fn write_to_fan(curve: &CurveData, pwm_num: char, device: &mut Device) {
             buf[15] = char::from_digit(index as u32 + 1, 10).unwrap() as u8;
         }
         let out = out.to_string();
-        dbg!(&pwm);
-        dbg!(&out);
         device.set_attribute_value(&pwm, &out).unwrap();
     }
 

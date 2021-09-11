@@ -96,6 +96,14 @@ standard = ["Static", "Breathe", "Pulse"]
 multizone = false
 per_key = false
 
+# GA503QE at higher priority (first match) than GA503Q
+[[led_data]]
+prod_family = "ROG Zephyrus G15"
+board_names = ["GA503QE"]
+standard = ["Static", "Breathe", "Pulse"]
+multizone = false
+per_key = false
+
 [[led_data]]
 prod_family = "ROG Zephyrus G15"
 board_names = ["GA503Q"]
@@ -112,7 +120,7 @@ per_key = true
 
 [[led_data]]
 prod_family = "ROG Zephyrus Duo 15 SE"
-board_name = ["GX551Q"]
-standard ["Static", "Breathe", "Pulse", "Rainbow", "Strobe"]
+board_names = ["GX551Q"]
+standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
 multizone = false
 per_key = true
