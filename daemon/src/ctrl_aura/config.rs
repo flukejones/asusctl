@@ -105,8 +105,17 @@ impl AuraConfig {
                     info!("Updated AuraConfig version");
                     return config;
                 }
-                warn!("Could not deserialise {}", AURA_CONFIG_PATH);
-                panic!("Please remove {} then restart asusd", AURA_CONFIG_PATH);
+                warn!(
+                    "Could not deserialise {}.\nWill rename to {}-old and recreate config",
+                    AURA_CONFIG_PATH, AURA_CONFIG_PATH
+                );
+                let cfg_old = AURA_CONFIG_PATH.to_string() + "-old";
+                std::fs::rename(AURA_CONFIG_PATH, cfg_old).unwrap_or_else(|err| {
+                    panic!(
+                        "Could not rename. Please remove {} then restart service: Error {}",
+                        AURA_CONFIG_PATH, err
+                    )
+                });
             }
         }
         AuraConfig::create_default(&mut file, supported_led_modes)

@@ -7,6 +7,7 @@ use daemon::ctrl_aura::controller::{
 };
 use daemon::ctrl_charge::CtrlCharge;
 use daemon::ctrl_profiles::config::ProfileConfig;
+use daemon::ctrl_profiles::controller::CtrlProfileTask;
 use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
 };
@@ -20,7 +21,7 @@ use daemon::{CtrlTask, Reloadable, ZbusAdd};
 use log::LevelFilter;
 use log::{error, info, warn};
 use rog_dbus::DBUS_NAME;
-use rog_profiles::fan_curve_set::FanCurveSet;
+use rog_profiles::Profile;
 use std::env;
 use std::error::Error;
 use std::io::Write;
@@ -108,23 +109,24 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    let fan_device = if let Ok(res) = FanCurveSet::get_device() {
-        Some(res)
-    } else {
-        None
-    };
-    let profile_config = ProfileConfig::load(PROFILE_CONFIG_PATH.into());
-    match CtrlPlatformProfile::new(profile_config, fan_device) {
-        Ok(mut ctrl) => {
-            ctrl.reload()
-                .unwrap_or_else(|err| warn!("Profile control: {}", err));
+    if Profile::is_platform_profile_supported() {
+        let profile_config = ProfileConfig::load(PROFILE_CONFIG_PATH.into());
+        match CtrlPlatformProfile::new(profile_config) {
+            Ok(mut ctrl) => {
+                ctrl.reload()
+                    .unwrap_or_else(|err| warn!("Profile control: {}", err));
 
-            let tmp = Arc::new(Mutex::new(ctrl));
-            ProfileZbus::new(tmp).add_to_server(&mut object_server);
+                let tmp = Arc::new(Mutex::new(ctrl));
+                ProfileZbus::new(tmp.clone()).add_to_server(&mut object_server);
+
+                tasks.push(Box::new(CtrlProfileTask::new(tmp)));
+            }
+            Err(err) => {
+                error!("Profile control: {}", err);
+            }
         }
-        Err(err) => {
-            error!("Profile control: {}", err);
-        }
+    } else {
+        warn!("platform_profile support not found. This requires kernel 5.15.x or the patch applied: https://lkml.org/lkml/2021/8/18/1022");
     }
 
     match CtrlAnime::new(AnimeConfig::load()) {

@@ -1,7 +1,7 @@
 use crate::{
     anime_cli::AnimeCommand,
     aura_cli::{LedBrightness, SetAuraBuiltin},
-    profiles_cli::ProfileCommand,
+    profiles_cli::{FanCurveCommand, ProfileCommand},
 };
 use gumdrop::Options;
 use supergfxctl::gfx_vendors::GfxVendors;
@@ -30,8 +30,10 @@ pub struct CliStart {
 pub enum CliCommand {
     #[options(help = "Set the keyboard lighting from built-in modes")]
     LedMode(LedModeCommand),
-    #[options(help = "Create and configure profiles")]
+    #[options(help = "Set or select platform_profile")]
     Profile(ProfileCommand),
+    #[options(help = "Set, select, or modify fan curves if suported")]
+    FanCurve(FanCurveCommand),
     #[options(help = "Set the graphics mode")]
     Graphics(GraphicsCommand),
     #[options(name = "anime", help = "Manage AniMe Matrix")]

@@ -1,6 +1,6 @@
 [package]
 name = "asusctl"
-version = "4.0.0"
+version = "4.0.2"
 authors = ["Luke D Jones <luke@ljones.dev>"]
 edition = "2018"
 
@@ -16,6 +16,7 @@ rog_supported = { path = "../rog-supported" }
 daemon = { path = "../daemon" }
 gumdrop = "^0.8"
 supergfxctl = { git = "https://gitlab.com/asus-linux/supergfxctl.git", tag = "2.0.0" }
+toml = "^0.5.8"
 
 sysfs-class = "^0.1.2"
 

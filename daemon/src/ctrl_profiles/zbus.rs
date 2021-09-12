@@ -35,11 +35,13 @@ impl ProfileZbus {
         ))
     }
 
-    /// Toggle to next platform_profile. Names provided by `Profiles`
+    /// Toggle to next platform_profile. Names provided by `Profiles`.
+    /// If fan-curves are supported will also activate a fan curve for profile.
     fn next_profile(&mut self) {
         if let Ok(mut ctrl) = self.inner.try_lock() {
             ctrl.set_next_profile()
                 .unwrap_or_else(|err| warn!("{}", err));
+            ctrl.save_config();
         }
         self.do_notification();
     }
@@ -61,9 +63,12 @@ impl ProfileZbus {
             // Read first just incase the user has modified the config before calling this
             ctrl.config.read();
             Profile::set_profile(profile)
-                .map_err(|e| warn!("Profile::set_profile, {}", e))
+                .map_err(|e| warn!("set_profile, {}", e))
                 .ok();
             ctrl.config.active_profile = profile;
+            ctrl.write_profile_curve_to_platform()
+                .map_err(|e| warn!("write_profile_curve_to_platform, {}", e))
+                .ok();
 
             ctrl.save_config();
         }
@@ -84,14 +89,23 @@ impl ProfileZbus {
         ))
     }
 
-    /// Get a list of profiles that have fan-curves enabled.
-    fn set_enabled_fan_profiles(&mut self, profiles: Vec<Profile>) -> zbus::fdo::Result<()> {
+    /// Set a profile fan curve enabled status. Will also activate a fan curve if in the
+    /// same profile mode
+    fn set_fan_curve_enabled(&mut self, profile: Profile, enabled: bool) -> zbus::fdo::Result<()> {
         if let Ok(mut ctrl) = self.inner.try_lock() {
             ctrl.config.read();
             if let Some(curves) = &mut ctrl.config.fan_curves {
-                curves.set_enabled_curve_profiles(profiles);
+                curves.set_profile_curve_enabled(profile, enabled);
+
+                ctrl.write_profile_curve_to_platform()
+                    .map_err(|e| warn!("write_profile_curve_to_platform, {}", e))
+                    .ok();
+
+                ctrl.save_config();
+                return Ok(());
+            } else {
+                return Err(Error::Failed(UNSUPPORTED_MSG.to_string()));
             }
-            return Err(Error::Failed(UNSUPPORTED_MSG.to_string()));
         }
         Err(Error::Failed(
             "Failed to get enabled fan curve names".to_string(),
@@ -99,46 +113,51 @@ impl ProfileZbus {
     }
 
     /// Get the fan-curve data for the currently active Profile
-    fn active_fan_curve_data(&mut self) -> zbus::fdo::Result<FanCurveSet> {
+    fn fan_curve_data(&mut self, profile: Profile) -> zbus::fdo::Result<FanCurveSet> {
         if let Ok(mut ctrl) = self.inner.try_lock() {
             ctrl.config.read();
             if let Some(curves) = &ctrl.config.fan_curves {
-                return Ok((*curves.get_active_fan_curves()).clone());
+                let curve = curves.get_fan_curves_for(profile);
+                return Ok(curve.clone());
             }
             return Err(Error::Failed(UNSUPPORTED_MSG.to_string()));
         }
         Err(Error::Failed("Failed to get fan curve data".to_string()))
     }
 
-    /// Get fan-curve data for each Profile as an array of objects
-    fn fan_curves(&self) -> zbus::fdo::Result<Vec<FanCurveSet>> {
+    /// Set the fan curve for the specified profile.
+    /// Will also activate the fan curve if the user is in the same mode.
+    fn set_fan_curve(&self, profile: Profile, curve: CurveData) -> zbus::fdo::Result<()> {
         if let Ok(mut ctrl) = self.inner.try_lock() {
             ctrl.config.read();
-            if let Some(curves) = &ctrl.config.fan_curves {
-                return Ok(curves.get_all_fan_curves());
-            }
-            return Err(Error::Failed(UNSUPPORTED_MSG.to_string()));
-        }
-        Err(Error::Failed("Failed to get all fan curves".to_string()))
-    }
-
-    /// Set this fan-curve data
-    fn set_fan_curve(&self, curve: CurveData) -> zbus::fdo::Result<()> {
-        if let Ok(mut ctrl) = self.inner.try_lock() {
-            ctrl.config.read();
-            let profile = ctrl.config.active_profile;
-            if let Some(mut device) = ctrl.get_device() {
-                if let Some(curves) = &mut ctrl.config.fan_curves {
-                    curves.write_and_set_fan_curve(curve, profile, &mut device);
-                }
+            if let Some(curves) = &mut ctrl.config.fan_curves {
+                curves
+                    .save_fan_curve(curve, profile)
+                    .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
             } else {
                 return Err(Error::Failed(UNSUPPORTED_MSG.to_string()));
             }
-
+            ctrl.write_profile_curve_to_platform()
+                .map_err(|e| warn!("Profile::set_profile, {}", e))
+                .ok();
             ctrl.save_config();
         }
+        Ok(())
+    }
 
-        Err(Error::Failed("Failed to set fan curves".to_string()))
+    /// Reset the stored (self) and device curve to the defaults of the platform.
+    ///
+    /// Each platform_profile has a different default and the defualt can be read
+    /// only for the currently active profile.
+    fn set_active_curve_to_defaults(&self) -> zbus::fdo::Result<()> {
+        if let Ok(mut ctrl) = self.inner.try_lock() {
+            ctrl.config.read();
+            ctrl.set_active_curve_to_defaults()
+                .map_err(|e| warn!("Profile::set_active_curve_to_defaults, {}", e))
+                .ok();
+            ctrl.save_config();
+        }
+        Ok(())
     }
 
     #[dbus_interface(signal)]

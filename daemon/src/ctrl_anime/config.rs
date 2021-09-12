@@ -166,11 +166,17 @@ impl AnimeConfig {
                     info!("Updated config version to: {}", VERSION);
                     return config;
                 }
-                AnimeConfig::write_backup(buf);
                 warn!(
-                    "Could not deserialise {}. Backed up as *-old",
-                    ANIME_CONFIG_PATH
+                    "Could not deserialise {}.\nWill rename to {}-old and recreate config",
+                    ANIME_CONFIG_PATH, ANIME_CONFIG_PATH
                 );
+                let cfg_old = ANIME_CONFIG_PATH.to_string() + "-old";
+                std::fs::rename(ANIME_CONFIG_PATH, cfg_old).unwrap_or_else(|err| {
+                    panic!(
+                        "Could not rename. Please remove {} then restart service: Error {}",
+                        ANIME_CONFIG_PATH, err
+                    )
+                });
             }
         }
         AnimeConfig::create_default(&mut file)
@@ -244,14 +250,6 @@ impl AnimeConfig {
         let mut file = File::create(ANIME_CONFIG_PATH).expect("Couldn't overwrite config");
         let json = serde_json::to_string_pretty(self).expect("Parse config to JSON failed");
         file.write_all(json.as_bytes())
-            .unwrap_or_else(|err| error!("Could not write config: {}", err));
-    }
-
-    fn write_backup(buf: String) {
-        let mut path = ANIME_CONFIG_PATH.to_string();
-        path.push_str("-old");
-        let mut file = File::create(&path).expect("Couldn't overwrite config");
-        file.write_all(buf.as_bytes())
             .unwrap_or_else(|err| error!("Could not write config: {}", err));
     }
 }

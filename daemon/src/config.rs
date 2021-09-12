@@ -34,8 +34,18 @@ impl Config {
             } else if let Ok(data) = serde_json::from_str(&buf) {
                 config = data;
             } else {
-                warn!("Could not deserialise {}", CONFIG_PATH);
-                panic!("Please remove {} then restart asusd", CONFIG_PATH);
+                warn!(
+                    "Could not deserialise {}.\nWill rename to {}-old and recreate config",
+                    CONFIG_PATH, CONFIG_PATH
+                );
+                let cfg_old = CONFIG_PATH.to_string() + "-old";
+                std::fs::rename(CONFIG_PATH, cfg_old).unwrap_or_else(|err| {
+                    panic!(
+                        "Could not rename. Please remove {} then restart service: Error {}",
+                        CONFIG_PATH, err
+                    )
+                });
+                config = Self::new();
             }
         } else {
             config = Self::new()

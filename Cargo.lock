@@ -45,7 +45,7 @@ dependencies = [
 
 [[package]]
 name = "asusctl"
-version = "4.0.0"
+version = "4.0.2"
 dependencies = [
  "daemon",
  "gif",
@@ -59,6 +59,7 @@ dependencies = [
  "supergfxctl",
  "sysfs-class",
  "tinybmp",
+ "toml",
  "zbus",
 ]
 
@@ -209,7 +210,7 @@ dependencies = [
 
 [[package]]
 name = "daemon"
-version = "4.0.1"
+version = "4.0.2"
 dependencies = [
  "env_logger",
  "log",
@@ -920,7 +921,7 @@ dependencies = [
 
 [[package]]
 name = "rog_dbus"
-version = "4.0.0"
+version = "4.0.2"
 dependencies = [
  "rog_anime",
  "rog_aura",
@@ -934,7 +935,7 @@ dependencies = [
 
 [[package]]
 name = "rog_profiles"
-version = "1.0.1"
+version = "1.1.2"
 dependencies = [
  "serde",
  "serde_derive",
