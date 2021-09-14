@@ -124,3 +124,10 @@ board_names = ["GX551Q"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
 multizone = false
 per_key = true
+
+[[led_data]]
+prod_family = "ROG Flow X13"
+board_names = ["GV301QH", "GV301QE"]
+standard = ["Static", "Breathe", "Pulse"]
+multizone = false
+per_key = false
