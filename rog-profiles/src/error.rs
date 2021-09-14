@@ -8,7 +8,11 @@ pub enum ProfileError {
     NotSupported,
     NotFound(String),
     Io(std::io::Error),
-    //Zbus(zbus::Error),
+    ParseProfileName,
+    ParseFanCurveDigit(std::num::ParseIntError),
+    /// (pwm/temp, prev, next)
+    ParseFanCurvePrevHigher(&'static str, u8, u8),
+    // Zbus(zbus::Error),
 }
 
 impl fmt::Display for ProfileError {
@@ -21,7 +25,16 @@ impl fmt::Display for ProfileError {
             ProfileError::NotSupported => write!(f, "Not supported"),
             ProfileError::NotFound(deets) => write!(f, "Not found: {}", deets),
             ProfileError::Io(detail) => write!(f, "std::io error: {}", detail),
-            //Error::Zbus(detail) => write!(f, "Zbus error: {}", detail),
+            ProfileError::ParseProfileName => write!(f, "Invalid profile name"),
+            ProfileError::ParseFanCurveDigit(e) => {
+                write!(f, "Could not parse number to 0-255: {}", e)
+            }
+            ProfileError::ParseFanCurvePrevHigher(part, prev, next) => write!(
+                f,
+                "Invalid {}, previous value {} is higher than next value {}",
+                part, prev, next
+            ),
+            // Error::Zbus(detail) => write!(f, "Zbus error: {}", detail),
         }
     }
 }

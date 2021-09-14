@@ -63,7 +63,7 @@ will probably suffer another rename once it becomes generic enough to do so.
 
 Requirements are rust >= 1.47 installed from rustup.io if the distro provided version is too old, and `make`.
 
-**Ubuntu*:** `apt install libclang-dev libudev-dev`
+**Ubuntu:** `apt install libclang-dev libudev-dev`
 
 **fedora:** `dnf install clang-devel systemd-devel`
 

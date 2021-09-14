@@ -1,5 +1,4 @@
 use log::{error, warn};
-use rog_profiles::fan_curve_set::FanCurveSet;
 use rog_profiles::{FanCurveProfiles, Profile};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
@@ -17,20 +16,22 @@ pub struct ProfileConfig {
 
 impl ProfileConfig {
     fn new(config_path: String) -> Self {
-        let mut platform = ProfileConfig {
+        Self {
             config_path,
-            active_profile: Profile::get_active_profile().unwrap_or(Profile::Balanced),
+            active_profile: Profile::Balanced,
             fan_curves: None,
-        };
+        }
+    }
 
-        if let Ok(res) = FanCurveSet::is_supported() {
+    pub fn set_defaults_and_save(&mut self) {
+        self.active_profile = Profile::get_active_profile().unwrap_or(Profile::Balanced);
+        if let Ok(res) = FanCurveProfiles::is_supported() {
             if res {
                 let curves = FanCurveProfiles::default();
-                platform.fan_curves = Some(curves);
+                self.fan_curves = Some(curves);
             }
         }
-
-        platform
+        self.write();
     }
 
     pub fn load(config_path: String) -> Self {
@@ -45,17 +46,29 @@ impl ProfileConfig {
         if let Ok(read_len) = file.read_to_string(&mut buf) {
             if read_len == 0 {
                 config = Self::new(config_path);
+                config.set_defaults_and_save();
             } else if let Ok(data) = toml::from_str(&buf) {
                 config = data;
                 config.config_path = config_path;
             } else {
-                warn!("Could not deserialise {}", config_path);
-                panic!("Please remove {} then restart service", config_path);
+                warn!(
+                    "Could not deserialise {}.\nWill rename to {}-old and recreate config",
+                    config_path, config_path
+                );
+                let cfg_old = config_path.clone() + "-old";
+                std::fs::rename(config_path.clone(), cfg_old).unwrap_or_else(|err| {
+                    panic!(
+                        "Could not rename. Please remove {} then restart service: Error {}",
+                        config_path, err
+                    )
+                });
+                config = Self::new(config_path);
+                config.set_defaults_and_save();
             }
         } else {
-            config = Self::new(config_path)
+            config = Self::new(config_path);
+            config.set_defaults_and_save();
         }
-        config.write();
         config
     }
 

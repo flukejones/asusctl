@@ -5,6 +5,7 @@ use ::zbus::Connection;
 use log::{error, info, warn};
 use logind_zbus::ManagerProxy;
 use rog_anime::{
+    error::AnimeError,
     usb::{
         pkt_for_apply, pkt_for_flush, pkt_for_set_boot, pkt_for_set_on, pkts_for_init, PROD_ID,
         VENDOR_ID,
@@ -181,15 +182,20 @@ impl CtrlAnime {
                     for action in actions.iter() {
                         match action {
                             ActionData::Animation(frames) => {
-                                if rog_anime::run_animation(frames, thread_exit.clone(), &|frame| {
-                                    if let Ok(lock) = inner.try_lock() {
-                                        lock.write_data_buffer(frame);
-                                    }
-                                    Ok(())
-                                })
-                                .map_err(|err| warn!("rog_anime::run_animation: {}", err))
-                                .is_err()
-                                {
+                                if let Err(err) = rog_anime::run_animation(
+                                    frames,
+                                    thread_exit.clone(),
+                                    &|frame| {
+                                        inner
+                                            .try_lock()
+                                            .map(|lock| lock.write_data_buffer(frame))
+                                            .map_err(|err| {
+                                                warn!("rog_anime::run_animation: {}", err);
+                                                AnimeError::NoFrames
+                                            })
+                                    },
+                                ) {
+                                    warn!("rog_anime::run_animation: {}", err);
                                     break 'main;
                                 };
 

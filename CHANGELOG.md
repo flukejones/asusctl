@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+# [4.0.2] - 2021-09-14
+### Changed
+- Backup old configs to *-old if parse fails
+- Prevent some types of crashes related to unpatched kernels
+- Add better help for graphics errors
+- Add better help for asusctl general errors
+- Implement fan-curve dbus API
+- Implement partial fan-curve control via CLI tool
+  + Set fan curve for profile + fan gpu/cpu
+
 # [4.0.1] - 2021-09-11
 ### Changed
 - Fix asusd-ledmodes.toml

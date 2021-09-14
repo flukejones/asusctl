@@ -7,7 +7,7 @@ use crate::aura_cli::{LedBrightness, SetAuraBuiltin};
 use crate::cli_opts::*;
 use anime_cli::{AnimeActions, AnimeCommand};
 use gumdrop::{Opt, Options};
-use profiles_cli::ProfileCommand;
+use profiles_cli::{FanCurveCommand, ProfileCommand};
 use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2, ANIME_DATA_LEN};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClient;
@@ -16,6 +16,7 @@ use rog_supported::{
     AnimeSupportedFunctions, LedSupportedFunctions, PlatformProfileFunctions,
     RogBiosSupportedFunctions,
 };
+use std::process::Command;
 use std::{env::args, path::Path, sync::mpsc::channel};
 use supergfxctl::{
     gfx_vendors::GfxRequiredUserAction,
@@ -24,8 +25,6 @@ use supergfxctl::{
 };
 use zbus::Connection;
 
-const PLEASE: &str =
-    "Please use `systemctl status asusd` and `journalctl -b -u asusd` for more information";
 const CONFIG_ADVICE: &str = "A config file need to be removed so a new one can be generated";
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -49,50 +48,48 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    let (dbus, _) = RogDbusClient::new().map_err(|e| {
-        println!("\nIs asusd running?\n");
-        println!("{}", PLEASE);
-        println!("{}\n", CONFIG_ADVICE);
-        e
-    })?;
+    let (dbus, _) = RogDbusClient::new()
+        .map_err(|e| {
+            print_error_help(Box::new(e), None);
+            std::process::exit(3);
+        })
+        .unwrap();
 
     let supported = dbus
         .proxies()
         .supported()
         .get_supported_functions()
         .map_err(|e| {
-            println!("\nIs asusd running?\n");
-            println!("{}", PLEASE);
-            println!("{}\n", CONFIG_ADVICE);
-            e
-        })?;
+            print_error_help(Box::new(e), None);
+            std::process::exit(4);
+        })
+        .unwrap();
 
     if parsed.version {
         print_versions();
         println!();
         print_laptop_info();
-        println!("{}\n", PLEASE);
         return Ok(());
     }
 
     if let Err(err) = do_parsed(&parsed, &supported, &dbus) {
-        print_error_help(err, &supported);
+        print_error_help(err, Some(&supported));
     }
 
     Ok(())
 }
 
-fn print_error_help(err: Box<dyn std::error::Error>, supported: &SupportedFunctions) {
-    println!("Error: {}\n", err);
-    print_versions();
-    println!();
-    print_laptop_info();
-    println!();
-    println!("Supported laptop functions:\n\n{}", supported);
-    println!();
-    println!("{}", PLEASE);
-    println!("The above may give some indication that an option is not supported");
-    println!("or that a config file must be removed or fixed");
+fn print_error_help(err: Box<dyn std::error::Error>, supported: Option<&SupportedFunctions>) {
+    if do_diagnose("asusd") {
+        println!("\nError: {}\n", err);
+        print_versions();
+        println!();
+        print_laptop_info();
+        if let Some(supported) = supported {
+            println!();
+            println!("Supported laptop functions:\n\n{}", supported);
+        }
+    }
 }
 
 fn print_versions() {
@@ -117,6 +114,30 @@ fn print_laptop_info() {
     println!("Board name: {}", board_name.trim());
 }
 
+fn do_diagnose(name: &str) -> bool {
+    if name != "asusd" && !check_systemd_unit_enabled(name) {
+        println!(
+            "\n\x1b[0;31m{} is not enabled, enable it with `systemctl enable {}\x1b[0m",
+            name, name
+        );
+        return true;
+    } else if !check_systemd_unit_active(name) {
+        println!(
+            "\n\x1b[0;31m{} is not running, start it with `systemctl start {}\x1b[0m",
+            name, name
+        );
+        return true;
+    } else {
+        println!("\nSome error happened (sorry)");
+        println!(
+            "Please use `systemctl status {}` and `journalctl -b -u {}` for more information",
+            name, name
+        );
+        println!("{}", CONFIG_ADVICE);
+    }
+    false
+}
+
 fn do_parsed(
     parsed: &CliStart,
     supported: &SupportedFunctions,
@@ -125,7 +146,13 @@ fn do_parsed(
     match &parsed.command {
         Some(CliCommand::LedMode(mode)) => handle_led_mode(dbus, &supported.keyboard_led, mode)?,
         Some(CliCommand::Profile(cmd)) => handle_profile(dbus, &supported.platform_profile, cmd)?,
-        Some(CliCommand::Graphics(cmd)) => do_gfx(cmd)?,
+        Some(CliCommand::FanCurve(cmd)) => {
+            handle_fan_curve(dbus, &supported.platform_profile, cmd)?
+        }
+        Some(CliCommand::Graphics(cmd)) => do_gfx(cmd).map_err(|err| {
+            do_gfx_diagnose();
+            err
+        })?,
         Some(CliCommand::Anime(cmd)) => handle_anime(dbus, &supported.anime_ctrl, cmd)?,
         Some(CliCommand::Bios(cmd)) => handle_bios_option(dbus, &supported.rog_bios_ctrl, cmd)?,
         None => {
@@ -177,6 +204,12 @@ fn do_parsed(
     Ok(())
 }
 
+fn do_gfx_diagnose() {
+    println!("\nGraphics mode change error.");
+    do_diagnose("supergfxd");
+    println!();
+}
+
 fn do_gfx(command: &GraphicsCommand) -> Result<(), Box<dyn std::error::Error>> {
     if command.mode.is_none() && !command.get && !command.pow && !command.force || command.help {
         println!("{}", command.self_usage());
@@ -194,13 +227,11 @@ fn do_gfx(command: &GraphicsCommand) -> Result<(), Box<dyn std::error::Error>> {
             std::process::exit(-1);
         }
 
-        println!("If anything fails check `journalctl -b -u asusd`\n");
+        println!(
+            "If anything fails check `journalctl -b -u asusd` and `journalctl -b -u supergfxd`\n"
+        );
 
-        proxy.gfx_write_mode(&mode).map_err(|err|{
-            println!("Graphics mode change error. You may be in an invalid state.");
-            println!("Check mode with `asusctl graphics -g` and switch to opposite\nmode to correct it, e.g: if integrated, switch to hybrid, or if nvidia, switch to integrated.\n");
-            err
-        })?;
+        proxy.gfx_write_mode(&mode)?;
 
         loop {
             proxy.next_signal()?;
@@ -372,25 +403,16 @@ fn handle_led_mode(
 
 fn handle_profile(
     dbus: &RogDbusClient,
-    supported: &PlatformProfileFunctions,
+    _supported: &PlatformProfileFunctions,
     cmd: &ProfileCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    println!("Warning: Profiles should work fine but now depend on power-profiles-daemon v0.9+");
+    println!("Warning: Profiles now depend on power-profiles-daemon v0.9+");
     println!("Warning: Fan-curve support is coming in a 4.1.x release");
     if !cmd.next && !cmd.list {
         if !cmd.help {
             println!("Missing arg or command\n");
         }
-        let usage: Vec<String> = ProfileCommand::usage()
-            .lines()
-            .map(|s| s.to_string())
-            .collect();
-        for line in usage
-            .iter()
-            .filter(|line| !line.contains("--curve") || supported.fan_curves)
-        {
-            println!("{}", line);
-        }
+        println!("{}", ProfileCommand::usage());
 
         if let Some(lst) = cmd.self_command_list() {
             println!("\n{}", lst);
@@ -404,10 +426,66 @@ fn handle_profile(
     if cmd.next {
         dbus.proxies().profile().next_profile()?;
     }
+
     if cmd.list {
         let res = dbus.proxies().profile().profiles()?;
         res.iter().for_each(|p| println!("{:?}", p));
     }
+    Ok(())
+}
+
+fn handle_fan_curve(
+    dbus: &RogDbusClient,
+    _supported: &PlatformProfileFunctions,
+    cmd: &FanCurveCommand,
+) -> Result<(), Box<dyn std::error::Error>> {
+    if !cmd.get_enabled && !cmd.default && cmd.mod_profile.is_none() {
+        if !cmd.help {
+            println!("Missing arg or command\n");
+        }
+        println!("{}", FanCurveCommand::usage());
+
+        if let Some(lst) = cmd.self_command_list() {
+            println!("\n{}", lst);
+        }
+        std::process::exit(1);
+    }
+
+    if cmd.enabled.is_some() || cmd.fan.is_some() || cmd.data.is_some() && cmd.mod_profile.is_none()
+    {
+        println!("--enabled, --fan, and --data options require --mod-profile");
+        std::process::exit(666);
+    }
+
+    if cmd.get_enabled {
+        let res = dbus.proxies().profile().enabled_fan_profiles()?;
+        println!("{:?}", res);
+    }
+
+    if cmd.default {
+        dbus.proxies().profile().set_active_curve_to_defaults()?;
+    }
+
+    if let Some(profile) = cmd.mod_profile {
+        if cmd.enabled.is_none() && cmd.data.is_none() {
+            let data = dbus.proxies().profile().fan_curve_data(profile)?;
+            let data = toml::to_string(&data)?;
+            println!("\nFan curves for {:?}\n\n{}", profile, data);
+        }
+
+        if let Some(enabled) = cmd.enabled {
+            dbus.proxies()
+                .profile()
+                .set_fan_curve_enabled(profile, enabled)?;
+        }
+
+        if let Some(mut curve) = cmd.data.clone() {
+            let fan = cmd.fan.unwrap_or_default();
+            curve.set_fan(fan);
+            dbus.proxies().profile().set_fan_curve(curve, profile)?;
+        }
+    }
+
     Ok(())
 }
 
@@ -463,4 +541,28 @@ fn handle_bios_option(
         }
     }
     Ok(())
+}
+
+fn check_systemd_unit_active(name: &str) -> bool {
+    if let Ok(out) = Command::new("systemctl")
+        .arg("is-active")
+        .arg(name)
+        .output()
+    {
+        let buf = String::from_utf8_lossy(&out.stdout);
+        return !buf.contains("inactive") && !buf.contains("failed");
+    }
+    false
+}
+
+fn check_systemd_unit_enabled(name: &str) -> bool {
+    if let Ok(out) = Command::new("systemctl")
+        .arg("is-enabled")
+        .arg(name)
+        .output()
+    {
+        let buf = String::from_utf8_lossy(&out.stdout);
+        return buf.contains("enabled");
+    }
+    false
 }
