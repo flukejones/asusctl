@@ -451,7 +451,7 @@ fn handle_fan_curve(
         std::process::exit(1);
     }
 
-    if cmd.enabled.is_some() || cmd.fan.is_some() || cmd.data.is_some() && cmd.mod_profile.is_none()
+    if (cmd.enabled.is_some() || cmd.fan.is_some() || cmd.data.is_some()) && cmd.mod_profile.is_none()
     {
         println!("--enabled, --fan, and --data options require --mod-profile");
         std::process::exit(666);

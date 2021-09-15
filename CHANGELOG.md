@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+# [4.0.3] - 2021-09-16
+### Changed
+- Don't show fan-curve warning if fan-curve available
+- Add G713QR to Strix led-modes
+- Fix part of CLI fan-curve control
+
 # [4.0.2] - 2021-09-14
 ### Changed
 - Backup old configs to *-old if parse fails

@@ -33,7 +33,7 @@ https://lkml.org/lkml/2021/8/18/1022
             fan_curve_supported = r;
         };
 
-        if fan_curve_supported {
+        if !fan_curve_supported {
             info!(
                 r#"
 fan curves kernel interface not found, your laptop does not support this, or the interface is missing.
