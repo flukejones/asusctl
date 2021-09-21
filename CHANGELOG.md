@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+# [4.0.4] - 2021-10-02
+### Changed
+- Add missing Profile commands
+- Spawn tasks on individual threads to prevent blocking
+- Don't force fan-curve default on reload
+- Begin obsoleting the graphics switch command in favour of supergfxctl
+- Slim down the notification daemon to pure ASUS notifications
+
 # [4.0.3] - 2021-09-16
 ### Changed
 - Don't show fan-curve warning if fan-curve available

@@ -1,3 +1,15 @@
+use std::error::Error;
+use std::io::Write;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::thread::sleep;
+use std::time::Duration;
+use std::{env, thread};
+
+use ::zbus::{fdo, Connection, ObjectServer};
+use log::LevelFilter;
+use log::{error, info, warn};
+
 use daemon::ctrl_anime::config::AnimeConfig;
 use daemon::ctrl_anime::zbus::CtrlAnimeZbus;
 use daemon::ctrl_anime::*;
@@ -8,6 +20,8 @@ use daemon::ctrl_aura::controller::{
 use daemon::ctrl_charge::CtrlCharge;
 use daemon::ctrl_profiles::config::ProfileConfig;
 use daemon::ctrl_profiles::controller::CtrlProfileTask;
+use daemon::ctrl_rog_bios::CtrlRogBios;
+use daemon::error::RogError;
 use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
 };
@@ -15,20 +29,9 @@ use daemon::{
     ctrl_profiles::{controller::CtrlPlatformProfile, zbus::ProfileZbus},
     laptops::LaptopLedData,
 };
-
-use ::zbus::{fdo, Connection, ObjectServer};
 use daemon::{CtrlTask, Reloadable, ZbusAdd};
-use log::LevelFilter;
-use log::{error, info, warn};
 use rog_dbus::DBUS_NAME;
 use rog_profiles::Profile;
-use std::env;
-use std::error::Error;
-use std::io::Write;
-use std::sync::Arc;
-use std::sync::Mutex;
-
-use daemon::ctrl_rog_bios::CtrlRogBios;
 
 static PROFILE_CONFIG_PATH: &str = "/etc/asusd/profile.conf";
 
@@ -71,8 +74,6 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
     print_board_info();
     println!("{}", serde_json::to_string_pretty(&supported)?);
 
-    // Collect tasks for task thread
-    let mut tasks: Vec<Box<dyn CtrlTask + Send>> = Vec::new();
     // Start zbus server
     let connection = Connection::new_system()?;
     let fdo_connection = fdo::DBusProxy::new(&connection)?;
@@ -119,7 +120,15 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
                 let tmp = Arc::new(Mutex::new(ctrl));
                 ProfileZbus::new(tmp.clone()).add_to_server(&mut object_server);
 
-                tasks.push(Box::new(CtrlProfileTask::new(tmp)));
+                let task = CtrlProfileTask::new(tmp);
+                thread::Builder::new().name("profile tasks".into()).spawn(
+                    move || -> Result<(), RogError> {
+                        loop {
+                            task.do_task()?;
+                            sleep(Duration::from_millis(100));
+                        }
+                    },
+                )?;
             }
             Err(err) => {
                 error!("Profile control: {}", err);
@@ -141,7 +150,14 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
             let zbus = CtrlAnimeZbus(inner.clone());
             zbus.add_to_server(&mut object_server);
 
-            tasks.push(Box::new(CtrlAnimeTask::new(inner)));
+            let task = CtrlAnimeTask::new(inner);
+            thread::Builder::new().name("anime tasks".into()).spawn(
+                move || -> Result<(), RogError> {
+                    loop {
+                        task.do_task()?;
+                    }
+                },
+            )?;
         }
         Err(err) => {
             error!("AniMe control: {}", err);
@@ -160,39 +176,26 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
                 .unwrap_or_else(|err| warn!("Keyboard LED control: {}", err));
 
             CtrlKbdLedZbus::new(inner.clone()).add_to_server(&mut object_server);
+
             let task = CtrlKbdLedTask::new(inner);
-            tasks.push(Box::new(task));
+            thread::Builder::new().name("keyboard tasks".into()).spawn(
+                move || -> Result<(), RogError> {
+                    loop {
+                        task.do_task()?;
+                    }
+                },
+            )?;
         }
         Err(err) => {
             error!("Keyboard control: {}", err);
         }
     }
 
-    // TODO: implement messaging between threads to check fails
-
-    // Run tasks
-    let handle = std::thread::Builder::new()
-        .name("asusd watch".to_string())
-        .spawn(move || loop {
-            std::thread::sleep(std::time::Duration::from_millis(100));
-
-            for ctrl in tasks.iter() {
-                ctrl.do_task()
-                    .map_err(|err| {
-                        warn!("do_task error: {}", err);
-                    })
-                    .ok();
-            }
-        });
-
     // Request dbus name after finishing initalizing all functions
     fdo_connection.request_name(DBUS_NAME, fdo::RequestNameFlags::ReplaceExisting.into())?;
 
     // Loop to check errors and iterate zbus server
     loop {
-        if let Err(err) = &handle {
-            error!("{}", err);
-        }
         if let Err(err) = object_server.try_handle_next() {
             error!("{}", err);
         }

@@ -14,7 +14,6 @@ rog_anime = { path = "../rog-anime" }
 rog_aura = { path = "../rog-aura" }
 rog_profiles = { path = "../rog-profiles" }
 rog_supported = { path = "../rog-supported" }
-supergfxctl = { git = "https://gitlab.com/asus-linux/supergfxctl.git", tag = "2.0.0" }
 zbus = "^1.9"
 zbus_macros = "^1.9"
 zvariant = "^2.8"

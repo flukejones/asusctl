@@ -12,7 +12,7 @@ pub struct ProfileCommand {
 
     #[options(help = "get profile")]
     pub profile_get: bool,
-    #[options(help = "set the active profile")]
+    #[options(meta = "", help = "set the active profile")]
     pub profile_set: Option<Profile>,
 }
 

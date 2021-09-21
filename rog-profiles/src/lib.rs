@@ -219,7 +219,9 @@ impl FanCurveProfiles {
     }
 
     /// Write the curves for the selected profile to the device. If the curve is
-    /// in the enabled list it will become active.
+    /// in the enabled list it will become active. If the curve is zeroed it will be initialised
+    /// to a default read from the system.
+    // TODO: Make this return an error if curve is zeroed
     pub fn write_profile_curve_to_platform(
         &mut self,
         profile: Profile,

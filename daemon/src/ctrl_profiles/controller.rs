@@ -56,7 +56,10 @@ impl crate::Reloadable for CtrlPlatformProfile {
     fn reload(&mut self) -> Result<(), RogError> {
         if let Some(curves) = &mut self.config.fan_curves {
             if let Ok(mut device) = FanCurveProfiles::get_device() {
+                // There is a possibility that the curve was default zeroed, so this call initialises
+                // the data from system read and we need to save it after
                 curves.write_profile_curve_to_platform(self.config.active_profile, &mut device)?;
+                self.config.write();
             }
         }
         Ok(())
@@ -64,17 +67,13 @@ impl crate::Reloadable for CtrlPlatformProfile {
 }
 
 impl CtrlPlatformProfile {
-    pub fn new(mut config: ProfileConfig) -> Result<Self, RogError> {
+    pub fn new(config: ProfileConfig) -> Result<Self, RogError> {
         if Profile::is_platform_profile_supported() {
             info!("Device has profile control available");
 
-            if let Ok(ref device) = FanCurveProfiles::get_device() {
-                let profile = config.active_profile;
-                if let Some(curve) = config.fan_curves.as_mut() {
-                    curve.read_from_dev_profile(profile, device);
-                }
+            if FanCurveProfiles::get_device().is_ok() {
+                info!("Device has fan curves available");
             }
-            config.write();
 
             return Ok(CtrlPlatformProfile { config });
         }
@@ -143,6 +142,7 @@ impl CtrlTask for CtrlProfileTask {
             let new_profile = Profile::get_active_profile().unwrap();
             if new_profile != lock.config.active_profile {
                 lock.config.active_profile = new_profile;
+                lock.write_profile_curve_to_platform()?;
                 lock.save_config();
             }
         }
