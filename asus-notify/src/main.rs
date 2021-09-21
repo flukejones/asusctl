@@ -196,7 +196,18 @@ fn do_gfx_action_notif(vendor: &GfxRequiredUserAction) -> Result<(), notify_rust
     notif.body("Graphics mode changed");
     notif.show()?.wait_for_action(|action| match action {
         "logout" => {
-            process::Command::new("gnome-session-quit").spawn().ok();
+            let r = process::Command::new("gnome-session-quit").spawn();
+            if r.is_err() {
+                // Try to prompt plasma logout screen via dbus
+                let conn = Connection::new_session().unwrap();
+                conn.call_method(
+                    Some(&"org.kde.LogoutPrompt"),
+                    &"/LogoutPrompt",
+                    Some(&"org.kde.LogoutPrompt"),
+                    &"promptLogout",
+                    &(),
+                ).ok();
+            }
         }
         "reboot" => {
             process::Command::new("systemctl")
