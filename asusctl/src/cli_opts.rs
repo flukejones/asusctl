@@ -4,7 +4,6 @@ use crate::{
     profiles_cli::{FanCurveCommand, ProfileCommand},
 };
 use gumdrop::Options;
-use supergfxctl::gfx_vendors::GfxVendors;
 
 #[derive(Default, Options)]
 pub struct CliStart {
@@ -20,7 +19,7 @@ pub struct CliStart {
     pub next_kbd_bright: bool,
     #[options(help = "Toggle to previous keyboard brightness")]
     pub prev_kbd_bright: bool,
-    #[options(meta = "", help = "<20-100>")]
+    #[options(meta = "", help = "Set your battery charge limit <20-100>")]
     pub chg_limit: Option<u8>,
     #[options(command)]
     pub command: Option<CliCommand>,
@@ -32,9 +31,9 @@ pub enum CliCommand {
     LedMode(LedModeCommand),
     #[options(help = "Set or select platform_profile")]
     Profile(ProfileCommand),
-    #[options(help = "Set, select, or modify fan curves if suported")]
+    #[options(help = "Set, select, or modify fan curves if supported")]
     FanCurve(FanCurveCommand),
-    #[options(help = "Set the graphics mode")]
+    #[options(help = "Set the graphics mode (obsoleted by supergfxctl)")]
     Graphics(GraphicsCommand),
     #[options(name = "anime", help = "Manage AniMe Matrix")]
     Anime(AnimeCommand),
@@ -68,17 +67,6 @@ pub struct LedModeCommand {
 pub struct GraphicsCommand {
     #[options(help = "print help message")]
     pub help: bool,
-    #[options(
-        meta = "",
-        help = "Set graphics mode: <nvidia, hybrid, compute, integrated>"
-    )]
-    pub mode: Option<GfxVendors>,
-    #[options(help = "Get the current mode")]
-    pub get: bool,
-    #[options(help = "Get the current power status")]
-    pub pow: bool,
-    #[options(help = "Do not ask for confirmation")]
-    pub force: bool,
 }
 
 #[derive(Options, Debug)]

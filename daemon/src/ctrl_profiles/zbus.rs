@@ -94,7 +94,7 @@ impl ProfileZbus {
     fn set_fan_curve_enabled(&mut self, profile: Profile, enabled: bool) -> zbus::fdo::Result<()> {
         if let Ok(mut ctrl) = self.inner.try_lock() {
             ctrl.config.read();
-            if let Some(curves) = &mut ctrl.config.fan_curves {
+            return if let Some(curves) = &mut ctrl.config.fan_curves {
                 curves.set_profile_curve_enabled(profile, enabled);
 
                 ctrl.write_profile_curve_to_platform()
@@ -102,10 +102,10 @@ impl ProfileZbus {
                     .ok();
 
                 ctrl.save_config();
-                return Ok(());
+                Ok(())
             } else {
-                return Err(Error::Failed(UNSUPPORTED_MSG.to_string()));
-            }
+                Err(Error::Failed(UNSUPPORTED_MSG.to_string()))
+            };
         }
         Err(Error::Failed(
             "Failed to get enabled fan curve names".to_string(),

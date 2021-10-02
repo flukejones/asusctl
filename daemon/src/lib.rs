@@ -27,7 +27,7 @@ pub mod laptops;
 /// Fetch all supported functions for the laptop
 pub mod ctrl_supported;
 
-mod error;
+pub mod error;
 
 use crate::error::RogError;
 use config::Config;

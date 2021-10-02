@@ -11,19 +11,14 @@ use profiles_cli::{FanCurveCommand, ProfileCommand};
 use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2, ANIME_DATA_LEN};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClient;
+use rog_profiles::error::ProfileError;
 use rog_supported::SupportedFunctions;
 use rog_supported::{
     AnimeSupportedFunctions, LedSupportedFunctions, PlatformProfileFunctions,
     RogBiosSupportedFunctions,
 };
 use std::process::Command;
-use std::{env::args, path::Path, sync::mpsc::channel};
-use supergfxctl::{
-    gfx_vendors::GfxRequiredUserAction,
-    special::{get_asus_gsync_gfx_mode, has_asus_gsync_gfx_mode},
-    zbus_proxy::GfxProxy,
-};
-use zbus::Connection;
+use std::{env::args, path::Path};
 
 const CONFIG_ADVICE: &str = "A config file need to be removed so a new one can be generated";
 
@@ -102,7 +97,6 @@ fn print_versions() {
     println!("     rog-dbus v{}", rog_dbus::VERSION);
     println!(" rog-profiles v{}", rog_profiles::VERSION);
     println!("rog-supported v{}", rog_supported::VERSION);
-    println!("  supergfxctl v{}", supergfxctl::VERSION);
 }
 
 fn print_laptop_info() {
@@ -149,10 +143,7 @@ fn do_parsed(
         Some(CliCommand::FanCurve(cmd)) => {
             handle_fan_curve(dbus, &supported.platform_profile, cmd)?
         }
-        Some(CliCommand::Graphics(cmd)) => do_gfx(cmd).map_err(|err| {
-            do_gfx_diagnose();
-            err
-        })?,
+        Some(CliCommand::Graphics(_)) => do_gfx()?,
         Some(CliCommand::Anime(cmd)) => handle_anime(dbus, &supported.anime_ctrl, cmd)?,
         Some(CliCommand::Bios(cmd)) => handle_bios_option(dbus, &supported.rog_bios_ctrl, cmd)?,
         None => {
@@ -204,71 +195,9 @@ fn do_parsed(
     Ok(())
 }
 
-fn do_gfx_diagnose() {
-    println!("\nGraphics mode change error.");
-    do_diagnose("supergfxd");
-    println!();
-}
-
-fn do_gfx(command: &GraphicsCommand) -> Result<(), Box<dyn std::error::Error>> {
-    if command.mode.is_none() && !command.get && !command.pow && !command.force || command.help {
-        println!("{}", command.self_usage());
-    }
-
-    let conn = Connection::new_system()?;
-    let proxy = GfxProxy::new(&conn)?;
-
-    let (tx, rx) = channel();
-    proxy.connect_notify_action(tx)?;
-
-    if let Some(mode) = command.mode {
-        if has_asus_gsync_gfx_mode() && get_asus_gsync_gfx_mode()? == 1 {
-            println!("You can not change modes until you turn dedicated/G-Sync off and reboot");
-            std::process::exit(-1);
-        }
-
-        println!(
-            "If anything fails check `journalctl -b -u asusd` and `journalctl -b -u supergfxd`\n"
-        );
-
-        proxy.gfx_write_mode(&mode)?;
-
-        loop {
-            proxy.next_signal()?;
-
-            if let Ok(res) = rx.try_recv() {
-                match res {
-                    GfxRequiredUserAction::Integrated => {
-                        println!(
-                            "You must change to Integrated before you can change to {}",
-                            <&str>::from(mode)
-                        );
-                    }
-                    GfxRequiredUserAction::Logout | GfxRequiredUserAction::Reboot => {
-                        println!(
-                            "Graphics mode changed to {}. User action required is: {}",
-                            <&str>::from(mode),
-                            <&str>::from(&res)
-                        );
-                    }
-                    GfxRequiredUserAction::None => {
-                        println!("Graphics mode changed to {}", <&str>::from(mode));
-                    }
-                }
-            }
-            std::process::exit(0)
-        }
-    }
-
-    if command.get {
-        let res = proxy.gfx_get_mode()?;
-        println!("Current graphics mode: {}", <&str>::from(res));
-    }
-    if command.pow {
-        let res = proxy.gfx_get_pwr()?;
-        println!("Current power status: {}", <&str>::from(&res));
-    }
-
+fn do_gfx() -> Result<(), Box<dyn std::error::Error>> {
+    println!("Please use supergfxctl for graphics switching. supergfxctl is the result of making asusctl graphics switching generic so all laptops can use it");
+    println!("This command will be removed in future");
     Ok(())
 }
 
@@ -403,12 +332,19 @@ fn handle_led_mode(
 
 fn handle_profile(
     dbus: &RogDbusClient,
-    _supported: &PlatformProfileFunctions,
+    supported: &PlatformProfileFunctions,
     cmd: &ProfileCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    println!("Warning: Profiles now depend on power-profiles-daemon v0.9+");
-    println!("Warning: Fan-curve support is coming in a 4.1.x release");
-    if !cmd.next && !cmd.list {
+    if !supported.fan_curves {
+        println!("Profiles not supported by either this kernel or by the laptop.");
+        return Err(ProfileError::NotSupported.into());
+    }
+
+    println!("Warning: Profiles now depend on power-profiles-daemon v0.9+ which may not be in your install");
+    println!("         If you have unexpected behaviour or have only two profiles in your desktop control");
+    println!("         you need to manually install from https://gitlab.freedesktop.org/hadess/power-profiles-daemon");
+    println!("         Fedora and Arch distros will get the update soon...\n");
+    if !cmd.next && !cmd.list && cmd.profile_set.is_none() && !cmd.profile_get {
         if !cmd.help {
             println!("Missing arg or command\n");
         }
@@ -417,28 +353,38 @@ fn handle_profile(
         if let Some(lst) = cmd.self_command_list() {
             println!("\n{}", lst);
         }
-
-        // println!("Note: turbo, frequency, fan preset and fan curve options will apply to");
-        // println!("      to the currently active profile unless a profile name is specified");
         std::process::exit(1);
     }
 
     if cmd.next {
         dbus.proxies().profile().next_profile()?;
+    } else if let Some(profile) = cmd.profile_set {
+        dbus.proxies().profile().set_active_profile(profile)?;
     }
 
     if cmd.list {
         let res = dbus.proxies().profile().profiles()?;
         res.iter().for_each(|p| println!("{:?}", p));
     }
+
+    if cmd.profile_get {
+        let res = dbus.proxies().profile().active_profile()?;
+        println!("Active profile is {:?}", res);
+    }
+
     Ok(())
 }
 
 fn handle_fan_curve(
     dbus: &RogDbusClient,
-    _supported: &PlatformProfileFunctions,
+    supported: &PlatformProfileFunctions,
     cmd: &FanCurveCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    if !supported.fan_curves {
+        println!("Fan-curves not supported by either this kernel or by the laptop.");
+        return Err(ProfileError::NotSupported.into());
+    }
+
     if !cmd.get_enabled && !cmd.default && cmd.mod_profile.is_none() {
         if !cmd.help {
             println!("Missing arg or command\n");
@@ -451,7 +397,8 @@ fn handle_fan_curve(
         std::process::exit(1);
     }
 
-    if (cmd.enabled.is_some() || cmd.fan.is_some() || cmd.data.is_some()) && cmd.mod_profile.is_none()
+    if (cmd.enabled.is_some() || cmd.fan.is_some() || cmd.data.is_some())
+        && cmd.mod_profile.is_none()
     {
         println!("--enabled, --fan, and --data options require --mod-profile");
         std::process::exit(666);
