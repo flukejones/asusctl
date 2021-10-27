@@ -37,14 +37,24 @@ pub struct CurveData {
 impl std::str::FromStr for CurveData {
     type Err = ProfileError;
 
+    /// Parse a string to the correct values that the fan curve kernel driver expects
+    ///
+    /// If the fan curve is given with percentage char '%' then the fan power values are converted
+    /// otherwise the expected fan power range is 0-255.
+    ///
+    /// Temperature range is 0-255 in degrees C. You don't want to be setting over 100.
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let mut temp = [0u8; 8];
         let mut pwm = [0u8; 8];
         let mut temp_prev = 0;
         let mut pwm_prev = 0;
+        let mut percentages = false;
 
         for (index, value) in input.split(',').enumerate() {
             for (select, num) in value.splitn(2, |c| c == 'c' || c == ':').enumerate() {
+                if num.contains('%') {
+                    percentages = true;
+                }
                 let r = num.trim_matches(|c| c == 'c' || c == ':' || c == '%');
                 let r = r.parse::<u8>().map_err(ProfileError::ParseFanCurveDigit)?;
 
@@ -59,15 +69,22 @@ impl std::str::FromStr for CurveData {
                     temp_prev = r;
                     temp[index] = r;
                 } else {
-                    if pwm_prev > r {
+                    let mut p = r;
+                    if percentages {
+                        p *= 255 / 100;
+                        if p > 100 {
+                            return Err(ProfileError::ParseFanCurvePercentOver100(r));
+                        }
+                    }
+                    if pwm_prev > p {
                         return Err(ProfileError::ParseFanCurvePrevHigher(
                             "percentage",
                             pwm_prev,
-                            r,
+                            p,
                         ));
                     }
-                    pwm_prev = r;
-                    pwm[index] = r;
+                    pwm_prev = p;
+                    pwm[index] = p;
                 }
             }
         }
