@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+# [4.0.5] - 2021-10-27
 ### Changed
 - Convert fan curve percentage to 0-255 expected by kernel driver only if '%' char is used, otherwise the expected range for fan power is 0-255
 - Use correct error in daemon for invalid charging limit
