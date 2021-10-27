@@ -30,7 +30,10 @@ pub struct CtrlCharge {
 
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl CtrlCharge {
-    pub fn set_limit(&mut self, limit: u8) {
+    pub fn set_limit(&mut self, limit: u8) -> Result<(), RogError> {
+        if !(20..=100).contains(&limit) {
+            return Err(RogError::ChargeLimit(limit));
+        }
         if let Ok(mut config) = self.config.try_lock() {
             self.set(limit, &mut config)
                 .map_err(|err| {
@@ -45,6 +48,7 @@ impl CtrlCharge {
                 })
                 .ok();
         }
+        Ok(())
     }
 
     pub fn limit(&self) -> i8 {
@@ -106,10 +110,7 @@ impl CtrlCharge {
 
     pub(super) fn set(&self, limit: u8, config: &mut Config) -> Result<(), RogError> {
         if !(20..=100).contains(&limit) {
-            warn!(
-                "Unable to set battery charge limit, must be between 20-100: requested {}",
-                limit
-            );
+            return Err(RogError::ChargeLimit(limit));
         }
 
         let path = Self::get_battery_path()?;

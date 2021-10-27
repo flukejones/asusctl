@@ -22,6 +22,7 @@ pub enum RogError {
     Modprobe(String),
     Io(std::io::Error),
     Zbus(zbus::Error),
+    ChargeLimit(u8),
 }
 
 impl fmt::Display for RogError {
@@ -46,6 +47,7 @@ impl fmt::Display for RogError {
             RogError::Modprobe(detail) => write!(f, "Modprobe error: {}", detail),
             RogError::Io(detail) => write!(f, "std::io error: {}", detail),
             RogError::Zbus(detail) => write!(f, "Zbus error: {}", detail),
+            RogError::ChargeLimit(value) => write!(f, "Invalid charging limit, not in range 20-100%: {}", value),
         }
     }
 }
