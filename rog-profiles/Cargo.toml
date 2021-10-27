@@ -1,6 +1,6 @@
 [package]
 name = "rog_profiles"
-version = "1.1.2"
+version = "1.1.3"
 authors = ["Luke D. Jones <luke@ljones.dev>"]
 edition = "2018"
 

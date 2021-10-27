@@ -12,6 +12,7 @@ pub enum ProfileError {
     ParseFanCurveDigit(std::num::ParseIntError),
     /// (pwm/temp, prev, next)
     ParseFanCurvePrevHigher(&'static str, u8, u8),
+    ParseFanCurvePercentOver100(u8),
     // Zbus(zbus::Error),
 }
 
@@ -34,6 +35,9 @@ impl fmt::Display for ProfileError {
                 "Invalid {}, previous value {} is higher than next value {}",
                 part, prev, next
             ),
+            ProfileError::ParseFanCurvePercentOver100(value) => {
+                write!(f, "Invalid percentage, {} is higher than 100", value)
+            }
             // Error::Zbus(detail) => write!(f, "Zbus error: {}", detail),
         }
     }
