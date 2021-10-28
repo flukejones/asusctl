@@ -69,7 +69,7 @@ impl ActionData {
                 file,
                 time,
                 brightness,
-            } => ActionData::Animation(AnimeGif::create_diagonal_gif(file, *time, *brightness)?),
+            } => ActionData::Animation(AnimeGif::from_diagonal_gif(file, *time, *brightness)?),
             ActionLoader::AsusImage {
                 file,
                 time,
@@ -80,9 +80,7 @@ impl ActionData {
                     let data = <AnimeDataBuffer>::from(&image);
                     ActionData::Image(Box::new(data))
                 }
-                _ => {
-                    ActionData::Animation(AnimeGif::create_diagonal_png(file, *time, *brightness)?)
-                }
+                _ => ActionData::Animation(AnimeGif::from_diagonal_png(file, *time, *brightness)?),
             },
             ActionLoader::ImageAnimation {
                 file,
@@ -94,7 +92,7 @@ impl ActionData {
             } => {
                 if let Some(ext) = file.extension() {
                     if ext.to_string_lossy().to_lowercase() == "png" {
-                        return Ok(ActionData::Animation(AnimeGif::create_png_static(
+                        return Ok(ActionData::Animation(AnimeGif::from_png(
                             file,
                             *scale,
                             *angle,
@@ -104,7 +102,7 @@ impl ActionData {
                         )?));
                     }
                 }
-                ActionData::Animation(AnimeGif::create_png_gif(
+                ActionData::Animation(AnimeGif::from_gif(
                     file,
                     *scale,
                     *angle,
@@ -129,7 +127,7 @@ impl ActionData {
                         let data = <AnimeDataBuffer>::from(&image);
                         ActionData::Image(Box::new(data))
                     }
-                    _ => ActionData::Animation(AnimeGif::create_png_static(
+                    _ => ActionData::Animation(AnimeGif::from_png(
                         file,
                         *scale,
                         *angle,

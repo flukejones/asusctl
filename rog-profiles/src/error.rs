@@ -37,8 +37,7 @@ impl fmt::Display for ProfileError {
             ),
             ProfileError::ParseFanCurvePercentOver100(value) => {
                 write!(f, "Invalid percentage, {} is higher than 100", value)
-            }
-            // Error::Zbus(detail) => write!(f, "Zbus error: {}", detail),
+            } // Error::Zbus(detail) => write!(f, "Zbus error: {}", detail),
         }
     }
 }

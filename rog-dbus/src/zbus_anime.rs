@@ -45,16 +45,21 @@ impl<'a> AnimeProxy<'a> {
         &self.0
     }
 
-    /// Set whether the AniMe will show boot, suspend, or off animations
-    #[inline]
-    pub fn set_system_animations(&self, on: bool) -> Result<()> {
-        self.0.set_boot_on_off(on)
-    }
-
     /// Set whether the AniMe is displaying images/data
     #[inline]
-    pub fn set_led_power(&self, on: bool) -> Result<()> {
+    pub fn set_on_off(&self, on: bool) -> Result<()> {
         self.0.set_on_off(on)
+    }
+
+    /// Set the global AniMe brightness
+    pub fn set_brightness(&self, bright: f32) -> Result<()> {
+        self.0.set_brightness(bright)
+    }
+
+    /// Set whether the AniMe will show boot, suspend, or off animations
+    #[inline]
+    pub fn set_boot_on_off(&self, on: bool) -> Result<()> {
+        self.0.set_boot_on_off(on)
     }
 
     /// Writes a data stream of length. Will force system thread to exit until it is restarted

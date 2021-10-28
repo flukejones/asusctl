@@ -101,4 +101,3 @@ fn do_led_notif(ledmode: &AuraEffect) -> Result<NotificationHandle, notify_rust:
 fn do_charge_notif(limit: &u8) -> Result<NotificationHandle, notify_rust::error::Error> {
     base_notification!(&format!("Battery charge limit changed to {}", limit))
 }
-

@@ -1,14 +1,12 @@
-mod anime_cli;
-mod aura_cli;
-mod cli_opts;
-mod profiles_cli;
+use std::process::Command;
+use std::thread::sleep;
+use std::{env::args, path::Path};
 
-use crate::aura_cli::{LedBrightness, SetAuraBuiltin};
-use crate::cli_opts::*;
-use anime_cli::{AnimeActions, AnimeCommand};
 use gumdrop::{Opt, Options};
+
+use anime_cli::{AnimeActions, AnimeCommand};
 use profiles_cli::{FanCurveCommand, ProfileCommand};
-use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2, ANIME_DATA_LEN};
+use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, Vec2};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClient;
 use rog_profiles::error::ProfileError;
@@ -17,8 +15,14 @@ use rog_supported::{
     AnimeSupportedFunctions, LedSupportedFunctions, PlatformProfileFunctions,
     RogBiosSupportedFunctions,
 };
-use std::process::Command;
-use std::{env::args, path::Path};
+
+use crate::aura_cli::{LedBrightness, SetAuraBuiltin};
+use crate::cli_opts::*;
+
+mod anime_cli;
+mod aura_cli;
+mod cli_opts;
+mod profiles_cli;
 
 const CONFIG_ADVICE: &str = "A config file need to be removed so a new one can be generated";
 
@@ -167,7 +171,7 @@ fn do_parsed(
         match brightness.level() {
             None => {
                 let level = dbus.proxies().led().get_led_brightness()?;
-                println!("Current keyboard led brightness: {}", level.to_string());
+                println!("Current keyboard led brightness: {}", level);
             }
             Some(level) => dbus
                 .proxies()
@@ -206,28 +210,28 @@ fn handle_anime(
     _supported: &AnimeSupportedFunctions,
     cmd: &AnimeCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if (cmd.command.is_none() && cmd.boot.is_none() && cmd.turn.is_none()) || cmd.help {
+    if (cmd.command.is_none()
+        && cmd.enable.is_none()
+        && cmd.boot_enable.is_none()
+        && cmd.brightness.is_none())
+        || cmd.help
+    {
         println!("Missing arg or command\n\n{}", cmd.self_usage());
         if let Some(lst) = cmd.self_command_list() {
             println!("\n{}", lst);
         }
     }
-    if let Some(anime_turn) = cmd.turn {
-        dbus.proxies().anime().set_led_power(anime_turn.into())?
+    if let Some(anime_turn) = cmd.enable {
+        dbus.proxies().anime().set_on_off(anime_turn)?
     }
-    if let Some(anime_boot) = cmd.boot {
-        dbus.proxies()
-            .anime()
-            .set_system_animations(anime_boot.into())?
+    if let Some(anime_boot) = cmd.boot_enable {
+        dbus.proxies().anime().set_boot_on_off(anime_boot)?
+    }
+    if let Some(bright) = cmd.brightness {
+        dbus.proxies().anime().set_brightness(bright as f32)?
     }
     if let Some(action) = cmd.command.as_ref() {
         match action {
-            AnimeActions::Leds(anime_leds) => {
-                let data = AnimeDataBuffer::from_vec(
-                    [anime_leds.led_brightness(); ANIME_DATA_LEN].to_vec(),
-                );
-                dbus.proxies().anime().write(data)?;
-            }
             AnimeActions::Image(image) => {
                 if image.help_requested() || image.path.is_empty() {
                     println!("Missing arg or command\n\n{}", image.self_usage());
@@ -248,6 +252,82 @@ fn handle_anime(
                 dbus.proxies()
                     .anime()
                     .write(<AnimeDataBuffer>::from(&matrix))?;
+            }
+            AnimeActions::PixelImage(image) => {
+                if image.help_requested() || image.path.is_empty() {
+                    println!("Missing arg or command\n\n{}", image.self_usage());
+                    if let Some(lst) = image.self_command_list() {
+                        println!("\n{}", lst);
+                    }
+                    std::process::exit(1);
+                }
+
+                let matrix = AnimeDiagonal::from_png(Path::new(&image.path), None, image.bright)?;
+
+                dbus.proxies()
+                    .anime()
+                    .write(<AnimeDataBuffer>::from(&matrix))?;
+            }
+            AnimeActions::Gif(gif) => {
+                if gif.help_requested() || gif.path.is_empty() {
+                    println!("Missing arg or command\n\n{}", gif.self_usage());
+                    if let Some(lst) = gif.self_command_list() {
+                        println!("\n{}", lst);
+                    }
+                    std::process::exit(1);
+                }
+
+                let matrix = AnimeGif::from_gif(
+                    Path::new(&gif.path),
+                    gif.scale,
+                    gif.angle,
+                    Vec2::new(gif.x_pos, gif.y_pos),
+                    AnimTime::Count(1),
+                    gif.bright,
+                )?;
+
+                let mut loops = gif.loops as i32;
+                loop {
+                    for frame in matrix.frames() {
+                        dbus.proxies().anime().write(frame.frame().clone())?;
+                        sleep(frame.delay());
+                    }
+                    if loops >= 0 {
+                        loops -= 1;
+                    }
+                    if loops == 0 {
+                        break;
+                    }
+                }
+            }
+            AnimeActions::PixelGif(gif) => {
+                if gif.help_requested() || gif.path.is_empty() {
+                    println!("Missing arg or command\n\n{}", gif.self_usage());
+                    if let Some(lst) = gif.self_command_list() {
+                        println!("\n{}", lst);
+                    }
+                    std::process::exit(1);
+                }
+
+                let matrix = AnimeGif::from_diagonal_gif(
+                    Path::new(&gif.path),
+                    AnimTime::Count(1),
+                    gif.bright,
+                )?;
+
+                let mut loops = gif.loops as i32;
+                loop {
+                    for frame in matrix.frames() {
+                        dbus.proxies().anime().write(frame.frame().clone())?;
+                        sleep(frame.delay());
+                    }
+                    if loops >= 0 {
+                        loops -= 1;
+                    }
+                    if loops == 0 {
+                        break;
+                    }
+                }
             }
         }
     }
