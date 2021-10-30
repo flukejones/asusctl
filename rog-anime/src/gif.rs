@@ -88,7 +88,7 @@ pub struct AnimeGif(Vec<AnimeFrame>, AnimTime);
 impl AnimeGif {
     /// Create an animation using the 74x36 ASUS gif format
     #[inline]
-    pub fn create_diagonal_gif(
+    pub fn from_diagonal_gif(
         file_name: &Path,
         duration: AnimTime,
         brightness: f32,
@@ -130,7 +130,7 @@ impl AnimeGif {
 
     /// Create an animation using the 74x36 ASUS gif format from a png
     #[inline]
-    pub fn create_diagonal_png(
+    pub fn from_diagonal_png(
         file_name: &Path,
         duration: AnimTime,
         brightness: f32,
@@ -159,7 +159,7 @@ impl AnimeGif {
     /// Create an animation using a gif of any size. This method must precompute the
     /// result.
     #[inline]
-    pub fn create_png_gif(
+    pub fn from_gif(
         file_name: &Path,
         scale: f32,
         angle: f32,
@@ -231,7 +231,7 @@ impl AnimeGif {
     /// will be 1 second long. If `AnimTime::Cycles` is specified for `duration` then this can
     /// be considered how many seconds the image will show for.
     #[inline]
-    pub fn create_png_static(
+    pub fn from_png(
         file_name: &Path,
         scale: f32,
         angle: f32,
