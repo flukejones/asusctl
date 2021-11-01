@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+# [4.0.6] - 2021-11-01
+### Changed
+- Fix CLI for bios toggles
+### Added
+- Extra commands for AniMe: pixel-image, gif, pixel-gif
+
 # [4.0.5] - 2021-10-27
 ### Changed
 - Convert fan curve percentage to 0-255 expected by kernel driver only if '%' char is used, otherwise the expected range for fan power is 0-255
