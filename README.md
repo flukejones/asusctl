@@ -5,7 +5,9 @@
 `asusd` is a utility for Linux to control many aspects of various ASUS laptops
 but can also be used with non-asus laptops with reduced features.
 
-## Kernel patches required
+## Kernel support
+
+You need kernel >= 5.15 or the following patches
 
 1. https://lkml.org/lkml/2021/8/20/232
 2. https://lkml.org/lkml/2021/8/18/1022
