@@ -415,7 +415,7 @@ fn handle_profile(
     supported: &PlatformProfileFunctions,
     cmd: &ProfileCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if !supported.fan_curves {
+    if !supported.platform_profile {
         println!("Profiles not supported by either this kernel or by the laptop.");
         return Err(ProfileError::NotSupported.into());
     }
