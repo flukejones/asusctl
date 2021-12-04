@@ -7,10 +7,9 @@ but can also be used with non-asus laptops with reduced features.
 
 ## Kernel support
 
-You need kernel >= 5.15 or the following patches
+**The minimum supported kernel version is 5.15**
 
-1. https://lkml.org/lkml/2021/8/20/232
-2. https://lkml.org/lkml/2021/8/18/1022
+Fan curve control on laptops with this feature require [this patch](https://lkml.org/lkml/2021/10/23/250) whcih has been merged for 5.17 upstream.
 
 ## Goals
 
@@ -25,10 +24,6 @@ supported (while asusd might still run fine on them). For best support use fedor
 
 Point 4? asusd currently uses a tiny fraction of cpu time, and less than 1Mb of ram, the way
 a system-level daemon should.
-
-**NOTICE:**
-
-Various patches are required for keyboard support. See [this post](https://asus-linux.org/blog/updates-2021-05-06/) for details on status and which kernels will have which patches.
 
 ## Discord
 
@@ -63,19 +58,19 @@ will probably suffer another rename once it becomes generic enough to do so.
 
 # BUILDING
 
-Requirements are rust >= 1.47 installed from rustup.io if the distro provided version is too old, and `make`.
+Requirements are rust >= 1.57 installed from rustup.io if the distro provided version is too old, and `make`.
 
-**Ubuntu:** `apt install libclang-dev libudev-dev`
+**Ubuntu (unsuported):** `apt install libclang-dev libudev-dev`
 
 **fedora:** `dnf install clang-devel systemd-devel`
 
 ## Installing
-
+-
 - Fedora copr = https://copr.fedorainfracloud.org/coprs/lukenukem/asus-linux/
 - openSUSE = https://download.opensuse.org/repositories/home:/luke_nukem:/asus/
 - Ubuntu = not supported due to packaging woes, but you can build and install on your own.
 
-Run `make` then `sudo make install` then reboot.
+=======
 
 The default init method is to use the udev rule, this ensures that the service is
 started when the device is initialised and ready.

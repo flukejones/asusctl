@@ -97,7 +97,7 @@ These options are not written to the config file as they are stored in efivars. 
 
 ### Profiles
 
-asusctl can support setting a power profile via platform_profile drivers. This requires [power-profiles-daemon](https://gitlab.freedesktop.org/hadess/power-profiles-daemon) v0.9.0 minimum. It also requires the kernel patch for platform_profile support to be applied form [here](https://lkml.org/lkml/2021/8/18/1022) - this patch is included in the "rog" kernels we build for fedora and arch, and will hit kernel 5.15 upstream.
+asusctl can support setting a power profile via platform_profile drivers. This requires [power-profiles-daemon](https://gitlab.freedesktop.org/hadess/power-profiles-daemon) v0.10.0 minimum. It also requires the kernel patch for platform_profile support to be applied form [here](https://lkml.org/lkml/2021/8/18/1022) - this patch is merged to 5.15 kernel upstream.
 
 A common use of asusctl is to bind the `fn+f5` (fan) key to `asusctl profile -n` to cycle through the 3 profiles:
 1. Balanced
@@ -106,7 +106,7 @@ A common use of asusctl is to bind the `fn+f5` (fan) key to `asusctl profile -n`
 
 #### Fan curves
 
-Fan curve support requires a laptop that supports it (this is detected automatically) and the kernel patch from [here](https://lkml.org/lkml/2021/8/29/50) which is still in review as of 29/09/21. As with Profiles, this is included in the kernels we build, and will hit 5.15 kernel upstream.
+Fan curve support requires a laptop that supports it (this is detected automatically) and the kernel patch from [here](https://lkml.org/lkml/2021/10/23/250) which is accepted for the 5.17 kernel release .
 
 The fan curve format can be of varying formats:
 

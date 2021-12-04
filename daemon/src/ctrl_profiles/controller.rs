@@ -21,8 +21,7 @@ impl GetSupported for CtrlPlatformProfile {
             warn!(
                 r#"
 platform_profile kernel interface not found, your laptop does not support this, or the interface is missing.
-To enable profile support you require a kernel with the following patch applied:
-https://lkml.org/lkml/2021/8/18/1022
+To enable profile support you require a kernel version 5.15.2 minimum.
 "#
             );
         }
@@ -38,8 +37,8 @@ https://lkml.org/lkml/2021/8/18/1022
                 r#"
 fan curves kernel interface not found, your laptop does not support this, or the interface is missing.
 To enable fan-curve support you require a kernel with the following patch applied:
-https://lkml.org/lkml/2021/8/20/232
-Please note that as of 24/08/2021 this is not final.
+https://lkml.org/lkml/2021/10/23/250
+This patch has been accepted upstream for 5.17 kernel release.
 "#
             );
         }
