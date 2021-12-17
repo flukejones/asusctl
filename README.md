@@ -60,12 +60,19 @@ will probably suffer another rename once it becomes generic enough to do so.
 
 Requirements are rust >= 1.57 installed from rustup.io if the distro provided version is too old, and `make`.
 
-**Ubuntu (unsuported):** `apt install libclang-dev libudev-dev`
+**Ubuntu (unsuported):**  
+    `apt install libclang-dev libudev-dev`  
+    `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`  
+    `make`  
+    `sudo make install`
 
-**fedora:** `dnf install clang-devel systemd-devel`
+**fedora:**  
+    `dnf install clang-devel systemd-devel`  
+    `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`  
+    `make`  
+    `sudo make install`  
 
 ## Installing
--
 - Fedora copr = https://copr.fedorainfracloud.org/coprs/lukenukem/asus-linux/
 - openSUSE = https://download.opensuse.org/repositories/home:/luke_nukem:/asus/
 - Ubuntu = not supported due to packaging woes, but you can build and install on your own.
