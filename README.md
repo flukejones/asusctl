@@ -61,14 +61,13 @@ will probably suffer another rename once it becomes generic enough to do so.
 Requirements are rust >= 1.57 installed from rustup.io if the distro provided version is too old, and `make`.
 
 **Ubuntu (unsuported):**  
-    `apt install libclang-dev libudev-dev`  
-    `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`  
-    `make`  
+    `apt install libclang-dev libudev-dev`
+    `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+    `make`
     `sudo make install`
 
 **fedora:**  
-    `dnf install clang-devel systemd-devel`  
-    `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`  
+    `dnf install clang-devel systemd-devel`
     `make`  
     `sudo make install`  
 
