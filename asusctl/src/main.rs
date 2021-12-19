@@ -420,10 +420,6 @@ fn handle_profile(
         return Err(ProfileError::NotSupported.into());
     }
 
-    println!("Warning: Profiles now depend on power-profiles-daemon v0.9+ which may not be in your install");
-    println!("         If you have unexpected behaviour or have only two profiles in your desktop control");
-    println!("         you need to manually install from https://gitlab.freedesktop.org/hadess/power-profiles-daemon");
-    println!("         Fedora and Arch distros will get the update soon...\n");
     if !cmd.next && !cmd.list && cmd.profile_set.is_none() && !cmd.profile_get {
         if !cmd.help {
             println!("Missing arg or command\n");
@@ -462,6 +458,9 @@ fn handle_fan_curve(
 ) -> Result<(), Box<dyn std::error::Error>> {
     if !supported.fan_curves {
         println!("Fan-curves not supported by either this kernel or by the laptop.");
+        println!(
+            "This requires kernel 5.17 (unlreleased) or the fan curve patch listed in the readme."
+        );
         return Err(ProfileError::NotSupported.into());
     }
 
