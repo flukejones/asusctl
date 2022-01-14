@@ -9,7 +9,7 @@ but can also be used with non-asus laptops with reduced features.
 
 **The minimum supported kernel version is 5.15**
 
-Fan curve control on laptops with this feature require [this patch](https://lkml.org/lkml/2021/10/23/250) whcih has been merged for 5.17 upstream.
+Fan curve control on laptops with this feature require [this patch](https://lkml.org/lkml/2021/10/23/250) which has been merged for 5.17 upstream.
 
 ## Goals
 
