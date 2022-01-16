@@ -1,11 +1,12 @@
 use std::sync::{Arc, Mutex};
 
+use async_trait::async_trait;
 use log::warn;
 use rog_anime::{
     usb::{pkt_for_apply, pkt_for_set_boot, pkt_for_set_on},
     AnimeDataBuffer, AnimePowerStates,
 };
-use zbus::dbus_interface;
+use zbus::{dbus_interface, Connection, SignalContext};
 use zvariant::ObjectPath;
 
 use std::sync::atomic::Ordering;
@@ -15,13 +16,16 @@ use super::CtrlAnime;
 pub struct CtrlAnimeZbus(pub Arc<Mutex<CtrlAnime>>);
 
 /// The struct with the main dbus methods requires this trait
+#[async_trait]
 impl crate::ZbusAdd for CtrlAnimeZbus {
-    fn add_to_server(self, server: &mut zbus::ObjectServer) {
+    async fn add_to_server(self, server: &mut Connection) {
         server
+            .object_server()
             .at(
                 &ObjectPath::from_str_unchecked("/org/asuslinux/Anime"),
                 self,
             )
+            .await
             .map_err(|err| {
                 warn!("CtrlAnimeDisplay: add_to_server {}", err);
                 err
@@ -71,12 +75,10 @@ impl CtrlAnimeZbus {
                 lock.config.awake_enabled = status;
                 lock.config.write();
 
-                let states = AnimePowerStates {
-                    enabled: lock.config.awake_enabled,
-                    boot_anim_enabled: lock.config.boot_anim_enabled,
-                };
-                self.notify_power_states(&states)
-                    .unwrap_or_else(|err| warn!("{}", err));
+                // let states = AnimePowerStates {
+                //     enabled: lock.config.awake_enabled,
+                //     boot_anim_enabled: lock.config.boot_anim_enabled,
+                // };
                 break 'outer;
             }
         }
@@ -91,12 +93,10 @@ impl CtrlAnimeZbus {
                 lock.config.boot_anim_enabled = on;
                 lock.config.write();
 
-                let states = AnimePowerStates {
-                    enabled: lock.config.awake_enabled,
-                    boot_anim_enabled: lock.config.boot_anim_enabled,
-                };
-                self.notify_power_states(&states)
-                    .unwrap_or_else(|err| warn!("{}", err));
+                // let states = AnimePowerStates {
+                //     enabled: lock.config.awake_enabled,
+                //     boot_anim_enabled: lock.config.boot_anim_enabled,
+                // };
                 break 'outer;
             }
         }
@@ -136,5 +136,8 @@ impl CtrlAnimeZbus {
 
     /// Notify listeners of the status of AniMe LED power and factory system-status animations
     #[dbus_interface(signal)]
-    fn notify_power_states(&self, data: &AnimePowerStates) -> zbus::Result<()>;
+    async fn notify_power_states(
+        ctxt: &SignalContext<'_>,
+        data: AnimePowerStates,
+    ) -> zbus::Result<()>;
 }

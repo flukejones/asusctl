@@ -1,6 +1,6 @@
 use rog_anime::error::AnimeError;
 use rog_anime::{ActionData, ActionLoader, AnimTime, Fade, Sequences, Vec2};
-use rog_dbus::RogDbusClient;
+use rog_dbus::RogDbusClientBlocking;
 use serde_derive::{Deserialize, Serialize};
 use std::time::Duration;
 use std::{
@@ -66,14 +66,14 @@ pub enum TimeType {
 /// and a zbus server behind `Arc<Mutex<T>>`
 pub struct CtrlAnimeInner<'a> {
     sequences: Sequences,
-    client: RogDbusClient<'a>,
+    client: RogDbusClientBlocking<'a>,
     do_early_return: Arc<AtomicBool>,
 }
 
 impl<'a> CtrlAnimeInner<'static> {
     pub fn new(
         sequences: Sequences,
-        client: RogDbusClient<'static>,
+        client: RogDbusClientBlocking<'static>,
         do_early_return: Arc<AtomicBool>,
     ) -> Result<Self, Error> {
         Ok(Self {
@@ -131,7 +131,7 @@ impl<'a> CtrlAnimeInner<'static> {
 
 pub struct CtrlAnime<'a> {
     config: Arc<Mutex<UserAnimeConfig>>,
-    client: RogDbusClient<'a>,
+    client: RogDbusClientBlocking<'a>,
     inner: Arc<Mutex<CtrlAnimeInner<'a>>>,
     /// Must be the same Atomic as in CtrlAnimeInner
     inner_early_return: Arc<AtomicBool>,
@@ -141,7 +141,7 @@ impl<'a> CtrlAnime<'static> {
     pub fn new(
         config: Arc<Mutex<UserAnimeConfig>>,
         inner: Arc<Mutex<CtrlAnimeInner<'static>>>,
-        client: RogDbusClient<'static>,
+        client: RogDbusClientBlocking<'static>,
         inner_early_return: Arc<AtomicBool>,
     ) -> Result<Self, Error> {
         Ok(CtrlAnime {
@@ -350,16 +350,16 @@ impl CtrlAnime<'static> {
         Err(zbus::fdo::Error::Failed("UserConfig lock fail".into()))
     }
 
-    pub fn set_state(&mut self, on: bool) -> zbus::fdo::Result<()> {
+    pub fn set_state(&mut self, on: bool) -> zbus::Result<()> {
         // Operations here need to be in specific order
         if on {
-            self.client.proxies().anime().set_on_off(on)?;
+            self.client.proxies().anime().set_on_off(on).ok();
             // Let the inner loop run
             self.inner_early_return.store(false, Ordering::SeqCst);
         } else {
             // Must make the inner run loop return early
             self.inner_early_return.store(true, Ordering::SeqCst);
-            self.client.proxies().anime().set_on_off(on)?;
+            self.client.proxies().anime().set_on_off(on).ok();
         }
         Ok(())
     }

@@ -30,8 +30,9 @@ pub mod ctrl_supported;
 pub mod error;
 
 use crate::error::RogError;
+use async_trait::async_trait;
 use config::Config;
-use zbus::ObjectServer;
+use zbus::Connection;
 
 pub static VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -39,12 +40,14 @@ pub trait Reloadable {
     fn reload(&mut self) -> Result<(), RogError>;
 }
 
+#[async_trait]
 pub trait ZbusAdd {
-    fn add_to_server(self, server: &mut ObjectServer);
+    async fn add_to_server(self, server: &mut Connection);
 }
 
+#[async_trait]
 pub trait CtrlTask {
-    fn do_task(&self) -> Result<(), RogError>;
+    async fn do_task(&self) -> Result<(), RogError>;
 }
 
 pub trait CtrlTaskComplex {

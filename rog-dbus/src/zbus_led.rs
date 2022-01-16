@@ -19,9 +19,8 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use std::sync::mpsc::Sender;
-
-use zbus::{dbus_proxy, Connection, Result};
+use zbus::{blocking::Connection, Result};
+use zbus_macros::dbus_proxy;
 
 use rog_aura::{AuraEffect, KeyColourArray, LedBrightness, LedPowerStates};
 
@@ -31,7 +30,7 @@ const BLOCKING_TIME: u64 = 40; // 100ms = 10 FPS, max 50ms = 20 FPS, 40ms = 25 F
     interface = "org.asuslinux.Daemon",
     default_path = "/org/asuslinux/Led"
 )]
-trait Daemon {
+trait Led {
     /// NextLedMode method
     fn next_led_mode(&self) -> zbus::Result<()>;
 
@@ -91,89 +90,17 @@ trait Daemon {
     fn side_leds_enabled(&self) -> zbus::Result<bool>;
 }
 
-pub struct LedProxy<'a>(DaemonProxy<'a>);
+pub struct LedProxyPerkey<'a>(LedProxyBlocking<'a>);
 
-impl<'a> LedProxy<'a> {
+impl<'a> LedProxyPerkey<'a> {
     #[inline]
     pub fn new(conn: &Connection) -> Result<Self> {
-        Ok(LedProxy(DaemonProxy::new(conn)?))
+        Ok(LedProxyPerkey(LedProxyBlocking::new(conn)?))
     }
 
     #[inline]
-    pub fn proxy(&self) -> &DaemonProxy<'a> {
+    pub fn proxy(&self) -> &LedProxyBlocking<'a> {
         &self.0
-    }
-
-    #[inline]
-    pub fn get_led_brightness(&self) -> Result<i16> {
-        self.0.led_brightness()
-    }
-
-    #[inline]
-    pub fn set_led_brightness(&self, level: LedBrightness) -> Result<()> {
-        self.0.set_brightness(level)?;
-        Ok(())
-    }
-
-    /// Set the keyboard LED to enabled while the device is awake
-    #[inline]
-    pub fn set_awake_enabled(&self, enabled: bool) -> Result<()> {
-        self.0.set_awake_enabled(enabled)?;
-        Ok(())
-    }
-
-    /// Set the keyboard LED suspend animation to enabled while the device is suspended
-    #[inline]
-    pub fn set_sleep_enabled(&self, enabled: bool) -> Result<()> {
-        self.0.set_sleep_enabled(enabled)?;
-        Ok(())
-    }
-
-    /// Set the keyboard side LEDs to enabled
-    #[inline]
-    pub fn set_side_leds_enabled(&self, enabled: bool) -> Result<()> {
-        self.0.set_side_leds_enabled(enabled)?;
-        Ok(())
-    }
-
-    #[inline]
-    pub fn next_led_mode(&self) -> Result<()> {
-        self.0.next_led_mode()
-    }
-
-    #[inline]
-    pub fn prev_led_mode(&self) -> Result<()> {
-        self.0.prev_led_mode()
-    }
-
-    #[inline]
-    pub fn next_led_brightness(&self) -> Result<()> {
-        self.0.next_led_brightness()
-    }
-
-    #[inline]
-    pub fn prev_led_brightness(&self) -> Result<()> {
-        self.0.prev_led_brightness()
-    }
-
-    #[inline]
-    pub fn set_led_mode(&self, mode: &AuraEffect) -> Result<()> {
-        self.0.set_led_mode(mode)
-    }
-
-    #[inline]
-    pub fn awake_enabled(&self) -> Result<bool> {
-        self.0.awake_enabled()
-    }
-
-    #[inline]
-    pub fn sleep_enabled(&self) -> Result<bool> {
-        self.0.sleep_enabled()
-    }
-
-    #[inline]
-    pub fn side_leds_enabled(&self) -> Result<bool> {
-        self.0.side_leds_enabled()
     }
 
     /// Write a single colour block.
@@ -206,35 +133,5 @@ impl<'a> LedProxy<'a> {
         // TODO: let mode = AuraModes::PerKey(vec![vec![]]);
         // self.0.set_led_mode(&serde_json::to_string(&mode).unwrap())
         Ok(())
-    }
-
-    #[inline]
-    pub fn connect_notify_led(&self, send: Sender<AuraEffect>) -> zbus::fdo::Result<()> {
-        self.0.connect_notify_led(move |data| {
-            send.send(data)
-                .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
-            Ok(())
-        })
-    }
-
-    #[inline]
-    pub fn connect_notify_side_leds(&self, send: Sender<bool>) -> zbus::fdo::Result<()> {
-        self.0.connect_notify_side_leds(move |data| {
-            send.send(data)
-                .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
-            Ok(())
-        })
-    }
-
-    #[inline]
-    pub fn connect_notify_power_states(
-        &self,
-        send: Sender<LedPowerStates>,
-    ) -> zbus::fdo::Result<()> {
-        self.0.connect_notify_power_states(move |data| {
-            send.send(data)
-                .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
-            Ok(())
-        })
     }
 }

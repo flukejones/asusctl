@@ -1,5 +1,5 @@
 use crate::{config::Config, error::RogError, GetSupported};
-//use crate::dbus::DbusEvents;
+use async_trait::async_trait;
 use log::{info, warn};
 use rog_supported::ChargeSupportedFunctions;
 use std::fs::OpenOptions;
@@ -8,6 +8,8 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
 use zbus::dbus_interface;
+use zbus::Connection;
+use zbus::SignalContext;
 use zvariant::ObjectPath;
 
 static BAT_CHARGE_PATH0: &str = "/sys/class/power_supply/BAT0/charge_control_end_threshold";
@@ -30,9 +32,13 @@ pub struct CtrlCharge {
 
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl CtrlCharge {
-    pub fn set_limit(&mut self, limit: u8) -> Result<(), RogError> {
+    async fn set_limit(
+        &mut self,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+        limit: u8,
+    ) -> zbus::fdo::Result<()> {
         if !(20..=100).contains(&limit) {
-            return Err(RogError::ChargeLimit(limit));
+            return Err(RogError::ChargeLimit(limit))?;
         }
         if let Ok(mut config) = self.config.try_lock() {
             self.set(limit, &mut config)
@@ -41,17 +47,12 @@ impl CtrlCharge {
                     err
                 })
                 .ok();
-            self.notify_charge(limit)
-                .map_err(|err| {
-                    warn!("CtrlCharge: set_limit {}", err);
-                    err
-                })
-                .ok();
         }
+        Self::notify_charge(&ctxt, limit).await?;
         Ok(())
     }
 
-    pub fn limit(&self) -> i8 {
+    fn limit(&self) -> i8 {
         if let Ok(config) = self.config.try_lock() {
             return config.bat_charge_limit as i8;
         }
@@ -59,16 +60,19 @@ impl CtrlCharge {
     }
 
     #[dbus_interface(signal)]
-    pub fn notify_charge(&self, limit: u8) -> zbus::Result<()> {}
+    async fn notify_charge(ctxt: &SignalContext<'_>, limit: u8) -> zbus::Result<()>;
 }
 
+#[async_trait]
 impl crate::ZbusAdd for CtrlCharge {
-    fn add_to_server(self, server: &mut zbus::ObjectServer) {
+    async fn add_to_server(self, server: &mut Connection) {
         server
+            .object_server()
             .at(
                 &ObjectPath::from_str_unchecked("/org/asuslinux/Charge"),
                 self,
             )
+            .await
             .map_err(|err| {
                 warn!("CtrlCharge: add_to_server {}", err);
                 err

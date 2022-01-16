@@ -1,7 +1,8 @@
 pub mod config;
 pub mod zbus;
 
-use ::zbus::Connection;
+use ::zbus::blocking::Connection;
+use async_trait::async_trait;
 use log::{error, info, warn};
 use logind_zbus::ManagerProxy;
 use rog_anime::{
@@ -298,7 +299,7 @@ impl CtrlAnime {
 }
 
 pub struct CtrlAnimeTask<'a> {
-    inner: Arc<Mutex<CtrlAnime>>,
+    _inner: Arc<Mutex<CtrlAnime>>,
     _c: Connection,
     manager: ManagerProxy<'a>,
 }
@@ -306,80 +307,24 @@ pub struct CtrlAnimeTask<'a> {
 impl<'a> CtrlAnimeTask<'a> {
     pub fn new(inner: Arc<Mutex<CtrlAnime>>) -> Self {
         let connection =
-            Connection::new_system().expect("CtrlAnimeTask could not create dbus connection");
+            Connection::system().expect("CtrlAnimeTask could not create dbus connection");
 
         let manager =
             ManagerProxy::new(&connection).expect("CtrlAnimeTask could not create ManagerProxy");
 
-        let c1 = inner.clone();
-        // Run this action when the system starts shutting down
-        manager
-            .connect_prepare_for_shutdown(move |shutdown| {
-                if shutdown {
-                    'outer: loop {
-                        if let Ok(lock) = c1.try_lock() {
-                            lock.thread_exit.store(true, Ordering::SeqCst);
-                            CtrlAnime::run_thread(c1.clone(), lock.cache.shutdown.clone(), false);
-                            break 'outer;
-                        }
-                    }
-                }
-                Ok(())
-            })
-            .map_err(|err| {
-                warn!("CtrlAnimeTask: new() {}", err);
-                err
-            })
-            .ok();
-
-        let c1 = inner.clone();
-        // Run this action when the system wakes up from sleep
-        manager
-            .connect_prepare_for_sleep(move |sleep| {
-                if !sleep {
-                    // wait a fraction for things to wake up properly
-                    std::thread::sleep(Duration::from_millis(100));
-                    'outer: loop {
-                        if let Ok(lock) = c1.try_lock() {
-                            lock.thread_exit.store(true, Ordering::SeqCst);
-                            CtrlAnime::run_thread(c1.clone(), lock.cache.wake.clone(), true);
-                            break 'outer;
-                        }
-                    }
-                }
-                Ok(())
-            })
-            .map_err(|err| {
-                warn!("CtrlAnimeTask: new() {}", err);
-                err
-            })
-            .ok();
-
         Self {
-            inner,
+            _inner: inner,
             _c: connection,
             manager,
         }
     }
 }
 
+#[async_trait]
 impl<'a> crate::CtrlTask for CtrlAnimeTask<'a> {
-    fn do_task(&self) -> Result<(), RogError> {
-        if let Ok(mut lock) = self.inner.try_lock() {
-            // Refresh the config and cache incase the user has edited it
-            let config = AnimeConfig::load();
-            lock.cache
-                .init_from_config(&config)
-                .map_err(|err| {
-                    warn!("CtrlAnimeTask: do_task {}", err);
-                    err
-                })
-                .ok();
-        }
-
-        // Check for signals on each task iteration, this will run the callbacks
-        // if any signal is recieved
-        self.manager.next_signal()?;
+    async fn do_task(&self) -> Result<(), RogError> {
+        self.manager.receive_prepare_for_shutdown()?.next();
+        self.manager.receive_prepare_for_sleep()?.next();
         Ok(())
     }
 }

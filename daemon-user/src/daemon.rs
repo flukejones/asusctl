@@ -1,4 +1,4 @@
-use rog_dbus::RogDbusClient;
+use rog_dbus::RogDbusClientBlocking;
 use rog_user::{
     ctrl_anime::{CtrlAnime, CtrlAnimeInner},
     user_config::*,
@@ -17,8 +17,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("     rog-dbus v{}", rog_dbus::VERSION);
     println!("rog-supported v{}", rog_supported::VERSION);
 
-    let (client, _) = RogDbusClient::new()?;
-    let supported = client.proxies().supported().get_supported_functions()?;
+    let (client, _) = RogDbusClientBlocking::new()?;
+    let supported = client.proxies().supported().supported_functions()?;
 
     let mut config = UserConfig::new();
     config.load_config()?;
@@ -44,7 +44,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             early_return.clone(),
         )?));
         // Need new client object for dbus control part
-        let (client, _) = RogDbusClient::new()?;
+        let (client, _) = RogDbusClientBlocking::new()?;
         let anime_control = CtrlAnime::new(anime_config, inner.clone(), client, early_return)?;
         anime_control.add_to_server(&mut server);
         // Thread using inner

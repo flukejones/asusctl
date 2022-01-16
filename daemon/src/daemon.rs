@@ -1,12 +1,11 @@
+use std::env;
 use std::error::Error;
 use std::io::Write;
-use std::sync::Arc;
-use std::sync::Mutex;
-use std::thread::sleep;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use std::{env, thread};
 
-use ::zbus::{fdo, Connection, ObjectServer};
+use ::zbus::Connection;
+use futures::executor::ThreadPool;
 use log::LevelFilter;
 use log::{error, info, warn};
 
@@ -19,9 +18,7 @@ use daemon::ctrl_aura::controller::{
 };
 use daemon::ctrl_charge::CtrlCharge;
 use daemon::ctrl_profiles::config::ProfileConfig;
-use daemon::ctrl_profiles::controller::CtrlProfileTask;
 use daemon::ctrl_rog_bios::CtrlRogBios;
-use daemon::error::RogError;
 use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
 };
@@ -64,25 +61,25 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!(" rog-profiles v{}", rog_profiles::VERSION);
     info!("rog-supported v{}", rog_supported::VERSION);
 
-    start_daemon()?;
+    let mut pool = ThreadPool::new()?;
+
+    futures::executor::block_on(start_daemon(&mut pool))?;
     Ok(())
 }
 
 /// The actual main loop for the daemon
-fn start_daemon() -> Result<(), Box<dyn Error>> {
+async fn start_daemon(thread_pool: &mut ThreadPool) -> Result<(), Box<dyn Error>> {
     let supported = SupportedFunctions::get_supported();
     print_board_info();
     println!("{}", serde_json::to_string_pretty(&supported)?);
 
     // Start zbus server
-    let connection = Connection::new_system()?;
-    let fdo_connection = fdo::DBusProxy::new(&connection)?;
-    let mut object_server = ObjectServer::new(&connection);
+    let mut connection = Connection::system().await?;
 
     let config = Config::load();
     let config = Arc::new(Mutex::new(config));
 
-    supported.add_to_server(&mut object_server);
+    supported.add_to_server(&mut connection).await;
 
     match CtrlRogBios::new(config.clone()) {
         Ok(mut ctrl) => {
@@ -90,7 +87,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
             ctrl.reload()
                 .unwrap_or_else(|err| warn!("Battery charge limit: {}", err));
             // Then register to dbus server
-            ctrl.add_to_server(&mut object_server);
+            ctrl.add_to_server(&mut connection).await;
         }
         Err(err) => {
             error!("rog_bios_control: {}", err);
@@ -103,7 +100,7 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
             ctrl.reload()
                 .unwrap_or_else(|err| warn!("Battery charge limit: {}", err));
             // Then register to dbus server
-            ctrl.add_to_server(&mut object_server);
+            ctrl.add_to_server(&mut connection).await;
         }
         Err(err) => {
             error!("charge_control: {}", err);
@@ -118,17 +115,9 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
                     .unwrap_or_else(|err| warn!("Profile control: {}", err));
 
                 let tmp = Arc::new(Mutex::new(ctrl));
-                ProfileZbus::new(tmp.clone()).add_to_server(&mut object_server);
-
-                let task = CtrlProfileTask::new(tmp);
-                thread::Builder::new().name("profile tasks".into()).spawn(
-                    move || -> Result<(), RogError> {
-                        loop {
-                            task.do_task()?;
-                            sleep(Duration::from_millis(100));
-                        }
-                    },
-                )?;
+                ProfileZbus::new(tmp.clone())
+                    .add_to_server(&mut connection)
+                    .await;
             }
             Err(err) => {
                 error!("Profile control: {}", err);
@@ -148,16 +137,12 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
                 .unwrap_or_else(|err| warn!("AniMe: {}", err));
 
             let zbus = CtrlAnimeZbus(inner.clone());
-            zbus.add_to_server(&mut object_server);
+            zbus.add_to_server(&mut connection).await;
 
             let task = CtrlAnimeTask::new(inner);
-            thread::Builder::new().name("anime tasks".into()).spawn(
-                move || -> Result<(), RogError> {
-                    loop {
-                        task.do_task()?;
-                    }
-                },
-            )?;
+            thread_pool.spawn_ok(async move {
+                task.do_task().await.ok();
+            });
         }
         Err(err) => {
             error!("AniMe control: {}", err);
@@ -175,16 +160,14 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
                 .reload()
                 .unwrap_or_else(|err| warn!("Keyboard LED control: {}", err));
 
-            CtrlKbdLedZbus::new(inner.clone()).add_to_server(&mut object_server);
+            CtrlKbdLedZbus::new(inner.clone())
+                .add_to_server(&mut connection)
+                .await;
 
             let task = CtrlKbdLedTask::new(inner);
-            thread::Builder::new().name("keyboard tasks".into()).spawn(
-                move || -> Result<(), RogError> {
-                    loop {
-                        task.do_task()?;
-                    }
-                },
-            )?;
+            thread_pool.spawn_ok(async move {
+                task.do_task().await.ok();
+            });
         }
         Err(err) => {
             error!("Keyboard control: {}", err);
@@ -192,12 +175,11 @@ fn start_daemon() -> Result<(), Box<dyn Error>> {
     }
 
     // Request dbus name after finishing initalizing all functions
-    fdo_connection.request_name(DBUS_NAME, fdo::RequestNameFlags::ReplaceExisting.into())?;
+    connection.request_name(DBUS_NAME).await?;
 
     // Loop to check errors and iterate zbus server
     loop {
-        if let Err(err) = object_server.try_handle_next() {
-            error!("{}", err);
-        }
+        // Nothing to do here really
+        std::thread::sleep(Duration::from_millis(1));
     }
 }

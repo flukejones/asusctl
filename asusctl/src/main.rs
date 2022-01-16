@@ -8,7 +8,7 @@ use anime_cli::{AnimeActions, AnimeCommand};
 use profiles_cli::{FanCurveCommand, ProfileCommand};
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, Vec2};
 use rog_aura::{self, AuraEffect};
-use rog_dbus::RogDbusClient;
+use rog_dbus::RogDbusClientBlocking;
 use rog_profiles::error::ProfileError;
 use rog_supported::SupportedFunctions;
 use rog_supported::{
@@ -47,7 +47,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    let (dbus, _) = RogDbusClient::new()
+    let (dbus, _) = RogDbusClientBlocking::new()
         .map_err(|e| {
             print_error_help(Box::new(e), None);
             std::process::exit(3);
@@ -57,7 +57,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let supported = dbus
         .proxies()
         .supported()
-        .get_supported_functions()
+        .supported_functions()
         .map_err(|e| {
             print_error_help(Box::new(e), None);
             std::process::exit(4);
@@ -139,7 +139,7 @@ fn do_diagnose(name: &str) -> bool {
 fn do_parsed(
     parsed: &CliStart,
     supported: &SupportedFunctions,
-    dbus: &RogDbusClient,
+    dbus: &RogDbusClientBlocking,
 ) -> Result<(), Box<dyn std::error::Error>> {
     match &parsed.command {
         Some(CliCommand::LedMode(mode)) => handle_led_mode(dbus, &supported.keyboard_led, mode)?,
@@ -170,13 +170,13 @@ fn do_parsed(
     if let Some(brightness) = &parsed.kbd_bright {
         match brightness.level() {
             None => {
-                let level = dbus.proxies().led().get_led_brightness()?;
+                let level = dbus.proxies().led().led_brightness()?;
                 println!("Current keyboard led brightness: {}", level);
             }
             Some(level) => dbus
                 .proxies()
                 .led()
-                .set_led_brightness(<rog_aura::LedBrightness>::from(level))?,
+                .set_brightness(<rog_aura::LedBrightness>::from(level))?,
         }
     }
 
@@ -193,7 +193,7 @@ fn do_parsed(
     }
 
     if let Some(chg_limit) = parsed.chg_limit {
-        dbus.proxies().charge().write_limit(chg_limit)?;
+        dbus.proxies().charge().set_limit(chg_limit)?;
     }
 
     Ok(())
@@ -206,7 +206,7 @@ fn do_gfx() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn handle_anime(
-    dbus: &RogDbusClient,
+    dbus: &RogDbusClientBlocking,
     _supported: &AnimeSupportedFunctions,
     cmd: &AnimeCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -335,7 +335,7 @@ fn handle_anime(
 }
 
 fn handle_led_mode(
-    dbus: &RogDbusClient,
+    dbus: &RogDbusClientBlocking,
     supported: &LedSupportedFunctions,
     mode: &LedModeCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -416,7 +416,7 @@ fn handle_led_mode(
 }
 
 fn handle_profile(
-    dbus: &RogDbusClient,
+    dbus: &RogDbusClientBlocking,
     supported: &PlatformProfileFunctions,
     cmd: &ProfileCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -457,7 +457,7 @@ fn handle_profile(
 }
 
 fn handle_fan_curve(
-    dbus: &RogDbusClient,
+    dbus: &RogDbusClientBlocking,
     supported: &PlatformProfileFunctions,
     cmd: &FanCurveCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -513,7 +513,7 @@ fn handle_fan_curve(
         if let Some(mut curve) = cmd.data.clone() {
             let fan = cmd.fan.unwrap_or_default();
             curve.set_fan(fan);
-            dbus.proxies().profile().set_fan_curve(curve, profile)?;
+            dbus.proxies().profile().set_fan_curve(profile, curve)?;
         }
     }
 
@@ -521,7 +521,7 @@ fn handle_fan_curve(
 }
 
 fn handle_bios_option(
-    dbus: &RogDbusClient,
+    dbus: &RogDbusClientBlocking,
     supported: &RogBiosSupportedFunctions,
     cmd: &BiosCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -548,15 +548,15 @@ fn handle_bios_option(
         }
 
         if let Some(opt) = cmd.post_sound_set {
-            dbus.proxies().rog_bios().set_post_sound(opt)?;
+            dbus.proxies().rog_bios().set_post_boot_sound(opt)?;
         }
         if cmd.post_sound_get {
-            let res = dbus.proxies().rog_bios().get_post_sound()? == 1;
+            let res = dbus.proxies().rog_bios().post_boot_sound()? == 1;
             println!("Bios POST sound on: {}", res);
         }
         if let Some(opt) = cmd.dedicated_gfx_set {
             println!("Rebuilding initrd to include drivers");
-            dbus.proxies().rog_bios().set_dedicated_gfx(opt)?;
+            dbus.proxies().rog_bios().set_dedicated_graphic_mode(opt)?;
             println!("The mode change is not active until you reboot, on boot the bios will make the required change");
             if opt {
                 println!(
@@ -567,7 +567,7 @@ fn handle_bios_option(
             }
         }
         if cmd.dedicated_gfx_get {
-            let res = dbus.proxies().rog_bios().get_dedicated_gfx()? == 1;
+            let res = dbus.proxies().rog_bios().dedicated_graphic_mode()? == 1;
             println!("Bios dedicated GPU on: {}", res);
         }
     }

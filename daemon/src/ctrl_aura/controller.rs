@@ -6,6 +6,7 @@ use crate::{
     laptops::{LaptopLedData, ASUS_KEYBOARD_DEVICES},
     CtrlTask,
 };
+use async_trait::async_trait;
 use log::{info, warn};
 use logind_zbus::ManagerProxy;
 use rog_aura::{
@@ -16,12 +17,12 @@ use rog_aura::{
     AuraEffect, LedBrightness, LED_MSG_LEN,
 };
 use rog_supported::LedSupportedFunctions;
+use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
-use std::{fs::OpenOptions, thread::spawn};
-use zbus::Connection;
+use zbus::blocking::Connection;
 
 use crate::GetSupported;
 
@@ -57,46 +58,46 @@ pub struct CtrlKbdLed {
 pub struct CtrlKbdLedTask<'a> {
     inner: Arc<Mutex<CtrlKbdLed>>,
     _c: Connection,
-    manager: ManagerProxy<'a>,
+    _manager: ManagerProxy<'a>,
 }
 
 impl<'a> CtrlKbdLedTask<'a> {
     pub fn new(inner: Arc<Mutex<CtrlKbdLed>>) -> Self {
         let connection =
-            Connection::new_system().expect("CtrlKbdLedTask could not create dbus connection");
+            Connection::system().expect("CtrlKbdLedTask could not create dbus connection");
 
         let manager =
             ManagerProxy::new(&connection).expect("CtrlKbdLedTask could not create ManagerProxy");
 
-        let c1 = inner.clone();
-        // Run this action when the system wakes up from sleep
-        manager
-            .connect_prepare_for_sleep(move |sleep| {
-                if !sleep {
-                    let c1 = c1.clone();
-                    spawn(move || {
-                        // wait a fraction for things to wake up properly
-                        //std::thread::sleep(Duration::from_millis(100));
-                        loop {
-                            if let Ok(ref mut lock) = c1.try_lock() {
-                                lock.set_brightness(lock.config.brightness).ok();
-                                break;
-                            }
-                        }
-                    });
-                }
-                Ok(())
-            })
-            .map_err(|err| {
-                warn!("CtrlAnimeTask: new() {}", err);
-                err
-            })
-            .ok();
+        // let c1 = inner.clone();
+        // // Run this action when the system wakes up from sleep
+        // manager
+        //     .connect_prepare_for_sleep(move |sleep| {
+        //         if !sleep {
+        //             let c1 = c1.clone();
+        //             spawn(move || {
+        //                 // wait a fraction for things to wake up properly
+        //                 //std::thread::sleep(Duration::from_millis(100));
+        //                 loop {
+        //                     if let Ok(ref mut lock) = c1.try_lock() {
+        //                         lock.set_brightness(lock.config.brightness).ok();
+        //                         break;
+        //                     }
+        //                 }
+        //             });
+        //         }
+        //         Ok(())
+        //     })
+        //     .map_err(|err| {
+        //         warn!("CtrlAnimeTask: new() {}", err);
+        //         err
+        //     })
+        //     .ok();
 
         Self {
             inner,
             _c: connection,
-            manager,
+            _manager: manager,
         }
     }
 
@@ -125,9 +126,11 @@ impl<'a> CtrlKbdLedTask<'a> {
     }
 }
 
+#[async_trait]
 impl<'a> CtrlTask for CtrlKbdLedTask<'a> {
-    fn do_task(&self) -> Result<(), RogError> {
-        self.manager.next_signal()?;
+    async fn do_task(&self) -> Result<(), RogError> {
+        self._manager.receive_prepare_for_sleep()?.next();
+
         if let Ok(ref mut lock) = self.inner.try_lock() {
             return Self::update_config(lock);
         }

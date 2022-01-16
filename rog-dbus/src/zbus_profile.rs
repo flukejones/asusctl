@@ -19,19 +19,17 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use std::sync::mpsc::Sender;
-
 use rog_profiles::{
     fan_curve_set::{CurveData, FanCurveSet},
     Profile,
 };
-use zbus::{dbus_proxy, Connection, Result};
+use zbus_macros::dbus_proxy;
 
 #[dbus_proxy(
     interface = "org.asuslinux.Daemon",
     default_path = "/org/asuslinux/Profile"
 )]
-trait Daemon {
+trait Profile {
     /// Get the fan-curve data for the currently active Profile
     fn fan_curve_data(&self, profile: Profile) -> zbus::Result<FanCurveSet>;
 
@@ -66,73 +64,5 @@ trait Daemon {
 
     /// NotifyProfile signal
     #[dbus_proxy(signal)]
-    fn notify_profile(&self, profile: Profile) -> zbus::Result<()>;
-}
-
-pub struct ProfileProxy<'a>(DaemonProxy<'a>);
-
-impl<'a> ProfileProxy<'a> {
-    #[inline]
-    pub fn new(conn: &Connection) -> Result<Self> {
-        Ok(ProfileProxy(DaemonProxy::new(conn)?))
-    }
-
-    #[inline]
-    pub fn proxy(&self) -> &DaemonProxy<'a> {
-        &self.0
-    }
-
-    #[inline]
-    pub fn active_profile(&self) -> zbus::Result<Profile> {
-        self.0.active_profile()
-    }
-
-    #[inline]
-    pub fn enabled_fan_profiles(&self) -> zbus::Result<Vec<Profile>> {
-        self.0.enabled_fan_profiles()
-    }
-
-    #[inline]
-    pub fn fan_curve_data(&self, profile: Profile) -> zbus::Result<FanCurveSet> {
-        self.0.fan_curve_data(profile)
-    }
-
-    #[inline]
-    pub fn next_profile(&self) -> Result<()> {
-        self.0.next_profile()
-    }
-
-    #[inline]
-    pub fn profiles(&self) -> Result<Vec<Profile>> {
-        self.0.profiles()
-    }
-
-    #[inline]
-    pub fn set_active_profile(&self, profile: Profile) -> zbus::Result<()> {
-        self.0.set_active_profile(profile)
-    }
-
-    #[inline]
-    pub fn set_fan_curve_enabled(&self, profile: Profile, enabled: bool) -> zbus::Result<()> {
-        self.0.set_fan_curve_enabled(profile, enabled)
-    }
-
-    #[inline]
-    pub fn set_fan_curve(&self, curve: CurveData, profile: Profile) -> zbus::Result<()> {
-        self.0.set_fan_curve(profile, curve)
-    }
-
-    #[inline]
-    pub fn set_active_curve_to_defaults(&self) -> zbus::Result<()> {
-        self.0.set_active_curve_to_defaults()
-    }
-
-    #[inline]
-    pub fn connect_notify_profile(&self, send: Sender<Profile>) -> zbus::fdo::Result<()> {
-        self.0.connect_notify_profile(move |data| {
-            send.send(data)
-                .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
-            Ok(())
-        })
-    }
+    fn notify_profile(&self, profile: Profile) -> zbus::Result<Profile>;
 }

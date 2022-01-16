@@ -18,11 +18,16 @@ name = "asusd"
 path = "src/daemon.rs"
 
 [dependencies]
-rog_anime = { path = "../rog-anime" }
-rog_aura = { path = "../rog-aura" }
+rog_anime = { path = "../rog-anime", features = ["dbus"] }
+rog_aura = { path = "../rog-aura", features = ["dbus"] }
 rog_supported = { path = "../rog-supported" }
 rog_profiles = { path = "../rog-profiles" }
 rog_dbus = { path = "../rog-dbus" }
+
+async-executor = "1.4.1"
+async-trait = "^0.1"
+futures = { version = "0.3.19", features = ["executor", "thread-pool"] }
+
 rusb = "^0.8"
 udev = "^0.6"
 
@@ -30,10 +35,9 @@ udev = "^0.6"
 log = "^0.4"
 env_logger = "^0.8"
 
-zbus = "^1.9.1"
-zvariant = "^2.6"
-zvariant_derive = { version = "^2.6" }
-logind-zbus = "^0.7.1"
+zbus = "^2.0"
+zvariant = "^3.0"
+logind-zbus = { version = "^2.0" } #, default-features = false, features = ["non_blocking"] }
 
 # serialisation
 serde = "^1.0"

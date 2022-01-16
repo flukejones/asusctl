@@ -19,15 +19,13 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use std::sync::mpsc::Sender;
-
-use zbus::{dbus_proxy, Connection, Result};
+use zbus_macros::dbus_proxy;
 
 #[dbus_proxy(
     interface = "org.asuslinux.Daemon",
     default_path = "/org/asuslinux/Charge"
 )]
-trait Daemon {
+trait Charge {
     /// Limit method
     fn limit(&self) -> zbus::Result<i16>;
 
@@ -36,38 +34,5 @@ trait Daemon {
 
     /// NotifyCharge signal
     #[dbus_proxy(signal)]
-    fn notify_charge(&self, limit: u8) -> zbus::Result<()>;
-}
-
-pub struct ChargeProxy<'a>(DaemonProxy<'a>);
-
-impl<'a> ChargeProxy<'a> {
-    #[inline]
-    pub fn new(conn: &Connection) -> Result<Self> {
-        Ok(ChargeProxy(DaemonProxy::new(conn)?))
-    }
-
-    #[inline]
-    pub fn proxy(&self) -> &DaemonProxy<'a> {
-        &self.0
-    }
-
-    #[inline]
-    pub fn write_limit(&self, level: u8) -> Result<()> {
-        self.0.set_limit(level)
-    }
-
-    #[inline]
-    pub fn get_limit(&self) -> Result<i16> {
-        self.0.limit()
-    }
-
-    #[inline]
-    pub fn connect_notify_charge(&self, send: Sender<u8>) -> zbus::fdo::Result<()> {
-        self.0.connect_notify_charge(move |data| {
-            send.send(data)
-                .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
-            Ok(())
-        })
-    }
+    fn notify_charge(&self, limit: u8) -> zbus::Result<u8>;
 }

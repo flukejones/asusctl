@@ -2,6 +2,7 @@ use log::{error, warn};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
+use std::path::PathBuf;
 
 pub static CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
 
@@ -24,8 +25,8 @@ impl Config {
             .read(true)
             .write(true)
             .create(true)
-            .open(&CONFIG_PATH)
-            .unwrap_or_else(|_| panic!("The directory /etc/asusd/ is missing")); // okay to cause panic here
+            .open(&PathBuf::from(CONFIG_PATH))
+            .unwrap_or_else(|e| panic!("Error opening {}, {}", CONFIG_PATH, e)); // okay to cause panic here
         let mut buf = String::new();
         let config;
         if let Ok(read_len) = file.read_to_string(&mut buf) {

@@ -19,15 +19,13 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use std::sync::mpsc::Sender;
-
-use zbus::{dbus_proxy, Connection, Result};
+use zbus_macros::dbus_proxy;
 
 #[dbus_proxy(
     interface = "org.asuslinux.Daemon",
     default_path = "/org/asuslinux/RogBios"
 )]
-trait Daemon {
+trait RogBios {
     /// DedicatedGraphicMode method
     fn dedicated_graphic_mode(&self) -> zbus::Result<i16>;
 
@@ -46,60 +44,5 @@ trait Daemon {
 
     /// NotifyPostBootSound signal
     #[dbus_proxy(signal)]
-    fn notify_post_boot_sound(&self, dedicated: bool) -> zbus::Result<()>;
-}
-
-pub struct RogBiosProxy<'a>(DaemonProxy<'a>);
-
-impl<'a> RogBiosProxy<'a> {
-    #[inline]
-    pub fn new(conn: &Connection) -> Result<Self> {
-        Ok(RogBiosProxy(DaemonProxy::new(conn)?))
-    }
-
-    #[inline]
-    pub fn proxy(&self) -> &DaemonProxy<'a> {
-        &self.0
-    }
-
-    #[inline]
-    pub fn get_dedicated_gfx(&self) -> Result<i16> {
-        self.0.dedicated_graphic_mode()
-    }
-
-    #[inline]
-    pub fn set_dedicated_gfx(&self, on: bool) -> Result<()> {
-        self.0.set_dedicated_graphic_mode(on)
-    }
-
-    #[inline]
-    pub fn get_post_sound(&self) -> Result<i16> {
-        self.0.post_boot_sound()
-    }
-
-    #[inline]
-    pub fn set_post_sound(&self, on: bool) -> Result<()> {
-        self.0.set_post_boot_sound(on)
-    }
-
-    #[inline]
-    pub fn connect_notify_dedicated_graphic_mode(
-        &self,
-        send: Sender<bool>,
-    ) -> zbus::fdo::Result<()> {
-        self.0.connect_notify_dedicated_graphic_mode(move |data| {
-            send.send(data)
-                .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
-            Ok(())
-        })
-    }
-
-    #[inline]
-    pub fn connect_notify_post_boot_sound(&self, send: Sender<bool>) -> zbus::fdo::Result<()> {
-        self.0.connect_notify_post_boot_sound(move |data| {
-            send.send(data)
-                .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
-            Ok(())
-        })
-    }
+    fn notify_post_boot_sound(&self, sound: bool) -> zbus::Result<()>;
 }

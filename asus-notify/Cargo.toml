@@ -7,13 +7,14 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-zbus = "^1.9"
+zbus = "^2.2"
 # serialisation
 serde_json = "^1.0"
 rog_dbus = { path = "../rog-dbus" }
 rog_aura = { path = "../rog-aura" }
 rog_supported = { path = "../rog-supported" }
 rog_profiles = { path = "../rog-profiles" }
+futures = { version = "0.3.19", features = ["executor", "thread-pool"] }
 
 [dependencies.notify-rust]
 version = "^4.3"

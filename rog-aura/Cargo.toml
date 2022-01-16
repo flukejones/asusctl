@@ -14,11 +14,10 @@ exclude = ["data"]
 
 [features]
 default = ["dbus"]
-dbus = ["zvariant", "zvariant_derive"]
+dbus = ["zvariant"]
 
 [dependencies]
 serde = "^1.0"
 serde_derive = "^1.0"
 
-zvariant = { version = "^2.6", optional = true }
-zvariant_derive = { version = "^2.6", optional = true }
+zvariant = { version = "^3.0", optional = true }

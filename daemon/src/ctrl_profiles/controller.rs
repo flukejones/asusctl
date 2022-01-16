@@ -2,6 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::error::RogError;
 use crate::{CtrlTask, GetSupported};
+use async_trait::async_trait;
 use log::{info, warn};
 use rog_profiles::error::ProfileError;
 use rog_profiles::{FanCurveProfiles, Profile};
@@ -135,8 +136,9 @@ impl CtrlProfileTask {
     }
 }
 
+#[async_trait]
 impl CtrlTask for CtrlProfileTask {
-    fn do_task(&self) -> Result<(), RogError> {
+    async fn do_task(&self) -> Result<(), RogError> {
         if let Ok(ref mut lock) = self.ctrl.try_lock() {
             let new_profile = Profile::get_active_profile().unwrap();
             if new_profile != lock.config.active_profile {

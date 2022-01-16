@@ -14,6 +14,6 @@ rog_anime = { path = "../rog-anime" }
 rog_aura = { path = "../rog-aura" }
 rog_profiles = { path = "../rog-profiles" }
 rog_supported = { path = "../rog-supported" }
-zbus = "^1.9"
-zbus_macros = "^1.9"
-zvariant = "^2.8"
+zbus = "^2.0"
+zbus_macros = "^2.0"
+zvariant = "^3.0"
