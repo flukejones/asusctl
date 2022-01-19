@@ -131,3 +131,10 @@ board_names = ["GV301QH", "GV301QE"]
 standard = ["Static", "Breathe", "Pulse"]
 multizone = false
 per_key = false
+
+[[led_data]]
+prod_family = "ROG Strix" 
+board_names = ["G513IC"]
+standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
+multizone = false
+per_key = false
