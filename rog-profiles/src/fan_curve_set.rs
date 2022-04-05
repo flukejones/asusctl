@@ -72,7 +72,7 @@ impl std::str::FromStr for CurveData {
                     let mut p = r;
                     if percentages {
                         p *= 255 / 100;
-                        if p > 100 {
+                        if r > 100 {
                             return Err(ProfileError::ParseFanCurvePercentOver100(r));
                         }
                     }
