@@ -216,7 +216,7 @@ pub enum AuraZone {
 
 /// Default factory modes structure. This easily converts to an USB HID packet with:
 /// ```rust
-/// let bytes: [u8; LED_MSG_LEN] = mode.into();
+/// // let bytes: [u8; LED_MSG_LEN] = mode.into();
 /// ```
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Debug, Clone, Deserialize, Serialize)]
