@@ -71,10 +71,10 @@ impl std::str::FromStr for CurveData {
                 } else {
                     let mut p = r;
                     if percentages {
-                        p *= 255 / 100;
                         if r > 100 {
                             return Err(ProfileError::ParseFanCurvePercentOver100(r));
                         }
+                        p = (p as f32 * 2.55).round() as u8;
                     }
                     if pwm_prev > p {
                         return Err(ProfileError::ParseFanCurvePrevHigher(
@@ -222,7 +222,7 @@ mod tests {
                 .unwrap();
         assert_eq!(curve.fan, FanCurvePU::CPU);
         assert_eq!(curve.temp, [30, 49, 59, 69, 79, 89, 99, 109]);
-        assert_eq!(curve.pwm, [1, 2, 3, 4, 31, 49, 56, 58]);
+        assert_eq!(curve.pwm, [3, 5, 8, 10, 79, 125, 143, 148]);
     }
 
     #[test]
