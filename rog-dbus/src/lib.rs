@@ -83,6 +83,7 @@ impl<'a> DbusProxies<'a> {
 pub struct Signals {
     pub profile: Receiver<Profile>,
     pub led_mode: Receiver<AuraEffect>,
+    pub side_leds: Receiver<bool>,
     pub led_power_state: Receiver<LedPowerStates>,
     pub anime_power_state: Receiver<AnimePowerStates>,
     pub charge: Receiver<u8>,
@@ -107,6 +108,11 @@ impl Signals {
             led_mode: {
                 let (tx, rx) = channel();
                 proxies.led.connect_notify_led(tx)?;
+                rx
+            },
+            side_leds: {
+                let (tx, rx) = channel();
+                proxies.led.connect_notify_side_leds(tx)?;
                 rx
             },
             led_power_state: {

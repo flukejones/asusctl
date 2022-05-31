@@ -56,9 +56,15 @@ trait Daemon {
     /// SetSleepEnabled method
     fn set_sleep_enabled(&self, enabled: bool) -> zbus::Result<()>;
 
+    /// SetSideLedsEnabled method
+    fn set_side_leds_enabled(&self, enabled: bool) -> Result<()>;
+
     /// NotifyLed signal
     #[dbus_proxy(signal)]
     fn notify_led(&self, data: AuraEffect) -> zbus::Result<()>;
+
+    #[dbus_proxy(signal)]
+    fn notify_side_leds(&self, data: bool) -> zbus::Result<()>;
 
     #[dbus_proxy(signal)]
     fn notify_power_states(&self, data: LedPowerStates) -> zbus::Result<()>;
@@ -80,6 +86,9 @@ trait Daemon {
 
     #[dbus_proxy(property)]
     fn sleep_enabled(&self) -> zbus::Result<bool>;
+
+    #[dbus_proxy(property)]
+    fn side_leds_enabled(&self) -> zbus::Result<bool>;
 }
 
 pub struct LedProxy<'a>(DaemonProxy<'a>);
@@ -120,6 +129,13 @@ impl<'a> LedProxy<'a> {
         Ok(())
     }
 
+    /// Set the keyboard side LEDs to enabled
+    #[inline]
+    pub fn set_side_leds_enabled(&self, enabled: bool) -> Result<()> {
+        self.0.set_side_leds_enabled(enabled)?;
+        Ok(())
+    }
+
     #[inline]
     pub fn next_led_mode(&self) -> Result<()> {
         self.0.next_led_mode()
@@ -153,6 +169,11 @@ impl<'a> LedProxy<'a> {
     #[inline]
     pub fn sleep_enabled(&self) -> Result<bool> {
         self.0.sleep_enabled()
+    }
+
+    #[inline]
+    pub fn side_leds_enabled(&self) -> Result<bool> {
+        self.0.side_leds_enabled()
     }
 
     /// Write a single colour block.
@@ -190,6 +211,15 @@ impl<'a> LedProxy<'a> {
     #[inline]
     pub fn connect_notify_led(&self, send: Sender<AuraEffect>) -> zbus::fdo::Result<()> {
         self.0.connect_notify_led(move |data| {
+            send.send(data)
+                .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
+            Ok(())
+        })
+    }
+
+    #[inline]
+    pub fn connect_notify_side_leds(&self, send: Sender<bool>) -> zbus::fdo::Result<()> {
+        self.0.connect_notify_side_leds(move |data| {
             send.send(data)
                 .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
             Ok(())
