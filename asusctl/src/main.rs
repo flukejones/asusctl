@@ -355,7 +355,7 @@ fn handle_led_mode(
             let commands: Vec<String> = cmdlist.lines().map(|s| s.to_string()).collect();
             for command in commands.iter().filter(|command| {
                 for mode in &supported.stock_led_modes {
-                    if command.contains(&<&str>::from(mode).to_lowercase()) {
+                    if command.trim().starts_with(&<&str>::from(mode).to_lowercase()) {
                         return true;
                     }
                 }
