@@ -11,7 +11,7 @@ use logind_zbus::ManagerProxy;
 use rog_aura::{
     usb::{
         LED_APPLY, LED_AWAKE_OFF_SLEEP_OFF, LED_AWAKE_OFF_SLEEP_ON, LED_AWAKE_ON_SLEEP_OFF,
-        LED_AWAKE_ON_SLEEP_ON, LED_SET,
+        LED_AWAKE_ON_SLEEP_ON, LED_SET, SIDE_LEDS_OFF, SIDE_LEDS_ON,
     },
     AuraEffect, LedBrightness, LED_MSG_LEN,
 };
@@ -148,6 +148,10 @@ impl crate::Reloadable for CtrlKbdLedReloader {
             ctrl.set_states_enabled(ctrl.config.awake_enabled, ctrl.config.sleep_anim_enabled)
                 .map_err(|err| warn!("{}", err))
                 .ok();
+
+            ctrl.set_side_leds_states(ctrl.config.side_leds_enabled)
+                .map_err(|err| warn!("{}", err))
+                .ok();
         }
         Ok(())
     }
@@ -275,6 +279,19 @@ impl CtrlKbdLed {
             LED_AWAKE_OFF_SLEEP_OFF
         } else {
             LED_AWAKE_ON_SLEEP_ON
+        };
+        self.write_bytes(&bytes)?;
+        self.write_bytes(&LED_SET)?;
+        // Changes won't persist unless apply is set
+        self.write_bytes(&LED_APPLY)?;
+        Ok(())
+    }
+
+    pub(super) fn set_side_leds_states(&self, activated: bool) -> Result<(), RogError> {
+        let bytes: [u8; LED_MSG_LEN] = if activated {
+            SIDE_LEDS_ON
+        } else {
+            SIDE_LEDS_OFF
         };
         self.write_bytes(&bytes)?;
         self.write_bytes(&LED_SET)?;

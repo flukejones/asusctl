@@ -344,6 +344,7 @@ fn handle_led_mode(
         && !mode.next_mode
         && mode.sleep_enable.is_none()
         && mode.awake_enable.is_none()
+        && mode.side_leds_enable.is_none()
     {
         if !mode.help {
             println!("Missing arg or command\n");
@@ -405,6 +406,10 @@ fn handle_led_mode(
 
     if let Some(enable) = mode.sleep_enable {
         dbus.proxies().led().set_sleep_enabled(enable)?;
+    }
+
+    if let Some(enable) = mode.side_leds_enable {
+        dbus.proxies().led().set_side_leds_enabled(enable)?;
     }
 
     Ok(())

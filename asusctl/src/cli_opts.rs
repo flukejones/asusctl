@@ -59,6 +59,11 @@ pub struct LedModeCommand {
         help = "set the keyboard LED suspend animation to enabled while the device is suspended"
     )]
     pub sleep_enable: Option<bool>,
+    #[options(
+    meta = "",
+    help = "set the keyboard side LEDs to enabled"
+    )]
+    pub side_leds_enable: Option<bool>,
     #[options(command)]
     pub command: Option<SetAuraBuiltin>,
 }

@@ -65,6 +65,19 @@ impl CtrlKbdLedZbus {
         }
     }
 
+    /// Set the keyboard side LEDs to enabled
+    fn set_side_leds_enabled(&mut self, enabled: bool) {
+        if let Ok(mut ctrl) = self.0.try_lock() {
+            ctrl.set_side_leds_states(enabled)
+                .map_err(|err| warn!("{}", err))
+                .ok();
+            ctrl.config.side_leds_enabled = enabled;
+            ctrl.config.write();
+            self.notify_side_leds(ctrl.config.side_leds_enabled)
+                .unwrap_or_else(|err| warn!("{}", err))
+        }
+    }
+
     fn set_led_mode(&mut self, effect: AuraEffect) {
         if let Ok(mut ctrl) = self.0.try_lock() {
             match ctrl.do_command(effect) {
@@ -135,6 +148,14 @@ impl CtrlKbdLedZbus {
         true
     }
 
+    #[dbus_interface(property)]
+    fn side_leds_enabled(&self) -> bool {
+        if let Ok(ctrl) = self.0.try_lock() {
+            return ctrl.config.side_leds_enabled;
+        }
+        true
+    }
+
     /// Return the current mode data
     #[dbus_interface(property)]
     fn led_mode(&self) -> String {
@@ -173,6 +194,9 @@ impl CtrlKbdLedZbus {
 
     #[dbus_interface(signal)]
     fn notify_led(&self, data: AuraEffect) -> zbus::Result<()>;
+
+    #[dbus_interface(signal)]
+    fn notify_side_leds(&self, data: bool) -> zbus::Result<()>;
 
     #[dbus_interface(signal)]
     fn notify_power_states(&self, data: &LedPowerStates) -> zbus::Result<()>;

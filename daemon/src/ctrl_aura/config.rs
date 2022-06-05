@@ -25,6 +25,7 @@ impl AuraConfigV320 {
             multizone: self.multizone,
             awake_enabled: true,
             sleep_anim_enabled: true,
+            side_leds_enabled:true,
         }
     }
 }
@@ -46,6 +47,7 @@ impl AuraConfigV352 {
             multizone: self.multizone,
             awake_enabled: true,
             sleep_anim_enabled: true,
+            side_leds_enabled:true,
         }
     }
 }
@@ -58,6 +60,7 @@ pub struct AuraConfig {
     pub multizone: Option<AuraMultiZone>,
     pub awake_enabled: bool,
     pub sleep_anim_enabled: bool,
+    pub side_leds_enabled: bool,
 }
 
 impl Default for AuraConfig {
@@ -69,6 +72,7 @@ impl Default for AuraConfig {
             multizone: None,
             awake_enabled: true,
             sleep_anim_enabled: true,
+            side_leds_enabled:true,
         }
     }
 }

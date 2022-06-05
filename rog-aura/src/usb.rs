@@ -30,3 +30,11 @@ pub const LED_AWAKE_OFF_SLEEP_OFF: [u8; 17] = [
 pub const LED_AWAKE_OFF_SLEEP_ON: [u8; 17] = [
     0x5d, 0xbd, 0x01, 0xf3, 0x1b, 0x0d, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
+
+pub const SIDE_LEDS_OFF: [u8; 17] = [
+    0x5d, 0xbd, 0x01, 0x08, 0x00, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+];
+
+pub const SIDE_LEDS_ON: [u8; 17] = [
+    0x5d, 0xbd, 0x01, 0x0c, 0x05, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+];
