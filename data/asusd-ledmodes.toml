@@ -96,6 +96,13 @@ standard = ["Static", "Breathe", "Pulse"]
 multizone = false
 per_key = false
 
+[[led_data]]
+prod_family = "ROG Zephyrus G14"
+board_names = ["GA402R"]
+standard = ["Static", "Breathe", "Pulse", "Rainbow"]
+multizone = false
+per_key = false
+
 # GA503QE at higher priority (first match) than GA503Q
 [[led_data]]
 prod_family = "ROG Zephyrus G15"
