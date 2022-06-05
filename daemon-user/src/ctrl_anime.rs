@@ -152,12 +152,14 @@ impl<'a> CtrlAnime<'static> {
         })
     }
 
-    pub fn add_to_server(self, server: &mut zbus::ObjectServer) {
+    pub async fn add_to_server(self, server: &mut zbus::Connection) {
         server
+            .object_server()
             .at(
                 &ObjectPath::from_str_unchecked("/org/asuslinux/Anime"),
                 self,
             )
+            .await
             .map_err(|err| {
                 println!("CtrlAnime: add_to_server {}", err);
                 err
@@ -350,7 +352,7 @@ impl CtrlAnime<'static> {
         Err(zbus::fdo::Error::Failed("UserConfig lock fail".into()))
     }
 
-    pub fn set_state(&mut self, on: bool) -> zbus::Result<()> {
+    pub fn set_state(&mut self, on: bool) -> zbus::fdo::Result<()> {
         // Operations here need to be in specific order
         if on {
             self.client.proxies().anime().set_on_off(on).ok();

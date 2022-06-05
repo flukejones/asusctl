@@ -28,7 +28,7 @@ dependencies = [
  "rog_profiles",
  "rog_supported",
  "serde_json",
- "zbus 2.2.0",
+ "zbus",
 ]
 
 [[package]]
@@ -47,7 +47,7 @@ dependencies = [
  "sysfs-class",
  "tinybmp",
  "toml",
- "zbus 2.2.0",
+ "zbus",
 ]
 
 [[package]]
@@ -239,8 +239,8 @@ dependencies = [
  "sysfs-class",
  "toml",
  "udev",
- "zbus 2.2.0",
- "zvariant 3.2.1",
+ "zbus",
+ "zvariant",
 ]
 
 [[package]]
@@ -248,15 +248,16 @@ name = "daemon-user"
 version = "1.2.0"
 dependencies = [
  "dirs",
+ "futures",
  "rog_anime",
  "rog_dbus",
  "rog_supported",
  "serde",
  "serde_derive",
  "serde_json",
- "zbus 1.9.2",
- "zvariant 2.10.0",
- "zvariant_derive 2.10.0",
+ "zbus",
+ "zvariant",
+ "zvariant_derive",
 ]
 
 [[package]]
@@ -342,33 +343,12 @@ dependencies = [
 
 [[package]]
 name = "enumflags2"
-version = "0.6.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83c8d82922337cd23a15f88b70d8e4ef5f11da38dd7cdb55e84dd5de99695da0"
-dependencies = [
- "enumflags2_derive 0.6.4",
- "serde",
-]
-
-[[package]]
-name = "enumflags2"
 version = "0.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e75d4cd21b95383444831539909fbb14b9dc3fdceb2a6f5d36577329a1f55ccb"
 dependencies = [
- "enumflags2_derive 0.7.4",
+ "enumflags2_derive",
  "serde",
-]
-
-[[package]]
-name = "enumflags2_derive"
-version = "0.6.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "946ee94e3dbf58fdd324f9ce245c7b238d46a66f00e86a020b71996349e46cce"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -679,8 +659,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c03958f20018a20963daf0c16ada4f271ae2da3e0017fb40caa8b0e3dc5b0226"
 dependencies = [
  "serde",
- "zbus 2.2.0",
- "zvariant 3.2.1",
+ "zbus",
+ "zvariant",
 ]
 
 [[package]]
@@ -737,29 +717,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nb-connect"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1bb540dc6ef51cfe1916ec038ce7a620daf3a111e2502d745197cd53d6bca15"
-dependencies = [
- "libc",
- "socket2",
-]
-
-[[package]]
-name = "nix"
-version = "0.20.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5e06129fb611568ef4e868c14b326274959aa70ff7776e9d55323531c374945"
-dependencies = [
- "bitflags",
- "cc",
- "cfg-if",
- "libc",
- "memoffset",
-]
-
-[[package]]
 name = "nix"
 version = "0.23.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -791,9 +748,9 @@ dependencies = [
  "mac-notification-sys",
  "serde",
  "winrt-notification",
- "zbus 2.2.0",
- "zvariant 3.2.1",
- "zvariant_derive 3.2.1",
+ "zbus",
+ "zvariant",
+ "zvariant_derive",
 ]
 
 [[package]]
@@ -961,15 +918,6 @@ checksum = "eb9f9e6e233e5c4a35559a617bf40a4ec447db2e84c20b55a6f83167b7e57872"
 
 [[package]]
 name = "proc-macro-crate"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d6ea3c4595b96363c13943497db34af4460fb474a95c43f4446ad341b8c9785"
-dependencies = [
- "toml",
-]
-
-[[package]]
-name = "proc-macro-crate"
 version = "1.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e17d47ce914bf4de440332250b0edd23ce48c005f59fab39d3335866b114f11a"
@@ -1082,7 +1030,7 @@ dependencies = [
  "png_pong",
  "serde",
  "serde_derive",
- "zvariant 3.2.1",
+ "zvariant",
 ]
 
 [[package]]
@@ -1091,7 +1039,7 @@ version = "1.1.0"
 dependencies = [
  "serde",
  "serde_derive",
- "zvariant 3.2.1",
+ "zvariant",
 ]
 
 [[package]]
@@ -1102,9 +1050,9 @@ dependencies = [
  "rog_aura",
  "rog_profiles",
  "rog_supported",
- "zbus 2.2.0",
- "zbus_macros 2.2.0",
- "zvariant 3.2.1",
+ "zbus",
+ "zbus_macros",
+ "zvariant",
 ]
 
 [[package]]
@@ -1114,8 +1062,8 @@ dependencies = [
  "serde",
  "serde_derive",
  "udev",
- "zvariant 3.2.1",
- "zvariant_derive 3.2.1",
+ "zvariant",
+ "zvariant_derive",
 ]
 
 [[package]]
@@ -1125,8 +1073,8 @@ dependencies = [
  "rog_aura",
  "serde",
  "serde_derive",
- "zvariant 3.2.1",
- "zvariant_derive 3.2.1",
+ "zvariant",
+ "zvariant_derive",
 ]
 
 [[package]]
@@ -1144,12 +1092,6 @@ name = "ryu"
 version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f3f6f92acf49d1b98f7a81226834412ada05458b7364277387724a237f062695"
-
-[[package]]
-name = "scoped-tls"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea6a9290e3c9cf0f18145ef7ffa62d68ee0bf5fcd651017e586dc7fd5da448c2"
 
 [[package]]
 name = "scopeguard"
@@ -1513,29 +1455,6 @@ checksum = "d2d7d3948613f75c98fd9328cfdcc45acc4d360655289d0a7d4ec931392200a3"
 
 [[package]]
 name = "zbus"
-version = "1.9.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5983c3d035549ab80db67c844ec83ed271f7c1f2546fd9577c594d34c1b6c85"
-dependencies = [
- "async-io",
- "byteorder",
- "derivative",
- "enumflags2 0.6.4",
- "fastrand",
- "futures",
- "nb-connect",
- "nix 0.20.2",
- "once_cell",
- "polling",
- "scoped-tls",
- "serde",
- "serde_repr",
- "zbus_macros 1.9.2",
- "zvariant 2.10.0",
-]
-
-[[package]]
-name = "zbus"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "53819092b9db813b2c6168b097b4b13ad284d81c9f2b0165a0a1b190e505a1f3"
@@ -1550,14 +1469,14 @@ dependencies = [
  "async-trait",
  "byteorder",
  "derivative",
- "enumflags2 0.7.5",
+ "enumflags2",
  "event-listener",
  "futures-core",
  "futures-sink",
  "futures-util",
  "hex",
  "lazy_static",
- "nix 0.23.1",
+ "nix",
  "once_cell",
  "ordered-stream",
  "rand",
@@ -1567,21 +1486,9 @@ dependencies = [
  "static_assertions",
  "uds_windows",
  "winapi",
- "zbus_macros 2.2.0",
+ "zbus_macros",
  "zbus_names",
- "zvariant 3.2.1",
-]
-
-[[package]]
-name = "zbus_macros"
-version = "1.9.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bce54ac7b2150a2fa21ad5842a7470ce2288158d7da1f9bfda8ad455a1c59a97"
-dependencies = [
- "proc-macro-crate 0.1.5",
- "proc-macro2",
- "quote",
- "syn",
+ "zvariant",
 ]
 
 [[package]]
@@ -1590,7 +1497,7 @@ version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c7174ebe6722c280d6d132d694bb5664ce50a788cb70eeb518e7fc1ca095a114"
 dependencies = [
- "proc-macro-crate 1.1.3",
+ "proc-macro-crate",
  "proc-macro2",
  "quote",
  "regex",
@@ -1605,21 +1512,7 @@ checksum = "45dfcdcf87b71dad505d30cc27b1b7b88a64b6d1c435648f48f9dbc1fdc4b7e1"
 dependencies = [
  "serde",
  "static_assertions",
- "zvariant 3.2.1",
-]
-
-[[package]]
-name = "zvariant"
-version = "2.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a68c7b55f2074489b7e8e07d2d0a6ee6b4f233867a653c664d8020ba53692525"
-dependencies = [
- "byteorder",
- "enumflags2 0.6.4",
- "libc",
- "serde",
- "static_assertions",
- "zvariant_derive 2.10.0",
+ "zvariant",
 ]
 
 [[package]]
@@ -1629,23 +1522,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cbd1abd8bc2c855412b9c8af9fc11c0d695c73c732ad5a1a1be10f3fd4bf19b2"
 dependencies = [
  "byteorder",
- "enumflags2 0.7.5",
+ "enumflags2",
  "libc",
  "serde",
  "static_assertions",
- "zvariant_derive 3.2.1",
-]
-
-[[package]]
-name = "zvariant_derive"
-version = "2.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4ca5e22593eb4212382d60d26350065bf2a02c34b85bc850474a74b589a3de9"
-dependencies = [
- "proc-macro-crate 1.1.3",
- "proc-macro2",
- "quote",
- "syn",
+ "zvariant_derive",
 ]
 
 [[package]]
@@ -1654,7 +1535,7 @@ version = "3.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "abebd57382dfacf3e7bbdd7b7c3d162d6ed0687a78f046263ddef4ddabc275ae"
 dependencies = [
- "proc-macro-crate 1.1.3",
+ "proc-macro-crate",
  "proc-macro2",
  "quote",
  "syn",

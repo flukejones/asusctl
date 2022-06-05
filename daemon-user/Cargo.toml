@@ -25,6 +25,8 @@ rog_supported = { path = "../rog-supported" }
 
 dirs = "^4.0"
 
-zbus = "^1.9.1"
-zvariant = "^2.6"
-zvariant_derive = "^2.6"
+zbus = "^2.2"
+zvariant = "^3.0"
+zvariant_derive = "^3.0"
+
+futures = { version = "0.3.19", features = ["executor", "thread-pool"] }

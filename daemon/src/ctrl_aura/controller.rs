@@ -66,8 +66,8 @@ impl<'a> CtrlKbdLedTask<'a> {
         let connection =
             Connection::system().expect("CtrlKbdLedTask could not create dbus connection");
 
-        let manager =
-            ManagerProxyBlocking::new(&connection).expect("CtrlKbdLedTask could not create ManagerProxy");
+        let manager = ManagerProxyBlocking::new(&connection)
+            .expect("CtrlKbdLedTask could not create ManagerProxy");
 
         // let c1 = inner.clone();
         // // Run this action when the system wakes up from sleep

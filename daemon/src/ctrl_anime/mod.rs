@@ -1,10 +1,10 @@
 pub mod config;
 pub mod zbus;
 
-use logind_zbus::manager::ManagerProxyBlocking;
 use ::zbus::blocking::Connection;
 use async_trait::async_trait;
 use log::{error, info, warn};
+use logind_zbus::manager::ManagerProxyBlocking;
 use rog_anime::{
     error::AnimeError,
     usb::{
@@ -309,8 +309,8 @@ impl<'a> CtrlAnimeTask<'a> {
         let connection =
             Connection::system().expect("CtrlAnimeTask could not create dbus connection");
 
-        let manager =
-            ManagerProxyBlocking::new(&connection).expect("CtrlAnimeTask could not create ManagerProxy");
+        let manager = ManagerProxyBlocking::new(&connection)
+            .expect("CtrlAnimeTask could not create ManagerProxy");
 
         Self {
             _inner: inner,
