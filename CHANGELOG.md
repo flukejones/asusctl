@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Huge refactor to use zbus 2.2 + zvariant 3.0
+- Fixes to fan-curve settings from CLI (Author: Armas Span)
+### Added
+- Support for GA402R LED modes
+- Support for G513IC LED modes (Author: dada513)
+- Support for G513QM LED modes (Author: Martin Piffault)
+- Add side-LED toggle support (Author: Martin Piffault)
 
 # [4.0.7] - 2021-12-19
 ### Changed
