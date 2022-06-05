@@ -8,7 +8,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use log::{info, warn};
-use logind_zbus::ManagerProxy;
+use logind_zbus::manager::ManagerProxyBlocking;
 use rog_aura::{
     usb::{
         LED_APPLY, LED_AWAKE_OFF_SLEEP_OFF, LED_AWAKE_OFF_SLEEP_ON, LED_AWAKE_ON_SLEEP_OFF,
@@ -58,7 +58,7 @@ pub struct CtrlKbdLed {
 pub struct CtrlKbdLedTask<'a> {
     inner: Arc<Mutex<CtrlKbdLed>>,
     _c: Connection,
-    _manager: ManagerProxy<'a>,
+    _manager: ManagerProxyBlocking<'a>,
 }
 
 impl<'a> CtrlKbdLedTask<'a> {
@@ -67,7 +67,7 @@ impl<'a> CtrlKbdLedTask<'a> {
             Connection::system().expect("CtrlKbdLedTask could not create dbus connection");
 
         let manager =
-            ManagerProxy::new(&connection).expect("CtrlKbdLedTask could not create ManagerProxy");
+            ManagerProxyBlocking::new(&connection).expect("CtrlKbdLedTask could not create ManagerProxy");
 
         // let c1 = inner.clone();
         // // Run this action when the system wakes up from sleep

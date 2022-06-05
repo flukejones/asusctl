@@ -1,6 +1,6 @@
 [package]
 name = "daemon"
-version = "4.0.7"
+version = "4.1.0"
 license = "MPL-2.0"
 readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]
@@ -28,16 +28,16 @@ async-executor = "1.4.1"
 async-trait = "^0.1"
 futures = { version = "0.3.19", features = ["executor", "thread-pool"] }
 
-rusb = "^0.8"
+rusb = "^0.9"
 udev = "^0.6"
 
 # cli and logging
 log = "^0.4"
-env_logger = "^0.8"
+env_logger = "^0.9"
 
-zbus = "^2.0"
-zvariant = "^3.0"
-logind-zbus = { version = "^2.0" } #, default-features = false, features = ["non_blocking"] }
+zbus = "^2.2"
+zvariant = "^3.2"
+logind-zbus = { version = "^3.0" } #, default-features = false, features = ["non_blocking"] }
 
 # serialisation
 serde = "^1.0"

@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-zbus = "^1.9.1"
+zbus = "^2.2"
 rog_anime = { path = "../rog-anime" }
 rog_aura = { path = "../rog-aura" }
 rog_dbus = { path = "../rog-dbus" }
@@ -20,7 +20,7 @@ toml = "^0.5.8"
 sysfs-class = "^0.1.2"
 
 [dev-dependencies]
-tinybmp = "^0.2.3"
-glam = "0.14.0"
+tinybmp = "^0.3.3"
+glam = "0.20.5"
 rog_dbus = { path = "../rog-dbus" }
 gif = "^0.11.2"
