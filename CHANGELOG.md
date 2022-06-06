@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Huge refactor to use zbus 2.2 + zvariant 3.0 in system-daemon. More work required.
 - Daemons with tasks not use `smol` for async ops.
 - Fixes to fan-curve settings from CLI (Author: Armas Span)
+- Add brightness to anime zbus notification
 ### Added
 - Support for GA402R LED modes
 - Support for GU502LV LED modes
