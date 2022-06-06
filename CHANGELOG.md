@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Support for GA402R LED modes
 - Support for GU502LV LED modes
+- Support for G512 LED modes
 - Support for G513IC LED modes (Author: dada513)
 - Support for G513QM LED modes (Author: Martin Piffault)
 - Add side-LED toggle support (Author: Martin Piffault)
