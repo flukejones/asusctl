@@ -19,7 +19,7 @@ dependencies = [
 
 [[package]]
 name = "asus-notify"
-version = "3.0.2"
+version = "3.1.0"
 dependencies = [
  "notify-rust",
  "rog_aura",
@@ -213,9 +213,9 @@ checksum = "f771a5d1f5503f7f4279a30f3643d3421ba149848b89ecaaec0ea2acf04a5ac4"
 
 [[package]]
 name = "bitflags"
-version = "1.2.1"
+version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
+checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "block"
@@ -303,7 +303,7 @@ dependencies = [
 
 [[package]]
 name = "daemon-user"
-version = "1.2.0"
+version = "1.3.0"
 dependencies = [
  "dirs",
  "rog_anime",
@@ -1018,7 +1018,7 @@ dependencies = [
 
 [[package]]
 name = "rog_anime"
-version = "1.3.1"
+version = "1.3.3"
 dependencies = [
  "gif",
  "glam",
@@ -1040,7 +1040,7 @@ dependencies = [
 
 [[package]]
 name = "rog_dbus"
-version = "4.0.2"
+version = "4.1.0"
 dependencies = [
  "rog_anime",
  "rog_aura",
