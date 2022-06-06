@@ -1,10 +1,10 @@
-use futures::executor::ThreadPool;
 use rog_dbus::RogDbusClientBlocking;
 use rog_user::{
     ctrl_anime::{CtrlAnime, CtrlAnimeInner},
     user_config::*,
     DBUS_NAME,
 };
+use smol::Executor;
 use std::sync::Arc;
 use std::sync::Mutex;
 use zbus::Connection;
@@ -23,44 +23,48 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut config = UserConfig::new();
     config.load_config()?;
 
-    let anime_config = UserAnimeConfig::load_config(config.active_anime)?;
-    let anime = anime_config.create_anime()?;
-
-    let anime_config = Arc::new(Mutex::new(anime_config));
-    let thread_pool = ThreadPool::new().unwrap();
+    let executor = Executor::new();
 
     let early_return = Arc::new(AtomicBool::new(false));
-    thread_pool.spawn_ok(async move {
-        // Create server
-        let mut connection = Connection::session().await.unwrap();
-        connection.request_name(DBUS_NAME).await.unwrap();
+    // Set up the anime data and run loop/thread
+    if supported.anime_ctrl.0 {
+        let anime_config = UserAnimeConfig::load_config(config.active_anime)?;
+        let anime = anime_config.create_anime()?;
+        let anime_config = Arc::new(Mutex::new(anime_config));
 
-        // Set up the anime data and run loop/thread
-        if supported.anime_ctrl.0 {
-            // Inner behind mutex required for thread safety
-            let inner = Arc::new(Mutex::new(
-                CtrlAnimeInner::new(anime, client, early_return.clone()).unwrap(),
-            ));
-            // Need new client object for dbus control part
-            let (client, _) = RogDbusClientBlocking::new().unwrap();
-            let anime_control =
-                CtrlAnime::new(anime_config, inner.clone(), client, early_return).unwrap();
-            anime_control.add_to_server(&mut connection).await;
-            loop {
-                if let Ok(inner) = inner.clone().try_lock() {
-                    inner.run().ok();
+        executor
+            .spawn(async move {
+                // Create server
+                let mut connection = Connection::session().await.unwrap();
+                connection.request_name(DBUS_NAME).await.unwrap();
+
+                // Inner behind mutex required for thread safety
+                let inner = Arc::new(Mutex::new(
+                    CtrlAnimeInner::new(anime, client, early_return.clone()).unwrap(),
+                ));
+                // Need new client object for dbus control part
+                let (client, _) = RogDbusClientBlocking::new().unwrap();
+                let anime_control =
+                    CtrlAnime::new(anime_config, inner.clone(), client, early_return).unwrap();
+                anime_control.add_to_server(&mut connection).await;
+                loop {
+                    if let Ok(inner) = inner.clone().try_lock() {
+                        inner.run().ok();
+                    }
                 }
-            }
-        }
-        // future::ready(())
-    });
+            })
+            .detach();
+    }
 
-    // if supported.keyboard_led.per_key_led_mode {}
+    // if supported.keyboard_led.per_key_led_mode {
+    //     executor
+    //         .spawn(async move {
+    //            //
+    //         })
+    //         .detach();
+    // }
 
     loop {
-        std::thread::sleep(std::time::Duration::from_millis(1000));
-        // if let Err(err) = server.try_handle_next() {
-        //     println!("{}", err);
-        // }
+        smol::block_on(executor.tick());
     }
 }

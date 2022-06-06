@@ -124,7 +124,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .detach();
 
     loop {
-        future::block_on(executor.tick());
+        smol::block_on(executor.tick());
     }
 }
 

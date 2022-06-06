@@ -24,9 +24,8 @@ rog_supported = { path = "../rog-supported" }
 rog_profiles = { path = "../rog-profiles" }
 rog_dbus = { path = "../rog-dbus" }
 
-async-executor = "1.4.1"
 async-trait = "^0.1"
-futures = { version = "0.3.19", features = ["executor", "thread-pool"] }
+smol = "^1.2"
 
 rusb = "^0.9"
 udev = "^0.6"

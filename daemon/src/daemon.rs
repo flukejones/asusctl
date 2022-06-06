@@ -5,9 +5,9 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use ::zbus::Connection;
-use futures::executor::ThreadPool;
 use log::LevelFilter;
 use log::{error, info, warn};
+use smol::Executor;
 
 use daemon::ctrl_anime::config::AnimeConfig;
 use daemon::ctrl_anime::zbus::CtrlAnimeZbus;
@@ -61,14 +61,14 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!(" rog-profiles v{}", rog_profiles::VERSION);
     info!("rog-supported v{}", rog_supported::VERSION);
 
-    let mut pool = ThreadPool::new()?;
+    let mut executor = Executor::new();
 
-    futures::executor::block_on(start_daemon(&mut pool))?;
+    smol::block_on(start_daemon(&mut executor))?;
     Ok(())
 }
 
 /// The actual main loop for the daemon
-async fn start_daemon(thread_pool: &mut ThreadPool) -> Result<(), Box<dyn Error>> {
+async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>> {
     let supported = SupportedFunctions::get_supported();
     print_board_info();
     println!("{}", serde_json::to_string_pretty(&supported)?);
@@ -140,9 +140,11 @@ async fn start_daemon(thread_pool: &mut ThreadPool) -> Result<(), Box<dyn Error>
             zbus.add_to_server(&mut connection).await;
 
             let task = CtrlAnimeTask::new(inner);
-            thread_pool.spawn_ok(async move {
-                task.do_task().await.ok();
-            });
+            executor
+                .spawn(async move {
+                    task.do_task().await.ok();
+                })
+                .detach();
         }
         Err(err) => {
             error!("AniMe control: {}", err);
@@ -165,9 +167,11 @@ async fn start_daemon(thread_pool: &mut ThreadPool) -> Result<(), Box<dyn Error>
                 .await;
 
             let task = CtrlKbdLedTask::new(inner);
-            thread_pool.spawn_ok(async move {
-                task.do_task().await.ok();
-            });
+            executor
+                .spawn(async move {
+                    task.do_task().await.ok();
+                })
+                .detach();
         }
         Err(err) => {
             error!("Keyboard control: {}", err);
