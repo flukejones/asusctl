@@ -1,5 +1,5 @@
 use rog_anime::{AnimeDataBuffer, AnimeGrid};
-use rog_dbus::RogDbusClient;
+use rog_dbus::RogDbusClientBlocking;
 
 // In usable data:
 // Top row start at 1, ends at 32
@@ -7,7 +7,7 @@ use rog_dbus::RogDbusClient;
 // 74w x 36h diagonal used by the windows app
 
 fn main() {
-    let (client, _) = RogDbusClient::new().unwrap();
+    let (client, _) = RogDbusClientBlocking::new().unwrap();
     let mut matrix = AnimeGrid::new(None);
     let tmp = matrix.get_mut();
 

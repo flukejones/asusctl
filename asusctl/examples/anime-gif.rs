@@ -1,10 +1,10 @@
 use std::{env, path::Path, thread::sleep};
 
 use rog_anime::{ActionData, ActionLoader, Sequences};
-use rog_dbus::RogDbusClient;
+use rog_dbus::RogDbusClientBlocking;
 
 fn main() {
-    let (client, _) = RogDbusClient::new().unwrap();
+    let (client, _) = RogDbusClientBlocking::new().unwrap();
 
     let args: Vec<String> = env::args().into_iter().collect();
     if args.len() != 3 {

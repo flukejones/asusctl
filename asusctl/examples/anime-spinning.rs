@@ -5,10 +5,10 @@ use std::{
 use rog_anime::{
     AnimeDataBuffer, {AnimeImage, Vec2},
 };
-use rog_dbus::RogDbusClient;
+use rog_dbus::RogDbusClientBlocking;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let (client, _) = RogDbusClient::new().unwrap();
+    let (client, _) = RogDbusClientBlocking::new().unwrap();
 
     let args: Vec<String> = env::args().into_iter().collect();
     if args.len() != 7 {
