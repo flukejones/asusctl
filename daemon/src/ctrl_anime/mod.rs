@@ -300,18 +300,18 @@ impl CtrlAnime {
 }
 
 pub struct CtrlAnimeTask {
-    _inner: Arc<Mutex<CtrlAnime>>,
+    inner: Arc<Mutex<CtrlAnime>>,
 }
 
 impl CtrlAnimeTask {
     pub async fn new(inner: Arc<Mutex<CtrlAnime>>) -> CtrlAnimeTask {
-        Self { _inner: inner }
+        Self { inner }
     }
 }
 
 #[async_trait]
 impl crate::CtrlTask for CtrlAnimeTask {
-    async fn create_task(&self, executor: &mut Executor) -> Result<(), RogError> {
+    async fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
         let connection = Connection::system()
             .await
             .expect("CtrlAnimeTask could not create dbus connection");
@@ -320,17 +320,37 @@ impl crate::CtrlTask for CtrlAnimeTask {
             .await
             .expect("CtrlAnimeTask could not create ManagerProxy");
 
-        let x = self._inner.clone();
+        let inner = self.inner.clone();
         executor
             .spawn(async move {
-                if let Ok(p) = manager.receive_prepare_for_sleep().await {
-                    p.for_each(|_| {
-                        if let Ok(_lock) = x.clone().try_lock() {
-                            info!("AniMe received sleep event (this feature is not yet complete)");
-                            // lock.config.system
-                        }
-                    })
-                    .await;
+                if let Ok(notif) = manager.receive_prepare_for_sleep().await {
+                    notif
+                        .for_each(|event| {
+                            if let Ok(args) = event.args() {
+                                if args.start {
+                                    if let Ok(lock) = inner.clone().try_lock() {
+                                        info!("CtrlAnimeTask running sleep animation");
+                                        lock.thread_exit.store(true, Ordering::Relaxed);
+                                        CtrlAnime::run_thread(
+                                            inner.clone(),
+                                            lock.cache.shutdown.clone(),
+                                            true,
+                                        );
+                                    }
+                                } else {
+                                    if let Ok(lock) = inner.clone().try_lock() {
+                                        info!("CtrlAnimeTask running wake animation");
+                                        lock.thread_exit.store(true, Ordering::Relaxed);
+                                        CtrlAnime::run_thread(
+                                            inner.clone(),
+                                            lock.cache.wake.clone(),
+                                            true,
+                                        );
+                                    }
+                                }
+                            }
+                        })
+                        .await;
                 }
             })
             .detach();
@@ -339,19 +359,38 @@ impl crate::CtrlTask for CtrlAnimeTask {
             .await
             .expect("CtrlAnimeTask could not create ManagerProxy");
 
-        let x = self._inner.clone();
+        let inner = self.inner.clone();
         executor
             .spawn(async move {
-                if let Ok(p) = manager.receive_prepare_for_shutdown().await {
-                    p.for_each(|_| {
-                        if let Ok(_lock) = x.clone().try_lock() {
-                            info!(
-                                "AniMe received shutdown event (this feature is not yet complete)"
-                            );
-                            // lock.config.system
-                        }
-                    })
-                    .await;
+                if let Ok(notif) = manager.receive_prepare_for_shutdown().await {
+                    notif
+                        .for_each(|event| {
+                            if let Ok(args) = event.args() {
+                                if args.start {
+                                    if let Ok(lock) = inner.clone().try_lock() {
+                                        info!("CtrlAnimeTask running sleep animation");
+                                        lock.thread_exit.store(true, Ordering::Relaxed);
+                                        CtrlAnime::run_thread(
+                                            inner.clone(),
+                                            lock.cache.shutdown.clone(),
+                                            true,
+                                        );
+                                    }
+                                } else {
+                                    // If waking up - intention is to catch hibernation event
+                                    if let Ok(lock) = inner.clone().try_lock() {
+                                        info!("CtrlAnimeTask running wake animation");
+                                        lock.thread_exit.store(true, Ordering::Relaxed);
+                                        CtrlAnime::run_thread(
+                                            inner.clone(),
+                                            lock.cache.wake.clone(),
+                                            true,
+                                        );
+                                    }
+                                }
+                            }
+                        })
+                        .await;
                 }
             })
             .detach();

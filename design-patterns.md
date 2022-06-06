@@ -28,17 +28,52 @@ impl CtrlAnime {
 }
 ```
 
-The task trait:
+The task trait. There are three ways to implement this:
 
 ```rust
 pub struct CtrlAnimeTask(Arc<Mutex<CtrlAnime>>);
 
 impl crate::CtrlTask for CtrlAnimeTask {
-    fn create_task(&self, executor: &mut Executor) -> Result<(), RogError> {
+    // This will run once only
+    fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
        if let Ok(lock) = self.inner.try_lock() {
             <some action>
         }
         Ok(())
+    }
+
+    // This will run until the notification stream closes (which in most cases will be never)
+    fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
+        let connection = Connection::system().await.unwrap();
+        let manager = ManagerProxy::new(&connection).await.unwrap();
+
+        let inner = self.inner.clone();
+        executor
+            .spawn(async move {
+                // A notification from logind dbus interface
+                if let Ok(p) = manager.receive_prepare_for_sleep().await {
+                    // A stream that will continuously output events
+                    p.for_each(|_| {
+                        if let Ok(lock) = inner.try_lock() {
+                            // Do stuff here
+                        }
+                    })
+                    .await;
+                }
+            })
+            .detach();
+    }
+
+    // This task will run every 500 milliseconds
+    fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
+        let inner = self.inner.clone();
+        // This is a provided free trait to help set up a repeating task
+        self.repeating_task(500, executor, move || {
+            if let Ok(lock) = inner.try_lock() {
+                // Do stuff here
+            }
+        })
+        .await;
     }
 }
 ```
@@ -61,18 +96,11 @@ The Zbus requirements:
 ```rust
 pub struct CtrlAnimeZbus(Arc<Mutex<CtrlAnime>>);
 
+#[async_trait]
 impl crate::ZbusAdd for CtrlAnimeZbus {
     fn add_to_server(self, server: &mut zbus::ObjectServer) {
-        server
-            .at(
-                &ObjectPath::from_str_unchecked("/org/asuslinux/Anime"),
-                self,
-            )
-            .map_err(|err| {
-                warn!("CtrlAnimeDisplay: add_to_server {}", err);
-                err
-            })
-            .ok();
+        // This is a provided free helper trait with pre-set body. It will move self in-to.
+        Self::add_to_server_helper(self, "/org/asuslinux/Anime", server).await;
     }
 }
 

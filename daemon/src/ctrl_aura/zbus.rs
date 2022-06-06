@@ -1,22 +1,14 @@
 use async_trait::async_trait;
-use log::{error, warn};
+use log::warn;
 use rog_aura::{AuraEffect, LedBrightness, LedPowerStates};
 use zbus::{dbus_interface, Connection, SignalContext};
-use zvariant::ObjectPath;
 
 use super::controller::CtrlKbdLedZbus;
 
 #[async_trait]
 impl crate::ZbusAdd for CtrlKbdLedZbus {
     async fn add_to_server(self, server: &mut Connection) {
-        server
-            .object_server()
-            .at(&ObjectPath::from_str_unchecked("/org/asuslinux/Led"), self)
-            .await
-            .map_err(|err| {
-                error!("DbusKbdLed: add_to_server {}", err);
-            })
-            .ok();
+        Self::add_to_server_helper(self, "/org/asuslinux/Led", server).await;
     }
 }
 
