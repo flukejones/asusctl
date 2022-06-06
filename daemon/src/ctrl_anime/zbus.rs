@@ -68,24 +68,29 @@ impl CtrlAnimeZbus {
     }
 
     /// Set whether the AniMe is displaying images/data
-    fn set_on_off(&self, status: bool) {
+    async fn set_on_off(&self, #[zbus(signal_context)] ctxt: SignalContext<'_>, status: bool) {
+        let mut states = None;
         'outer: loop {
             if let Ok(mut lock) = self.0.try_lock() {
                 lock.write_bytes(&pkt_for_set_on(status));
                 lock.config.awake_enabled = status;
                 lock.config.write();
 
-                // let states = AnimePowerStates {
-                //     enabled: lock.config.awake_enabled,
-                //     boot_anim_enabled: lock.config.boot_anim_enabled,
-                // };
+                states = Some(AnimePowerStates {
+                    enabled: lock.config.awake_enabled,
+                    boot_anim_enabled: lock.config.boot_anim_enabled,
+                });
                 break 'outer;
             }
+        }
+        if let Some(state) = states {
+            Self::notify_power_states(&ctxt, state).await.ok();
         }
     }
 
     /// Set whether the AniMe will show boot, suspend, or off animations
-    fn set_boot_on_off(&self, on: bool) {
+    async fn set_boot_on_off(&self, #[zbus(signal_context)] ctxt: SignalContext<'_>, on: bool) {
+        let mut states = None;
         'outer: loop {
             if let Ok(mut lock) = self.0.try_lock() {
                 lock.write_bytes(&pkt_for_set_boot(on));
@@ -93,12 +98,15 @@ impl CtrlAnimeZbus {
                 lock.config.boot_anim_enabled = on;
                 lock.config.write();
 
-                // let states = AnimePowerStates {
-                //     enabled: lock.config.awake_enabled,
-                //     boot_anim_enabled: lock.config.boot_anim_enabled,
-                // };
+                states = Some(AnimePowerStates {
+                    enabled: lock.config.awake_enabled,
+                    boot_anim_enabled: lock.config.boot_anim_enabled,
+                });
                 break 'outer;
             }
+        }
+        if let Some(state) = states {
+            Self::notify_power_states(&ctxt, state).await.ok();
         }
     }
 
@@ -116,7 +124,7 @@ impl CtrlAnimeZbus {
         }
     }
 
-    /// Get status of if the AniMe LEDs are on
+    /// Get status of if the AniMe LEDs are on/displaying while system is awake
     #[dbus_interface(property)]
     fn awake_enabled(&self) -> bool {
         if let Ok(ctrl) = self.0.try_lock() {
