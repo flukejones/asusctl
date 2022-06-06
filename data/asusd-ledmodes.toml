@@ -21,7 +21,7 @@ per_key = false
 
 [[led_data]]
 prod_family = "ROG Zephyrus M15"
-board_names = ["GU502LW"]
+board_names = ["GU502LW", "GU502LV"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
 multizone = false
 per_key = true
