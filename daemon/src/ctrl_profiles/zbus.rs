@@ -3,6 +3,7 @@ use log::warn;
 use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::fan_curve_set::FanCurveSet;
 use rog_profiles::Profile;
+use smol::Executor;
 use zbus::Connection;
 use zbus::SignalContext;
 
@@ -203,15 +204,19 @@ impl crate::ZbusAdd for ProfileZbus {
 
 #[async_trait]
 impl CtrlTask for ProfileZbus {
-    async fn do_task(&self) -> Result<(), RogError> {
-        if let Ok(ref mut lock) = self.inner.try_lock() {
-            let new_profile = Profile::get_active_profile().unwrap();
-            if new_profile != lock.config.active_profile {
-                lock.config.active_profile = new_profile;
-                lock.write_profile_curve_to_platform()?;
-                lock.save_config();
+    async fn create_task(&self, executor: &mut Executor) -> Result<(), RogError> {
+        let inner = self.inner.clone();
+        self.repeating_task(500, executor, move || {
+            if let Ok(ref mut lock) = inner.try_lock() {
+                let new_profile = Profile::get_active_profile().unwrap();
+                if new_profile != lock.config.active_profile {
+                    lock.config.active_profile = new_profile;
+                    lock.write_profile_curve_to_platform().unwrap();
+                    lock.save_config();
+                }
             }
-        }
+        })
+        .await;
         Ok(())
     }
 }
