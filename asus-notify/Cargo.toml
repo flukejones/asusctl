@@ -14,7 +14,7 @@ rog_dbus = { path = "../rog-dbus" }
 rog_aura = { path = "../rog-aura" }
 rog_supported = { path = "../rog-supported" }
 rog_profiles = { path = "../rog-profiles" }
-futures = { version = "0.3.19", features = ["executor", "thread-pool"] }
+smol = "^1.2"
 
 [dependencies.notify-rust]
 version = "^4.3"

@@ -1,4 +1,3 @@
-use futures::{executor::ThreadPool, StreamExt};
 use notify_rust::{Hint, Notification, NotificationHandle};
 use rog_aura::AuraEffect;
 use rog_dbus::{
@@ -6,11 +5,12 @@ use rog_dbus::{
     zbus_rogbios::RogBiosProxy,
 };
 use rog_profiles::Profile;
+use smol::{future, Executor};
 use std::{
     error::Error,
-    future,
     sync::{Arc, Mutex},
 };
+use zbus::export::futures_util::StreamExt;
 
 const NOTIF_HEADER: &str = "ROG Control";
 
@@ -43,102 +43,88 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let last_notification: SharedHandle = Arc::new(Mutex::new(None));
 
-    let thread_pool = ThreadPool::new()?;
+    let executor = Executor::new();
     // BIOS notif
     let x = last_notification.clone();
-    thread_pool.spawn_ok(async move {
-        let conn = zbus::Connection::system().await.unwrap();
-        let proxy = RogBiosProxy::new(&conn).await.unwrap();
-        if let Ok(p) = proxy.receive_notify_post_boot_sound().await {
-            p.for_each(|e| {
-                if let Ok(out) = e.args() {
-                    if let Ok(ref mut lock) = x.try_lock() {
-                        notify!(do_post_sound_notif, lock, &out.sound());
+    executor
+        .spawn(async move {
+            let conn = zbus::Connection::system().await.unwrap();
+            let proxy = RogBiosProxy::new(&conn).await.unwrap();
+            if let Ok(p) = proxy.receive_notify_post_boot_sound().await {
+                p.for_each(|e| {
+                    if let Ok(out) = e.args() {
+                        if let Ok(ref mut lock) = x.try_lock() {
+                            notify!(do_post_sound_notif, lock, &out.sound());
+                        }
                     }
-                }
-                future::ready(())
-            })
-            .await;
-        };
-    });
+                    future::ready(())
+                })
+                .await;
+            };
+        })
+        .detach();
 
     // Charge notif
     let x = last_notification.clone();
-    thread_pool.spawn_ok(async move {
-        let conn = zbus::Connection::system().await.unwrap();
-        let proxy = ChargeProxy::new(&conn).await.unwrap();
-        if let Ok(p) = proxy.receive_notify_charge().await {
-            p.for_each(|e| {
-                if let Ok(out) = e.args() {
-                    if let Ok(ref mut lock) = x.try_lock() {
-                        notify!(do_charge_notif, lock, &out.limit);
+    executor
+        .spawn(async move {
+            let conn = zbus::Connection::system().await.unwrap();
+            let proxy = ChargeProxy::new(&conn).await.unwrap();
+            if let Ok(p) = proxy.receive_notify_charge().await {
+                p.for_each(|e| {
+                    if let Ok(out) = e.args() {
+                        if let Ok(ref mut lock) = x.try_lock() {
+                            notify!(do_charge_notif, lock, &out.limit);
+                        }
                     }
-                }
-                future::ready(())
-            })
-            .await;
-        };
-    });
+                    future::ready(())
+                })
+                .await;
+            };
+        })
+        .detach();
 
     // Profile notif
     let x = last_notification.clone();
-    thread_pool.spawn_ok(async move {
-        let conn = zbus::Connection::system().await.unwrap();
-        let proxy = ProfileProxy::new(&conn).await.unwrap();
-        if let Ok(p) = proxy.receive_notify_profile().await {
-            p.for_each(|e| {
-                if let Ok(out) = e.args() {
-                    if let Ok(ref mut lock) = x.try_lock() {
-                        notify!(do_thermal_notif, lock, &out.profile);
+    executor
+        .spawn(async move {
+            let conn = zbus::Connection::system().await.unwrap();
+            let proxy = ProfileProxy::new(&conn).await.unwrap();
+            if let Ok(p) = proxy.receive_notify_profile().await {
+                p.for_each(|e| {
+                    if let Ok(out) = e.args() {
+                        if let Ok(ref mut lock) = x.try_lock() {
+                            notify!(do_thermal_notif, lock, &out.profile);
+                        }
                     }
-                }
-                future::ready(())
-            })
-            .await;
-        };
-    });
+                    future::ready(())
+                })
+                .await;
+            };
+        })
+        .detach();
 
     // LED notif
-    thread_pool.spawn_ok(async move {
-        let conn = zbus::Connection::system().await.unwrap();
-        let proxy = LedProxy::new(&conn).await.unwrap();
-        if let Ok(p) = proxy.receive_notify_led().await {
-            p.for_each(|e| {
-                if let Ok(out) = e.args() {
-                    if let Ok(ref mut lock) = last_notification.try_lock() {
-                        notify!(do_led_notif, lock, &out.data);
+    executor
+        .spawn(async move {
+            let conn = zbus::Connection::system().await.unwrap();
+            let proxy = LedProxy::new(&conn).await.unwrap();
+            if let Ok(p) = proxy.receive_notify_led().await {
+                p.for_each(|e| {
+                    if let Ok(out) = e.args() {
+                        if let Ok(ref mut lock) = last_notification.try_lock() {
+                            notify!(do_led_notif, lock, &out.data);
+                        }
                     }
-                }
-                future::ready(())
-            })
-            .await;
-        };
-    });
+                    future::ready(())
+                })
+                .await;
+            };
+        })
+        .detach();
 
     loop {
-        std::thread::sleep(std::time::Duration::from_millis(1000));
-        //     if err_count < 3 {
-        //         err_count += 1;
-        //         println!("{}", err);
-        //     }
-        //     if err_count == 3 {
-        //         err_count += 1;
-        //         println!("Max error count reached. Spooling silently.");
-        //     }
-        //     sleep(Duration::from_millis(2000));
-        //     continue;
-        // }
-        // err_count = 0;
-
-        // if let Ok(data) = signals.led_mode.try_recv() {
-        //     notify!(do_led_notif, last_notification, &data);
-        // }
-        // if let Ok(data) = signals.profile.try_recv() {
-        //     notify!(do_thermal_notif, last_notification, &data);
-        // }
-        // if let Ok(data) = signals.charge.try_recv() {
-        //     notify!(do_charge_notif, last_notification, &data);
-        // }
+        future::block_on(executor.tick());
     }
 }
 
