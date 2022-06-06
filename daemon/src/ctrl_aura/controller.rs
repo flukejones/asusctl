@@ -8,7 +8,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use log::{info, warn};
-use logind_zbus::manager::ManagerProxyBlocking;
+use logind_zbus::manager::ManagerProxy;
 use rog_aura::{
     usb::{
         LED_APPLY, LED_AWAKE_OFF_SLEEP_OFF, LED_AWAKE_OFF_SLEEP_ON, LED_AWAKE_ON_SLEEP_OFF,
@@ -17,12 +17,13 @@ use rog_aura::{
     AuraEffect, LedBrightness, LED_MSG_LEN,
 };
 use rog_supported::LedSupportedFunctions;
+use smol::{stream::StreamExt, Executor};
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
-use zbus::blocking::Connection;
+use zbus::Connection;
 
 use crate::GetSupported;
 
@@ -55,50 +56,13 @@ pub struct CtrlKbdLed {
     pub config: AuraConfig,
 }
 
-pub struct CtrlKbdLedTask<'a> {
+pub struct CtrlKbdLedTask {
     inner: Arc<Mutex<CtrlKbdLed>>,
-    _c: Connection,
-    _manager: ManagerProxyBlocking<'a>,
 }
 
-impl<'a> CtrlKbdLedTask<'a> {
+impl CtrlKbdLedTask {
     pub fn new(inner: Arc<Mutex<CtrlKbdLed>>) -> Self {
-        let connection =
-            Connection::system().expect("CtrlKbdLedTask could not create dbus connection");
-
-        let manager = ManagerProxyBlocking::new(&connection)
-            .expect("CtrlKbdLedTask could not create ManagerProxy");
-
-        // let c1 = inner.clone();
-        // // Run this action when the system wakes up from sleep
-        // manager
-        //     .connect_prepare_for_sleep(move |sleep| {
-        //         if !sleep {
-        //             let c1 = c1.clone();
-        //             spawn(move || {
-        //                 // wait a fraction for things to wake up properly
-        //                 //std::thread::sleep(Duration::from_millis(100));
-        //                 loop {
-        //                     if let Ok(ref mut lock) = c1.try_lock() {
-        //                         lock.set_brightness(lock.config.brightness).ok();
-        //                         break;
-        //                     }
-        //                 }
-        //             });
-        //         }
-        //         Ok(())
-        //     })
-        //     .map_err(|err| {
-        //         warn!("CtrlAnimeTask: new() {}", err);
-        //         err
-        //     })
-        //     .ok();
-
-        Self {
-            inner,
-            _c: connection,
-            _manager: manager,
-        }
+        Self { inner }
     }
 
     fn update_config(lock: &mut CtrlKbdLed) -> Result<(), RogError> {
@@ -127,13 +91,38 @@ impl<'a> CtrlKbdLedTask<'a> {
 }
 
 #[async_trait]
-impl<'a> CtrlTask for CtrlKbdLedTask<'a> {
-    async fn do_task(&self) -> Result<(), RogError> {
-        self._manager.receive_prepare_for_sleep()?.next();
+impl CtrlTask for CtrlKbdLedTask {
+    async fn create_task(&self, executor: &mut Executor) -> Result<(), RogError> {
+        let connection = Connection::system()
+            .await
+            .expect("CtrlKbdLedTask could not create dbus connection");
 
-        if let Ok(ref mut lock) = self.inner.try_lock() {
-            return Self::update_config(lock);
-        }
+        let manager = ManagerProxy::new(&connection)
+            .await
+            .expect("CtrlKbdLedTask could not create ManagerProxy");
+
+        let inner = self.inner.clone();
+        executor
+            .spawn(async move {
+                if let Ok(p) = manager.receive_prepare_for_sleep().await {
+                    p.for_each(|_| {
+                        if let Ok(_lock) = inner.clone().try_lock() {
+                            info!("CtrlKbdLedTask received sleep event (this feature is not yet complete)");
+                            // lock.config.system
+                        }
+                    })
+                    .await;
+                }
+            })
+            .detach();
+
+        let inner = self.inner.clone();
+        self.repeating_task(500, executor, move || {
+            if let Ok(ref mut lock) = inner.try_lock() {
+                Self::update_config(lock).unwrap();
+            }
+        })
+        .await;
         Ok(())
     }
 }

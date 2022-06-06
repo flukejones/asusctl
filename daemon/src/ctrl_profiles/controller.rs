@@ -7,6 +7,7 @@ use log::{info, warn};
 use rog_profiles::error::ProfileError;
 use rog_profiles::{FanCurveProfiles, Profile};
 use rog_supported::PlatformProfileFunctions;
+use smol::Executor;
 
 use super::config::ProfileConfig;
 
@@ -138,15 +139,19 @@ impl CtrlProfileTask {
 
 #[async_trait]
 impl CtrlTask for CtrlProfileTask {
-    async fn do_task(&self) -> Result<(), RogError> {
-        if let Ok(ref mut lock) = self.ctrl.try_lock() {
-            let new_profile = Profile::get_active_profile().unwrap();
-            if new_profile != lock.config.active_profile {
-                lock.config.active_profile = new_profile;
-                lock.write_profile_curve_to_platform()?;
-                lock.save_config();
+    async fn create_task(&self, executor: &mut Executor) -> Result<(), RogError> {
+        let ctrl = self.ctrl.clone();
+        self.repeating_task(666, executor, move || {
+            if let Ok(ref mut lock) = ctrl.try_lock() {
+                let new_profile = Profile::get_active_profile().unwrap();
+                if new_profile != lock.config.active_profile {
+                    lock.config.active_profile = new_profile;
+                    lock.write_profile_curve_to_platform().unwrap();
+                    lock.save_config();
+                }
             }
-        }
+        })
+        .await;
         Ok(())
     }
 }

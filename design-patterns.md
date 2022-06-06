@@ -34,7 +34,7 @@ The task trait:
 pub struct CtrlAnimeTask(Arc<Mutex<CtrlAnime>>);
 
 impl crate::CtrlTask for CtrlAnimeTask {
-    fn do_task(&self) -> Result<(), RogError> {
+    fn create_task(&self, executor: &mut Executor) -> Result<(), RogError> {
        if let Ok(lock) = self.inner.try_lock() {
             <some action>
         }

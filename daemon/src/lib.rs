@@ -29,9 +29,12 @@ pub mod ctrl_supported;
 
 pub mod error;
 
+use std::time::Duration;
+
 use crate::error::RogError;
 use async_trait::async_trait;
 use config::Config;
+use smol::{stream::StreamExt, Executor, Timer};
 use zbus::Connection;
 
 pub static VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -45,9 +48,25 @@ pub trait ZbusAdd {
     async fn add_to_server(self, server: &mut Connection);
 }
 
+/// Set up a task to run on the async executor
 #[async_trait]
 pub trait CtrlTask {
-    async fn do_task(&self) -> Result<(), RogError>;
+    async fn create_task(&self, executor: &mut Executor) -> Result<(), RogError>;
+
+    /// Create a timed repeating task
+    async fn repeating_task(
+        &self,
+        millis: u64,
+        executor: &mut Executor,
+        mut task: impl FnMut() + Send + 'static,
+    ) {
+        let timer = Timer::interval(Duration::from_millis(millis));
+        executor
+            .spawn(async move {
+                timer.for_each(|_| task()).await;
+            })
+            .detach();
+    }
 }
 
 pub trait CtrlTaskComplex {

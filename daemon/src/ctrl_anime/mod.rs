@@ -1,10 +1,10 @@
 pub mod config;
 pub mod zbus;
 
-use ::zbus::blocking::Connection;
+use ::zbus::Connection;
 use async_trait::async_trait;
 use log::{error, info, warn};
-use logind_zbus::manager::ManagerProxyBlocking;
+use logind_zbus::manager::ManagerProxy;
 use rog_anime::{
     error::AnimeError,
     usb::{
@@ -15,6 +15,7 @@ use rog_anime::{
 };
 use rog_supported::AnimeSupportedFunctions;
 use rusb::{Device, DeviceHandle};
+use smol::{stream::StreamExt, Executor};
 use std::{
     cell::RefCell,
     error::Error,
@@ -298,33 +299,63 @@ impl CtrlAnime {
     }
 }
 
-pub struct CtrlAnimeTask<'a> {
+pub struct CtrlAnimeTask {
     _inner: Arc<Mutex<CtrlAnime>>,
-    _c: Connection,
-    manager: ManagerProxyBlocking<'a>,
 }
 
-impl<'a> CtrlAnimeTask<'a> {
-    pub fn new(inner: Arc<Mutex<CtrlAnime>>) -> Self {
-        let connection =
-            Connection::system().expect("CtrlAnimeTask could not create dbus connection");
-
-        let manager = ManagerProxyBlocking::new(&connection)
-            .expect("CtrlAnimeTask could not create ManagerProxy");
-
-        Self {
-            _inner: inner,
-            _c: connection,
-            manager,
-        }
+impl CtrlAnimeTask {
+    pub async fn new(inner: Arc<Mutex<CtrlAnime>>) -> CtrlAnimeTask {
+        Self { _inner: inner }
     }
 }
 
 #[async_trait]
-impl<'a> crate::CtrlTask for CtrlAnimeTask<'a> {
-    async fn do_task(&self) -> Result<(), RogError> {
-        self.manager.receive_prepare_for_shutdown()?.next();
-        self.manager.receive_prepare_for_sleep()?.next();
+impl crate::CtrlTask for CtrlAnimeTask {
+    async fn create_task(&self, executor: &mut Executor) -> Result<(), RogError> {
+        let connection = Connection::system()
+            .await
+            .expect("CtrlAnimeTask could not create dbus connection");
+
+        let manager = ManagerProxy::new(&connection)
+            .await
+            .expect("CtrlAnimeTask could not create ManagerProxy");
+
+        let x = self._inner.clone();
+        executor
+            .spawn(async move {
+                if let Ok(p) = manager.receive_prepare_for_sleep().await {
+                    p.for_each(|_| {
+                        if let Ok(_lock) = x.clone().try_lock() {
+                            info!("AniMe received sleep event (this feature is not yet complete)");
+                            // lock.config.system
+                        }
+                    })
+                    .await;
+                }
+            })
+            .detach();
+
+        let manager = ManagerProxy::new(&connection)
+            .await
+            .expect("CtrlAnimeTask could not create ManagerProxy");
+
+        let x = self._inner.clone();
+        executor
+            .spawn(async move {
+                if let Ok(p) = manager.receive_prepare_for_shutdown().await {
+                    p.for_each(|_| {
+                        if let Ok(_lock) = x.clone().try_lock() {
+                            info!(
+                                "AniMe received shutdown event (this feature is not yet complete)"
+                            );
+                            // lock.config.system
+                        }
+                    })
+                    .await;
+                }
+            })
+            .detach();
+
         Ok(())
     }
 }

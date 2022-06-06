@@ -2,9 +2,9 @@ use std::env;
 use std::error::Error;
 use std::io::Write;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
 
 use ::zbus::Connection;
+use daemon::ctrl_profiles::controller::CtrlProfileTask;
 use log::LevelFilter;
 use log::{error, info, warn};
 use smol::Executor;
@@ -115,9 +115,13 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
                     .unwrap_or_else(|err| warn!("Profile control: {}", err));
 
                 let tmp = Arc::new(Mutex::new(ctrl));
-                ProfileZbus::new(tmp.clone())
-                    .add_to_server(&mut connection)
-                    .await;
+                let task = CtrlProfileTask::new(tmp.clone());
+                task.create_task(executor).await.ok();
+
+                let task = ProfileZbus::new(tmp.clone());
+                task.create_task(executor).await.ok();
+
+                task.add_to_server(&mut connection).await;
             }
             Err(err) => {
                 error!("Profile control: {}", err);
@@ -139,12 +143,8 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
             let zbus = CtrlAnimeZbus(inner.clone());
             zbus.add_to_server(&mut connection).await;
 
-            let task = CtrlAnimeTask::new(inner);
-            executor
-                .spawn(async move {
-                    task.do_task().await.ok();
-                })
-                .detach();
+            let task = CtrlAnimeTask::new(inner).await;
+            task.create_task(executor).await.ok();
         }
         Err(err) => {
             error!("AniMe control: {}", err);
@@ -167,11 +167,7 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
                 .await;
 
             let task = CtrlKbdLedTask::new(inner);
-            executor
-                .spawn(async move {
-                    task.do_task().await.ok();
-                })
-                .detach();
+            task.create_task(executor).await.ok();
         }
         Err(err) => {
             error!("Keyboard control: {}", err);
@@ -180,10 +176,8 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
 
     // Request dbus name after finishing initalizing all functions
     connection.request_name(DBUS_NAME).await?;
-
-    // Loop to check errors and iterate zbus server
+    dbg!();
     loop {
-        // Nothing to do here really
-        std::thread::sleep(Duration::from_millis(1));
+        smol::block_on(executor.tick());
     }
 }
