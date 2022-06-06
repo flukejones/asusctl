@@ -94,13 +94,16 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
         }
     }
 
-    match CtrlCharge::new(config) {
+    match CtrlCharge::new(config.clone()) {
         Ok(mut ctrl) => {
             // Do a reload of any settings
             ctrl.reload()
                 .unwrap_or_else(|err| warn!("Battery charge limit: {}", err));
             // Then register to dbus server
             ctrl.add_to_server(&mut connection).await;
+
+            let task = CtrlCharge::new(config)?;
+            task.create_tasks(executor).await.ok();
         }
         Err(err) => {
             error!("charge_control: {}", err);
@@ -116,11 +119,9 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
 
                 let tmp = Arc::new(Mutex::new(ctrl));
                 let task = CtrlProfileTask::new(tmp.clone());
-                task.create_task(executor).await.ok();
+                task.create_tasks(executor).await.ok();
 
                 let task = ProfileZbus::new(tmp.clone());
-                task.create_task(executor).await.ok();
-
                 task.add_to_server(&mut connection).await;
             }
             Err(err) => {
@@ -144,7 +145,7 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
             zbus.add_to_server(&mut connection).await;
 
             let task = CtrlAnimeTask::new(inner).await;
-            task.create_task(executor).await.ok();
+            task.create_tasks(executor).await.ok();
         }
         Err(err) => {
             error!("AniMe control: {}", err);
@@ -167,7 +168,7 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
                 .await;
 
             let task = CtrlKbdLedTask::new(inner);
-            task.create_task(executor).await.ok();
+            task.create_tasks(executor).await.ok();
         }
         Err(err) => {
             error!("Keyboard control: {}", err);
@@ -176,7 +177,6 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
 
     // Request dbus name after finishing initalizing all functions
     connection.request_name(DBUS_NAME).await?;
-    dbg!();
     loop {
         smol::block_on(executor.tick());
     }

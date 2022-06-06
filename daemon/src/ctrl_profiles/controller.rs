@@ -139,7 +139,7 @@ impl CtrlProfileTask {
 
 #[async_trait]
 impl CtrlTask for CtrlProfileTask {
-    async fn create_task(&self, executor: &mut Executor) -> Result<(), RogError> {
+    async fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
         let ctrl = self.ctrl.clone();
         self.repeating_task(666, executor, move || {
             if let Ok(ref mut lock) = ctrl.try_lock() {

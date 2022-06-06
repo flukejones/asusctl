@@ -1,7 +1,11 @@
+use crate::CtrlTask;
 use crate::{config::Config, error::RogError, GetSupported};
 use async_trait::async_trait;
 use log::{info, warn};
+use logind_zbus::manager::ManagerProxy;
 use rog_supported::ChargeSupportedFunctions;
+use smol::stream::StreamExt;
+use smol::Executor;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
@@ -10,7 +14,6 @@ use std::sync::Mutex;
 use zbus::dbus_interface;
 use zbus::Connection;
 use zbus::SignalContext;
-use zvariant::ObjectPath;
 
 static BAT_CHARGE_PATH0: &str = "/sys/class/power_supply/BAT0/charge_control_end_threshold";
 static BAT_CHARGE_PATH1: &str = "/sys/class/power_supply/BAT1/charge_control_end_threshold";
@@ -41,7 +44,7 @@ impl CtrlCharge {
             return Err(RogError::ChargeLimit(limit))?;
         }
         if let Ok(mut config) = self.config.try_lock() {
-            self.set(limit, &mut config)
+            Self::set(limit, &mut config)
                 .map_err(|err| {
                     warn!("CtrlCharge: set_limit {}", err);
                     err
@@ -66,18 +69,7 @@ impl CtrlCharge {
 #[async_trait]
 impl crate::ZbusAdd for CtrlCharge {
     async fn add_to_server(self, server: &mut Connection) {
-        server
-            .object_server()
-            .at(
-                &ObjectPath::from_str_unchecked("/org/asuslinux/Charge"),
-                self,
-            )
-            .await
-            .map_err(|err| {
-                warn!("CtrlCharge: add_to_server {}", err);
-                err
-            })
-            .ok();
+        Self::add_to_server_helper(self, "/org/asuslinux/Charge", server).await;
     }
 }
 
@@ -85,7 +77,7 @@ impl crate::Reloadable for CtrlCharge {
     fn reload(&mut self) -> Result<(), RogError> {
         if let Ok(mut config) = self.config.try_lock() {
             config.read();
-            self.set(config.bat_charge_limit, &mut config)?;
+            Self::set(config.bat_charge_limit, &mut config)?;
         }
         Ok(())
     }
@@ -112,7 +104,7 @@ impl CtrlCharge {
         }
     }
 
-    pub(super) fn set(&self, limit: u8, config: &mut Config) -> Result<(), RogError> {
+    pub(super) fn set(limit: u8, config: &mut Config) -> Result<(), RogError> {
         if !(20..=100).contains(&limit) {
             return Err(RogError::ChargeLimit(limit));
         }
@@ -131,6 +123,76 @@ impl CtrlCharge {
         config.bat_charge_limit = limit;
         config.write();
 
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl CtrlTask for CtrlCharge {
+    async fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
+        let connection = Connection::system()
+            .await
+            .expect("CtrlCharge could not create dbus connection");
+
+        let manager = ManagerProxy::new(&connection)
+            .await
+            .expect("CtrlCharge could not create ManagerProxy");
+
+        let config1 = self.config.clone();
+        executor
+            .spawn(async move {
+                if let Ok(notif) = manager.receive_prepare_for_sleep().await {
+                    notif
+                        .for_each(|event| {
+                            if let Ok(args) = event.args() {
+                                // If waking up
+                                if !args.start {
+                                    info!("CtrlCharge reloading charge limit");
+                                    if let Ok(mut lock) = config1.try_lock() {
+                                        Self::set(lock.bat_charge_limit, &mut lock)
+                                            .map_err(|err| {
+                                                warn!("CtrlCharge: set_limit {}", err);
+                                                err
+                                            })
+                                            .ok();
+                                    }
+                                }
+                            }
+                        })
+                        .await;
+                }
+            })
+            .detach();
+
+        let manager = ManagerProxy::new(&connection)
+            .await
+            .expect("CtrlCharge could not create ManagerProxy");
+
+        let config = self.config.clone();
+        executor
+            .spawn(async move {
+                if let Ok(notif) = manager.receive_prepare_for_shutdown().await {
+                    notif
+                        .for_each(|event| {
+                            if let Ok(args) = event.args() {
+                                // If waking up - intention is to catch hibernation event
+                                if !args.start {
+                                    info!("CtrlCharge reloading charge limit");
+                                    if let Ok(mut lock) = config.clone().try_lock() {
+                                        Self::set(lock.bat_charge_limit, &mut lock)
+                                            .map_err(|err| {
+                                                warn!("CtrlCharge: set_limit {}", err);
+                                                err
+                                            })
+                                            .ok();
+                                    }
+                                }
+                            }
+                        })
+                        .await;
+                }
+            })
+            .detach();
         Ok(())
     }
 }

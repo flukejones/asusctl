@@ -1,9 +1,7 @@
 use async_trait::async_trait;
-use log::warn;
 use serde_derive::{Deserialize, Serialize};
 use zbus::dbus_interface;
 use zbus::Connection;
-use zvariant::ObjectPath;
 use zvariant::Type;
 
 use crate::{
@@ -35,18 +33,7 @@ impl SupportedFunctions {
 #[async_trait]
 impl crate::ZbusAdd for SupportedFunctions {
     async fn add_to_server(self, server: &mut Connection) {
-        server
-            .object_server()
-            .at(
-                &ObjectPath::from_str_unchecked("/org/asuslinux/Supported"),
-                self,
-            )
-            .await
-            .map_err(|err| {
-                warn!("SupportedFunctions: add_to_server {}", err);
-                err
-            })
-            .ok();
+        Self::add_to_server_helper(self, "/org/asuslinux/Supported", server).await;
     }
 }
 

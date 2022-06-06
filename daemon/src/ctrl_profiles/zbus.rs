@@ -3,17 +3,12 @@ use log::warn;
 use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::fan_curve_set::FanCurveSet;
 use rog_profiles::Profile;
-use smol::Executor;
 use zbus::Connection;
 use zbus::SignalContext;
 
 use std::sync::Arc;
 use std::sync::Mutex;
 use zbus::{dbus_interface, fdo::Error};
-use zvariant::ObjectPath;
-
-use crate::error::RogError;
-use crate::CtrlTask;
 
 use super::controller::CtrlPlatformProfile;
 
@@ -187,36 +182,6 @@ impl ProfileZbus {
 #[async_trait]
 impl crate::ZbusAdd for ProfileZbus {
     async fn add_to_server(self, server: &mut Connection) {
-        server
-            .object_server()
-            .at(
-                &ObjectPath::from_str_unchecked("/org/asuslinux/Profile"),
-                self,
-            )
-            .await
-            .map_err(|err| {
-                warn!("DbusFanAndCpu: add_to_server {}", err);
-                err
-            })
-            .ok();
-    }
-}
-
-#[async_trait]
-impl CtrlTask for ProfileZbus {
-    async fn create_task(&self, executor: &mut Executor) -> Result<(), RogError> {
-        let inner = self.inner.clone();
-        self.repeating_task(500, executor, move || {
-            if let Ok(ref mut lock) = inner.try_lock() {
-                let new_profile = Profile::get_active_profile().unwrap();
-                if new_profile != lock.config.active_profile {
-                    lock.config.active_profile = new_profile;
-                    lock.write_profile_curve_to_platform().unwrap();
-                    lock.save_config();
-                }
-            }
-        })
-        .await;
-        Ok(())
+        Self::add_to_server_helper(self, "/org/asuslinux/Profile", server).await;
     }
 }

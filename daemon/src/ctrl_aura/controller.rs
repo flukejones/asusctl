@@ -7,7 +7,7 @@ use crate::{
     CtrlTask,
 };
 use async_trait::async_trait;
-use log::{info, warn};
+use log::{error, info, warn};
 use logind_zbus::manager::ManagerProxy;
 use rog_aura::{
     usb::{
@@ -92,7 +92,7 @@ impl CtrlKbdLedTask {
 
 #[async_trait]
 impl CtrlTask for CtrlKbdLedTask {
-    async fn create_task(&self, executor: &mut Executor) -> Result<(), RogError> {
+    async fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
         let connection = Connection::system()
             .await
             .expect("CtrlKbdLedTask could not create dbus connection");
@@ -104,14 +104,32 @@ impl CtrlTask for CtrlKbdLedTask {
         let inner = self.inner.clone();
         executor
             .spawn(async move {
-                if let Ok(p) = manager.receive_prepare_for_sleep().await {
-                    p.for_each(|_| {
-                        if let Ok(_lock) = inner.clone().try_lock() {
-                            info!("CtrlKbdLedTask received sleep event (this feature is not yet complete)");
-                            // lock.config.system
-                        }
-                    })
-                    .await;
+                if let Ok(notif) = manager.receive_prepare_for_sleep().await {
+                    notif
+                        .for_each(|event| {
+                            if let Ok(args) = event.args() {
+                                // If waking up
+                                if !args.start {
+                                    info!("CtrlKbdLedTask reloading brightness and modes");
+                                    if let Ok(lock) = inner.clone().try_lock() {
+                                        lock.set_brightness(lock.config.brightness)
+                                            .map_err(|e| error!("CtrlKbdLedTask: {e}"))
+                                            .ok();
+                                        lock.set_side_leds_states(lock.config.side_leds_enabled)
+                                            .map_err(|e| error!("CtrlKbdLedTask: {e}"))
+                                            .ok();
+                                        if let Some(mode) =
+                                            lock.config.builtins.get(&lock.config.current_mode)
+                                        {
+                                            lock.write_mode(mode)
+                                                .map_err(|e| error!("CtrlKbdLedTask: {e}"))
+                                                .ok();
+                                        }
+                                    }
+                                }
+                            }
+                        })
+                        .await;
                 }
             })
             .detach();
@@ -138,11 +156,11 @@ impl crate::Reloadable for CtrlKbdLedReloader {
             }
 
             ctrl.set_states_enabled(ctrl.config.awake_enabled, ctrl.config.sleep_anim_enabled)
-                .map_err(|err| warn!("{}", err))
+                .map_err(|err| warn!("{err}"))
                 .ok();
 
             ctrl.set_side_leds_states(ctrl.config.side_leds_enabled)
-                .map_err(|err| warn!("{}", err))
+                .map_err(|err| warn!("{err}"))
                 .ok();
         }
         Ok(())
@@ -166,9 +184,10 @@ impl CtrlKbdLed {
             match Self::find_led_node(prod) {
                 Ok(node) => {
                     led_node = Some(node);
+                    info!("Found keyboard controller 0x{prod}");
                     break;
                 }
-                Err(err) => warn!("led_node: {}", err),
+                Err(err) => info!("Looked for keyboard controller 0x{prod}: {err}"),
             }
         }
 

@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for G513IC LED modes (Author: dada513)
 - Support for G513QM LED modes (Author: Martin Piffault)
 - Add side-LED toggle support (Author: Martin Piffault)
+- Support reloading keyboard brightness and mode on wake (from sleep/hiber)
+- Support reloading charge-level on wake (from sleep/hiber)
+- Support running AniMe animation blocks on wake/sleep and boot/shutdown events
 
 # [4.0.7] - 2021-12-19
 ### Changed
