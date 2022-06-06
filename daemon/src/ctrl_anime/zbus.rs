@@ -69,7 +69,7 @@ impl CtrlAnimeZbus {
 
     /// Set whether the AniMe is displaying images/data
     async fn set_on_off(&self, #[zbus(signal_context)] ctxt: SignalContext<'_>, status: bool) {
-        let mut states = None;
+        let states;
         'outer: loop {
             if let Ok(mut lock) = self.0.try_lock() {
                 lock.write_bytes(&pkt_for_set_on(status));
@@ -77,6 +77,7 @@ impl CtrlAnimeZbus {
                 lock.config.write();
 
                 states = Some(AnimePowerStates {
+                    brightness: lock.config.brightness.floor() as u8,
                     enabled: lock.config.awake_enabled,
                     boot_anim_enabled: lock.config.boot_anim_enabled,
                 });
@@ -90,7 +91,7 @@ impl CtrlAnimeZbus {
 
     /// Set whether the AniMe will show boot, suspend, or off animations
     async fn set_boot_on_off(&self, #[zbus(signal_context)] ctxt: SignalContext<'_>, on: bool) {
-        let mut states = None;
+        let states;
         'outer: loop {
             if let Ok(mut lock) = self.0.try_lock() {
                 lock.write_bytes(&pkt_for_set_boot(on));
@@ -99,6 +100,7 @@ impl CtrlAnimeZbus {
                 lock.config.write();
 
                 states = Some(AnimePowerStates {
+                    brightness: lock.config.brightness.floor() as u8,
                     enabled: lock.config.awake_enabled,
                     boot_anim_enabled: lock.config.boot_anim_enabled,
                 });

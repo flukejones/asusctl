@@ -28,6 +28,7 @@ const USB_PREFIX2: [u8; 7] = [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x02];
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Debug, PartialEq, Copy, Clone, Deserialize, Serialize)]
 pub struct AnimePowerStates {
+    pub brightness: u8,
     pub enabled: bool,
     pub boot_anim_enabled: bool,
 }
