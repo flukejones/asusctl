@@ -363,7 +363,8 @@ fn handle_led_mode(
                         return true;
                     }
                 }
-                if supported.multizone_led_mode {
+                if supported.multizone_led_mode && command.trim().starts_with("multi")
+                {
                     return true;
                 }
                 false
