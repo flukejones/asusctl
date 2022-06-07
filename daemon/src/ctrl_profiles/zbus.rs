@@ -39,13 +39,17 @@ impl ProfileZbus {
 
     /// Toggle to next platform_profile. Names provided by `Profiles`.
     /// If fan-curves are supported will also activate a fan curve for profile.
-    fn next_profile(&mut self) {
+    async fn next_profile(&mut self, #[zbus(signal_context)] ctxt: SignalContext<'_>) {
+        let mut profile = None;
         if let Ok(mut ctrl) = self.inner.try_lock() {
             ctrl.set_next_profile()
                 .unwrap_or_else(|err| warn!("{}", err));
             ctrl.save_config();
+            profile = Some(ctrl.config.active_profile);
         }
-        self.do_notification();
+        if let Some(profile) = profile {
+            Self::notify_profile(&ctxt, profile).await.ok();
+        }
     }
 
     /// Fetch the active profile name
@@ -60,7 +64,12 @@ impl ProfileZbus {
     }
 
     /// Set this platform_profile name as active
-    fn set_active_profile(&self, profile: Profile) {
+    async fn set_active_profile(
+        &self,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+        profile: Profile,
+    ) {
+        let mut tmp = None;
         if let Ok(mut ctrl) = self.inner.try_lock() {
             // Read first just incase the user has modified the config before calling this
             ctrl.config.read();
@@ -73,8 +82,11 @@ impl ProfileZbus {
                 .ok();
 
             ctrl.save_config();
+            tmp = Some(ctrl.config.active_profile);
         }
-        self.do_notification();
+        if let Some(profile) = tmp {
+            Self::notify_profile(&ctxt, profile).await.ok();
+        }
     }
 
     /// Get a list of profiles that have fan-curves enabled.
@@ -163,19 +175,7 @@ impl ProfileZbus {
     }
 
     #[dbus_interface(signal)]
-    async fn notify_profile(
-        signal_ctxt: &SignalContext<'_>,
-        profile: &Profile,
-    ) -> zbus::Result<()> {
-    }
-}
-
-impl ProfileZbus {
-    fn do_notification(&self) {
-        if let Ok(_ctrl) = self.inner.try_lock() {
-            // self.notify_profile(&ctrl.config.active_profile)
-            //     .unwrap_or_else(|err| warn!("{}", err));
-        }
+    async fn notify_profile(signal_ctxt: &SignalContext<'_>, profile: Profile) -> zbus::Result<()> {
     }
 }
 
