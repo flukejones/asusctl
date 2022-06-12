@@ -34,10 +34,10 @@ impl GetSupported for CtrlKbdLed {
 
     fn get_supported() -> Self::A {
         // let mode = <&str>::from(&<AuraModes>::from(*mode));
-        let multizone_led_mode = false;
-        let per_key_led_mode = false;
         let laptop = LaptopLedData::get_data();
         let stock_led_modes = laptop.standard;
+        let multizone_led_mode = laptop.multizone;
+        let per_key_led_mode = laptop.per_key;
 
         LedSupportedFunctions {
             brightness_set: CtrlKbdLed::get_kbd_bright_path().is_some(),
