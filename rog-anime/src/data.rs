@@ -164,7 +164,7 @@ pub fn run_animation(
                 }
             }
 
-            callback(output)?;
+            callback(output).ok();
 
             if timed && Instant::now().duration_since(start) > run_time {
                 break 'animation;

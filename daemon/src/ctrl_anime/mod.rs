@@ -171,17 +171,19 @@ impl CtrlAnime {
                 loop {
                     // wait for other threads to set not running so we know they exited
                     if !thread_running.load(Ordering::SeqCst) {
-                        thread_exit.store(false, Ordering::SeqCst);
                         info!("AniMe forced a thread to exit");
                         break;
                     }
                 }
 
+                thread_exit.store(false, Ordering::SeqCst);
+                thread_running.store(true, Ordering::SeqCst);
+
                 'main: loop {
-                    if thread_exit.load(Ordering::SeqCst) {
-                        break 'main;
-                    }
                     for action in actions.iter() {
+                        if thread_exit.load(Ordering::SeqCst) {
+                            break 'main;
+                        }
                         match action {
                             ActionData::Animation(frames) => {
                                 if let Err(err) = rog_anime::run_animation(
@@ -192,18 +194,14 @@ impl CtrlAnime {
                                             .try_lock()
                                             .map(|lock| lock.write_data_buffer(frame))
                                             .map_err(|err| {
-                                                warn!("rog_anime::run_animation: {}", err);
+                                                warn!("rog_anime::run_animation:callback {}", err);
                                                 AnimeError::NoFrames
                                             })
                                     },
                                 ) {
-                                    warn!("rog_anime::run_animation: {}", err);
+                                    warn!("rog_anime::run_animation:Animation {}", err);
                                     break 'main;
                                 };
-
-                                if thread_exit.load(Ordering::SeqCst) {
-                                    break 'main;
-                                }
                             }
                             ActionData::Image(image) => {
                                 once = false;
@@ -228,7 +226,6 @@ impl CtrlAnime {
                     lock.write_data_buffer(data);
                 }
                 // Loop ended, set the atmonics
-                thread_exit.store(false, Ordering::SeqCst);
                 thread_running.store(false, Ordering::SeqCst);
                 info!("AniMe system thread exited");
             })
@@ -328,24 +325,30 @@ impl crate::CtrlTask for CtrlAnimeTask {
                         .for_each(|event| {
                             if let Ok(args) = event.args() {
                                 if args.start {
-                                    if let Ok(lock) = inner.clone().try_lock() {
-                                        info!("CtrlAnimeTask running sleep animation");
-                                        lock.thread_exit.store(true, Ordering::Relaxed);
-                                        CtrlAnime::run_thread(
-                                            inner.clone(),
-                                            lock.cache.shutdown.clone(),
-                                            true,
-                                        );
+                                    loop {
+                                        // Loop is required to try an attempt to get the mutex *without* blocking
+                                        // other threads - it is possible to end up with deadlocks otherwise.
+                                        if let Ok(lock) = inner.clone().try_lock() {
+                                            info!("CtrlAnimeTask running sleep animation");
+                                            CtrlAnime::run_thread(
+                                                inner.clone(),
+                                                lock.cache.shutdown.clone(),
+                                                true,
+                                            );
+                                            break;
+                                        }
                                     }
                                 } else {
-                                    if let Ok(lock) = inner.clone().try_lock() {
-                                        info!("CtrlAnimeTask running wake animation");
-                                        lock.thread_exit.store(true, Ordering::Relaxed);
-                                        CtrlAnime::run_thread(
-                                            inner.clone(),
-                                            lock.cache.wake.clone(),
-                                            true,
-                                        );
+                                    loop {
+                                        if let Ok(lock) = inner.clone().try_lock() {
+                                            info!("CtrlAnimeTask running wake animation");
+                                            CtrlAnime::run_thread(
+                                                inner.clone(),
+                                                lock.cache.wake.clone(),
+                                                true,
+                                            );
+                                            break;
+                                        }
                                     }
                                 }
                             }
@@ -367,25 +370,29 @@ impl crate::CtrlTask for CtrlAnimeTask {
                         .for_each(|event| {
                             if let Ok(args) = event.args() {
                                 if args.start {
-                                    if let Ok(lock) = inner.clone().try_lock() {
-                                        info!("CtrlAnimeTask running sleep animation");
-                                        lock.thread_exit.store(true, Ordering::Relaxed);
-                                        CtrlAnime::run_thread(
-                                            inner.clone(),
-                                            lock.cache.shutdown.clone(),
-                                            true,
-                                        );
+                                    loop {
+                                        if let Ok(lock) = inner.clone().try_lock() {
+                                            info!("CtrlAnimeTask running sleep animation");
+                                            CtrlAnime::run_thread(
+                                                inner.clone(),
+                                                lock.cache.shutdown.clone(),
+                                                true,
+                                            );
+                                            break;
+                                        }
                                     }
                                 } else {
                                     // If waking up - intention is to catch hibernation event
-                                    if let Ok(lock) = inner.clone().try_lock() {
-                                        info!("CtrlAnimeTask running wake animation");
-                                        lock.thread_exit.store(true, Ordering::Relaxed);
-                                        CtrlAnime::run_thread(
-                                            inner.clone(),
-                                            lock.cache.wake.clone(),
-                                            true,
-                                        );
+                                    loop {
+                                        if let Ok(lock) = inner.clone().lock() {
+                                            info!("CtrlAnimeTask running wake animation");
+                                            CtrlAnime::run_thread(
+                                                inner.clone(),
+                                                lock.cache.wake.clone(),
+                                                true,
+                                            );
+                                            break;
+                                        }
                                     }
                                 }
                             }

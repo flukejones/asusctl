@@ -178,13 +178,16 @@ impl CtrlTask for CtrlCharge {
                                 // If waking up - intention is to catch hibernation event
                                 if !args.start {
                                     info!("CtrlCharge reloading charge limit");
-                                    if let Ok(mut lock) = config.clone().try_lock() {
-                                        Self::set(lock.bat_charge_limit, &mut lock)
-                                            .map_err(|err| {
-                                                warn!("CtrlCharge: set_limit {}", err);
-                                                err
-                                            })
-                                            .ok();
+                                    loop {
+                                        if let Ok(mut lock) = config.clone().try_lock() {
+                                            Self::set(lock.bat_charge_limit, &mut lock)
+                                                .map_err(|err| {
+                                                    warn!("CtrlCharge: set_limit {}", err);
+                                                    err
+                                                })
+                                                .ok();
+                                            break;
+                                        }
                                     }
                                 }
                             }
