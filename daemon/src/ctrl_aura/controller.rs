@@ -111,19 +111,28 @@ impl CtrlTask for CtrlKbdLedTask {
                                 // If waking up
                                 if !args.start {
                                     info!("CtrlKbdLedTask reloading brightness and modes");
-                                    if let Ok(lock) = inner.clone().try_lock() {
-                                        lock.set_brightness(lock.config.brightness)
+                                    loop {
+                                        // Loop so that we do aquire the lock but also don't block other
+                                        // threads (prevents potential deadlocks)
+                                        if let Ok(lock) = inner.clone().try_lock() {
+                                            // Can't reload brightness due to system setting the brightness on sleep/wake
+                                            // and the config update task saving that change.
+                                            // lock.set_brightness(lock.config.brightness)
+                                            //     .map_err(|e| error!("CtrlKbdLedTask: {e}"))
+                                            //     .ok();
+                                            lock.set_side_leds_states(
+                                                lock.config.side_leds_enabled,
+                                            )
                                             .map_err(|e| error!("CtrlKbdLedTask: {e}"))
                                             .ok();
-                                        lock.set_side_leds_states(lock.config.side_leds_enabled)
-                                            .map_err(|e| error!("CtrlKbdLedTask: {e}"))
-                                            .ok();
-                                        if let Some(mode) =
-                                            lock.config.builtins.get(&lock.config.current_mode)
-                                        {
-                                            lock.write_mode(mode)
-                                                .map_err(|e| error!("CtrlKbdLedTask: {e}"))
-                                                .ok();
+                                            if let Some(mode) =
+                                                lock.config.builtins.get(&lock.config.current_mode)
+                                            {
+                                                lock.write_mode(mode)
+                                                    .map_err(|e| error!("CtrlKbdLedTask: {e}"))
+                                                    .ok();
+                                            }
+                                            break;
                                         }
                                     }
                                 }
@@ -135,9 +144,10 @@ impl CtrlTask for CtrlKbdLedTask {
             .detach();
 
         let inner = self.inner.clone();
-        self.repeating_task(500, executor, move || {
+        self.repeating_task(500, executor, move || loop {
             if let Ok(ref mut lock) = inner.try_lock() {
                 Self::update_config(lock).unwrap();
+                break;
             }
         })
         .await;
