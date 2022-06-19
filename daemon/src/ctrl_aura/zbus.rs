@@ -27,22 +27,26 @@ impl CtrlKbdLedZbus {
     }
 
     /// Set the keyboard LED to enabled while the device is awake
-    async fn set_awake_enabled(
+    async fn set_boot_enabled(
         &mut self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
         enabled: bool,
     ) {
         let mut states = None;
         if let Ok(mut ctrl) = self.0.try_lock() {
-            ctrl.set_states_enabled(enabled, ctrl.config.sleep_anim_enabled)
-                .map_err(|err| warn!("{}", err))
-                .ok();
-            ctrl.config.awake_enabled = enabled;
+            ctrl.config.boot_anim_enabled = enabled;
             ctrl.config.write();
 
+            ctrl.set_power_states(&ctrl.config)
+            .map_err(|err| warn!("{}", err))
+            .ok();
+
             states = Some(LedPowerStates {
-                enabled: ctrl.config.awake_enabled,
-                sleep_anim_enabled: ctrl.config.sleep_anim_enabled,
+                boot_anim: ctrl.config.boot_anim_enabled,
+                sleep_anim: ctrl.config.sleep_anim_enabled,
+                all_leds: ctrl.config.all_leds_enabled,
+                keys_leds: ctrl.config.keys_leds_enabled,
+                side_leds: ctrl.config.side_leds_enabled
             });
         }
         // Need to pull state out like this due to MutexGuard
@@ -61,16 +65,85 @@ impl CtrlKbdLedZbus {
     ) {
         let mut states = None;
         if let Ok(mut ctrl) = self.0.try_lock() {
-            ctrl.set_states_enabled(ctrl.config.awake_enabled, enabled)
-                .map_err(|err| warn!("{}", err))
-                .ok();
             ctrl.config.sleep_anim_enabled = enabled;
             ctrl.config.write();
+
+            ctrl.set_power_states(&ctrl.config)
+            .map_err(|err| warn!("{}", err))
+            .ok();
+
             states = Some(LedPowerStates {
-                enabled: ctrl.config.awake_enabled,
-                sleep_anim_enabled: ctrl.config.sleep_anim_enabled,
+                boot_anim: ctrl.config.boot_anim_enabled,
+                sleep_anim: ctrl.config.sleep_anim_enabled,
+                all_leds: ctrl.config.all_leds_enabled,
+                keys_leds: ctrl.config.keys_leds_enabled,
+                side_leds: ctrl.config.side_leds_enabled
             });
         }
+        if let Some(states) = states {
+            Self::notify_power_states(&ctxt, &states)
+                .await
+                .unwrap_or_else(|err| warn!("{}", err));
+        }
+    }
+
+    /// Set all the keyboard LEDs (keys and side) to enabled
+    async fn set_all_leds_enabled(
+        &mut self,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+        enabled: bool,
+    ) {
+        let mut states = None;
+        if let Ok(mut ctrl) = self.0.try_lock() {
+            ctrl.config.all_leds_enabled = enabled;
+            ctrl.config.keys_leds_enabled = enabled;
+            ctrl.config.side_leds_enabled = enabled;
+            ctrl.config.write();
+
+            ctrl.set_power_states(&ctrl.config)
+                .map_err(|err| warn!("{}", err))
+                .ok();
+
+            states = Some(LedPowerStates {
+                boot_anim: ctrl.config.boot_anim_enabled,
+                sleep_anim: ctrl.config.sleep_anim_enabled,
+                all_leds: ctrl.config.all_leds_enabled,
+                keys_leds: ctrl.config.keys_leds_enabled,
+                side_leds: ctrl.config.side_leds_enabled
+            });
+        }
+        // Need to pull state out like this due to MutexGuard
+        if let Some(states) = states {
+            Self::notify_power_states(&ctxt, &states)
+                .await
+                .unwrap_or_else(|err| warn!("{}", err));
+        }
+    }
+
+    /// Set the keyboard keys LEDs to enabled
+    async fn set_keys_leds_enabled(
+        &mut self,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+        enabled: bool,
+    ) {
+        let mut states = None;
+        if let Ok(mut ctrl) = self.0.try_lock() {
+            ctrl.config.keys_leds_enabled = enabled;
+            ctrl.config.write();
+
+            ctrl.set_power_states(&ctrl.config)
+                .map_err(|err| warn!("{}", err))
+                .ok();
+
+            states = Some(LedPowerStates {
+                boot_anim: ctrl.config.boot_anim_enabled,
+                sleep_anim: ctrl.config.sleep_anim_enabled,
+                all_leds: ctrl.config.all_leds_enabled,
+                keys_leds: ctrl.config.keys_leds_enabled,
+                side_leds: ctrl.config.side_leds_enabled
+            });
+        }
+        // Need to pull state out like this due to MutexGuard
         if let Some(states) = states {
             Self::notify_power_states(&ctxt, &states)
                 .await
@@ -84,17 +157,26 @@ impl CtrlKbdLedZbus {
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
         enabled: bool,
     ) {
-        let mut led = None;
+        let mut states = None;
         if let Ok(mut ctrl) = self.0.try_lock() {
-            ctrl.set_side_leds_states(enabled)
-                .map_err(|err| warn!("{}", err))
-                .ok();
             ctrl.config.side_leds_enabled = enabled;
             ctrl.config.write();
-            led = Some(enabled);
+
+            ctrl.set_power_states(&ctrl.config)
+                .map_err(|err| warn!("{}", err))
+                .ok();
+
+            states = Some(LedPowerStates {
+                boot_anim: ctrl.config.boot_anim_enabled,
+                sleep_anim: ctrl.config.sleep_anim_enabled,
+                all_leds: ctrl.config.all_leds_enabled,
+                keys_leds: ctrl.config.keys_leds_enabled,
+                side_leds: ctrl.config.side_leds_enabled
+            });
         }
-        if let Some(led) = led {
-            Self::notify_side_leds(&ctxt, led)
+        // Need to pull state out like this due to MutexGuard
+        if let Some(states) = states {
+            Self::notify_power_states(&ctxt, &states)
                 .await
                 .unwrap_or_else(|err| warn!("{}", err));
         }
@@ -174,9 +256,9 @@ impl CtrlKbdLedZbus {
     }
 
     #[dbus_interface(property)]
-    async fn awake_enabled(&self) -> bool {
+    async fn boot_enabled(&self) -> bool {
         if let Ok(ctrl) = self.0.try_lock() {
-            return ctrl.config.awake_enabled;
+            return ctrl.config.boot_anim_enabled;
         }
         true
     }
@@ -185,6 +267,22 @@ impl CtrlKbdLedZbus {
     async fn sleep_enabled(&self) -> bool {
         if let Ok(ctrl) = self.0.try_lock() {
             return ctrl.config.sleep_anim_enabled;
+        }
+        true
+    }
+
+    #[dbus_interface(property)]
+    async fn all_leds_enabled(&self) -> bool {
+        if let Ok(ctrl) = self.0.try_lock() {
+            return ctrl.config.all_leds_enabled;
+        }
+        true
+    }
+
+    #[dbus_interface(property)]
+    async fn keys_leds_enabled(&self) -> bool {
+        if let Ok(ctrl) = self.0.try_lock() {
+            return ctrl.config.keys_leds_enabled;
         }
         true
     }
@@ -235,9 +333,6 @@ impl CtrlKbdLedZbus {
 
     #[dbus_interface(signal)]
     async fn notify_led(signal_ctxt: &SignalContext<'_>, data: AuraEffect) -> zbus::Result<()>;
-
-    #[dbus_interface(signal)]
-    async fn notify_side_leds(signal_ctxt: &SignalContext<'_>, data: bool) -> zbus::Result<()>;
 
     #[dbus_interface(signal)]
     async fn notify_power_states(

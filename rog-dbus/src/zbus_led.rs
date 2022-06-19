@@ -50,10 +50,16 @@ trait Led {
     fn set_led_mode(&self, effect: &AuraEffect) -> zbus::Result<()>;
 
     /// SetAwakeEnabled method
-    fn set_awake_enabled(&self, enabled: bool) -> zbus::Result<()>;
+    fn set_boot_enabled(&self, enabled: bool) -> zbus::Result<()>;
 
     /// SetSleepEnabled method
     fn set_sleep_enabled(&self, enabled: bool) -> zbus::Result<()>;
+
+    /// SetSideLedsEnabled method
+    fn set_all_leds_enabled(&self, enabled: bool) -> Result<()>;
+
+    /// SetSideLedsEnabled method
+    fn set_keys_leds_enabled(&self, enabled: bool) -> Result<()>;
 
     /// SetSideLedsEnabled method
     fn set_side_leds_enabled(&self, enabled: bool) -> Result<()>;
@@ -61,9 +67,6 @@ trait Led {
     /// NotifyLed signal
     #[dbus_proxy(signal)]
     fn notify_led(&self, data: AuraEffect) -> zbus::Result<()>;
-
-    #[dbus_proxy(signal)]
-    fn notify_side_leds(&self, data: bool) -> zbus::Result<()>;
 
     #[dbus_proxy(signal)]
     fn notify_power_states(&self, data: LedPowerStates) -> zbus::Result<()>;

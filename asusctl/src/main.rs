@@ -342,8 +342,10 @@ fn handle_led_mode(
     if mode.command.is_none()
         && !mode.prev_mode
         && !mode.next_mode
+        && mode.boot_enable.is_none()
         && mode.sleep_enable.is_none()
-        && mode.awake_enable.is_none()
+        && mode.all_leds_enable.is_none()
+        && mode.keys_leds_enable.is_none()
         && mode.side_leds_enable.is_none()
     {
         if !mode.help {
@@ -404,14 +406,20 @@ fn handle_led_mode(
         }
     }
 
-    if let Some(enable) = mode.awake_enable {
-        dbus.proxies().led().set_awake_enabled(enable)?;
+    if let Some(enable) = mode.boot_enable {
+        dbus.proxies().led().set_boot_enabled(enable)?;
     }
 
     if let Some(enable) = mode.sleep_enable {
         dbus.proxies().led().set_sleep_enabled(enable)?;
     }
 
+    if let Some(enable) = mode.all_leds_enable {
+        dbus.proxies().led().set_all_leds_enabled(enable)?;
+    }
+    if let Some(enable) = mode.keys_leds_enable {
+        dbus.proxies().led().set_keys_leds_enabled(enable)?;
+    }
     if let Some(enable) = mode.side_leds_enable {
         dbus.proxies().led().set_side_leds_enabled(enable)?;
     }

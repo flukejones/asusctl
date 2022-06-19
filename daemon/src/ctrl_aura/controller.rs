@@ -11,8 +11,7 @@ use log::{error, info, warn};
 use logind_zbus::manager::ManagerProxy;
 use rog_aura::{
     usb::{
-        LED_APPLY, LED_AWAKE_OFF_SLEEP_OFF, LED_AWAKE_OFF_SLEEP_ON, LED_AWAKE_ON_SLEEP_OFF,
-        LED_AWAKE_ON_SLEEP_ON, LED_SET, SIDE_LEDS_OFF, SIDE_LEDS_ON,
+        LED_APPLY, LED_SET
     },
     AuraEffect, LedBrightness, LED_MSG_LEN,
 };
@@ -24,10 +23,13 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
 use zbus::Connection;
+use rog_aura::usb::leds_message;
 
 use crate::GetSupported;
 
 use super::config::AuraConfig;
+
+
 
 impl GetSupported for CtrlKbdLed {
     type A = LedSupportedFunctions;
@@ -120,11 +122,6 @@ impl CtrlTask for CtrlKbdLedTask {
                                             // lock.set_brightness(lock.config.brightness)
                                             //     .map_err(|e| error!("CtrlKbdLedTask: {e}"))
                                             //     .ok();
-                                            lock.set_side_leds_states(
-                                                lock.config.side_leds_enabled,
-                                            )
-                                            .map_err(|e| error!("CtrlKbdLedTask: {e}"))
-                                            .ok();
                                             if let Some(mode) =
                                                 lock.config.builtins.get(&lock.config.current_mode)
                                             {
@@ -165,11 +162,7 @@ impl crate::Reloadable for CtrlKbdLedReloader {
                 ctrl.do_command(mode).ok();
             }
 
-            ctrl.set_states_enabled(ctrl.config.awake_enabled, ctrl.config.sleep_anim_enabled)
-                .map_err(|err| warn!("{err}"))
-                .ok();
-
-            ctrl.set_side_leds_states(ctrl.config.side_leds_enabled)
+            ctrl.set_power_states(&ctrl.config)
                 .map_err(|err| warn!("{err}"))
                 .ok();
         }
@@ -288,33 +281,23 @@ impl CtrlKbdLed {
         self.set_brightness(self.config.brightness)
     }
 
-    /// Set if awake/on LED active, and/or sleep animation active
-    pub(super) fn set_states_enabled(&self, awake: bool, sleep: bool) -> Result<(), RogError> {
-        let bytes = if awake && sleep {
-            LED_AWAKE_ON_SLEEP_ON
-        } else if awake && !sleep {
-            LED_AWAKE_ON_SLEEP_OFF
-        } else if !awake && sleep {
-            LED_AWAKE_OFF_SLEEP_ON
-        } else if !awake && !sleep {
-            LED_AWAKE_OFF_SLEEP_OFF
-        } else {
-            LED_AWAKE_ON_SLEEP_ON
-        };
-        self.write_bytes(&bytes)?;
-        self.write_bytes(&LED_SET)?;
-        // Changes won't persist unless apply is set
-        self.write_bytes(&LED_APPLY)?;
-        Ok(())
-    }
 
-    pub(super) fn set_side_leds_states(&self, activated: bool) -> Result<(), RogError> {
-        let bytes: [u8; LED_MSG_LEN] = if activated {
-            SIDE_LEDS_ON
-        } else {
-            SIDE_LEDS_OFF
-        };
-        self.write_bytes(&bytes)?;
+
+    /// Set combination state for boot animation/sleep animation/all leds/keys leds/side leds LED active
+    pub(super) fn set_power_states(&self, config: &AuraConfig) -> Result<(), RogError> {
+
+        let bytes = leds_message(config.boot_anim_enabled,
+                                 config.sleep_anim_enabled,
+                                 config.all_leds_enabled,
+                                 config.keys_leds_enabled,
+                                 config.side_leds_enabled);
+
+        // Quite ugly, must be a more idiomatic way to do
+        let message = [
+            0x5d, 0xbd, 0x01, bytes[0], bytes[1], bytes[2], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ];
+
+        self.write_bytes(&message)?;
         self.write_bytes(&LED_SET)?;
         // Changes won't persist unless apply is set
         self.write_bytes(&LED_APPLY)?;
