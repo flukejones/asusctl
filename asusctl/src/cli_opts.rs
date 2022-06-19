@@ -53,12 +53,16 @@ pub struct LedModeCommand {
         meta = "",
         help = "set the keyboard LED to enabled while the device is awake"
     )]
-    pub awake_enable: Option<bool>,
+    pub boot_enable: Option<bool>,
     #[options(
         meta = "",
         help = "set the keyboard LED suspend animation to enabled while the device is suspended"
     )]
     pub sleep_enable: Option<bool>,
+    #[options(meta = "", help = "set the full keyboard LEDs (keys and side) to enabled")]
+    pub all_leds_enable: Option<bool>,
+    #[options(meta = "", help = "set the keyboard keys LEDs to enabled")]
+    pub keys_leds_enable: Option<bool>,
     #[options(meta = "", help = "set the keyboard side LEDs to enabled")]
     pub side_leds_enable: Option<bool>,
     #[options(command)]
