@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [4.1.0] - 2022-06-20
 ### Changed
-- Huge refactor to use zbus 2.2 + zvariant 3.0 in system-daemon. More work required.
-- Daemons with tasks not use `smol` for async ops.
+- Huge refactor to use zbus 2.2 + zvariant 3.0 in system-daemon.
+- Daemons with tasks now use `smol` for async ops.
 - Fixes to fan-curve settings from CLI (Author: Armas Span)
 - Add brightness to anime zbus notification
 - Adjust how threads in AniMe matrix controller work
