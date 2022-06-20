@@ -83,7 +83,6 @@ impl AuraConfigV407 {
     }
 }
 
-
 #[derive(Deserialize, Serialize)]
 pub struct AuraConfig {
     pub brightness: LedBrightness,
@@ -94,7 +93,7 @@ pub struct AuraConfig {
     pub sleep_anim_enabled: bool,
     pub all_leds_enabled: bool,
     pub keys_leds_enabled: bool,
-    pub side_leds_enabled: bool
+    pub side_leds_enabled: bool,
 }
 
 impl Default for AuraConfig {

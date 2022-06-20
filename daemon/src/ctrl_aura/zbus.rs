@@ -38,15 +38,15 @@ impl CtrlKbdLedZbus {
             ctrl.config.write();
 
             ctrl.set_power_states(&ctrl.config)
-            .map_err(|err| warn!("{}", err))
-            .ok();
+                .map_err(|err| warn!("{}", err))
+                .ok();
 
             states = Some(LedPowerStates {
                 boot_anim: ctrl.config.boot_anim_enabled,
                 sleep_anim: ctrl.config.sleep_anim_enabled,
                 all_leds: ctrl.config.all_leds_enabled,
                 keys_leds: ctrl.config.keys_leds_enabled,
-                side_leds: ctrl.config.side_leds_enabled
+                side_leds: ctrl.config.side_leds_enabled,
             });
         }
         // Need to pull state out like this due to MutexGuard
@@ -69,15 +69,15 @@ impl CtrlKbdLedZbus {
             ctrl.config.write();
 
             ctrl.set_power_states(&ctrl.config)
-            .map_err(|err| warn!("{}", err))
-            .ok();
+                .map_err(|err| warn!("{}", err))
+                .ok();
 
             states = Some(LedPowerStates {
                 boot_anim: ctrl.config.boot_anim_enabled,
                 sleep_anim: ctrl.config.sleep_anim_enabled,
                 all_leds: ctrl.config.all_leds_enabled,
                 keys_leds: ctrl.config.keys_leds_enabled,
-                side_leds: ctrl.config.side_leds_enabled
+                side_leds: ctrl.config.side_leds_enabled,
             });
         }
         if let Some(states) = states {
@@ -109,7 +109,7 @@ impl CtrlKbdLedZbus {
                 sleep_anim: ctrl.config.sleep_anim_enabled,
                 all_leds: ctrl.config.all_leds_enabled,
                 keys_leds: ctrl.config.keys_leds_enabled,
-                side_leds: ctrl.config.side_leds_enabled
+                side_leds: ctrl.config.side_leds_enabled,
             });
         }
         // Need to pull state out like this due to MutexGuard
@@ -140,7 +140,7 @@ impl CtrlKbdLedZbus {
                 sleep_anim: ctrl.config.sleep_anim_enabled,
                 all_leds: ctrl.config.all_leds_enabled,
                 keys_leds: ctrl.config.keys_leds_enabled,
-                side_leds: ctrl.config.side_leds_enabled
+                side_leds: ctrl.config.side_leds_enabled,
             });
         }
         // Need to pull state out like this due to MutexGuard
@@ -171,7 +171,7 @@ impl CtrlKbdLedZbus {
                 sleep_anim: ctrl.config.sleep_anim_enabled,
                 all_leds: ctrl.config.all_leds_enabled,
                 keys_leds: ctrl.config.keys_leds_enabled,
-                side_leds: ctrl.config.side_leds_enabled
+                side_leds: ctrl.config.side_leds_enabled,
             });
         }
         // Need to pull state out like this due to MutexGuard

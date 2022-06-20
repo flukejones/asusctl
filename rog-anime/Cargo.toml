@@ -20,6 +20,7 @@ dbus = ["zvariant"]
 png_pong = "^0.8.0"
 pix = "0.13"
 gif = "^0.11.2"
+log = "*"
 
 serde = "^1.0"
 serde_derive = "^1.0"

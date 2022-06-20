@@ -141,6 +141,7 @@ impl CtrlAnime {
             warn!("AniMe system actions was empty");
             return;
         }
+
         // Loop rules:
         // - Lock the mutex **only when required**. That is, the lock must be held for the shortest duration possible.
         // - An AtomicBool used for thread exit should be checked in every loop, including nested
@@ -150,55 +151,54 @@ impl CtrlAnime {
         std::thread::Builder::new()
             .name("AniMe system thread start".into())
             .spawn(move || {
-                info!("AniMe system thread started");
+                info!("AniMe new system thread started");
                 // Getting copies of these Atomics is done *in* the thread to ensure
                 // we don't block other threads/main
                 let thread_exit;
                 let thread_running;
-                // First two loops are to ensure we *do* aquire a lock on the mutex
-                // The reason the loop is required is because the USB writes can block
-                // for up to 10ms. We can't fail to get the atomics.
                 loop {
                     if let Ok(lock) = inner.try_lock() {
                         thread_exit = lock.thread_exit.clone();
                         thread_running = lock.thread_running.clone();
-                        // Make any running loop exit first
-                        thread_exit.store(true, Ordering::SeqCst);
                         break;
                     }
                 }
-
-                loop {
-                    // wait for other threads to set not running so we know they exited
-                    if !thread_running.load(Ordering::SeqCst) {
-                        info!("AniMe forced a thread to exit");
-                        break;
-                    }
+                // First two loops are to ensure we *do* aquire a lock on the mutex
+                // The reason the loop is required is because the USB writes can block
+                // for up to 10ms. We can't fail to get the atomics.
+                while thread_running.load(Ordering::SeqCst) {
+                    // Make any running loop exit first
+                    thread_exit.store(true, Ordering::SeqCst);
+                    break;
                 }
 
+                info!("AniMe no previous system thread running (now)");
                 thread_exit.store(false, Ordering::SeqCst);
-                thread_running.store(true, Ordering::SeqCst);
 
                 'main: loop {
+                    thread_running.store(true, Ordering::SeqCst);
                     for action in actions.iter() {
                         if thread_exit.load(Ordering::SeqCst) {
                             break 'main;
                         }
                         match action {
                             ActionData::Animation(frames) => {
-                                if let Err(err) = rog_anime::run_animation(
-                                    frames,
-                                    thread_exit.clone(),
-                                    &|frame| {
-                                        inner
-                                            .try_lock()
-                                            .map(|lock| lock.write_data_buffer(frame))
-                                            .map_err(|err| {
-                                                warn!("rog_anime::run_animation:callback {}", err);
-                                                AnimeError::NoFrames
-                                            })
-                                    },
-                                ) {
+                                if let Err(err) = rog_anime::run_animation(frames, &|frame| {
+                                    if thread_exit.load(Ordering::Acquire) {
+                                        info!("rog-anime: frame-loop was asked to exit");
+                                        return Ok(true); // Do safe exit
+                                    }
+                                    inner
+                                        .try_lock()
+                                        .map(|lock| {
+                                            lock.write_data_buffer(frame);
+                                            false // Don't exit yet
+                                        })
+                                        .map_err(|err| {
+                                            warn!("rog_anime::run_animation:callback {}", err);
+                                            AnimeError::NoFrames
+                                        })
+                                }) {
                                     warn!("rog_anime::run_animation:Animation {}", err);
                                     break 'main;
                                 };

@@ -9,10 +9,9 @@ use crate::{
 use async_trait::async_trait;
 use log::{error, info, warn};
 use logind_zbus::manager::ManagerProxy;
+use rog_aura::usb::leds_message;
 use rog_aura::{
-    usb::{
-        LED_APPLY, LED_SET
-    },
+    usb::{LED_APPLY, LED_SET},
     AuraEffect, LedBrightness, LED_MSG_LEN,
 };
 use rog_supported::LedSupportedFunctions;
@@ -23,13 +22,10 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
 use zbus::Connection;
-use rog_aura::usb::leds_message;
 
 use crate::GetSupported;
 
 use super::config::AuraConfig;
-
-
 
 impl GetSupported for CtrlKbdLed {
     type A = LedSupportedFunctions;
@@ -281,20 +277,19 @@ impl CtrlKbdLed {
         self.set_brightness(self.config.brightness)
     }
 
-
-
     /// Set combination state for boot animation/sleep animation/all leds/keys leds/side leds LED active
     pub(super) fn set_power_states(&self, config: &AuraConfig) -> Result<(), RogError> {
-
-        let bytes = leds_message(config.boot_anim_enabled,
-                                 config.sleep_anim_enabled,
-                                 config.all_leds_enabled,
-                                 config.keys_leds_enabled,
-                                 config.side_leds_enabled);
+        let bytes = leds_message(
+            config.boot_anim_enabled,
+            config.sleep_anim_enabled,
+            config.all_leds_enabled,
+            config.keys_leds_enabled,
+            config.side_leds_enabled,
+        );
 
         // Quite ugly, must be a more idiomatic way to do
         let message = [
-            0x5d, 0xbd, 0x01, bytes[0], bytes[1], bytes[2], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            0x5d, 0xbd, 0x01, bytes[0], bytes[1], bytes[2], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         ];
 
         self.write_bytes(&message)?;

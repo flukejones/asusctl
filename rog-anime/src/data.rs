@@ -1,12 +1,9 @@
 use std::{
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
     thread::sleep,
     time::{Duration, Instant},
 };
 
+use log::info;
 use serde_derive::{Deserialize, Serialize};
 #[cfg(feature = "dbus")]
 use zvariant::Type;
@@ -92,10 +89,11 @@ impl From<AnimeDataBuffer> for AnimePacketType {
 }
 
 /// This runs the animations as a blocking loop by using the `callback` to write data
+///
+/// If `callback` is `Ok(true)` then `run_animation` will exit the animation loop early.
 pub fn run_animation(
     frames: &AnimeGif,
-    do_early_return: Arc<AtomicBool>,
-    callback: &dyn Fn(AnimeDataBuffer) -> Result<(), AnimeError>,
+    callback: &dyn Fn(AnimeDataBuffer) -> Result<bool, AnimeError>,
 ) -> Result<(), AnimeError> {
     let mut count = 0;
     let start = Instant::now();
@@ -140,9 +138,6 @@ pub fn run_animation(
     'animation: loop {
         for frame in frames.frames() {
             let frame_start = Instant::now();
-            if do_early_return.load(Ordering::SeqCst) {
-                return Ok(());
-            }
             let mut output = frame.frame().clone();
 
             if let AnimTime::Fade(_) = frames.duration() {
@@ -164,12 +159,14 @@ pub fn run_animation(
                 }
             }
 
-            callback(output).ok();
+            if matches!(callback(output), Ok(true)) {
+                info!("rog-anime: frame-loop callback asked to exit early");
+                return Ok(());
+            }
 
             if timed && Instant::now().duration_since(start) > run_time {
                 break 'animation;
             }
-
             sleep(frame.delay());
         }
         if let AnimTime::Count(times) = frames.duration() {

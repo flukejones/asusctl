@@ -91,12 +91,16 @@ impl<'a> CtrlAnimeInner<'static> {
         for action in self.sequences.iter() {
             match action {
                 ActionData::Animation(frames) => {
-                    rog_anime::run_animation(frames, self.do_early_return.clone(), &|output| {
+                    rog_anime::run_animation(frames, &|output| {
+                        if self.do_early_return.load(Ordering::Acquire) {
+                            return Ok(true); // Do safe exit
+                        }
                         self.client
                             .proxies()
                             .anime()
                             .write(output)
                             .map_err(|e| AnimeError::Dbus(format!("{}", e)))
+                            .map(|_| false)
                     })?;
                 }
                 ActionData::Image(image) => {
