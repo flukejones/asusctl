@@ -34,20 +34,14 @@ impl CtrlKbdLedZbus {
     ) {
         let mut states = None;
         if let Ok(mut ctrl) = self.0.try_lock() {
-            ctrl.config.boot_anim_enabled = enabled;
+            ctrl.config.power_states.boot_anim = enabled;
             ctrl.config.write();
 
             ctrl.set_power_states(&ctrl.config)
                 .map_err(|err| warn!("{}", err))
                 .ok();
 
-            states = Some(LedPowerStates {
-                boot_anim: ctrl.config.boot_anim_enabled,
-                sleep_anim: ctrl.config.sleep_anim_enabled,
-                all_leds: ctrl.config.all_leds_enabled,
-                keys_leds: ctrl.config.keys_leds_enabled,
-                side_leds: ctrl.config.side_leds_enabled,
-            });
+            states = Some(ctrl.config.power_states);
         }
         // Need to pull state out like this due to MutexGuard
         if let Some(states) = states {
@@ -65,20 +59,14 @@ impl CtrlKbdLedZbus {
     ) {
         let mut states = None;
         if let Ok(mut ctrl) = self.0.try_lock() {
-            ctrl.config.sleep_anim_enabled = enabled;
+            ctrl.config.power_states.sleep_anim = enabled;
             ctrl.config.write();
 
             ctrl.set_power_states(&ctrl.config)
                 .map_err(|err| warn!("{}", err))
                 .ok();
 
-            states = Some(LedPowerStates {
-                boot_anim: ctrl.config.boot_anim_enabled,
-                sleep_anim: ctrl.config.sleep_anim_enabled,
-                all_leds: ctrl.config.all_leds_enabled,
-                keys_leds: ctrl.config.keys_leds_enabled,
-                side_leds: ctrl.config.side_leds_enabled,
-            });
+            states = Some(ctrl.config.power_states);
         }
         if let Some(states) = states {
             Self::notify_power_states(&ctxt, &states)
@@ -95,22 +83,16 @@ impl CtrlKbdLedZbus {
     ) {
         let mut states = None;
         if let Ok(mut ctrl) = self.0.try_lock() {
-            ctrl.config.all_leds_enabled = enabled;
-            ctrl.config.keys_leds_enabled = enabled;
-            ctrl.config.side_leds_enabled = enabled;
+            ctrl.config.power_states.all_leds = enabled;
+            ctrl.config.power_states.keys_leds = enabled;
+            ctrl.config.power_states.side_leds = enabled;
             ctrl.config.write();
 
             ctrl.set_power_states(&ctrl.config)
                 .map_err(|err| warn!("{}", err))
                 .ok();
 
-            states = Some(LedPowerStates {
-                boot_anim: ctrl.config.boot_anim_enabled,
-                sleep_anim: ctrl.config.sleep_anim_enabled,
-                all_leds: ctrl.config.all_leds_enabled,
-                keys_leds: ctrl.config.keys_leds_enabled,
-                side_leds: ctrl.config.side_leds_enabled,
-            });
+            states = Some(ctrl.config.power_states);
         }
         // Need to pull state out like this due to MutexGuard
         if let Some(states) = states {
@@ -128,20 +110,14 @@ impl CtrlKbdLedZbus {
     ) {
         let mut states = None;
         if let Ok(mut ctrl) = self.0.try_lock() {
-            ctrl.config.keys_leds_enabled = enabled;
+            ctrl.config.power_states.keys_leds = enabled;
             ctrl.config.write();
 
             ctrl.set_power_states(&ctrl.config)
                 .map_err(|err| warn!("{}", err))
                 .ok();
 
-            states = Some(LedPowerStates {
-                boot_anim: ctrl.config.boot_anim_enabled,
-                sleep_anim: ctrl.config.sleep_anim_enabled,
-                all_leds: ctrl.config.all_leds_enabled,
-                keys_leds: ctrl.config.keys_leds_enabled,
-                side_leds: ctrl.config.side_leds_enabled,
-            });
+            states = Some(ctrl.config.power_states);
         }
         // Need to pull state out like this due to MutexGuard
         if let Some(states) = states {
@@ -159,20 +135,14 @@ impl CtrlKbdLedZbus {
     ) {
         let mut states = None;
         if let Ok(mut ctrl) = self.0.try_lock() {
-            ctrl.config.side_leds_enabled = enabled;
+            ctrl.config.power_states.side_leds = enabled;
             ctrl.config.write();
 
             ctrl.set_power_states(&ctrl.config)
                 .map_err(|err| warn!("{}", err))
                 .ok();
 
-            states = Some(LedPowerStates {
-                boot_anim: ctrl.config.boot_anim_enabled,
-                sleep_anim: ctrl.config.sleep_anim_enabled,
-                all_leds: ctrl.config.all_leds_enabled,
-                keys_leds: ctrl.config.keys_leds_enabled,
-                side_leds: ctrl.config.side_leds_enabled,
-            });
+            states = Some(ctrl.config.power_states);
         }
         // Need to pull state out like this due to MutexGuard
         if let Some(states) = states {
@@ -258,7 +228,7 @@ impl CtrlKbdLedZbus {
     #[dbus_interface(property)]
     async fn boot_enabled(&self) -> bool {
         if let Ok(ctrl) = self.0.try_lock() {
-            return ctrl.config.boot_anim_enabled;
+            return ctrl.config.power_states.boot_anim;
         }
         true
     }
@@ -266,7 +236,7 @@ impl CtrlKbdLedZbus {
     #[dbus_interface(property)]
     async fn sleep_enabled(&self) -> bool {
         if let Ok(ctrl) = self.0.try_lock() {
-            return ctrl.config.sleep_anim_enabled;
+            return ctrl.config.power_states.sleep_anim;
         }
         true
     }
@@ -274,7 +244,7 @@ impl CtrlKbdLedZbus {
     #[dbus_interface(property)]
     async fn all_leds_enabled(&self) -> bool {
         if let Ok(ctrl) = self.0.try_lock() {
-            return ctrl.config.all_leds_enabled;
+            return ctrl.config.power_states.all_leds;
         }
         true
     }
@@ -282,7 +252,7 @@ impl CtrlKbdLedZbus {
     #[dbus_interface(property)]
     async fn keys_leds_enabled(&self) -> bool {
         if let Ok(ctrl) = self.0.try_lock() {
-            return ctrl.config.keys_leds_enabled;
+            return ctrl.config.power_states.keys_leds;
         }
         true
     }
@@ -290,7 +260,7 @@ impl CtrlKbdLedZbus {
     #[dbus_interface(property)]
     fn side_leds_enabled(&self) -> bool {
         if let Ok(ctrl) = self.0.try_lock() {
-            return ctrl.config.side_leds_enabled;
+            return ctrl.config.power_states.side_leds;
         }
         true
     }

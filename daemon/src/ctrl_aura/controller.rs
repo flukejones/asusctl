@@ -183,7 +183,7 @@ impl CtrlKbdLed {
             match Self::find_led_node(prod) {
                 Ok(node) => {
                     led_node = Some(node);
-                    info!("Found keyboard controller 0x{prod}");
+                    info!("Looked for keyboard controller 0x{prod}: Found");
                     break;
                 }
                 Err(err) => info!("Looked for keyboard controller 0x{prod}: {err}"),
@@ -280,11 +280,11 @@ impl CtrlKbdLed {
     /// Set combination state for boot animation/sleep animation/all leds/keys leds/side leds LED active
     pub(super) fn set_power_states(&self, config: &AuraConfig) -> Result<(), RogError> {
         let bytes = leds_message(
-            config.boot_anim_enabled,
-            config.sleep_anim_enabled,
-            config.all_leds_enabled,
-            config.keys_leds_enabled,
-            config.side_leds_enabled,
+            config.power_states.boot_anim,
+            config.power_states.sleep_anim,
+            config.power_states.all_leds,
+            config.power_states.keys_leds,
+            config.power_states.side_leds,
         );
 
         // Quite ugly, must be a more idiomatic way to do

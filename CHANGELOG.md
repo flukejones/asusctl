@@ -4,12 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased 4.1.0]
+## [Unreleased ]
+
+## [4.1.0] - 2022-06-20
 ### Changed
 - Huge refactor to use zbus 2.2 + zvariant 3.0 in system-daemon. More work required.
 - Daemons with tasks not use `smol` for async ops.
 - Fixes to fan-curve settings from CLI (Author: Armas Span)
 - Add brightness to anime zbus notification
+- Adjust how threads in AniMe matrix controller work
+- Use proper power-state packet for keyboard LED's (Author: Martin Piffault)
 ### Added
 - Support for GA402R LED modes
 - Support for GU502LV LED modes
@@ -17,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for G513IC LED modes (Author: dada513)
 - Support for G513QM LED modes (Author: Martin Piffault)
 - Add side-LED toggle support (Author: Martin Piffault)
-- Support reloading keyboard brightness and mode on wake (from sleep/hiber)
+- Support reloading keyboard mode on wake (from sleep/hiber)
 - Support reloading charge-level on wake (from sleep/hiber)
 - Support running AniMe animation blocks on wake/sleep and boot/shutdown events
 

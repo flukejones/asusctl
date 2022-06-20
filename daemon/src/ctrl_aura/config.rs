@@ -1,36 +1,12 @@
 use crate::laptops::LaptopLedData;
 use log::{error, info, warn};
-use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness};
+use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness, LedPowerStates};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 
 pub static AURA_CONFIG_PATH: &str = "/etc/asusd/aura.conf";
-
-#[derive(Deserialize, Serialize)]
-pub struct AuraConfigV320 {
-    pub brightness: u32,
-    pub current_mode: AuraModeNum,
-    pub builtins: BTreeMap<AuraModeNum, AuraEffect>,
-    pub multizone: Option<AuraMultiZone>,
-}
-
-impl AuraConfigV320 {
-    pub(crate) fn into_current(self) -> AuraConfig {
-        AuraConfig {
-            brightness: <LedBrightness>::from(self.brightness),
-            current_mode: self.current_mode,
-            builtins: self.builtins,
-            multizone: self.multizone,
-            boot_anim_enabled: true,
-            sleep_anim_enabled: true,
-            all_leds_enabled: true,
-            keys_leds_enabled: true,
-            side_leds_enabled: true,
-        }
-    }
-}
 
 #[derive(Deserialize, Serialize)]
 pub struct AuraConfigV352 {
@@ -47,11 +23,13 @@ impl AuraConfigV352 {
             current_mode: self.current_mode,
             builtins: self.builtins,
             multizone: self.multizone,
-            boot_anim_enabled: true,
-            sleep_anim_enabled: true,
-            all_leds_enabled: true,
-            keys_leds_enabled: true,
-            side_leds_enabled: true,
+            power_states: LedPowerStates {
+                boot_anim: true,
+                sleep_anim: true,
+                all_leds: true,
+                keys_leds: true,
+                side_leds: true,
+            },
         }
     }
 }
@@ -74,11 +52,13 @@ impl AuraConfigV407 {
             current_mode: self.current_mode,
             builtins: self.builtins,
             multizone: self.multizone,
-            boot_anim_enabled: true,
-            sleep_anim_enabled: self.sleep_anim_enabled,
-            all_leds_enabled: self.awake_enabled,
-            keys_leds_enabled: self.awake_enabled,
-            side_leds_enabled: self.side_leds_enabled,
+            power_states: LedPowerStates {
+                boot_anim: true,
+                sleep_anim: self.sleep_anim_enabled,
+                all_leds: self.awake_enabled,
+                keys_leds: self.awake_enabled,
+                side_leds: self.side_leds_enabled,
+            },
         }
     }
 }
@@ -89,11 +69,7 @@ pub struct AuraConfig {
     pub current_mode: AuraModeNum,
     pub builtins: BTreeMap<AuraModeNum, AuraEffect>,
     pub multizone: Option<AuraMultiZone>,
-    pub boot_anim_enabled: bool,
-    pub sleep_anim_enabled: bool,
-    pub all_leds_enabled: bool,
-    pub keys_leds_enabled: bool,
-    pub side_leds_enabled: bool,
+    pub power_states: LedPowerStates,
 }
 
 impl Default for AuraConfig {
@@ -103,11 +79,13 @@ impl Default for AuraConfig {
             current_mode: AuraModeNum::Static,
             builtins: BTreeMap::new(),
             multizone: None,
-            boot_anim_enabled: true,
-            sleep_anim_enabled: true,
-            all_leds_enabled: true,
-            keys_leds_enabled: true,
-            side_leds_enabled: true,
+            power_states: LedPowerStates {
+                boot_anim: true,
+                sleep_anim: true,
+                all_leds: true,
+                keys_leds: true,
+                side_leds: true,
+            },
         }
     }
 }
@@ -133,11 +111,6 @@ impl AuraConfig {
             } else {
                 if let Ok(data) = serde_json::from_str(&buf) {
                     return data;
-                } else if let Ok(data) = serde_json::from_str::<AuraConfigV320>(&buf) {
-                    let config = data.into_current();
-                    config.write();
-                    info!("Updated AuraConfig version");
-                    return config;
                 } else if let Ok(data) = serde_json::from_str::<AuraConfigV352>(&buf) {
                     let config = data.into_current();
                     config.write();
