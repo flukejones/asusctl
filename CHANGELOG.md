@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased ]
 
+## [4.1.1] - 2022-06-21
+### Changed
+- Fixes to anime matrix system thread cancelation
+
 ## [4.1.0] - 2022-06-20
 ### Changed
 - Huge refactor to use zbus 2.2 + zvariant 3.0 in system-daemon.

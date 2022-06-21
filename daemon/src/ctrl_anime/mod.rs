@@ -169,12 +169,11 @@ impl CtrlAnime {
                 while thread_running.load(Ordering::SeqCst) {
                     // Make any running loop exit first
                     thread_exit.store(true, Ordering::SeqCst);
-                    break;
                 }
 
                 info!("AniMe no previous system thread running (now)");
                 thread_exit.store(false, Ordering::SeqCst);
-
+                
                 'main: loop {
                     thread_running.store(true, Ordering::SeqCst);
                     for action in actions.iter() {
@@ -215,6 +214,9 @@ impl CtrlAnime {
                             ActionData::TimeDate => {}
                             ActionData::Matrix => {}
                         }
+                    }
+                    if thread_exit.load(Ordering::SeqCst) {
+                        break 'main;
                     }
                     if once || actions.is_empty() {
                         break 'main;
