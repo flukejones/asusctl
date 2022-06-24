@@ -319,15 +319,16 @@ impl crate::CtrlTask for CtrlAnimeTask {
             .await
             .expect("CtrlAnimeTask could not create ManagerProxy");
 
-        let load_save = |start: bool, lock: MutexGuard<CtrlAnime>, inner: Arc<Mutex<CtrlAnime>>| {
-            if start {
-                info!("CtrlAnimeTask running sleep animation");
-                CtrlAnime::run_thread(inner.clone(), lock.cache.shutdown.clone(), true);
-            } else {
-                info!("CtrlAnimeTask running wake animation");
-                CtrlAnime::run_thread(inner.clone(), lock.cache.wake.clone(), true);
-            }
-        };
+        let run_action =
+            |start: bool, lock: MutexGuard<CtrlAnime>, inner: Arc<Mutex<CtrlAnime>>| {
+                if start {
+                    info!("CtrlAnimeTask running sleep animation");
+                    CtrlAnime::run_thread(inner.clone(), lock.cache.shutdown.clone(), true);
+                } else {
+                    info!("CtrlAnimeTask running wake animation");
+                    CtrlAnime::run_thread(inner.clone(), lock.cache.wake.clone(), true);
+                }
+            };
 
         let inner = self.inner.clone();
         executor
@@ -340,7 +341,7 @@ impl crate::CtrlTask for CtrlAnimeTask {
                                 // other threads - it is possible to end up with deadlocks otherwise.
                                 loop {
                                     if let Ok(lock) = inner.clone().try_lock() {
-                                        load_save(args.start, lock, inner.clone());
+                                        run_action(args.start, lock, inner.clone());
                                         break;
                                     }
                                 }
@@ -364,7 +365,7 @@ impl crate::CtrlTask for CtrlAnimeTask {
                             if let Ok(args) = event.args() {
                                 loop {
                                     if let Ok(lock) = inner.clone().try_lock() {
-                                        load_save(args.start, lock, inner.clone());
+                                        run_action(args.start, lock, inner.clone());
                                     }
                                 }
                             }
