@@ -19,7 +19,7 @@ use smol::{stream::StreamExt, Executor};
 use std::{
     cell::RefCell,
     error::Error,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, MutexGuard},
     thread::sleep,
 };
 use std::{
@@ -173,7 +173,7 @@ impl CtrlAnime {
 
                 info!("AniMe no previous system thread running (now)");
                 thread_exit.store(false, Ordering::SeqCst);
-                
+
                 'main: loop {
                     thread_running.store(true, Ordering::SeqCst);
                     for action in actions.iter() {
@@ -319,6 +319,16 @@ impl crate::CtrlTask for CtrlAnimeTask {
             .await
             .expect("CtrlAnimeTask could not create ManagerProxy");
 
+        let load_save = |start: bool, lock: MutexGuard<CtrlAnime>, inner: Arc<Mutex<CtrlAnime>>| {
+            if start {
+                info!("CtrlAnimeTask running sleep animation");
+                CtrlAnime::run_thread(inner.clone(), lock.cache.shutdown.clone(), true);
+            } else {
+                info!("CtrlAnimeTask running wake animation");
+                CtrlAnime::run_thread(inner.clone(), lock.cache.wake.clone(), true);
+            }
+        };
+
         let inner = self.inner.clone();
         executor
             .spawn(async move {
@@ -326,31 +336,12 @@ impl crate::CtrlTask for CtrlAnimeTask {
                     notif
                         .for_each(|event| {
                             if let Ok(args) = event.args() {
-                                if args.start {
-                                    loop {
-                                        // Loop is required to try an attempt to get the mutex *without* blocking
-                                        // other threads - it is possible to end up with deadlocks otherwise.
-                                        if let Ok(lock) = inner.clone().try_lock() {
-                                            info!("CtrlAnimeTask running sleep animation");
-                                            CtrlAnime::run_thread(
-                                                inner.clone(),
-                                                lock.cache.shutdown.clone(),
-                                                true,
-                                            );
-                                            break;
-                                        }
-                                    }
-                                } else {
-                                    loop {
-                                        if let Ok(lock) = inner.clone().try_lock() {
-                                            info!("CtrlAnimeTask running wake animation");
-                                            CtrlAnime::run_thread(
-                                                inner.clone(),
-                                                lock.cache.wake.clone(),
-                                                true,
-                                            );
-                                            break;
-                                        }
+                                // Loop is required to try an attempt to get the mutex *without* blocking
+                                // other threads - it is possible to end up with deadlocks otherwise.
+                                loop {
+                                    if let Ok(lock) = inner.clone().try_lock() {
+                                        load_save(args.start, lock, inner.clone());
+                                        break;
                                     }
                                 }
                             }
@@ -371,30 +362,9 @@ impl crate::CtrlTask for CtrlAnimeTask {
                     notif
                         .for_each(|event| {
                             if let Ok(args) = event.args() {
-                                if args.start {
-                                    loop {
-                                        if let Ok(lock) = inner.clone().try_lock() {
-                                            info!("CtrlAnimeTask running sleep animation");
-                                            CtrlAnime::run_thread(
-                                                inner.clone(),
-                                                lock.cache.shutdown.clone(),
-                                                true,
-                                            );
-                                            break;
-                                        }
-                                    }
-                                } else {
-                                    // If waking up - intention is to catch hibernation event
-                                    loop {
-                                        if let Ok(lock) = inner.clone().lock() {
-                                            info!("CtrlAnimeTask running wake animation");
-                                            CtrlAnime::run_thread(
-                                                inner.clone(),
-                                                lock.cache.wake.clone(),
-                                                true,
-                                            );
-                                            break;
-                                        }
+                                loop {
+                                    if let Ok(lock) = inner.clone().try_lock() {
+                                        load_save(args.start, lock, inner.clone());
                                     }
                                 }
                             }

@@ -16,11 +16,11 @@ use rog_aura::{
 };
 use rog_supported::LedSupportedFunctions;
 use smol::{stream::StreamExt, Executor};
-use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::{fs::OpenOptions, sync::MutexGuard};
 use zbus::Connection;
 
 use crate::GetSupported;
@@ -99,6 +99,24 @@ impl CtrlTask for CtrlKbdLedTask {
             .await
             .expect("CtrlKbdLedTask could not create ManagerProxy");
 
+        let load_save = |start: bool, mut lock: MutexGuard<CtrlKbdLed>| {
+            // If waking up
+            if !start {
+                info!("CtrlKbdLedTask reloading brightness and modes");
+                lock.set_brightness(lock.config.last_brightness)
+                    .map_err(|e| error!("CtrlKbdLedTask: {e}"))
+                    .ok();
+                if let Some(mode) = lock.config.builtins.get(&lock.config.current_mode) {
+                    lock.write_mode(mode)
+                        .map_err(|e| error!("CtrlKbdLedTask: {e}"))
+                        .ok();
+                }
+            } else if start {
+                info!("CtrlKbdLedTask saving last brightness");
+                lock.config.last_brightness = lock.config.brightness;
+            }
+        };
+
         let inner = self.inner.clone();
         executor
             .spawn(async move {
@@ -106,27 +124,26 @@ impl CtrlTask for CtrlKbdLedTask {
                     notif
                         .for_each(|event| {
                             if let Ok(args) = event.args() {
-                                // If waking up
-                                if !args.start {
-                                    info!("CtrlKbdLedTask reloading brightness and modes");
-                                    loop {
-                                        // Loop so that we do aquire the lock but also don't block other
-                                        // threads (prevents potential deadlocks)
-                                        if let Ok(lock) = inner.clone().try_lock() {
-                                            // Can't reload brightness due to system setting the brightness on sleep/wake
-                                            // and the config update task saving that change.
-                                            // lock.set_brightness(lock.config.brightness)
-                                            //     .map_err(|e| error!("CtrlKbdLedTask: {e}"))
-                                            //     .ok();
-                                            if let Some(mode) =
-                                                lock.config.builtins.get(&lock.config.current_mode)
-                                            {
-                                                lock.write_mode(mode)
-                                                    .map_err(|e| error!("CtrlKbdLedTask: {e}"))
-                                                    .ok();
-                                            }
-                                            break;
-                                        }
+                                loop {
+                                    // Loop so that we do aquire the lock but also don't block other
+                                    // threads (prevents potential deadlocks)
+                                    if let Ok(lock) = inner.clone().try_lock() {
+                                        load_save(args.start, lock);
+                                        break;
+                                    }
+                                }
+                            }
+                        })
+                        .await;
+                }
+                if let Ok(notif) = manager.receive_prepare_for_shutdown().await {
+                    notif
+                        .for_each(|event| {
+                            if let Ok(args) = event.args() {
+                                loop {
+                                    if let Ok(lock) = inner.clone().try_lock() {
+                                        load_save(args.start, lock);
+                                        break;
                                     }
                                 }
                             }

@@ -9,32 +9,6 @@ use std::io::{Read, Write};
 pub static AURA_CONFIG_PATH: &str = "/etc/asusd/aura.conf";
 
 #[derive(Deserialize, Serialize)]
-pub struct AuraConfigV352 {
-    pub brightness: LedBrightness,
-    pub current_mode: AuraModeNum,
-    pub builtins: BTreeMap<AuraModeNum, AuraEffect>,
-    pub multizone: Option<AuraMultiZone>,
-}
-
-impl AuraConfigV352 {
-    pub(crate) fn into_current(self) -> AuraConfig {
-        AuraConfig {
-            brightness: self.brightness,
-            current_mode: self.current_mode,
-            builtins: self.builtins,
-            multizone: self.multizone,
-            power_states: LedPowerStates {
-                boot_anim: true,
-                sleep_anim: true,
-                all_leds: true,
-                keys_leds: true,
-                side_leds: true,
-            },
-        }
-    }
-}
-
-#[derive(Deserialize, Serialize)]
 pub struct AuraConfigV407 {
     pub brightness: LedBrightness,
     pub current_mode: AuraModeNum,
@@ -49,6 +23,7 @@ impl AuraConfigV407 {
     pub(crate) fn into_current(self) -> AuraConfig {
         AuraConfig {
             brightness: self.brightness,
+            last_brightness: LedBrightness::Med,
             current_mode: self.current_mode,
             builtins: self.builtins,
             multizone: self.multizone,
@@ -64,8 +39,32 @@ impl AuraConfigV407 {
 }
 
 #[derive(Deserialize, Serialize)]
+pub struct AuraConfigV411 {
+    pub brightness: LedBrightness,
+    pub current_mode: AuraModeNum,
+    pub builtins: BTreeMap<AuraModeNum, AuraEffect>,
+    pub multizone: Option<AuraMultiZone>,
+    pub power_states: LedPowerStates,
+}
+
+impl AuraConfigV411 {
+    pub(crate) fn into_current(self) -> AuraConfig {
+        AuraConfig {
+            brightness: self.brightness,
+            last_brightness: LedBrightness::Med,
+            current_mode: self.current_mode,
+            builtins: self.builtins,
+            multizone: self.multizone,
+            power_states: self.power_states,
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize)]
 pub struct AuraConfig {
     pub brightness: LedBrightness,
+    /// Used to re-set brightness on wake from sleep/hibernation
+    pub last_brightness: LedBrightness,
     pub current_mode: AuraModeNum,
     pub builtins: BTreeMap<AuraModeNum, AuraEffect>,
     pub multizone: Option<AuraMultiZone>,
@@ -76,6 +75,7 @@ impl Default for AuraConfig {
     fn default() -> Self {
         AuraConfig {
             brightness: LedBrightness::Med,
+            last_brightness: LedBrightness::Med,
             current_mode: AuraModeNum::Static,
             builtins: BTreeMap::new(),
             multizone: None,
@@ -111,12 +111,12 @@ impl AuraConfig {
             } else {
                 if let Ok(data) = serde_json::from_str(&buf) {
                     return data;
-                } else if let Ok(data) = serde_json::from_str::<AuraConfigV352>(&buf) {
+                } else if let Ok(data) = serde_json::from_str::<AuraConfigV407>(&buf) {
                     let config = data.into_current();
                     config.write();
                     info!("Updated AuraConfig version");
                     return config;
-                } else if let Ok(data) = serde_json::from_str::<AuraConfigV407>(&buf) {
+                } else if let Ok(data) = serde_json::from_str::<AuraConfigV411>(&buf) {
                     let config = data.into_current();
                     config.write();
                     info!("Updated AuraConfig version");
