@@ -113,7 +113,7 @@ per_key = false
 
 [[led_data]]
 prod_family = "ROG Zephyrus G15"
-board_names = ["GA503Q"]
+board_names = ["GA503Q", "GA503R"]
 standard = ["Static", "Breathe", "Pulse", "Rainbow", "Strobe"]
 multizone = false
 per_key = false
