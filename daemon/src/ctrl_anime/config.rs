@@ -1,7 +1,7 @@
 use crate::VERSION;
 use log::{error, info, warn};
-use rog_anime::Fade;
 use rog_anime::{error::AnimeError, ActionData, ActionLoader, AnimTime, Vec2};
+use rog_anime::{AnimeType, Fade};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
@@ -81,27 +81,28 @@ pub struct AnimeConfigCached {
 
 impl AnimeConfigCached {
     pub fn init_from_config(&mut self, config: &AnimeConfig) -> Result<(), AnimeError> {
+        let anime_type = AnimeType::GA401; // TODO: detect
         let mut sys = Vec::with_capacity(config.system.len());
         for ani in config.system.iter() {
-            sys.push(ActionData::from_anime_action(ani)?);
+            sys.push(ActionData::from_anime_action(anime_type, ani)?);
         }
         self.system = sys;
 
         let mut boot = Vec::with_capacity(config.boot.len());
         for ani in config.boot.iter() {
-            boot.push(ActionData::from_anime_action(ani)?);
+            boot.push(ActionData::from_anime_action(anime_type, ani)?);
         }
         self.boot = boot;
 
         let mut wake = Vec::with_capacity(config.wake.len());
         for ani in config.wake.iter() {
-            wake.push(ActionData::from_anime_action(ani)?);
+            wake.push(ActionData::from_anime_action(anime_type, ani)?);
         }
         self.wake = wake;
 
         let mut shutdown = Vec::with_capacity(config.shutdown.len());
         for ani in config.shutdown.iter() {
-            shutdown.push(ActionData::from_anime_action(ani)?);
+            shutdown.push(ActionData::from_anime_action(anime_type, ani)?);
         }
         self.shutdown = shutdown;
         Ok(())

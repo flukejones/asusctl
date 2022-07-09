@@ -13,6 +13,9 @@ pub enum AnimeError {
     /// The input was incorrect size, expected size is `IncorrectSize(width, height)`
     IncorrectSize(u32, u32),
     Dbus(String),
+    Udev(String, std::io::Error),
+    NoDevice,
+    UnsupportedDevice,
 }
 
 impl fmt::Display for AnimeError {
@@ -30,6 +33,9 @@ impl fmt::Display for AnimeError {
                 width, height
             ),
             AnimeError::Dbus(detail) => write!(f, "{}", detail),
+            AnimeError::Udev(deets, error) => write!(f, "udev {}: {}", deets, error),
+            AnimeError::NoDevice => write!(f, "No AniMe Matrix device found"),
+            AnimeError::UnsupportedDevice => write!(f, "Unsupported AniMe Matrix device found"),
         }
     }
 }

@@ -8,10 +8,11 @@ use logind_zbus::manager::ManagerProxy;
 use rog_anime::{
     error::AnimeError,
     usb::{
-        pkt_for_apply, pkt_for_flush, pkt_for_set_boot, pkt_for_set_on, pkts_for_init, PROD_ID,
-        VENDOR_ID,
+        find_node, get_anime_type, pkt_for_apply, pkt_for_flush, pkt_for_set_boot, pkt_for_set_on,
+        pkts_for_init, PROD_ID, VENDOR_ID,
     },
-    ActionData, AnimeDataBuffer, AnimePacketType, ANIME_DATA_LEN,
+    ActionData, AnimeDataBuffer, AnimePacketType, AnimeType, ANIME_GA401_DATA_LEN,
+    ANIME_GA402_DATA_LEN,
 };
 use rog_supported::AnimeSupportedFunctions;
 use rusb::{Device, DeviceHandle};
@@ -41,6 +42,7 @@ impl GetSupported for CtrlAnime {
 
 pub struct CtrlAnime {
     _node: String,
+    anime_type: AnimeType,
     handle: RefCell<DeviceHandle<rusb::GlobalContext>>,
     cache: AnimeConfigCached,
     config: AnimeConfig,
@@ -53,7 +55,8 @@ pub struct CtrlAnime {
 impl CtrlAnime {
     #[inline]
     pub fn new(config: AnimeConfig) -> Result<CtrlAnime, Box<dyn Error>> {
-        let node = Self::find_node("193b")?;
+        let node = find_node("193b")?;
+        let anime_type = get_anime_type()?;
         let device = Self::get_dev_handle()?;
 
         info!("Device has an AniMe Matrix display");
@@ -62,6 +65,7 @@ impl CtrlAnime {
 
         let ctrl = CtrlAnime {
             _node: node,
+            anime_type,
             handle: RefCell::new(device),
             cache,
             config,
@@ -71,34 +75,6 @@ impl CtrlAnime {
         ctrl.do_initialization();
 
         Ok(ctrl)
-    }
-
-    fn find_node(id_product: &str) -> Result<String, RogError> {
-        let mut enumerator = udev::Enumerator::new().map_err(|err| {
-            warn!("{}", err);
-            RogError::Udev("enumerator failed".into(), err)
-        })?;
-        enumerator.match_subsystem("usb").map_err(|err| {
-            warn!("{}", err);
-            RogError::Udev("match_subsystem failed".into(), err)
-        })?;
-
-        for device in enumerator.scan_devices().map_err(|err| {
-            warn!("{}", err);
-            RogError::Udev("scan_devices failed".into(), err)
-        })? {
-            if let Some(attr) = device.attribute_value("idProduct") {
-                if attr == id_product {
-                    if let Some(dev_node) = device.devnode() {
-                        info!("Using device at: {:?} for AniMe control", dev_node);
-                        return Ok(dev_node.to_string_lossy().to_string());
-                    }
-                }
-            }
-        }
-        Err(RogError::MissingFunction(
-            "ASUS AniMe device node not found".into(),
-        ))
     }
 
     fn get_dev_handle() -> Result<DeviceHandle<rusb::GlobalContext>, Box<dyn Error>> {
@@ -156,10 +132,12 @@ impl CtrlAnime {
                 // we don't block other threads/main
                 let thread_exit;
                 let thread_running;
+                let anime_type;
                 loop {
                     if let Ok(lock) = inner.try_lock() {
                         thread_exit = lock.thread_exit.clone();
                         thread_running = lock.thread_running.clone();
+                        anime_type = lock.anime_type;
                         break;
                     }
                 }
@@ -224,7 +202,16 @@ impl CtrlAnime {
                 }
                 // Clear the display on exit
                 if let Ok(lock) = inner.try_lock() {
-                    let data = AnimeDataBuffer::from_vec([0u8; ANIME_DATA_LEN].to_vec());
+                    let data = match anime_type {
+                        AnimeType::GA401 => AnimeDataBuffer::from_vec(
+                            anime_type,
+                            [0u8; ANIME_GA401_DATA_LEN].to_vec(),
+                        ),
+                        AnimeType::GA402 => AnimeDataBuffer::from_vec(
+                            anime_type,
+                            [0u8; ANIME_GA402_DATA_LEN].to_vec(),
+                        ),
+                    };
                     lock.write_data_buffer(data);
                 }
                 // Loop ended, set the atmonics
@@ -277,7 +264,7 @@ impl CtrlAnime {
     /// Write only a data packet. This will modify the leds brightness using the
     /// global brightness set in config.
     fn write_data_buffer(&self, mut buffer: AnimeDataBuffer) {
-        for led in buffer.get_mut()[7..].iter_mut() {
+        for led in buffer.data_mut()[7..].iter_mut() {
             let mut bright = *led as f32 * self.config.brightness;
             if bright > 254.0 {
                 bright = 254.0;

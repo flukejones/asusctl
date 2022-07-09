@@ -17,10 +17,15 @@ const BLOCK_END: usize = 634;
 /// Individual usable data length of each USB packet
 const PANE_LEN: usize = BLOCK_END - BLOCK_START;
 /// The length of usable data
-pub const ANIME_DATA_LEN: usize = PANE_LEN * 2;
+pub const ANIME_GA401_DATA_LEN: usize = PANE_LEN * 2;
+pub const ANIME_GA402_DATA_LEN: usize = PANE_LEN * 3;
 
+/// First packet is for GA401 + GA402
 const USB_PREFIX1: [u8; 7] = [0x5e, 0xc0, 0x02, 0x01, 0x00, 0x73, 0x02];
+/// Second packet is for GA401 + GA402
 const USB_PREFIX2: [u8; 7] = [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x02];
+/// Third packet is for GA402 matrix
+const USB_PREFIX3: [u8; 7] = [0x5e, 0xc0, 0x02, 0xe7, 0x04, 0x73, 0x02];
 
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Debug, PartialEq, Copy, Clone, Deserialize, Serialize)]
@@ -30,34 +35,46 @@ pub struct AnimePowerStates {
     pub boot_anim_enabled: bool,
 }
 
+#[cfg_attr(feature = "dbus", derive(Type))]
+#[derive(Debug, Copy, Clone, Deserialize, Serialize)]
+pub enum AnimeType {
+    GA401,
+    GA402,
+}
+
 /// The minimal serializable data that can be transferred over wire types.
 /// Other data structures in `rog_anime` will convert to this.
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct AnimeDataBuffer(Vec<u8>);
-
-impl Default for AnimeDataBuffer {
-    fn default() -> Self {
-        Self::new()
-    }
+pub struct AnimeDataBuffer {
+    data: Vec<u8>,
+    anime: AnimeType,
 }
 
 impl AnimeDataBuffer {
     #[inline]
-    pub fn new() -> Self {
-        AnimeDataBuffer(vec![0u8; ANIME_DATA_LEN])
+    pub fn new(anime: AnimeType) -> Self {
+        let len = match anime {
+            AnimeType::GA401 => ANIME_GA401_DATA_LEN,
+            AnimeType::GA402 => ANIME_GA402_DATA_LEN,
+        };
+
+        AnimeDataBuffer {
+            data: vec![0u8; len],
+            anime,
+        }
     }
 
     /// Get the inner data buffer
     #[inline]
-    pub fn get(&self) -> &[u8] {
-        &self.0
+    pub fn data(&self) -> &[u8] {
+        &self.data
     }
 
     /// Get a mutable slice of the inner buffer
     #[inline]
-    pub fn get_mut(&mut self) -> &mut [u8] {
-        &mut self.0
+    pub fn data_mut(&mut self) -> &mut [u8] {
+        &mut self.data
     }
 
     /// Create from a vector of bytes
@@ -65,25 +82,41 @@ impl AnimeDataBuffer {
     /// # Panics
     /// Will panic if the vector length is not `ANIME_DATA_LEN`
     #[inline]
-    pub fn from_vec(input: Vec<u8>) -> Self {
-        assert_eq!(input.len(), ANIME_DATA_LEN);
-        Self(input)
+    pub fn from_vec(anime: AnimeType, data: Vec<u8>) -> Self {
+        match anime {
+            AnimeType::GA401 => assert_eq!(data.len(), ANIME_GA401_DATA_LEN),
+            AnimeType::GA402 => assert_eq!(data.len(), ANIME_GA402_DATA_LEN),
+        }
+        Self { data, anime }
     }
 }
 
 /// The two packets to be written to USB
-pub type AnimePacketType = [[u8; 640]; 2];
+pub type AnimePacketType = Vec<[u8; 640]>;
 
 impl From<AnimeDataBuffer> for AnimePacketType {
     #[inline]
     fn from(anime: AnimeDataBuffer) -> Self {
-        assert!(anime.0.len() == ANIME_DATA_LEN);
-        let mut buffers = [[0; 640]; 2];
-        for (idx, chunk) in anime.0.as_slice().chunks(PANE_LEN).enumerate() {
+        let mut buffers = match anime.anime {
+            AnimeType::GA401 => {
+                assert!(anime.data.len() == ANIME_GA401_DATA_LEN);
+                vec![[0; 640]; 2]
+            }
+            AnimeType::GA402 => {
+                assert!(anime.data.len() == ANIME_GA402_DATA_LEN);
+                vec![[0; 640]; 3]
+            }
+        };
+
+        for (idx, chunk) in anime.data.as_slice().chunks(PANE_LEN).enumerate() {
             buffers[idx][BLOCK_START..BLOCK_END].copy_from_slice(chunk);
         }
         buffers[0][..7].copy_from_slice(&USB_PREFIX1);
         buffers[1][..7].copy_from_slice(&USB_PREFIX2);
+
+        if matches!(anime.anime, AnimeType::GA402) {
+            buffers[2][..7].copy_from_slice(&USB_PREFIX3);
+        }
         buffers
     }
 }
@@ -142,7 +175,7 @@ pub fn run_animation(
 
             if let AnimTime::Fade(_) = frames.duration() {
                 if frame_start <= start + fade_in {
-                    for pixel in output.get_mut() {
+                    for pixel in output.data_mut() {
                         *pixel = (*pixel as f32 * fade_in_accum) as u8;
                     }
                     fade_in_accum = fade_in_step * (frame_start - start).as_secs_f32();
@@ -153,7 +186,7 @@ pub fn run_animation(
                     } else {
                         fade_out_accum = 0.0;
                     }
-                    for pixel in output.get_mut() {
+                    for pixel in output.data_mut() {
                         *pixel = (*pixel as f32 * fade_out_accum) as u8;
                     }
                 }
