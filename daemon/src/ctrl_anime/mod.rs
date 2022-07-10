@@ -11,8 +11,7 @@ use rog_anime::{
         find_node, get_anime_type, pkt_for_apply, pkt_for_flush, pkt_for_set_boot, pkt_for_set_on,
         pkts_for_init, PROD_ID, VENDOR_ID,
     },
-    ActionData, AnimeDataBuffer, AnimePacketType, AnimeType, ANIME_GA401_DATA_LEN,
-    ANIME_GA402_DATA_LEN,
+    ActionData, AnimeDataBuffer, AnimePacketType, AnimeType,
 };
 use rog_supported::AnimeSupportedFunctions;
 use rusb::{Device, DeviceHandle};
@@ -61,7 +60,7 @@ impl CtrlAnime {
 
         info!("Device has an AniMe Matrix display");
         let mut cache = AnimeConfigCached::default();
-        cache.init_from_config(&config)?;
+        cache.init_from_config(&config, anime_type)?;
 
         let ctrl = CtrlAnime {
             _node: node,
@@ -202,16 +201,10 @@ impl CtrlAnime {
                 }
                 // Clear the display on exit
                 if let Ok(lock) = inner.try_lock() {
-                    let data = match anime_type {
-                        AnimeType::GA401 => AnimeDataBuffer::from_vec(
-                            anime_type,
-                            [0u8; ANIME_GA401_DATA_LEN].to_vec(),
-                        ),
-                        AnimeType::GA402 => AnimeDataBuffer::from_vec(
-                            anime_type,
-                            [0u8; ANIME_GA402_DATA_LEN].to_vec(),
-                        ),
-                    };
+                    let data = AnimeDataBuffer::from_vec(
+                        anime_type,
+                        vec![0u8; anime_type.data_length()],
+                    );
                     lock.write_data_buffer(data);
                 }
                 // Loop ended, set the atmonics

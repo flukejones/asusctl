@@ -3,11 +3,7 @@ use std::path::Path;
 pub use glam::Vec2;
 use glam::{Mat3, Vec3};
 
-use crate::{
-    data::{AnimeDataBuffer, ANIME_GA401_DATA_LEN},
-    error::AnimeError,
-    AnimeType,
-};
+use crate::{data::AnimeDataBuffer, error::AnimeError, AnimeType};
 
 /// A single greyscale + alpha pixel in the image
 #[derive(Copy, Clone, Debug)]
@@ -392,7 +388,7 @@ impl From<&AnimeImage> for AnimeDataBuffer {
             .iter()
             .map(|l| if let Some(l) = l { l.bright() } else { 0 })
             .collect();
-        let mut v = Vec::with_capacity(ANIME_GA401_DATA_LEN);
+        let mut v = Vec::with_capacity(leds.anime_type.data_length());
         v.push(0);
         v.append(&mut l);
         v.append(&mut vec![0u8; 9]);

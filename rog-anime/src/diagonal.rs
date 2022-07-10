@@ -1,42 +1,31 @@
 use std::{path::Path, time::Duration};
 
-use crate::{
-    data::{AnimeDataBuffer, ANIME_GA401_DATA_LEN},
-    error::AnimeError,
-    AnimeType, ANIME_GA402_DATA_LEN,
-};
-
-const WIDTH: usize = 74;
-// TODO: Change for GA402
-const HEIGHT: usize = 36;
+use crate::{data::AnimeDataBuffer, error::AnimeError, AnimeType};
 
 /// Mostly intended to be used with ASUS gifs, but can be used for other purposes (like images)
 #[derive(Debug, Clone)]
-pub struct AnimeDiagonal([[u8; WIDTH]; HEIGHT], Option<Duration>);
-
-impl Default for AnimeDiagonal {
-    #[inline]
-    fn default() -> Self {
-        Self::new(None)
-    }
-}
+pub struct AnimeDiagonal(AnimeType, Vec<Vec<u8>>, Option<Duration>);
 
 impl AnimeDiagonal {
     #[inline]
-    pub fn new(duration: Option<Duration>) -> Self {
-        Self([[0u8; WIDTH]; HEIGHT], duration)
+    pub fn new(anime_type: AnimeType, duration: Option<Duration>) -> Self {
+        Self(
+            anime_type,
+            vec![vec![0; anime_type.width()]; anime_type.height()],
+            duration,
+        )
     }
 
     #[inline]
-    pub fn get_mut(&mut self) -> &mut [[u8; WIDTH]; HEIGHT] {
-        &mut self.0
+    pub fn get_mut(&mut self) -> &mut Vec<Vec<u8>> {
+        &mut self.1
     }
 
     /// Get a full diagonal row where `x` `y` is the starting point  and `len` is the length of data.
     fn get_row(&self, x: usize, y: usize, len: usize) -> Vec<u8> {
         let mut buf = Vec::with_capacity(len);
         for i in 0..len {
-            let val = self.0[HEIGHT - y - i - 1][x + i];
+            let val = self.1[self.0.height() - y - i - 1][x + i];
             buf.push(val);
         }
         buf
@@ -49,13 +38,14 @@ impl AnimeDiagonal {
         path: &Path,
         duration: Option<Duration>,
         bright: f32,
+        anime_type: AnimeType,
     ) -> Result<Self, AnimeError> {
         let data = std::fs::read(path)?;
         let data = std::io::Cursor::new(data);
         let decoder = png_pong::Decoder::new(data)?.into_steps();
         let png_pong::Step { raster, delay: _ } = decoder.last().ok_or(AnimeError::NoFrames)??;
 
-        let mut matrix = AnimeDiagonal::new(duration);
+        let mut matrix = AnimeDiagonal::new(anime_type, duration);
 
         match raster {
             png_pong::PngRaster::Gray8(ras) => {
@@ -102,7 +92,7 @@ impl AnimeDiagonal {
                         + (<u8>::from(px.two()) / 3) as f32
                         + (<u8>::from(px.three()) / 3) as f32
                 };
-                matrix.0[y][x] = (v * bright) as u8;
+                matrix.1[y][x] = (v * bright) as u8;
             }
         }
     }
@@ -125,7 +115,7 @@ impl AnimeDiagonal {
                         + ((<u16>::from(px.two()) / 3) >> 8) as f32
                         + ((<u16>::from(px.three()) / 3) >> 8) as f32
                 };
-                matrix.0[y][x] = (v * bright) as u8;
+                matrix.1[y][x] = (v * bright) as u8;
             }
         }
     }
@@ -142,7 +132,7 @@ impl AnimeDiagonal {
     /// Do conversion from the nested Vec in AnimeMatrix to the two required
     /// packets suitable for sending over USB
     fn into_ga401_packets(&self) -> AnimeDataBuffer {
-        let mut buf = vec![0u8; ANIME_GA401_DATA_LEN];
+        let mut buf = vec![0u8; AnimeType::GA401.data_length()];
 
         buf[1..=32].copy_from_slice(&self.get_row(0, 3, 32));
         buf[34..=66].copy_from_slice(&self.get_row(0, 2, 33));
@@ -204,7 +194,7 @@ impl AnimeDiagonal {
     }
 
     fn into_ga402_packets(&self) -> AnimeDataBuffer {
-        let mut buf = vec![0u8; ANIME_GA402_DATA_LEN];
+        let mut buf = vec![0u8; AnimeType::GA402.data_length()];
         let mut start_index: usize = 0;
 
         fn copy_slice(
@@ -291,7 +281,7 @@ impl AnimeDiagonal {
 mod tests {
     use std::path::PathBuf;
 
-    use crate::{AnimeDiagonal, AnimePacketType};
+    use crate::{AnimeDiagonal, AnimePacketType, AnimeType};
 
     #[test]
     fn ga401_diagonal_packet_check() {
@@ -380,7 +370,7 @@ mod tests {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.push("test/ga401-diagonal.png");
 
-        let matrix = AnimeDiagonal::from_png(&path, None, 255.0).unwrap();
+        let matrix = AnimeDiagonal::from_png(&path, None, 255.0, AnimeType::GA401).unwrap();
         let data = matrix.into_data_buffer(crate::AnimeType::GA401);
         let pkt = AnimePacketType::from(data);
 

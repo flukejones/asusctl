@@ -1,5 +1,5 @@
-use crate::data::{AnimeDataBuffer, ANIME_GA401_DATA_LEN};
-use crate::{AnimeImage, AnimeType, ANIME_GA402_DATA_LEN};
+use crate::data::AnimeDataBuffer;
+use crate::{AnimeImage, AnimeType};
 
 // TODO: Adjust these sizes as WIDTH_GA401 WIDTH_GA402
 const WIDTH: usize = 33;
@@ -92,10 +92,7 @@ impl From<AnimeGrid> for AnimeDataBuffer {
     /// packets suitable for sending over USB
     #[inline]
     fn from(anime: AnimeGrid) -> Self {
-        let mut buf = match anime.anime_type {
-            AnimeType::GA401 => vec![0u8; ANIME_GA401_DATA_LEN],
-            AnimeType::GA402 => vec![0u8; ANIME_GA402_DATA_LEN],
-        };
+        let mut buf = vec![0u8; anime.anime_type.data_length()];
 
         for (idx, pos) in AnimeImage::generate_image_positioning(anime.anime_type)
             .iter()

@@ -16,9 +16,6 @@ const BLOCK_START: usize = 7;
 const BLOCK_END: usize = 634;
 /// Individual usable data length of each USB packet
 const PANE_LEN: usize = BLOCK_END - BLOCK_START;
-/// The length of usable data
-pub const ANIME_GA401_DATA_LEN: usize = PANE_LEN * 2;
-pub const ANIME_GA402_DATA_LEN: usize = PANE_LEN * 3;
 
 /// First packet is for GA401 + GA402
 const USB_PREFIX1: [u8; 7] = [0x5e, 0xc0, 0x02, 0x01, 0x00, 0x73, 0x02];
@@ -42,6 +39,32 @@ pub enum AnimeType {
     GA402,
 }
 
+impl AnimeType {
+    /// The width of diagonal images
+    pub fn width(&self) -> usize {
+        match self {
+            AnimeType::GA401 => 74,
+            AnimeType::GA402 => 74,
+        }
+    }
+
+    /// The height of diagonal images
+    pub fn height(&self) -> usize {
+        match self {
+            AnimeType::GA401 => 32,
+            AnimeType::GA402 => 39,
+        }
+    }
+
+    /// The length of usable data for this type
+    pub fn data_length(&self) -> usize {
+        match self {
+            AnimeType::GA401 => PANE_LEN * 2,
+            AnimeType::GA402 => PANE_LEN * 3,
+        }
+    }
+}
+
 /// The minimal serializable data that can be transferred over wire types.
 /// Other data structures in `rog_anime` will convert to this.
 #[cfg_attr(feature = "dbus", derive(Type))]
@@ -54,10 +77,7 @@ pub struct AnimeDataBuffer {
 impl AnimeDataBuffer {
     #[inline]
     pub fn new(anime: AnimeType) -> Self {
-        let len = match anime {
-            AnimeType::GA401 => ANIME_GA401_DATA_LEN,
-            AnimeType::GA402 => ANIME_GA402_DATA_LEN,
-        };
+        let len = anime.data_length();
 
         AnimeDataBuffer {
             data: vec![0u8; len],
@@ -83,10 +103,8 @@ impl AnimeDataBuffer {
     /// Will panic if the vector length is not `ANIME_DATA_LEN`
     #[inline]
     pub fn from_vec(anime: AnimeType, data: Vec<u8>) -> Self {
-        match anime {
-            AnimeType::GA401 => assert_eq!(data.len(), ANIME_GA401_DATA_LEN),
-            AnimeType::GA402 => assert_eq!(data.len(), ANIME_GA402_DATA_LEN),
-        }
+        assert_eq!(data.len(), anime.data_length());
+
         Self { data, anime }
     }
 }
@@ -97,15 +115,11 @@ pub type AnimePacketType = Vec<[u8; 640]>;
 impl From<AnimeDataBuffer> for AnimePacketType {
     #[inline]
     fn from(anime: AnimeDataBuffer) -> Self {
+        assert_eq!(anime.data.len(), anime.anime.data_length());
+
         let mut buffers = match anime.anime {
-            AnimeType::GA401 => {
-                assert!(anime.data.len() == ANIME_GA401_DATA_LEN);
-                vec![[0; 640]; 2]
-            }
-            AnimeType::GA402 => {
-                assert!(anime.data.len() == ANIME_GA402_DATA_LEN);
-                vec![[0; 640]; 3]
-            }
+            AnimeType::GA401 => vec![[0; 640]; 2],
+            AnimeType::GA402 => vec![[0; 640]; 3],
         };
 
         for (idx, chunk) in anime.data.as_slice().chunks(PANE_LEN).enumerate() {

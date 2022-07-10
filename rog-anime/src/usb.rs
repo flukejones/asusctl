@@ -28,7 +28,7 @@ pub fn get_anime_type() -> Result<AnimeType, AnimeError> {
 
     if board_name.contains("GA401Q") {
         return Ok(AnimeType::GA401);
-    } else if board_name.contains("GA401R") {
+    } else if board_name.contains("GA402R") {
         return Ok(AnimeType::GA402);
     }
     Err(AnimeError::UnsupportedDevice)
