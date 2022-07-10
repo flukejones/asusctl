@@ -1,6 +1,6 @@
 use std::{env, error::Error, path::Path, process::exit};
 
-use rog_anime::{AnimeDataBuffer, AnimeDiagonal};
+use rog_anime::{usb::get_anime_type, AnimeDiagonal};
 use rog_dbus::RogDbusClientBlocking;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -16,10 +16,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let matrix =
         AnimeDiagonal::from_png(Path::new(&args[1]), None, args[2].parse::<f32>().unwrap())?;
 
+    let anime_type = get_anime_type()?;
+
     client
         .proxies()
         .anime()
-        .write(<AnimeDataBuffer>::from(&matrix))
+        .write(matrix.into_data_buffer(anime_type))
         .unwrap();
 
     Ok(())

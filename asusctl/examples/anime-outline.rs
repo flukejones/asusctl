@@ -1,4 +1,4 @@
-use rog_anime::AnimeDataBuffer;
+use rog_anime::{usb::get_anime_type, AnimeDataBuffer};
 use rog_dbus::RogDbusClientBlocking;
 
 // In usable data:
@@ -6,7 +6,8 @@ use rog_dbus::RogDbusClientBlocking;
 
 fn main() {
     let (client, _) = RogDbusClientBlocking::new().unwrap();
-    let mut matrix = AnimeDataBuffer::new();
+    let anime_type = get_anime_type().unwrap();
+    let mut matrix = AnimeDataBuffer::new(anime_type);
     matrix.data_mut()[1] = 100; // start = 1
     for n in matrix.data_mut()[2..32].iter_mut() {
         *n = 250;

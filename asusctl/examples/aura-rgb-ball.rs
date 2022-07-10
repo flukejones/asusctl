@@ -1,5 +1,5 @@
 use rog_aura::{GX502Layout, Key, KeyColourArray, KeyLayout};
-use rog_dbus::RogDbusClient;
+use rog_dbus::RogDbusClientBlocking;
 use std::collections::LinkedList;
 
 #[derive(Debug, Clone)]
@@ -52,15 +52,13 @@ impl Ball {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let (dbus, _) = RogDbusClient::new()?;
+    let (dbus, _) = RogDbusClientBlocking::new()?;
 
     let mut colours = KeyColourArray::new();
 
     let layout = GX502Layout::default();
 
     let mut balls = [Ball::new(2, 1, 12), Ball::new(4, 6, 12)];
-
-    dbus.proxies().led().init_effect()?;
 
     let rows = layout.get_rows();
     loop {
