@@ -103,7 +103,7 @@ impl CtrlTask for CtrlKbdLedTask {
             // If waking up
             if !start {
                 info!("CtrlKbdLedTask reloading brightness and modes");
-                lock.set_brightness(lock.config.last_brightness)
+                lock.set_brightness(lock.config.brightness)
                     .map_err(|e| error!("CtrlKbdLedTask: {e}"))
                     .ok();
                 if let Some(mode) = lock.config.builtins.get(&lock.config.current_mode) {
@@ -113,7 +113,9 @@ impl CtrlTask for CtrlKbdLedTask {
                 }
             } else if start {
                 info!("CtrlKbdLedTask saving last brightness");
-                lock.config.last_brightness = lock.config.brightness;
+                Self::update_config(&mut lock)
+                    .map_err(|e| error!("CtrlKbdLedTask: {e}"))
+                    .ok();
             }
         };
 
@@ -153,14 +155,14 @@ impl CtrlTask for CtrlKbdLedTask {
             })
             .detach();
 
-        let inner = self.inner.clone();
-        self.repeating_task(500, executor, move || loop {
-            if let Ok(ref mut lock) = inner.try_lock() {
-                Self::update_config(lock).unwrap();
-                break;
-            }
-        })
-        .await;
+        // let inner = self.inner.clone();
+        // self.repeating_task(500, executor, move || loop {
+        //     if let Ok(ref mut lock) = inner.try_lock() {
+        //         Self::update_config(lock).unwrap();
+        //         break;
+        //     }
+        // })
+        // .await;
         Ok(())
     }
 }

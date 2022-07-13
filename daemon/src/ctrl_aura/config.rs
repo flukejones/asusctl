@@ -12,8 +12,6 @@ pub static AURA_CONFIG_PATH: &str = "/etc/asusd/aura.conf";
 #[serde(default)]
 pub struct AuraConfig {
     pub brightness: LedBrightness,
-    /// Used to re-set brightness on wake from sleep/hibernation
-    pub last_brightness: LedBrightness,
     pub current_mode: AuraModeNum,
     pub builtins: BTreeMap<AuraModeNum, AuraEffect>,
     pub multizone: Option<BTreeMap<AuraModeNum, Vec<AuraEffect>>>,
@@ -24,7 +22,6 @@ impl Default for AuraConfig {
     fn default() -> Self {
         AuraConfig {
             brightness: LedBrightness::Med,
-            last_brightness: LedBrightness::Med,
             current_mode: AuraModeNum::Static,
             builtins: BTreeMap::new(),
             multizone: None,
