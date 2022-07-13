@@ -99,6 +99,11 @@ impl AnimeImage {
     // TODO: Convert functions back to const after todo completed
 
     /// Scale ratio in CM
+    ///
+    /// This is worked out by measuring the pyhsical width of the display, then dividing by
+    /// `<horizontal LED count> + 0.5`, where the LED count is first/longest row.
+    ///
+    /// For GA401 this is `26.8 / (33 + 0.5) = 0.8`
     fn scale_x(anime_type: AnimeType) -> f32 {
         match anime_type {
             AnimeType::GA401 => 0.8,
@@ -107,6 +112,11 @@ impl AnimeImage {
     }
 
     /// Scale ratio in CM
+    ///
+    /// This is worked out by measuring the pyhsical height of the display, then dividing by
+    /// `<vertical LED count> + 1.0`, where the LED count is first/longest row.
+    ///
+    /// For GA401 this is `16.5 / (54.0 + 1.0) = 0.3`
     fn scale_y(anime_type: AnimeType) -> f32 {
         match anime_type {
             AnimeType::GA401 => 0.3,
@@ -115,24 +125,33 @@ impl AnimeImage {
     }
 
     /// Get the starting X position for the data we actually require when writing
-    /// it out to LEDs
+    /// it out to LEDs.
+    ///
+    /// In relation to the display itself you should think of it as a full square grid, so `first_x`
+    /// is the x position on that grid where the LED is actually positioned in relation to the Y.
     fn first_x(anime_type: AnimeType, y: u32) -> u32 {
         match anime_type {
             AnimeType::GA401 => {
                 if y < 5 {
+                    // first 5 rows for GA401 are always at X = 0
                     return 0;
                 }
                 (y + 1) / 2 - 3
             }
+            // The GA402 has different number of rows with consistent length and
+            // row lengths and may need new offset formula
             AnimeType::GA402 => todo!("GA402R series AnimeImage positions not completed"),
         }
     }
 
     /// Width in LED count
+    ///
+    /// This is how many LED's are physically in a row
     fn width(anime_type: AnimeType, y: u32) -> u32 {
         match anime_type {
             AnimeType::GA401 => {
                 if y < 5 {
+                    // First 5 rows for GA401 are always 33 physical LEDs long
                     return 33;
                 }
                 36 - (y + 1) / 2
@@ -144,12 +163,13 @@ impl AnimeImage {
     /// Physical display width
     fn phys_width(anime_type: AnimeType) -> f32 {
         match anime_type {
-            AnimeType::GA401 => (32.0 - -0.5 + 1.0) * Self::scale_x(anime_type),
+            // 33.0 = Longest row LED count (physical) plus half-pixel offset
+            AnimeType::GA401 => (33.0 + 0.5) * Self::scale_x(anime_type),
             AnimeType::GA402 => todo!("GA402R series AnimeImage positions not completed"),
         }
     }
 
-    /// Height in LED count
+    /// Height in LED count of longest column (physical)
     fn height(anime_type: AnimeType) -> u32 {
         match anime_type {
             AnimeType::GA401 => 55,
@@ -160,7 +180,9 @@ impl AnimeImage {
     /// Physical display height
     fn phys_height(anime_type: AnimeType) -> f32 {
         match anime_type {
+            // 54.0 = End column LED count (physical) plus one dead pixel
             AnimeType::GA401 => (54.0 + 1.0) * Self::scale_y(anime_type),
+            // GA402 may not have dead pixels and require only the physical LED count
             AnimeType::GA402 => todo!("GA402R series AnimeImage positions not completed"),
         }
     }
@@ -170,7 +192,7 @@ impl AnimeImage {
         match anime_type {
             AnimeType::GA401 => match y {
                 0 | 2 | 4 => 33,
-                1 | 3 => 35,
+                1 | 3 => 35, // Some rows are padded
                 _ => 36 - y / 2,
             },
             AnimeType::GA402 => todo!("GA402R series AnimeImage positions not completed"),
@@ -187,12 +209,13 @@ impl AnimeImage {
         match anime_type {
             AnimeType::GA401 => (0..AnimeImage::height(anime_type))
                 .flat_map(|y| {
+                    // For each row (Y) get actual length
                     (0..AnimeImage::pitch(anime_type, y)).map(move |l| {
                         if l < AnimeImage::width(anime_type, y) {
                             let x = AnimeImage::first_x(anime_type, y) + l;
                             Some(Led::new(x as f32 - 0.5 * (y % 2) as f32, y as f32))
                         } else {
-                            None
+                            None // dead pixels to the left
                         }
                     })
                 })

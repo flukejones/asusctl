@@ -201,10 +201,8 @@ impl CtrlAnime {
                 }
                 // Clear the display on exit
                 if let Ok(lock) = inner.try_lock() {
-                    let data = AnimeDataBuffer::from_vec(
-                        anime_type,
-                        vec![0u8; anime_type.data_length()],
-                    );
+                    let data =
+                        AnimeDataBuffer::from_vec(anime_type, vec![0u8; anime_type.data_length()]);
                     lock.write_data_buffer(data);
                 }
                 // Loop ended, set the atmonics

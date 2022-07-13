@@ -268,7 +268,12 @@ fn handle_anime(
                     std::process::exit(1);
                 }
 
-                let matrix = AnimeDiagonal::from_png(Path::new(&image.path), None, image.bright, anime_type)?;
+                let matrix = AnimeDiagonal::from_png(
+                    Path::new(&image.path),
+                    None,
+                    image.bright,
+                    anime_type,
+                )?;
 
                 dbus.proxies()
                     .anime()

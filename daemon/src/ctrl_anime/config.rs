@@ -80,7 +80,11 @@ pub struct AnimeConfigCached {
 }
 
 impl AnimeConfigCached {
-    pub fn init_from_config(&mut self, config: &AnimeConfig, anime_type: AnimeType) -> Result<(), AnimeError> {
+    pub fn init_from_config(
+        &mut self,
+        config: &AnimeConfig,
+        anime_type: AnimeType,
+    ) -> Result<(), AnimeError> {
         let mut sys = Vec::with_capacity(config.system.len());
         for ani in config.system.iter() {
             sys.push(ActionData::from_anime_action(anime_type, ani)?);
