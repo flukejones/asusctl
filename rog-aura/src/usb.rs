@@ -1,6 +1,7 @@
-use crate::usb::LedCfgState::{Off, On};
-use std::convert::TryFrom;
+use serde::{Deserialize, Serialize};
 use std::ops::{BitAnd, BitOr};
+#[cfg(feature = "dbus")]
+use zvariant::Type;
 
 pub const LED_INIT1: [u8; 2] = [0x5d, 0xb9];
 pub const LED_INIT2: &str = "]ASUS Tech.Inc."; // ] == 0x5d
@@ -12,13 +13,6 @@ pub const LED_INIT5: [u8; 6] = [0x5e, 0x05, 0x20, 0x31, 0, 0x08];
 pub const LED_APPLY: [u8; 17] = [0x5d, 0xb4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 pub const LED_SET: [u8; 17] = [0x5d, 0xb5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-pub const BOOT_MASK: i32 = 0xc31309;
-pub const SLEEP_MASK: i32 = 0x300904;
-pub const ALL_LEDS_MASK: i32 = 0x000002;
-pub const KBD_LEDS_MASK: i32 = 0x080000;
-pub const SIDE_LEDS_MASK: i32 = 0x040500;
-pub const LEDS_STATE_MASK: i32 = ALL_LEDS_MASK | KBD_LEDS_MASK | SIDE_LEDS_MASK;
-
 /// Writes out the correct byte string for brightness
 pub const fn aura_brightness_bytes(brightness: u8) -> [u8; 17] {
     [
@@ -26,113 +20,152 @@ pub const fn aura_brightness_bytes(brightness: u8) -> [u8; 17] {
     ]
 }
 
-#[derive(Clone, Copy)]
-pub enum LedCfgState {
-    On = 0xffffff,
-    Off = 0x0,
+#[cfg_attr(feature = "dbus", derive(Type))]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize)]
+#[repr(u16)]
+pub enum AuraControl {
+    BootLogo = 1,
+    BootKeyb = 1 << 1,
+    AwakeLogo = 1 << 2,
+    AwakeKeyb = 1 << 3,
+    SleepLogo = 1 << 4,
+    SleepKeyb = 1 << 5,
+    ShutdownLogo = 1 << 6,
+    ShutdownKeyb = 1 << 7,
+    AwakeBar = 1 << 7 + 2,
+    BootBar = 1 << 7 + 3,
+    SleepBar = 1 << 7 + 4,
+    ShutdownBar = 1 << 7 + 5,
 }
 
-impl From<i32> for LedCfgState {
-    fn from(state: i32) -> Self {
-        match state {
-            0xffffff => On,
-            0x0 => Off,
-            _ => Off,
-        }
+impl From<AuraControl> for u16 {
+    fn from(a: AuraControl) -> Self {
+        a as u16
     }
 }
 
-impl From<bool> for LedCfgState {
-    fn from(state: bool) -> Self {
-        match state {
-            true => On,
-            false => Off,
-        }
+impl AuraControl {
+    pub fn to_bytes(control: &[Self]) -> [u8; 2] {
+        let mut a: u16 = 0;
+        control.iter().for_each(|n| {
+            a |= *n as u16;
+        });
+        [(a & 0xff) as u8, ((a & 0xff00) >> 8) as u8]
     }
 }
 
-impl TryFrom<[u8; 3]> for LedCfgState {
-    type Error = &'static str;
+impl BitOr<AuraControl> for AuraControl {
+    type Output = u16;
 
-    fn try_from(value: [u8; 3]) -> Result<Self, Self::Error> {
-        match value {
-            [0xff, 0xff, 0xff] => Ok(On),
-            [0, 0, 0] => Ok(Off),
-            _ => Err("Unconvertible value"),
-        }
+    fn bitor(self, rhs: AuraControl) -> Self::Output {
+        return self as u16 | rhs as u16;
     }
 }
 
-impl BitAnd<LedCfgState> for i32 {
-    type Output = i32;
+impl BitAnd<AuraControl> for AuraControl {
+    type Output = u16;
 
-    fn bitand(self, rhs: LedCfgState) -> i32 {
-        return self & rhs as i32;
-    }
-}
-impl BitOr<LedCfgState> for i32 {
-    type Output = i32;
-
-    fn bitor(self, rhs: LedCfgState) -> Self::Output {
-        return self | rhs as i32;
+    fn bitand(self, rhs: AuraControl) -> Self::Output {
+        return self as u16 & rhs as u16;
     }
 }
 
-impl BitOr<LedCfgState> for LedCfgState {
-    type Output = i32;
+#[cfg(test)]
+mod tests {
+    use crate::usb::AuraControl;
 
-    fn bitor(self, rhs: LedCfgState) -> i32 {
-        return self as i32 | rhs as i32;
+    #[test]
+    fn check_led_control_bytes() {
+        // All on
+        let byte1 = [
+            AuraControl::BootLogo,
+            AuraControl::BootKeyb,
+            AuraControl::SleepLogo,
+            AuraControl::SleepKeyb,
+            AuraControl::AwakeLogo,
+            AuraControl::AwakeKeyb,
+            AuraControl::ShutdownLogo,
+            AuraControl::ShutdownKeyb,
+        ];
+        let bytes = AuraControl::to_bytes(&byte1);
+        println!("{:08b}", bytes[0]);
+        assert_eq!(bytes[0], 0xff);
+
+        //
+        let byte1 = [
+            // AuraControl::BootLogo,
+            AuraControl::BootKeyb,
+            AuraControl::SleepLogo,
+            AuraControl::SleepKeyb,
+            AuraControl::AwakeLogo,
+            AuraControl::AwakeKeyb,
+            AuraControl::ShutdownLogo,
+            AuraControl::ShutdownKeyb,
+        ];
+        let bytes = AuraControl::to_bytes(&byte1);
+        println!("{:08b}", bytes[0]);
+        assert_eq!(bytes[0], 0xfe);
+
+        let byte1 = [
+            AuraControl::BootLogo,
+            // AuraControl::BootKeyb,
+            AuraControl::SleepLogo,
+            AuraControl::SleepKeyb,
+            AuraControl::AwakeLogo,
+            AuraControl::AwakeKeyb,
+            AuraControl::ShutdownLogo,
+            AuraControl::ShutdownKeyb,
+        ];
+        let bytes = AuraControl::to_bytes(&byte1);
+        println!("{:08b}", bytes[0]);
+        assert_eq!(bytes[0], 0xfd);
+
+        let byte1 = [
+            AuraControl::BootLogo,
+            AuraControl::BootKeyb,
+            // AuraControl::SleepLogo,
+            AuraControl::SleepKeyb,
+            AuraControl::AwakeLogo,
+            AuraControl::AwakeKeyb,
+            AuraControl::ShutdownLogo,
+            AuraControl::ShutdownKeyb,
+        ];
+        let bytes = AuraControl::to_bytes(&byte1);
+        println!("{:08b}", bytes[0]);
+        assert_eq!(bytes[0], 0xef);
+
+        let byte1 = [
+            AuraControl::BootLogo,
+            AuraControl::BootKeyb,
+            AuraControl::SleepLogo,
+            // AuraControl::SleepKeyb,
+            AuraControl::AwakeLogo,
+            AuraControl::AwakeKeyb,
+            AuraControl::ShutdownLogo,
+            AuraControl::ShutdownKeyb,
+        ];
+        let bytes = AuraControl::to_bytes(&byte1);
+        println!("{:08b}", bytes[0]);
+        assert_eq!(bytes[0], 0xdf);
+
+        let byte2 = [
+            AuraControl::AwakeBar,
+            AuraControl::BootBar,
+            AuraControl::SleepBar,
+            AuraControl::ShutdownBar,
+        ];
+        let bytes = AuraControl::to_bytes(&byte2);
+        println!("{:08b}", bytes[1]);
+        assert_eq!(bytes[1], 0x1e);
+
+        let byte2 = [
+            AuraControl::AwakeBar,
+            AuraControl::BootBar,
+            // AuraControl::SleepBar,
+            AuraControl::ShutdownBar,
+        ];
+        let bytes = AuraControl::to_bytes(&byte2);
+        println!("{:08b}", bytes[1]);
+        assert_eq!(bytes[1], 0x16);
     }
-}
-
-impl BitAnd<LedCfgState> for LedCfgState {
-    type Output = LedCfgState;
-
-    fn bitand(self, rhs: LedCfgState) -> LedCfgState {
-        return (self as i32 & rhs as i32).into();
-    }
-}
-
-pub fn leds_message(
-    boot_state: bool,
-    sleep_state: bool,
-    all_leds_state: bool,
-    kbd_leds_state: bool,
-    side_leds_state: bool,
-) -> [u8; 3] {
-    let raw_message = _leds_message(
-        boot_state.into(),
-        sleep_state.into(),
-        all_leds_state.into(),
-        kbd_leds_state.into(),
-        side_leds_state.into(),
-    );
-
-    let [_, lows @ ..] = i32::to_be_bytes(raw_message);
-    return lows;
-}
-
-fn _leds_message(
-    boot_state: LedCfgState,
-    sleep_state: LedCfgState,
-    all_leds_state: LedCfgState,
-    kbd_leds_state: LedCfgState,
-    side_leds_state: LedCfgState,
-) -> i32 {
-    let full_leds_state = match all_leds_state {
-        On => {
-            (ALL_LEDS_MASK & all_leds_state)
-                | (KBD_LEDS_MASK & kbd_leds_state)
-                | (SIDE_LEDS_MASK & side_leds_state)
-        }
-        Off => 0x0100 & side_leds_state,
-    };
-
-    let boot_xor_sleep = (BOOT_MASK & boot_state) ^ (SLEEP_MASK & sleep_state);
-
-    return match (all_leds_state | kbd_leds_state | side_leds_state).into() {
-        On => boot_xor_sleep ^ ((boot_xor_sleep ^ full_leds_state) & LEDS_STATE_MASK),
-        _ => boot_xor_sleep,
-    };
 }

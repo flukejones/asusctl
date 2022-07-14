@@ -12,16 +12,6 @@ use zvariant::Type;
 use crate::{error::Error, LED_MSG_LEN};
 
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Debug, PartialEq, Copy, Clone, Deserialize, Serialize)]
-pub struct LedPowerStates {
-    pub boot_anim: bool,
-    pub sleep_anim: bool,
-    pub all_leds: bool,
-    pub keys_leds: bool,
-    pub side_leds: bool,
-}
-
-#[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize)]
 pub enum LedBrightness {
     Off,

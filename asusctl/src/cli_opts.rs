@@ -1,6 +1,6 @@
 use crate::{
     anime_cli::AnimeCommand,
-    aura_cli::{LedBrightness, SetAuraBuiltin},
+    aura_cli::{LedBrightness, LedPowerCommand, SetAuraBuiltin},
     profiles_cli::{FanCurveCommand, ProfileCommand},
 };
 use gumdrop::Options;
@@ -29,6 +29,8 @@ pub struct CliStart {
 pub enum CliCommand {
     #[options(help = "Set the keyboard lighting from built-in modes")]
     LedMode(LedModeCommand),
+    #[options(help = "Set the keyboard lighting from built-in modes")]
+    LedPower(LedPowerCommand),
     #[options(help = "Set or select platform_profile")]
     Profile(ProfileCommand),
     #[options(help = "Set, select, or modify fan curves if supported")]
@@ -49,25 +51,6 @@ pub struct LedModeCommand {
     pub next_mode: bool,
     #[options(help = "switch to previous aura mode")]
     pub prev_mode: bool,
-    #[options(
-        meta = "",
-        help = "set the keyboard LED to enabled while the device is awake"
-    )]
-    pub boot_enable: Option<bool>,
-    #[options(
-        meta = "",
-        help = "set the keyboard LED suspend animation to enabled while the device is suspended"
-    )]
-    pub sleep_enable: Option<bool>,
-    #[options(
-        meta = "",
-        help = "set the full keyboard LEDs (keys and side) to enabled"
-    )]
-    pub all_leds_enable: Option<bool>,
-    #[options(meta = "", help = "set the keyboard keys LEDs to enabled")]
-    pub keys_leds_enable: Option<bool>,
-    #[options(meta = "", help = "set the keyboard side LEDs to enabled")]
-    pub side_leds_enable: Option<bool>,
     #[options(command)]
     pub command: Option<SetAuraBuiltin>,
 }

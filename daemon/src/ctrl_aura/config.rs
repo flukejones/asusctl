@@ -1,6 +1,7 @@
 use crate::laptops::LaptopLedData;
 use log::{error, warn};
-use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness, LedPowerStates};
+use rog_aura::usb::AuraControl;
+use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs::{File, OpenOptions};
@@ -15,7 +16,7 @@ pub struct AuraConfig {
     pub current_mode: AuraModeNum,
     pub builtins: BTreeMap<AuraModeNum, AuraEffect>,
     pub multizone: Option<BTreeMap<AuraModeNum, Vec<AuraEffect>>>,
-    pub power_states: LedPowerStates,
+    pub enabled: Vec<AuraControl>,
 }
 
 impl Default for AuraConfig {
@@ -25,13 +26,20 @@ impl Default for AuraConfig {
             current_mode: AuraModeNum::Static,
             builtins: BTreeMap::new(),
             multizone: None,
-            power_states: LedPowerStates {
-                boot_anim: true,
-                sleep_anim: true,
-                all_leds: true,
-                keys_leds: true,
-                side_leds: true,
-            },
+            enabled: vec![
+                AuraControl::BootLogo,
+                AuraControl::BootKeyb,
+                AuraControl::SleepLogo,
+                AuraControl::SleepKeyb,
+                AuraControl::AwakeLogo,
+                AuraControl::AwakeKeyb,
+                AuraControl::ShutdownLogo,
+                AuraControl::ShutdownKeyb,
+                AuraControl::AwakeBar,
+                AuraControl::BootBar,
+                AuraControl::SleepBar,
+                AuraControl::ShutdownBar,
+            ],
         }
     }
 }

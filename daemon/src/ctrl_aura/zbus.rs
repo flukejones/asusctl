@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use log::warn;
-use rog_aura::{AuraEffect, LedBrightness, LedPowerStates};
+use rog_aura::{usb::AuraControl, AuraEffect, LedBrightness};
 use zbus::{dbus_interface, Connection, SignalContext};
 
 use super::controller::CtrlKbdLedZbus;
@@ -26,22 +26,26 @@ impl CtrlKbdLedZbus {
         }
     }
 
-    /// Set the keyboard LED to enabled while the device is awake
-    async fn set_boot_enabled(
+    /// Set a variety of states
+    async fn set_leds_enabled(
         &mut self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
-        enabled: bool,
+        enabled: Vec<AuraControl>,
     ) {
         let mut states = None;
         if let Ok(mut ctrl) = self.0.try_lock() {
-            ctrl.config.power_states.boot_anim = enabled;
+            for s in enabled {
+                if !ctrl.config.enabled.contains(&s) {
+                    ctrl.config.enabled.push(s);
+                }
+            }
             ctrl.config.write();
 
             ctrl.set_power_states(&ctrl.config)
                 .map_err(|err| warn!("{}", err))
                 .ok();
 
-            states = Some(ctrl.config.power_states);
+            states = Some(ctrl.config.enabled.clone());
         }
         // Need to pull state out like this due to MutexGuard
         if let Some(states) = states {
@@ -51,98 +55,27 @@ impl CtrlKbdLedZbus {
         }
     }
 
-    /// Set the keyboard LED suspend animation to enabled while the device is suspended
-    async fn set_sleep_enabled(
+    async fn set_leds_disabled(
         &mut self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
-        enabled: bool,
+        disabled: Vec<AuraControl>,
     ) {
         let mut states = None;
         if let Ok(mut ctrl) = self.0.try_lock() {
-            ctrl.config.power_states.sleep_anim = enabled;
+            for s in disabled {
+                if ctrl.config.enabled.contains(&s) {
+                    if let Ok(idx) = ctrl.config.enabled.binary_search(&s) {
+                        ctrl.config.enabled.remove(idx);
+                    }
+                }
+            }
             ctrl.config.write();
 
             ctrl.set_power_states(&ctrl.config)
                 .map_err(|err| warn!("{}", err))
                 .ok();
 
-            states = Some(ctrl.config.power_states);
-        }
-        if let Some(states) = states {
-            Self::notify_power_states(&ctxt, &states)
-                .await
-                .unwrap_or_else(|err| warn!("{}", err));
-        }
-    }
-
-    /// Set all the keyboard LEDs (keys and side) to enabled
-    async fn set_all_leds_enabled(
-        &mut self,
-        #[zbus(signal_context)] ctxt: SignalContext<'_>,
-        enabled: bool,
-    ) {
-        let mut states = None;
-        if let Ok(mut ctrl) = self.0.try_lock() {
-            ctrl.config.power_states.all_leds = enabled;
-            ctrl.config.power_states.keys_leds = enabled;
-            ctrl.config.power_states.side_leds = enabled;
-            ctrl.config.write();
-
-            ctrl.set_power_states(&ctrl.config)
-                .map_err(|err| warn!("{}", err))
-                .ok();
-
-            states = Some(ctrl.config.power_states);
-        }
-        // Need to pull state out like this due to MutexGuard
-        if let Some(states) = states {
-            Self::notify_power_states(&ctxt, &states)
-                .await
-                .unwrap_or_else(|err| warn!("{}", err));
-        }
-    }
-
-    /// Set the keyboard keys LEDs to enabled
-    async fn set_keys_leds_enabled(
-        &mut self,
-        #[zbus(signal_context)] ctxt: SignalContext<'_>,
-        enabled: bool,
-    ) {
-        let mut states = None;
-        if let Ok(mut ctrl) = self.0.try_lock() {
-            ctrl.config.power_states.keys_leds = enabled;
-            ctrl.config.write();
-
-            ctrl.set_power_states(&ctrl.config)
-                .map_err(|err| warn!("{}", err))
-                .ok();
-
-            states = Some(ctrl.config.power_states);
-        }
-        // Need to pull state out like this due to MutexGuard
-        if let Some(states) = states {
-            Self::notify_power_states(&ctxt, &states)
-                .await
-                .unwrap_or_else(|err| warn!("{}", err));
-        }
-    }
-
-    /// Set the keyboard side LEDs to enabled
-    async fn set_side_leds_enabled(
-        &mut self,
-        #[zbus(signal_context)] ctxt: SignalContext<'_>,
-        enabled: bool,
-    ) {
-        let mut states = None;
-        if let Ok(mut ctrl) = self.0.try_lock() {
-            ctrl.config.power_states.side_leds = enabled;
-            ctrl.config.write();
-
-            ctrl.set_power_states(&ctrl.config)
-                .map_err(|err| warn!("{}", err))
-                .ok();
-
-            states = Some(ctrl.config.power_states);
+            states = Some(ctrl.config.enabled.clone());
         }
         // Need to pull state out like this due to MutexGuard
         if let Some(states) = states {
@@ -226,43 +159,11 @@ impl CtrlKbdLedZbus {
     }
 
     #[dbus_interface(property)]
-    async fn boot_enabled(&self) -> bool {
+    async fn leds_enabled(&self) -> Vec<u8> {
         if let Ok(ctrl) = self.0.try_lock() {
-            return ctrl.config.power_states.boot_anim;
+            return AuraControl::to_bytes(&ctrl.config.enabled).to_vec();
         }
-        true
-    }
-
-    #[dbus_interface(property)]
-    async fn sleep_enabled(&self) -> bool {
-        if let Ok(ctrl) = self.0.try_lock() {
-            return ctrl.config.power_states.sleep_anim;
-        }
-        true
-    }
-
-    #[dbus_interface(property)]
-    async fn all_leds_enabled(&self) -> bool {
-        if let Ok(ctrl) = self.0.try_lock() {
-            return ctrl.config.power_states.all_leds;
-        }
-        true
-    }
-
-    #[dbus_interface(property)]
-    async fn keys_leds_enabled(&self) -> bool {
-        if let Ok(ctrl) = self.0.try_lock() {
-            return ctrl.config.power_states.keys_leds;
-        }
-        true
-    }
-
-    #[dbus_interface(property)]
-    fn side_leds_enabled(&self) -> bool {
-        if let Ok(ctrl) = self.0.try_lock() {
-            return ctrl.config.power_states.side_leds;
-        }
-        true
+        vec![0, 0]
     }
 
     /// Return the current mode data
@@ -307,6 +208,6 @@ impl CtrlKbdLedZbus {
     #[dbus_interface(signal)]
     async fn notify_power_states(
         signal_ctxt: &SignalContext<'_>,
-        data: &LedPowerStates,
+        data: &[AuraControl],
     ) -> zbus::Result<()>;
 }

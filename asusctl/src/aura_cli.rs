@@ -3,6 +3,53 @@ use rog_aura::{error::Error, AuraEffect, AuraModeNum, AuraZone, Colour, Directio
 use std::str::FromStr;
 
 #[derive(Options)]
+pub struct LedPowerCommand {
+    #[options(help = "print help message")]
+    pub help: bool,
+    #[options(command)]
+    pub command: Option<SetAuraEnabled>,
+}
+
+#[derive(Options)]
+pub enum SetAuraEnabled {
+    #[options(help = "set <keyboard, logo, lightbar> to enabled while the device is booting")]
+    Boot(AuraEnabled),
+    #[options(help = "set <keyboard, logo, lightbar> to animate while the device is suspended")]
+    Sleep(AuraEnabled),
+    #[options(help = "set <keyboard, logo, lightbar> to enabled while device is awake")]
+    Awake(AuraEnabled),
+    #[options(help = "set <keyboard, logo, lightbar> to animate while the device is shutdown")]
+    Shutdown(AuraEnabled),
+}
+
+#[derive(Debug, Clone, Default, Options)]
+pub struct AuraEnabled {
+    #[options(help = "print help message")]
+    pub help: bool,
+    #[options(meta = "", help = "<true/false>")]
+    pub keyboard: Option<bool>,
+    #[options(meta = "", help = "<true/false>")]
+    pub logo: Option<bool>,
+    #[options(meta = "", help = "<true/false>")]
+    pub lightbar: Option<bool>,
+}
+
+// impl FromStr for AuraEnabled {
+//     type Err = Error;
+
+//     fn from_str(s: &str) -> Result<Self, Self::Err> {
+//         let s = s.to_lowercase();
+//         dbg!(s);
+//         Ok(Self {
+//             help: false,
+//             keyboard: None,
+//             logo: None,
+//             lightbar: None,
+//         })
+//     }
+// }
+
+#[derive(Options)]
 pub struct LedBrightness {
     level: Option<u32>,
 }
@@ -57,6 +104,7 @@ pub struct SingleSpeed {
     )]
     pub zone: AuraZone,
 }
+
 #[derive(Debug, Clone, Options, Default)]
 pub struct SingleSpeedDirection {
     #[options(help = "print help message")]
@@ -306,7 +354,6 @@ impl From<&SetAuraBuiltin> for AuraEffect {
                 data.mode = AuraModeNum::Flash;
                 data
             }
-            _ => AuraEffect::default(),
         }
     }
 }

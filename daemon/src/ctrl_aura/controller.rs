@@ -9,7 +9,7 @@ use crate::{
 use async_trait::async_trait;
 use log::{error, info, warn};
 use logind_zbus::manager::ManagerProxy;
-use rog_aura::usb::leds_message;
+use rog_aura::usb::AuraControl;
 use rog_aura::{
     usb::{LED_APPLY, LED_SET},
     AuraEffect, LedBrightness, LED_MSG_LEN,
@@ -298,17 +298,11 @@ impl CtrlKbdLed {
 
     /// Set combination state for boot animation/sleep animation/all leds/keys leds/side leds LED active
     pub(super) fn set_power_states(&self, config: &AuraConfig) -> Result<(), RogError> {
-        let bytes = leds_message(
-            config.power_states.boot_anim,
-            config.power_states.sleep_anim,
-            config.power_states.all_leds,
-            config.power_states.keys_leds,
-            config.power_states.side_leds,
-        );
+        let bytes = AuraControl::to_bytes(&config.enabled);
 
         // Quite ugly, must be a more idiomatic way to do
         let message = [
-            0x5d, 0xbd, 0x01, bytes[0], bytes[1], bytes[2], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0x5d, 0xbd, 0x01, bytes[0], bytes[1], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         ];
 
         self.write_bytes(&message)?;
