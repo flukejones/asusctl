@@ -203,7 +203,8 @@ impl AnimeImage {
         &mut self.img_pixels
     }
 
-    /// Generate the data used to
+    /// Generate a list of LED positions. These are then used to sample the Image data,
+    /// and will contain their resulting brightness.
     #[inline]
     pub fn generate_image_positioning(anime_type: AnimeType) -> Vec<Option<Led>> {
         match anime_type {
@@ -215,7 +216,7 @@ impl AnimeImage {
                             let x = AnimeImage::first_x(anime_type, y) + l;
                             Some(Led::new(x as f32 - 0.5 * (y % 2) as f32, y as f32))
                         } else {
-                            None // dead pixels to the left
+                            None // dead/non-existant pixels to the left
                         }
                     })
                 })
@@ -226,7 +227,10 @@ impl AnimeImage {
 
     /// Called after setting new angle, position, or scale to refresh the image
     /// samples, the result can then been transformed to the appropriate data
-    /// for displaying
+    /// for displaying.
+    ///
+    /// The internal for loop iterates over the LED positions, skipping the blank/dead
+    /// pixels if any.
     #[inline]
     pub fn update(&mut self) {
         let width = self.width as i32;
