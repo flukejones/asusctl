@@ -2,11 +2,13 @@ use std::process::Command;
 use std::thread::sleep;
 use std::{env::args, path::Path};
 
+use aura_cli::LedPowerCommand;
 use gumdrop::{Opt, Options};
 
 use anime_cli::{AnimeActions, AnimeCommand};
 use profiles_cli::{FanCurveCommand, ProfileCommand};
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, Vec2};
+use rog_aura::usb::AuraControl;
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClientBlocking;
 use rog_profiles::error::ProfileError;
@@ -16,7 +18,7 @@ use rog_supported::{
     RogBiosSupportedFunctions,
 };
 
-use crate::aura_cli::{LedBrightness, SetAuraBuiltin};
+use crate::aura_cli::LedBrightness;
 use crate::cli_opts::*;
 
 mod anime_cli;
@@ -143,6 +145,7 @@ fn do_parsed(
 ) -> Result<(), Box<dyn std::error::Error>> {
     match &parsed.command {
         Some(CliCommand::LedMode(mode)) => handle_led_mode(dbus, &supported.keyboard_led, mode)?,
+        Some(CliCommand::LedPower(pow)) => handle_led_power(dbus, &supported.keyboard_led, pow)?,
         Some(CliCommand::Profile(cmd)) => handle_profile(dbus, &supported.platform_profile, cmd)?,
         Some(CliCommand::FanCurve(cmd)) => {
             handle_fan_curve(dbus, &supported.platform_profile, cmd)?
@@ -339,15 +342,7 @@ fn handle_led_mode(
     supported: &LedSupportedFunctions,
     mode: &LedModeCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if mode.command.is_none()
-        && !mode.prev_mode
-        && !mode.next_mode
-        && mode.boot_enable.is_none()
-        && mode.sleep_enable.is_none()
-        && mode.all_leds_enable.is_none()
-        && mode.keys_leds_enable.is_none()
-        && mode.side_leds_enable.is_none()
-    {
+    if mode.command.is_none() && !mode.prev_mode && !mode.next_mode {
         if !mode.help {
             println!("Missing arg or command\n");
         }
@@ -365,7 +360,7 @@ fn handle_led_mode(
                         return true;
                     }
                 }
-                if supported.multizone_led_mode && command.trim().starts_with("multi") {
+                if !supported.multizone_led_mode.is_empty() && command.trim().starts_with("multi") {
                     return true;
                 }
                 false
@@ -391,36 +386,170 @@ fn handle_led_mode(
             println!("{}", mode.self_usage());
             return Ok(());
         }
-        match mode {
-            SetAuraBuiltin::MultiStatic(_) | SetAuraBuiltin::MultiBreathe(_) => {
-                let zones = <Vec<AuraEffect>>::from(mode);
-                for eff in zones {
-                    dbus.proxies().led().set_led_mode(&eff)?
+        dbus.proxies()
+            .led()
+            .set_led_mode(&<AuraEffect>::from(mode))?;
+    }
+
+    Ok(())
+}
+
+fn handle_led_power(
+    dbus: &RogDbusClientBlocking,
+    _supported: &LedSupportedFunctions,
+    power: &LedPowerCommand,
+) -> Result<(), Box<dyn std::error::Error>> {
+    if power.command().is_none() {
+        if !power.help {
+            println!("Missing arg or command\n");
+        }
+        println!("{}\n", power.self_usage());
+        println!("Commands available");
+
+        if let Some(cmdlist) = LedPowerCommand::command_list() {
+            let commands: Vec<String> = cmdlist.lines().map(|s| s.to_string()).collect();
+            for command in commands.iter() {
+                println!("{}", command);
+            }
+        }
+
+        println!("\nHelp can also be requested on commands, e.g: boot --help");
+        return Ok(());
+    }
+
+    if let Some(pow) = power.command.as_ref() {
+        if pow.help_requested() {
+            println!("{}", pow.self_usage());
+            return Ok(());
+        }
+
+        match pow {
+            // TODO: make this a macro or something
+            aura_cli::SetAuraEnabled::Boot(arg) => {
+                let mut enabled: Vec<AuraControl> = Vec::new();
+                let mut disabled: Vec<AuraControl> = Vec::new();
+                arg.keyboard.map(|v| {
+                    if v {
+                        enabled.push(AuraControl::BootKeyb)
+                    } else {
+                        disabled.push(AuraControl::BootKeyb)
+                    }
+                });
+                arg.logo.map(|v| {
+                    if v {
+                        enabled.push(AuraControl::BootLogo)
+                    } else {
+                        disabled.push(AuraControl::BootLogo)
+                    }
+                });
+                arg.lightbar.map(|v| {
+                    if v {
+                        enabled.push(AuraControl::BootBar)
+                    } else {
+                        disabled.push(AuraControl::BootBar)
+                    }
+                });
+                if !enabled.is_empty() {
+                    dbus.proxies().led().set_leds_enabled(enabled)?;
+                }
+                if !disabled.is_empty() {
+                    dbus.proxies().led().set_leds_disabled(disabled)?;
                 }
             }
-            _ => dbus
-                .proxies()
-                .led()
-                .set_led_mode(&<AuraEffect>::from(mode))?,
+            aura_cli::SetAuraEnabled::Sleep(arg) => {
+                let mut enabled: Vec<AuraControl> = Vec::new();
+                let mut disabled: Vec<AuraControl> = Vec::new();
+                arg.keyboard.map(|v| {
+                    if v {
+                        enabled.push(AuraControl::SleepKeyb)
+                    } else {
+                        disabled.push(AuraControl::SleepKeyb)
+                    }
+                });
+                arg.logo.map(|v| {
+                    if v {
+                        enabled.push(AuraControl::SleepLogo)
+                    } else {
+                        disabled.push(AuraControl::SleepLogo)
+                    }
+                });
+                arg.lightbar.map(|v| {
+                    if v {
+                        enabled.push(AuraControl::SleepBar)
+                    } else {
+                        disabled.push(AuraControl::SleepBar)
+                    }
+                });
+                if !enabled.is_empty() {
+                    dbus.proxies().led().set_leds_enabled(enabled)?;
+                }
+                if !disabled.is_empty() {
+                    dbus.proxies().led().set_leds_disabled(disabled)?;
+                }
+            }
+            aura_cli::SetAuraEnabled::Awake(arg) => {
+                let mut enabled: Vec<AuraControl> = Vec::new();
+                let mut disabled: Vec<AuraControl> = Vec::new();
+                arg.keyboard.map(|v| {
+                    if v {
+                        enabled.push(AuraControl::AwakeKeyb)
+                    } else {
+                        disabled.push(AuraControl::AwakeKeyb)
+                    }
+                });
+                arg.logo.map(|v| {
+                    if v {
+                        enabled.push(AuraControl::AwakeLogo)
+                    } else {
+                        disabled.push(AuraControl::AwakeLogo)
+                    }
+                });
+                arg.lightbar.map(|v| {
+                    if v {
+                        enabled.push(AuraControl::AwakeBar)
+                    } else {
+                        disabled.push(AuraControl::AwakeBar)
+                    }
+                });
+                if !enabled.is_empty() {
+                    dbus.proxies().led().set_leds_enabled(enabled)?;
+                }
+                if !disabled.is_empty() {
+                    dbus.proxies().led().set_leds_disabled(disabled)?;
+                }
+            }
+            aura_cli::SetAuraEnabled::Shutdown(arg) => {
+                let mut enabled: Vec<AuraControl> = Vec::new();
+                let mut disabled: Vec<AuraControl> = Vec::new();
+                arg.keyboard.map(|v| {
+                    if v {
+                        enabled.push(AuraControl::ShutdownKeyb)
+                    } else {
+                        disabled.push(AuraControl::ShutdownKeyb)
+                    }
+                });
+                arg.logo.map(|v| {
+                    if v {
+                        enabled.push(AuraControl::ShutdownLogo)
+                    } else {
+                        disabled.push(AuraControl::ShutdownLogo)
+                    }
+                });
+                arg.lightbar.map(|v| {
+                    if v {
+                        enabled.push(AuraControl::ShutdownBar)
+                    } else {
+                        disabled.push(AuraControl::ShutdownBar)
+                    }
+                });
+                if !enabled.is_empty() {
+                    dbus.proxies().led().set_leds_enabled(enabled)?;
+                }
+                if !disabled.is_empty() {
+                    dbus.proxies().led().set_leds_disabled(disabled)?;
+                }
+            }
         }
-    }
-
-    if let Some(enable) = mode.boot_enable {
-        dbus.proxies().led().set_boot_enabled(enable)?;
-    }
-
-    if let Some(enable) = mode.sleep_enable {
-        dbus.proxies().led().set_sleep_enabled(enable)?;
-    }
-
-    if let Some(enable) = mode.all_leds_enable {
-        dbus.proxies().led().set_all_leds_enabled(enable)?;
-    }
-    if let Some(enable) = mode.keys_leds_enable {
-        dbus.proxies().led().set_keys_leds_enabled(enable)?;
-    }
-    if let Some(enable) = mode.side_leds_enable {
-        dbus.proxies().led().set_side_leds_enabled(enable)?;
     }
 
     Ok(())

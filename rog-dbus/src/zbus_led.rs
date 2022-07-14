@@ -22,7 +22,7 @@
 use zbus::{blocking::Connection, Result};
 use zbus_macros::dbus_proxy;
 
-use rog_aura::{AuraEffect, KeyColourArray, LedBrightness, LedPowerStates};
+use rog_aura::{usb::AuraControl, AuraEffect, KeyColourArray, LedBrightness};
 
 const BLOCKING_TIME: u64 = 40; // 100ms = 10 FPS, max 50ms = 20 FPS, 40ms = 25 FPS
 
@@ -49,27 +49,16 @@ trait Led {
     /// SetLedMode method
     fn set_led_mode(&self, effect: &AuraEffect) -> zbus::Result<()>;
 
-    /// SetAwakeEnabled method
-    fn set_boot_enabled(&self, enabled: bool) -> zbus::Result<()>;
+    fn set_leds_enabled(&self, enabled: Vec<AuraControl>) -> zbus::Result<()>;
 
-    /// SetSleepEnabled method
-    fn set_sleep_enabled(&self, enabled: bool) -> zbus::Result<()>;
-
-    /// SetSideLedsEnabled method
-    fn set_all_leds_enabled(&self, enabled: bool) -> Result<()>;
-
-    /// SetSideLedsEnabled method
-    fn set_keys_leds_enabled(&self, enabled: bool) -> Result<()>;
-
-    /// SetSideLedsEnabled method
-    fn set_side_leds_enabled(&self, enabled: bool) -> Result<()>;
+    fn set_leds_disabled(&self, disabled: Vec<AuraControl>) -> zbus::Result<()>;
 
     /// NotifyLed signal
     #[dbus_proxy(signal)]
     fn notify_led(&self, data: AuraEffect) -> zbus::Result<()>;
 
     #[dbus_proxy(signal)]
-    fn notify_power_states(&self, data: LedPowerStates) -> zbus::Result<()>;
+    fn notify_power_states(&self, data: Vec<AuraControl>) -> zbus::Result<()>;
 
     /// LedBrightness property
     #[dbus_proxy(property)]
@@ -84,13 +73,7 @@ trait Led {
     fn led_modes(&self) -> zbus::Result<String>;
 
     #[dbus_proxy(property)]
-    fn awake_enabled(&self) -> zbus::Result<bool>;
-
-    #[dbus_proxy(property)]
-    fn sleep_enabled(&self) -> zbus::Result<bool>;
-
-    #[dbus_proxy(property)]
-    fn side_leds_enabled(&self) -> zbus::Result<bool>;
+    fn leds_enabled(&self) -> zbus::Result<Vec<u8>>;
 }
 
 pub struct LedProxyPerkey<'a>(LedProxyBlocking<'a>);

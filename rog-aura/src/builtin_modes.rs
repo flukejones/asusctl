@@ -12,16 +12,6 @@ use zvariant::Type;
 use crate::{error::Error, LED_MSG_LEN};
 
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Debug, PartialEq, Copy, Clone, Deserialize, Serialize)]
-pub struct LedPowerStates {
-    pub boot_anim: bool,
-    pub sleep_anim: bool,
-    pub all_leds: bool,
-    pub keys_leds: bool,
-    pub side_leds: bool,
-}
-
-#[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize)]
 pub enum LedBrightness {
     Off,
@@ -148,6 +138,26 @@ pub enum AuraModeNum {
     Flash = 12,
 }
 
+impl From<AuraModeNum> for String {
+    fn from(mode: AuraModeNum) -> Self {
+        match mode {
+            AuraModeNum::Static => "Static",
+            AuraModeNum::Breathe => "Breathe",
+            AuraModeNum::Strobe => "Strobe",
+            AuraModeNum::Rainbow => "Rainbow",
+            AuraModeNum::Star => "Stars",
+            AuraModeNum::Rain => "Rain",
+            AuraModeNum::Highlight => "Highlight",
+            AuraModeNum::Laser => "Laser",
+            AuraModeNum::Ripple => "Ripple",
+            AuraModeNum::Pulse => "Pulse",
+            AuraModeNum::Comet => "Comet",
+            AuraModeNum::Flash => "Flash",
+        }
+        .to_string()
+    }
+}
+
 impl From<&AuraModeNum> for &str {
     fn from(mode: &AuraModeNum) -> Self {
         match mode {
@@ -210,11 +220,55 @@ impl From<u8> for AuraModeNum {
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize)]
 pub enum AuraZone {
+    /// Used if keyboard has no zones, or if setting all
     None,
-    One,
-    Two,
-    Three,
-    Four,
+    /// Leftmost zone
+    Key1,
+    /// Zone after leftmost
+    Key2,
+    /// Zone second from right
+    Key3,
+    /// Rightmost zone
+    Key4,
+    /// Logo on the lid (or elsewhere?)
+    Logo,
+    /// The left part of a lightbar (typically on the front of laptop)
+    BarLeft,
+    /// The right part of a lightbar
+    BarRight,
+}
+
+impl Default for AuraZone {
+    fn default() -> Self {
+        AuraZone::None
+    }
+}
+
+impl FromStr for AuraZone {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = s.to_lowercase();
+        match s.to_ascii_lowercase().as_str() {
+            "0" => Ok(AuraZone::None),
+            "none" => Ok(AuraZone::None),
+            "1" => Ok(AuraZone::Key1),
+            "one" => Ok(AuraZone::Key1),
+            "2" => Ok(AuraZone::Key2),
+            "two" => Ok(AuraZone::Key2),
+            "3" => Ok(AuraZone::Key3),
+            "three" => Ok(AuraZone::Key3),
+            "4" => Ok(AuraZone::Key4),
+            "four" => Ok(AuraZone::Key4),
+            "5" => Ok(AuraZone::Logo),
+            "logo" => Ok(AuraZone::Logo),
+            "6" => Ok(AuraZone::BarLeft),
+            "lightbar-left" => Ok(AuraZone::BarLeft),
+            "7" => Ok(AuraZone::BarRight),
+            "lightbar-right" => Ok(AuraZone::BarRight),
+            _ => Err(Error::ParseSpeed),
+        }
+    }
 }
 
 /// Default factory modes structure. This easily converts to an USB HID packet with:
@@ -300,5 +354,102 @@ impl From<&AuraEffect> for [u8; LED_MSG_LEN] {
         msg[11] = aura.colour2.1;
         msg[12] = aura.colour2.2;
         msg
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{AuraEffect, AuraModeNum, AuraZone, Colour, Direction, Speed, LED_MSG_LEN};
+
+    #[test]
+    fn check_led_static_packet() {
+        let st = AuraEffect {
+            mode: AuraModeNum::Static,
+            zone: AuraZone::None,
+            colour1: Colour(0xff, 0x11, 0xdd),
+            colour2: Colour::default(),
+            speed: Speed::Med,
+            direction: Direction::Right,
+        };
+        let ar = <[u8; LED_MSG_LEN]>::from(&st);
+
+        println!("{:02x?}", ar);
+        let check = [
+            0x5d, 0xb3, 0x0, 0x0, 0xff, 0x11, 0xdd, 0xeb, 0x0, 0x0, 0xa6, 0x0, 0x0, 0x0, 0x0, 0x0,
+            0x0,
+        ];
+        assert_eq!(ar, check);
+    }
+
+    #[test]
+    fn check_led_static_zone_packet() {
+        let mut st = AuraEffect {
+            mode: AuraModeNum::Static,
+            zone: AuraZone::Key1,
+            colour1: Colour(0xff, 0, 0),
+            colour2: Colour(0, 0, 0),
+            speed: Speed::Low,
+            direction: Direction::Left,
+        };
+        let capture = [
+            0x5d, 0xb3, 0x01, 0x00, 0xff, 0x00, 0x00, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+            0x0, 0x0,
+        ];
+        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+
+        st.zone = AuraZone::Key2;
+        st.colour1 = Colour(0xff, 0xff, 0);
+        let capture = [
+            0x5d, 0xb3, 0x02, 0x00, 0xff, 0xff, 0x00, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+            0x0, 0x0,
+        ];
+        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+
+        st.zone = AuraZone::Key3;
+        st.colour1 = Colour(0, 0xff, 0xff);
+        let capture = [
+            0x5d, 0xb3, 0x03, 0x00, 0x00, 0xff, 0xff, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+            0x0, 0x0,
+        ];
+        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+
+        st.zone = AuraZone::Key4;
+        st.colour1 = Colour(0xff, 0x00, 0xff);
+        let capture = [
+            0x5d, 0xb3, 0x04, 0x00, 0xff, 0x00, 0xff, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+            0x0, 0x0,
+        ];
+        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+
+        st.zone = AuraZone::Logo;
+        st.colour1 = Colour(0x2c, 0xff, 0x00);
+        let capture = [
+            0x5d, 0xb3, 0x05, 0x00, 0x2c, 0xff, 0x00, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+            0x0, 0x0,
+        ];
+        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+
+        st.zone = AuraZone::BarLeft;
+        st.colour1 = Colour(0xff, 0x00, 0x00);
+        let capture = [
+            0x5d, 0xb3, 0x06, 0x00, 0xff, 0x00, 0x00, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+            0x0, 0x0,
+        ];
+        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+
+        st.zone = AuraZone::BarRight;
+        st.colour1 = Colour(0xff, 0x00, 0xcd);
+        let capture = [
+            0x5d, 0xb3, 0x07, 0x00, 0xff, 0x00, 0xcd, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+            0x0, 0x0,
+        ];
+        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+
+        st.mode = AuraModeNum::Rainbow;
+        let capture = [
+            0x5d, 0xb3, 0x07, 0x03, 0xff, 0x00, 0xcd, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+            0x0, 0x0,
+        ];
+        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
     }
 }
