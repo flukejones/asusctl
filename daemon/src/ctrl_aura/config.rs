@@ -1,5 +1,5 @@
 use crate::laptops::LaptopLedData;
-use log::{error, info, warn};
+use log::{error, warn};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness, LedPowerStates};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -9,65 +9,14 @@ use std::io::{Read, Write};
 pub static AURA_CONFIG_PATH: &str = "/etc/asusd/aura.conf";
 
 #[derive(Deserialize, Serialize)]
-pub struct AuraConfigV407 {
-    pub brightness: LedBrightness,
-    pub current_mode: AuraModeNum,
-    pub builtins: BTreeMap<AuraModeNum, AuraEffect>,
-    pub multizone: Option<AuraMultiZone>,
-    pub awake_enabled: bool,
-    pub sleep_anim_enabled: bool,
-    pub side_leds_enabled: bool,
-}
-
-impl AuraConfigV407 {
-    pub(crate) fn into_current(self) -> AuraConfig {
-        AuraConfig {
-            brightness: self.brightness,
-            last_brightness: LedBrightness::Med,
-            current_mode: self.current_mode,
-            builtins: self.builtins,
-            multizone: self.multizone,
-            power_states: LedPowerStates {
-                boot_anim: true,
-                sleep_anim: self.sleep_anim_enabled,
-                all_leds: self.awake_enabled,
-                keys_leds: self.awake_enabled,
-                side_leds: self.side_leds_enabled,
-            },
-        }
-    }
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct AuraConfigV411 {
-    pub brightness: LedBrightness,
-    pub current_mode: AuraModeNum,
-    pub builtins: BTreeMap<AuraModeNum, AuraEffect>,
-    pub multizone: Option<AuraMultiZone>,
-    pub power_states: LedPowerStates,
-}
-
-impl AuraConfigV411 {
-    pub(crate) fn into_current(self) -> AuraConfig {
-        AuraConfig {
-            brightness: self.brightness,
-            last_brightness: LedBrightness::Med,
-            current_mode: self.current_mode,
-            builtins: self.builtins,
-            multizone: self.multizone,
-            power_states: self.power_states,
-        }
-    }
-}
-
-#[derive(Deserialize, Serialize)]
+#[serde(default)]
 pub struct AuraConfig {
     pub brightness: LedBrightness,
     /// Used to re-set brightness on wake from sleep/hibernation
     pub last_brightness: LedBrightness,
     pub current_mode: AuraModeNum,
     pub builtins: BTreeMap<AuraModeNum, AuraEffect>,
-    pub multizone: Option<AuraMultiZone>,
+    pub multizone: Option<BTreeMap<AuraModeNum, Vec<AuraEffect>>>,
     pub power_states: LedPowerStates,
 }
 
@@ -111,16 +60,6 @@ impl AuraConfig {
             } else {
                 if let Ok(data) = serde_json::from_str(&buf) {
                     return data;
-                } else if let Ok(data) = serde_json::from_str::<AuraConfigV407>(&buf) {
-                    let config = data.into_current();
-                    config.write();
-                    info!("Updated AuraConfig version");
-                    return config;
-                } else if let Ok(data) = serde_json::from_str::<AuraConfigV411>(&buf) {
-                    let config = data.into_current();
-                    config.write();
-                    info!("Updated AuraConfig version");
-                    return config;
                 }
                 warn!(
                     "Could not deserialise {}.\nWill rename to {}-old and recreate config",
@@ -187,107 +126,27 @@ impl AuraConfig {
             }
             _ => {
                 if let Some(multi) = self.multizone.as_mut() {
-                    multi.set(effect)
+                    if let Some(fx) = multi.get_mut(effect.mode()) {
+                        for fx in fx.iter_mut() {
+                            if fx.mode == effect.mode {
+                                *fx = effect;
+                                break;
+                            }
+                        }
+                    } else {
+                        let mut tmp = BTreeMap::new();
+                        tmp.insert(*effect.mode(), vec![effect]);
+                        self.multizone = Some(tmp);
+                    }
                 }
             }
         }
     }
 
-    pub fn get_multizone(&self, aura_type: AuraModeNum) -> Option<&[AuraEffect; 4]> {
+    pub fn get_multizone(&self, aura_type: AuraModeNum) -> Option<&[AuraEffect]> {
         if let Some(multi) = &self.multizone {
-            if aura_type == AuraModeNum::Static {
-                return Some(multi.static_());
-            } else if aura_type == AuraModeNum::Breathe {
-                return Some(multi.breathe());
-            }
+            return multi.get(&aura_type).map(|v| v.as_slice());
         }
         None
-    }
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct AuraMultiZone {
-    static_: [AuraEffect; 4],
-    breathe: [AuraEffect; 4],
-}
-
-impl AuraMultiZone {
-    pub fn set(&mut self, effect: AuraEffect) {
-        if effect.mode == AuraModeNum::Static {
-            match effect.zone {
-                AuraZone::None => {}
-                AuraZone::One => self.static_[0] = effect,
-                AuraZone::Two => self.static_[1] = effect,
-                AuraZone::Three => self.static_[2] = effect,
-                AuraZone::Four => self.static_[3] = effect,
-            }
-        } else if effect.mode == AuraModeNum::Breathe {
-            match effect.zone {
-                AuraZone::None => {}
-                AuraZone::One => self.breathe[0] = effect,
-                AuraZone::Two => self.breathe[1] = effect,
-                AuraZone::Three => self.breathe[2] = effect,
-                AuraZone::Four => self.breathe[3] = effect,
-            }
-        }
-    }
-
-    pub fn static_(&self) -> &[AuraEffect; 4] {
-        &self.static_
-    }
-
-    pub fn breathe(&self) -> &[AuraEffect; 4] {
-        &self.breathe
-    }
-}
-
-impl Default for AuraMultiZone {
-    fn default() -> Self {
-        Self {
-            static_: [
-                AuraEffect {
-                    mode: AuraModeNum::Static,
-                    zone: AuraZone::One,
-                    ..Default::default()
-                },
-                AuraEffect {
-                    mode: AuraModeNum::Static,
-                    zone: AuraZone::Two,
-                    ..Default::default()
-                },
-                AuraEffect {
-                    mode: AuraModeNum::Static,
-                    zone: AuraZone::Three,
-                    ..Default::default()
-                },
-                AuraEffect {
-                    mode: AuraModeNum::Static,
-                    zone: AuraZone::Four,
-                    ..Default::default()
-                },
-            ],
-            breathe: [
-                AuraEffect {
-                    mode: AuraModeNum::Breathe,
-                    zone: AuraZone::One,
-                    ..Default::default()
-                },
-                AuraEffect {
-                    mode: AuraModeNum::Breathe,
-                    zone: AuraZone::Two,
-                    ..Default::default()
-                },
-                AuraEffect {
-                    mode: AuraModeNum::Breathe,
-                    zone: AuraZone::Three,
-                    ..Default::default()
-                },
-                AuraEffect {
-                    mode: AuraModeNum::Breathe,
-                    zone: AuraZone::Four,
-                    ..Default::default()
-                },
-            ],
-        }
     }
 }

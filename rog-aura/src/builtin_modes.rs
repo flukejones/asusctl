@@ -211,10 +211,13 @@ impl From<u8> for AuraModeNum {
 #[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize)]
 pub enum AuraZone {
     None,
-    One,
-    Two,
-    Three,
-    Four,
+    KeyOne,
+    KeyTwo,
+    KeyThree,
+    KeyFour,
+    Logo,
+    LightbarLeft,
+    LightbarRight,
 }
 
 /// Default factory modes structure. This easily converts to an USB HID packet with:

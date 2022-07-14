@@ -286,39 +286,39 @@ impl From<&SetAuraBuiltin> for Vec<AuraEffect> {
         match aura {
             SetAuraBuiltin::MultiStatic(data) => {
                 zones[0].mode = AuraModeNum::Static;
-                zones[0].zone = AuraZone::One;
+                zones[0].zone = AuraZone::KeyOne;
                 zones[0].colour1 = data.colour1;
 
                 zones[1].mode = AuraModeNum::Static;
-                zones[1].zone = AuraZone::Two;
+                zones[1].zone = AuraZone::KeyTwo;
                 zones[1].colour1 = data.colour2;
 
                 zones[2].mode = AuraModeNum::Static;
-                zones[2].zone = AuraZone::Three;
+                zones[2].zone = AuraZone::KeyThree;
                 zones[2].colour1 = data.colour3;
 
                 zones[3].mode = AuraModeNum::Static;
-                zones[3].zone = AuraZone::Four;
+                zones[3].zone = AuraZone::KeyFour;
                 zones[3].colour1 = data.colour4;
             }
             SetAuraBuiltin::MultiBreathe(data) => {
                 zones[0].mode = AuraModeNum::Breathe;
-                zones[0].zone = AuraZone::One;
+                zones[0].zone = AuraZone::KeyOne;
                 zones[0].colour1 = data.colour1;
                 zones[0].speed = data.speed;
 
                 zones[1].mode = AuraModeNum::Breathe;
-                zones[1].zone = AuraZone::Two;
+                zones[1].zone = AuraZone::KeyTwo;
                 zones[1].colour1 = data.colour2;
                 zones[1].speed = data.speed;
 
                 zones[2].mode = AuraModeNum::Breathe;
-                zones[2].zone = AuraZone::Three;
+                zones[2].zone = AuraZone::KeyThree;
                 zones[2].colour1 = data.colour3;
                 zones[2].speed = data.speed;
 
                 zones[3].mode = AuraModeNum::Breathe;
-                zones[3].zone = AuraZone::Four;
+                zones[3].zone = AuraZone::KeyFour;
                 zones[3].colour1 = data.colour4;
                 zones[3].speed = data.speed;
             }
