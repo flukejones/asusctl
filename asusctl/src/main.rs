@@ -16,7 +16,7 @@ use rog_supported::{
     RogBiosSupportedFunctions,
 };
 
-use crate::aura_cli::{LedBrightness, SetAuraBuiltin};
+use crate::aura_cli::LedBrightness;
 use crate::cli_opts::*;
 
 mod anime_cli;
@@ -365,7 +365,7 @@ fn handle_led_mode(
                         return true;
                     }
                 }
-                if supported.multizone_led_mode && command.trim().starts_with("multi") {
+                if !supported.multizone_led_mode.is_empty() && command.trim().starts_with("multi") {
                     return true;
                 }
                 false
@@ -391,18 +391,9 @@ fn handle_led_mode(
             println!("{}", mode.self_usage());
             return Ok(());
         }
-        match mode {
-            SetAuraBuiltin::MultiStatic(_) | SetAuraBuiltin::MultiBreathe(_) => {
-                let zones = <Vec<AuraEffect>>::from(mode);
-                for eff in zones {
-                    dbus.proxies().led().set_led_mode(&eff)?
-                }
-            }
-            _ => dbus
-                .proxies()
-                .led()
-                .set_led_mode(&<AuraEffect>::from(mode))?,
-        }
+        dbus.proxies()
+            .led()
+            .set_led_mode(&<AuraEffect>::from(mode))?;
     }
 
     if let Some(enable) = mode.boot_enable {

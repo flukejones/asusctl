@@ -50,6 +50,12 @@ pub struct SingleSpeed {
     help: bool,
     #[options(no_long, meta = "WORD", help = "set the speed: low, med, high")]
     pub speed: Speed,
+    #[options(
+        no_long,
+        meta = "",
+        help = "set the zone for this effect e.g, 0, 1, one, logo, lightbar-left"
+    )]
+    pub zone: AuraZone,
 }
 #[derive(Debug, Clone, Options, Default)]
 pub struct SingleSpeedDirection {
@@ -59,6 +65,12 @@ pub struct SingleSpeedDirection {
     pub direction: Direction,
     #[options(no_long, meta = "", help = "set the speed: low, med, high")]
     pub speed: Speed,
+    #[options(
+        no_long,
+        meta = "",
+        help = "set the zone for this effect e.g, 0, 1, one, logo, lightbar-left"
+    )]
+    pub zone: AuraZone,
 }
 
 #[derive(Debug, Clone, Default, Options)]
@@ -67,6 +79,12 @@ pub struct SingleColour {
     help: bool,
     #[options(no_long, meta = "", help = "set the RGB value e.g, ff00ff")]
     pub colour: Colour,
+    #[options(
+        no_long,
+        meta = "",
+        help = "set the zone for this effect e.g, 0, 1, one, logo, lightbar-left"
+    )]
+    pub zone: AuraZone,
 }
 
 #[derive(Debug, Clone, Default, Options)]
@@ -77,6 +95,12 @@ pub struct SingleColourSpeed {
     pub colour: Colour,
     #[options(no_long, meta = "", help = "set the speed: low, med, high")]
     pub speed: Speed,
+    #[options(
+        no_long,
+        meta = "",
+        help = "set the zone for this effect e.g, 0, 1, one, logo, lightbar-left"
+    )]
+    pub zone: AuraZone,
 }
 
 #[derive(Debug, Clone, Options, Default)]
@@ -89,10 +113,16 @@ pub struct TwoColourSpeed {
     pub colour2: Colour,
     #[options(no_long, meta = "", help = "set the speed: low, med, high")]
     pub speed: Speed,
+    #[options(
+        no_long,
+        meta = "",
+        help = "set the zone for this effect e.g, 0, 1, one, logo, lightbar-left"
+    )]
+    pub zone: AuraZone,
 }
 
 #[derive(Debug, Clone, Default, Options)]
-pub struct MultiColour {
+pub struct MultiZone {
     #[options(help = "print help message")]
     help: bool,
     #[options(short = "a", meta = "", help = "set the RGB value e.g, ff00ff")]
@@ -152,10 +182,6 @@ pub enum SetAuraBuiltin {
     Comet(SingleColour),
     #[options(help = "set a wide vertical line zooming from left")]
     Flash(SingleColour),
-    #[options(help = "4-zone multi-colour")]
-    MultiStatic(MultiColour),
-    #[options(help = "4-zone multi-colour breathing")]
-    MultiBreathe(MultiColourSpeed),
 }
 
 impl Default for SetAuraBuiltin {
@@ -168,6 +194,7 @@ impl From<&SingleColour> for AuraEffect {
     fn from(aura: &SingleColour) -> Self {
         Self {
             colour1: aura.colour,
+            zone: aura.zone,
             ..Default::default()
         }
     }
@@ -177,6 +204,7 @@ impl From<&SingleSpeed> for AuraEffect {
     fn from(aura: &SingleSpeed) -> Self {
         Self {
             speed: aura.speed,
+            zone: aura.zone,
             ..Default::default()
         }
     }
@@ -187,6 +215,7 @@ impl From<&SingleColourSpeed> for AuraEffect {
         Self {
             colour1: aura.colour,
             speed: aura.speed,
+            zone: aura.zone,
             ..Default::default()
         }
     }
@@ -197,6 +226,7 @@ impl From<&TwoColourSpeed> for AuraEffect {
         Self {
             colour1: aura.colour,
             colour2: aura.colour2,
+            zone: aura.zone,
             ..Default::default()
         }
     }
@@ -207,6 +237,7 @@ impl From<&SingleSpeedDirection> for AuraEffect {
         Self {
             speed: aura.speed,
             direction: aura.direction,
+            zone: aura.zone,
             ..Default::default()
         }
     }
@@ -277,53 +308,5 @@ impl From<&SetAuraBuiltin> for AuraEffect {
             }
             _ => AuraEffect::default(),
         }
-    }
-}
-
-impl From<&SetAuraBuiltin> for Vec<AuraEffect> {
-    fn from(aura: &SetAuraBuiltin) -> Vec<AuraEffect> {
-        let mut zones = vec![AuraEffect::default(); 4];
-        match aura {
-            SetAuraBuiltin::MultiStatic(data) => {
-                zones[0].mode = AuraModeNum::Static;
-                zones[0].zone = AuraZone::KeyOne;
-                zones[0].colour1 = data.colour1;
-
-                zones[1].mode = AuraModeNum::Static;
-                zones[1].zone = AuraZone::KeyTwo;
-                zones[1].colour1 = data.colour2;
-
-                zones[2].mode = AuraModeNum::Static;
-                zones[2].zone = AuraZone::KeyThree;
-                zones[2].colour1 = data.colour3;
-
-                zones[3].mode = AuraModeNum::Static;
-                zones[3].zone = AuraZone::KeyFour;
-                zones[3].colour1 = data.colour4;
-            }
-            SetAuraBuiltin::MultiBreathe(data) => {
-                zones[0].mode = AuraModeNum::Breathe;
-                zones[0].zone = AuraZone::KeyOne;
-                zones[0].colour1 = data.colour1;
-                zones[0].speed = data.speed;
-
-                zones[1].mode = AuraModeNum::Breathe;
-                zones[1].zone = AuraZone::KeyTwo;
-                zones[1].colour1 = data.colour2;
-                zones[1].speed = data.speed;
-
-                zones[2].mode = AuraModeNum::Breathe;
-                zones[2].zone = AuraZone::KeyThree;
-                zones[2].colour1 = data.colour3;
-                zones[2].speed = data.speed;
-
-                zones[3].mode = AuraModeNum::Breathe;
-                zones[3].zone = AuraZone::KeyFour;
-                zones[3].colour1 = data.colour4;
-                zones[3].speed = data.speed;
-            }
-            _ => {}
-        }
-        zones
     }
 }

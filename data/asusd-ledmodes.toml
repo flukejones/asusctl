@@ -2,105 +2,112 @@
 prod_family = "Zephyrus S"
 board_names = ["GX502", "GX701", "G531", "GL531", "G532"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
-multizone = false
+multizone = []
 per_key = true
 
 [[led_data]]
 prod_family = "Zephyrus M"
 board_names = ["GU502GV"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
-multizone = false
+multizone = []
 per_key = true
 
 [[led_data]]
 prod_family = "Zephyrus M"
 board_names = ["GM501GS"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
-multizone = true
+multizone = ["Key1", "Key2", "Key3", "Key4"]
 per_key = false
 
 [[led_data]]
 prod_family = "ROG Zephyrus M15"
 board_names = ["GU502LW", "GU502LV"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
-multizone = false
+multizone = []
 per_key = true
 
 [[led_data]]
 prod_family = "ROG Zephyrus M15"
 board_names = ["GU502LU"]
 standard = ["Static", "Breathe", "Strobe", "Pulse"]
-multizone = false
+multizone = []
 per_key = false
 
 [[led_data]]
 prod_family = "Zephyrus"
 board_names = ["GM501GM", "GX531"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
-multizone = true
+multizone = ["Key1", "Key2", "Key3", "Key4"]
 per_key = false
 
 [[led_data]]
 prod_family = "ROG Strix"
 board_names = ["G531GW", "G533QR", "G533QS", "G733QS", "G733QR", "G513QR", "G713QR", "G513QM"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
-multizone = false
+multizone = []
 per_key = true
 
 [[led_data]]
 prod_family = "ROG Strix"
 board_names = ["G513QE", "GX531", "G512LV", "G712LV", "G712LW", "G513IH", "G513QY", "G713QM", "G512"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
-multizone = true
+multizone = ["Key1", "Key2", "Key3", "Key4"]
 per_key = false
 
 [[led_data]]
 prod_family = "ROG Strix"
 board_names = ["G512LI", "G712LI", "G531GD"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
-multizone = false
+multizone = []
 per_key = false
 
 [[led_data]]
 prod_family = "Strix"
 board_names = ["G731GV", "G731GW", "G531GV"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow"]
-multizone = true
+multizone = ["Key1", "Key2", "Key3", "Key4"]
+per_key = false
+
+[[led_data]]
+prod_family = "Strix"
+board_names = ["GL504G"]
+standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
+multizone = ["Key1", "Key2", "Key3", "Key4", "Logo", "BarLeft", "BarRight"]
 per_key = false
 
 [[led_data]]
 prod_family = "Strix"
 board_names = ["G731GT", "G731GU", "G531GT", "G531GU"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow"]
-multizone = false
+multizone = []
 per_key = false
 
 [[led_data]]
 prod_family = "Strix Scar"
 board_names = ["G531", "G731"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
-multizone = true
+multizone = ["Key1", "Key2", "Key3", "Key4"]
 per_key = true
 
 [[led_data]]
 prod_family = "ROG"
 board_names = ["GL553VE"]
 standard = ["Static", "Breathe", "Strobe"]
-multizone = true
+multizone = ["Key1", "Key2", "Key3", "Key4"]
 per_key = false
 
 [[led_data]]
 prod_family = "ROG Zephyrus G14"
 board_names = ["GA401Q"]
 standard = ["Static", "Breathe", "Pulse"]
-multizone = false
+multizone = []
 per_key = false
 
 [[led_data]]
 prod_family = "ROG Zephyrus G14"
 board_names = ["GA402R"]
 standard = ["Static", "Breathe", "Pulse", "Rainbow"]
-multizone = false
+multizone = []
 per_key = false
 
 # GA503QE at higher priority (first match) than GA503Q
@@ -108,40 +115,40 @@ per_key = false
 prod_family = "ROG Zephyrus G15"
 board_names = ["GA503QE"]
 standard = ["Static", "Breathe", "Pulse"]
-multizone = false
+multizone = []
 per_key = false
 
 [[led_data]]
 prod_family = "ROG Zephyrus G15"
 board_names = ["GA503Q", "GA503R"]
 standard = ["Static", "Breathe", "Pulse", "Rainbow", "Strobe"]
-multizone = false
+multizone = []
 per_key = false
 
 [[led_data]]
 prod_family = "ROG Zephyrus"
 board_names = ["GX550L"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
-multizone = false
+multizone = []
 per_key = true
 
 [[led_data]]
 prod_family = "ROG Zephyrus Duo 15 SE"
 board_names = ["GX551Q"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
-multizone = false
+multizone = []
 per_key = true
 
 [[led_data]]
 prod_family = "ROG Flow X13"
 board_names = ["GV301QH", "GV301QE"]
 standard = ["Static", "Breathe", "Pulse"]
-multizone = false
+multizone = []
 per_key = false
 
 [[led_data]]
 prod_family = "ROG Strix" 
 board_names = ["G513IC"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
-multizone = false
+multizone = []
 per_key = false

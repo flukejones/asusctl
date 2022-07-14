@@ -1,5 +1,5 @@
 use log::{info, warn};
-use rog_aura::AuraModeNum;
+use rog_aura::{AuraModeNum, AuraZone};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io::Read;
@@ -37,12 +37,13 @@ struct LedSupportFile {
     led_data: Vec<LaptopLedData>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(default)]
 pub struct LaptopLedData {
     pub prod_family: String,
     pub board_names: Vec<String>,
     pub standard: Vec<AuraModeNum>,
-    pub multizone: bool,
+    pub multizone: Vec<AuraZone>,
     pub per_key: bool,
 }
 
@@ -62,7 +63,7 @@ impl LaptopLedData {
             prod_family,
             board_names: vec![board_name],
             standard: vec![],
-            multizone: false,
+            multizone: vec![],
             per_key: false,
         }
     }
@@ -99,5 +100,37 @@ impl LedSupportFile {
         }
         warn!("Does {} exist?", ASUS_LED_MODE_CONF);
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{fs::OpenOptions, io::Read, path::PathBuf};
+
+    use super::LaptopLedData;
+    use rog_aura::{AuraModeNum, AuraZone};
+
+    #[test]
+    fn check_data_parse() {
+        let led = LaptopLedData {
+            prod_family: "Test".to_owned(),
+            board_names: vec!["Test".to_owned()],
+            standard: vec![AuraModeNum::Static],
+            multizone: vec![AuraZone::Key1, AuraZone::Logo, AuraZone::BarLeft],
+            per_key: false,
+        };
+
+        let toml = toml::to_string_pretty(&led).unwrap();
+        println!("{toml}");
+
+        let mut data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        data.push("../data/asusd-ledmodes.toml");
+
+        let mut file = OpenOptions::new().read(true).open(&data).unwrap();
+        let mut buf = String::new();
+        file.read_to_string(&mut buf).unwrap();
+
+        let x = toml::to_string_pretty(&buf).unwrap();
+        println!("{x}");
     }
 }

@@ -1,6 +1,6 @@
 pub static VERSION: &str = env!("CARGO_PKG_VERSION");
 
-use rog_aura::AuraModeNum;
+use rog_aura::{AuraModeNum, AuraZone};
 use serde_derive::{Deserialize, Serialize};
 use std::fmt;
 use zvariant_derive::Type;
@@ -32,7 +32,7 @@ pub struct PlatformProfileFunctions {
 pub struct LedSupportedFunctions {
     pub brightness_set: bool,
     pub stock_led_modes: Vec<AuraModeNum>,
-    pub multizone_led_mode: bool,
+    pub multizone_led_mode: Vec<AuraZone>,
     pub per_key_led_mode: bool,
 }
 
@@ -80,7 +80,7 @@ impl fmt::Display for LedSupportedFunctions {
         writeln!(f, "LED:")?;
         writeln!(f, "\tBrightness control: {}", self.brightness_set)?;
         writeln!(f, "\tStock LED modes: {:?}", self.stock_led_modes)?;
-        writeln!(f, "\tMultizone LED mode: {}", self.multizone_led_mode)?;
+        writeln!(f, "\tMultizone LED mode: {:?}", self.multizone_led_mode)?;
         writeln!(f, "\tPer key LED mode: {}", self.per_key_led_mode)
     }
 }
