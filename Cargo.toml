@@ -2,7 +2,9 @@
 members = ["asusctl", "asus-notify", "daemon", "daemon-user", "rog-supported", "rog-dbus", "rog-anime", "rog-aura", "rog-profiles"]
 
 [profile.release]
-lto = true
+# thin = 57s, asusd = 9.0M
+# fat = 72s, asusd = 6.4M
+lto = "fat"
 debug = false
 opt-level = 3
 panic = "abort"
