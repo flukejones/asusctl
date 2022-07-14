@@ -21,7 +21,7 @@ pub const fn aura_brightness_bytes(brightness: u8) -> [u8; 17] {
 }
 
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
 #[repr(u16)]
 pub enum AuraControl {
     BootLogo = 1,

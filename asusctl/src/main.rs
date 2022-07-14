@@ -603,9 +603,7 @@ fn handle_fan_curve(
 ) -> Result<(), Box<dyn std::error::Error>> {
     if !supported.fan_curves {
         println!("Fan-curves not supported by either this kernel or by the laptop.");
-        println!(
-            "This requires kernel 5.17 or the fan curve patch listed in the readme."
-        );
+        println!("This requires kernel 5.17 or the fan curve patch listed in the readme.");
         return Err(ProfileError::NotSupported.into());
     }
 

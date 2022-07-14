@@ -298,7 +298,8 @@ impl CtrlKbdLed {
 
     /// Set combination state for boot animation/sleep animation/all leds/keys leds/side leds LED active
     pub(super) fn set_power_states(&self, config: &AuraConfig) -> Result<(), RogError> {
-        let bytes = AuraControl::to_bytes(&config.enabled);
+        let set: Vec<AuraControl> = config.enabled.iter().map(|v| *v).collect();
+        let bytes = AuraControl::to_bytes(&set);
 
         // Quite ugly, must be a more idiomatic way to do
         let message = [

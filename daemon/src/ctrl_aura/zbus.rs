@@ -35,9 +35,7 @@ impl CtrlKbdLedZbus {
         let mut states = None;
         if let Ok(mut ctrl) = self.0.try_lock() {
             for s in enabled {
-                if !ctrl.config.enabled.contains(&s) {
-                    ctrl.config.enabled.push(s);
-                }
+                ctrl.config.enabled.insert(s);
             }
             ctrl.config.write();
 
@@ -45,7 +43,8 @@ impl CtrlKbdLedZbus {
                 .map_err(|err| warn!("{}", err))
                 .ok();
 
-            states = Some(ctrl.config.enabled.clone());
+            let set: Vec<AuraControl> = ctrl.config.enabled.iter().map(|v| *v).collect();
+            states = Some(set);
         }
         // Need to pull state out like this due to MutexGuard
         if let Some(states) = states {
@@ -63,11 +62,7 @@ impl CtrlKbdLedZbus {
         let mut states = None;
         if let Ok(mut ctrl) = self.0.try_lock() {
             for s in disabled {
-                if ctrl.config.enabled.contains(&s) {
-                    if let Ok(idx) = ctrl.config.enabled.binary_search(&s) {
-                        ctrl.config.enabled.remove(idx);
-                    }
-                }
+                ctrl.config.enabled.remove(&s);
             }
             ctrl.config.write();
 
@@ -75,7 +70,8 @@ impl CtrlKbdLedZbus {
                 .map_err(|err| warn!("{}", err))
                 .ok();
 
-            states = Some(ctrl.config.enabled.clone());
+            let set: Vec<AuraControl> = ctrl.config.enabled.iter().map(|v| *v).collect();
+            states = Some(set);
         }
         // Need to pull state out like this due to MutexGuard
         if let Some(states) = states {
@@ -161,7 +157,8 @@ impl CtrlKbdLedZbus {
     #[dbus_interface(property)]
     async fn leds_enabled(&self) -> Vec<u8> {
         if let Ok(ctrl) = self.0.try_lock() {
-            return AuraControl::to_bytes(&ctrl.config.enabled).to_vec();
+            let set: Vec<AuraControl> = ctrl.config.enabled.iter().map(|v| *v).collect();
+            return AuraControl::to_bytes(&set).to_vec();
         }
         vec![0, 0]
     }

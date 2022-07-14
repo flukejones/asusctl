@@ -3,7 +3,7 @@ use log::{error, warn};
 use rog_aura::usb::AuraControl;
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness};
 use serde_derive::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 
@@ -16,7 +16,7 @@ pub struct AuraConfig {
     pub current_mode: AuraModeNum,
     pub builtins: BTreeMap<AuraModeNum, AuraEffect>,
     pub multizone: Option<BTreeMap<AuraModeNum, Vec<AuraEffect>>>,
-    pub enabled: Vec<AuraControl>,
+    pub enabled: HashSet<AuraControl>,
 }
 
 impl Default for AuraConfig {
@@ -26,7 +26,7 @@ impl Default for AuraConfig {
             current_mode: AuraModeNum::Static,
             builtins: BTreeMap::new(),
             multizone: None,
-            enabled: vec![
+            enabled: HashSet::from([
                 AuraControl::BootLogo,
                 AuraControl::BootKeyb,
                 AuraControl::SleepLogo,
@@ -39,7 +39,7 @@ impl Default for AuraConfig {
                 AuraControl::BootBar,
                 AuraControl::SleepBar,
                 AuraControl::ShutdownBar,
-            ],
+            ]),
         }
     }
 }
