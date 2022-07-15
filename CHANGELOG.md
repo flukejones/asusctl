@@ -6,8 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased ]
 
+### Added
+- Support for GA402 Anime Matrix display (Author: I-Al-Istannen & Luke Jones)
+- Support for power-config of all LED zones. See `asusctrl led-power --help` (Author: Luke Jones, With much help from: @0x4d-53-32-36)
+- Full support for multizone LED <logo, keyboard, lightbar> (Author: Luke Jones, With much help from: @0x4d-53-32-36)
 ### Changed
 - Data for anime-matrix now requires passing the laptop model as enum
+- Extra unit tests for anime stuff to help verify things
 
 ### Added
 - Support for GA503R LED modes
