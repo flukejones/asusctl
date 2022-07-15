@@ -100,11 +100,12 @@ impl AnimeImage {
 
     /// Scale ratio in CM
     ///
-    /// This is worked out by measuring the pyhsical width of the display, then dividing by
-    /// `<horizontal LED count> + 0.5`, where the LED count is first/longest row.
+    /// This is worked out by measuring the physical width of the display from pixel center to
+    /// center, then dividing by `<horizontal LED count> + 0.5`, where the LED count is
+    /// first/longest row.
     ///
     /// For GA401 this is `26.8 / (33 + 0.5) = 0.8`
-    /// For GA402 this is `27.3 / (35 + 0.5) = 0.77`
+    /// For GA402 this is `27.4 / (35 + 0.5) = 0.77`
     fn scale_x(anime_type: AnimeType) -> f32 {
         match anime_type {
             AnimeType::GA401 => 0.8,
@@ -114,15 +115,16 @@ impl AnimeImage {
 
     /// Scale ratio in CM
     ///
-    /// This is worked out by measuring the pyhsical height of the display, then dividing by
-    /// `<vertical LED count> + 1.0`, where the LED count is first/longest row.
+    /// This is worked out by measuring the physical height of the display from pixel center to
+    /// pixel center, then dividing by  `<vertical LED count> + 1.0`, where the LED count is
+    /// first/longest row.
     ///
     /// For GA401 this is `16.5 / (54.0 + 1.0) = 0.3`
-    /// For GA402 this is `17.0 / (61.0 + 1.0) = 0.274`
+    /// For GA402 this is `17.3 / (61.0)       = 0.283`
     fn scale_y(anime_type: AnimeType) -> f32 {
         match anime_type {
             AnimeType::GA401 => 0.3,
-            AnimeType::GA402 => 0.274,
+            AnimeType::GA402 => 0.283,
         }
     }
 
@@ -131,6 +133,19 @@ impl AnimeImage {
     ///
     /// In relation to the display itself you should think of it as a full square grid, so `first_x`
     /// is the x position on that grid where the LED is actually positioned in relation to the Y.
+    /// ```text
+    /// +------------+
+    /// |            |
+    /// |            |
+    ///  \           |
+    ///   \          |
+    ///    \         |
+    ///     \        |
+    ///      \       |
+    /// |----|\      |
+    ///    ^   ------+
+    ///  first_x
+    /// ```
     fn first_x(anime_type: AnimeType, y: u32) -> u32 {
         match anime_type {
             AnimeType::GA401 => {
@@ -140,12 +155,12 @@ impl AnimeImage {
                 }
                 (y + 1) / 2 - 3
             }
-            // The GA402 has different number of rows with consistent length and
-            // row lengths and may need new offset formula
             AnimeType::GA402 => {
+                // first 11 rows start at zero
                 if y <= 11 {
                     return 0;
                 }
+                // and then their offset grows by one every two rows
                 (y + 1) / 2 - 5
             }
         }
@@ -154,6 +169,18 @@ impl AnimeImage {
     /// Width in LED count
     ///
     /// This is how many LED's are physically in a row
+    /// ```text
+    /// +------------+
+    /// |            |
+    /// |            |
+    ///  \           |
+    ///   \   width  |
+    ///    \    v    |
+    ///     \|------||
+    ///      \       |
+    ///       \      |
+    ///        ------+
+    /// ```
     fn width(anime_type: AnimeType, y: u32) -> u32 {
         match anime_type {
             AnimeType::GA401 => {
@@ -195,7 +222,7 @@ impl AnimeImage {
             // 54.0 = End column LED count (physical) plus one dead pixel
             AnimeType::GA401 => (54.0 + 1.0) * Self::scale_y(anime_type),
             // GA402 may not have dead pixels and require only the physical LED count
-            AnimeType::GA402 => (61.0 + 1.0) * Self::scale_y(anime_type),
+            AnimeType::GA402 => 61.0 * Self::scale_y(anime_type),
         }
     }
 
@@ -207,12 +234,8 @@ impl AnimeImage {
                 1 | 3 => 35, // Some rows are padded
                 _ => 36 - y / 2,
             },
-            AnimeType::GA402 => match y {
-                0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 => 34, // CONFIRMED CORRECT
-                // 0|1 | 2 | 4 | 6 | 8 | 10 => 34, // These are the top rows of consistent length
-                //1|3|5|7|9|11 => 35, // Padding.. may be needed for odd rows, but unsure
-                _ => 39 - y / 2, // This may not be correct (37 is a guess based on photo)
-            },
+            // GA402 does not have padding, equivalent to width
+            AnimeType::GA402 => AnimeImage::width(anime_type, y),
         }
     }
 
@@ -232,7 +255,7 @@ impl AnimeImage {
                         let x = AnimeImage::first_x(anime_type, y) + l;
                         Some(Led::new(x as f32 - 0.5 * (y % 2) as f32, y as f32))
                     } else {
-                        None // dead/non-existant pixels to the left
+                        None // dead/non-existent pixels to the left
                     }
                 })
             })
@@ -283,11 +306,6 @@ impl AnimeImage {
             sum /= count as f32;
             led.set_bright((sum * self.bright * alpha) as u8);
         }
-
-        // TODO: remove when sorted out
-        // if self.anime_type == AnimeType::GA402 {
-        self.edge_outline();
-        // }
     }
 
     fn edge_outline(&mut self) {
