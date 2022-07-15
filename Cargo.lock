@@ -1027,6 +1027,8 @@ dependencies = [
  "png_pong",
  "serde",
  "serde_derive",
+ "sysfs-class",
+ "udev",
  "zvariant",
 ]
 

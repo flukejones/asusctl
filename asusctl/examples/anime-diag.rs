@@ -1,6 +1,6 @@
 use std::{thread::sleep, time::Duration};
 
-use rog_anime::{AnimeDataBuffer, AnimeDiagonal};
+use rog_anime::{usb::get_anime_type, AnimeDiagonal, AnimeType};
 use rog_dbus::RogDbusClientBlocking;
 
 // In usable data:
@@ -12,7 +12,7 @@ fn main() {
     let (client, _) = RogDbusClientBlocking::new().unwrap();
 
     for step in (2..50).rev() {
-        let mut matrix = AnimeDiagonal::new(None);
+        let mut matrix = AnimeDiagonal::new(AnimeType::GA401, None);
         for c in (0..60).into_iter().step_by(step) {
             for i in matrix.get_mut().iter_mut() {
                 i[c] = 50;
@@ -25,8 +25,12 @@ fn main() {
             }
         }
 
-        let m = <AnimeDataBuffer>::from(&matrix);
-        client.proxies().anime().write(m).unwrap();
+        let anime_type = get_anime_type().unwrap();
+        client
+            .proxies()
+            .anime()
+            .write(matrix.into_data_buffer(anime_type))
+            .unwrap();
         sleep(Duration::from_millis(300));
     }
 }

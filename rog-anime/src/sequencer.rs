@@ -3,7 +3,9 @@ use std::{path::PathBuf, time::Duration};
 use glam::Vec2;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{error::AnimeError, AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage};
+use crate::{
+    error::AnimeError, AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType,
+};
 
 /// All the possible AniMe actions that can be used. This enum is intended to be
 /// a helper for loading up `ActionData`.
@@ -63,24 +65,37 @@ pub enum ActionData {
 }
 
 impl ActionData {
-    pub fn from_anime_action(action: &ActionLoader) -> Result<ActionData, AnimeError> {
+    pub fn from_anime_action(
+        anime_type: AnimeType,
+        action: &ActionLoader,
+    ) -> Result<ActionData, AnimeError> {
         let a = match action {
             ActionLoader::AsusAnimation {
                 file,
                 time,
                 brightness,
-            } => ActionData::Animation(AnimeGif::from_diagonal_gif(file, *time, *brightness)?),
+            } => ActionData::Animation(AnimeGif::from_diagonal_gif(
+                file,
+                *time,
+                *brightness,
+                anime_type,
+            )?),
             ActionLoader::AsusImage {
                 file,
                 time,
                 brightness,
             } => match time {
                 AnimTime::Infinite => {
-                    let image = AnimeDiagonal::from_png(file, None, *brightness)?;
-                    let data = <AnimeDataBuffer>::from(&image);
+                    let image = AnimeDiagonal::from_png(file, None, *brightness, anime_type)?;
+                    let data = image.into_data_buffer(anime_type);
                     ActionData::Image(Box::new(data))
                 }
-                _ => ActionData::Animation(AnimeGif::from_diagonal_png(file, *time, *brightness)?),
+                _ => ActionData::Animation(AnimeGif::from_diagonal_png(
+                    file,
+                    anime_type,
+                    *time,
+                    *brightness,
+                )?),
             },
             ActionLoader::ImageAnimation {
                 file,
@@ -99,6 +114,7 @@ impl ActionData {
                             *translation,
                             *time,
                             *brightness,
+                            anime_type,
                         )?));
                     }
                 }
@@ -109,6 +125,7 @@ impl ActionData {
                     *translation,
                     *time,
                     *brightness,
+                    anime_type,
                 )?)
             }
             ActionLoader::Image {
@@ -122,8 +139,14 @@ impl ActionData {
                 match time {
                     AnimTime::Infinite => {
                         // If no time then create a plain static image
-                        let image =
-                            AnimeImage::from_png(file, *scale, *angle, *translation, *brightness)?;
+                        let image = AnimeImage::from_png(
+                            file,
+                            *scale,
+                            *angle,
+                            *translation,
+                            *brightness,
+                            anime_type,
+                        )?;
                         let data = <AnimeDataBuffer>::from(&image);
                         ActionData::Image(Box::new(data))
                     }
@@ -134,6 +157,7 @@ impl ActionData {
                         *translation,
                         *time,
                         *brightness,
+                        anime_type,
                     )?),
                 }
             }
@@ -144,20 +168,21 @@ impl ActionData {
 }
 
 /// An optimised precomputed set of actions that the user can cycle through
-#[derive(Debug, Deserialize, Serialize, Default)]
-pub struct Sequences(Vec<ActionData>);
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Sequences(Vec<ActionData>, AnimeType);
 
 impl Sequences {
     #[inline]
-    pub fn new() -> Self {
-        Self(Vec::new())
+    pub fn new(anime_type: AnimeType) -> Self {
+        Self(Vec::new(), anime_type)
     }
 
     /// Use a base `AnimeAction` to generate the precomputed data and insert in to
     /// the run buffer
     #[inline]
     pub fn insert(&mut self, index: usize, action: &ActionLoader) -> Result<(), AnimeError> {
-        self.0.insert(index, ActionData::from_anime_action(action)?);
+        self.0
+            .insert(index, ActionData::from_anime_action(self.1, action)?);
         Ok(())
     }
 

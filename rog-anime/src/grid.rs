@@ -1,8 +1,7 @@
-use std::time::Duration;
+use crate::data::AnimeDataBuffer;
+use crate::{AnimeImage, AnimeType};
 
-use crate::data::{AnimeDataBuffer, ANIME_DATA_LEN};
-use crate::image::LED_IMAGE_POSITIONS;
-
+// TODO: Adjust these sizes as WIDTH_GA401 WIDTH_GA402
 const WIDTH: usize = 33;
 const HEIGHT: usize = 55;
 
@@ -14,41 +13,40 @@ const HEIGHT: usize = 55;
 ///
 /// **Note:** the columns in each odd row are offset by half a pixel left
 #[derive(Debug, Clone)]
-pub struct AnimeGrid([[u8; WIDTH]; HEIGHT], Option<Duration>);
-
-impl Default for AnimeGrid {
-    #[inline]
-    fn default() -> Self {
-        Self::new(None)
-    }
+pub struct AnimeGrid {
+    anime_type: AnimeType,
+    data: [[u8; WIDTH]; HEIGHT],
 }
 
 impl AnimeGrid {
     #[inline]
-    pub fn new(duration: Option<Duration>) -> Self {
-        AnimeGrid([[0u8; WIDTH]; HEIGHT], duration)
+    pub fn new(anime_type: AnimeType) -> Self {
+        Self {
+            anime_type,
+            data: [[0u8; WIDTH]; HEIGHT],
+        }
     }
 
     /// Set a position in the grid with a brightness value
     #[inline]
     pub fn set(&mut self, x: usize, y: usize, b: u8) {
-        self.0[y][x] = b;
+        self.data[y][x] = b;
     }
 
     #[inline]
     pub fn get(&self) -> &[[u8; WIDTH]; HEIGHT] {
-        &self.0
+        &self.data
     }
 
     #[inline]
     pub fn get_mut(&mut self) -> &mut [[u8; WIDTH]; HEIGHT] {
-        &mut self.0
+        &mut self.data
     }
 
     /// Fill the grid with a value
     #[inline]
     pub fn fill_with(&mut self, fill: u8) {
-        for row in self.0.iter_mut() {
+        for row in self.data.iter_mut() {
             for x in row.iter_mut() {
                 *x = fill;
             }
@@ -94,16 +92,19 @@ impl From<AnimeGrid> for AnimeDataBuffer {
     /// packets suitable for sending over USB
     #[inline]
     fn from(anime: AnimeGrid) -> Self {
-        let mut buf = vec![0u8; ANIME_DATA_LEN];
+        let mut buf = vec![0u8; anime.anime_type.data_length()];
 
-        for (idx, pos) in LED_IMAGE_POSITIONS.iter().enumerate() {
+        for (idx, pos) in AnimeImage::generate_image_positioning(anime.anime_type)
+            .iter()
+            .enumerate()
+        {
             if let Some(pos) = pos {
                 let x = pos.x().ceil() as usize;
                 let y = pos.y().ceil() as usize;
-                buf[idx + 1] = anime.0[y][x];
+                buf[idx + 1] = anime.data[y][x];
             }
         }
-        AnimeDataBuffer::from_vec(buf)
+        AnimeDataBuffer::from_vec(anime.anime_type, buf)
     }
 }
 
@@ -113,7 +114,7 @@ mod tests {
 
     #[test]
     fn check_data_alignment() {
-        let mut matrix = AnimeGrid::new(None);
+        let mut matrix = AnimeGrid::new(AnimeType::GA401);
         {
             let tmp = matrix.get_mut();
             for row in tmp.iter_mut() {
@@ -171,6 +172,6 @@ mod tests {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0,
             0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         ];
-        assert_eq!(matrix.get(), &data_cmp);
+        assert_eq!(matrix.data(), &data_cmp);
     }
 }

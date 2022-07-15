@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased ]
 
+### Changed
+- Data for anime-matrix now requires passing the laptop model as enum
+
 ### Added
 - Support for GA503R LED modes
 ### Changed

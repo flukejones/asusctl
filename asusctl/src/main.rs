@@ -7,6 +7,7 @@ use gumdrop::{Opt, Options};
 
 use anime_cli::{AnimeActions, AnimeCommand};
 use profiles_cli::{FanCurveCommand, ProfileCommand};
+use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, Vec2};
 use rog_aura::usb::AuraControl;
 use rog_aura::{self, AuraEffect};
@@ -234,6 +235,7 @@ fn handle_anime(
         dbus.proxies().anime().set_brightness(bright as f32)?
     }
     if let Some(action) = cmd.command.as_ref() {
+        let anime_type = get_anime_type()?;
         match action {
             AnimeActions::Image(image) => {
                 if image.help_requested() || image.path.is_empty() {
@@ -250,6 +252,7 @@ fn handle_anime(
                     image.angle,
                     Vec2::new(image.x_pos, image.y_pos),
                     image.bright,
+                    anime_type,
                 )?;
 
                 dbus.proxies()
@@ -265,11 +268,16 @@ fn handle_anime(
                     std::process::exit(1);
                 }
 
-                let matrix = AnimeDiagonal::from_png(Path::new(&image.path), None, image.bright)?;
+                let matrix = AnimeDiagonal::from_png(
+                    Path::new(&image.path),
+                    None,
+                    image.bright,
+                    anime_type,
+                )?;
 
                 dbus.proxies()
                     .anime()
-                    .write(<AnimeDataBuffer>::from(&matrix))?;
+                    .write(matrix.into_data_buffer(anime_type))?;
             }
             AnimeActions::Gif(gif) => {
                 if gif.help_requested() || gif.path.is_empty() {
@@ -287,6 +295,7 @@ fn handle_anime(
                     Vec2::new(gif.x_pos, gif.y_pos),
                     AnimTime::Count(1),
                     gif.bright,
+                    anime_type,
                 )?;
 
                 let mut loops = gif.loops as i32;
@@ -316,6 +325,7 @@ fn handle_anime(
                     Path::new(&gif.path),
                     AnimTime::Count(1),
                     gif.bright,
+                    anime_type,
                 )?;
 
                 let mut loops = gif.loops as i32;

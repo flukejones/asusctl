@@ -4,7 +4,7 @@ use std::{
     time::Duration,
 };
 
-use rog_anime::{ActionLoader, AnimTime, Fade, Sequences, Vec2};
+use rog_anime::{ActionLoader, AnimTime, AnimeType, Fade, Sequences, Vec2};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::error::Error;
@@ -16,8 +16,8 @@ pub struct UserAnimeConfig {
 }
 
 impl UserAnimeConfig {
-    pub fn create_anime(&self) -> Result<Sequences, Error> {
-        let mut seq = Sequences::new();
+    pub fn create_anime(&self, anime_type: AnimeType) -> Result<Sequences, Error> {
+        let mut seq = Sequences::new(anime_type);
 
         for (idx, action) in self.anime.iter().enumerate() {
             seq.insert(idx, action)?;

@@ -1,3 +1,4 @@
+use rog_anime::usb::get_anime_type;
 use rog_dbus::RogDbusClientBlocking;
 use rog_user::{
     ctrl_anime::{CtrlAnime, CtrlAnimeInner},
@@ -28,8 +29,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let early_return = Arc::new(AtomicBool::new(false));
     // Set up the anime data and run loop/thread
     if supported.anime_ctrl.0 {
+        let anime_type = get_anime_type()?;
         let anime_config = UserAnimeConfig::load_config(config.active_anime)?;
-        let anime = anime_config.create_anime()?;
+        let anime = anime_config.create_anime(anime_type)?;
         let anime_config = Arc::new(Mutex::new(anime_config));
 
         executor

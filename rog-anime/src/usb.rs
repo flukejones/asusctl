@@ -7,6 +7,8 @@
 //!
 //! Step 1 need to applied only on fresh system boot.
 
+use crate::{error::AnimeError, AnimeType};
+
 const INIT_STR: [u8; 15] = [
     0x5e, b'A', b'S', b'U', b'S', b' ', b'T', b'e', b'c', b'h', b'.', b'I', b'n', b'c', b'.',
 ];
@@ -14,6 +16,47 @@ const PACKET_SIZE: usize = 640;
 const DEV_PAGE: u8 = 0x5e;
 pub const VENDOR_ID: u16 = 0x0b05;
 pub const PROD_ID: u16 = 0x193b;
+
+/// `get_anime_type` is very broad, matching on part of the laptop board name only. For this
+/// reason `find_node()` must be used also to verify if the USB device is available.
+///
+/// The currently known USB device is `19b6`.
+#[inline]
+pub fn get_anime_type() -> Result<AnimeType, AnimeError> {
+    let dmi = sysfs_class::DmiId::default();
+    let board_name = dmi.board_name()?;
+
+    if board_name.contains("GA401Q") {
+        return Ok(AnimeType::GA401);
+    } else if board_name.contains("GA402R") {
+        return Ok(AnimeType::GA402);
+    }
+    Err(AnimeError::UnsupportedDevice)
+}
+
+/// Find the USB device node - known devices so far: `19b6`
+#[inline]
+pub fn find_node(id_product: &str) -> Result<String, AnimeError> {
+    let mut enumerator =
+        udev::Enumerator::new().map_err(|err| AnimeError::Udev("enumerator failed".into(), err))?;
+    enumerator
+        .match_subsystem("usb")
+        .map_err(|err| AnimeError::Udev("match_subsystem failed".into(), err))?;
+
+    for device in enumerator
+        .scan_devices()
+        .map_err(|err| AnimeError::Udev("scan_devices failed".into(), err))?
+    {
+        if let Some(attr) = device.attribute_value("idProduct") {
+            if attr == id_product {
+                if let Some(dev_node) = device.devnode() {
+                    return Ok(dev_node.to_string_lossy().to_string());
+                }
+            }
+        }
+    }
+    Err(AnimeError::NoDevice)
+}
 
 /// Get the two device initialization packets. These are required for device start
 /// after the laptop boots.

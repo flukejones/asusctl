@@ -2,7 +2,7 @@ use glam::Vec2;
 use serde_derive::{Deserialize, Serialize};
 use std::{fs::File, path::Path, time::Duration};
 
-use crate::{error::AnimeError, AnimeDataBuffer, AnimeDiagonal, AnimeImage, Pixel};
+use crate::{error::AnimeError, AnimeDataBuffer, AnimeDiagonal, AnimeImage, AnimeType, Pixel};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AnimeFrame {
@@ -92,8 +92,9 @@ impl AnimeGif {
         file_name: &Path,
         duration: AnimTime,
         brightness: f32,
+        anime_type: AnimeType,
     ) -> Result<Self, AnimeError> {
-        let mut matrix = AnimeDiagonal::new(None);
+        let mut matrix = AnimeDiagonal::new(anime_type, None);
 
         let mut decoder = gif::DecodeOptions::new();
         // Configure the decoder such that it will expand the image to RGBA.
@@ -121,7 +122,7 @@ impl AnimeGif {
             }
 
             frames.push(AnimeFrame {
-                data: <AnimeDataBuffer>::from(&matrix),
+                data: matrix.into_data_buffer(anime_type),
                 delay: Duration::from_millis(wait as u64),
             });
         }
@@ -132,10 +133,11 @@ impl AnimeGif {
     #[inline]
     pub fn from_diagonal_png(
         file_name: &Path,
+        anime_type: AnimeType,
         duration: AnimTime,
         brightness: f32,
     ) -> Result<Self, AnimeError> {
-        let image = AnimeDiagonal::from_png(file_name, None, brightness)?;
+        let image = AnimeDiagonal::from_png(file_name, None, brightness, anime_type)?;
 
         let mut total = Duration::from_millis(1000);
         if let AnimTime::Fade(fade) = duration {
@@ -148,7 +150,7 @@ impl AnimeGif {
         let frame_count = total.as_millis() / 30;
 
         let single = AnimeFrame {
-            data: <AnimeDataBuffer>::from(&image),
+            data: image.into_data_buffer(anime_type),
             delay: Duration::from_millis(30),
         };
         let frames = vec![single; frame_count as usize];
@@ -166,6 +168,7 @@ impl AnimeGif {
         translation: Vec2,
         duration: AnimTime,
         brightness: f32,
+        anime_type: AnimeType,
     ) -> Result<Self, AnimeError> {
         let mut frames = Vec::new();
 
@@ -187,6 +190,7 @@ impl AnimeGif {
             brightness,
             pixels,
             decoder.width() as u32,
+            anime_type,
         );
 
         while let Some(frame) = decoder.read_next_frame()? {
@@ -201,6 +205,7 @@ impl AnimeGif {
                     brightness,
                     pixels,
                     width as u32,
+                    anime_type,
                 );
             }
             for (y, row) in frame.buffer.chunks(frame.width as usize * 4).enumerate() {
@@ -238,8 +243,10 @@ impl AnimeGif {
         translation: Vec2,
         duration: AnimTime,
         brightness: f32,
+        anime_type: AnimeType,
     ) -> Result<Self, AnimeError> {
-        let image = AnimeImage::from_png(file_name, scale, angle, translation, brightness)?;
+        let image =
+            AnimeImage::from_png(file_name, scale, angle, translation, brightness, anime_type)?;
 
         let mut total = Duration::from_millis(1000);
         if let AnimTime::Fade(fade) = duration {

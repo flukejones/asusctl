@@ -1,4 +1,4 @@
-use rog_anime::{AnimeDataBuffer, AnimeGrid};
+use rog_anime::{usb::get_anime_type, AnimeDataBuffer, AnimeGrid};
 use rog_dbus::RogDbusClientBlocking;
 
 // In usable data:
@@ -8,7 +8,8 @@ use rog_dbus::RogDbusClientBlocking;
 
 fn main() {
     let (client, _) = RogDbusClientBlocking::new().unwrap();
-    let mut matrix = AnimeGrid::new(None);
+    let anime_type = get_anime_type().unwrap();
+    let mut matrix = AnimeGrid::new(anime_type);
     let tmp = matrix.get_mut();
 
     let mut i = 0;

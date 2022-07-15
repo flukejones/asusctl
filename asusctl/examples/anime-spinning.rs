@@ -3,6 +3,7 @@ use std::{
 };
 
 use rog_anime::{
+    usb::get_anime_type,
     AnimeDataBuffer, {AnimeImage, Vec2},
 };
 use rog_dbus::RogDbusClientBlocking;
@@ -17,6 +18,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         exit(-1);
     }
 
+    let anime_type = get_anime_type()?;
     let mut matrix = AnimeImage::from_png(
         Path::new(&args[1]),
         args[2].parse::<f32>().unwrap(),
@@ -26,6 +28,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             args[5].parse::<f32>().unwrap(),
         ),
         args[6].parse::<f32>().unwrap(),
+        anime_type,
     )?;
 
     loop {
