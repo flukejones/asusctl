@@ -10,6 +10,7 @@ stages:
 test:
   script:
     - cargo check #+nightly check --features "clippy"
+    - cargo test
 
 build:
   only:
