@@ -33,7 +33,7 @@ pub struct AnimePowerStates {
 }
 
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Debug, Copy, Clone, Deserialize, Serialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub enum AnimeType {
     GA401,
     GA402,
