@@ -69,7 +69,7 @@ Requirements are rust >= 1.57 installed from rustup.io if the distro provided ve
 
 **fedora:**
 
-    dnf install clang-devel systemd-devel
+    dnf install clang-devel systemd-devel cargo
     make
     sudo make install
 
