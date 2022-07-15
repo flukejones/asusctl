@@ -483,7 +483,9 @@ impl From<&AnimeImage> for AnimeDataBuffer {
 
 #[cfg(test)]
 mod tests {
-    use crate::{image::*, AnimePacketType};
+    use std::path::PathBuf;
+
+    use crate::{image::*, AnimePacketType, AnimeGif, AnimTime};
 
     #[test]
     fn led_positions() {
@@ -575,7 +577,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "Needs the packets verified with capture"]
     fn ga402_image_edge_packet_check() {
         let pkt0_check = [
             0x5e, 0xc0, 0x2, 0x1, 0x0, 0x73, 0x2, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -715,5 +716,16 @@ mod tests {
         assert_eq!(pkt[0], pkt0_check);
         assert_eq!(pkt[1], pkt1_check);
         assert_eq!(pkt[2], pkt2_check);
+    }
+
+    #[test]
+    #[ignore = "Just to inspect image packet"]
+    fn ga402_image_packet_check() {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("data/anime/custom/sonic-run.gif");
+
+        let matrix = AnimeGif::from_gif(&path, 1.0, 0.0, Vec2::default(), AnimTime::Infinite, 1.0, AnimeType::GA402).unwrap();
+        matrix.frames()[0].frame();
+        let _pkt = AnimePacketType::from(matrix.frames()[0].frame().clone());
     }
 }

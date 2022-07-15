@@ -51,7 +51,7 @@ impl AnimeType {
     /// The height of diagonal images
     pub fn height(&self) -> usize {
         match self {
-            AnimeType::GA401 => 32,
+            AnimeType::GA401 => 36,
             AnimeType::GA402 => 39,
         }
     }
