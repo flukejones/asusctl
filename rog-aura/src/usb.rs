@@ -24,29 +24,43 @@ pub const fn aura_brightness_bytes(brightness: u8) -> [u8; 17] {
 /// when the device is awake, suspended, shutting down or
 /// booting.
 ///
+/// # Bits for 0x19b6 keyboard model
+/// 
 /// ```text
-// byte 4 in the USB packet is for keyboard + logo power states
-// default is on, `ff`
-// Keyboard and logo use the full range of bits (almost)
-// | n1   | n2   | hex | action                | bit   |
-// |------|------|-----|-----------------------|-------|
-// | 0000 | 0000 | 00  | all off               |       |
-// | 0000 | 0001 | 01  | logo boot             | bit 1 |
-// | 0000 | 0010 | 02  | keyboard boot         | bit 2 |
-// | 0000 | 0100 | 04  | logo awake            | bit 3 |
-// | 0000 | 1000 | 08  | keyboard awake        | bit 4 |
-// | 0001 | 0000 | 10  | logo sleep off        | bit 5 |
-// | 0010 | 0000 | 20  | keyboard sleep        | bit 6 |
-// | 0100 | 0000 | 40  | logo shutdown off     | bit 7 |
-// | 1000 | 0000 | 80  | keyboard shutdown off | bit 8 |
-
-// byte 5 = lightbar
-// |  1   |  2   | hex | action               | bit   |
-// |------|------|-----|----------------------|-------|
-// | 0000 | 0010 | 02  | lightbar off boot    | bit 2 |
-// | 0000 | 0100 | 04  | lightbar on          | bit 3 |
-// | 0000 | 1000 | 08  | lightbar off sleep   | bit 4 |
-// | 0001 | 0000 | 10  | lightbar shtdn off   | bit 5 |
+/// byte 4 in the USB packet is for keyboard + logo power states
+/// default is on, `ff`
+/// Keyboard and logo use the full range of bits (almost)
+/// | n1   | n2   | hex | action                | bit   |
+/// |------|------|-----|-----------------------|-------|
+/// | 0000 | 0000 | 00  | all off               |       |
+/// | 0000 | 0001 | 01  | logo boot             | bit 1 |
+/// | 0000 | 0010 | 02  | keyboard boot         | bit 2 |
+/// | 0000 | 0100 | 04  | logo awake            | bit 3 |
+/// | 0000 | 1000 | 08  | keyboard awake        | bit 4 |
+/// | 0001 | 0000 | 10  | logo sleep off        | bit 5 |
+/// | 0010 | 0000 | 20  | keyboard sleep        | bit 6 |
+/// | 0100 | 0000 | 40  | logo shutdown off     | bit 7 |
+/// | 1000 | 0000 | 80  | keyboard shutdown off | bit 8 |
+///
+/// byte 5 = lightbar
+/// |  1   |  2   | hex | action               | bit   |
+/// |------|------|-----|----------------------|-------|
+/// | 0000 | 0010 | 02  | lightbar off boot    | bit 2 |
+/// | 0000 | 0100 | 04  | lightbar on          | bit 3 |
+/// | 0000 | 1000 | 08  | lightbar off sleep   | bit 4 |
+/// | 0001 | 0000 | 10  | lightbar shtdn off   | bit 5 |
+///
+/// # Bits for older 0x1866 keyboard model
+/// 
+/// Keybord and Light zone require Awake
+/// |    byte 1   |    byte 2   |    byte 3   |          |          |
+/// | 1    |  2   | 3    | 4    | 5    | 6    | function | hex      |
+/// |------|------|------|------|------|------|----------|----------|
+/// | 0000 | 0000 | 0000 | 0000 | 0000 | 0010 | Awake    | 00,00,02 |
+/// | 1000 | 0000 | 0000 | 0000 | 0000 | 0010 | Keyboard | 80,00,02 |
+/// | 0000 | 0100 | 0000 | 0101 | 0000 | 0010 | Lightbar | 04,05,02 |
+/// | 1100 | 0011 | 0001 | 0010 | 0000 | 1001 | Boot/Sht | c3,12,09 |
+/// | 0011 | 0000 | 0000 | 1000 | 0000 | 0100 | Sleep    | 30,08,04 |
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
 #[repr(u16)]
