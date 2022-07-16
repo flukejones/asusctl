@@ -191,7 +191,7 @@ impl AnimeGif {
             pixels,
             decoder.width() as u32,
             anime_type,
-        );
+        )?;
 
         while let Some(frame) = decoder.read_next_frame()? {
             let wait = frame.delay * 10;
@@ -206,7 +206,7 @@ impl AnimeGif {
                     pixels,
                     width as u32,
                     anime_type,
-                );
+                )?;
             }
             for (y, row) in frame.buffer.chunks(frame.width as usize * 4).enumerate() {
                 for (x, px) in row.chunks(4).enumerate() {

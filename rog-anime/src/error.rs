@@ -16,6 +16,7 @@ pub enum AnimeError {
     Udev(String, std::io::Error),
     NoDevice,
     UnsupportedDevice,
+    InvalidBrightness(f32),
 }
 
 impl fmt::Display for AnimeError {
@@ -36,6 +37,11 @@ impl fmt::Display for AnimeError {
             AnimeError::Udev(deets, error) => write!(f, "udev {}: {}", deets, error),
             AnimeError::NoDevice => write!(f, "No AniMe Matrix device found"),
             AnimeError::UnsupportedDevice => write!(f, "Unsupported AniMe Matrix device found"),
+            AnimeError::InvalidBrightness(bright) => write!(
+                f,
+                "Image brightness must be between 0.0 and 1.0 (inclusive), was {}",
+                bright
+            ),
         }
     }
 }

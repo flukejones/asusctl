@@ -157,17 +157,20 @@ impl AnimeConfig {
             if read_len == 0 {
                 return AnimeConfig::create_default(&mut file);
             } else {
-                if let Ok(data) = serde_json::from_str(&buf) {
+                if let Ok(mut data) = serde_json::from_str(&buf) {
+                    Self::clamp_config_brightness(&mut data);
                     return data;
                 } else if let Ok(data) = serde_json::from_str::<AnimeConfigV341>(&buf) {
-                    let config = data.into_current();
+                    let mut config = data.into_current();
                     config.write();
                     info!("Updated config version to: {}", VERSION);
+                    Self::clamp_config_brightness(&mut config);
                     return config;
                 } else if let Ok(data) = serde_json::from_str::<AnimeConfigV352>(&buf) {
-                    let config = data.into_current();
+                    let mut config = data.into_current();
                     config.write();
                     info!("Updated config version to: {}", VERSION);
+                    Self::clamp_config_brightness(&mut config);
                     return config;
                 }
                 warn!(
@@ -184,6 +187,16 @@ impl AnimeConfig {
             }
         }
         AnimeConfig::create_default(&mut file)
+    }
+
+    fn clamp_config_brightness(mut config: &mut AnimeConfig) {
+        if config.brightness < 0.0 || config.brightness > 1.0 {
+            warn!(
+                "Clamped brightness to [0.0 ; 1.0], was {}",
+                config.brightness
+            );
+            config.brightness = f32::max(0.0, f32::min(1.0, config.brightness));
+        }
     }
 
     fn create_default(file: &mut File) -> Self {

@@ -232,7 +232,8 @@ fn handle_anime(
         dbus.proxies().anime().set_boot_on_off(anime_boot)?
     }
     if let Some(bright) = cmd.brightness {
-        dbus.proxies().anime().set_brightness(bright as f32)?
+        verify_brightness(bright);
+        dbus.proxies().anime().set_brightness(bright)?
     }
     if let Some(action) = cmd.command.as_ref() {
         let anime_type = get_anime_type()?;
@@ -245,6 +246,7 @@ fn handle_anime(
                     }
                     std::process::exit(1);
                 }
+                verify_brightness(image.bright);
 
                 let matrix = AnimeImage::from_png(
                     Path::new(&image.path),
@@ -267,6 +269,7 @@ fn handle_anime(
                     }
                     std::process::exit(1);
                 }
+                verify_brightness(image.bright);
 
                 let matrix = AnimeDiagonal::from_png(
                     Path::new(&image.path),
@@ -287,6 +290,7 @@ fn handle_anime(
                     }
                     std::process::exit(1);
                 }
+                verify_brightness(gif.bright);
 
                 let matrix = AnimeGif::from_gif(
                     Path::new(&gif.path),
@@ -320,6 +324,7 @@ fn handle_anime(
                     }
                     std::process::exit(1);
                 }
+                verify_brightness(gif.bright);
 
                 let matrix = AnimeGif::from_diagonal_gif(
                     Path::new(&gif.path),
@@ -345,6 +350,16 @@ fn handle_anime(
         }
     }
     Ok(())
+}
+
+fn verify_brightness(brightness: f32) {
+    if brightness < 0.0 || brightness > 1.0 {
+        println!(
+            "Image and global brightness must be between 0.0 and 1.0 (inclusive), was {}",
+            brightness
+        );
+        std::process::exit(1);
+    }
 }
 
 fn handle_led_mode(
