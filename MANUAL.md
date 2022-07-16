@@ -60,17 +60,17 @@ The defaults are located at `/etc/asusd/asusd-ledmodes.toml`, and on `asusd` sta
 Example:
 ```toml
 [[led_data]]
-prod_family = "ROG Zephyrus M15"
-board_names = ["GU502LU"]
-standard = ["Static", "Breathe", "Strobe", "Pulse"]
-multizone = false
+prod_family = "Strix"
+board_names = ["GL504G"]
+standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
+multizone = ["Key1", "Key2", "Key3", "Key4", "Logo", "BarLeft", "BarRight"]
 per_key = false
 ```
 
 1. `prod_family`: you can find this in `journalctl -b -u asusd`, or `cat /sys/class/dmi/id/product_name`. It should be copied as written. There can be multiple `led-data` groups of the same `prod_family` with differing `board_names`.
 2. `board_names`: is an array of board names in this product family. Find this in the journal as above or by `cat /sys/class/dmi/id/board_name`.
 3. `standard` are the factory preset modes, the names should corrospond to Armory Crate names
-4. `multizone`: some keyboards have 4 zones of LED control, this enables setting a colour in each zone. The keyboard must support this or it has no effect.
+4. `multizone`: some models have 4 to 7 zones of LED control as shown in the example. If the laptop has no zones then an empty array will suffice.
 5. `per_key`: enable per-key RGB effects. The keyboard must support this or it has no effect.
 
 ##### /etc/asusd/aura.conf

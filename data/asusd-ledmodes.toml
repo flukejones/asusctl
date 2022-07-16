@@ -34,6 +34,14 @@ multizone = []
 per_key = false
 
 [[led_data]]
+prod_family = "ROG Zephyrus S17"
+board_names = ["GX703HS"]
+standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
+multizone = []
+per_key = false
+
+
+[[led_data]]
 prod_family = "Zephyrus"
 board_names = ["GM501GM", "GX531"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
@@ -65,7 +73,7 @@ per_key = false
 prod_family = "ROG Strix"
 board_names = ["G513IM"]
 standard = ["Flash", "Static", "Breathe", "Strobe", "Rainbow"]
-multizone = false
+multizone = []
 per_key = true
 
 [[led_data]]

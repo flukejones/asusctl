@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Full support for multizone LED <logo, keyboard, lightbar> (Author: Luke Jones, With much help from: @MNS26)
 - Add ability to load extra data from `/etc/asusd/asusd-user-ledmodes.toml` for LED support if file exits
 - Support for G513IM LED modes
+- Support for GX703HS LED modes
 ### Changed
 - Dbus interface for Aura config has been changed, all power control is done with `SetLedsEnabled` and `SetLedsDisabled`
 - Data for anime-matrix now requires passing the laptop model as enum
