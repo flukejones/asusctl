@@ -308,7 +308,8 @@ impl AnimeImage {
         }
     }
 
-    fn edge_outline(&mut self) {
+    /// A helper for determining physical position alignment
+    fn _edge_outline(&mut self) {
         // Janky shit here just to try help align images
         let mut last_x = 0.0;
         let mut last_y = 0.0;
@@ -503,7 +504,7 @@ impl From<&AnimeImage> for AnimeDataBuffer {
 mod tests {
     use std::path::PathBuf;
 
-    use crate::{image::*, AnimePacketType, AnimeGif, AnimTime};
+    use crate::{image::*, AnimTime, AnimeGif, AnimePacketType};
 
     #[test]
     fn led_positions() {
@@ -727,7 +728,7 @@ mod tests {
             100,
             AnimeType::GA402,
         );
-        matrix.edge_outline();
+        matrix._edge_outline();
         let data = AnimeDataBuffer::from(&matrix);
         let pkt = AnimePacketType::from(data);
 
@@ -742,7 +743,16 @@ mod tests {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.push("data/anime/custom/sonic-run.gif");
 
-        let matrix = AnimeGif::from_gif(&path, 1.0, 0.0, Vec2::default(), AnimTime::Infinite, 1.0, AnimeType::GA402).unwrap();
+        let matrix = AnimeGif::from_gif(
+            &path,
+            1.0,
+            0.0,
+            Vec2::default(),
+            AnimTime::Infinite,
+            1.0,
+            AnimeType::GA402,
+        )
+        .unwrap();
         matrix.frames()[0].frame();
         let _pkt = AnimePacketType::from(matrix.frames()[0].frame().clone());
     }

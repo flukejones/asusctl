@@ -5,6 +5,7 @@ use std::fs::OpenOptions;
 use std::io::Read;
 
 pub const ASUS_LED_MODE_CONF: &str = "/etc/asusd/asusd-ledmodes.toml";
+pub const ASUS_LED_MODE_USER_CONF: &str = "/etc/asusd/asusd-user-ledmodes.toml";
 pub const ASUS_KEYBOARD_DEVICES: [&str; 4] = ["1866", "1869", "1854", "19b6"];
 
 pub fn print_board_info() {
@@ -32,7 +33,7 @@ pub fn print_modes(supported_modes: &[u8]) {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 struct LedSupportFile {
     led_data: Vec<LaptopLedData>,
 }
@@ -86,19 +87,49 @@ impl LedSupportFile {
     }
 
     fn load_from_config() -> Option<Self> {
+        let mut loaded = false;
+        let mut data = LedSupportFile::default();
+        // Load user configs first so they are first to be checked
+        if let Ok(mut file) = OpenOptions::new().read(true).open(&ASUS_LED_MODE_USER_CONF) {
+            let mut buf = String::new();
+            if let Ok(l) = file.read_to_string(&mut buf) {
+                if l == 0 {
+                    warn!("{} is empty", ASUS_LED_MODE_USER_CONF);
+                } else {
+                    if let Ok(mut tmp) = toml::from_str::<LedSupportFile>(&buf) {
+                        data.led_data.append(&mut tmp.led_data);
+                    }
+                    info!(
+                        "Loaded user-defined LED support data from {}",
+                        ASUS_LED_MODE_USER_CONF
+                    );
+                }
+            }
+        }
+        // Load and append the default LED support data
         if let Ok(mut file) = OpenOptions::new().read(true).open(&ASUS_LED_MODE_CONF) {
             let mut buf = String::new();
             if let Ok(l) = file.read_to_string(&mut buf) {
                 if l == 0 {
                     warn!("{} is empty", ASUS_LED_MODE_CONF);
                 } else {
-                    return Some(toml::from_str(&buf).unwrap_or_else(|_| {
-                        panic!("Could not deserialise {}", ASUS_LED_MODE_CONF)
-                    }));
+                    let mut tmp: LedSupportFile = toml::from_str(&buf)
+                        .unwrap_or_else(|_| panic!("Could not deserialise {}", ASUS_LED_MODE_CONF));
+                    data.led_data.append(&mut tmp.led_data);
+                    loaded = true;
+                    info!(
+                        "Loaded default LED support data from {}",
+                        ASUS_LED_MODE_CONF
+                    );
                 }
             }
         }
-        warn!("Does {} exist?", ASUS_LED_MODE_CONF);
+
+        if loaded {
+            return Some(data);
+        }
+
+        warn!("Does {} exist?", ASUS_LED_MODE_USER_CONF);
         None
     }
 }
