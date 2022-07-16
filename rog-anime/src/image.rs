@@ -83,8 +83,12 @@ impl AnimeImage {
         pixels: Vec<Pixel>,
         width: u32,
         anime_type: AnimeType,
-    ) -> Self {
-        Self {
+    ) -> Result<Self, AnimeError> {
+        if bright < 0.0 || bright > 1.0 {
+            return Err(AnimeError::InvalidBrightness(bright));
+        }
+
+        Ok(Self {
             scale,
             angle,
             translation,
@@ -93,7 +97,7 @@ impl AnimeImage {
             img_pixels: pixels,
             width,
             anime_type,
-        }
+        })
     }
 
     // TODO: Convert functions back to const after todo completed
@@ -435,7 +439,7 @@ impl AnimeImage {
             pixels,
             width,
             anime_type,
-        );
+        )?;
 
         matrix.update();
         Ok(matrix)

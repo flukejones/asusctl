@@ -44,8 +44,8 @@ impl CtrlAnimeZbus {
                 let mut bright = bright;
                 if bright < 0.0 {
                     bright = 0.0
-                } else if bright > 254.0 {
-                    bright = 254.0;
+                } else if bright > 1.0 {
+                    bright = 1.0;
                 }
                 lock.config.brightness = bright;
                 lock.config.write();
