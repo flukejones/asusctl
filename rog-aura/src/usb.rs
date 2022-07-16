@@ -20,6 +20,33 @@ pub const fn aura_brightness_bytes(brightness: u8) -> [u8; 17] {
     ]
 }
 
+/// Enable/disable LED control in various states such as
+/// when the device is awake, suspended, shutting down or
+/// booting.
+///
+/// ```text
+// byte 4 in the USB packet is for keyboard + logo power states
+// default is on, `ff`
+// Keyboard and logo use the full range of bits (almost)
+// | n1   | n2   | hex | action                | bit   |
+// |------|------|-----|-----------------------|-------|
+// | 0000 | 0000 | 00  | all off               |       |
+// | 0000 | 0001 | 01  | logo boot             | bit 1 |
+// | 0000 | 0010 | 02  | keyboard boot         | bit 2 |
+// | 0000 | 0100 | 04  | logo awake            | bit 3 |
+// | 0000 | 1000 | 08  | keyboard awake        | bit 4 |
+// | 0001 | 0000 | 10  | logo sleep off        | bit 5 |
+// | 0010 | 0000 | 20  | keyboard sleep        | bit 6 |
+// | 0100 | 0000 | 40  | logo shutdown off     | bit 7 |
+// | 1000 | 0000 | 80  | keyboard shutdown off | bit 8 |
+
+// byte 5 = lightbar
+// |  1   |  2   | hex | action               | bit   |
+// |------|------|-----|----------------------|-------|
+// | 0000 | 0010 | 02  | lightbar off boot    | bit 2 |
+// | 0000 | 0100 | 04  | lightbar on          | bit 3 |
+// | 0000 | 1000 | 08  | lightbar off sleep   | bit 4 |
+// | 0001 | 0000 | 10  | lightbar shtdn off   | bit 5 |
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
 #[repr(u16)]

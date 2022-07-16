@@ -26,7 +26,22 @@ impl CtrlKbdLedZbus {
         }
     }
 
-    /// Set a variety of states
+    /// Set a variety of states, input is array of enum.
+    ///
+    /// enum AuraControl {
+    ///     BootLogo,
+    ///     BootKeyb,
+    ///     AwakeLogo,
+    ///     AwakeKeyb,
+    ///     SleepLogo,
+    ///     SleepKeyb,
+    ///     ShutdownLogo,
+    ///     ShutdownKeyb,
+    ///     AwakeBar,
+    ///     BootBar,
+    ///     SleepBar,
+    ///     ShutdownBar,
+    /// }
     async fn set_leds_enabled(
         &mut self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
