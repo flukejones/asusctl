@@ -1,6 +1,6 @@
 [package]
 name = "rog_supported"
-version = "4.0.0"
+version = "4.2.0"
 license = "MPL-2.0"
 readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]

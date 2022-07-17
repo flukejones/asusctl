@@ -16,6 +16,7 @@ pub struct AuraConfig {
     pub current_mode: AuraModeNum,
     pub builtins: BTreeMap<AuraModeNum, AuraEffect>,
     pub multizone: Option<BTreeMap<AuraModeNum, Vec<AuraEffect>>>,
+    pub multizone_on: bool,
     pub enabled: HashSet<AuraControl>,
 }
 
@@ -26,6 +27,7 @@ impl Default for AuraConfig {
             current_mode: AuraModeNum::Static,
             builtins: BTreeMap::new(),
             multizone: None,
+            multizone_on: false,
             enabled: HashSet::from([
                 AuraControl::BootLogo,
                 AuraControl::BootKeyb,
@@ -123,27 +125,35 @@ impl AuraConfig {
             .unwrap_or_else(|err| error!("Could not write config: {}", err));
     }
 
-    /// Multipurpose, will accept AuraEffect with zones and put in the correct store
+    /// Set the mode data, current mode, and if multizone enabled.
+    ///
+    /// Multipurpose, will accept AuraEffect with zones and put in the correct store.
     pub fn set_builtin(&mut self, effect: AuraEffect) {
+        self.current_mode = effect.mode;
         match effect.zone() {
             AuraZone::None => {
                 self.builtins.insert(*effect.mode(), effect);
+                self.multizone_on = false;
             }
             _ => {
                 if let Some(multi) = self.multizone.as_mut() {
                     if let Some(fx) = multi.get_mut(effect.mode()) {
                         for fx in fx.iter_mut() {
-                            if fx.mode == effect.mode {
+                            if fx.zone == effect.zone {
                                 *fx = effect;
-                                break;
+                                return;
                             }
                         }
+                        fx.push(effect);
                     } else {
-                        let mut tmp = BTreeMap::new();
-                        tmp.insert(*effect.mode(), vec![effect]);
-                        self.multizone = Some(tmp);
+                        multi.insert(*effect.mode(), vec![effect]);
                     }
+                } else {
+                    let mut tmp = BTreeMap::new();
+                    tmp.insert(*effect.mode(), vec![effect]);
+                    self.multizone = Some(tmp);
                 }
+                self.multizone_on = true;
             }
         }
     }
@@ -153,5 +163,88 @@ impl AuraConfig {
             return multi.get(&aura_type).map(|v| v.as_slice());
         }
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::AuraConfig;
+    use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour};
+
+    #[test]
+    fn set_multizone_4key_config() {
+        let mut config = AuraConfig::default();
+
+        let mut effect = AuraEffect::default();
+        effect.colour1 = Colour(0xff, 0x00, 0xff);
+        effect.zone = AuraZone::Key1;
+        config.set_builtin(effect);
+
+        assert!(config.multizone.is_some());
+
+        let mut effect = AuraEffect::default();
+        effect.colour1 = Colour(0x00, 0xff, 0xff);
+        effect.zone = AuraZone::Key2;
+        config.set_builtin(effect);
+
+        let mut effect = AuraEffect::default();
+        effect.colour1 = Colour(0xff, 0xff, 0x00);
+        effect.zone = AuraZone::Key3;
+        config.set_builtin(effect);
+
+        let mut effect = AuraEffect::default();
+        effect.colour1 = Colour(0x00, 0xff, 0x00);
+        effect.zone = AuraZone::Key4;
+        let effect_clone = effect.clone();
+        config.set_builtin(effect);
+        // This should replace existing
+        config.set_builtin(effect_clone);
+
+        let res = config.multizone.unwrap();
+        let sta = res.get(&AuraModeNum::Static).unwrap();
+        assert_eq!(sta.len(), 4);
+        assert_eq!(sta[0].colour1, Colour(0xff, 0x00, 0xff));
+        assert_eq!(sta[1].colour1, Colour(0x00, 0xff, 0xff));
+        assert_eq!(sta[2].colour1, Colour(0xff, 0xff, 0x00));
+        assert_eq!(sta[3].colour1, Colour(0x00, 0xff, 0x00));
+    }
+
+    #[test]
+    fn set_multizone_multimode_config() {
+        let mut config = AuraConfig::default();
+
+        let mut effect = AuraEffect::default();
+        effect.zone = AuraZone::Key1;
+        config.set_builtin(effect);
+
+        assert!(config.multizone.is_some());
+
+        let mut effect = AuraEffect::default();
+        effect.zone = AuraZone::Key2;
+        effect.mode = AuraModeNum::Breathe;
+        config.set_builtin(effect);
+
+        let mut effect = AuraEffect::default();
+        effect.zone = AuraZone::Key3;
+        effect.mode = AuraModeNum::Comet;
+        config.set_builtin(effect);
+
+        let mut effect = AuraEffect::default();
+        effect.zone = AuraZone::Key4;
+        effect.mode = AuraModeNum::Pulse;
+        config.set_builtin(effect);
+
+        let res = config.multizone.unwrap();
+        let sta = res.get(&AuraModeNum::Static).unwrap();
+        assert_eq!(sta.len(), 1);
+
+        let sta = res.get(&AuraModeNum::Breathe).unwrap();
+        assert_eq!(sta.len(), 1);
+
+        let sta = res.get(&AuraModeNum::Comet).unwrap();
+        assert_eq!(sta.len(), 1);
+
+        let sta = res.get(&AuraModeNum::Pulse).unwrap();
+        assert_eq!(sta.len(), 1);
     }
 }

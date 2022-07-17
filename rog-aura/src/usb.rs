@@ -25,7 +25,7 @@ pub const fn aura_brightness_bytes(brightness: u8) -> [u8; 17] {
 /// booting.
 ///
 /// # Bits for 0x19b6 keyboard model
-/// 
+///
 /// ```text
 /// byte 4 in the USB packet is for keyboard + logo power states
 /// default is on, `ff`
@@ -51,7 +51,7 @@ pub const fn aura_brightness_bytes(brightness: u8) -> [u8; 17] {
 /// | 0001 | 0000 | 10  | lightbar shtdn off   | bit 5 |
 ///
 /// # Bits for older 0x1866 keyboard model
-/// 
+///
 /// Keybord and Light zone require Awake
 /// |    byte 1   |    byte 2   |    byte 3   |          |          |
 /// | 1    |  2   | 3    | 4    | 5    | 6    | function | hex      |

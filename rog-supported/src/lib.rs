@@ -38,8 +38,11 @@ pub struct LedSupportedFunctions {
 
 #[derive(Serialize, Deserialize, Type, Debug)]
 pub struct RogBiosSupportedFunctions {
-    pub post_sound_toggle: bool,
-    pub dedicated_gfx_toggle: bool,
+    pub post_sound: bool,
+    pub dedicated_gfx: bool,
+    pub panel_overdrive: bool,
+    pub dgpu_disable: bool,
+    pub egpu_enable: bool,
 }
 
 impl fmt::Display for SupportedFunctions {
@@ -87,7 +90,11 @@ impl fmt::Display for LedSupportedFunctions {
 impl fmt::Display for RogBiosSupportedFunctions {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "ROG BIOS:")?;
-        writeln!(f, "\tPOST sound toggle: {}", self.post_sound_toggle)?;
-        writeln!(f, "\tDedicated GFX toggle: {}", self.dedicated_gfx_toggle)
+        writeln!(f, "\tPOST sound switch: {}", self.post_sound)?;
+        writeln!(f, "\tPanel Overdrive: {}", self.panel_overdrive)?;
+        writeln!(f, "\tdGPU disable switch: {}", self.dgpu_disable)?;
+        writeln!(f, "\teGPU enable switch: {}", self.egpu_enable)?;
+        writeln!(f, "\tDedicated GFX switch: {}", self.dedicated_gfx)?;
+        Ok(())
     }
 }

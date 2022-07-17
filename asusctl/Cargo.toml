@@ -1,6 +1,6 @@
 [package]
 name = "asusctl"
-version = "4.0.7"
+version = "4.2.1"
 authors = ["Luke D Jones <luke@ljones.dev>"]
 edition = "2018"
 

@@ -9,7 +9,7 @@ use crate::{
 use async_trait::async_trait;
 use log::{error, info, warn};
 use logind_zbus::manager::ManagerProxy;
-use rog_aura::usb::AuraControl;
+use rog_aura::{usb::AuraControl, AuraZone};
 use rog_aura::{
     usb::{LED_APPLY, LED_SET},
     AuraEffect, LedBrightness, LED_MSG_LEN,
@@ -106,11 +106,9 @@ impl CtrlTask for CtrlKbdLedTask {
                 lock.set_brightness(lock.config.brightness)
                     .map_err(|e| error!("CtrlKbdLedTask: {e}"))
                     .ok();
-                if let Some(mode) = lock.config.builtins.get(&lock.config.current_mode) {
-                    lock.write_mode(mode)
-                        .map_err(|e| error!("CtrlKbdLedTask: {e}"))
-                        .ok();
-                }
+                lock.write_current_config_mode()
+                    .map_err(|e| error!("CtrlKbdLedTask: {e}"))
+                    .ok();
             } else if start {
                 info!("CtrlKbdLedTask saving last brightness");
                 Self::update_config(&mut lock)
@@ -154,15 +152,6 @@ impl CtrlTask for CtrlKbdLedTask {
                 }
             })
             .detach();
-
-        // let inner = self.inner.clone();
-        // self.repeating_task(500, executor, move || loop {
-        //     if let Ok(ref mut lock) = inner.try_lock() {
-        //         Self::update_config(lock).unwrap();
-        //         break;
-        //     }
-        // })
-        // .await;
         Ok(())
     }
 }
@@ -171,12 +160,8 @@ pub struct CtrlKbdLedReloader(pub Arc<Mutex<CtrlKbdLed>>);
 
 impl crate::Reloadable for CtrlKbdLedReloader {
     fn reload(&mut self) -> Result<(), RogError> {
-        if let Ok(mut ctrl) = self.0.try_lock() {
-            let current = ctrl.config.current_mode;
-            if let Some(mode) = ctrl.config.builtins.get(&current).cloned() {
-                ctrl.do_command(mode).ok();
-            }
-
+        if let Ok(ctrl) = self.0.try_lock() {
+            ctrl.write_current_config_mode()?;
             ctrl.set_power_states(&ctrl.config)
                 .map_err(|err| warn!("{err}"))
                 .ok();
@@ -211,11 +196,8 @@ impl CtrlKbdLed {
 
         let bright_node = Self::get_kbd_bright_path();
 
-        if led_node.is_none() && bright_node.is_none() {
-            return Err(RogError::MissingFunction(
-                "All keyboard features missing, you may require a v5.11 series kernel or newer"
-                    .into(),
-            ));
+        if led_node.is_none() {
+            return Err(RogError::NoAuraKeyboard);
         }
 
         if bright_node.is_none() {
@@ -301,7 +283,6 @@ impl CtrlKbdLed {
         let set: Vec<AuraControl> = config.enabled.iter().map(|v| *v).collect();
         let bytes = AuraControl::to_bytes(&set);
 
-        // Quite ugly, must be a more idiomatic way to do
         let message = [
             0x5d, 0xbd, 0x01, bytes[0], bytes[1], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         ];
@@ -351,8 +332,24 @@ impl CtrlKbdLed {
         ))
     }
 
-    pub(crate) fn do_command(&mut self, mode: AuraEffect) -> Result<(), RogError> {
-        self.set_and_save(mode)
+    /// Set an Aura effect if the effect mode or zone is supported.
+    ///
+    /// On success the aura config file is read to refresh cached values, then the effect is
+    /// stored and config written to disk.
+    pub(crate) fn set_effect(&mut self, effect: AuraEffect) -> Result<(), RogError> {
+        if !self.supported_modes.standard.contains(&effect.mode) {
+            return Err(RogError::AuraEffectNotSupported);
+        } else if effect.zone != AuraZone::None
+            && !self.supported_modes.multizone.contains(&effect.zone)
+        {
+            return Err(RogError::AuraEffectNotSupported);
+        }
+
+        self.write_mode(&effect)?;
+        self.config.read(); // refresh config if successful
+        self.config.set_builtin(effect);
+        self.config.write();
+        Ok(())
     }
 
     /// Should only be used if the bytes you are writing are verified correct
@@ -366,10 +363,10 @@ impl CtrlKbdLed {
                     .map_err(|err| RogError::Write("write_bytes".into(), err));
             }
         }
-        Err(RogError::NotSupported)
+        Err(RogError::NoAuraNode)
     }
 
-    /// Write an effect block
+    /// Write an effect block. This is for per-key
     #[inline]
     fn _write_effect(&mut self, effect: &[Vec<u8>]) -> Result<(), RogError> {
         if self.flip_effect_write {
@@ -382,19 +379,6 @@ impl CtrlKbdLed {
             }
         }
         self.flip_effect_write = !self.flip_effect_write;
-        Ok(())
-    }
-
-    /// Used to set a builtin mode and save the settings for it
-    ///
-    /// This needs to be universal so that settings applied by dbus stick
-    #[inline]
-    fn set_and_save(&mut self, mode: AuraEffect) -> Result<(), RogError> {
-        self.config.read();
-        self.write_mode(&mode)?;
-        self.config.current_mode = *mode.mode();
-        self.config.set_builtin(mode);
-        self.config.write();
         Ok(())
     }
 
@@ -424,9 +408,9 @@ impl CtrlKbdLed {
             let next = self.supported_modes.standard[idx];
 
             self.config.read();
-            if let Some(data) = self.config.builtins.get(&next) {
-                self.write_mode(data)?;
+            if self.config.builtins.contains_key(&next) {
                 self.config.current_mode = next;
+                self.write_current_config_mode()?;
             }
             self.config.write();
         }
@@ -436,14 +420,103 @@ impl CtrlKbdLed {
 
     #[inline]
     fn write_mode(&self, mode: &AuraEffect) -> Result<(), RogError> {
-        if !self.supported_modes.standard.contains(mode.mode()) {
-            return Err(RogError::NotSupported);
-        }
         let bytes: [u8; LED_MSG_LEN] = mode.into();
         self.write_bytes(&bytes)?;
         self.write_bytes(&LED_SET)?;
         // Changes won't persist unless apply is set
         self.write_bytes(&LED_APPLY)?;
         Ok(())
+    }
+
+    #[inline]
+    fn write_current_config_mode(&self) -> Result<(), RogError> {
+        if self.config.multizone_on {
+            let mode = self.config.current_mode;
+            if let Some(multizones) = self.config.multizone.as_ref() {
+                if let Some(set) = multizones.get(&mode) {
+                    for mode in set {
+                        self.write_mode(mode)?;
+                    }
+                }
+            }
+        } else {
+            let mode = self.config.current_mode;
+            if let Some(effect) = self.config.builtins.get(&mode) {
+                self.write_mode(effect)?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour};
+
+    use crate::{ctrl_aura::config::AuraConfig, laptops::LaptopLedData};
+
+    use super::CtrlKbdLed;
+
+    #[test]
+    // #[ignore = "Must be manually run due to detection stage"]
+    fn check_set_mode_errors() {
+        // Checking to ensure set_mode errors when unsupported modes are tried
+        let config = AuraConfig::default();
+        let supported_modes = LaptopLedData {
+            prod_family: "".into(),
+            board_names: vec![],
+            standard: vec![AuraModeNum::Static],
+            multizone: vec![],
+            per_key: false,
+        };
+        let mut controller = CtrlKbdLed {
+            led_node: None,
+            bright_node: String::new(),
+            supported_modes,
+            flip_effect_write: false,
+            config,
+        };
+
+        let mut effect = AuraEffect::default();
+        effect.colour1 = Colour(0xff, 0x00, 0xff);
+        effect.zone = AuraZone::None;
+
+        // This error comes from write_bytes because we don't have a keyboard node stored
+        assert_eq!(
+            controller
+                .set_effect(effect.clone())
+                .unwrap_err()
+                .to_string(),
+            "No Aura keyboard node found"
+        );
+
+        effect.mode = AuraModeNum::Laser;
+        assert_eq!(
+            controller
+                .set_effect(effect.clone())
+                .unwrap_err()
+                .to_string(),
+            "Aura effect not supported"
+        );
+
+        effect.mode = AuraModeNum::Static;
+        effect.zone = AuraZone::Key2;
+        assert_eq!(
+            controller
+                .set_effect(effect.clone())
+                .unwrap_err()
+                .to_string(),
+            "Aura effect not supported"
+        );
+
+        controller.supported_modes.multizone.push(AuraZone::Key2);
+        assert_eq!(
+            controller
+                .set_effect(effect.clone())
+                .unwrap_err()
+                .to_string(),
+            "No Aura keyboard node found"
+        );
     }
 }

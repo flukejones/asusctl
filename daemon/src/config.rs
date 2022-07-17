@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 pub static CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Default)]
 pub struct Config {
     /// Save charge limit for restoring on boot
     pub bat_charge_limit: u8,

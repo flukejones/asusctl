@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased ]
 
+### Added
+- Add panel overdrive support (autodetects if supported)
+- Add detection of dgpu_disable and egpu_enable for diagnostic
+### Changed
+- Fixed save and restore of multizone LED settings
+
 ## [4.2.0] - 2022-07-16
 ### Added
 - Support for GA402 Anime Matrix display (Author: I-Al-Istannen & Luke Jones)

@@ -167,6 +167,10 @@ fn do_parsed(
                 if let Some(cmdlist) = CliStart::command_list() {
                     println!("{}", cmdlist);
                 }
+
+                println!("\nExtra help can be requested on any command or subcommand:");
+                println!(" asusctl led-mode --help");
+                println!(" asusctl led-mode static --help");
             }
         }
     }
@@ -692,7 +696,9 @@ fn handle_bios_option(
         if (cmd.dedicated_gfx_set.is_none()
             && !cmd.dedicated_gfx_get
             && cmd.post_sound_set.is_none()
-            && !cmd.post_sound_get)
+            && !cmd.post_sound_get
+            && cmd.panel_overdrive_set.is_none()
+            && !cmd.panel_overdrive_get)
             || cmd.help
         {
             println!("Missing arg or command\n");
@@ -703,8 +709,9 @@ fn handle_bios_option(
                 .collect();
 
             for line in usage.iter().filter(|line| {
-                line.contains("sound") && supported.post_sound_toggle
-                    || line.contains("GPU") && supported.dedicated_gfx_toggle
+                line.contains("sound") && supported.post_sound
+                    || line.contains("GPU") && supported.dedicated_gfx
+                    || line.contains("panel") && supported.panel_overdrive
             }) {
                 println!("{}", line);
             }
@@ -717,6 +724,7 @@ fn handle_bios_option(
             let res = dbus.proxies().rog_bios().post_boot_sound()? == 1;
             println!("Bios POST sound on: {}", res);
         }
+
         if let Some(opt) = cmd.dedicated_gfx_set {
             println!("Rebuilding initrd to include drivers");
             dbus.proxies().rog_bios().set_dedicated_graphic_mode(opt)?;
@@ -732,6 +740,14 @@ fn handle_bios_option(
         if cmd.dedicated_gfx_get {
             let res = dbus.proxies().rog_bios().dedicated_graphic_mode()? == 1;
             println!("Bios dedicated GPU on: {}", res);
+        }
+
+        if let Some(opt) = cmd.panel_overdrive_set {
+            dbus.proxies().rog_bios().set_panel_overdrive(opt)?;
+        }
+        if cmd.panel_overdrive_get {
+            let res = dbus.proxies().rog_bios().panel_overdrive()? == 1;
+            println!("Panel overdrive on: {}", res);
         }
     }
     Ok(())

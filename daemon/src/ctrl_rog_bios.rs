@@ -19,6 +19,9 @@ static ASUS_SWITCH_GRAPHIC_MODE: &str =
     "/sys/firmware/efi/efivars/AsusSwitchGraphicMode-607005d5-3f75-4b2e-98f0-85ba66797a3e";
 static ASUS_POST_LOGO_SOUND: &str =
     "/sys/firmware/efi/efivars/AsusPostLogoSound-607005d5-3f75-4b2e-98f0-85ba66797a3e";
+static ASUS_PANEL_OD_PATH: &str = "/sys/devices/platform/asus-nb-wmi/panel_od";
+static ASUS_DGPU_DISABLE_PATH: &str = "/sys/devices/platform/asus-nb-wmi/dgpu_disable";
+static ASUS_EGPU_ENABLE_PATH: &str = "/sys/devices/platform/asus-nb-wmi/egpu_enable";
 
 pub struct CtrlRogBios {
     _config: Arc<Mutex<Config>>,
@@ -29,8 +32,11 @@ impl GetSupported for CtrlRogBios {
 
     fn get_supported() -> Self::A {
         RogBiosSupportedFunctions {
-            post_sound_toggle: Path::new(ASUS_POST_LOGO_SOUND).exists(),
-            dedicated_gfx_toggle: Path::new(ASUS_SWITCH_GRAPHIC_MODE).exists(),
+            post_sound: Path::new(ASUS_POST_LOGO_SOUND).exists(),
+            dedicated_gfx: Path::new(ASUS_SWITCH_GRAPHIC_MODE).exists(),
+            panel_overdrive: Path::new(ASUS_PANEL_OD_PATH).exists(),
+            dgpu_disable: Path::new(ASUS_DGPU_DISABLE_PATH).exists(),
+            egpu_enable: Path::new(ASUS_EGPU_ENABLE_PATH).exists(),
         }
     }
 }
@@ -94,6 +100,52 @@ impl CtrlRogBios {
 
     #[dbus_interface(signal)]
     async fn notify_post_boot_sound(ctxt: &SignalContext<'_>, on: bool) -> zbus::Result<()> {}
+
+    async fn set_panel_overdrive(
+        &mut self,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+        overdrive: bool,
+    ) {
+        if self
+            .set_panel_od(overdrive)
+            .map_err(|err| {
+                warn!("CtrlRogBios: set_panel_overdrive {}", err);
+                err
+            })
+            .is_ok()
+        {
+            Self::notify_panel_overdrive(&ctxt, overdrive).await.ok();
+        }
+    }
+
+    fn panel_overdrive(&self) -> i8 {
+        let path = ASUS_PANEL_OD_PATH;
+        if let Ok(mut file) = OpenOptions::new().read(true).open(path).map_err(|err| {
+            warn!("CtrlRogBios: panel_overdrive {}", err);
+            err
+        }) {
+            let mut buf = Vec::new();
+            file.read_to_end(&mut buf)
+                .map_err(|err| {
+                    warn!("CtrlRogBios: set_panel_overdrive {}", err);
+                    err
+                })
+                .ok();
+
+            if buf.len() >= 1 {
+                let tmp = String::from_utf8_lossy(&buf[0..1]);
+                return tmp.parse::<i8>().unwrap_or(-1);
+            }
+        }
+        -1
+    }
+
+    #[dbus_interface(signal)]
+    async fn notify_panel_overdrive(
+        signal_ctxt: &SignalContext<'_>,
+        overdrive: bool,
+    ) -> zbus::Result<()> {
+    }
 }
 
 #[async_trait]
@@ -304,5 +356,44 @@ impl CtrlRogBios {
             }
         }
         Ok(())
+    }
+
+    fn set_panel_od(&mut self, overdrive: bool) -> Result<(), RogError> {
+        let path = ASUS_PANEL_OD_PATH;
+        let mut file = OpenOptions::new().write(true).open(path).map_err(|err| {
+            warn!("CtrlRogBios: set_panel_overdrive {}", err);
+            err
+        })?;
+
+        let s = if overdrive { '1' } else { '0' };
+        file.write(&[s as u8]).map_err(|err| {
+            warn!("CtrlRogBios: set_panel_overdrive {}", err);
+            err
+        })?;
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::CtrlRogBios;
+    use crate::config::Config;
+    use std::sync::{Arc, Mutex};
+
+    #[test]
+    #[ignore = "Must be manually tested"]
+    fn set_multizone_4key_config() {
+        let config = Config::default();
+
+        let controller = CtrlRogBios {
+            _config: Arc::new(Mutex::new(config)),
+        };
+
+        let res = controller.panel_overdrive();
+        assert_eq!(res, 1);
+
+        // controller.set_panel_od(false).unwrap();
+        // let res = controller.panel_overdrive();
+        // assert_eq!(res, 0);
     }
 }

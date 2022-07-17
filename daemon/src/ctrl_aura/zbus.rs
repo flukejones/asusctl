@@ -46,7 +46,7 @@ impl CtrlKbdLedZbus {
         &mut self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
         enabled: Vec<AuraControl>,
-    ) {
+    ) -> zbus::fdo::Result<()> {
         let mut states = None;
         if let Ok(mut ctrl) = self.0.try_lock() {
             for s in enabled {
@@ -54,9 +54,10 @@ impl CtrlKbdLedZbus {
             }
             ctrl.config.write();
 
-            ctrl.set_power_states(&ctrl.config)
-                .map_err(|err| warn!("{}", err))
-                .ok();
+            ctrl.set_power_states(&ctrl.config).map_err(|e| {
+                warn!("{}", e);
+                e
+            })?;
 
             let set: Vec<AuraControl> = ctrl.config.enabled.iter().map(|v| *v).collect();
             states = Some(set);
@@ -67,13 +68,14 @@ impl CtrlKbdLedZbus {
                 .await
                 .unwrap_or_else(|err| warn!("{}", err));
         }
+        Ok(())
     }
 
     async fn set_leds_disabled(
         &mut self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
         disabled: Vec<AuraControl>,
-    ) {
+    ) -> zbus::fdo::Result<()> {
         let mut states = None;
         if let Ok(mut ctrl) = self.0.try_lock() {
             for s in disabled {
@@ -81,9 +83,10 @@ impl CtrlKbdLedZbus {
             }
             ctrl.config.write();
 
-            ctrl.set_power_states(&ctrl.config)
-                .map_err(|err| warn!("{}", err))
-                .ok();
+            ctrl.set_power_states(&ctrl.config).map_err(|e| {
+                warn!("{}", e);
+                e
+            })?;
 
             let set: Vec<AuraControl> = ctrl.config.enabled.iter().map(|v| *v).collect();
             states = Some(set);
@@ -94,24 +97,22 @@ impl CtrlKbdLedZbus {
                 .await
                 .unwrap_or_else(|err| warn!("{}", err));
         }
+        Ok(())
     }
 
     async fn set_led_mode(
         &mut self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
         effect: AuraEffect,
-    ) {
+    ) -> zbus::fdo::Result<()> {
         let mut led = None;
         if let Ok(mut ctrl) = self.0.try_lock() {
-            match ctrl.do_command(effect) {
-                Ok(_) => {
-                    if let Some(mode) = ctrl.config.builtins.get(&ctrl.config.current_mode) {
-                        led = Some(mode.clone());
-                    }
-                }
-                Err(err) => {
-                    warn!("{}", err);
-                }
+            ctrl.set_effect(effect).map_err(|e| {
+                warn!("{}", e);
+                e
+            })?;
+            if let Some(mode) = ctrl.config.builtins.get(&ctrl.config.current_mode) {
+                led = Some(mode.clone());
             }
         }
         if let Some(led) = led {
@@ -119,13 +120,19 @@ impl CtrlKbdLedZbus {
                 .await
                 .unwrap_or_else(|err| warn!("{}", err));
         }
+        Ok(())
     }
 
-    async fn next_led_mode(&self, #[zbus(signal_context)] ctxt: SignalContext<'_>) {
+    async fn next_led_mode(
+        &self,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+    ) -> zbus::fdo::Result<()> {
         let mut led = None;
         if let Ok(mut ctrl) = self.0.lock() {
-            ctrl.toggle_mode(false)
-                .unwrap_or_else(|err| warn!("{}", err));
+            ctrl.toggle_mode(false).map_err(|e| {
+                warn!("{}", e);
+                e
+            })?;
 
             if let Some(mode) = ctrl.config.builtins.get(&ctrl.config.current_mode) {
                 led = Some(mode.clone());
@@ -136,13 +143,19 @@ impl CtrlKbdLedZbus {
                 .await
                 .unwrap_or_else(|err| warn!("{}", err));
         }
+        Ok(())
     }
 
-    async fn prev_led_mode(&self, #[zbus(signal_context)] ctxt: SignalContext<'_>) {
+    async fn prev_led_mode(
+        &self,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+    ) -> zbus::fdo::Result<()> {
         let mut led = None;
         if let Ok(mut ctrl) = self.0.lock() {
-            ctrl.toggle_mode(true)
-                .unwrap_or_else(|err| warn!("{}", err));
+            ctrl.toggle_mode(true).map_err(|e| {
+                warn!("{}", e);
+                e
+            })?;
 
             if let Some(mode) = ctrl.config.builtins.get(&ctrl.config.current_mode) {
                 led = Some(mode.clone());
@@ -153,20 +166,27 @@ impl CtrlKbdLedZbus {
                 .await
                 .unwrap_or_else(|err| warn!("{}", err));
         }
+        Ok(())
     }
 
-    async fn next_led_brightness(&self) {
+    async fn next_led_brightness(&self) -> zbus::fdo::Result<()> {
         if let Ok(mut ctrl) = self.0.try_lock() {
-            ctrl.next_brightness()
-                .unwrap_or_else(|err| warn!("{}", err));
+            ctrl.next_brightness().map_err(|e| {
+                warn!("{}", e);
+                e
+            })?;
         }
+        Ok(())
     }
 
-    async fn prev_led_brightness(&self) {
+    async fn prev_led_brightness(&self) -> zbus::fdo::Result<()> {
         if let Ok(mut ctrl) = self.0.try_lock() {
-            ctrl.prev_brightness()
-                .unwrap_or_else(|err| warn!("{}", err));
+            ctrl.prev_brightness().map_err(|e| {
+                warn!("{}", e);
+                e
+            })?;
         }
+        Ok(())
     }
 
     #[dbus_interface(property)]
