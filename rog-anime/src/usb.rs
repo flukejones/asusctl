@@ -26,7 +26,9 @@ pub fn get_anime_type() -> Result<AnimeType, AnimeError> {
     let dmi = sysfs_class::DmiId::default();
     let board_name = dmi.board_name()?;
 
-    if board_name.contains("GA401Q") {
+    if board_name.contains("GA401I") {
+        return Ok(AnimeType::GA401);
+    } else if board_name.contains("GA401Q") {
         return Ok(AnimeType::GA401);
     } else if board_name.contains("GA402R") {
         return Ok(AnimeType::GA402);
