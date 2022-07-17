@@ -709,8 +709,8 @@ fn handle_bios_option(
                 .collect();
 
             for line in usage.iter().filter(|line| {
-                line.contains("sound") && supported.post_sound_toggle
-                    || line.contains("GPU") && supported.dedicated_gfx_toggle
+                line.contains("sound") && supported.post_sound
+                    || line.contains("GPU") && supported.dedicated_gfx
                     || line.contains("panel") && supported.panel_overdrive
             }) {
                 println!("{}", line);

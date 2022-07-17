@@ -20,6 +20,8 @@ static ASUS_SWITCH_GRAPHIC_MODE: &str =
 static ASUS_POST_LOGO_SOUND: &str =
     "/sys/firmware/efi/efivars/AsusPostLogoSound-607005d5-3f75-4b2e-98f0-85ba66797a3e";
 static ASUS_PANEL_OD_PATH: &str = "/sys/devices/platform/asus-nb-wmi/panel_od";
+static ASUS_DGPU_DISABLE_PATH: &str = "/sys/devices/platform/asus-nb-wmi/dgpu_disable";
+static ASUS_EGPU_ENABLE_PATH: &str = "/sys/devices/platform/asus-nb-wmi/egpu_enable";
 
 pub struct CtrlRogBios {
     _config: Arc<Mutex<Config>>,
@@ -30,9 +32,11 @@ impl GetSupported for CtrlRogBios {
 
     fn get_supported() -> Self::A {
         RogBiosSupportedFunctions {
-            post_sound_toggle: Path::new(ASUS_POST_LOGO_SOUND).exists(),
-            dedicated_gfx_toggle: Path::new(ASUS_SWITCH_GRAPHIC_MODE).exists(),
+            post_sound: Path::new(ASUS_POST_LOGO_SOUND).exists(),
+            dedicated_gfx: Path::new(ASUS_SWITCH_GRAPHIC_MODE).exists(),
             panel_overdrive: Path::new(ASUS_PANEL_OD_PATH).exists(),
+            dgpu_disable: Path::new(ASUS_DGPU_DISABLE_PATH).exists(),
+            egpu_enable: Path::new(ASUS_EGPU_ENABLE_PATH).exists(),
         }
     }
 }

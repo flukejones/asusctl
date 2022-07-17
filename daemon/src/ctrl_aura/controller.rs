@@ -490,7 +490,7 @@ mod tests {
                 .set_effect(effect.clone())
                 .unwrap_err()
                 .to_string(),
-            "Aura efect not supported"
+            "Aura effect not supported"
         );
 
         effect.mode = AuraModeNum::Static;
@@ -500,7 +500,7 @@ mod tests {
                 .set_effect(effect.clone())
                 .unwrap_err()
                 .to_string(),
-            "Aura efect not supported"
+            "Aura effect not supported"
         );
 
         controller.supported_modes.multizone.push(AuraZone::Key2);

@@ -33,7 +33,7 @@ dependencies = [
 
 [[package]]
 name = "asusctl"
-version = "4.0.7"
+version = "4.2.1"
 dependencies = [
  "daemon",
  "gif",
@@ -278,7 +278,7 @@ dependencies = [
 
 [[package]]
 name = "daemon"
-version = "4.2.0"
+version = "4.2.1"
 dependencies = [
  "async-trait",
  "env_logger",
@@ -1034,7 +1034,7 @@ dependencies = [
 
 [[package]]
 name = "rog_aura"
-version = "1.1.1"
+version = "1.1.2"
 dependencies = [
  "serde",
  "serde_derive",
@@ -1067,7 +1067,7 @@ dependencies = [
 
 [[package]]
 name = "rog_supported"
-version = "4.0.0"
+version = "4.2.0"
 dependencies = [
  "rog_aura",
  "serde",

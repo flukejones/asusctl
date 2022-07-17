@@ -51,7 +51,7 @@ impl fmt::Display for RogError {
             RogError::Io(detail) => write!(f, "std::io error: {}", detail),
             RogError::Zbus(detail) => write!(f, "Zbus error: {}", detail),
             RogError::ChargeLimit(value) => write!(f, "Invalid charging limit, not in range 20-100%: {}", value),
-            RogError::AuraEffectNotSupported => write!(f, "Aura efect not supported"),
+            RogError::AuraEffectNotSupported => write!(f, "Aura effect not supported"),
             RogError::NoAuraKeyboard => write!(f, "No supported Aura keyboard"),
             RogError::NoAuraNode => write!(f, "No Aura keyboard node found"),
         }
