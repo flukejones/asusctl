@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased ]
 ### Changed
 - Fixed save and restore of multizone LED settings
+- Add panel overdrive support (autodetects if supported)
 
 ## [4.2.0] - 2022-07-16
 ### Added

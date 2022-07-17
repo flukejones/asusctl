@@ -67,18 +67,29 @@ pub struct BiosCommand {
     pub help: bool,
     #[options(
         meta = "",
+        short = "S",
         no_long,
         help = "set bios POST sound: asusctl -p <true/false>"
     )]
     pub post_sound_set: Option<bool>,
-    #[options(no_long, help = "read bios POST sound")]
+    #[options(no_long, short = "s", help = "read bios POST sound")]
     pub post_sound_get: bool,
     #[options(
         meta = "",
+        short = "D",
         no_long,
         help = "activate dGPU dedicated/G-Sync: asusctl -d <true/false>, reboot required"
     )]
     pub dedicated_gfx_set: Option<bool>,
-    #[options(no_long, help = "get GPU mode")]
+    #[options(no_long, short = "d", help = "get GPU mode")]
     pub dedicated_gfx_get: bool,
+    #[options(
+        meta = "",
+        short = "O",
+        no_long,
+        help = "Set device panel overdrive <true/false>"
+    )]
+    pub panel_overdrive_set: Option<bool>,
+    #[options(no_long, short = "o", help = "get panel overdrive")]
+    pub panel_overdrive_get: bool,
 }

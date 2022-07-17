@@ -40,6 +40,7 @@ pub struct LedSupportedFunctions {
 pub struct RogBiosSupportedFunctions {
     pub post_sound_toggle: bool,
     pub dedicated_gfx_toggle: bool,
+    pub panel_overdrive: bool,
 }
 
 impl fmt::Display for SupportedFunctions {
