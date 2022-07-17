@@ -1,7 +1,7 @@
 use crate::laptops::LaptopLedData;
 use log::{error, warn};
 use rog_aura::usb::AuraControl;
-use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness};
+use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Direction, LedBrightness, Speed, GRADIENT};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashSet};
 use std::fs::{File, OpenOptions};
@@ -92,6 +92,27 @@ impl AuraConfig {
             config
                 .builtins
                 .insert(*n, AuraEffect::default_with_mode(*n));
+
+            if !support_data.multizone.is_empty() {
+                let mut default = vec![];
+                for (i, tmp) in support_data.multizone.iter().enumerate() {
+                    default.push(AuraEffect {
+                        mode: *n,
+                        zone: *tmp,
+                        colour1: *GRADIENT.get(i).unwrap_or(&GRADIENT[0]),
+                        colour2: *GRADIENT.get(GRADIENT.len() - i).unwrap_or(&GRADIENT[6]),
+                        speed: Speed::Med,
+                        direction: Direction::Left,
+                    })
+                }
+                if let Some(m) = config.multizone.as_mut() {
+                    m.insert(*n, default);
+                } else {
+                    let mut tmp = BTreeMap::new();
+                    tmp.insert(*n, default);
+                    config.multizone = Some(tmp);
+                }
+            }
         }
 
         // Should be okay to unwrap this as is since it is a Default
