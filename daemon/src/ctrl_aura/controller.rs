@@ -459,6 +459,7 @@ mod tests {
     use super::CtrlKbdLed;
 
     #[test]
+    // #[ignore = "Must be manually run due to detection stage"]
     fn check_set_mode_errors() {
         // Checking to ensure set_mode errors when unsupported modes are tried
         let config = AuraConfig::default();
@@ -469,7 +470,13 @@ mod tests {
             multizone: vec![],
             per_key: false,
         };
-        let mut controller = CtrlKbdLed::new(supported_modes, config).unwrap();
+        let mut controller = CtrlKbdLed {
+            led_node: None,
+            bright_node: String::new(),
+            supported_modes,
+            flip_effect_write: false,
+            config,
+        };
 
         let mut effect = AuraEffect::default();
         effect.colour1 = Colour(0xff, 0x00, 0xff);
