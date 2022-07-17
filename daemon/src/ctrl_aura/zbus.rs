@@ -103,7 +103,7 @@ impl CtrlKbdLedZbus {
     ) {
         let mut led = None;
         if let Ok(mut ctrl) = self.0.try_lock() {
-            match ctrl.do_command(effect) {
+            match ctrl.set_effect(effect) {
                 Ok(_) => {
                     if let Some(mode) = ctrl.config.builtins.get(&ctrl.config.current_mode) {
                         led = Some(mode.clone());
