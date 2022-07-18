@@ -9,17 +9,20 @@ use crate::{
 use async_trait::async_trait;
 use log::{error, info, warn};
 use logind_zbus::manager::ManagerProxy;
-use rog_aura::{usb::AuraControl, AuraZone};
+use rog_aura::{usb::AuraControl, AuraZone, Direction, Speed, GRADIENT};
 use rog_aura::{
     usb::{LED_APPLY, LED_SET},
     AuraEffect, LedBrightness, LED_MSG_LEN,
 };
 use rog_supported::LedSupportedFunctions;
 use smol::{stream::StreamExt, Executor};
-use std::io::{Read, Write};
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::{
+    collections::BTreeMap,
+    io::{Read, Write},
+};
 use std::{fs::OpenOptions, sync::MutexGuard};
 use zbus::Connection;
 
@@ -160,7 +163,7 @@ pub struct CtrlKbdLedReloader(pub Arc<Mutex<CtrlKbdLed>>);
 
 impl crate::Reloadable for CtrlKbdLedReloader {
     fn reload(&mut self) -> Result<(), RogError> {
-        if let Ok(ctrl) = self.0.try_lock() {
+        if let Ok(mut ctrl) = self.0.try_lock() {
             ctrl.write_current_config_mode()?;
             ctrl.set_power_states(&ctrl.config)
                 .map_err(|err| warn!("{err}"))
@@ -179,7 +182,6 @@ impl CtrlKbdLedZbus {
 }
 
 impl CtrlKbdLed {
-    #[inline]
     pub fn new(supported_modes: LaptopLedData, config: AuraConfig) -> Result<Self, RogError> {
         // TODO: return error if *all* nodes are None
         let mut led_node = None;
@@ -353,7 +355,6 @@ impl CtrlKbdLed {
     }
 
     /// Should only be used if the bytes you are writing are verified correct
-    #[inline]
     fn write_bytes(&self, message: &[u8]) -> Result<(), RogError> {
         if let Some(led_node) = &self.led_node {
             if let Ok(mut file) = OpenOptions::new().write(true).open(led_node) {
@@ -367,7 +368,6 @@ impl CtrlKbdLed {
     }
 
     /// Write an effect block. This is for per-key
-    #[inline]
     fn _write_effect(&mut self, effect: &[Vec<u8>]) -> Result<(), RogError> {
         if self.flip_effect_write {
             for row in effect.iter().rev() {
@@ -382,7 +382,6 @@ impl CtrlKbdLed {
         Ok(())
     }
 
-    #[inline]
     pub(super) fn toggle_mode(&mut self, reverse: bool) -> Result<(), RogError> {
         let current = self.config.current_mode;
         if let Some(idx) = self
@@ -418,7 +417,6 @@ impl CtrlKbdLed {
         Ok(())
     }
 
-    #[inline]
     fn write_mode(&self, mode: &AuraEffect) -> Result<(), RogError> {
         let bytes: [u8; LED_MSG_LEN] = mode.into();
         self.write_bytes(&bytes)?;
@@ -428,10 +426,25 @@ impl CtrlKbdLed {
         Ok(())
     }
 
-    #[inline]
-    fn write_current_config_mode(&self) -> Result<(), RogError> {
+    fn write_current_config_mode(&mut self) -> Result<(), RogError> {
         if self.config.multizone_on {
             let mode = self.config.current_mode;
+            let mut create = false;
+            // There is no multizone config for this mode so create one here
+            // using the colours of rainbow if it exists, or first available
+            // mode, or random
+            if self.config.multizone.is_none() {
+                create = true;
+            } else if let Some(multizones) = self.config.multizone.as_ref() {
+                if !multizones.contains_key(&mode) {
+                    create = true;
+                }
+            }
+            if create {
+                info!("No user-set config for zone founding, attempting a default");
+                self.create_multizone_default()?;
+            }
+
             if let Some(multizones) = self.config.multizone.as_ref() {
                 if let Some(set) = multizones.get(&mode) {
                     for mode in set {
@@ -446,6 +459,33 @@ impl CtrlKbdLed {
             }
         }
 
+        Ok(())
+    }
+
+    /// Create a default for the `current_mode` if multizone and no config exists.
+    fn create_multizone_default(&mut self) -> Result<(), RogError> {
+        let mut default = vec![];
+        for (i, tmp) in self.supported_modes.multizone.iter().enumerate() {
+            default.push(AuraEffect {
+                mode: self.config.current_mode,
+                zone: *tmp,
+                colour1: *GRADIENT.get(i).unwrap_or(&GRADIENT[0]),
+                colour2: *GRADIENT.get(GRADIENT.len() - i).unwrap_or(&GRADIENT[6]),
+                speed: Speed::Med,
+                direction: Direction::Left,
+            })
+        }
+        if default.is_empty() {
+            return Err(RogError::AuraEffectNotSupported);
+        }
+
+        if let Some(multizones) = self.config.multizone.as_mut() {
+            multizones.insert(self.config.current_mode, default);
+        } else {
+            let mut tmp = BTreeMap::new();
+            tmp.insert(self.config.current_mode, default);
+            self.config.multizone = Some(tmp);
+        }
         Ok(())
     }
 }
@@ -518,5 +558,41 @@ mod tests {
                 .to_string(),
             "No Aura keyboard node found"
         );
+    }
+
+    #[test]
+    fn create_multizone_if_no_config() {
+        // Checking to ensure set_mode errors when unsupported modes are tried
+        let config = AuraConfig::default();
+        let supported_modes = LaptopLedData {
+            prod_family: "".into(),
+            board_names: vec![],
+            standard: vec![AuraModeNum::Static],
+            multizone: vec![],
+            per_key: false,
+        };
+        let mut controller = CtrlKbdLed {
+            led_node: None,
+            bright_node: String::new(),
+            supported_modes,
+            flip_effect_write: false,
+            config,
+        };
+
+        assert!(controller.config.multizone.is_none());
+        assert!(controller.create_multizone_default().is_err());
+        assert!(controller.config.multizone.is_none());
+
+        controller.supported_modes.multizone.push(AuraZone::Key1);
+        controller.supported_modes.multizone.push(AuraZone::Key2);
+        assert!(controller.create_multizone_default().is_ok());
+        assert!(controller.config.multizone.is_some());
+
+        let m = controller.config.multizone.unwrap();
+        assert!(m.contains_key(&AuraModeNum::Static));
+        let e = m.get(&AuraModeNum::Static).unwrap();
+        assert_eq!(e.len(), 2);
+        assert_eq!(e[0].zone, AuraZone::Key1);
+        assert_eq!(e[1].zone, AuraZone::Key2);
     }
 }

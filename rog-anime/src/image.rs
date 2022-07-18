@@ -731,7 +731,8 @@ mod tests {
             vec![Pixel::default(); 1000],
             100,
             AnimeType::GA402,
-        ).unwrap();
+        )
+        .unwrap();
         matrix._edge_outline();
         let data = AnimeDataBuffer::from(&matrix);
         let pkt = AnimePacketType::from(data);
