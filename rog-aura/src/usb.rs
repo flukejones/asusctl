@@ -57,10 +57,12 @@ pub const fn aura_brightness_bytes(brightness: u8) -> [u8; 17] {
 /// | 1    |  2   | 3    | 4    | 5    | 6    | function | hex      |
 /// |------|------|------|------|------|------|----------|----------|
 /// | 0000 | 0000 | 0000 | 0000 | 0000 | 0010 | Awake    | 00,00,02 |
-/// | 1000 | 0000 | 0000 | 0000 | 0000 | 0010 | Keyboard | 80,00,02 |
-/// | 0000 | 0100 | 0000 | 0101 | 0000 | 0010 | Lightbar | 04,05,02 |
-/// | 1100 | 0011 | 0001 | 0010 | 0000 | 1001 | Boot/Sht | c3,12,09 |
+/// | 1000 | 0000 | 0000 | 0000 | 0000 | 0000 | Keyboard | 80,00,00 |
+/// | 0000 | 0100 | 0000 | 0101 | 0000 | 0000 | Lightbar | 04,05,00 |
+/// | 0100 | 0011 | 0001 | 0010 | 0000 | 1001 | Boot/Sht | c3,12,09 |
 /// | 0011 | 0000 | 0000 | 1000 | 0000 | 0100 | Sleep    | 30,08,04 |
+/// | 0000 | 1000 | 0000 | 0000 | 0000 | 0000 | Unsure   | 08,00,00 |
+/// The last row in the table seems to apply only when all are on
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
 #[repr(u16)]
