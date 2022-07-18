@@ -595,4 +595,44 @@ mod tests {
         assert_eq!(e[0].zone, AuraZone::Key1);
         assert_eq!(e[1].zone, AuraZone::Key2);
     }
+
+    #[test]
+    fn next_mode_create_multizone_if_no_config() {
+        // Checking to ensure set_mode errors when unsupported modes are tried
+        let config = AuraConfig::default();
+        let supported_modes = LaptopLedData {
+            prod_family: "".into(),
+            board_names: vec![],
+            standard: vec![AuraModeNum::Static],
+            multizone: vec![AuraZone::Key1, AuraZone::Key2],
+            per_key: false,
+        };
+        let mut controller = CtrlKbdLed {
+            led_node: None,
+            bright_node: String::new(),
+            supported_modes,
+            flip_effect_write: false,
+            config,
+        };
+
+        assert!(controller.config.multizone.is_none());
+        controller.config.multizone_on = true;
+        // This is called in toggle_mode. It will error here because we have no
+        // keyboard node in tests.
+        assert_eq!(
+            controller
+                .write_current_config_mode()
+                .unwrap_err()
+                .to_string(),
+            "No Aura keyboard node found"
+        );
+        assert!(controller.config.multizone.is_some());
+
+        let m = controller.config.multizone.unwrap();
+        assert!(m.contains_key(&AuraModeNum::Static));
+        let e = m.get(&AuraModeNum::Static).unwrap();
+        assert_eq!(e.len(), 2);
+        assert_eq!(e[0].zone, AuraZone::Key1);
+        assert_eq!(e[1].zone, AuraZone::Key2);
+    }
 }
