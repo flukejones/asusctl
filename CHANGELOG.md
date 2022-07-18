@@ -6,11 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased ]
 
+## [4.2.1] - 2022-07-18
 ### Added
 - Add panel overdrive support (autodetects if supported)
 - Add detection of dgpu_disable and egpu_enable for diagnostic
 ### Changed
 - Fixed save and restore of multizone LED settings
+- Create defaults for multizone
 
 ## [4.2.0] - 2022-07-16
 ### Added
