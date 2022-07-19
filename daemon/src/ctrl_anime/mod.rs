@@ -18,6 +18,7 @@ use rusb::{Device, DeviceHandle};
 use smol::{stream::StreamExt, Executor};
 use std::{
     cell::RefCell,
+    convert::TryFrom,
     error::Error,
     sync::{Arc, Mutex, MutexGuard},
     thread::sleep,
@@ -167,7 +168,14 @@ impl CtrlAnime {
                                     inner
                                         .try_lock()
                                         .map(|lock| {
-                                            lock.write_data_buffer(frame);
+                                            lock.write_data_buffer(frame)
+                                                .map_err(|err| {
+                                                    warn!(
+                                                        "rog_anime::run_animation:callback {}",
+                                                        err
+                                                    );
+                                                })
+                                                .ok();
                                             false // Don't exit yet
                                         })
                                         .map_err(|err| {
@@ -183,6 +191,8 @@ impl CtrlAnime {
                                 once = false;
                                 if let Ok(lock) = inner.try_lock() {
                                     lock.write_data_buffer(image.as_ref().clone())
+                                        .map_err(|e| error!("{}", e))
+                                        .ok();
                                 }
                             }
                             ActionData::Pause(duration) => sleep(*duration),
@@ -201,9 +211,16 @@ impl CtrlAnime {
                 }
                 // Clear the display on exit
                 if let Ok(lock) = inner.try_lock() {
-                    let data =
-                        AnimeDataBuffer::from_vec(anime_type, vec![0u8; anime_type.data_length()]);
-                    lock.write_data_buffer(data);
+                    if let Ok(data) =
+                        AnimeDataBuffer::from_vec(anime_type, vec![0u8; anime_type.data_length()])
+                            .map_err(|e| error!("{}", e))
+                    {
+                        lock.write_data_buffer(data)
+                            .map_err(|err| {
+                                warn!("rog_anime::run_animation:callback {}", err);
+                            })
+                            .ok();
+                    }
                 }
                 // Loop ended, set the atmonics
                 thread_running.store(false, Ordering::SeqCst);
@@ -254,7 +271,7 @@ impl CtrlAnime {
 
     /// Write only a data packet. This will modify the leds brightness using the
     /// global brightness set in config.
-    fn write_data_buffer(&self, mut buffer: AnimeDataBuffer) {
+    fn write_data_buffer(&self, mut buffer: AnimeDataBuffer) -> Result<(), RogError> {
         for led in buffer.data_mut()[7..].iter_mut() {
             let mut bright = *led as f32 * self.config.brightness;
             if bright > 254.0 {
@@ -262,11 +279,12 @@ impl CtrlAnime {
             }
             *led = bright as u8;
         }
-        let data = AnimePacketType::from(buffer);
+        let data = AnimePacketType::try_from(buffer)?;
         for row in data.iter() {
             self.write_bytes(row);
         }
         self.write_bytes(&pkt_for_flush());
+        Ok(())
     }
 
     fn do_initialization(&self) {

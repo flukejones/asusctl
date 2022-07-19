@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
+use log::warn;
 use rog_anime::{
     usb::{pkt_for_apply, pkt_for_set_boot, pkt_for_set_on},
     AnimeDataBuffer, AnimePowerStates,
@@ -27,14 +28,18 @@ impl crate::ZbusAdd for CtrlAnimeZbus {
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl CtrlAnimeZbus {
     /// Writes a data stream of length. Will force system thread to exit until it is restarted
-    fn write(&self, input: AnimeDataBuffer) {
+    fn write(&self, input: AnimeDataBuffer) -> zbus::fdo::Result<()> {
         'outer: loop {
             if let Ok(lock) = self.0.try_lock() {
                 lock.thread_exit.store(true, Ordering::SeqCst);
-                lock.write_data_buffer(input);
+                lock.write_data_buffer(input).map_err(|err| {
+                    warn!("rog_anime::run_animation:callback {}", err);
+                    err
+                })?;
                 break 'outer;
             }
         }
+        Ok(())
     }
 
     /// Set the global AniMe brightness

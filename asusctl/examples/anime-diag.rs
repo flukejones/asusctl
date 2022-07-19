@@ -29,7 +29,7 @@ fn main() {
         client
             .proxies()
             .anime()
-            .write(matrix.into_data_buffer(anime_type))
+            .write(matrix.into_data_buffer(anime_type).unwrap())
             .unwrap();
         sleep(Duration::from_millis(300));
     }

@@ -1,3 +1,4 @@
+use rog_anime::error::AnimeError;
 use rog_profiles::error::ProfileError;
 use std::convert::From;
 use std::fmt;
@@ -26,6 +27,7 @@ pub enum RogError {
     AuraEffectNotSupported,
     NoAuraKeyboard,
     NoAuraNode,
+    Anime(AnimeError),
 }
 
 impl fmt::Display for RogError {
@@ -54,6 +56,7 @@ impl fmt::Display for RogError {
             RogError::AuraEffectNotSupported => write!(f, "Aura effect not supported"),
             RogError::NoAuraKeyboard => write!(f, "No supported Aura keyboard"),
             RogError::NoAuraNode => write!(f, "No Aura keyboard node found"),
+            RogError::Anime(deets) => write!(f, "AniMe Matrix error: {}", deets),
         }
     }
 }
@@ -63,6 +66,12 @@ impl std::error::Error for RogError {}
 impl From<ProfileError> for RogError {
     fn from(err: ProfileError) -> Self {
         RogError::Profiles(err)
+    }
+}
+
+impl From<AnimeError> for RogError {
+    fn from(err: AnimeError) -> Self {
+        RogError::Anime(err)
     }
 }
 

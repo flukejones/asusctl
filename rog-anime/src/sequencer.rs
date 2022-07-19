@@ -1,10 +1,10 @@
-use std::{path::PathBuf, time::Duration};
-
 use glam::Vec2;
 use serde_derive::{Deserialize, Serialize};
+use std::convert::TryFrom;
+use std::{path::PathBuf, time::Duration};
 
 use crate::{
-    error::AnimeError, AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType,
+    error::Result, AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType,
 };
 
 /// All the possible AniMe actions that can be used. This enum is intended to be
@@ -65,10 +65,7 @@ pub enum ActionData {
 }
 
 impl ActionData {
-    pub fn from_anime_action(
-        anime_type: AnimeType,
-        action: &ActionLoader,
-    ) -> Result<ActionData, AnimeError> {
+    pub fn from_anime_action(anime_type: AnimeType, action: &ActionLoader) -> Result<ActionData> {
         let a = match action {
             ActionLoader::AsusAnimation {
                 file,
@@ -87,7 +84,7 @@ impl ActionData {
             } => match time {
                 AnimTime::Infinite => {
                     let image = AnimeDiagonal::from_png(file, None, *brightness, anime_type)?;
-                    let data = image.into_data_buffer(anime_type);
+                    let data = image.into_data_buffer(anime_type)?;
                     ActionData::Image(Box::new(data))
                 }
                 _ => ActionData::Animation(AnimeGif::from_diagonal_png(
@@ -147,7 +144,7 @@ impl ActionData {
                             *brightness,
                             anime_type,
                         )?;
-                        let data = <AnimeDataBuffer>::from(&image);
+                        let data = <AnimeDataBuffer>::try_from(&image)?;
                         ActionData::Image(Box::new(data))
                     }
                     _ => ActionData::Animation(AnimeGif::from_png(
@@ -180,7 +177,7 @@ impl Sequences {
     /// Use a base `AnimeAction` to generate the precomputed data and insert in to
     /// the run buffer
     #[inline]
-    pub fn insert(&mut self, index: usize, action: &ActionLoader) -> Result<(), AnimeError> {
+    pub fn insert(&mut self, index: usize, action: &ActionLoader) -> Result<()> {
         self.0
             .insert(index, ActionData::from_anime_action(self.1, action)?);
         Ok(())

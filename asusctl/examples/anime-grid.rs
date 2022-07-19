@@ -1,5 +1,6 @@
 use rog_anime::{usb::get_anime_type, AnimeDataBuffer, AnimeGrid};
 use rog_dbus::RogDbusClientBlocking;
+use std::convert::TryFrom;
 
 // In usable data:
 // Top row start at 1, ends at 32
@@ -39,7 +40,7 @@ fn main() {
         }
     }
 
-    let matrix = <AnimeDataBuffer>::from(matrix);
+    let matrix = <AnimeDataBuffer>::try_from(matrix).unwrap();
 
     client.proxies().anime().write(matrix).unwrap();
 }

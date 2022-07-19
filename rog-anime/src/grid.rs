@@ -1,4 +1,7 @@
+use std::convert::TryFrom;
+
 use crate::data::AnimeDataBuffer;
+use crate::error::{AnimeError, Result};
 use crate::{AnimeImage, AnimeType};
 
 // TODO: Adjust these sizes as WIDTH_GA401 WIDTH_GA402
@@ -87,11 +90,12 @@ impl AnimeGrid {
     // }
 }
 
-impl From<AnimeGrid> for AnimeDataBuffer {
+impl TryFrom<AnimeGrid> for AnimeDataBuffer {
+    type Error = AnimeError;
+
     /// Do conversion from the nested Vec in AniMeMatrix to the two required
     /// packets suitable for sending over USB
-    #[inline]
-    fn from(anime: AnimeGrid) -> Self {
+    fn try_from(anime: AnimeGrid) -> Result<Self> {
         let mut buf = vec![0u8; anime.anime_type.data_length()];
 
         for (idx, pos) in AnimeImage::generate_image_positioning(anime.anime_type)
@@ -123,7 +127,7 @@ mod tests {
             }
         }
 
-        let matrix = <AnimeDataBuffer>::from(matrix);
+        let matrix = <AnimeDataBuffer>::try_from(matrix).unwrap();
 
         let data_cmp = [
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

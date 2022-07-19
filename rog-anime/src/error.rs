@@ -3,6 +3,8 @@ use png_pong::decode::Error as PngError;
 use std::error::Error;
 use std::fmt;
 
+pub type Result<T> = std::result::Result<T, AnimeError>;
+
 #[derive(Debug)]
 pub enum AnimeError {
     NoFrames,
@@ -17,6 +19,7 @@ pub enum AnimeError {
     NoDevice,
     UnsupportedDevice,
     InvalidBrightness(f32),
+    DataBufferLength,
 }
 
 impl fmt::Display for AnimeError {
@@ -36,6 +39,10 @@ impl fmt::Display for AnimeError {
             AnimeError::Dbus(detail) => write!(f, "{}", detail),
             AnimeError::Udev(deets, error) => write!(f, "udev {}: {}", deets, error),
             AnimeError::NoDevice => write!(f, "No AniMe Matrix device found"),
+            AnimeError::DataBufferLength => write!(
+                f,
+                "The data buffer was incorrect length for generating USB packets"
+            ),
             AnimeError::UnsupportedDevice => write!(f, "Unsupported AniMe Matrix device found"),
             AnimeError::InvalidBrightness(bright) => write!(
                 f,
@@ -66,5 +73,12 @@ impl From<DecodingError> for AnimeError {
     #[inline]
     fn from(err: DecodingError) -> Self {
         AnimeError::Gif(err)
+    }
+}
+
+impl From<AnimeError> for zbus::fdo::Error {
+    #[inline]
+    fn from(err: AnimeError) -> Self {
+        zbus::fdo::Error::Failed(format!("{}", err))
     }
 }

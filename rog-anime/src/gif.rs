@@ -1,8 +1,9 @@
 use glam::Vec2;
 use serde_derive::{Deserialize, Serialize};
+use std::convert::TryFrom;
 use std::{fs::File, path::Path, time::Duration};
 
-use crate::{error::AnimeError, AnimeDataBuffer, AnimeDiagonal, AnimeImage, AnimeType, Pixel};
+use crate::{error::Result, AnimeDataBuffer, AnimeDiagonal, AnimeImage, AnimeType, Pixel};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AnimeFrame {
@@ -93,7 +94,7 @@ impl AnimeGif {
         duration: AnimTime,
         brightness: f32,
         anime_type: AnimeType,
-    ) -> Result<Self, AnimeError> {
+    ) -> Result<Self> {
         let mut matrix = AnimeDiagonal::new(anime_type, None);
 
         let mut decoder = gif::DecodeOptions::new();
@@ -122,7 +123,7 @@ impl AnimeGif {
             }
 
             frames.push(AnimeFrame {
-                data: matrix.into_data_buffer(anime_type),
+                data: matrix.into_data_buffer(anime_type)?,
                 delay: Duration::from_millis(wait as u64),
             });
         }
@@ -136,7 +137,7 @@ impl AnimeGif {
         anime_type: AnimeType,
         duration: AnimTime,
         brightness: f32,
-    ) -> Result<Self, AnimeError> {
+    ) -> Result<Self> {
         let image = AnimeDiagonal::from_png(file_name, None, brightness, anime_type)?;
 
         let mut total = Duration::from_millis(1000);
@@ -150,7 +151,7 @@ impl AnimeGif {
         let frame_count = total.as_millis() / 30;
 
         let single = AnimeFrame {
-            data: image.into_data_buffer(anime_type),
+            data: image.into_data_buffer(anime_type)?,
             delay: Duration::from_millis(30),
         };
         let frames = vec![single; frame_count as usize];
@@ -169,7 +170,7 @@ impl AnimeGif {
         duration: AnimTime,
         brightness: f32,
         anime_type: AnimeType,
-    ) -> Result<Self, AnimeError> {
+    ) -> Result<Self> {
         let mut frames = Vec::new();
 
         let mut decoder = gif::DecodeOptions::new();
@@ -225,7 +226,7 @@ impl AnimeGif {
             image.update();
 
             frames.push(AnimeFrame {
-                data: <AnimeDataBuffer>::from(&image),
+                data: <AnimeDataBuffer>::try_from(&image)?,
                 delay: Duration::from_millis(wait as u64),
             });
         }
@@ -244,7 +245,7 @@ impl AnimeGif {
         duration: AnimTime,
         brightness: f32,
         anime_type: AnimeType,
-    ) -> Result<Self, AnimeError> {
+    ) -> Result<Self> {
         let image =
             AnimeImage::from_png(file_name, scale, angle, translation, brightness, anime_type)?;
 
@@ -259,7 +260,7 @@ impl AnimeGif {
         let frame_count = total.as_millis() / 30;
 
         let single = AnimeFrame {
-            data: <AnimeDataBuffer>::from(&image),
+            data: <AnimeDataBuffer>::try_from(&image)?,
             delay: Duration::from_millis(30),
         };
         let frames = vec![single; frame_count as usize];

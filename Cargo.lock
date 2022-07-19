@@ -1029,6 +1029,7 @@ dependencies = [
  "serde_derive",
  "sysfs-class",
  "udev",
+ "zbus",
  "zvariant",
 ]
 

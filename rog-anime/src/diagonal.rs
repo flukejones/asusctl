@@ -1,6 +1,10 @@
 use std::{path::Path, time::Duration};
 
-use crate::{data::AnimeDataBuffer, error::AnimeError, AnimeType};
+use crate::{
+    data::AnimeDataBuffer,
+    error::{AnimeError, Result},
+    AnimeType,
+};
 
 /// Mostly intended to be used with ASUS gifs, but can be used for other purposes (like images)
 #[derive(Debug, Clone)]
@@ -40,7 +44,7 @@ impl AnimeDiagonal {
         duration: Option<Duration>,
         bright: f32,
         anime_type: AnimeType,
-    ) -> Result<Self, AnimeError> {
+    ) -> Result<Self> {
         let data = std::fs::read(path)?;
         let data = std::io::Cursor::new(data);
         let decoder = png_pong::Decoder::new(data)?.into_steps();
@@ -125,7 +129,7 @@ impl AnimeDiagonal {
 
     /// Convert to a data buffer that can be sent over dbus
     #[inline]
-    pub fn into_data_buffer(&self, anime_type: AnimeType) -> AnimeDataBuffer {
+    pub fn into_data_buffer(&self, anime_type: AnimeType) -> Result<AnimeDataBuffer> {
         match anime_type {
             AnimeType::GA401 => self.into_ga401_packets(),
             AnimeType::GA402 => self.into_ga402_packets(),
@@ -134,7 +138,7 @@ impl AnimeDiagonal {
 
     /// Do conversion from the nested Vec in AnimeMatrix to the two required
     /// packets suitable for sending over USB
-    fn into_ga401_packets(&self) -> AnimeDataBuffer {
+    fn into_ga401_packets(&self) -> Result<AnimeDataBuffer> {
         let mut buf = vec![0u8; AnimeType::GA401.data_length()];
 
         buf[1..=32].copy_from_slice(&self.get_row(0, 3, 32));
@@ -196,7 +200,7 @@ impl AnimeDiagonal {
         AnimeDataBuffer::from_vec(crate::AnimeType::GA401, buf)
     }
 
-    fn into_ga402_packets(&self) -> AnimeDataBuffer {
+    fn into_ga402_packets(&self) -> Result<AnimeDataBuffer> {
         let mut buf = vec![0u8; AnimeType::GA402.data_length()];
         let mut start_index: usize = 0;
 
@@ -282,7 +286,7 @@ impl AnimeDiagonal {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
+    use std::{convert::TryFrom, path::PathBuf};
 
     use crate::{AnimeDiagonal, AnimePacketType, AnimeType};
 
@@ -374,8 +378,8 @@ mod tests {
         path.push("test/ga401-diagonal.png");
 
         let matrix = AnimeDiagonal::from_png(&path, None, 255.0, AnimeType::GA401).unwrap();
-        let data = matrix.into_data_buffer(crate::AnimeType::GA401);
-        let pkt = AnimePacketType::from(data);
+        let data = matrix.into_data_buffer(crate::AnimeType::GA401).unwrap();
+        let pkt = AnimePacketType::try_from(data).unwrap();
 
         assert_eq!(pkt[0], pkt0_check);
         assert_eq!(pkt[1], pkt1_check);
@@ -509,8 +513,8 @@ mod tests {
         path.push("test/ga402-diagonal.png");
 
         let matrix = AnimeDiagonal::from_png(&path, None, 255.0, AnimeType::GA402).unwrap();
-        let data = matrix.into_data_buffer(crate::AnimeType::GA402);
-        let pkt = AnimePacketType::from(data);
+        let data = matrix.into_data_buffer(crate::AnimeType::GA402).unwrap();
+        let pkt = AnimePacketType::try_from(data).unwrap();
 
         assert_eq!(pkt[0], pkt0_check);
         assert_eq!(pkt[1], pkt1_check);
@@ -654,8 +658,8 @@ mod tests {
         path.push("test/ga402-diagonal-fullbright.png");
 
         let matrix = AnimeDiagonal::from_png(&path, None, 255.0, AnimeType::GA402).unwrap();
-        let data = matrix.into_data_buffer(crate::AnimeType::GA402);
-        let pkt = AnimePacketType::from(data);
+        let data = matrix.into_data_buffer(crate::AnimeType::GA402).unwrap();
+        let pkt = AnimePacketType::try_from(data).unwrap();
 
         assert_eq!(pkt[0], pkt0_check);
         assert_eq!(pkt[1], pkt1_check);
