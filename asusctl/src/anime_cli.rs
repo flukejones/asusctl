@@ -16,6 +16,8 @@ pub struct AnimeCommand {
     pub boot_enable: Option<bool>,
     #[options(meta = "", help = "set global AniMe brightness value")]
     pub brightness: Option<f32>,
+    #[options(help = "clear the display")]
+    pub clear: bool,
     #[options(command)]
     pub command: Option<AnimeActions>,
 }

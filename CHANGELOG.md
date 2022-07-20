@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased ]
 
+### Added
+- Clear command for anime `asusctl anime --clear` will clear the display
+### Changed
+- Make rog-anime more error tolerent. Remove various asserts and return errors instead
+- Return error if a pixel-gif is larger than the anime-display dimensions
+
 ## [4.2.1] - 2022-07-18
 ### Added
 - Add panel overdrive support (autodetects if supported)

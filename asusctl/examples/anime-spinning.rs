@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::{
     env, error::Error, f32::consts::PI, path::Path, process::exit, thread::sleep, time::Duration,
 };
@@ -41,7 +42,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         client
             .proxies()
             .anime()
-            .write(<AnimeDataBuffer>::from(&matrix))
+            .write(<AnimeDataBuffer>::try_from(&matrix)?)
             .unwrap();
         sleep(Duration::from_micros(500));
     }

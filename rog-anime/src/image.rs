@@ -1,9 +1,13 @@
-use std::path::Path;
+use std::{convert::TryFrom, path::Path};
 
 pub use glam::Vec2;
 use glam::{Mat3, Vec3};
 
-use crate::{data::AnimeDataBuffer, error::AnimeError, AnimeType};
+use crate::{
+    data::AnimeDataBuffer,
+    error::{AnimeError, Result},
+    AnimeType,
+};
 
 /// A single greyscale + alpha pixel in the image
 #[derive(Copy, Clone, Debug)]
@@ -83,7 +87,7 @@ impl AnimeImage {
         pixels: Vec<Pixel>,
         width: u32,
         anime_type: AnimeType,
-    ) -> Result<Self, AnimeError> {
+    ) -> Result<Self> {
         if bright < 0.0 || bright > 1.0 {
             return Err(AnimeError::InvalidBrightness(bright));
         }
@@ -388,7 +392,7 @@ impl AnimeImage {
         translation: Vec2,
         bright: f32,
         anime_type: AnimeType,
-    ) -> Result<Self, AnimeError> {
+    ) -> Result<Self> {
         let data = std::fs::read(path)?;
         let data = std::io::Cursor::new(data);
         let decoder = png_pong::Decoder::new(data)?.into_steps();
@@ -484,11 +488,12 @@ impl AnimeImage {
     }
 }
 
-impl From<&AnimeImage> for AnimeDataBuffer {
+impl TryFrom<&AnimeImage> for AnimeDataBuffer {
+    type Error = AnimeError;
+
     /// Do conversion from the nested Vec in AnimeDataBuffer to the two required
     /// packets suitable for sending over USB
-    #[inline]
-    fn from(leds: &AnimeImage) -> Self {
+    fn try_from(leds: &AnimeImage) -> Result<Self> {
         let mut l: Vec<u8> = leds
             .led_pos
             .iter()
@@ -506,7 +511,7 @@ impl From<&AnimeImage> for AnimeDataBuffer {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
+    use std::{convert::TryFrom, path::PathBuf};
 
     use crate::{image::*, AnimTime, AnimeGif, AnimePacketType};
 
@@ -734,8 +739,8 @@ mod tests {
         )
         .unwrap();
         matrix._edge_outline();
-        let data = AnimeDataBuffer::from(&matrix);
-        let pkt = AnimePacketType::from(data);
+        let data = AnimeDataBuffer::try_from(&matrix).unwrap();
+        let pkt = AnimePacketType::try_from(data).unwrap();
 
         assert_eq!(pkt[0], pkt0_check);
         assert_eq!(pkt[1], pkt1_check);
@@ -759,6 +764,6 @@ mod tests {
         )
         .unwrap();
         matrix.frames()[0].frame();
-        let _pkt = AnimePacketType::from(matrix.frames()[0].frame().clone());
+        let _pkt = AnimePacketType::try_from(matrix.frames()[0].frame().clone()).unwrap();
     }
 }

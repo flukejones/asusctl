@@ -25,7 +25,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     client
         .proxies()
         .anime()
-        .write(matrix.into_data_buffer(anime_type))
+        .write(matrix.into_data_buffer(anime_type)?)
         .unwrap();
 
     Ok(())

@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::{env, error::Error, path::Path, process::exit};
 
 use rog_anime::{
@@ -32,7 +33,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     client
         .proxies()
         .anime()
-        .write(<AnimeDataBuffer>::from(&matrix))
+        .write(<AnimeDataBuffer>::try_from(&matrix)?)
         .unwrap();
 
     Ok(())

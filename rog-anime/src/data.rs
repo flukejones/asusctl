@@ -1,4 +1,5 @@
 use std::{
+    convert::TryFrom,
     thread::sleep,
     time::{Duration, Instant},
 };
@@ -8,7 +9,10 @@ use serde_derive::{Deserialize, Serialize};
 #[cfg(feature = "dbus")]
 use zvariant::Type;
 
-use crate::{error::AnimeError, AnimTime, AnimeGif};
+use crate::{
+    error::{AnimeError, Result},
+    AnimTime, AnimeGif,
+};
 
 /// The first 7 bytes of a USB packet are accounted for by `USB_PREFIX1` and `USB_PREFIX2`
 const BLOCK_START: usize = 7;
@@ -102,20 +106,25 @@ impl AnimeDataBuffer {
     /// # Panics
     /// Will panic if the vector length is not `ANIME_DATA_LEN`
     #[inline]
-    pub fn from_vec(anime: AnimeType, data: Vec<u8>) -> Self {
-        assert_eq!(data.len(), anime.data_length());
+    pub fn from_vec(anime: AnimeType, data: Vec<u8>) -> Result<Self> {
+        if data.len() != anime.data_length() {
+            return Err(AnimeError::DataBufferLength);
+        }
 
-        Self { data, anime }
+        Ok(Self { data, anime })
     }
 }
 
 /// The two packets to be written to USB
 pub type AnimePacketType = Vec<[u8; 640]>;
 
-impl From<AnimeDataBuffer> for AnimePacketType {
-    #[inline]
-    fn from(anime: AnimeDataBuffer) -> Self {
-        assert_eq!(anime.data.len(), anime.anime.data_length());
+impl TryFrom<AnimeDataBuffer> for AnimePacketType {
+    type Error = AnimeError;
+
+    fn try_from(anime: AnimeDataBuffer) -> std::result::Result<Self, Self::Error> {
+        if anime.data.len() != anime.anime.data_length() {
+            return Err(AnimeError::DataBufferLength);
+        }
 
         let mut buffers = match anime.anime {
             AnimeType::GA401 => vec![[0; 640]; 2],
@@ -131,7 +140,7 @@ impl From<AnimeDataBuffer> for AnimePacketType {
         if matches!(anime.anime, AnimeType::GA402) {
             buffers[2][..7].copy_from_slice(&USB_PREFIX3);
         }
-        buffers
+        Ok(buffers)
     }
 }
 
@@ -140,8 +149,8 @@ impl From<AnimeDataBuffer> for AnimePacketType {
 /// If `callback` is `Ok(true)` then `run_animation` will exit the animation loop early.
 pub fn run_animation(
     frames: &AnimeGif,
-    callback: &dyn Fn(AnimeDataBuffer) -> Result<bool, AnimeError>,
-) -> Result<(), AnimeError> {
+    callback: &dyn Fn(AnimeDataBuffer) -> Result<bool>,
+) -> Result<()> {
     let mut count = 0;
     let start = Instant::now();
 

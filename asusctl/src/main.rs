@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::process::Command;
 use std::thread::sleep;
 use std::{env::args, path::Path};
@@ -26,8 +27,6 @@ mod anime_cli;
 mod aura_cli;
 mod cli_opts;
 mod profiles_cli;
-
-const CONFIG_ADVICE: &str = "A config file need to be removed so a new one can be generated";
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = args().skip(1).collect();
@@ -82,15 +81,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn print_error_help(err: Box<dyn std::error::Error>, supported: Option<&SupportedFunctions>) {
-    if do_diagnose("asusd") {
-        println!("\nError: {}\n", err);
-        print_versions();
+    check_service("asusd");
+    println!("\nError: {}\n", err);
+    print_versions();
+    println!();
+    print_laptop_info();
+    if let Some(supported) = supported {
         println!();
-        print_laptop_info();
-        if let Some(supported) = supported {
-            println!();
-            println!("Supported laptop functions:\n\n{}", supported);
-        }
+        println!("Supported laptop functions:\n\n{}", supported);
     }
 }
 
@@ -115,7 +113,7 @@ fn print_laptop_info() {
     println!("Board name: {}", board_name.trim());
 }
 
-fn do_diagnose(name: &str) -> bool {
+fn check_service(name: &str) -> bool {
     if name != "asusd" && !check_systemd_unit_enabled(name) {
         println!(
             "\n\x1b[0;31m{} is not enabled, enable it with `systemctl enable {}\x1b[0m",
@@ -128,13 +126,6 @@ fn do_diagnose(name: &str) -> bool {
             name, name
         );
         return true;
-    } else {
-        println!("\nSome error happened (sorry)");
-        println!(
-            "Please use `systemctl status {}` and `journalctl -b -u {}` for more information",
-            name, name
-        );
-        println!("{}", CONFIG_ADVICE);
     }
     false
 }
@@ -239,6 +230,13 @@ fn handle_anime(
         verify_brightness(bright);
         dbus.proxies().anime().set_brightness(bright)?
     }
+    if cmd.clear {
+        let anime_type = get_anime_type()?;
+        let data = vec![0u8; anime_type.data_length()];
+        let tmp = AnimeDataBuffer::from_vec(anime_type, data)?;
+        dbus.proxies().anime().write(tmp)?;
+    }
+
     if let Some(action) = cmd.command.as_ref() {
         let anime_type = get_anime_type()?;
         match action {
@@ -263,7 +261,7 @@ fn handle_anime(
 
                 dbus.proxies()
                     .anime()
-                    .write(<AnimeDataBuffer>::from(&matrix))?;
+                    .write(<AnimeDataBuffer>::try_from(&matrix)?)?;
             }
             AnimeActions::PixelImage(image) => {
                 if image.help_requested() || image.path.is_empty() {
@@ -284,7 +282,7 @@ fn handle_anime(
 
                 dbus.proxies()
                     .anime()
-                    .write(matrix.into_data_buffer(anime_type))?;
+                    .write(matrix.into_data_buffer(anime_type)?)?;
             }
             AnimeActions::Gif(gif) => {
                 if gif.help_requested() || gif.path.is_empty() {
