@@ -3,6 +3,7 @@ use serde_derive::{Deserialize, Serialize};
 use std::convert::TryFrom;
 use std::{fs::File, path::Path, time::Duration};
 
+use crate::error::AnimeError;
 use crate::{error::Result, AnimeDataBuffer, AnimeDiagonal, AnimeImage, AnimeType, Pixel};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -117,8 +118,17 @@ impl AnimeGif {
                         // should be t but not in some gifs? What, ASUS, what?
                         continue;
                     }
-                    matrix.get_mut()[y + frame.top as usize][x + frame.left as usize] =
-                        (px[0] as f32 * brightness) as u8;
+                    let tmp = matrix.get_mut();
+                    let y = y + frame.top as usize;
+                    if y >= tmp.len() {
+                        return Err(AnimeError::PixelGifHeight(tmp.len()));
+                    }
+                    let x = x + frame.left as usize;
+                    if x >= tmp[y].len() {
+                        return Err(AnimeError::PixelGifWidth(tmp[y].len()));
+                    }
+
+                    matrix.get_mut()[y][x] = (px[0] as f32 * brightness) as u8;
                 }
             }
 

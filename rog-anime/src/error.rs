@@ -20,6 +20,8 @@ pub enum AnimeError {
     UnsupportedDevice,
     InvalidBrightness(f32),
     DataBufferLength,
+    PixelGifWidth(usize),
+    PixelGifHeight(usize),
 }
 
 impl fmt::Display for AnimeError {
@@ -48,6 +50,13 @@ impl fmt::Display for AnimeError {
                 f,
                 "Image brightness must be between 0.0 and 1.0 (inclusive), was {}",
                 bright
+            ),
+            AnimeError::PixelGifWidth(n) => {
+                write!(f, "The gif used for pixel-perfect gif is is wider than {n}")
+            }
+            AnimeError::PixelGifHeight(n) => write!(
+                f,
+                "The gif used for pixel-perfect gif is is taller than {n}"
             ),
         }
     }
