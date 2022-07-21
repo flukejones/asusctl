@@ -1,4 +1,4 @@
-use crate::laptops::LaptopLedData;
+use crate::laptops::{LaptopLedData, ASUS_KEYBOARD_DEVICES};
 use log::{error, warn};
 use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Direction, LedBrightness, Speed, GRADIENT};
@@ -6,6 +6,8 @@ use serde_derive::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashSet};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
+
+use super::controller::CtrlKbdLed;
 
 pub static AURA_CONFIG_PATH: &str = "/etc/asusd/aura.conf";
 
@@ -81,13 +83,46 @@ pub struct AuraConfig {
 
 impl Default for AuraConfig {
     fn default() -> Self {
+        let mut prod_id = String::new();
+        for prod in ASUS_KEYBOARD_DEVICES.iter() {
+            if let Ok(_) = CtrlKbdLed::find_led_node(prod) {
+                prod_id = prod.to_string();
+                break;
+            }
+        }
+
+        let enabled = if prod_id == "19b6" {
+            AuraPowerConfig::AuraDev19b6(HashSet::from([
+                AuraDev19b6::BootLogo,
+                AuraDev19b6::BootKeyb,
+                AuraDev19b6::SleepLogo,
+                AuraDev19b6::SleepKeyb,
+                AuraDev19b6::AwakeLogo,
+                AuraDev19b6::AwakeKeyb,
+                AuraDev19b6::ShutdownLogo,
+                AuraDev19b6::ShutdownKeyb,
+                AuraDev19b6::AwakeBar,
+                AuraDev19b6::BootBar,
+                AuraDev19b6::SleepBar,
+                AuraDev19b6::ShutdownBar,
+            ]))
+        } else {
+            AuraPowerConfig::AuraDev1866(HashSet::from([
+                AuraDev1866::Awake,
+                AuraDev1866::Boot,
+                AuraDev1866::Sleep,
+                AuraDev1866::Keyboard,
+                AuraDev1866::Lightbar,
+            ]))
+        };
+
         AuraConfig {
             brightness: LedBrightness::Med,
             current_mode: AuraModeNum::Static,
             builtins: BTreeMap::new(),
             multizone: None,
             multizone_on: false,
-            enabled: AuraPowerConfig::AuraDev1866(HashSet::new()),
+            enabled,
         }
     }
 }

@@ -306,7 +306,7 @@ impl CtrlKbdLed {
         Ok(())
     }
 
-    fn find_led_node(id_product: &str) -> Result<String, RogError> {
+    pub(crate) fn find_led_node(id_product: &str) -> Result<String, RogError> {
         let mut enumerator = udev::Enumerator::new().map_err(|err| {
             warn!("{}", err);
             RogError::Udev("enumerator failed".into(), err)
