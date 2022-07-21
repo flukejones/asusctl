@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use log::warn;
-use rog_aura::{usb::AuraControl, AuraEffect, LedBrightness};
+use rog_aura::{usb::AuraPowerDev, AuraEffect, LedBrightness};
 use zbus::{dbus_interface, Connection, SignalContext};
 
 use super::controller::CtrlKbdLedZbus;
@@ -42,16 +42,21 @@ impl CtrlKbdLedZbus {
     ///     SleepBar,
     ///     ShutdownBar,
     /// }
-    async fn set_leds_enabled(
+    async fn set_leds_power(
         &mut self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
-        enabled: Vec<AuraControl>,
+        options: AuraPowerDev,
+        enabled: bool,
     ) -> zbus::fdo::Result<()> {
         let mut states = None;
         if let Ok(mut ctrl) = self.0.try_lock() {
-            for s in enabled {
-                ctrl.config.enabled.insert(s);
+            for p in options.x1866 {
+                ctrl.config.enabled.set_0x1866(p, enabled);
             }
+            for p in options.x19b6 {
+                ctrl.config.enabled.set_0x19b6(p, enabled);
+            }
+
             ctrl.config.write();
 
             ctrl.set_power_states(&ctrl.config).map_err(|e| {
@@ -59,37 +64,7 @@ impl CtrlKbdLedZbus {
                 e
             })?;
 
-            let set: Vec<AuraControl> = ctrl.config.enabled.iter().map(|v| *v).collect();
-            states = Some(set);
-        }
-        // Need to pull state out like this due to MutexGuard
-        if let Some(states) = states {
-            Self::notify_power_states(&ctxt, &states)
-                .await
-                .unwrap_or_else(|err| warn!("{}", err));
-        }
-        Ok(())
-    }
-
-    async fn set_leds_disabled(
-        &mut self,
-        #[zbus(signal_context)] ctxt: SignalContext<'_>,
-        disabled: Vec<AuraControl>,
-    ) -> zbus::fdo::Result<()> {
-        let mut states = None;
-        if let Ok(mut ctrl) = self.0.try_lock() {
-            for s in disabled {
-                ctrl.config.enabled.remove(&s);
-            }
-            ctrl.config.write();
-
-            ctrl.set_power_states(&ctrl.config).map_err(|e| {
-                warn!("{}", e);
-                e
-            })?;
-
-            let set: Vec<AuraControl> = ctrl.config.enabled.iter().map(|v| *v).collect();
-            states = Some(set);
+            states = Some(AuraPowerDev::from(&ctrl.config.enabled));
         }
         // Need to pull state out like this due to MutexGuard
         if let Some(states) = states {
@@ -189,13 +164,14 @@ impl CtrlKbdLedZbus {
         Ok(())
     }
 
-    #[dbus_interface(property)]
-    async fn leds_enabled(&self) -> Vec<u8> {
-        if let Ok(ctrl) = self.0.try_lock() {
-            let set: Vec<AuraControl> = ctrl.config.enabled.iter().map(|v| *v).collect();
-            return AuraControl::to_bytes(&set).to_vec();
+    // As property doesn't work for AuraPowerDev (complexity of serialization?)
+    // #[dbus_interface(property)]
+    async fn leds_power(&self) -> AuraPowerDev {
+        loop {
+            if let Ok(ctrl) = self.0.try_lock() {
+                return AuraPowerDev::from(&ctrl.config.enabled);
+            }
         }
-        vec![0, 0]
     }
 
     /// Return the current mode data
@@ -240,6 +216,6 @@ impl CtrlKbdLedZbus {
     #[dbus_interface(signal)]
     async fn notify_power_states(
         signal_ctxt: &SignalContext<'_>,
-        data: &[AuraControl],
+        data: &AuraPowerDev,
     ) -> zbus::Result<()>;
 }

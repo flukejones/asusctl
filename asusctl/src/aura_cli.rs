@@ -3,7 +3,23 @@ use rog_aura::{error::Error, AuraEffect, AuraModeNum, AuraZone, Colour, Directio
 use std::str::FromStr;
 
 #[derive(Options)]
-pub struct LedPowerCommand {
+pub struct LedPowerCommand1 {
+    #[options(help = "print help message")]
+    pub help: bool,
+    #[options(meta = "", help = "Control if LEDs enabled while awake <true/false>")]
+    pub awake: Option<bool>,
+    #[options(meta = "", help = "Use with awake option <true/false>")]
+    pub keyboard: Option<bool>,
+    #[options(meta = "", help = "Use with awake option <true/false>")]
+    pub lightbar: Option<bool>,
+    #[options(meta = "", help = "Control boot animations <true/false>")]
+    pub boot: Option<bool>,
+    #[options(meta = "", help = "Control suspend animations <true/false>")]
+    pub sleep: Option<bool>,
+}
+
+#[derive(Options)]
+pub struct LedPowerCommand2 {
     #[options(help = "print help message")]
     pub help: bool,
     #[options(command)]
@@ -12,12 +28,13 @@ pub struct LedPowerCommand {
 
 #[derive(Options)]
 pub enum SetAuraEnabled {
+    /// Applies to both old and new models
+    #[options(help = "set <keyboard, logo, lightbar> to enabled while device is awake")]
+    Awake(AuraEnabled),
     #[options(help = "set <keyboard, logo, lightbar> to enabled while the device is booting")]
     Boot(AuraEnabled),
     #[options(help = "set <keyboard, logo, lightbar> to animate while the device is suspended")]
     Sleep(AuraEnabled),
-    #[options(help = "set <keyboard, logo, lightbar> to enabled while device is awake")]
-    Awake(AuraEnabled),
     #[options(help = "set <keyboard, logo, lightbar> to animate while the device is shutdown")]
     Shutdown(AuraEnabled),
 }

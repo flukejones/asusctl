@@ -9,11 +9,11 @@ use crate::{
 use async_trait::async_trait;
 use log::{error, info, warn};
 use logind_zbus::manager::ManagerProxy;
-use rog_aura::{usb::AuraControl, AuraZone, Direction, Speed, GRADIENT};
 use rog_aura::{
     usb::{LED_APPLY, LED_SET},
     AuraEffect, LedBrightness, LED_MSG_LEN,
 };
+use rog_aura::{AuraZone, Direction, Speed, GRADIENT};
 use rog_supported::LedSupportedFunctions;
 use smol::{stream::StreamExt, Executor};
 use std::path::Path;
@@ -28,7 +28,7 @@ use zbus::Connection;
 
 use crate::GetSupported;
 
-use super::config::AuraConfig;
+use super::config::{AuraConfig, AuraPowerConfig};
 
 impl GetSupported for CtrlKbdLed {
     type A = LedSupportedFunctions;
@@ -40,7 +40,16 @@ impl GetSupported for CtrlKbdLed {
         let multizone_led_mode = laptop.multizone;
         let per_key_led_mode = laptop.per_key;
 
+        let mut prod_id = String::new();
+        for prod in ASUS_KEYBOARD_DEVICES.iter() {
+            if let Ok(_) = Self::find_led_node(prod) {
+                prod_id = prod.to_string();
+                break;
+            }
+        }
+
         LedSupportedFunctions {
+            prod_id,
             brightness_set: CtrlKbdLed::get_kbd_bright_path().is_some(),
             stock_led_modes,
             multizone_led_mode,
@@ -50,6 +59,8 @@ impl GetSupported for CtrlKbdLed {
 }
 
 pub struct CtrlKbdLed {
+    // TODO: config stores the keyboard type as an AuraPower, use or update this
+    pub led_prod: Option<String>,
     pub led_node: Option<String>,
     pub bright_node: String,
     pub supported_modes: LaptopLedData,
@@ -184,10 +195,12 @@ impl CtrlKbdLedZbus {
 impl CtrlKbdLed {
     pub fn new(supported_modes: LaptopLedData, config: AuraConfig) -> Result<Self, RogError> {
         // TODO: return error if *all* nodes are None
+        let mut led_prod = None;
         let mut led_node = None;
         for prod in ASUS_KEYBOARD_DEVICES.iter() {
             match Self::find_led_node(prod) {
                 Ok(node) => {
+                    led_prod = Some(prod.to_string());
                     led_node = Some(node);
                     info!("Looked for keyboard controller 0x{prod}: Found");
                     break;
@@ -209,6 +222,7 @@ impl CtrlKbdLed {
         }
 
         let ctrl = CtrlKbdLed {
+            led_prod,
             led_node,
             bright_node: bright_node.unwrap(), // If was none then we already returned above
             supported_modes,
@@ -282,12 +296,8 @@ impl CtrlKbdLed {
 
     /// Set combination state for boot animation/sleep animation/all leds/keys leds/side leds LED active
     pub(super) fn set_power_states(&self, config: &AuraConfig) -> Result<(), RogError> {
-        let set: Vec<AuraControl> = config.enabled.iter().map(|v| *v).collect();
-        let bytes = AuraControl::to_bytes(&set);
-
-        let message = [
-            0x5d, 0xbd, 0x01, bytes[0], bytes[1], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        ];
+        let bytes = AuraPowerConfig::to_bytes(&config.enabled);
+        let message = [0x5d, 0xbd, 0x01, bytes[0], bytes[1], bytes[2]];
 
         self.write_bytes(&message)?;
         self.write_bytes(&LED_SET)?;
@@ -296,7 +306,7 @@ impl CtrlKbdLed {
         Ok(())
     }
 
-    fn find_led_node(id_product: &str) -> Result<String, RogError> {
+    pub(crate) fn find_led_node(id_product: &str) -> Result<String, RogError> {
         let mut enumerator = udev::Enumerator::new().map_err(|err| {
             warn!("{}", err);
             RogError::Udev("enumerator failed".into(), err)
@@ -511,6 +521,7 @@ mod tests {
             per_key: false,
         };
         let mut controller = CtrlKbdLed {
+            led_prod: None,
             led_node: None,
             bright_node: String::new(),
             supported_modes,
@@ -572,6 +583,7 @@ mod tests {
             per_key: false,
         };
         let mut controller = CtrlKbdLed {
+            led_prod: None,
             led_node: None,
             bright_node: String::new(),
             supported_modes,
@@ -608,6 +620,7 @@ mod tests {
             per_key: false,
         };
         let mut controller = CtrlKbdLed {
+            led_prod: None,
             led_node: None,
             bright_node: String::new(),
             supported_modes,

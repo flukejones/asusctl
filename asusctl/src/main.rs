@@ -3,14 +3,14 @@ use std::process::Command;
 use std::thread::sleep;
 use std::{env::args, path::Path};
 
-use aura_cli::LedPowerCommand;
+use aura_cli::{LedPowerCommand1, LedPowerCommand2};
 use gumdrop::{Opt, Options};
 
 use anime_cli::{AnimeActions, AnimeCommand};
 use profiles_cli::{FanCurveCommand, ProfileCommand};
 use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, Vec2};
-use rog_aura::usb::AuraControl;
+use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraPowerDev};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClientBlocking;
 use rog_profiles::error::ProfileError;
@@ -137,7 +137,8 @@ fn do_parsed(
 ) -> Result<(), Box<dyn std::error::Error>> {
     match &parsed.command {
         Some(CliCommand::LedMode(mode)) => handle_led_mode(dbus, &supported.keyboard_led, mode)?,
-        Some(CliCommand::LedPower(pow)) => handle_led_power(dbus, &supported.keyboard_led, pow)?,
+        Some(CliCommand::LedPow1(pow)) => handle_led_power1(dbus, &supported.keyboard_led, pow)?,
+        Some(CliCommand::LedPow2(pow)) => handle_led_power2(dbus, &supported.keyboard_led, pow)?,
         Some(CliCommand::Profile(cmd)) => handle_profile(dbus, &supported.platform_profile, cmd)?,
         Some(CliCommand::FanCurve(cmd)) => {
             handle_fan_curve(dbus, &supported.platform_profile, cmd)?
@@ -156,7 +157,22 @@ fn do_parsed(
                 println!("{}", CliStart::usage());
                 println!();
                 if let Some(cmdlist) = CliStart::command_list() {
-                    println!("{}", cmdlist);
+                    let commands: Vec<String> = cmdlist.lines().map(|s| s.to_string()).collect();
+                    for command in commands.iter().filter(|command| {
+                        if supported.keyboard_led.prod_id != "1866"
+                            && command.trim().starts_with("led-pow-1")
+                        {
+                            return false;
+                        }
+                        if supported.keyboard_led.prod_id != "19b6"
+                            && command.trim().starts_with("led-pow-2")
+                        {
+                            return false;
+                        }
+                        true
+                    }) {
+                        println!("{}", command);
+                    }
                 }
 
                 println!("\nExtra help can be requested on any command or subcommand:");
@@ -421,10 +437,67 @@ fn handle_led_mode(
     Ok(())
 }
 
-fn handle_led_power(
+fn handle_led_power1(
     dbus: &RogDbusClientBlocking,
-    _supported: &LedSupportedFunctions,
-    power: &LedPowerCommand,
+    supported: &LedSupportedFunctions,
+    power: &LedPowerCommand1,
+) -> Result<(), Box<dyn std::error::Error>> {
+    if power.awake.is_none()
+        && power.sleep.is_none()
+        && power.boot.is_none()
+        && power.keyboard.is_none()
+        && power.lightbar.is_none()
+    {
+        if !power.help {
+            println!("Missing arg or command\n");
+        }
+        println!("{}\n", power.self_usage());
+        return Ok(());
+    }
+
+    if supported.prod_id != "1866" {
+        println!("These options are for keyboards of product ID 0x1866 only");
+        return Ok(());
+    }
+
+    let mut enabled: Vec<AuraDev1866> = Vec::new();
+    let mut disabled: Vec<AuraDev1866> = Vec::new();
+
+    let mut check = |e: Option<bool>, a: AuraDev1866| {
+        if let Some(arg) = e {
+            if arg {
+                enabled.push(a);
+            } else {
+                disabled.push(a);
+            }
+        }
+    };
+
+    check(power.awake, AuraDev1866::Awake);
+    check(power.boot, AuraDev1866::Boot);
+    check(power.sleep, AuraDev1866::Sleep);
+    check(power.keyboard, AuraDev1866::Keyboard);
+    check(power.lightbar, AuraDev1866::Lightbar);
+
+    let data = AuraPowerDev {
+        x1866: enabled,
+        x19b6: vec![],
+    };
+    dbus.proxies().led().set_leds_power(data, true)?;
+
+    let data = AuraPowerDev {
+        x1866: disabled,
+        x19b6: vec![],
+    };
+    dbus.proxies().led().set_leds_power(data, false)?;
+
+    Ok(())
+}
+
+fn handle_led_power2(
+    dbus: &RogDbusClientBlocking,
+    supported: &LedSupportedFunctions,
+    power: &LedPowerCommand2,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if power.command().is_none() {
         if !power.help {
@@ -433,7 +506,7 @@ fn handle_led_power(
         println!("{}\n", power.self_usage());
         println!("Commands available");
 
-        if let Some(cmdlist) = LedPowerCommand::command_list() {
+        if let Some(cmdlist) = LedPowerCommand2::command_list() {
             let commands: Vec<String> = cmdlist.lines().map(|s| s.to_string()).collect();
             for command in commands.iter() {
                 println!("{}", command);
@@ -450,132 +523,59 @@ fn handle_led_power(
             return Ok(());
         }
 
+        if supported.prod_id == "1866" {
+            println!("This option does not apply to keyboards with product ID 0x1866")
+        }
+
+        let mut enabled: Vec<AuraDev19b6> = Vec::new();
+        let mut disabled: Vec<AuraDev19b6> = Vec::new();
+        let mut check = |e: Option<bool>, a: AuraDev19b6| {
+            if let Some(arg) = e {
+                if arg {
+                    enabled.push(a);
+                } else {
+                    disabled.push(a);
+                }
+            }
+        };
+
         match pow {
-            // TODO: make this a macro or something
             aura_cli::SetAuraEnabled::Boot(arg) => {
-                let mut enabled: Vec<AuraControl> = Vec::new();
-                let mut disabled: Vec<AuraControl> = Vec::new();
-                arg.keyboard.map(|v| {
-                    if v {
-                        enabled.push(AuraControl::BootKeyb)
-                    } else {
-                        disabled.push(AuraControl::BootKeyb)
-                    }
-                });
-                arg.logo.map(|v| {
-                    if v {
-                        enabled.push(AuraControl::BootLogo)
-                    } else {
-                        disabled.push(AuraControl::BootLogo)
-                    }
-                });
-                arg.lightbar.map(|v| {
-                    if v {
-                        enabled.push(AuraControl::BootBar)
-                    } else {
-                        disabled.push(AuraControl::BootBar)
-                    }
-                });
-                if !enabled.is_empty() {
-                    dbus.proxies().led().set_leds_enabled(enabled)?;
-                }
-                if !disabled.is_empty() {
-                    dbus.proxies().led().set_leds_disabled(disabled)?;
-                }
+                check(arg.keyboard, AuraDev19b6::BootKeyb);
+                check(arg.logo, AuraDev19b6::BootLogo);
+                check(arg.lightbar, AuraDev19b6::BootBar);
             }
             aura_cli::SetAuraEnabled::Sleep(arg) => {
-                let mut enabled: Vec<AuraControl> = Vec::new();
-                let mut disabled: Vec<AuraControl> = Vec::new();
-                arg.keyboard.map(|v| {
-                    if v {
-                        enabled.push(AuraControl::SleepKeyb)
-                    } else {
-                        disabled.push(AuraControl::SleepKeyb)
-                    }
-                });
-                arg.logo.map(|v| {
-                    if v {
-                        enabled.push(AuraControl::SleepLogo)
-                    } else {
-                        disabled.push(AuraControl::SleepLogo)
-                    }
-                });
-                arg.lightbar.map(|v| {
-                    if v {
-                        enabled.push(AuraControl::SleepBar)
-                    } else {
-                        disabled.push(AuraControl::SleepBar)
-                    }
-                });
-                if !enabled.is_empty() {
-                    dbus.proxies().led().set_leds_enabled(enabled)?;
-                }
-                if !disabled.is_empty() {
-                    dbus.proxies().led().set_leds_disabled(disabled)?;
-                }
+                check(arg.keyboard, AuraDev19b6::SleepKeyb);
+                check(arg.logo, AuraDev19b6::SleepLogo);
+                check(arg.lightbar, AuraDev19b6::SleepBar);
             }
             aura_cli::SetAuraEnabled::Awake(arg) => {
-                let mut enabled: Vec<AuraControl> = Vec::new();
-                let mut disabled: Vec<AuraControl> = Vec::new();
-                arg.keyboard.map(|v| {
-                    if v {
-                        enabled.push(AuraControl::AwakeKeyb)
-                    } else {
-                        disabled.push(AuraControl::AwakeKeyb)
-                    }
-                });
-                arg.logo.map(|v| {
-                    if v {
-                        enabled.push(AuraControl::AwakeLogo)
-                    } else {
-                        disabled.push(AuraControl::AwakeLogo)
-                    }
-                });
-                arg.lightbar.map(|v| {
-                    if v {
-                        enabled.push(AuraControl::AwakeBar)
-                    } else {
-                        disabled.push(AuraControl::AwakeBar)
-                    }
-                });
-                if !enabled.is_empty() {
-                    dbus.proxies().led().set_leds_enabled(enabled)?;
-                }
-                if !disabled.is_empty() {
-                    dbus.proxies().led().set_leds_disabled(disabled)?;
-                }
+                check(arg.keyboard, AuraDev19b6::AwakeKeyb);
+                check(arg.logo, AuraDev19b6::AwakeLogo);
+                check(arg.lightbar, AuraDev19b6::AwakeBar);
             }
             aura_cli::SetAuraEnabled::Shutdown(arg) => {
-                let mut enabled: Vec<AuraControl> = Vec::new();
-                let mut disabled: Vec<AuraControl> = Vec::new();
-                arg.keyboard.map(|v| {
-                    if v {
-                        enabled.push(AuraControl::ShutdownKeyb)
-                    } else {
-                        disabled.push(AuraControl::ShutdownKeyb)
-                    }
-                });
-                arg.logo.map(|v| {
-                    if v {
-                        enabled.push(AuraControl::ShutdownLogo)
-                    } else {
-                        disabled.push(AuraControl::ShutdownLogo)
-                    }
-                });
-                arg.lightbar.map(|v| {
-                    if v {
-                        enabled.push(AuraControl::ShutdownBar)
-                    } else {
-                        disabled.push(AuraControl::ShutdownBar)
-                    }
-                });
-                if !enabled.is_empty() {
-                    dbus.proxies().led().set_leds_enabled(enabled)?;
-                }
-                if !disabled.is_empty() {
-                    dbus.proxies().led().set_leds_disabled(disabled)?;
-                }
+                check(arg.keyboard, AuraDev19b6::ShutdownKeyb);
+                check(arg.logo, AuraDev19b6::ShutdownLogo);
+                check(arg.lightbar, AuraDev19b6::ShutdownBar);
             }
+        }
+
+        if !enabled.is_empty() {
+            let data = AuraPowerDev {
+                x1866: vec![],
+                x19b6: enabled,
+            };
+            dbus.proxies().led().set_leds_power(data, true)?;
+        }
+
+        if !disabled.is_empty() {
+            let data = AuraPowerDev {
+                x1866: vec![],
+                x19b6: disabled,
+            };
+            dbus.proxies().led().set_leds_power(data, false)?;
         }
     }
 
