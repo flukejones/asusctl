@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Clear command for anime `asusctl anime --clear` will clear the display
+- Re-added support for LED power states on `0x1866` type keyboards
 ### Changed
 - Make rog-anime more error tolerent. Remove various asserts and return errors instead
 - Return error if a pixel-gif is larger than the anime-display dimensions
