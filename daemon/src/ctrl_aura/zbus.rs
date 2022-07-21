@@ -8,7 +8,7 @@ use super::controller::CtrlKbdLedZbus;
 #[async_trait]
 impl crate::ZbusAdd for CtrlKbdLedZbus {
     async fn add_to_server(self, server: &mut Connection) {
-        Self::add_to_server_helper(self, "/org/asuslinux/Led", server).await;
+        Self::add_to_server_helper(self, "/org/asuslinux/Aura", server).await;
     }
 }
 

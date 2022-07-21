@@ -6,12 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased ]
 
+## [4.3.0] - 2022-07-21
 ### Added
 - Clear command for anime `asusctl anime --clear` will clear the display
 - Re-added support for LED power states on `0x1866` type keyboards
 ### Changed
 - Make rog-anime more error tolerent. Remove various asserts and return errors instead
 - Return error if a pixel-gif is larger than the anime-display dimensions
+- Both Anime and Aura dbus interfaces are changed a little
+  - Aura power has changed, all power related settings are now in one method
+  - Anime methods will now return an error (if errored)
+  - /org/asuslinux/Led renamed to /org/asuslinux/Aura
 
 ## [4.2.1] - 2022-07-18
 ### Added
