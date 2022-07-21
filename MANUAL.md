@@ -90,7 +90,7 @@ where the number is a percentage.
 
 Some options that you find in Armory Crate are available under this controller, so far there is:
 
-- POST sound: this is the sound you here on bios boot post
+- POST sound: this is the sound you hear on bios boot post
 - G-Sync: this controls if the dGPU (Nvidia) is the *only* GPU, making it the main GPU and disabling the iGPU
 
 These options are not written to the config file as they are stored in efivars. The only way to change these is to use the exposed safe dbus methods, or use the `asusctl` CLI tool.
@@ -293,7 +293,7 @@ A plain non-float integer.
 
 ## asusctl
 
-`asusctl` is a commandline interface which intends to be the main method of interacting with `asusd`. I can be used in any place a terminal app can be used.
+`asusctl` is a commandline interface which intends to be the main method of interacting with `asusd`. It can be used in any place a terminal app can be used.
 
 This program will query `asusd` for the `Support` level of the laptop and show or hide options according to this support level.
 
