@@ -1,6 +1,6 @@
 use crate::{
     anime_cli::AnimeCommand,
-    aura_cli::{LedBrightness, LedPowerCommand, SetAuraBuiltin},
+    aura_cli::{LedBrightness, LedPowerCommand1, LedPowerCommand2, SetAuraBuiltin},
     profiles_cli::{FanCurveCommand, ProfileCommand},
 };
 use gumdrop::Options;
@@ -29,8 +29,10 @@ pub struct CliStart {
 pub enum CliCommand {
     #[options(help = "Set the keyboard lighting from built-in modes")]
     LedMode(LedModeCommand),
-    #[options(help = "Set the keyboard lighting from built-in modes")]
-    LedPower(LedPowerCommand),
+    #[options(help = "Set the LED power states")]
+    LedPow1(LedPowerCommand1),
+    #[options(help = "Set the LED power states")]
+    LedPow2(LedPowerCommand2),
     #[options(help = "Set or select platform_profile")]
     Profile(ProfileCommand),
     #[options(help = "Set, select, or modify fan curves if supported")]

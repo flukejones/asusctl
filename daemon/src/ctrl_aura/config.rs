@@ -1,6 +1,6 @@
 use crate::laptops::LaptopLedData;
 use log::{error, warn};
-use rog_aura::usb::AuraControl;
+use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Direction, LedBrightness, Speed, GRADIENT};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashSet};
@@ -8,6 +8,65 @@ use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 
 pub static AURA_CONFIG_PATH: &str = "/etc/asusd/aura.conf";
+
+/// Enable/disable LED control in various states such as
+/// when the device is awake, suspended, shutting down or
+/// booting.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AuraPowerConfig {
+    AuraDev1866(HashSet<AuraDev1866>),
+    AuraDev19b6(HashSet<AuraDev19b6>),
+}
+
+impl AuraPowerConfig {
+    pub fn to_bytes(control: &Self) -> [u8; 3] {
+        match control {
+            AuraPowerConfig::AuraDev1866(c) => {
+                let c: Vec<AuraDev1866> = c.iter().map(|v| *v).collect();
+                AuraDev1866::to_bytes(&c)
+            }
+            AuraPowerConfig::AuraDev19b6(c) => {
+                let c: Vec<AuraDev19b6> = c.iter().map(|v| *v).collect();
+                AuraDev19b6::to_bytes(&c)
+            }
+        }
+    }
+
+    pub fn set_0x1866(&mut self, power: AuraDev1866, on: bool) {
+        if let Self::AuraDev1866(p) = self {
+            if on {
+                p.insert(power);
+            } else {
+                p.remove(&power);
+            }
+        }
+    }
+
+    pub fn set_0x19b6(&mut self, power: AuraDev19b6, on: bool) {
+        if let Self::AuraDev19b6(p) = self {
+            if on {
+                p.insert(power);
+            } else {
+                p.remove(&power);
+            }
+        }
+    }
+}
+
+impl From<&AuraPowerConfig> for AuraPowerDev {
+    fn from(config: &AuraPowerConfig) -> Self {
+        match config {
+            AuraPowerConfig::AuraDev1866(d) => AuraPowerDev {
+                x1866: d.iter().map(|o| *o).collect(),
+                x19b6: vec![],
+            },
+            AuraPowerConfig::AuraDev19b6(d) => AuraPowerDev {
+                x1866: vec![],
+                x19b6: d.iter().map(|o| *o).collect(),
+            },
+        }
+    }
+}
 
 #[derive(Deserialize, Serialize)]
 #[serde(default)]
@@ -17,7 +76,7 @@ pub struct AuraConfig {
     pub builtins: BTreeMap<AuraModeNum, AuraEffect>,
     pub multizone: Option<BTreeMap<AuraModeNum, Vec<AuraEffect>>>,
     pub multizone_on: bool,
-    pub enabled: HashSet<AuraControl>,
+    pub enabled: AuraPowerConfig,
 }
 
 impl Default for AuraConfig {
@@ -28,20 +87,7 @@ impl Default for AuraConfig {
             builtins: BTreeMap::new(),
             multizone: None,
             multizone_on: false,
-            enabled: HashSet::from([
-                AuraControl::BootLogo,
-                AuraControl::BootKeyb,
-                AuraControl::SleepLogo,
-                AuraControl::SleepKeyb,
-                AuraControl::AwakeLogo,
-                AuraControl::AwakeKeyb,
-                AuraControl::ShutdownLogo,
-                AuraControl::ShutdownKeyb,
-                AuraControl::AwakeBar,
-                AuraControl::BootBar,
-                AuraControl::SleepBar,
-                AuraControl::ShutdownBar,
-            ]),
+            enabled: AuraPowerConfig::AuraDev1866(HashSet::new()),
         }
     }
 }

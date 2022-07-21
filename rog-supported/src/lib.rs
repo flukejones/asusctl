@@ -30,6 +30,7 @@ pub struct PlatformProfileFunctions {
 
 #[derive(Serialize, Deserialize, Type, Debug)]
 pub struct LedSupportedFunctions {
+    pub prod_id: String,
     pub brightness_set: bool,
     pub stock_led_modes: Vec<AuraModeNum>,
     pub multizone_led_mode: Vec<AuraZone>,
