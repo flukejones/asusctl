@@ -29,9 +29,9 @@ pub(crate) fn temp_str(fan: char, index: usize) -> String {
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Deserialize, Serialize, Default, Debug, Clone)]
 pub struct CurveData {
-    pub(crate) fan: FanCurvePU,
-    pub(crate) pwm: [u8; 8],
-    pub(crate) temp: [u8; 8],
+    pub fan: FanCurvePU,
+    pub pwm: [u8; 8],
+    pub temp: [u8; 8],
 }
 
 impl std::str::FromStr for CurveData {
