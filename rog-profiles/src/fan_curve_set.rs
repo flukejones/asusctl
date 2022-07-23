@@ -166,9 +166,9 @@ impl CurveData {
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct FanCurveSet {
-    pub(crate) enabled: bool,
-    pub(crate) cpu: CurveData,
-    pub(crate) gpu: CurveData,
+    pub enabled: bool,
+    pub cpu: CurveData,
+    pub gpu: CurveData,
 }
 
 impl Default for FanCurveSet {
