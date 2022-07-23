@@ -38,7 +38,7 @@ pub fn find_fan_curve_node() -> Result<Option<Device>, ProfileError> {
 }
 
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Deserialize, Serialize, Debug, PartialEq, Clone, Copy)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum Profile {
     Balanced,
     Performance,
