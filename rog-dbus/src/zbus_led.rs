@@ -22,7 +22,7 @@
 use zbus::{blocking::Connection, Result};
 use zbus_macros::dbus_proxy;
 
-use rog_aura::{usb::AuraPowerDev, AuraEffect, KeyColourArray, LedBrightness};
+use rog_aura::{usb::AuraPowerDev, AuraEffect, KeyColourArray, LedBrightness, AuraModeNum};
 
 const BLOCKING_TIME: u64 = 40; // 100ms = 10 FPS, max 50ms = 20 FPS, 40ms = 25 FPS
 
@@ -63,8 +63,8 @@ trait Led {
     fn led_brightness(&self) -> zbus::Result<i16>;
 
     /// LedMode property
-    #[dbus_proxy(property)]
-    fn led_mode(&self) -> zbus::Result<String>;
+    // #[dbus_proxy(property)]
+    fn led_mode(&self) -> zbus::Result<AuraModeNum>;
 
     /// LedModes property
     #[dbus_proxy(property)]

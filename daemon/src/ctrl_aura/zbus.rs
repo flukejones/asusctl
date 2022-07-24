@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use log::warn;
-use rog_aura::{usb::AuraPowerDev, AuraEffect, LedBrightness};
+use rog_aura::{usb::AuraPowerDev, AuraEffect, LedBrightness, AuraModeNum};
 use zbus::{dbus_interface, Connection, SignalContext};
 
 use super::controller::CtrlKbdLedZbus;
@@ -175,17 +175,19 @@ impl CtrlKbdLedZbus {
     }
 
     /// Return the current mode data
-    #[dbus_interface(property)]
-    async fn led_mode(&self) -> String {
+    // #[dbus_interface(property)]
+    async fn led_mode(&self) -> AuraModeNum {
         if let Ok(ctrl) = self.0.try_lock() {
-            if let Some(mode) = ctrl.config.builtins.get(&ctrl.config.current_mode) {
-                if let Ok(json) = serde_json::to_string(&mode) {
-                    return json;
-                }
-            }
+            // if let Some(mode) = ctrl.config.builtins.get(&ctrl.config.current_mode) {
+                // if let Ok(json) = serde_json::to_string(&ctrl.config.current_mode) {
+                //     return json;
+                // }
+            // }
+            return ctrl.config.current_mode;
         }
-        warn!("SetKeyBacklight could not deserialise");
-        "SetKeyBacklight could not deserialise".to_string()
+        // warn!("SetKeyBacklight could not deserialise");
+        // "SetKeyBacklight could not deserialise".to_string()
+        AuraModeNum::Static
     }
 
     /// Return a list of available modes
