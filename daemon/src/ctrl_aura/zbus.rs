@@ -175,18 +175,10 @@ impl CtrlKbdLedZbus {
     }
 
     /// Return the current mode data
-    // #[dbus_interface(property)]
     async fn led_mode(&self) -> AuraModeNum {
         if let Ok(ctrl) = self.0.try_lock() {
-            // if let Some(mode) = ctrl.config.builtins.get(&ctrl.config.current_mode) {
-                // if let Ok(json) = serde_json::to_string(&ctrl.config.current_mode) {
-                //     return json;
-                // }
-            // }
             return ctrl.config.current_mode;
         }
-        // warn!("SetKeyBacklight could not deserialise");
-        // "SetKeyBacklight could not deserialise".to_string()
         AuraModeNum::Static
     }
 

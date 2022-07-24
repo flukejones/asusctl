@@ -63,7 +63,6 @@ trait Led {
     fn led_brightness(&self) -> zbus::Result<i16>;
 
     /// LedMode property
-    // #[dbus_proxy(property)]
     fn led_mode(&self) -> zbus::Result<AuraModeNum>;
 
     /// LedModes property
