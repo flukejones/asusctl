@@ -63,6 +63,22 @@ impl FromStr for Colour {
     }
 }
 
+impl From<&[f32; 3]> for Colour {
+    fn from(c: &[f32; 3]) -> Self {
+        Self(
+            (255.0 * c[0]) as u8,
+            (255.0 * c[1]) as u8,
+            (255.0 * c[2]) as u8,
+        )
+    }
+}
+
+impl From<Colour> for [f32; 3] {
+    fn from(c: Colour) -> Self {
+        [c.0 as f32 / 255.0, c.1 as f32 / 255.0, c.2 as f32 / 255.0]
+    }
+}
+
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize)]
 pub enum Speed {
