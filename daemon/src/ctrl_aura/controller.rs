@@ -418,8 +418,8 @@ impl CtrlKbdLed {
 
             self.config.read();
             // if self.config.builtins.contains_key(&next) {
-                self.config.current_mode = next;
-                self.write_current_config_mode()?;
+            self.config.current_mode = next;
+            self.write_current_config_mode()?;
             // }
             self.config.write();
         }

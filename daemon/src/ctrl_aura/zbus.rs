@@ -1,6 +1,8 @@
+use std::collections::BTreeMap;
+
 use async_trait::async_trait;
 use log::warn;
-use rog_aura::{usb::AuraPowerDev, AuraEffect, LedBrightness, AuraModeNum};
+use rog_aura::{usb::AuraPowerDev, AuraEffect, AuraModeNum, LedBrightness};
 use zbus::{dbus_interface, Connection, SignalContext};
 
 use super::controller::CtrlKbdLedZbus;
@@ -183,15 +185,12 @@ impl CtrlKbdLedZbus {
     }
 
     /// Return a list of available modes
-    #[dbus_interface(property)]
-    async fn led_modes(&self) -> String {
-        if let Ok(ctrl) = self.0.try_lock() {
-            if let Ok(json) = serde_json::to_string(&ctrl.config.builtins) {
-                return json;
+    async fn led_modes(&self) -> BTreeMap<AuraModeNum, AuraEffect> {
+        loop {
+            if let Ok(ctrl) = self.0.try_lock() {
+                return ctrl.config.builtins.clone();
             }
         }
-        warn!("SetKeyBacklight could not deserialise");
-        "SetKeyBacklight could not serialise".to_string()
     }
 
     /// Return the current LED brightness

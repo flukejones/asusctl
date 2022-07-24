@@ -19,10 +19,12 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
+use std::collections::BTreeMap;
+
 use zbus::{blocking::Connection, Result};
 use zbus_macros::dbus_proxy;
 
-use rog_aura::{usb::AuraPowerDev, AuraEffect, KeyColourArray, LedBrightness, AuraModeNum};
+use rog_aura::{usb::AuraPowerDev, AuraEffect, AuraModeNum, KeyColourArray, LedBrightness};
 
 const BLOCKING_TIME: u64 = 40; // 100ms = 10 FPS, max 50ms = 20 FPS, 40ms = 25 FPS
 
@@ -66,8 +68,7 @@ trait Led {
     fn led_mode(&self) -> zbus::Result<AuraModeNum>;
 
     /// LedModes property
-    #[dbus_proxy(property)]
-    fn led_modes(&self) -> zbus::Result<String>;
+    fn led_modes(&self) -> zbus::Result<BTreeMap<AuraModeNum, AuraEffect>>;
 
     // As property doesn't work for AuraPowerDev (complexity of serialization?)
     // #[dbus_proxy(property)]
