@@ -182,7 +182,7 @@ impl CtrlKbdLedZbus {
 
     // As property doesn't work for AuraPowerDev (complexity of serialization?)
     // #[dbus_interface(property)]
-    async fn leds_power(&self) -> AuraPowerDev {
+    async fn leds_enabled(&self) -> AuraPowerDev {
         loop {
             if let Ok(ctrl) = self.0.try_lock() {
                 return AuraPowerDev::from(&ctrl.config.enabled);
