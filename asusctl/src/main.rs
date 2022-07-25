@@ -10,7 +10,7 @@ use anime_cli::{AnimeActions, AnimeCommand};
 use profiles_cli::{FanCurveCommand, ProfileCommand};
 use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, Vec2};
-use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraPowerDev};
+use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraDevice, AuraPowerDev};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClientBlocking;
 use rog_profiles::error::ProfileError;
@@ -159,12 +159,14 @@ fn do_parsed(
                 if let Some(cmdlist) = CliStart::command_list() {
                     let commands: Vec<String> = cmdlist.lines().map(|s| s.to_string()).collect();
                     for command in commands.iter().filter(|command| {
-                        if supported.keyboard_led.prod_id != "1866"
-                            && command.trim().starts_with("led-pow-1")
+                        if !matches!(
+                            supported.keyboard_led.prod_id,
+                            AuraDevice::X1854 | AuraDevice::X1869 | AuraDevice::X1866
+                        ) && command.trim().starts_with("led-pow-1")
                         {
                             return false;
                         }
-                        if supported.keyboard_led.prod_id != "19b6"
+                        if supported.keyboard_led.prod_id != AuraDevice::X19B6
                             && command.trim().starts_with("led-pow-2")
                         {
                             return false;
@@ -455,7 +457,10 @@ fn handle_led_power1(
         return Ok(());
     }
 
-    if supported.prod_id != "1866" {
+    if !matches!(
+        supported.prod_id,
+        AuraDevice::X1854 | AuraDevice::X1869 | AuraDevice::X1866
+    ) {
         println!("These options are for keyboards of product ID 0x1866 only");
         return Ok(());
     }
@@ -523,8 +528,8 @@ fn handle_led_power2(
             return Ok(());
         }
 
-        if supported.prod_id == "1866" {
-            println!("This option does not apply to keyboards with product ID 0x1866")
+        if supported.prod_id != AuraDevice::X19B6 {
+            println!("This option applies only to keyboards with product ID 0x19b6")
         }
 
         let mut enabled: Vec<AuraDev19b6> = Vec::new();

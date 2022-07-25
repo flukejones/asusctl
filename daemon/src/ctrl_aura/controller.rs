@@ -10,7 +10,7 @@ use async_trait::async_trait;
 use log::{error, info, warn};
 use logind_zbus::manager::ManagerProxy;
 use rog_aura::{
-    usb::{LED_APPLY, LED_SET},
+    usb::{AuraDevice, LED_APPLY, LED_SET},
     AuraEffect, LedBrightness, LED_MSG_LEN,
 };
 use rog_aura::{AuraZone, Direction, Speed, GRADIENT};
@@ -40,16 +40,16 @@ impl GetSupported for CtrlKbdLed {
         let multizone_led_mode = laptop.multizone;
         let per_key_led_mode = laptop.per_key;
 
-        let mut prod_id = String::new();
+        let mut prod_id = "";
         for prod in ASUS_KEYBOARD_DEVICES.iter() {
             if let Ok(_) = Self::find_led_node(prod) {
-                prod_id = prod.to_string();
+                prod_id = *prod;
                 break;
             }
         }
 
         LedSupportedFunctions {
-            prod_id,
+            prod_id: AuraDevice::from(prod_id),
             brightness_set: CtrlKbdLed::get_kbd_bright_path().is_some(),
             stock_led_modes,
             multizone_led_mode,

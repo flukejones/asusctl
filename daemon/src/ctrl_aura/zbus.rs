@@ -29,8 +29,21 @@ impl CtrlKbdLedZbus {
     }
 
     /// Set a variety of states, input is array of enum.
+    /// `enabled` sets if the sent array should be disabled or enabled
     ///
-    /// enum AuraControl {
+    /// ```text
+    /// pub struct AuraPowerDev {
+    ///     pub x1866: Vec<AuraDev1866>,
+    ///     pub x19b6: Vec<AuraDev19b6>,
+    /// }
+    /// pub enum AuraDev1866 {
+    ///     Awake,
+    ///     Keyboard,
+    ///     Lightbar,
+    ///     Boot,
+    ///     Sleep,
+    /// }
+    /// enum AuraDev19b6 {
     ///     BootLogo,
     ///     BootKeyb,
     ///     AwakeLogo,
@@ -44,6 +57,7 @@ impl CtrlKbdLedZbus {
     ///     SleepBar,
     ///     ShutdownBar,
     /// }
+    /// ```
     async fn set_leds_power(
         &mut self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,

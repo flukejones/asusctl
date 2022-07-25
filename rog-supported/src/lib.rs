@@ -1,6 +1,6 @@
 pub static VERSION: &str = env!("CARGO_PKG_VERSION");
 
-use rog_aura::{AuraModeNum, AuraZone};
+use rog_aura::{usb::AuraDevice, AuraModeNum, AuraZone};
 use serde_derive::{Deserialize, Serialize};
 use std::fmt;
 use zvariant_derive::Type;
@@ -30,7 +30,7 @@ pub struct PlatformProfileFunctions {
 
 #[derive(Serialize, Deserialize, Type, Debug)]
 pub struct LedSupportedFunctions {
-    pub prod_id: String,
+    pub prod_id: AuraDevice,
     pub brightness_set: bool,
     pub stock_led_modes: Vec<AuraModeNum>,
     pub multizone_led_mode: Vec<AuraZone>,

@@ -20,6 +20,32 @@ pub const fn aura_brightness_bytes(brightness: u8) -> [u8; 17] {
     ]
 }
 
+#[cfg_attr(feature = "dbus", derive(Type))]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
+pub enum AuraDevice {
+    X1854,
+    X1869,
+    X1866,
+    X19B6,
+    Unknown,
+}
+
+impl From<&str> for AuraDevice {
+    fn from(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            "1866" => AuraDevice::X1866,
+            "1869" => AuraDevice::X1869,
+            "1854" => AuraDevice::X1854,
+            "19b6" => AuraDevice::X19B6,
+            "0x1866" => AuraDevice::X1866,
+            "0x1869" => AuraDevice::X1869,
+            "0x1854" => AuraDevice::X1854,
+            "0x19b6" => AuraDevice::X19B6,
+            _ => AuraDevice::Unknown,
+        }
+    }
+}
+
 /// This struct is intended as a helper to pass args to generic dbus interface
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Clone, Debug, Serialize, Deserialize)]
