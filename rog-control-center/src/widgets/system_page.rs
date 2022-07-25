@@ -59,6 +59,24 @@ impl<'a> RogApp<'a> {
                     }
                 }
 
+                if supported.rog_bios_ctrl.post_sound {
+                    if ui
+                        .add(egui::Checkbox::new(
+                            &mut states.bios.panel_overdrive,
+                            "Panel overdrive",
+                        ))
+                        .changed()
+                    {
+                        dbus.proxies()
+                            .rog_bios()
+                            .set_panel_overdrive(states.bios.panel_overdrive)
+                            .map_err(|err| {
+                                states.error = Some(err.to_string());
+                            })
+                            .ok();
+                    }
+                }
+
                 if supported.rog_bios_ctrl.dedicated_gfx {
                     if ui
                         .add(egui::Checkbox::new(

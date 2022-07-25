@@ -33,9 +33,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let anime_notified = Arc::new(AtomicBool::new(false));
     let profiles_notified = Arc::new(AtomicBool::new(false));
     let fans_notified = Arc::new(AtomicBool::new(false));
+    let notifs_enabled = Arc::new(AtomicBool::new(config.enable_notifications));
     // TODO: change this to an error instead of the nested unwraps, then use to
     // display a bare box app with error message.
     let states = PageDataStates::new(
+        notifs_enabled.clone(),
         charge_notified.clone(),
         bios_notified.clone(),
         aura_notified.clone(),
@@ -54,6 +56,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             anime_notified,
             profiles_notified,
             fans_notified,
+            notifs_enabled,
         )?;
     }
 

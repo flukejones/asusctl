@@ -1,3 +1,5 @@
+use std::sync::atomic::Ordering;
+
 use crate::RogApp;
 
 impl<'a> RogApp<'a> {
@@ -13,32 +15,19 @@ impl<'a> RogApp<'a> {
                     }
                 });
                 ui.menu_button("Settings", |ui| {
-                    let (mut in_bg, mut hidden) =
-                        { (config.run_in_background, config.startup_in_background) };
-                    if ui.checkbox(&mut in_bg, "Run in Background").clicked() {
-                        config.run_in_background = in_bg;
-                        config
-                            .save()
-                            .map_err(|err| {
-                                states.error = Some(err.to_string());
-                            })
-                            .ok();
-                    }
-                    if ui.checkbox(&mut hidden, "Startup Hidden").clicked() {
-                        config.startup_in_background = in_bg;
-                        config
-                            .save()
-                            .map_err(|err| {
-                                states.error = Some(err.to_string());
-                            })
-                            .ok();
-                    }
                     if ui
-                        .checkbox(&mut config.enable_notifications, "Enable Notifications")
+                        .checkbox(&mut config.run_in_background, "Run in Background")
                         .clicked()
+                        || ui
+                            .checkbox(&mut config.startup_in_background, "Startup Hidden")
+                            .clicked()
+                        || ui
+                            .checkbox(&mut config.enable_notifications, "Enable Notifications")
+                            .clicked()
                     {
-                        config.enable_notifications = in_bg;
-                        // TODO: set an atomicbool used in the notif thread
+                        states
+                            .notifs_enabled
+                            .store(config.enable_notifications, Ordering::SeqCst);
                         config
                             .save()
                             .map_err(|err| {

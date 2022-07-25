@@ -51,12 +51,16 @@ pub fn start_notifications(
     anime_notified: Arc<AtomicBool>,
     profiles_notified: Arc<AtomicBool>,
     _fans_notified: Arc<AtomicBool>,
+    notifs_enabled: Arc<AtomicBool>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let last_notification: SharedHandle = Arc::new(Mutex::new(None));
 
     let executor = Executor::new();
     // BIOS notif
-    let x = last_notification.clone();
+    let last_notif = last_notification.clone();
+    let notifs_enabled1 = notifs_enabled.clone();
+    let bios_notified1 = bios_notified.clone();
+    // TODO: make a macro or generic function or something...
     executor
         .spawn(async move {
             let conn = zbus::Connection::system().await.unwrap();
@@ -64,10 +68,12 @@ pub fn start_notifications(
             if let Ok(p) = proxy.receive_notify_post_boot_sound().await {
                 p.for_each(|e| {
                     if let Ok(out) = e.args() {
-                        if let Ok(ref mut lock) = x.try_lock() {
-                            notify!(do_post_sound_notif, lock, &out.sound());
+                        if notifs_enabled1.load(Ordering::SeqCst) {
+                            if let Ok(ref mut lock) = last_notif.try_lock() {
+                                notify!(do_post_sound_notif, lock, &out.sound());
+                            }
                         }
-                        bios_notified.store(true, Ordering::SeqCst);
+                        bios_notified1.store(true, Ordering::SeqCst);
                     }
                     future::ready(())
                 })
@@ -76,8 +82,23 @@ pub fn start_notifications(
         })
         .detach();
 
+    executor
+        .spawn(async move {
+            let conn = zbus::Connection::system().await.unwrap();
+            let proxy = RogBiosProxy::new(&conn).await.unwrap();
+            if let Ok(p) = proxy.receive_notify_panel_overdrive().await {
+                p.for_each(|_| {
+                    bios_notified.store(true, Ordering::SeqCst);
+                    future::ready(())
+                })
+                .await;
+            };
+        })
+        .detach();
+
     // Charge notif
-    let x = last_notification.clone();
+    let last_notif = last_notification.clone();
+    let notifs_enabled1 = notifs_enabled.clone();
     executor
         .spawn(async move {
             let conn = zbus::Connection::system().await.unwrap();
@@ -85,8 +106,10 @@ pub fn start_notifications(
             if let Ok(p) = proxy.receive_notify_charge().await {
                 p.for_each(|e| {
                     if let Ok(out) = e.args() {
-                        if let Ok(ref mut lock) = x.try_lock() {
-                            notify!(do_charge_notif, lock, &out.limit);
+                        if notifs_enabled1.load(Ordering::SeqCst) {
+                            if let Ok(ref mut lock) = last_notif.try_lock() {
+                                notify!(do_charge_notif, lock, &out.limit);
+                            }
                         }
                         charge_notified.store(true, Ordering::SeqCst);
                     }
@@ -98,7 +121,8 @@ pub fn start_notifications(
         .detach();
 
     // Profile notif
-    let x = last_notification.clone();
+    let last_notif = last_notification.clone();
+    let notifs_enabled1 = notifs_enabled.clone();
     executor
         .spawn(async move {
             let conn = zbus::Connection::system().await.unwrap();
@@ -106,8 +130,10 @@ pub fn start_notifications(
             if let Ok(p) = proxy.receive_notify_profile().await {
                 p.for_each(|e| {
                     if let Ok(out) = e.args() {
-                        if let Ok(ref mut lock) = x.try_lock() {
-                            notify!(do_thermal_notif, lock, &out.profile);
+                        if notifs_enabled1.load(Ordering::SeqCst) {
+                            if let Ok(ref mut lock) = last_notif.try_lock() {
+                                notify!(do_thermal_notif, lock, &out.profile);
+                            }
                         }
                         profiles_notified.store(true, Ordering::SeqCst);
                     }
@@ -119,8 +145,9 @@ pub fn start_notifications(
         .detach();
 
     // LED notif
-    let x = last_notification.clone();
-    let a = aura_notified.clone();
+    let last_notif = last_notification.clone();
+    let aura_notif = aura_notified.clone();
+    let notifs_enabled1 = notifs_enabled.clone();
     executor
         .spawn(async move {
             let conn = zbus::Connection::system().await.unwrap();
@@ -128,10 +155,12 @@ pub fn start_notifications(
             if let Ok(p) = proxy.receive_notify_led().await {
                 p.for_each(|e| {
                     if let Ok(out) = e.args() {
-                        if let Ok(ref mut lock) = x.try_lock() {
-                            notify!(do_led_notif, lock, &out.data);
+                        if notifs_enabled1.load(Ordering::SeqCst) {
+                            if let Ok(ref mut lock) = last_notif.try_lock() {
+                                notify!(do_led_notif, lock, &out.data);
+                            }
                         }
-                        a.store(true, Ordering::SeqCst);
+                        aura_notif.store(true, Ordering::SeqCst);
                     }
                     future::ready(())
                 })
@@ -145,13 +174,8 @@ pub fn start_notifications(
             let conn = zbus::Connection::system().await.unwrap();
             let proxy = LedProxy::new(&conn).await.unwrap();
             if let Ok(p) = proxy.receive_notify_power_states().await {
-                p.for_each(|e| {
-                    if let Ok(_out) = e.args() {
-                        // if let Ok(ref mut lock) = last_notification.try_lock() {
-                        //     notify!(do_led_notif, lock, &out.data);
-                        // }
-                        aura_notified.store(true, Ordering::SeqCst);
-                    }
+                p.for_each(|_| {
+                    aura_notified.store(true, Ordering::SeqCst);
                     future::ready(())
                 })
                 .await;
@@ -164,13 +188,8 @@ pub fn start_notifications(
             let conn = zbus::Connection::system().await.unwrap();
             let proxy = AnimeProxy::new(&conn).await.unwrap();
             if let Ok(p) = proxy.receive_power_states().await {
-                p.for_each(|e| {
-                    if let Ok(_out) = e.args() {
-                        // if let Ok(ref mut lock) = last_notification.try_lock() {
-                        //     notify!(do_led_notif, lock, &out.data);
-                        // }
-                        anime_notified.store(true, Ordering::SeqCst);
-                    }
+                p.for_each(|_| {
+                    anime_notified.store(true, Ordering::SeqCst);
                     future::ready(())
                 })
                 .await;

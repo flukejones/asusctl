@@ -218,6 +218,7 @@ impl AnimeState {
 
 #[derive(Debug)]
 pub struct PageDataStates {
+    pub notifs_enabled: Arc<AtomicBool>,
     pub was_notified: Arc<AtomicBool>,
     /// Because much of the app state here is the same as `RogBiosSupportedFunctions`
     /// we can re-use that structure.
@@ -232,6 +233,7 @@ pub struct PageDataStates {
 
 impl PageDataStates {
     pub fn new(
+        notifs_enabled: Arc<AtomicBool>,
         charge_notified: Arc<AtomicBool>,
         bios_notified: Arc<AtomicBool>,
         aura_notified: Arc<AtomicBool>,
@@ -242,6 +244,7 @@ impl PageDataStates {
         dbus: &RogDbusClientBlocking,
     ) -> Self {
         Self {
+            notifs_enabled,
             was_notified: charge_notified,
             charge_limit: dbus.proxies().charge().limit().unwrap(),
             bios: BiosState::new(bios_notified, supported, dbus),
