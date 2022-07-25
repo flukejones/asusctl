@@ -156,6 +156,8 @@ pub struct AuraState {
     pub current_mode: AuraModeNum,
     pub modes: BTreeMap<AuraModeNum, AuraEffect>,
     pub enabled: AuraPowerDev,
+    /// Brightness from 0-3
+    pub bright: i16,
 }
 
 impl AuraState {
@@ -178,6 +180,11 @@ impl AuraState {
                 BTreeMap::new()
             },
             enabled: dbus.proxies().led().leds_enabled().unwrap(),
+            bright: if !supported.keyboard_led.brightness_set {
+                dbus.proxies().led().led_brightness().unwrap()
+            } else {
+                2
+            },
         }
     }
 }

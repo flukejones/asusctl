@@ -169,11 +169,26 @@ pub fn start_notifications(
         })
         .detach();
 
+    let aura_notif = aura_notified.clone();
     executor
         .spawn(async move {
             let conn = zbus::Connection::system().await.unwrap();
             let proxy = LedProxy::new(&conn).await.unwrap();
-            if let Ok(p) = proxy.receive_notify_power_states().await {
+            if let Ok(p) = proxy.receive_notify_led().await {
+                p.for_each(|_| {
+                    aura_notif.store(true, Ordering::SeqCst);
+                    future::ready(())
+                })
+                .await;
+            };
+        })
+        .detach();
+
+    executor
+        .spawn(async move {
+            let conn = zbus::Connection::system().await.unwrap();
+            let proxy = LedProxy::new(&conn).await.unwrap();
+            if let Ok(p) = proxy.receive_all_signals().await {
                 p.for_each(|_| {
                     aura_notified.store(true, Ordering::SeqCst);
                     future::ready(())

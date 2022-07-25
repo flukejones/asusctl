@@ -1,7 +1,7 @@
 use egui::{RichText, Ui};
 use rog_aura::{
     usb::{AuraDev1866, AuraDev19b6, AuraDevice, AuraPowerDev},
-    AuraModeNum, AuraZone, Colour, Speed,
+    AuraModeNum, AuraZone, Colour, LedBrightness, Speed,
 };
 use rog_dbus::RogDbusClientBlocking;
 use rog_supported::SupportedFunctions;
@@ -72,6 +72,11 @@ impl<'a> RogApp<'a> {
                 ui.horizontal_wrapped(|ui| {
                     ui.label(RichText::new("Sleep").size(h));
                 });
+                // if supported.keyboard_led.brightness_set {
+                //     ui.horizontal_wrapped(|ui| {
+                //         ui.label(RichText::new("Brightness").size(h));
+                //     });
+                // }
             });
             ui.vertical(|ui| {
                 ui.set_row_height(22.0);
@@ -95,6 +100,26 @@ impl<'a> RogApp<'a> {
                         changed = true;
                     }
                 });
+
+                // We currently don't have a watch for system changes here
+                // if supported.keyboard_led.brightness_set {
+                //     if ui
+                //         .add(egui::Slider::new(
+                //             &mut states.aura.bright,
+                //             0..=3,
+                //         ))
+                //         .changed()
+                //     {
+                //         let bright = LedBrightness::from(states.aura.bright as u32);
+                //         dbus.proxies()
+                //             .led()
+                //             .set_brightness(bright)
+                //             .map_err(|err| {
+                //                 states.error = Some(err.to_string());
+                //             })
+                //             .ok();
+                //     }
+                // }
             });
         });
 
