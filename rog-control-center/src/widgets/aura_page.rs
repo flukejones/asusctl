@@ -1,7 +1,7 @@
 use egui::{RichText, Ui};
 use rog_aura::{
     usb::{AuraDev1866, AuraDev19b6, AuraDevice, AuraPowerDev},
-    AuraModeNum, AuraZone, Colour, LedBrightness, Speed,
+    AuraModeNum, AuraZone, Colour, Speed,
 };
 use rog_dbus::RogDbusClientBlocking;
 use rog_supported::SupportedFunctions;
