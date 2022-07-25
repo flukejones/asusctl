@@ -5,6 +5,8 @@
 `asusd` is a utility for Linux to control many aspects of various ASUS laptops
 but can also be used with non-asus laptops with reduced features.
 
+Now includes a GUI, `rog-control-center`.
+
 ## Kernel support
 
 **The minimum supported kernel version is 5.15**

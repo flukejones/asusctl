@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+
+Name=ROG Control Center
+Comment=Make your ASUS ROG Laptop go Brrrrr!
+Categories=Settings
+
+Icon=rog-control-center
+Exec=env WINIT_UNIX_BACKEND=x11 rog-control-center
+Terminal=false

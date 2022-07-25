@@ -1,0 +1,6 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory '/home/luke/Projects/rog-control-center'
+ 
+cargo build --release
+make: Leaving directory '/home/luke/Projects/rog-control-center'
+ 

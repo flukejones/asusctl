@@ -1,0 +1,45 @@
+[package]
+name = "rog-control-center"
+version = "0.1.3"
+authors = ["Luke D. Jones <luke@ljones.dev>"]
+edition = "2021"
+
+[features]
+mocking = []
+
+[dependencies]
+egui = { git = "https://github.com/emilk/egui" }
+eframe= { git = "https://github.com/emilk/egui" }
+#eframe= { git = "https://github.com/emilk/egui", default-features = false, features = ["dark-light", "default_fonts", "wgpu"] }
+
+rog_dbus = { path = "../rog-dbus" }
+rog_aura = { path = "../rog-aura" }
+rog_profiles = { path = "../rog-profiles" }
+rog_supported = { path = "../rog-supported" }
+# supergfxctl = { git = "https://gitlab.com/asus-linux/supergfxctl.git" }
+
+smol = "^1.2"
+
+serde = "^1.0"
+toml = "^0.5"
+serde_json = "^1.0"
+serde_derive = "^1.0"
+zbus = "^2.3"
+nix = "^0.20.0"
+tempfile = "3.2.0"
+dirs = "3.0.1"
+
+[dependencies.notify-rust]
+version = "^4.3"
+default-features = false
+features = ["z"]
+
+[profile.release]
+lto = true
+debug = false
+opt-level = 3
+panic = "abort"
+
+[profile.bench]
+debug = false
+opt-level = 3

@@ -1,0 +1,414 @@
+make all --print-data-base --no-builtin-variables --no-builtin-rules --question
+# GNU Make 4.3
+# Built for x86_64-redhat-linux-gnu
+# Copyright (C) 1988-2020 Free Software Foundation, Inc.
+# License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+# This is free software: you are free to change and redistribute it.
+# There is NO WARRANTY, to the extent permitted by law.
+
+# Make data base, printed on Mon Jul 25 13:56:15 2022
+
+# Variables
+
+# makefile (from 'Makefile', line 4)
+INSTALL_PROGRAM = ${INSTALL} -D -m 0755
+# environment
+GDK_BACKEND = x11
+# environment
+LC_ALL = C
+# environment
+NO_AT_BRIDGE = 1
+# makefile (from 'Makefile', line 15)
+SRC := Cargo.toml Cargo.lock Makefile ./src/error.rs ./src/config.rs ./src/widgets/mod.rs ./src/widgets/top_bar.rs ./src/widgets/side_panel.rs ./src/widgets/anime_page.rs ./src/widgets/aura_page.rs ./src/widgets/fan_curve_page.rs ./src/widgets/system_page.rs ./src/app.rs ./src/lib.rs ./src/main.rs ./src/notify.rs ./src/page_states.rs
+# environment
+STARSHIP_SESSION_KEY = 2042530886117081
+# environment
+GJS_DEBUG_OUTPUT = stderr
+# environment
+VSCODE_CWD = /home/luke
+# makefile (from 'Makefile', line 7)
+prefix = /usr
+# environment
+GDM_LANG = en_NZ.UTF-8
+# environment
+WASMER_DIR = /home/luke/.wasmer
+# default
+MAKE_COMMAND := make
+# environment
+define BASH_FUNC_which%%
+() {  ( alias;
+ eval ${which_declare} ) | /usr/bin/which --tty-only --read-alias --read-functions --show-tilde --show-dot $@
+}
+endef
+# automatic
+@D = $(patsubst %/,%,$(dir $@))
+# environment
+VSCODE_HANDLES_UNCAUGHT_ERRORS = true
+# makefile (from 'Makefile', line 13)
+BIN_ROG := rog-control-center
+# default
+.VARIABLES := 
+# environment
+PWD = /home/luke/Projects/rog-control-center
+# automatic
+%D = $(patsubst %/,%,$(dir $%))
+# environment
+HOSTNAME = fedora
+# environment
+MAIL = /var/spool/mail/luke
+# environment
+STEAM_FRAME_FORCE_CLOSE = 1
+# environment
+XDG_DATA_DIRS = /home/luke/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share/:/usr/share/
+# automatic
+^D = $(patsubst %/,%,$(dir $^))
+# automatic
+%F = $(notdir $%)
+# environment
+VSCODE_CODE_CACHE_PATH = /home/luke/.config/Code/CachedData/3b889b090b5ad5793f524b5d1d39fda662b96a2a
+# environment
+LANG = C
+# environment
+XAUTHORITY = /run/user/1000/.mutter-Xwaylandauth.WG1MP1
+# default
+.LOADED := 
+# default
+.INCLUDE_DIRS = /usr/include /usr/local/include /usr/include
+# makefile
+MAKEFLAGS = pqrR
+# makefile
+CURDIR := /home/luke/Projects/rog-control-center
+# environment
+APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = true
+# environment
+LESSOPEN = ||/usr/bin/lesspipe.sh %s
+# automatic
+*D = $(patsubst %/,%,$(dir $*))
+# makefile (from 'Makefile', line 1)
+VERSION := 0.1.2
+# environment
+MFLAGS = -pqrR
+# environment
+SSH_AUTH_SOCK = /run/user/1000/keyring/ssh
+# default
+.SHELLFLAGS := -c
+# environment
+WAYLAND_DISPLAY = wayland-0
+# environment
+HISTSIZE = 1000
+# automatic
++D = $(patsubst %/,%,$(dir $+))
+# environment
+XDG_SESSION_DESKTOP = gnome
+# makefile (from 'Makefile', line 1)
+MAKEFILE_LIST := Makefile
+# automatic
+@F = $(notdir $@)
+# environment
+VSCODE_PID = 152272
+# environment
+SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS = 0
+# environment
+XDG_SESSION_TYPE = wayland
+# automatic
+?D = $(patsubst %/,%,$(dir $?))
+# makefile (from 'Makefile', line 3)
+INSTALL = install
+# environment
+SESSION_MANAGER = local/unix:@/tmp/.ICE-unix/1985,unix/unix:/tmp/.ICE-unix/1985
+# automatic
+*F = $(notdir $*)
+# makefile (from 'Makefile', line 23)
+VENDORED = 0
+# environment
+CHROME_DESKTOP = code-url-handler.desktop
+# environment
+DBUS_SESSION_BUS_ADDRESS = unix:path=/run/user/1000/bus
+# automatic
+<D = $(patsubst %/,%,$(dir $<))
+# environment
+VSCODE_NLS_CONFIG = {"locale":"en-gb","availableLanguages":{},"_languagePackSupport":true}
+# environment
+ANDROID_SDK_ROOT = /home/luke/Android/Sdk
+# default
+MAKE_HOST := x86_64-redhat-linux-gnu
+# makefile
+SHELL = /bin/sh
+# default
+MAKECMDGOALS := all
+# environment
+XMODIFIERS = @im=ibus
+# environment
+GJS_DEBUG_TOPICS = JS ERROR;JS LOG
+# environment
+SHLVL = 0
+# makefile (from 'Makefile', line 19)
+ARGS = --release
+# environment
+GCC_COLORS = error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01
+# environment
+MAKELEVEL := 0
+# default
+MAKE = $(MAKE_COMMAND)
+# environment
+PATH = /home/luke/Android/Sdk/tools/bin:/home/luke/Android/Sdk/tools:/home/luke/Android/flutter/bin:/home/luke/.wasmer/bin:/home/luke/Android/Sdk/tools/bin:/home/luke/Android/Sdk/tools:/home/luke/Android/flutter/bin:/home/luke/Android/Sdk/tools/bin:/home/luke/Android/Sdk/tools:/home/luke/Android/flutter/bin:/home/luke/.wasmer/bin:/home/luke/Android/Sdk/tools/bin:/home/luke/Android/Sdk/tools:/home/luke/Android/flutter/bin:/home/luke/.cargo/bin:/home/luke/.local/bin:/home/luke/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/home/luke/.wasmer/globals/wapm_packages/.bin:/home/luke/.wasmer/globals/wapm_packages/.bin
+# default
+MAKEFILES := 
+# automatic
+^F = $(notdir $^)
+# makefile (from 'Makefile', line 9)
+bindir = $(exec_prefix)/bin
+# makefile (from 'Makefile', line 10)
+datarootdir = $(prefix)/share
+# environment
+INVOCATION_ID = 2eaec57f907246ed918d02a60be4d129
+# environment
+USERNAME = luke
+# environment
+GNOME_SETUP_DISPLAY = :1
+# makefile (from 'Makefile', line 8)
+exec_prefix = $(prefix)
+# automatic
+?F = $(notdir $?)
+# environment
+XDG_CURRENT_DESKTOP = GNOME
+# environment
+LS_COLORS = 
+# automatic
++F = $(notdir $+)
+# environment
+DESKTOP_SESSION = gnome
+# environment
+WASMER_CACHE_DIR = /home/luke/.wasmer/cache
+# environment
+ORIGINAL_XDG_CURRENT_DESKTOP = GNOME
+# 'override' directive
+GNUMAKEFLAGS := 
+# environment
+LOGNAME = luke
+# environment
+GIO_LAUNCHED_DESKTOP_FILE = /usr/share/applications/code.desktop
+# makefile
+.DEFAULT_GOAL := all
+# environment
+SYSTEMD_EXEC_PID = 2026
+# environment
+HISTCONTROL = ignoreboth:erasedups
+# environment
+EDITOR = vim
+# environment
+DISPLAY = :0
+# environment
+USER = luke
+# default
+MAKE_VERSION := 4.3
+# 'override' directive
+.SHELLSTATUS := 0
+# environment
+MANAGERPID = 1828
+# environment
+which_declare = declare -f
+# environment
+DEBUGINFOD_URLS = https://debuginfod.fedoraproject.org/ 
+# environment
+STARSHIP_SHELL = bash
+# environment
+GIO_LAUNCHED_DESKTOP_FILE_PID = 152272
+# environment
+BAT_THEME = Monokai Extended Light
+# environment
+_ = /usr/bin/make
+# environment
+ANDROID_NDK_ROOT = /home/luke/Android/Sdk/ndk/24.0.8215888
+# environment
+XDG_RUNTIME_DIR = /run/user/1000
+# environment
+JOURNAL_STREAM = 8:32224
+# environment
+XDG_SESSION_CLASS = user
+# environment
+VSCODE_AMD_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
+# environment
+HOME = /home/luke
+# environment
+QT_IM_MODULE = ibus
+# makefile (from 'Makefile', line 5)
+INSTALL_DATA = ${INSTALL} -D -m 0644
+# environment
+ELECTRON_RUN_AS_NODE = 1
+# environment
+VSCODE_IPC_HOOK = /run/user/1000/vscode-8b1d6e5b-1.69.2-main.sock
+# default
+.RECIPEPREFIX := 
+# automatic
+<F = $(notdir $<)
+# default
+SUFFIXES := 
+# makefile (from 'Makefile', line 20)
+TARGET = release
+# makefile (from 'Makefile', line 11)
+libdir = $(exec_prefix)/lib
+# makefile (from 'Makefile', line 17)
+DEBUG = 0
+# default
+.FEATURES := target-specific order-only second-expansion else-if shortest-stem undefine oneshell nocomment grouped-target extra-prereqs archives jobserver output-sync check-symlink guile load
+# environment
+XDG_MENU_PREFIX = gnome-
+# environment
+GDMSESSION = gnome
+# variable set hash-table stats:
+# Load=121/1024=12%, Rehash=0, Collisions=9/168=5%
+
+# Pattern-specific Variable Values
+
+# No pattern-specific variable values.
+
+# Directories
+
+# . (device 41, inode 1835231): 16 files, no impossibilities.
+
+# 16 files, no impossibilities in 1 directories.
+
+# Implicit Rules
+
+# No implicit rules.
+
+# Files
+
+distclean:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 34):
+	rm -rf .cargo vendor vendor.tar.xz
+
+update:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 47):
+	cargo update
+
+# Not a target:
+Makefile:
+#  Implicit rule search has been done.
+ 
+#  Last modified 2022-07-24 15:01:20.244889065
+#  File has been updated.
+#  Successfully updated.
+
+vendor:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 50):
+	mkdir -p .cargo
+	cargo vendor | head -n -1 > .cargo/config
+	echo 'directory = "vendor"' >> .cargo/config
+	mv .cargo/config ./cargo-config
+	rm -rf .cargo
+	tar pcfJ vendor_asusctl_$(VERSION).tar.xz vendor
+	rm -rf vendor
+
+uninstall:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 42):
+	rm -f "$(DESTDIR)$(bindir)/$(BIN_ROG)"
+	rm -r "$(DESTDIR)$(datarootdir)/applications/$(BIN_ROG).desktop"
+	rm -r "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/$(BIN_ROG).png"
+
+clean:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 31):
+	cargo clean
+
+# Not a target:
+.DEFAULT:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+all: build
+#  Phony target (prerequisite of .PHONY).
+#  Command line target.
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has been updated.
+#  Needs to be updated (-q is set).
+# variable set hash-table stats:
+# Load=0/32=0%, Rehash=0, Collisions=0/4=0%
+
+build:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  Implicit/static pattern stem: ''
+#  File does not exist.
+#  File has been updated.
+#  Needs to be updated (-q is set).
+# automatic
+# @ := build
+# automatic
+# * := 
+# automatic
+# < := 
+# automatic
+# + := 
+# automatic
+# % := 
+# automatic
+# ^ := 
+# automatic
+# ? := 
+# automatic
+# | := 
+# variable set hash-table stats:
+# Load=8/32=25%, Rehash=0, Collisions=6/12=50%
+#  recipe to execute (from 'Makefile', line 63):
+	cargo build $(ARGS)
+
+install:
+#  Phony target (prerequisite of .PHONY).
+#  Implicit rule search has not been done.
+#  File does not exist.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 37):
+	$(INSTALL_PROGRAM) "./target/release/$(BIN_ROG)" "$(DESTDIR)$(bindir)/$(BIN_ROG)"
+	$(INSTALL_DATA) "./data/$(BIN_ROG).desktop" "$(DESTDIR)$(datarootdir)/applications/$(BIN_ROG).desktop"
+	$(INSTALL_DATA) "./data/$(BIN_ROG).png" "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/$(BIN_ROG).png"
+
+# Not a target:
+.SUFFIXES:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+.PHONY: all clean distclean install uninstall update build
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+# files hash-table stats:
+# Load=12/1024=1%, Rehash=0, Collisions=0/33=0%
+# VPATH Search Paths
+
+# No 'vpath' search paths.
+
+# No general ('VPATH' variable) search path.
+
+# strcache buffers: 1 (0) / strings = 29 / storage = 279 B / avg = 9 B
+# current buf: size = 8162 B / used = 279 B / count = 29 / avg = 9 B
+
+# strcache performance: lookups = 52 / hit rate = 44%
+# hash-table stats:
+# Load=29/8192=0%, Rehash=0, Collisions=0/52=0%
+# Finished Make data base on Mon Jul 25 13:56:15 2022
+
+ 

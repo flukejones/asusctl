@@ -11,6 +11,7 @@ datarootdir = $(prefix)/share
 libdir = $(exec_prefix)/lib
 zshcpl = $(datarootdir)/zsh/site-functions
 
+BIN_ROG := rog-control-center
 BIN_C := asusctl
 BIN_D := asusd
 BIN_U := asusd-user
@@ -39,6 +40,10 @@ distclean:
 	rm -rf .cargo vendor vendor.tar.xz
 
 install:
+	$(INSTALL_PROGRAM) "./target/release/$(BIN_ROG)" "$(DESTDIR)$(bindir)/$(BIN_ROG)"
+	$(INSTALL_DATA) "./rog-control-center/data/$(BIN_ROG).desktop" "$(DESTDIR)$(datarootdir)/applications/$(BIN_ROG).desktop"
+	$(INSTALL_DATA) "./rog-control-center/data/$(BIN_ROG).png" "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/$(BIN_ROG).png"
+
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_C)" "$(DESTDIR)$(bindir)/$(BIN_C)"
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_D)" "$(DESTDIR)$(bindir)/$(BIN_D)"
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_U)" "$(DESTDIR)$(bindir)/$(BIN_U)"
@@ -68,6 +73,10 @@ install:
 	cd rog-anime/data && find "./anime" -type f -exec install -Dm 755 "{}" "$(DESTDIR)$(datarootdir)/asusd/{}" \;
 
 uninstall:
+	rm -f "$(DESTDIR)$(bindir)/$(BIN_ROG)"
+	rm -r "$(DESTDIR)$(datarootdir)/applications/$(BIN_ROG).desktop"
+	rm -r "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/$(BIN_ROG).png"
+
 	rm -f "$(DESTDIR)$(bindir)/$(BIN_C)"
 	rm -f "$(DESTDIR)$(bindir)/$(BIN_D)"
 	rm -f "$(DESTDIR)$(bindir)/$(BIN_N)"
