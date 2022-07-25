@@ -1,8 +1,8 @@
 use rog_control_center::{
     config::Config, get_ipc_file, notify::start_notifications, on_tmp_dir_exists,
-    page_states::PageDataStates, RogApp, SHOW_GUI,
+    page_states::PageDataStates, RogApp, RogDbusClientBlocking, SHOW_GUI,
 };
-use rog_dbus::RogDbusClientBlocking;
+
 use std::{
     io::Read,
     sync::{
@@ -23,8 +23,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         config.save()?;
     }
 
-    let (dbus, _) = RogDbusClientBlocking::new().unwrap();
-    let supported = dbus.proxies().supported().supported_functions().unwrap();
     // Cheap method to alert to notifications rather than spinning a thread for each
     // This is quite different when done in a retained mode app
     let charge_notified = Arc::new(AtomicBool::new(false));
@@ -34,19 +32,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let profiles_notified = Arc::new(AtomicBool::new(false));
     let fans_notified = Arc::new(AtomicBool::new(false));
     let notifs_enabled = Arc::new(AtomicBool::new(config.enable_notifications));
-    // TODO: change this to an error instead of the nested unwraps, then use to
-    // display a bare box app with error message.
-    let states = PageDataStates::new(
-        notifs_enabled.clone(),
-        charge_notified.clone(),
-        bios_notified.clone(),
-        aura_notified.clone(),
-        anime_notified.clone(),
-        profiles_notified.clone(),
-        fans_notified.clone(),
-        &supported,
-        &dbus,
-    );
+
+    let states = {
+        let (dbus, _) = RogDbusClientBlocking::new()?;
+        let supported = dbus.proxies().supported().supported_functions().unwrap();
+        PageDataStates::new(
+            notifs_enabled.clone(),
+            charge_notified.clone(),
+            bios_notified.clone(),
+            aura_notified.clone(),
+            anime_notified.clone(),
+            profiles_notified.clone(),
+            fans_notified.clone(),
+            &supported,
+            &dbus,
+        )? // TODO: if error, show alt GUI containing the error message
+    };
 
     if config.enable_notifications {
         start_notifications(
@@ -92,6 +93,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     eframe::run_native(
         "ROG Control Center",
         native_options,
-        Box::new(move |cc| Box::new(RogApp::new(start_closed, config, should, states, cc))),
+        Box::new(move |cc| {
+            Box::new(RogApp::new(start_closed, config, should, states, cc).unwrap())
+        }),
     );
 }

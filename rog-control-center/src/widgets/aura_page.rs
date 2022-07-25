@@ -3,12 +3,11 @@ use rog_aura::{
     usb::{AuraDev1866, AuraDev19b6, AuraDevice, AuraPowerDev},
     AuraModeNum, AuraZone, Colour, Speed,
 };
-use rog_dbus::RogDbusClientBlocking;
 use rog_supported::SupportedFunctions;
 
 use crate::{
     page_states::{AuraState, PageDataStates},
-    RogApp,
+    RogApp, RogDbusClientBlocking,
 };
 
 impl<'a> RogApp<'a> {
@@ -442,7 +441,10 @@ impl<'a> RogApp<'a> {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
             if ui.add(egui::Button::new("Cancel")).clicked() {
                 let notif = states.aura.was_notified.clone();
-                states.aura.modes = AuraState::new(notif, supported, dbus).modes;
+                match AuraState::new(notif, supported, dbus) {
+                    Ok(a) => states.aura.modes = a.modes,
+                    Err(e) => states.error = Some(e.to_string()),
+                }
             }
 
             if ui.add(egui::Button::new("Apply")).clicked() {

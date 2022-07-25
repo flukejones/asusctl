@@ -11,9 +11,16 @@ pub use app::RogApp;
 
 pub mod config;
 pub mod error;
+#[cfg(feature = "mocking")]
+pub mod mocking;
 pub mod notify;
 pub mod page_states;
 pub mod widgets;
+
+#[cfg(feature = "mocking")]
+pub use mocking::RogDbusClientBlocking;
+#[cfg(not(feature = "mocking"))]
+pub use rog_dbus::RogDbusClientBlocking;
 
 use nix::{sys::stat, unistd};
 use tempfile::TempDir;

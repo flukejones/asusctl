@@ -8,10 +8,12 @@ use std::{
 };
 
 use egui::{Button, RichText};
-use rog_dbus::RogDbusClientBlocking;
 use rog_supported::SupportedFunctions;
 
-use crate::{config::Config, get_ipc_file, page_states::PageDataStates, Page, SHOWING_GUI};
+use crate::{
+    config::Config, error::Result, get_ipc_file, page_states::PageDataStates, Page,
+    RogDbusClientBlocking, SHOWING_GUI,
+};
 
 pub struct RogApp<'a> {
     pub page: Page,
@@ -34,11 +36,11 @@ impl<'a> RogApp<'a> {
         show_gui: Arc<AtomicBool>,
         states: PageDataStates,
         _cc: &eframe::CreationContext<'_>,
-    ) -> Self {
-        let (dbus, _) = RogDbusClientBlocking::new().unwrap();
-        let supported = dbus.proxies().supported().supported_functions().unwrap();
+    ) -> Result<Self> {
+        let (dbus, _) = RogDbusClientBlocking::new()?;
+        let supported = dbus.proxies().supported().supported_functions()?;
 
-        Self {
+        Ok(Self {
             supported,
             states,
             page: Page::System,
@@ -46,7 +48,7 @@ impl<'a> RogApp<'a> {
             running_in_bg: start_closed,
             config,
             asus_dbus: dbus,
-        }
+        })
     }
 }
 
@@ -70,9 +72,15 @@ impl<'a> eframe::App for RogApp<'a> {
             states,
             ..
         } = self;
-        if states.refresh_if_notfied(supported, dbus) {
-            ctx.request_repaint();
-        }
+        states
+            .refresh_if_notfied(supported, dbus)
+            .map(|repaint| {
+                if repaint {
+                    ctx.request_repaint();
+                }
+            })
+            .map_err(|e| self.states.error = Some(e.to_string()))
+            .ok();
 
         let page = self.page;
 

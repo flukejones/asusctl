@@ -20,12 +20,7 @@ impl GetSupported for CtrlPlatformProfile {
 
     fn get_supported() -> Self::A {
         if !Profile::is_platform_profile_supported() {
-            warn!(
-                r#"
-platform_profile kernel interface not found, your laptop does not support this, or the interface is missing.
-To enable profile support you require a kernel version 5.15.2 minimum.
-"#
-            );
+            warn!("platform_profile kernel interface not found, your laptop does not support this, or the interface is missing.");
         }
 
         let res = FanCurveProfiles::is_supported();
@@ -35,14 +30,7 @@ To enable profile support you require a kernel version 5.15.2 minimum.
         };
 
         if !fan_curve_supported {
-            info!(
-                r#"
-fan curves kernel interface not found, your laptop does not support this, or the interface is missing.
-To enable fan-curve support you require a kernel with the following patch applied:
-https://lkml.org/lkml/2021/10/23/250
-This patch has been accepted upstream for 5.17 kernel release.
-"#
-            );
+            info!("fan curves kernel interface not found, your laptop does not support this, or the interface is missing.");
         }
 
         PlatformProfileFunctions {
@@ -68,12 +56,45 @@ impl crate::Reloadable for CtrlPlatformProfile {
 }
 
 impl CtrlPlatformProfile {
-    pub fn new(config: ProfileConfig) -> Result<Self, RogError> {
+    pub fn new(mut config: ProfileConfig) -> Result<Self, RogError> {
         if Profile::is_platform_profile_supported() {
             info!("Device has profile control available");
 
             if FanCurveProfiles::get_device().is_ok() {
                 info!("Device has fan curves available");
+                if config.fan_curves.is_none() {
+                    let active = Profile::get_active_profile().unwrap_or(Profile::Balanced);
+                    let dev = FanCurveProfiles::get_device()?;
+                    let mut curves = FanCurveProfiles::default();
+
+                    warn!("No default fan-curves: cycling profiles to set defaults");
+                    Profile::set_profile(Profile::Balanced)?;
+                    curves.read_from_dev_profile(Profile::Balanced, &dev);
+                    info!(
+                        "{:?}: {}",
+                        config.active_profile,
+                        String::from(curves.get_fan_curves_for(Profile::Balanced))
+                    );
+                    Profile::set_profile(Profile::Performance)?;
+                    curves.read_from_dev_profile(Profile::Performance, &dev);
+                    info!(
+                        "{:?}: {}",
+                        config.active_profile,
+                        String::from(curves.get_fan_curves_for(Profile::Performance))
+                    );
+                    Profile::set_profile(Profile::Quiet)?;
+                    curves.read_from_dev_profile(Profile::Quiet, &dev);
+                    info!(
+                        "{:?}: {}",
+                        config.active_profile,
+                        String::from(curves.get_fan_curves_for(Profile::Quiet))
+                    );
+
+                    Profile::set_profile(active)?;
+                    config.fan_curves = Some(curves);
+                    config.write();
+                    info!("Set fan curve defaults");
+                }
             }
 
             return Ok(CtrlPlatformProfile { config });

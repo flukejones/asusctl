@@ -1,5 +1,7 @@
 use std::fmt;
 
+pub type Result<T> = std::result::Result<T, Error>;
+
 #[derive(Debug)]
 pub enum Error {
     Io(std::io::Error),
@@ -7,6 +9,7 @@ pub enum Error {
     ConfigLoadFail,
     ConfigLockFail,
     XdgVars,
+    Zbus(zbus::Error),
 }
 
 impl fmt::Display for Error {
@@ -18,6 +21,7 @@ impl fmt::Display for Error {
             Error::ConfigLoadFail => write!(f, "Failed to load user config"),
             Error::ConfigLockFail => write!(f, "Failed to lock user config"),
             Error::XdgVars => write!(f, "XDG environment vars appear unset"),
+            Error::Zbus(err) => write!(f, "Error: {}", err),
         }
     }
 }
@@ -30,14 +34,14 @@ impl From<std::io::Error> for Error {
     }
 }
 
-impl From<Error> for zbus::fdo::Error {
-    fn from(err: Error) -> Self {
-        zbus::fdo::Error::Failed(format!("Anime zbus error: {}", err))
-    }
-}
-
 impl From<nix::Error> for Error {
     fn from(err: nix::Error) -> Self {
         Error::Nix(err)
+    }
+}
+
+impl From<zbus::Error> for Error {
+    fn from(err: zbus::Error) -> Self {
+        Error::Zbus(err)
     }
 }

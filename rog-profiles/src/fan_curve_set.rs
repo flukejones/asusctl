@@ -34,6 +34,31 @@ pub struct CurveData {
     pub temp: [u8; 8],
 }
 
+impl From<&CurveData> for String {
+    fn from(c: &CurveData) -> Self {
+        format!(
+            "{:?}: {}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%",
+            c.fan,
+            c.temp[0],
+            (c.pwm[0] as u32) * 100 / 255,
+            c.temp[1],
+            (c.pwm[1] as u32) * 100 / 255,
+            c.temp[2],
+            (c.pwm[2] as u32) * 100 / 255,
+            c.temp[3],
+            (c.pwm[3] as u32) * 100 / 255,
+            c.temp[4],
+            (c.pwm[4] as u32) * 100 / 255,
+            c.temp[5],
+            (c.pwm[5] as u32) * 100 / 255,
+            c.temp[6],
+            (c.pwm[6] as u32) * 100 / 255,
+            c.temp[7],
+            (c.pwm[7] as u32) * 100 / 255,
+        )
+    }
+}
+
 impl std::str::FromStr for CurveData {
     type Err = ProfileError;
 
@@ -189,6 +214,17 @@ impl Default for FanCurveSet {
     }
 }
 
+impl From<&FanCurveSet> for String {
+    fn from(s: &FanCurveSet) -> Self {
+        format!(
+            "Enabled: {}, {}, {}",
+            s.enabled,
+            String::from(&s.cpu),
+            String::from(&s.gpu),
+        )
+    }
+}
+
 impl FanCurveSet {
     pub(crate) fn read_cpu_from_device(&mut self, device: &Device) {
         self.cpu.read_from_device(device);
@@ -216,13 +252,20 @@ mod tests {
     use super::*;
 
     #[test]
-    fn curve_data_from_str() {
+    fn curve_data_from_str_to_str() {
         let curve =
             CurveData::from_str("30c:1%,49c:2%,59c:3%,69c:4%,79c:31%,89c:49%,99c:56%,109c:58%")
                 .unwrap();
         assert_eq!(curve.fan, FanCurvePU::CPU);
         assert_eq!(curve.temp, [30, 49, 59, 69, 79, 89, 99, 109]);
         assert_eq!(curve.pwm, [3, 5, 8, 10, 79, 125, 143, 148]);
+
+        let string: String = (&curve).into();
+        // End result is slightly different due to type conversions and rounding errors
+        assert_eq!(
+            string.as_str(),
+            "CPU: 30c:1%,49c:1%,59c:3%,69c:3%,79c:30%,89c:49%,99c:56%,109c:58%"
+        )
     }
 
     #[test]
@@ -256,5 +299,12 @@ mod tests {
         assert_eq!(temp_str('1', 0), "pwm1_auto_point1_temp");
         assert_eq!(temp_str('1', 4), "pwm1_auto_point5_temp");
         assert_eq!(temp_str('1', 7), "pwm1_auto_point8_temp");
+    }
+
+    #[test]
+    fn set_to_string() {
+        let set = FanCurveSet::default();
+        let string = String::from(&set);
+        assert_eq!(string.as_str(), "Enabled: false, CPU: 0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%, GPU: 0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%");
     }
 }

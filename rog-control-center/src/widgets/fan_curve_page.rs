@@ -1,9 +1,8 @@
 use crate::{
     page_states::{FanCurvesState, ProfilesState},
-    RogApp,
+    RogApp, RogDbusClientBlocking,
 };
 use egui::{plot::Points, Ui};
-use rog_dbus::RogDbusClientBlocking;
 use rog_profiles::{FanCurvePU, Profile};
 use rog_supported::SupportedFunctions;
 
@@ -44,7 +43,7 @@ impl<'a> RogApp<'a> {
 
         let mut changed = false;
         ui.horizontal(|ui| {
-            let mut item = |p: Profile, _curves: &mut FanCurvesState, mut checked: bool| {
+            let mut item = |p: Profile, curves: &mut FanCurvesState, mut checked: bool| {
                 if ui
                     .add(egui::Checkbox::new(&mut checked, format!("{:?}", p)))
                     .changed()
@@ -57,11 +56,10 @@ impl<'a> RogApp<'a> {
                         })
                         .ok();
 
-                    #[cfg(feature = "mocking")]
                     if !checked {
-                        _curves.enabled.remove(&p);
+                        curves.enabled.remove(&p);
                     } else {
-                        _curves.enabled.insert(p);
+                        curves.enabled.insert(p);
                     }
                     changed = true;
                 }
@@ -73,11 +71,10 @@ impl<'a> RogApp<'a> {
         });
 
         if changed {
-            // Need to update app data if change made
-            #[cfg(not(feature = "mocking"))]
-            {
-                let notif = curves.was_notified.clone();
-                *curves = FanCurvesState::new(notif, supported, dbus);
+            let notif = curves.was_notified.clone();
+            match FanCurvesState::new(notif, supported, dbus) {
+                Ok(f) => *curves = f,
+                Err(e) => *do_error = Some(e.to_string()),
             }
         }
     }
@@ -132,13 +129,13 @@ impl<'a> RogApp<'a> {
         let points = Points::new(PlotPoints::from_iter(points)).radius(3.0);
 
         Plot::new("my_plot")
-            .view_aspect(2.0)
+            .view_aspect(1.666)
             // .center_x_axis(true)
             // .center_y_axis(true)
             .include_x(0.0)
-            .include_x(110.0)
+            .include_x(104.0)
             .include_y(0.0)
-            .include_y(110.0)
+            .include_y(106.0)
             .allow_scroll(false)
             .allow_drag(false)
             .allow_boxed_zoom(false)
@@ -183,7 +180,6 @@ impl<'a> RogApp<'a> {
 
         ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
             if ui.add(egui::Button::new("Apply Fan-curve")).clicked() {
-                #[cfg(not(feature = "mocking"))]
                 dbus.proxies()
                     .profile()
                     .set_fan_curve(profiles.current, data.clone())
@@ -191,8 +187,6 @@ impl<'a> RogApp<'a> {
                         *do_error = Some(err.to_string());
                     })
                     .ok();
-                #[cfg(feature = "mocking")]
-                dbg!("Applied");
             }
         });
     }

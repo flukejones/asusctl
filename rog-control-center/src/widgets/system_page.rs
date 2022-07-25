@@ -1,6 +1,5 @@
-use crate::{page_states::PageDataStates, RogApp};
+use crate::{page_states::PageDataStates, RogApp, RogDbusClientBlocking};
 use egui::Ui;
-use rog_dbus::RogDbusClientBlocking;
 use rog_profiles::Profile;
 
 impl<'a> RogApp<'a> {

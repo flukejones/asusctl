@@ -23,17 +23,6 @@ impl ProfileConfig {
         }
     }
 
-    pub fn set_defaults_and_save(&mut self) {
-        self.active_profile = Profile::get_active_profile().unwrap_or(Profile::Balanced);
-        if let Ok(res) = FanCurveProfiles::is_supported() {
-            if res {
-                let curves = FanCurveProfiles::default();
-                self.fan_curves = Some(curves);
-            }
-        }
-        self.write();
-    }
-
     pub fn load(config_path: String) -> Self {
         let mut file = OpenOptions::new()
             .read(true)
@@ -46,7 +35,6 @@ impl ProfileConfig {
         if let Ok(read_len) = file.read_to_string(&mut buf) {
             if read_len == 0 {
                 config = Self::new(config_path);
-                config.set_defaults_and_save();
             } else if let Ok(data) = toml::from_str(&buf) {
                 config = data;
                 config.config_path = config_path;
@@ -63,11 +51,9 @@ impl ProfileConfig {
                     )
                 });
                 config = Self::new(config_path);
-                config.set_defaults_and_save();
             }
         } else {
             config = Self::new(config_path);
-            config.set_defaults_and_save();
         }
         config
     }

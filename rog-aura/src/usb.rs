@@ -21,11 +21,12 @@ pub const fn aura_brightness_bytes(brightness: u8) -> [u8; 17] {
 }
 
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Clone, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Serialize, Deserialize, Default)]
 pub enum AuraDevice {
     X1854,
     X1869,
     X1866,
+    #[default]
     X19B6,
     Unknown,
 }

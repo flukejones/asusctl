@@ -18,7 +18,7 @@ impl<'a> RogApp<'a> {
                     *page = Page::System;
                 }
 
-                if self.supported.platform_profile.fan_curves || cfg!(feature = "mocking") {
+                if self.supported.platform_profile.fan_curves {
                     ui.separator();
                     if ui
                         .selectable_value(page, Page::FanCurves, "Fan Curves")
@@ -28,9 +28,7 @@ impl<'a> RogApp<'a> {
                     }
                 }
 
-                if !self.supported.keyboard_led.stock_led_modes.is_empty()
-                    || cfg!(feature = "mocking")
-                {
+                if !self.supported.keyboard_led.stock_led_modes.is_empty() {
                     ui.separator();
                     if ui
                         .selectable_value(page, Page::AuraEffects, "Keyboard Aura")
@@ -40,7 +38,7 @@ impl<'a> RogApp<'a> {
                     }
                 }
 
-                if self.supported.anime_ctrl.0 || cfg!(feature = "mocking") {
+                if self.supported.anime_ctrl.0 {
                     ui.separator();
                     if ui
                         .selectable_value(page, Page::AnimeMatrix, "AniMe Matrix")
