@@ -13,26 +13,40 @@ impl<'a> RogApp<'a> {
         } = self;
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            // The central panel the region left after adding TopPanel's and SidePanel's
-
             ui.heading("Experimental application for asusd");
-            ui.separator();
 
             egui::ScrollArea::vertical().show(ui, |ui| {
-                if supported.platform_profile.platform_profile {
-                    ui.group(|ui| platform_profile(states, dbus, ui));
-                }
+                ui.spacing_mut().item_spacing = egui::vec2(8.0, 10.0);
+                let rect = ui.available_rect_before_wrap();
+                egui::Grid::new("id_source")
+                    .min_col_width(rect.width() / 2.0)
+                    .show(ui, |ui| {
+                        if supported.platform_profile.platform_profile {
+                            ui.vertical(|ui| {
+                                ui.separator();
+                                platform_profile(states, dbus, ui);
+                            });
+                        }
 
-                ui.separator();
-                ui.group(|ui| rog_bios_group(supported, states, dbus, ui));
+                        ui.vertical(|ui| {
+                            ui.separator();
+                            aura_power_group(supported, states, dbus, ui);
+                        });
+                        ui.end_row();
 
-                ui.separator();
-                ui.group(|ui| aura_power_group(supported, states, dbus, ui));
+                        ui.vertical(|ui| {
+                            ui.separator();
+                            rog_bios_group(supported, states, dbus, ui);
+                        });
 
-                if supported.anime_ctrl.0 {
-                    ui.separator();
-                    ui.group(|ui| anime_power_group(supported, states, dbus, ui));
-                }
+                        if supported.anime_ctrl.0 {
+                            ui.vertical(|ui| {
+                                ui.separator();
+                                anime_power_group(supported, states, dbus, ui);
+                            });
+                        }
+                        ui.end_row();
+                    });
             });
         });
     }
