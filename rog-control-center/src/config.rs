@@ -9,7 +9,7 @@ use serde_derive::{Deserialize, Serialize};
 use crate::error::Error;
 
 const CFG_DIR: &str = "rog";
-const CFG_FILE_NAME: &str = "app-template.cfg";
+const CFG_FILE_NAME: &str = "rog-control-center.cfg";
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(default)]
