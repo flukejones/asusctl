@@ -21,6 +21,6 @@ sysfs-class = "^0.1.2"
 
 [dev-dependencies]
 tinybmp = "^0.3.3"
-glam = "0.20.5"
+glam = "^0.21.2"
 rog_dbus = { path = "../rog-dbus" }
 gif = "^0.11.2"
