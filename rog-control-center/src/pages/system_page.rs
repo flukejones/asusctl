@@ -21,12 +21,12 @@ impl<'a> RogApp<'a> {
                 egui::Grid::new("id_source")
                     .min_col_width(rect.width() / 2.0)
                     .show(ui, |ui| {
-                        if supported.platform_profile.platform_profile {
-                            ui.vertical(|ui| {
-                                ui.separator();
+                        ui.vertical(|ui| {
+                            ui.separator();
+                            if supported.platform_profile.platform_profile {
                                 platform_profile(states, dbus, ui);
-                            });
-                        }
+                            }
+                        });
 
                         ui.vertical(|ui| {
                             ui.separator();
@@ -39,12 +39,12 @@ impl<'a> RogApp<'a> {
                             rog_bios_group(supported, states, dbus, ui);
                         });
 
-                        if supported.anime_ctrl.0 {
-                            ui.vertical(|ui| {
-                                ui.separator();
+                        ui.vertical(|ui| {
+                            ui.separator();
+                            if supported.anime_ctrl.0 {
                                 anime_power_group(supported, states, dbus, ui);
-                            });
-                        }
+                            }
+                        });
                         ui.end_row();
                     });
             });
