@@ -72,7 +72,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let native_options = eframe::NativeOptions {
-        decorated: true,
+        decorated: false,
+        transparent: false,
+        max_window_size: Some(egui::vec2(800.0, 600.0)),
         ..Default::default()
     };
 
