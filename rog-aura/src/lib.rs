@@ -8,13 +8,12 @@ pub use builtin_modes::*;
 
 mod per_key_rgb;
 pub use per_key_rgb::*;
-
+pub mod error;
+pub mod keys;
+pub mod layouts;
 pub mod usb;
 
-pub mod error;
-
 pub const LED_MSG_LEN: usize = 17;
-
 pub static VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub const RED: Colour = Colour(0xff, 0x00, 0x00);

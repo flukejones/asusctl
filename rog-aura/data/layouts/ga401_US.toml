@@ -1,0 +1,146 @@
+matches = [
+    'GA401',
+    'GA402',
+    'GU603',
+    'GV301',
+    'GA502',
+    'GA503',
+]
+
+locale = "US"
+
+[[rows]]
+row = [
+    'NormalSpacer',
+    'FuncSpacer',
+    'VolDown',
+    'VolUp',
+    'MicMute',
+    'Rog',
+]
+
+[[rows]]
+row = [
+    'Esc',
+    'FuncSpacer',
+    'F1',
+    'F2',
+    'F3',
+    'F4',
+    'FuncSpacer',
+    'F5',
+    'F6',
+    'F7',
+    'F8',
+    'FuncSpacer',
+    'F9',
+    'F10',
+    'F11',
+    'F12',
+]
+
+[[rows]]
+row = [
+    'Tilde',
+    'N1',
+    'N2',
+    'N3',
+    'N4',
+    'N5',
+    'N6',
+    'N7',
+    'N8',
+    'N9',
+    'N0',
+    'Hyphen',
+    'Equals',
+    'BkSpc',
+]
+
+[[rows]]
+row = [
+    'Tab',
+    'Q',
+    'W',
+    'E',
+    'R',
+    'T',
+    'Y',
+    'U',
+    'I',
+    'O',
+    'P',
+    'LBracket',
+    'RBracket',
+    'BackSlash',
+]
+
+[[rows]]
+row = [
+    'Caps',
+    'A',
+    'S',
+    'D',
+    'F',
+    'G',
+    'H',
+    'J',
+    'K',
+    'L',
+    'SemiColon',
+    'Quote',
+    'Return',
+]
+
+[[rows]]
+row = [
+    'LShift',
+    'Z',
+    'X',
+    'C',
+    'V',
+    'B',
+    'N',
+    'M',
+    'Comma',
+    'Period',
+    'FwdSlash',
+    'Rshift',
+]
+
+[[rows]]
+row = [
+    'LCtrl',
+    'LFn',
+    'Meta',
+    'LAlt',
+    'Space',
+    'RAlt',
+    'PrtSc',
+    'RCtrl',
+    'ArrowSpacer',
+    'Up',
+    'ArrowSpacer',
+]
+
+[[rows]]
+row = [
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'Left',
+    'Down',
+    'Right',
+    'ArrowSpacer',
+]
+

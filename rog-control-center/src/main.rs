@@ -1,10 +1,13 @@
+use rog_aura::layouts::KeyLayout;
 use rog_control_center::{
     config::Config, get_ipc_file, notify::start_notifications, on_tmp_dir_exists,
     page_states::PageDataStates, RogApp, RogDbusClientBlocking, SHOW_GUI,
 };
 
 use std::{
+    fs::{self, OpenOptions},
     io::Read,
+    path::PathBuf,
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc,
@@ -12,6 +15,9 @@ use std::{
     thread::spawn,
     time::Duration,
 };
+
+const DATA_DIR: &str = "/usr/share/rog-gui/";
+const BOARD_NAME: &str = "/sys/class/dmi/id/board_name";
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Startup
@@ -21,6 +27,31 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if config.startup_in_background {
         config.run_in_background = true;
         config.save()?;
+    }
+
+    // Find and load a matching layout for laptop
+    let mut file = OpenOptions::new()
+        .read(true)
+        .open(PathBuf::from(BOARD_NAME))
+        .map_err(|e| {
+            println!("{BOARD_NAME}, {e}");
+            e
+        })?;
+    let mut board_name = String::new();
+    file.read_to_string(&mut board_name)?;
+
+    let mut layout = KeyLayout::ga401_layout(); // default
+    let mut path = PathBuf::from(DATA_DIR);
+    path.push("layouts");
+    for path in fs::read_dir(path).map_err(|e| {
+        println!("{DATA_DIR}, {e}");
+        e
+    })? {
+        let tmp = KeyLayout::from_file(&path?.path()).unwrap();
+        if tmp.matches(board_name.as_str()) {
+            layout = tmp;
+            break;
+        }
     }
 
     // Cheap method to alert to notifications rather than spinning a thread for each
@@ -37,6 +68,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let (dbus, _) = RogDbusClientBlocking::new()?;
         let supported = dbus.proxies().supported().supported_functions().unwrap();
         PageDataStates::new(
+            layout,
             notifs_enabled.clone(),
             charge_notified.clone(),
             bios_notified.clone(),

@@ -1,3 +1,5 @@
+use crate::keys::Key;
+
 /// A `KeyColourArray` contains all data to change the full set of keyboard
 /// key colours individually.
 ///
@@ -45,16 +47,16 @@ impl KeyColourArray {
 
     #[inline]
     pub fn set(&mut self, key: Key, r: u8, g: u8, b: u8) {
-        if let Some((rr, gg, bb)) = self.key(key) {
-            *rr = r;
-            *gg = g;
-            *bb = b;
+        if let Some(c) = self.rgb(key) {
+            c[0] = r;
+            c[1] = g;
+            c[2] = b;
         }
     }
 
     /// Indexes in to `KeyColourArray` at the correct row and column
     /// to set a series of three bytes to the chosen R,G,B values
-    pub fn key(&mut self, key: Key) -> Option<(&mut u8, &mut u8, &mut u8)> {
+    pub fn rgb(&mut self, key: Key) -> Option<&mut [u8]> {
         // Tuples are indexes in to array
         let (row, col) = match key {
             Key::VolDown => (0, 15),
@@ -91,9 +93,9 @@ impl KeyColourArray {
             Key::N0 => (3, 21),
             Key::Hyphen => (3, 24),
             Key::Equals => (3, 27),
-            Key::BkSpc1 => (3, 30),
-            Key::BkSpc2 => (3, 33),
-            Key::BkSpc3 => (3, 36),
+            Key::BkSpc3_1 => (3, 30),
+            Key::BkSpc3_2 => (3, 33),
+            Key::BkSpc3_3 => (3, 36),
             Key::Home => (3, 39),
             Key::Tab => (3, 54),
             //
@@ -125,11 +127,16 @@ impl KeyColourArray {
             Key::SemiColon => (5, 51),
             Key::Quote => (5, 54),
             //
-            Key::Ret1 => (6, 12),
-            Key::Ret2 => (6, 15),
-            Key::Ret3 => (6, 18),
+            Key::Return => (6, 9),
+            Key::Return3_1 => (6, 12),
+            Key::Return3_2 => (6, 15),
+            Key::Return3_3 => (6, 18),
             Key::PgDn => (6, 21),
             Key::LShift => (6, 36),
+            // TODO: Find correct locations
+            Key::LShift3_1 => (6, 36),
+            Key::LShift3_2 => (6, 36),
+            Key::LShift3_3 => (6, 36),
             Key::Z => (6, 42),
             Key::X => (6, 45),
             Key::C => (6, 48),
@@ -141,19 +148,21 @@ impl KeyColourArray {
             Key::Comma => (7, 15),
             Key::Period => (7, 18),
             Key::FwdSlash => (7, 21),
-            Key::Rshift1 => (7, 27),
-            Key::Rshift2 => (7, 30),
-            Key::Rshift3 => (7, 33),
+            Key::Rshift => (7, 24),
+            Key::Rshift3_1 => (7, 27),
+            Key::Rshift3_2 => (7, 30),
+            Key::Rshift3_3 => (7, 33),
             Key::End => (7, 36),
             Key::LCtrl => (7, 51),
             Key::LFn => (7, 54),
             //
             Key::Meta => (8, 9),
             Key::LAlt => (8, 12),
-            Key::Space1 => (8, 15),
-            Key::Space2 => (8, 18),
-            Key::Space3 => (8, 21),
-            Key::Space4 => (8, 24),
+            Key::Space5_1 => (8, 15),
+            Key::Space5_2 => (8, 18),
+            Key::Space5_3 => (8, 21),
+            Key::Space5_4 => (8, 24),
+            Key::Space5_5 => (8, 27),
             Key::RAlt => (8, 30),
             Key::PrtSc => (8, 33),
             Key::RCtrl => (8, 36),
@@ -164,124 +173,23 @@ impl KeyColourArray {
             //
             Key::Down => (10, 9),
             Key::Right => (10, 12),
-            Key::None => return None,
+            Key::NormalBlank
+            | Key::FuncBlank
+            | Key::NormalSpacer
+            | Key::FuncSpacer
+            | Key::ArrowBlank
+            | Key::ArrowSpacer
+            | Key::RowEndSpacer => return None,
+            Key::Fan | Key::Space | Key::BkSpc => return None,
         };
-        // LOLOLOLOLOLOLOL! Look it's safe okay
-        unsafe {
-            Some((
-                &mut *(&mut self.0[row][col] as *mut u8),
-                &mut *(&mut self.0[row][col + 1] as *mut u8),
-                &mut *(&mut self.0[row][col + 2] as *mut u8),
-            ))
-        }
+
+        Some(&mut self.0[row][col..2])
     }
 
     #[inline]
     pub fn get(&self) -> &[[u8; 64]; 11] {
         &self.0
     }
-}
-
-#[derive(Debug, PartialEq, Copy, Clone)]
-pub enum Key {
-    VolUp,
-    VolDown,
-    MicMute,
-    Rog,
-    Esc,
-    F1,
-    F2,
-    F3,
-    F4,
-    F5,
-    F6,
-    F7,
-    F8,
-    F9,
-    F10,
-    F11,
-    F12,
-    Del,
-    Tilde,
-    N1,
-    N2,
-    N3,
-    N4,
-    N5,
-    N6,
-    N7,
-    N8,
-    N9,
-    N0,
-    Hyphen,
-    Equals,
-    BkSpc1,
-    BkSpc2,
-    BkSpc3,
-    Home,
-    Tab,
-    Q,
-    W,
-    E,
-    R,
-    T,
-    Y,
-    U,
-    I,
-    O,
-    P,
-    LBracket,
-    RBracket,
-    BackSlash,
-    PgUp,
-    Caps,
-    A,
-    S,
-    D,
-    F,
-    G,
-    H,
-    J,
-    K,
-    L,
-    SemiColon,
-    Quote,
-    Ret1,
-    Ret2,
-    Ret3,
-    PgDn,
-    LShift,
-    Z,
-    X,
-    C,
-    V,
-    B,
-    N,
-    M,
-    Comma,
-    Period,
-    FwdSlash,
-    Rshift1,
-    Rshift2,
-    Rshift3,
-    End,
-    LCtrl,
-    LFn,
-    Meta,
-    LAlt,
-    Space1,
-    Space2,
-    Space3,
-    Space4,
-    RAlt,
-    PrtSc,
-    RCtrl,
-    Up,
-    Down,
-    Left,
-    Right,
-    RFn,
-    None,
 }
 
 pub trait KeyLayout {
@@ -301,37 +209,37 @@ impl Default for GX502Layout {
     fn default() -> Self {
         GX502Layout(vec![
             [
-                Key::None,
-                Key::None,
+                Key::NormalSpacer,
+                Key::FuncSpacer,
                 Key::VolDown,
                 Key::VolUp,
                 Key::MicMute,
                 Key::Rog,
-                Key::None,
-                Key::None,
-                Key::None,
-                Key::None,
-                Key::None,
-                Key::None,
-                Key::None,
-                Key::None,
-                Key::None,
-                Key::None,
-                Key::None,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
             ],
             [
                 Key::Esc,
-                Key::None,
+                Key::NormalBlank,
                 Key::F1,
                 Key::F2,
                 Key::F3,
                 Key::F4,
-                Key::None, // not sure which key to put here
+                Key::NormalBlank, // not sure which key to put here
                 Key::F5,
                 Key::F6,
                 Key::F7,
                 Key::F8,
-                Key::F9,
+                Key::NormalBlank,
                 Key::F9,
                 Key::F10,
                 Key::F11,
@@ -352,9 +260,9 @@ impl Default for GX502Layout {
                 Key::N0,
                 Key::Hyphen,
                 Key::Equals,
-                Key::BkSpc1,
-                Key::BkSpc2,
-                Key::BkSpc3,
+                Key::BkSpc3_1,
+                Key::BkSpc3_2,
+                Key::BkSpc3_3,
                 Key::Home,
             ],
             [
@@ -390,9 +298,9 @@ impl Default for GX502Layout {
                 Key::SemiColon,
                 Key::Quote,
                 Key::Quote,
-                Key::Ret1,
-                Key::Ret2,
-                Key::Ret3,
+                Key::Return3_1,
+                Key::Return3_2,
+                Key::Return3_3,
                 Key::PgDn,
             ],
             [
@@ -409,9 +317,9 @@ impl Default for GX502Layout {
                 Key::Period,
                 Key::FwdSlash,
                 Key::FwdSlash,
-                Key::Rshift1,
-                Key::Rshift2,
-                Key::Rshift3,
+                Key::Rshift3_1,
+                Key::Rshift3_2,
+                Key::Rshift3_3,
                 Key::End,
             ],
             [
@@ -419,11 +327,11 @@ impl Default for GX502Layout {
                 Key::LFn,
                 Key::Meta,
                 Key::LAlt,
-                Key::Space1,
-                Key::Space2,
-                Key::Space3,
-                Key::Space4,
-                Key::Space4,
+                Key::Space5_1,
+                Key::Space5_2,
+                Key::Space5_3,
+                Key::Space5_4,
+                Key::Space5_5,
                 Key::RAlt,
                 Key::PrtSc,
                 Key::RCtrl,
@@ -434,23 +342,23 @@ impl Default for GX502Layout {
                 Key::RFn,
             ],
             [
-                Key::None,
-                Key::None,
-                Key::None,
-                Key::None,
-                Key::None,
-                Key::None,
-                Key::None,
-                Key::None,
-                Key::None,
-                Key::None,
-                Key::None,
-                Key::None,
-                Key::None,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
+                Key::NormalBlank,
                 Key::Left,
                 Key::Down,
                 Key::Right,
-                Key::None,
+                Key::NormalBlank,
             ],
         ])
     }

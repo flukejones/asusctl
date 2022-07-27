@@ -9,9 +9,7 @@ Now includes a GUI, `rog-control-center`.
 
 ## Kernel support
 
-**The minimum supported kernel version is 5.15**
-
-Fan curve control on laptops with this feature require [this patch](https://lkml.org/lkml/2021/10/23/250) which has been merged for 5.17 upstream.
+**The minimum supported kernel version is 5.17**
 
 ## Goals
 
@@ -43,6 +41,16 @@ Bus 001 Device 002: ID 0b05:1866 ASUSTek Computer, Inc. N-KEY Device
 then it may work without tweaks. Technically all other functions except the LED
 and AniMe parts should work regardless of your latop make. Eventually this project
 will probably suffer another rename once it becomes generic enough to do so.
+
+### Unsupported (e.g, TUF laptops)
+
+- `sudo systemctl mask asusd && sudo systemctl stop asusd`
+- `copy asusd-alt.service to /etc/systemd/system/`
+- `sudo systemctl enable asusd-alt`
+- `sudo systemctl start asusd-alt`
+- `asusctl -s`
+
+`asusd-alt.service` is in the `data` dir of this repo.
 
 ## Implemented
 

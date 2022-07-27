@@ -43,6 +43,7 @@ install:
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_ROG)" "$(DESTDIR)$(bindir)/$(BIN_ROG)"
 	$(INSTALL_DATA) "./rog-control-center/data/$(BIN_ROG).desktop" "$(DESTDIR)$(datarootdir)/applications/$(BIN_ROG).desktop"
 	$(INSTALL_DATA) "./rog-control-center/data/$(BIN_ROG).png" "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/$(BIN_ROG).png"
+	cd rog-aura/data/layouts && find . -type f -name "*.toml" -exec install -Dm 755 "{}" "$(DESTDIR)$(datarootdir)/rog-gui/layouts/{}" \;
 
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_C)" "$(DESTDIR)$(bindir)/$(BIN_C)"
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_D)" "$(DESTDIR)$(bindir)/$(BIN_D)"
@@ -68,8 +69,6 @@ install:
 	$(INSTALL_DATA) "./data/icons/scalable/gpu-vfio.svg" "$(DESTDIR)$(datarootdir)/icons/hicolor/scalable/status/gpu-vfio.svg"
 	$(INSTALL_DATA) "./data/icons/scalable/notification-reboot.svg" "$(DESTDIR)$(datarootdir)/icons/hicolor/scalable/status/notification-reboot.svg"
 
-	$(INSTALL_DATA) "./data/_asusctl" "$(DESTDIR)$(zshcpl)/_asusctl"
-	$(INSTALL_DATA) "./data/completions/asusctl.fish" "$(DESTDIR)$(datarootdir)/fish/vendor_completions.d/asusctl.fish"
 	cd rog-anime/data && find "./anime" -type f -exec install -Dm 755 "{}" "$(DESTDIR)$(datarootdir)/asusd/{}" \;
 
 uninstall:
@@ -94,9 +93,8 @@ uninstall:
 	rm -r "$(DESTDIR)$(datarootdir)/icons/hicolor/scalable/status/gpu-nvidia.svg"
 	rm -r "$(DESTDIR)$(datarootdir)/icons/hicolor/scalable/status/gpu-vfio.svg"
 	rm -r "$(DESTDIR)$(datarootdir)/icons/hicolor/scalable/status/notification-reboot.svg"
-	rm -f "$(DESTDIR)$(zshcpl)/_asusctl"
-	rm -f "$(DESTDIR)$(datarootdir)/fish/vendor_completions.d/asusctl.fish"
 	rm -rf "$(DESTDIR)$(datarootdir)/asusd"
+	rm -rf "$(DESTDIR)$(datarootdir)/rog-gui"
 
 update:
 	cargo update

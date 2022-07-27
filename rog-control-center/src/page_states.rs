@@ -7,7 +7,7 @@ use std::{
 };
 
 use egui::Vec2;
-use rog_aura::{usb::AuraPowerDev, AuraEffect, AuraModeNum};
+use rog_aura::{layouts::KeyLayout, usb::AuraPowerDev, AuraEffect, AuraModeNum};
 use rog_profiles::{fan_curve_set::FanCurveSet, FanCurvePU, Profile};
 use rog_supported::SupportedFunctions;
 
@@ -226,6 +226,7 @@ impl AnimeState {
 
 #[derive(Debug)]
 pub struct PageDataStates {
+    pub keyboard_layout: KeyLayout,
     pub notifs_enabled: Arc<AtomicBool>,
     pub was_notified: Arc<AtomicBool>,
     /// Because much of the app state here is the same as `RogBiosSupportedFunctions`
@@ -241,6 +242,7 @@ pub struct PageDataStates {
 
 impl PageDataStates {
     pub fn new(
+        keyboard_layout: KeyLayout,
         notifs_enabled: Arc<AtomicBool>,
         charge_notified: Arc<AtomicBool>,
         bios_notified: Arc<AtomicBool>,
@@ -252,6 +254,7 @@ impl PageDataStates {
         dbus: &RogDbusClientBlocking,
     ) -> Result<Self> {
         Ok(Self {
+            keyboard_layout,
             notifs_enabled,
             was_notified: charge_notified,
             charge_limit: dbus.proxies().charge().limit()?,
@@ -308,6 +311,7 @@ impl PageDataStates {
 impl Default for PageDataStates {
     fn default() -> Self {
         Self {
+            keyboard_layout: KeyLayout::ga401_layout(),
             notifs_enabled: Default::default(),
             was_notified: Default::default(),
             bios: BiosState {

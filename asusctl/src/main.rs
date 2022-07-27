@@ -10,6 +10,7 @@ use anime_cli::{AnimeActions, AnimeCommand};
 use profiles_cli::{FanCurveCommand, ProfileCommand};
 use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, Vec2};
+
 use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraDevice, AuraPowerDev};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClientBlocking;

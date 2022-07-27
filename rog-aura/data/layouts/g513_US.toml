@@ -1,0 +1,153 @@
+matches = [
+    'G513',
+]
+
+locale = "US"
+
+[[rows]]
+row = [
+    'NormalSpacer',
+    'FuncSpacer',
+    'VolDown',
+    'VolUp',
+    'MicMute',
+    'Fan',
+    'Rog',
+]
+
+[[rows]]
+row = [
+    'Esc',
+    'FuncSpacer',
+    'F1',
+    'F2',
+    'F3',
+    'F4',
+    'FuncSpacer',
+    'F5',
+    'F6',
+    'F7',
+    'F8',
+    'FuncSpacer',
+    'F9',
+    'F10',
+    'F11',
+    'F12',
+    'RowEndSpacer',
+    'Del',
+]
+
+[[rows]]
+row = [
+    'Tilde',
+    'N1',
+    'N2',
+    'N3',
+    'N4',
+    'N5',
+    'N6',
+    'N7',
+    'N8',
+    'N9',
+    'N0',
+    'Hyphen',
+    'Equals',
+    'BkSpc',
+    'RowEndSpacer',
+    'Home',
+]
+
+[[rows]]
+row = [
+    'Tab',
+    'Q',
+    'W',
+    'E',
+    'R',
+    'T',
+    'Y',
+    'U',
+    'I',
+    'O',
+    'P',
+    'LBracket',
+    'RBracket',
+    'BackSlash',
+    'RowEndSpacer',
+    'PgUp',
+]
+
+[[rows]]
+row = [
+    'Caps',
+    'A',
+    'S',
+    'D',
+    'F',
+    'G',
+    'H',
+    'J',
+    'K',
+    'L',
+    'SemiColon',
+    'Quote',
+    'Return',
+    'RowEndSpacer',
+    'PgDn',
+]
+
+[[rows]]
+row = [
+    'LShift',
+    'Z',
+    'X',
+    'C',
+    'V',
+    'B',
+    'N',
+    'M',
+    'Comma',
+    'Period',
+    'FwdSlash',
+    'Rshift',
+    'RowEndSpacer',
+    'End',
+]
+
+[[rows]]
+row = [
+    'LCtrl',
+    'LFn',
+    'Meta',
+    'LAlt',
+    'Space',
+    'RAlt',
+    'PrtSc',
+    'RCtrl',
+    'ArrowSpacer',
+    'Up',
+    'ArrowSpacer',
+    'RowEndSpacer',
+    'RFn',
+]
+
+[[rows]]
+row = [
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'ArrowSpacer',
+    'Left',
+    'Down',
+    'Right',
+    'ArrowSpacer',
+]
