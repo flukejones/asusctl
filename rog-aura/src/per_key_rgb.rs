@@ -179,6 +179,20 @@ impl KeyColourArray {
             | Key::FuncSpacer
             | Key::ArrowBlank
             | Key::ArrowSpacer
+            | Key::UpRegular
+            | Key::DownRegular
+            | Key::LeftRegular
+            | Key::RightRegular
+            | Key::UpSplit
+            | Key::DownSplit
+            | Key::LeftSplit
+            | Key::RightSplit
+            | Key::ArrowRegularBlank
+            | Key::ArrowRegularSpacer
+            | Key::ArrowSplitBlank
+            | Key::ArrowSplitSpacer
+            | Key::RshiftSmall
+            | Key::LCtrlMed
             | Key::RowEndSpacer => return None,
             Key::Fan | Key::Space | Key::BkSpc => return None,
         };

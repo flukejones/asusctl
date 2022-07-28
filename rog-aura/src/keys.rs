@@ -86,11 +86,13 @@ pub enum Key {
     Period,
     FwdSlash,
     Rshift,
+    RshiftSmall,
     Rshift3_1,
     Rshift3_2,
     Rshift3_3,
     End,
     LCtrl,
+    LCtrlMed,
     LFn,
     Meta,
     LAlt,
@@ -107,6 +109,14 @@ pub enum Key {
     Down,
     Left,
     Right,
+    UpRegular,
+    DownRegular,
+    LeftRegular,
+    RightRegular,
+    UpSplit,
+    DownSplit,
+    LeftSplit,
+    RightSplit,
     RFn,
     NormalBlank,
     /// To be ignored by per-key effects
@@ -117,6 +127,12 @@ pub enum Key {
     ArrowBlank,
     /// To be ignored by per-key effects
     ArrowSpacer,
+    ArrowRegularBlank,
+    /// To be ignored by per-key effects
+    ArrowRegularSpacer,
+    ArrowSplitBlank,
+    /// To be ignored by per-key effects
+    ArrowSplitSpacer,
     /// A gap between regular rows and the rightside buttons
     RowEndSpacer,
 }
@@ -136,10 +152,12 @@ pub enum KeyShape {
     FuncSpacer,
     Space,
     Space5,
+    LCtrlMed,
     LShift,
     /// Used in a group of 3 (LED's)
     LShift3,
     RShift,
+    RshiftSmall,
     /// Used in a group of 3 (LED's)
     RShift3,
     Return,
@@ -152,6 +170,11 @@ pub enum KeyShape {
     Arrow,
     ArrowBlank,
     ArrowSpacer,
+    ArrowSplit,
+    ArrowSplitBlank,
+    ArrowSplitSpacer,
+    ArrowRegularBlank,
+    ArrowRegularSpacer,
     RowEndSpacer,
 }
 
@@ -167,9 +190,11 @@ impl KeyShape {
             Self::FuncSpacer => 0.6,
             Self::Space => 5.0,
             Self::Space5 => 1.0,
+            Self::LCtrlMed => 1.1,
             Self::LShift => 2.1,
             Self::LShift3 => 0.67,
             Self::RShift => 2.7,
+            Self::RshiftSmall => 1.7,
             Self::RShift3 => 0.9,
             Self::Return => 2.2,
             Self::Return3 => 0.7333,
@@ -177,9 +202,9 @@ impl KeyShape {
             Self::Caps => 1.6,
             Self::Backspace => 2.0,
             Self::Backspace3 => 0.666,
-            Self::Arrow => 0.93,
-            Self::ArrowBlank => 0.93,
-            Self::ArrowSpacer => 0.93,
+            Self::ArrowRegularBlank | Self::ArrowRegularSpacer => 0.7,
+            Self::Arrow | Self::ArrowBlank | Self::ArrowSpacer => 0.93,
+            Self::ArrowSplit | Self::ArrowSplitBlank | Self::ArrowSplitSpacer => 1.0,
             Self::RowEndSpacer => 0.1,
         }
     }
@@ -188,9 +213,8 @@ impl KeyShape {
             Self::Func => 0.8,
             Self::FuncBlank => 0.8,
             Self::FuncSpacer => 0.8,
-            Self::Arrow => 0.6,
-            Self::ArrowBlank => 0.6,
-            Self::ArrowSpacer => 0.6,
+            Self::Arrow | Self::ArrowBlank | Self::ArrowSpacer => 0.6,
+            Self::ArrowSplit | Self::ArrowSplitBlank | Self::ArrowSplitSpacer => 5.0,
             _ => 1.0,
         }
     }
@@ -199,7 +223,11 @@ impl KeyShape {
     /// depednign on the per-key effect
     pub const fn is_blank(&self) -> bool {
         match self {
-            Self::NormalBlank | Self::FuncBlank | Self::ArrowBlank => true,
+            Self::NormalBlank
+            | Self::FuncBlank
+            | Self::ArrowBlank
+            | Self::ArrowSplitBlank
+            | Self::ArrowRegularBlank => true,
             _ => false,
         }
     }
@@ -207,7 +235,11 @@ impl KeyShape {
     /// A spacer is used to space keys out in GUI's, but ignored in per-key effects
     pub const fn is_spacer(&self) -> bool {
         match self {
-            Self::FuncSpacer | Self::NormalSpacer | Self::ArrowSpacer => true,
+            Self::FuncSpacer
+            | Self::NormalSpacer
+            | Self::ArrowSpacer
+            | Self::ArrowSplitSpacer
+            | Self::ArrowRegularSpacer => true,
             _ => false,
         }
     }
@@ -253,24 +285,39 @@ impl From<Key> for KeyShape {
 
             Key::Return => KeyShape::Return,
             Key::Return3_1 | Key::Return3_2 | Key::Return3_3 => KeyShape::Return3,
+            Key::LCtrlMed => KeyShape::LCtrlMed,
             Key::LShift => KeyShape::LShift,
 
             Key::Rshift => KeyShape::RShift,
+            Key::RshiftSmall => KeyShape::RshiftSmall,
             Key::Rshift3_1 | Key::Rshift3_2 | Key::Rshift3_3 => KeyShape::RShift3,
 
             Key::Space => KeyShape::Space,
             Key::Space5_1 | Key::Space5_2 | Key::Space5_3 | Key::Space5_4 | Key::Space5_5 => {
                 KeyShape::Space5
             }
-            Key::Up | Key::Down | Key::Left | Key::Right => KeyShape::Arrow,
+
             Key::NormalBlank => KeyShape::NormalBlank,
             Key::NormalSpacer => KeyShape::NormalSpacer,
 
             Key::FuncBlank => KeyShape::FuncBlank,
             Key::FuncSpacer => KeyShape::FuncSpacer,
 
+            Key::Up | Key::Down | Key::Left | Key::Right => KeyShape::Arrow,
             Key::ArrowBlank => KeyShape::ArrowBlank,
             Key::ArrowSpacer => KeyShape::ArrowSpacer,
+
+            Key::UpRegular | Key::LeftRegular | Key::DownRegular | Key::RightRegular => {
+                KeyShape::Normal
+            }
+            Key::ArrowRegularBlank => KeyShape::ArrowRegularBlank,
+            Key::ArrowRegularSpacer => KeyShape::ArrowRegularSpacer,
+
+            Key::UpSplit | Key::LeftSplit | Key::DownSplit | Key::RightSplit => {
+                KeyShape::ArrowSplit
+            }
+            Key::ArrowSplitBlank => KeyShape::ArrowSplitBlank,
+            Key::ArrowSplitSpacer => KeyShape::ArrowSplitSpacer,
 
             Key::RowEndSpacer => KeyShape::RowEndSpacer,
 

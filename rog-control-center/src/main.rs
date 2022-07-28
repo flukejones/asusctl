@@ -16,7 +16,10 @@ use std::{
     time::Duration,
 };
 
+#[cfg(not(feature = "mocking"))]
 const DATA_DIR: &str = "/usr/share/rog-gui/";
+#[cfg(feature = "mocking")]
+const DATA_DIR: &str = env!("CARGO_MANIFEST_DIR");
 const BOARD_NAME: &str = "/sys/class/dmi/id/board_name";
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -42,12 +45,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut layout = KeyLayout::ga401_layout(); // default
     let mut path = PathBuf::from(DATA_DIR);
+    #[cfg(feature = "mocking")]
+    {
+        path.pop();
+        path.push("rog-aura");
+        path.push("data");
+    }
     path.push("layouts");
-    for path in fs::read_dir(path).map_err(|e| {
-        println!("{DATA_DIR}, {e}");
+    let path = path.as_path();
+    for p in fs::read_dir(path).map_err(|e| {
+        println!("{:?}, {e}", path);
         e
     })? {
-        let tmp = KeyLayout::from_file(&path?.path()).unwrap();
+        let tmp = KeyLayout::from_file(&p?.path()).unwrap();
         if tmp.matches(board_name.as_str()) {
             layout = tmp;
             break;

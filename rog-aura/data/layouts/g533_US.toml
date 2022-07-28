@@ -52,9 +52,7 @@ row = [
     'N0',
     'Hyphen',
     'Equals',
-    'BkSpc3_1',
-    'BkSpc3_2',
-    'BkSpc3_3',
+    'BkSpc',
     'Home',
 ]
 
@@ -91,9 +89,7 @@ row = [
     'L',
     'SemiColon',
     'Quote',
-    'Return3_1',
-    'Return3_2',
-    'Return3_3',
+    'Return',
     'PgDn',
 ]
 
@@ -110,28 +106,24 @@ row = [
     'Comma',
     'Period',
     'FwdSlash',
-    'Caps',
-    'Up',
+    'RshiftSmall',
+    'UpRegular',
     'End',
 ]
 
 [[rows]]
 row = [
-    'LCtrl',
+    'LCtrlMed',
     'LFn',
     'Meta',
     'LAlt',
-    'Space5_1',
-    'Space5_2',
-    'Space5_3',
-    'Space5_4',
-    'Space5_5',
+    'Space',
     'RAlt',
     'PrtSc',
     'RCtrl',
-    'ArrowSpacer',
-    'Left',
-    'Down',
-    'Right',
+    'ArrowRegularSpacer',
+    'LeftRegular',
+    'DownRegular',
+    'RightRegular',
 ]
 
