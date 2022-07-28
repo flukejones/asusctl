@@ -42,7 +42,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         })?;
     let mut board_name = String::new();
     file.read_to_string(&mut board_name)?;
-    board_name = "G533".to_string();
+    // board_name = "G533".to_string();
 
     let mut layout = KeyLayout::ga401_layout(); // default
     let mut path = PathBuf::from(DATA_DIR);
