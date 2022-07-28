@@ -53,7 +53,7 @@ row = [
     'Hyphen',
     'Equals',
     'BkSpc',
-    'Home',
+    'MediaPlay',
 ]
 
 [[rows]]
@@ -72,7 +72,7 @@ row = [
     'LBracket',
     'RBracket',
     'BackSlash',
-    'PgUp',
+    'MediaStop',
 ]
 
 [[rows]]
@@ -90,7 +90,7 @@ row = [
     'SemiColon',
     'Quote',
     'Return',
-    'PgDn',
+    'MediaPrev',
 ]
 
 [[rows]]
@@ -108,7 +108,7 @@ row = [
     'FwdSlash',
     'RshiftSmall',
     'UpRegular',
-    'End',
+    'MediaNext',
 ]
 
 [[rows]]

@@ -193,6 +193,10 @@ impl KeyColourArray {
             | Key::ArrowSplitSpacer
             | Key::RshiftSmall
             | Key::LCtrlMed
+            | Key::MediaPlay
+            | Key::MediaStop
+            | Key::MediaPrev
+            | Key::MediaNext
             | Key::RowEndSpacer => return None,
             Key::Fan | Key::Space | Key::BkSpc => return None,
         };

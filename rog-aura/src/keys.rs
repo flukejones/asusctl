@@ -118,6 +118,10 @@ pub enum Key {
     LeftSplit,
     RightSplit,
     RFn,
+    MediaPlay,
+    MediaStop,
+    MediaNext,
+    MediaPrev,
     NormalBlank,
     /// To be ignored by per-key effects
     NormalSpacer,
@@ -307,9 +311,6 @@ impl From<Key> for KeyShape {
             Key::ArrowBlank => KeyShape::ArrowBlank,
             Key::ArrowSpacer => KeyShape::ArrowSpacer,
 
-            Key::UpRegular | Key::LeftRegular | Key::DownRegular | Key::RightRegular => {
-                KeyShape::Normal
-            }
             Key::ArrowRegularBlank => KeyShape::ArrowRegularBlank,
             Key::ArrowRegularSpacer => KeyShape::ArrowRegularSpacer,
 

@@ -9,7 +9,9 @@ pub use builtin_modes::*;
 mod per_key_rgb;
 pub use per_key_rgb::*;
 pub mod error;
+pub mod key_to_str;
 pub mod keys;
+pub use key_to_str::*;
 pub mod layouts;
 pub mod usb;
 

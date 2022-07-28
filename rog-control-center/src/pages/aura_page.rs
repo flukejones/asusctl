@@ -30,13 +30,12 @@ impl<'a> RogApp<'a> {
                         // your boat
                         let shape = KeyShape::from(key);
 
+                        let label = <&str>::from(key);
                         if shape.is_blank() || shape.is_spacer() {
                             blank(ui, shape);
                         } else if shape.is_group() {
-                            let label = format!("{key:?}");
                             key_group(ui, colour, shape.ux(), shape.uy()).on_hover_text(label);
                         } else {
-                            let label = format!("{key:?}");
                             key_shape(ui, colour, shape).on_hover_text(label);
                         }
                     }
