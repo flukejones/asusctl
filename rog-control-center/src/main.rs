@@ -42,12 +42,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         })?;
     let mut board_name = String::new();
     file.read_to_string(&mut board_name)?;
-    // board_name = "G533".to_string();
 
     let mut layout = KeyLayout::ga401_layout(); // default
     let mut path = PathBuf::from(DATA_DIR);
     #[cfg(feature = "mocking")]
     {
+        board_name = "GX502".to_string();
         path.pop();
         path.push("rog-aura");
         path.push("data");
@@ -117,7 +117,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let native_options = eframe::NativeOptions {
         decorated: false,
         transparent: false,
-        max_window_size: Some(egui::vec2(800.0, 600.0)),
+        min_window_size: Some(egui::vec2(840.0, 600.0)),
+        max_window_size: Some(egui::vec2(840.0, 600.0)),
         ..Default::default()
     };
 

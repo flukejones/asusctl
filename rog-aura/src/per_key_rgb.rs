@@ -197,6 +197,16 @@ impl KeyColourArray {
             | Key::MediaStop
             | Key::MediaPrev
             | Key::MediaNext
+            | Key::Pause
+            | Key::NumLock
+            | Key::Star
+            | Key::NumPadDel
+            | Key::NumPadPlus
+            | Key::NumPadEnter
+            | Key::NumPadPause
+            | Key::NumPadPrtSc
+            | Key::NumPadHome
+            | Key::RCtrlLarge
             | Key::RowEndSpacer => return None,
             Key::Fan | Key::Space | Key::BkSpc => return None,
         };

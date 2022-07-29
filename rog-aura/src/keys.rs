@@ -85,6 +85,14 @@ pub enum Key {
     Comma,
     Period,
     FwdSlash,
+    Star,
+    NumPadDel,
+    NumPadPlus,
+    NumPadEnter,
+    NumPadPause,
+    NumPadPrtSc,
+    NumPadHome,
+    NumLock,
     Rshift,
     RshiftSmall,
     Rshift3_1,
@@ -102,9 +110,11 @@ pub enum Key {
     Space5_3,
     Space5_4,
     Space5_5,
+    Pause,
     RAlt,
     PrtSc,
     RCtrl,
+    RCtrlLarge,
     Up,
     Down,
     Left,
@@ -214,7 +224,7 @@ impl KeyShape {
     }
     pub const fn uy(&self) -> f32 {
         match self {
-            Self::Func => 0.8,
+            Self::Func | Self::RowEndSpacer => 0.8,
             Self::FuncBlank => 0.8,
             Self::FuncSpacer => 0.8,
             Self::Arrow | Self::ArrowBlank | Self::ArrowSpacer => 0.6,
@@ -292,13 +302,17 @@ impl From<Key> for KeyShape {
             Key::LCtrlMed => KeyShape::LCtrlMed,
             Key::LShift => KeyShape::LShift,
 
-            Key::Rshift => KeyShape::RShift,
+            Key::Rshift | Key::RCtrlLarge => KeyShape::RShift,
             Key::RshiftSmall => KeyShape::RshiftSmall,
             Key::Rshift3_1 | Key::Rshift3_2 | Key::Rshift3_3 => KeyShape::RShift3,
 
             Key::Space => KeyShape::Space,
             Key::Space5_1 | Key::Space5_2 | Key::Space5_3 | Key::Space5_4 | Key::Space5_5 => {
                 KeyShape::Space5
+            }
+
+            Key::NumPadPause | Key::NumPadPrtSc | Key::NumPadHome | Key::NumPadDel => {
+                KeyShape::Func
             }
 
             Key::NormalBlank => KeyShape::NormalBlank,

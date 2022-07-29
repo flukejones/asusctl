@@ -1,5 +1,5 @@
 matches = [
-    'G513',
+    'GL504',
 ]
 
 locale = "US"
@@ -11,7 +11,6 @@ row = [
     'VolDown',
     'VolUp',
     'MicMute',
-    'Fan',
     'Rog',
 ]
 
@@ -33,8 +32,10 @@ row = [
     'F10',
     'F11',
     'F12',
-    'RowEndSpacer',
-    'NumPadDel',
+    'Del',
+    'NumPadPause',
+    'NumPadPrtSc',
+    'NumPadHome',
 ]
 
 [[rows]]
@@ -53,8 +54,10 @@ row = [
     'Hyphen',
     'Equals',
     'BkSpc',
-    'RowEndSpacer',
-    'Home',
+    'NumLock',
+    'FwdSlash',
+    'Star',
+    'Hyphen',
 ]
 
 [[rows]]
@@ -73,8 +76,10 @@ row = [
     'LBracket',
     'RBracket',
     'BackSlash',
-    'RowEndSpacer',
-    'PgUp',
+    'N7',
+    'N8',
+    'N9',
+    'NumPadPlus',
 ]
 
 [[rows]]
@@ -92,8 +97,10 @@ row = [
     'SemiColon',
     'Quote',
     'Return',
-    'RowEndSpacer',
-    'PgDn',
+    'N4',
+    'N5',
+    'N6',
+    'NumPadPlus',
 ]
 
 [[rows]]
@@ -110,44 +117,49 @@ row = [
     'Period',
     'FwdSlash',
     'Rshift',
-    'RowEndSpacer',
-    'End',
+    'N1',
+    'N2',
+    'N3',
+    'NumPadEnter',
 ]
 
 [[rows]]
 row = [
-    'LCtrl',
+    'LCtrlMed',
     'LFn',
     'Meta',
     'LAlt',
     'Space',
     'RAlt',
-    'PrtSc',
-    'RCtrl',
-    'ArrowSpacer',
-    'Up',
-    'ArrowSpacer',
-    'RowEndSpacer',
     'RFn',
+    'RFn',
+    'RCtrlLarge',
+    'UpRegular',
+    'N0',
+    'NumPadDel',
+    'NumPadEnter',
 ]
 
 [[rows]]
 row = [
-    'ArrowSpacer',
-    'ArrowSpacer',
-    'ArrowSpacer',
-    'ArrowSpacer',
-    'ArrowSpacer',
-    'ArrowSpacer',
-    'ArrowSpacer',
-    'ArrowSpacer',
-    'ArrowSpacer',
-    'ArrowSpacer',
-    'ArrowSpacer',
-    'ArrowSpacer',
-    'ArrowSpacer',
-    'Left',
-    'Down',
-    'Right',
-    'ArrowSpacer',
+    'FuncSpacer',
+    'FuncSpacer',
+    'FuncSpacer',
+    'NormalSpacer',
+    'NormalSpacer',
+    'NormalSpacer',
+    'NormalSpacer',
+    'NormalSpacer',
+    'NormalSpacer',
+    'NormalSpacer',
+    'NormalSpacer',
+    'NormalSpacer',
+    'NormalSpacer',
+    'NormalSpacer',
+    'NormalSpacer',
+    'LeftRegular',
+    'DownRegular',
+    'RightRegular',
+    'NormalSpacer',
 ]
+
