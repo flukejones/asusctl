@@ -272,7 +272,7 @@ impl CtrlAnime {
     /// Write only a data packet. This will modify the leds brightness using the
     /// global brightness set in config.
     fn write_data_buffer(&self, mut buffer: AnimeDataBuffer) -> Result<(), RogError> {
-        for led in buffer.data_mut()[7..].iter_mut() {
+        for led in buffer.data_mut().iter_mut() {
             let mut bright = *led as f32 * self.config.brightness;
             if bright > 254.0 {
                 bright = 254.0;
