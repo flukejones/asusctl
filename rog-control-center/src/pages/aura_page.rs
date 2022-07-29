@@ -25,11 +25,18 @@ impl<'a> RogApp<'a> {
 
             ui.spacing_mut().item_spacing = egui::vec2(0.0, 0.0);
             let mut arrows_done = false;
+            let mut rog_done = false;
             for row in states.keyboard_layout.rows() {
-                let height = row.height();
                 ui.horizontal_top(|ui| {
                     for key in row.row() {
                         // your boat
+                        let height = if rog_done {
+                            row.height()
+                        } else {
+                            // Use the first item (always a blank) to stand off the row
+                            rog_done = true;
+                            1.2
+                        };
                         let shape = KeyShape::from(key);
 
                         let label = <&str>::from(key);
