@@ -1,4 +1,4 @@
-use egui::{Color32, Vec2};
+use egui::{Align, Color32, Vec2};
 use rog_aura::keys::KeyShape;
 
 use crate::{widgets::aura_modes_group, RogApp};
@@ -24,14 +24,20 @@ impl<'a> RogApp<'a> {
             aura_modes_group(supported, states, dbus, ui);
 
             ui.spacing_mut().item_spacing = egui::vec2(0.0, 0.0);
+            let mut arrows_done = false;
             for row in states.keyboard_layout.rows() {
-                ui.horizontal(|ui| {
+                ui.horizontal_top(|ui| {
                     for key in row.row() {
                         // your boat
                         let shape = KeyShape::from(key);
 
                         let label = <&str>::from(key);
-                        if shape.is_blank() || shape.is_spacer() {
+                        if shape.is_arrow_cluster() {
+                            if !arrows_done {
+                                arrow_cluster(ui, colour);
+                                arrows_done = true;
+                            }
+                        } else if shape.is_blank() || shape.is_spacer() {
                             blank(ui, shape);
                         } else if shape.is_group() {
                             key_group(ui, colour, shape.ux(), shape.uy()).on_hover_text(label);
@@ -92,4 +98,28 @@ fn blank(ui: &mut egui::Ui, shape: KeyShape) {
     let desired_size =
         ui.spacing().interact_size.y * egui::vec2(2.0 * shape.ux(), 2.0 * shape.uy());
     ui.allocate_exact_size(desired_size, egui::Sense::click());
+}
+
+/// Draws entire arrow cluster block. This is visibly different to the split-arrows.
+fn arrow_cluster(ui: &mut egui::Ui, colour: Color32) {
+    let space = KeyShape::ArrowSpacer;
+    let shape = KeyShape::Arrow;
+    ui.horizontal_top(|ui| {
+        ui.with_layout(egui::Layout::top_down(Align::LEFT), |ui| {
+            blank(ui, space);
+            ui.horizontal(|ui| {
+                blank(ui, KeyShape::RowEndSpacer);
+                blank(ui, KeyShape::RowEndSpacer);
+                key_shape(ui, colour, shape).on_hover_text("Left");
+            });
+        });
+        ui.with_layout(egui::Layout::top_down(Align::LEFT), |ui| {
+            key_shape(ui, colour, shape).on_hover_text("Up");
+            key_shape(ui, colour, shape).on_hover_text("Down");
+        });
+        ui.with_layout(egui::Layout::top_down(Align::LEFT), |ui| {
+            blank(ui, space);
+            key_shape(ui, colour, shape).on_hover_text("Right");
+        });
+    });
 }

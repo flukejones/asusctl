@@ -205,11 +205,11 @@ impl KeyShape {
             Self::Space => 5.0,
             Self::Space5 => 1.0,
             Self::LCtrlMed => 1.1,
-            Self::LShift => 2.1,
+            Self::LShift => 2.0,
             Self::LShift3 => 0.67,
-            Self::RShift => 2.7,
+            Self::RShift => 2.8,
             Self::RshiftSmall => 1.7,
-            Self::RShift3 => 0.9,
+            Self::RShift3 => 0.93,
             Self::Return => 2.2,
             Self::Return3 => 0.7333,
             Self::Tab => 1.4,
@@ -217,14 +217,16 @@ impl KeyShape {
             Self::Backspace => 2.0,
             Self::Backspace3 => 0.666,
             Self::ArrowRegularBlank | Self::ArrowRegularSpacer => 0.7,
-            Self::Arrow | Self::ArrowBlank | Self::ArrowSpacer => 0.93,
+            Self::Arrow => 0.8,
+            Self::ArrowBlank | Self::ArrowSpacer => 1.0,
             Self::ArrowSplit | Self::ArrowSplitBlank | Self::ArrowSplitSpacer => 1.0,
             Self::RowEndSpacer => 0.1,
         }
     }
     pub const fn uy(&self) -> f32 {
         match self {
-            Self::Func | Self::RowEndSpacer => 0.8,
+            Self::Func => 0.8,
+            Self::RowEndSpacer => 0.1,
             Self::FuncBlank => 0.8,
             Self::FuncSpacer => 0.8,
             Self::Arrow | Self::ArrowBlank | Self::ArrowSpacer => 0.6,
@@ -263,6 +265,20 @@ impl KeyShape {
         match self {
             Self::LShift3 | Self::RShift3 => true,
             Self::Return3 | Self::Space5 | Self::Backspace3 => true,
+            _ => false,
+        }
+    }
+
+    pub const fn is_arrow_cluster(&self) -> bool {
+        match self {
+            Self::Arrow | Self::ArrowBlank | Self::ArrowSpacer => true,
+            _ => false,
+        }
+    }
+
+    pub const fn is_arrow_splits(&self) -> bool {
+        match self {
+            Self::ArrowSplit | Self::ArrowSplitBlank | Self::ArrowSplitSpacer => true,
             _ => false,
         }
     }
