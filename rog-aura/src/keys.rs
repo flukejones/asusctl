@@ -258,6 +258,8 @@ impl KeyShape {
         }
     }
 
+    /// Mostly intended as a helper for signalling when to draw a
+    /// split/compact arrow cluster
     pub const fn is_arrow_cluster(&self) -> bool {
         match self {
             Self::Arrow | Self::ArrowBlank | Self::ArrowSpacer => true,

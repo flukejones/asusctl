@@ -79,6 +79,18 @@ impl From<Colour> for [f32; 3] {
     }
 }
 
+impl From<&[u8; 3]> for Colour {
+    fn from(c: &[u8; 3]) -> Self {
+        Self(c[0], c[1], c[2])
+    }
+}
+
+impl From<Colour> for [u8; 3] {
+    fn from(c: Colour) -> Self {
+        [c.0, c.1, c.2]
+    }
+}
+
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize)]
 pub enum Speed {

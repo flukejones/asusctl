@@ -61,8 +61,8 @@ pub fn aura_modes_group(
             ui.selectable_value(&mut effect.direction, a, format!("{:?}", a));
         };
 
-        let mut c1: [f32; 3] = effect.colour1.into();
-        let mut c2: [f32; 3] = effect.colour2.into();
+        let mut c1: [u8; 3] = effect.colour1.into();
+        let mut c2: [u8; 3] = effect.colour2.into();
 
         ui.separator();
         ui.horizontal_wrapped(|ui| {
@@ -118,9 +118,9 @@ pub fn aura_modes_group(
                 }
 
                 ui.set_enabled(allowed.colour1);
-                egui::color_picker::color_edit_button_rgb(ui, &mut c1);
+                egui::color_picker::color_edit_button_srgb(ui, &mut c1);
                 ui.set_enabled(allowed.colour2);
-                egui::color_picker::color_edit_button_rgb(ui, &mut c2);
+                egui::color_picker::color_edit_button_srgb(ui, &mut c2);
 
                 ui.set_enabled(allowed.speed);
                 ui.horizontal_wrapped(|ui| {
