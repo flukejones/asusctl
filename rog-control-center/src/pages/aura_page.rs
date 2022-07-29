@@ -26,6 +26,7 @@ impl<'a> RogApp<'a> {
             ui.spacing_mut().item_spacing = egui::vec2(0.0, 0.0);
             let mut arrows_done = false;
             for row in states.keyboard_layout.rows() {
+                let height = row.height();
                 ui.horizontal_top(|ui| {
                     for key in row.row() {
                         // your boat
@@ -38,11 +39,11 @@ impl<'a> RogApp<'a> {
                                 arrows_done = true;
                             }
                         } else if shape.is_blank() || shape.is_spacer() {
-                            blank(ui, shape);
+                            blank(ui, shape.width(), height);
                         } else if shape.is_group() {
-                            key_group(ui, colour, shape.ux(), shape.uy()).on_hover_text(label);
+                            key_group(ui, colour, shape.width(), height).on_hover_text(label);
                         } else {
-                            key_shape(ui, colour, shape).on_hover_text(label);
+                            key_shape(ui, colour, shape.width(), height).on_hover_text(label);
                         }
                     }
                 });
@@ -51,9 +52,8 @@ impl<'a> RogApp<'a> {
     }
 }
 
-fn key_shape(ui: &mut egui::Ui, colour: Color32, shape: KeyShape) -> egui::Response {
-    let desired_size =
-        ui.spacing().interact_size.y * egui::vec2(2.0 * shape.ux(), 2.0 * shape.uy());
+fn key_shape(ui: &mut egui::Ui, colour: Color32, ux: f32, uy: f32) -> egui::Response {
+    let desired_size = ui.spacing().interact_size.y * egui::vec2(2.0 * ux, 2.0 * uy);
     let (mut rect, mut response) = ui.allocate_exact_size(desired_size, egui::Sense::click());
     rect = rect.shrink(3.0);
     if response.clicked() {
@@ -94,32 +94,32 @@ fn key_group(ui: &mut egui::Ui, colour: Color32, ux: f32, uy: f32) -> egui::Resp
     response
 }
 
-fn blank(ui: &mut egui::Ui, shape: KeyShape) {
-    let desired_size =
-        ui.spacing().interact_size.y * egui::vec2(2.0 * shape.ux(), 2.0 * shape.uy());
+fn blank(ui: &mut egui::Ui, ux: f32, uy: f32) {
+    let desired_size = ui.spacing().interact_size.y * egui::vec2(2.0 * ux, 2.0 * uy);
     ui.allocate_exact_size(desired_size, egui::Sense::click());
 }
 
 /// Draws entire arrow cluster block. This is visibly different to the split-arrows.
 fn arrow_cluster(ui: &mut egui::Ui, colour: Color32) {
+    let height = 0.7;
     let space = KeyShape::ArrowSpacer;
     let shape = KeyShape::Arrow;
     ui.horizontal_top(|ui| {
         ui.with_layout(egui::Layout::top_down(Align::LEFT), |ui| {
-            blank(ui, space);
+            blank(ui, space.width(), height);
             ui.horizontal(|ui| {
-                blank(ui, KeyShape::RowEndSpacer);
-                blank(ui, KeyShape::RowEndSpacer);
-                key_shape(ui, colour, shape).on_hover_text("Left");
+                blank(ui, KeyShape::RowEndSpacer.width(), height);
+                blank(ui, KeyShape::RowEndSpacer.width(), height);
+                key_shape(ui, colour, shape.width(), height).on_hover_text("Left");
             });
         });
         ui.with_layout(egui::Layout::top_down(Align::LEFT), |ui| {
-            key_shape(ui, colour, shape).on_hover_text("Up");
-            key_shape(ui, colour, shape).on_hover_text("Down");
+            key_shape(ui, colour, shape.width(), height).on_hover_text("Up");
+            key_shape(ui, colour, shape.width(), height).on_hover_text("Down");
         });
         ui.with_layout(egui::Layout::top_down(Align::LEFT), |ui| {
-            blank(ui, space);
-            key_shape(ui, colour, shape).on_hover_text("Right");
+            blank(ui, space.width(), height);
+            key_shape(ui, colour, shape.width(), height).on_hover_text("Right");
         });
     });
 }

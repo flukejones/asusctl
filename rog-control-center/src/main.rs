@@ -47,7 +47,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut path = PathBuf::from(DATA_DIR);
     #[cfg(feature = "mocking")]
     {
-        board_name = "G513".to_string();
+        board_name = "gx502".to_string();
         path.pop();
         path.push("rog-aura");
         path.push("data");

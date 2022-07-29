@@ -50,15 +50,20 @@ impl KeyLayout {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct KeyRow {
+    height: f32,
     row: Vec<Key>,
 }
 
 impl KeyRow {
-    pub fn new(row: Vec<Key>) -> Self {
-        Self { row }
+    pub fn new(height: f32, row: Vec<Key>) -> Self {
+        Self { height, row }
     }
 
     pub fn row(&self) -> Iter<Key> {
         self.row.iter()
+    }
+
+    pub fn height(&self) -> f32 {
+        self.height
     }
 }

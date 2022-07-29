@@ -6,6 +6,7 @@ matches = [
 locale = "US"
 
 [[rows]]
+height = 0.8
 row = [
     'NormalSpacer',
     'FuncSpacer',
@@ -16,6 +17,7 @@ row = [
 ]
 
 [[rows]]
+height = 0.8
 row = [
     'Esc',
     'FuncSpacer',
@@ -38,6 +40,7 @@ row = [
 ]
 
 [[rows]]
+height = 1.0
 row = [
     'Tilde',
     'N1',
@@ -60,6 +63,7 @@ row = [
 ]
 
 [[rows]]
+height = 1.0
 row = [
     'Tab',
     'Q',
@@ -80,6 +84,7 @@ row = [
 ]
 
 [[rows]]
+height = 1.0
 row = [
     'Caps',
     'A',
@@ -101,6 +106,7 @@ row = [
 ]
 
 [[rows]]
+height = 1.0
 row = [
     'LShift',
     'Z',
@@ -121,6 +127,7 @@ row = [
 ]
 
 [[rows]]
+height = 1.2
 row = [
     'LCtrl',
     'LFn',
@@ -142,6 +149,7 @@ row = [
 ]
 
 [[rows]]
+height = 0.8
 row = [
     'FuncSpacer',
     'FuncSpacer',

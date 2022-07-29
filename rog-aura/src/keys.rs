@@ -193,7 +193,7 @@ pub enum KeyShape {
 }
 
 impl KeyShape {
-    pub const fn ux(&self) -> f32 {
+    pub const fn width(&self) -> f32 {
         match self {
             Self::Tilde => 0.8,
             Self::Normal => 1.0,
@@ -208,7 +208,7 @@ impl KeyShape {
             Self::LShift => 2.0,
             Self::LShift3 => 0.67,
             Self::RShift => 2.8,
-            Self::RshiftSmall => 1.7,
+            Self::RshiftSmall => 1.8,
             Self::RShift3 => 0.93,
             Self::Return => 2.2,
             Self::Return3 => 0.7333,
@@ -221,17 +221,6 @@ impl KeyShape {
             Self::ArrowBlank | Self::ArrowSpacer => 1.0,
             Self::ArrowSplit | Self::ArrowSplitBlank | Self::ArrowSplitSpacer => 1.0,
             Self::RowEndSpacer => 0.1,
-        }
-    }
-    pub const fn uy(&self) -> f32 {
-        match self {
-            Self::Func => 0.8,
-            Self::RowEndSpacer => 0.1,
-            Self::FuncBlank => 0.8,
-            Self::FuncSpacer => 0.8,
-            Self::Arrow | Self::ArrowBlank | Self::ArrowSpacer => 0.6,
-            Self::ArrowSplit | Self::ArrowSplitBlank | Self::ArrowSplitSpacer => 5.0,
-            _ => 1.0,
         }
     }
 
