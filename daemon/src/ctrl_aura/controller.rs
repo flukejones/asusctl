@@ -211,14 +211,8 @@ impl CtrlKbdLed {
 
         let bright_node = Self::get_kbd_bright_path();
 
-        if led_node.is_none() {
+        if led_node.is_none() && bright_node.is_none() {
             return Err(RogError::NoAuraKeyboard);
-        }
-
-        if bright_node.is_none() {
-            return Err(RogError::MissingFunction(
-                "No brightness control, you may require a v5.11 series kernel or newer".into(),
-            ));
         }
 
         let ctrl = CtrlKbdLed {
