@@ -159,6 +159,9 @@ pub struct AuraState {
     pub enabled: AuraPowerDev,
     /// Brightness from 0-3
     pub bright: i16,
+    pub wave_red: [u8; 22],
+    pub wave_green: [u8; 22],
+    pub wave_blue: [u8; 22],
 }
 
 impl AuraState {
@@ -186,7 +189,33 @@ impl AuraState {
             } else {
                 2
             },
+            wave_red: [0u8; 22],
+            wave_green: [0u8; 22],
+            wave_blue: [0u8; 22],
         })
+    }
+
+    /// Bump value in to the wave and surf all along.
+    pub fn nudge_wave(&mut self, value: u8) {
+        for i in (0..self.wave_red.len()).rev() {
+            if i > 0 {
+                self.wave_red[i] = self.wave_red[i - 1];
+                self.wave_green[i] = self.wave_green[i - 1];
+                self.wave_blue[i] = self.wave_blue[i - 1];
+            }
+        }
+        let mut g = value + 33;
+        if g >  100 {
+            g -= 100;
+        }
+        let mut b = value + 66;
+        if b >  100 {
+            b -= 100;
+        }
+        self.wave_red[0] = value;
+        self.wave_green[0] = g;
+        self.wave_blue[0] = b;
+        dbg!(self.wave_blue);
     }
 }
 
@@ -331,6 +360,9 @@ impl Default for PageDataStates {
                     x19b6: vec![],
                 },
                 bright: Default::default(),
+                wave_red: Default::default(),
+                wave_green: Default::default(),
+                wave_blue: Default::default(),
             },
             anime: AnimeState {
                 was_notified: Default::default(),

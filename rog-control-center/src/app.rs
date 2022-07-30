@@ -1,10 +1,11 @@
 use std::{
+    f64::consts::PI,
     io::Write,
     sync::{
-        atomic::{AtomicBool, Ordering},
+        atomic::{AtomicBool, AtomicU8, Ordering},
         Arc,
     },
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use egui::{Button, RichText};
@@ -26,6 +27,12 @@ pub struct RogApp<'a> {
     // TODO: can probably just open and read whenever
     pub config: Config,
     pub asus_dbus: RogDbusClientBlocking<'a>,
+    /// Oscillator in percentage
+    pub oscillator: Arc<AtomicU8>,
+    /// Frequency of oscillation
+    pub oscillator_freq: Arc<AtomicU8>,
+    /// A toggle that toggles true/false when the oscillator reaches 0
+    pub oscillator_toggle: Arc<AtomicBool>,
 }
 
 impl<'a> RogApp<'a> {
@@ -40,6 +47,38 @@ impl<'a> RogApp<'a> {
         let (dbus, _) = RogDbusClientBlocking::new()?;
         let supported = dbus.proxies().supported().supported_functions()?;
 
+        // Set up an oscillator to run on a thread.
+        // Helpful for visual effects like colour pulse.
+        let oscillator = Arc::new(AtomicU8::new(0));
+        let oscillator1 = oscillator.clone();
+        let oscillator_freq = Arc::new(AtomicU8::new(5));
+        let oscillator_freq1 = oscillator_freq.clone();
+        let oscillator_toggle = Arc::new(AtomicBool::new(false));
+        let oscillator_toggle1 = oscillator_toggle.clone();
+        std::thread::spawn(move || {
+            let started = Instant::now();
+            let mut toggled = false;
+            loop {
+                let time = started.elapsed();
+                // 32 = slow, 16 = med, 8 = fast
+                let scale = oscillator_freq1.load(Ordering::SeqCst) as f64;
+                let elapsed = time.as_millis() as f64 / 10000.0;
+                let tmp = ((scale * elapsed * PI).cos()).abs();
+                if tmp <= 0.1 && !toggled {
+                    let s = oscillator_toggle1.load(Ordering::SeqCst);
+                    oscillator_toggle1.store(!s, Ordering::SeqCst);
+                    toggled = true;
+                } else if tmp > 0.9 {
+                    toggled = false;
+                }
+
+                let tmp = (255.0 * tmp * 100.0 / 255.0) as u8;
+
+                oscillator1.store(tmp, Ordering::SeqCst);
+                std::thread::sleep(Duration::from_millis(33));
+            }
+        });
+
         Ok(Self {
             supported,
             states,
@@ -48,6 +87,9 @@ impl<'a> RogApp<'a> {
             running_in_bg: start_closed,
             config,
             asus_dbus: dbus,
+            oscillator,
+            oscillator_toggle,
+            oscillator_freq,
         })
     }
 }
