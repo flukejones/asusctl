@@ -1,6 +1,6 @@
 [package]
 name = "rog-control-center"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Luke D. Jones <luke@ljones.dev>"]
 edition = "2021"
 
