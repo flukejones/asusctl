@@ -147,6 +147,7 @@ impl Led {
     }
     pub fn leds_enabled(&self) -> Result<AuraPowerDev> {
         Ok(AuraPowerDev {
+            tuf: vec![],
             x1866: vec![],
             x19b6: vec![
                 AuraDev19b6::BootKeyb,

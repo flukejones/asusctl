@@ -38,15 +38,16 @@ impl<'a> RogApp<'a> {
                     }
                 }
 
-                if self.supported.anime_ctrl.0 {
-                    ui.separator();
-                    if ui
-                        .selectable_value(page, Page::AnimeMatrix, "AniMe Matrix")
-                        .clicked()
-                    {
-                        *page = Page::AnimeMatrix;
-                    }
-                }
+                // TODO: Anime page is not complete
+                // if self.supported.anime_ctrl.0 {
+                //     ui.separator();
+                //     if ui
+                //         .selectable_value(page, Page::AnimeMatrix, "AniMe Matrix")
+                //         .clicked()
+                //     {
+                //         *page = Page::AnimeMatrix;
+                //     }
+                // }
 
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                     ui.horizontal(|ui| {

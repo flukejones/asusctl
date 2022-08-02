@@ -66,6 +66,9 @@ impl CtrlKbdLedZbus {
     ) -> zbus::fdo::Result<()> {
         let mut states = None;
         if let Ok(mut ctrl) = self.0.try_lock() {
+            for p in options.tuf {
+                ctrl.config.enabled.set_tuf(p, enabled);
+            }
             for p in options.x1866 {
                 ctrl.config.enabled.set_0x1866(p, enabled);
             }

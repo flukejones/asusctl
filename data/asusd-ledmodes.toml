@@ -1,4 +1,18 @@
 [[led_data]]
+prod_family = "TUF"
+board_names = ["FA507"]
+standard = ["Static", "Breathe", "Strobe", "Pulse"]
+multizone = []
+per_key = false
+
+[[led_data]]
+prod_family = "TUF Gaming"
+board_names = ["FX505D"]
+standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
+multizone = []
+per_key = false
+
+[[led_data]]
 prod_family = "Zephyrus S"
 board_names = ["GX502", "GX701", "G531", "GL531", "G532"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
@@ -162,7 +176,7 @@ multizone = []
 per_key = false
 
 [[led_data]]
-prod_family = "ROG Strix" 
+prod_family = "ROG Strix"
 board_names = ["G513IC"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
 multizone = []

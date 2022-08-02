@@ -3,7 +3,12 @@ use rog_aura::{keys::KeyShape, layouts::KeyLayout, AuraModeNum};
 
 use crate::page_states::AuraState;
 
-pub fn keyboard(ui: &mut egui::Ui, keyboard_layout: &KeyLayout, states: &mut AuraState, mut colour: Color32) {
+pub fn keyboard(
+    ui: &mut egui::Ui,
+    keyboard_layout: &KeyLayout,
+    states: &mut AuraState,
+    mut colour: Color32,
+) {
     ui.spacing_mut().item_spacing = egui::vec2(0.0, 0.0);
     let mut arrows_done = false;
     let mut rog_done = false;
@@ -13,8 +18,8 @@ pub fn keyboard(ui: &mut egui::Ui, keyboard_layout: &KeyLayout, states: &mut Aur
                 if states.current_mode == AuraModeNum::Rainbow {
                     colour = Color32::from_rgb(
                         (states.wave_red[i] as u32 * 255 / 100) as u8,
-                        (states.wave_green[i]as u32 * 255 / 100) as u8,
-                        (states.wave_blue[i]as u32 * 255 / 100) as u8,
+                        (states.wave_green[i] as u32 * 255 / 100) as u8,
+                        (states.wave_blue[i] as u32 * 255 / 100) as u8,
                     );
                 }
                 // your boat

@@ -1,6 +1,6 @@
 use crate::laptops::{LaptopLedData, ASUS_KEYBOARD_DEVICES};
 use log::{error, warn};
-use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraPowerDev};
+use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Direction, LedBrightness, Speed, GRADIENT};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashSet};
@@ -16,13 +16,16 @@ pub static AURA_CONFIG_PATH: &str = "/etc/asusd/aura.conf";
 /// booting.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AuraPowerConfig {
+    AuraDevTuf(HashSet<AuraDevTuf>),
     AuraDev1866(HashSet<AuraDev1866>),
     AuraDev19b6(HashSet<AuraDev19b6>),
 }
 
 impl AuraPowerConfig {
+    /// Invalid for TUF laptops
     pub fn to_bytes(control: &Self) -> [u8; 3] {
         match control {
+            AuraPowerConfig::AuraDevTuf(_) => [0, 0, 0],
             AuraPowerConfig::AuraDev1866(c) => {
                 let c: Vec<AuraDev1866> = c.iter().map(|v| *v).collect();
                 AuraDev1866::to_bytes(&c)
@@ -34,6 +37,39 @@ impl AuraPowerConfig {
         }
     }
 
+    pub fn to_tuf_bool_array(control: &Self) -> Option<[bool; 5]> {
+        if let Self::AuraDevTuf(c) = control {
+            return Some([
+                true,
+                c.contains(&AuraDevTuf::Boot),
+                c.contains(&AuraDevTuf::Awake),
+                c.contains(&AuraDevTuf::Sleep),
+                c.contains(&AuraDevTuf::Keyboard),
+            ]);
+        }
+
+        if let Self::AuraDev1866(c) = control {
+            return Some([
+                true,
+                c.contains(&AuraDev1866::Boot),
+                c.contains(&AuraDev1866::Awake),
+                c.contains(&AuraDev1866::Sleep),
+                c.contains(&AuraDev1866::Keyboard),
+            ]);
+        }
+
+        None
+    }
+
+    pub fn set_tuf(&mut self, power: AuraDevTuf, on: bool) {
+        if let Self::AuraDevTuf(p) = self {
+            if on {
+                p.insert(power);
+            } else {
+                p.remove(&power);
+            }
+        }
+    }
     pub fn set_0x1866(&mut self, power: AuraDev1866, on: bool) {
         if let Self::AuraDev1866(p) = self {
             if on {
@@ -58,11 +94,18 @@ impl AuraPowerConfig {
 impl From<&AuraPowerConfig> for AuraPowerDev {
     fn from(config: &AuraPowerConfig) -> Self {
         match config {
+            AuraPowerConfig::AuraDevTuf(d) => AuraPowerDev {
+                tuf: d.iter().map(|o| *o).collect(),
+                x1866: vec![],
+                x19b6: vec![],
+            },
             AuraPowerConfig::AuraDev1866(d) => AuraPowerDev {
+                tuf: vec![],
                 x1866: d.iter().map(|o| *o).collect(),
                 x19b6: vec![],
             },
             AuraPowerConfig::AuraDev19b6(d) => AuraPowerDev {
+                tuf: vec![],
                 x1866: vec![],
                 x19b6: d.iter().map(|o| *o).collect(),
             },
@@ -83,15 +126,19 @@ pub struct AuraConfig {
 
 impl Default for AuraConfig {
     fn default() -> Self {
-        let mut prod_id = String::new();
+        let mut prod_id = AuraDevice::Unknown;
         for prod in ASUS_KEYBOARD_DEVICES.iter() {
             if let Ok(_) = CtrlKbdLed::find_led_node(prod) {
-                prod_id = prod.to_string();
+                prod_id = AuraDevice::from(*prod);
                 break;
             }
         }
 
-        let enabled = if prod_id == "19b6" {
+        if CtrlKbdLed::get_tuf_mode_path().is_some() {
+            prod_id = AuraDevice::Tuf;
+        }
+
+        let enabled = if prod_id == AuraDevice::X19B6 {
             AuraPowerConfig::AuraDev19b6(HashSet::from([
                 AuraDev19b6::BootLogo,
                 AuraDev19b6::BootKeyb,
@@ -105,6 +152,13 @@ impl Default for AuraConfig {
                 AuraDev19b6::BootBar,
                 AuraDev19b6::SleepBar,
                 AuraDev19b6::ShutdownBar,
+            ]))
+        } else if prod_id == AuraDevice::Tuf {
+            AuraPowerConfig::AuraDevTuf(HashSet::from([
+                AuraDevTuf::Awake,
+                AuraDevTuf::Boot,
+                AuraDevTuf::Sleep,
+                AuraDevTuf::Keyboard,
             ]))
         } else {
             AuraPowerConfig::AuraDev1866(HashSet::from([

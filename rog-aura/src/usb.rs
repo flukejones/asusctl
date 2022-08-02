@@ -23,6 +23,7 @@ pub const fn aura_brightness_bytes(brightness: u8) -> [u8; 17] {
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Clone, Debug, PartialEq, PartialOrd, Serialize, Deserialize, Default)]
 pub enum AuraDevice {
+    Tuf,
     X1854,
     X1869,
     X1866,
@@ -34,6 +35,7 @@ pub enum AuraDevice {
 impl From<&str> for AuraDevice {
     fn from(s: &str) -> Self {
         match s.to_lowercase().as_str() {
+            "tuf" => AuraDevice::Tuf,
             "1866" => AuraDevice::X1866,
             "1869" => AuraDevice::X1869,
             "1854" => AuraDevice::X1854,
@@ -49,10 +51,27 @@ impl From<&str> for AuraDevice {
 
 /// This struct is intended as a helper to pass args to generic dbus interface
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct AuraPowerDev {
+    pub tuf: Vec<AuraDevTuf>,
     pub x1866: Vec<AuraDev1866>,
     pub x19b6: Vec<AuraDev19b6>,
+}
+
+#[cfg_attr(feature = "dbus", derive(Type))]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
+#[repr(u32)]
+pub enum AuraDevTuf {
+    Boot,
+    Awake,
+    Sleep,
+    Keyboard,
+}
+
+impl AuraDevTuf {
+    pub const fn dev_id() -> &'static str {
+        "tuf"
+    }
 }
 
 /// # Bits for older 0x1866 keyboard model

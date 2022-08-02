@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `rog-control-center` has now been moved in to the main workspace due to
   the heavy dependencies on most of the rog crates
-
+- Preliminary support of TUF RGB keyboards + power states
 
 ## [4.3.0] - 2022-07-21
 ### Added

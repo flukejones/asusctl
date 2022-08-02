@@ -11,7 +11,7 @@ use profiles_cli::{FanCurveCommand, ProfileCommand};
 use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, Vec2};
 
-use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraDevice, AuraPowerDev};
+use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClientBlocking;
 use rog_profiles::error::ProfileError;
@@ -162,7 +162,10 @@ fn do_parsed(
                     for command in commands.iter().filter(|command| {
                         if !matches!(
                             supported.keyboard_led.prod_id,
-                            AuraDevice::X1854 | AuraDevice::X1869 | AuraDevice::X1866
+                            AuraDevice::X1854
+                                | AuraDevice::X1869
+                                | AuraDevice::X1866
+                                | AuraDevice::Tuf
                         ) && command.trim().starts_with("led-pow-1")
                         {
                             return false;
@@ -458,14 +461,27 @@ fn handle_led_power1(
         return Ok(());
     }
 
-    if !matches!(
+    if matches!(
         supported.prod_id,
         AuraDevice::X1854 | AuraDevice::X1869 | AuraDevice::X1866
     ) {
-        println!("These options are for keyboards of product ID 0x1866 only");
+        handle_led_power_1_do_1866(dbus, power)?;
         return Ok(());
     }
 
+    if matches!(supported.prod_id, AuraDevice::Tuf) {
+        handle_led_power_1_do_tuf(dbus, power)?;
+        return Ok(());
+    }
+
+    println!("These options are for keyboards of product ID 0x1866 or TUF only");
+    return Ok(());
+}
+
+fn handle_led_power_1_do_1866(
+    dbus: &RogDbusClientBlocking,
+    power: &LedPowerCommand1,
+) -> Result<(), Box<dyn std::error::Error>> {
     let mut enabled: Vec<AuraDev1866> = Vec::new();
     let mut disabled: Vec<AuraDev1866> = Vec::new();
 
@@ -488,12 +504,54 @@ fn handle_led_power1(
     let data = AuraPowerDev {
         x1866: enabled,
         x19b6: vec![],
+        tuf: vec![],
     };
     dbus.proxies().led().set_leds_power(data, true)?;
 
     let data = AuraPowerDev {
         x1866: disabled,
         x19b6: vec![],
+        tuf: vec![],
+    };
+    dbus.proxies().led().set_leds_power(data, false)?;
+
+    Ok(())
+}
+
+fn handle_led_power_1_do_tuf(
+    dbus: &RogDbusClientBlocking,
+    power: &LedPowerCommand1,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let mut enabled: Vec<AuraDevTuf> = Vec::new();
+    let mut disabled: Vec<AuraDevTuf> = Vec::new();
+
+    let mut check = |e: Option<bool>, a: AuraDevTuf| {
+        if let Some(arg) = e {
+            if arg {
+                enabled.push(a);
+            } else {
+                disabled.push(a);
+            }
+        }
+    };
+
+    check(power.awake, AuraDevTuf::Awake);
+    check(power.boot, AuraDevTuf::Boot);
+    check(power.sleep, AuraDevTuf::Sleep);
+    check(power.keyboard, AuraDevTuf::Keyboard);
+
+    let data = AuraPowerDev {
+        x1866: vec![],
+        x19b6: vec![],
+        tuf: enabled,
+    };
+    dbg!(&data);
+    dbus.proxies().led().set_leds_power(data, true)?;
+
+    let data = AuraPowerDev {
+        x1866: vec![],
+        x19b6: vec![],
+        tuf: disabled,
     };
     dbus.proxies().led().set_leds_power(data, false)?;
 
@@ -570,6 +628,7 @@ fn handle_led_power2(
 
         if !enabled.is_empty() {
             let data = AuraPowerDev {
+                tuf: vec![],
                 x1866: vec![],
                 x19b6: enabled,
             };
@@ -578,6 +637,7 @@ fn handle_led_power2(
 
         if !disabled.is_empty() {
             let data = AuraPowerDev {
+                tuf: vec![],
                 x1866: vec![],
                 x19b6: disabled,
             };

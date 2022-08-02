@@ -173,19 +173,19 @@ impl AuraState {
         Ok(Self {
             was_notified,
             current_mode: if !supported.keyboard_led.stock_led_modes.is_empty() {
-                dbus.proxies().led().led_mode()?
+                dbus.proxies().led().led_mode().unwrap_or_default()
             } else {
                 AuraModeNum::Static
             },
 
             modes: if !supported.keyboard_led.stock_led_modes.is_empty() {
-                dbus.proxies().led().led_modes()?
+                dbus.proxies().led().led_modes().unwrap_or_default()
             } else {
                 BTreeMap::new()
             },
-            enabled: dbus.proxies().led().leds_enabled()?,
+            enabled: dbus.proxies().led().leds_enabled().unwrap_or_default(),
             bright: if !supported.keyboard_led.brightness_set {
-                dbus.proxies().led().led_brightness()?
+                dbus.proxies().led().led_brightness().unwrap_or_default()
             } else {
                 2
             },
@@ -196,7 +196,7 @@ impl AuraState {
     }
 
     /// Bump value in to the wave and surf all along.
-    pub fn nudge_wave(&mut self, value: u8) {
+    pub fn nudge_wave(&mut self, r: u8, g: u8, b: u8) {
         for i in (0..self.wave_red.len()).rev() {
             if i > 0 {
                 self.wave_red[i] = self.wave_red[i - 1];
@@ -204,18 +204,9 @@ impl AuraState {
                 self.wave_blue[i] = self.wave_blue[i - 1];
             }
         }
-        let mut g = value + 33;
-        if g >  100 {
-            g -= 100;
-        }
-        let mut b = value + 66;
-        if b >  100 {
-            b -= 100;
-        }
-        self.wave_red[0] = value;
+        self.wave_red[0] = r;
         self.wave_green[0] = g;
         self.wave_blue[0] = b;
-        dbg!(self.wave_blue);
     }
 }
 
@@ -356,6 +347,7 @@ impl Default for PageDataStates {
                 current_mode: AuraModeNum::Static,
                 modes: Default::default(),
                 enabled: AuraPowerDev {
+                    tuf: vec![],
                     x1866: vec![],
                     x19b6: vec![],
                 },

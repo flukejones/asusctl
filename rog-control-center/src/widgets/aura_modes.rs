@@ -1,3 +1,8 @@
+use std::sync::{
+    atomic::{AtomicU8, Ordering},
+    Arc,
+};
+
 use egui::{RichText, Ui};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour, Speed};
 use rog_supported::SupportedFunctions;
@@ -10,6 +15,7 @@ use crate::{
 pub fn aura_modes_group(
     supported: &SupportedFunctions,
     states: &mut PageDataStates,
+    freq: &mut Arc<AtomicU8>,
     dbus: &mut RogDbusClientBlocking,
     ui: &mut Ui,
 ) {
@@ -55,7 +61,17 @@ pub fn aura_modes_group(
             ui.selectable_value(&mut effect.zone, a, format!("{:?}", a));
         };
         let mut speed_button = |a: Speed, ui: &mut Ui| {
-            ui.selectable_value(&mut effect.speed, a, format!("{:?}", a));
+            if ui
+                .selectable_value(&mut effect.speed, a, format!("{:?}", a))
+                .clicked()
+            {
+                let val = match effect.speed {
+                    Speed::Low => 6,
+                    Speed::Med => 8,
+                    Speed::High => 10,
+                };
+                freq.store(val, Ordering::SeqCst);
+            }
         };
         let mut dir_button = |a: rog_aura::Direction, ui: &mut Ui| {
             ui.selectable_value(&mut effect.direction, a, format!("{:?}", a));
@@ -69,72 +85,82 @@ pub fn aura_modes_group(
             ui.vertical(|ui| {
                 let h = 16.0;
                 ui.set_row_height(22.0);
-                if has_keyzones || has_lightbar || has_logo {
+                ui.add_enabled_ui(allowed.zone, |ui| {
+                    if has_keyzones || has_lightbar || has_logo {
+                        ui.horizontal_wrapped(|ui| {
+                            ui.label(RichText::new("Zone").size(h));
+                        });
+                    }
+                });
+                ui.add_enabled_ui(allowed.colour1, |ui| {
                     ui.horizontal_wrapped(|ui| {
-                        ui.set_enabled(allowed.zone);
-                        ui.label(RichText::new("Zone").size(h));
+                        ui.label(RichText::new("Colour 1").size(h));
                     });
-                }
-                ui.horizontal_wrapped(|ui| {
-                    ui.set_enabled(allowed.colour1);
-                    ui.label(RichText::new("Colour 1").size(h));
                 });
-
-                ui.horizontal_wrapped(|ui| {
-                    ui.set_enabled(allowed.colour2);
-                    ui.label(RichText::new("Colour 2").size(h));
+                ui.add_enabled_ui(allowed.colour2, |ui| {
+                    ui.horizontal_wrapped(|ui| {
+                        ui.label(RichText::new("Colour 2").size(h));
+                    });
                 });
-
-                ui.horizontal_wrapped(|ui| {
-                    ui.set_enabled(allowed.speed);
-                    ui.label(RichText::new("Speed").size(h));
+                ui.add_enabled_ui(allowed.speed, |ui| {
+                    ui.horizontal_wrapped(|ui| {
+                        ui.set_enabled(allowed.speed);
+                        ui.label(RichText::new("Speed").size(h));
+                    });
                 });
-                ui.horizontal_wrapped(|ui| {
-                    ui.set_enabled(allowed.direction);
-                    ui.label(RichText::new("Direction").size(h));
+                ui.add_enabled_ui(allowed.direction, |ui| {
+                    ui.horizontal_wrapped(|ui| {
+                        ui.set_enabled(allowed.direction);
+                        ui.label(RichText::new("Direction").size(h));
+                    });
                 });
                 ui.set_enabled(true);
             });
             ui.vertical(|ui| {
                 ui.set_row_height(22.0);
-                if has_keyzones || has_lightbar || has_logo {
-                    ui.horizontal_wrapped(|ui| {
-                        ui.set_enabled(allowed.zone);
-                        zone_button(AuraZone::None, ui);
-                        if has_keyzones {
-                            zone_button(AuraZone::Key1, ui);
-                            zone_button(AuraZone::Key2, ui);
-                            zone_button(AuraZone::Key3, ui);
-                            zone_button(AuraZone::Key4, ui);
-                        }
-                        if has_logo {
-                            zone_button(AuraZone::Logo, ui);
-                        }
-                        if has_lightbar {
-                            zone_button(AuraZone::BarLeft, ui);
-                            zone_button(AuraZone::BarRight, ui);
-                        }
-                    });
-                }
-
-                ui.set_enabled(allowed.colour1);
-                egui::color_picker::color_edit_button_srgb(ui, &mut c1);
-                ui.set_enabled(allowed.colour2);
-                egui::color_picker::color_edit_button_srgb(ui, &mut c2);
-
-                ui.set_enabled(allowed.speed);
-                ui.horizontal_wrapped(|ui| {
-                    speed_button(Speed::Low, ui);
-                    speed_button(Speed::Med, ui);
-                    speed_button(Speed::High, ui);
+                ui.add_enabled_ui(allowed.zone, |ui| {
+                    if has_keyzones || has_lightbar || has_logo {
+                        ui.horizontal_wrapped(|ui| {
+                            zone_button(AuraZone::None, ui);
+                            if has_keyzones {
+                                zone_button(AuraZone::Key1, ui);
+                                zone_button(AuraZone::Key2, ui);
+                                zone_button(AuraZone::Key3, ui);
+                                zone_button(AuraZone::Key4, ui);
+                            }
+                            if has_logo {
+                                zone_button(AuraZone::Logo, ui);
+                            }
+                            if has_lightbar {
+                                zone_button(AuraZone::BarLeft, ui);
+                                zone_button(AuraZone::BarRight, ui);
+                            }
+                        });
+                    }
                 });
 
-                ui.set_enabled(allowed.direction);
-                ui.horizontal_wrapped(|ui| {
-                    dir_button(rog_aura::Direction::Left, ui);
-                    dir_button(rog_aura::Direction::Down, ui);
-                    dir_button(rog_aura::Direction::Right, ui);
-                    dir_button(rog_aura::Direction::Up, ui);
+                ui.add_enabled_ui(allowed.colour1, |ui| {
+                    egui::color_picker::color_edit_button_srgb(ui, &mut c1)
+                });
+                ui.add_enabled_ui(allowed.colour2, |ui| {
+                    egui::color_picker::color_edit_button_srgb(ui, &mut c2)
+                });
+
+                ui.add_enabled_ui(allowed.speed, |ui| {
+                    ui.horizontal_wrapped(|ui| {
+                        speed_button(Speed::Low, ui);
+                        speed_button(Speed::Med, ui);
+                        speed_button(Speed::High, ui);
+                    });
+                });
+
+                ui.add_enabled_ui(allowed.direction, |ui| {
+                    ui.horizontal_wrapped(|ui| {
+                        dir_button(rog_aura::Direction::Left, ui);
+                        dir_button(rog_aura::Direction::Down, ui);
+                        dir_button(rog_aura::Direction::Right, ui);
+                        dir_button(rog_aura::Direction::Up, ui);
+                    });
                 });
             });
         });

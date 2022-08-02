@@ -1,5 +1,7 @@
 // Only these two packets must be 17 bytes
 static KBD_BRIGHT_PATH: &str = "/sys/class/leds/asus::kbd_backlight/brightness";
+static TUF_RGB_MODE_PATH: &str = "/sys/devices/platform/asus-nb-wmi/tuf_krgb_mode";
+static TUF_RGB_STATE_PATH: &str = "/sys/devices/platform/asus-nb-wmi/tuf_krgb_state";
 
 use crate::{
     error::RogError,
@@ -40,16 +42,20 @@ impl GetSupported for CtrlKbdLed {
         let multizone_led_mode = laptop.multizone;
         let per_key_led_mode = laptop.per_key;
 
-        let mut prod_id = "";
+        let mut prod_id = AuraDevice::Unknown;
         for prod in ASUS_KEYBOARD_DEVICES.iter() {
             if let Ok(_) = Self::find_led_node(prod) {
-                prod_id = *prod;
+                prod_id = AuraDevice::from(*prod);
                 break;
             }
         }
 
+        if Self::get_tuf_mode_path().is_some() {
+            prod_id = AuraDevice::Tuf;
+        }
+
         LedSupportedFunctions {
-            prod_id: AuraDevice::from(prod_id),
+            prod_id,
             brightness_set: CtrlKbdLed::get_kbd_bright_path().is_some(),
             stock_led_modes,
             multizone_led_mode,
@@ -58,10 +64,17 @@ impl GetSupported for CtrlKbdLed {
     }
 }
 
+#[derive(Debug, PartialEq, PartialOrd)]
+pub enum LEDNode {
+    Tuf,
+    Rog(String),
+    None,
+}
+
 pub struct CtrlKbdLed {
     // TODO: config stores the keyboard type as an AuraPower, use or update this
     pub led_prod: Option<String>,
-    pub led_node: Option<String>,
+    pub led_node: LEDNode,
     pub bright_node: String,
     pub supported_modes: LaptopLedData,
     pub flip_effect_write: bool,
@@ -194,7 +207,6 @@ impl CtrlKbdLedZbus {
 
 impl CtrlKbdLed {
     pub fn new(supported_modes: LaptopLedData, config: AuraConfig) -> Result<Self, RogError> {
-        // TODO: return error if *all* nodes are None
         let mut led_prod = None;
         let mut led_node = None;
         for prod in ASUS_KEYBOARD_DEVICES.iter() {
@@ -210,10 +222,27 @@ impl CtrlKbdLed {
         }
 
         let bright_node = Self::get_kbd_bright_path();
+        let tuf_node = Self::get_tuf_mode_path().is_some() || Self::get_tuf_state_path().is_some();
 
-        if led_node.is_none() && bright_node.is_none() {
+        if led_node.is_none() && tuf_node && bright_node.is_none() {
+            let dmi = sysfs_class::DmiId::default();
+            if let Ok(prod_family) = dmi.product_family() {
+                if prod_family.contains("TUF") {
+                    warn!("A kernel patch is in progress for TUF RGB support");
+                }
+            }
             return Err(RogError::NoAuraKeyboard);
         }
+
+        let led_node = if let Some(rog) = led_node {
+            info!("Found ROG USB keyboard");
+            LEDNode::Rog(rog)
+        } else if tuf_node {
+            info!("Found TUF keyboard");
+            LEDNode::Tuf
+        } else {
+            LEDNode::None
+        };
 
         let ctrl = CtrlKbdLed {
             led_prod,
@@ -229,6 +258,20 @@ impl CtrlKbdLed {
     fn get_kbd_bright_path() -> Option<String> {
         if Path::new(KBD_BRIGHT_PATH).exists() {
             return Some(KBD_BRIGHT_PATH.to_string());
+        }
+        None
+    }
+
+    pub fn get_tuf_mode_path() -> Option<String> {
+        if Path::new(TUF_RGB_MODE_PATH).exists() {
+            return Some(TUF_RGB_MODE_PATH.to_string());
+        }
+        None
+    }
+
+    fn get_tuf_state_path() -> Option<String> {
+        if Path::new(TUF_RGB_STATE_PATH).exists() {
+            return Some(TUF_RGB_STATE_PATH.to_string());
         }
         None
     }
@@ -290,13 +333,26 @@ impl CtrlKbdLed {
 
     /// Set combination state for boot animation/sleep animation/all leds/keys leds/side leds LED active
     pub(super) fn set_power_states(&self, config: &AuraConfig) -> Result<(), RogError> {
-        let bytes = AuraPowerConfig::to_bytes(&config.enabled);
-        let message = [0x5d, 0xbd, 0x01, bytes[0], bytes[1], bytes[2]];
+        if LEDNode::Tuf == self.led_node {
+            if let Some(path) = Self::get_tuf_state_path() {
+                let mut file = OpenOptions::new().write(true).open(path)?;
+                if let Some(pwr) = AuraPowerConfig::to_tuf_bool_array(&config.enabled) {
+                    let buf = format!(
+                        "1 {} {} {} {}",
+                        pwr[1] as u8, pwr[2] as u8, pwr[3] as u8, pwr[4] as u8,
+                    );
+                    file.write_all(buf.as_bytes())?;
+                }
+            }
+        } else {
+            let bytes = AuraPowerConfig::to_bytes(&config.enabled);
+            let message = [0x5d, 0xbd, 0x01, bytes[0], bytes[1], bytes[2]];
 
-        self.write_bytes(&message)?;
-        self.write_bytes(&LED_SET)?;
-        // Changes won't persist unless apply is set
-        self.write_bytes(&LED_APPLY)?;
+            self.write_bytes(&message)?;
+            self.write_bytes(&LED_SET)?;
+            // Changes won't persist unless apply is set
+            self.write_bytes(&LED_APPLY)?;
+        }
         Ok(())
     }
 
@@ -360,7 +416,7 @@ impl CtrlKbdLed {
 
     /// Should only be used if the bytes you are writing are verified correct
     fn write_bytes(&self, message: &[u8]) -> Result<(), RogError> {
-        if let Some(led_node) = &self.led_node {
+        if let LEDNode::Rog(led_node) = &self.led_node {
             if let Ok(mut file) = OpenOptions::new().write(true).open(led_node) {
                 // println!("write: {:02x?}", &message);
                 return file
@@ -422,11 +478,20 @@ impl CtrlKbdLed {
     }
 
     fn write_mode(&self, mode: &AuraEffect) -> Result<(), RogError> {
-        let bytes: [u8; LED_MSG_LEN] = mode.into();
-        self.write_bytes(&bytes)?;
-        self.write_bytes(&LED_SET)?;
-        // Changes won't persist unless apply is set
-        self.write_bytes(&LED_APPLY)?;
+        if LEDNode::Tuf == self.led_node {
+            let mut file = OpenOptions::new().write(true).open(TUF_RGB_MODE_PATH)?;
+            let buf = format!(
+                "1 {} {} {} {} {}",
+                mode.mode as u8, mode.colour1.0, mode.colour1.1, mode.colour1.2, mode.speed as u8,
+            );
+            file.write_all(buf.as_bytes())?;
+        } else {
+            let bytes: [u8; LED_MSG_LEN] = mode.into();
+            self.write_bytes(&bytes)?;
+            self.write_bytes(&LED_SET)?;
+            // Changes won't persist unless apply is set
+            self.write_bytes(&LED_APPLY)?;
+        }
         Ok(())
     }
 
@@ -498,7 +563,10 @@ impl CtrlKbdLed {
 mod tests {
     use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour};
 
-    use crate::{ctrl_aura::config::AuraConfig, laptops::LaptopLedData};
+    use crate::{
+        ctrl_aura::{config::AuraConfig, controller::LEDNode},
+        laptops::LaptopLedData,
+    };
 
     use super::CtrlKbdLed;
 
@@ -516,7 +584,7 @@ mod tests {
         };
         let mut controller = CtrlKbdLed {
             led_prod: None,
-            led_node: None,
+            led_node: LEDNode::None,
             bright_node: String::new(),
             supported_modes,
             flip_effect_write: false,
@@ -578,7 +646,7 @@ mod tests {
         };
         let mut controller = CtrlKbdLed {
             led_prod: None,
-            led_node: None,
+            led_node: LEDNode::None,
             bright_node: String::new(),
             supported_modes,
             flip_effect_write: false,
@@ -615,7 +683,7 @@ mod tests {
         };
         let mut controller = CtrlKbdLed {
             led_prod: None,
-            led_node: None,
+            led_node: LEDNode::None,
             bright_node: String::new(),
             supported_modes,
             flip_effect_write: false,

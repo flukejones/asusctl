@@ -150,8 +150,11 @@ impl FromStr for Direction {
 
 /// Enum of modes that convert to the actual number required by a USB HID packet
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Copy, Deserialize, Serialize)]
+#[derive(
+    Debug, Default, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Copy, Deserialize, Serialize,
+)]
 pub enum AuraModeNum {
+    #[default]
     Static = 0,
     Breathe = 1,
     Strobe = 2,

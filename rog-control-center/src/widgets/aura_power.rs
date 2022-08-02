@@ -1,6 +1,6 @@
 use egui::{RichText, Ui};
 use rog_aura::{
-    usb::{AuraDev1866, AuraDev19b6, AuraDevice, AuraPowerDev},
+    usb::{AuraDev1866, AuraDev19b6, AuraDevTuf, AuraDevice, AuraPowerDev},
     AuraZone,
 };
 use rog_supported::SupportedFunctions;
@@ -20,6 +20,7 @@ pub fn aura_power_group(
             aura_power1(supported, states, dbus, ui)
         }
         AuraDevice::X19B6 => aura_power2(supported, states, dbus, ui),
+        AuraDevice::Tuf => aura_power1(supported, states, dbus, ui),
         AuraDevice::Unknown => {}
     }
 }
@@ -31,10 +32,15 @@ fn aura_power1(
     ui: &mut Ui,
 ) {
     let enabled_states = &mut states.aura.enabled;
-    let boot = &mut enabled_states.x1866.contains(&AuraDev1866::Boot);
-    let sleep = &mut enabled_states.x1866.contains(&AuraDev1866::Sleep);
-    let keyboard = &mut enabled_states.x1866.contains(&AuraDev1866::Keyboard);
-    let lightbar = &mut enabled_states.x1866.contains(&AuraDev1866::Lightbar);
+    let mut boot = enabled_states.x1866.contains(&AuraDev1866::Boot);
+    let mut sleep = enabled_states.x1866.contains(&AuraDev1866::Sleep);
+    let mut keyboard = enabled_states.x1866.contains(&AuraDev1866::Keyboard);
+    let mut lightbar = enabled_states.x1866.contains(&AuraDev1866::Lightbar);
+    if supported.keyboard_led.prod_id == AuraDevice::Tuf {
+        boot = enabled_states.tuf.contains(&AuraDevTuf::Boot);
+        sleep = enabled_states.tuf.contains(&AuraDevTuf::Sleep);
+        keyboard = enabled_states.tuf.contains(&AuraDevTuf::Awake);
+    }
     let mut changed = false;
 
     ui.horizontal_wrapped(|ui| {
@@ -59,22 +65,22 @@ fn aura_power1(
         ui.vertical(|ui| {
             ui.set_row_height(22.0);
             ui.horizontal_wrapped(|ui| {
-                if ui.checkbox(boot, "Enable").changed() {
+                if ui.checkbox(&mut boot, "Enable").changed() {
                     changed = true;
                 }
             });
             ui.horizontal_wrapped(|ui| {
-                if ui.toggle_value(keyboard, "Keyboard").changed() {
+                if ui.toggle_value(&mut keyboard, "Keyboard").changed() {
                     changed = true;
                 }
                 if !supported.keyboard_led.multizone_led_mode.is_empty() {
-                    if ui.toggle_value(lightbar, "Lightbar").changed() {
+                    if ui.toggle_value(&mut lightbar, "Lightbar").changed() {
                         changed = true;
                     }
                 }
             });
             ui.horizontal_wrapped(|ui| {
-                if ui.checkbox(sleep, "Enable").changed() {
+                if ui.checkbox(&mut sleep, "Enable").changed() {
                     changed = true;
                 }
             });
@@ -102,53 +108,102 @@ fn aura_power1(
     });
 
     if changed {
-        let mut enabled = Vec::new();
-        let mut disabled = Vec::new();
+        if supported.keyboard_led.prod_id == AuraDevice::Tuf {
+            let mut enabled = Vec::new();
+            let mut disabled = Vec::new();
 
-        let mut modify = |b: bool, a: AuraDev1866| {
-            if b {
-                enabled.push(a);
-                if !enabled_states.x1866.contains(&a) {
-                    enabled_states.x1866.push(a);
-                }
-            } else {
-                disabled.push(a);
-                // This would be so much better as a hashset
-                if enabled_states.x1866.contains(&a) {
-                    let mut idx = 0;
-                    for (i, n) in enabled_states.x1866.iter().enumerate() {
-                        if *n == a {
-                            idx = i;
-                            break;
-                        }
+            let mut modify_tuf = |b: bool, a: AuraDevTuf| {
+                if b {
+                    enabled.push(a);
+                    if !enabled_states.tuf.contains(&a) {
+                        enabled_states.tuf.push(a);
                     }
-                    enabled_states.x1866.remove(idx);
+                } else {
+                    disabled.push(a);
+                    // This would be so much better as a hashset
+                    if enabled_states.tuf.contains(&a) {
+                        let mut idx = 0;
+                        for (i, n) in enabled_states.tuf.iter().enumerate() {
+                            if *n == a {
+                                idx = i;
+                                break;
+                            }
+                        }
+                        enabled_states.tuf.remove(idx);
+                    }
                 }
-            }
-        };
-        modify(*boot, AuraDev1866::Boot);
-        modify(*sleep, AuraDev1866::Sleep);
-        modify(*keyboard, AuraDev1866::Keyboard);
-        if !supported.keyboard_led.multizone_led_mode.is_empty() {
-            modify(*lightbar, AuraDev1866::Lightbar);
-        }
-
-        let mut send = |enable: bool, data: Vec<AuraDev1866>| {
-            let options = AuraPowerDev {
-                x1866: data,
-                x19b6: vec![],
             };
-            // build data to send
-            dbus.proxies()
-                .led()
-                .set_leds_power(options, enable)
-                .map_err(|err| {
-                    states.error = Some(err.to_string());
-                })
-                .ok();
-        };
-        send(true, enabled);
-        send(false, disabled);
+            modify_tuf(boot, AuraDevTuf::Boot);
+            modify_tuf(sleep, AuraDevTuf::Sleep);
+            modify_tuf(keyboard, AuraDevTuf::Awake);
+
+            let mut send = |enable: bool, data: Vec<AuraDevTuf>| {
+                let options = AuraPowerDev {
+                    tuf: data,
+                    x1866: vec![],
+                    x19b6: vec![],
+                };
+                // build data to send
+                dbus.proxies()
+                    .led()
+                    .set_leds_power(options, enable)
+                    .map_err(|err| {
+                        states.error = Some(err.to_string());
+                    })
+                    .ok();
+            };
+            send(true, enabled);
+            send(false, disabled);
+        } else {
+            let mut enabled = Vec::new();
+            let mut disabled = Vec::new();
+
+            let mut modify_x1866 = |b: bool, a: AuraDev1866| {
+                if b {
+                    enabled.push(a);
+                    if !enabled_states.x1866.contains(&a) {
+                        enabled_states.x1866.push(a);
+                    }
+                } else {
+                    disabled.push(a);
+                    // This would be so much better as a hashset
+                    if enabled_states.x1866.contains(&a) {
+                        let mut idx = 0;
+                        for (i, n) in enabled_states.x1866.iter().enumerate() {
+                            if *n == a {
+                                idx = i;
+                                break;
+                            }
+                        }
+                        enabled_states.x1866.remove(idx);
+                    }
+                }
+            };
+            modify_x1866(boot, AuraDev1866::Boot);
+            modify_x1866(sleep, AuraDev1866::Sleep);
+            modify_x1866(keyboard, AuraDev1866::Keyboard);
+            if !supported.keyboard_led.multizone_led_mode.is_empty() {
+                modify_x1866(lightbar, AuraDev1866::Lightbar);
+            }
+
+            let mut send = |enable: bool, data: Vec<AuraDev1866>| {
+                let options = AuraPowerDev {
+                    tuf: vec![],
+                    x1866: data,
+                    x19b6: vec![],
+                };
+                // build data to send
+                dbus.proxies()
+                    .led()
+                    .set_leds_power(options, enable)
+                    .map_err(|err| {
+                        states.error = Some(err.to_string());
+                    })
+                    .ok();
+            };
+            send(true, enabled);
+            send(false, disabled);
+        }
     }
 }
 
@@ -271,6 +326,7 @@ fn aura_power2(
 
         let mut send = |enable: bool, data: Vec<AuraDev19b6>| {
             let options = AuraPowerDev {
+                tuf: vec![],
                 x1866: vec![],
                 x19b6: data,
             };

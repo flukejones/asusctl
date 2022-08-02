@@ -56,7 +56,6 @@ pub struct AuraEnabled {
 
 //     fn from_str(s: &str) -> Result<Self, Self::Err> {
 //         let s = s.to_lowercase();
-//         dbg!(s);
 //         Ok(Self {
 //             help: false,
 //             keyboard: None,
