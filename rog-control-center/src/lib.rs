@@ -16,6 +16,7 @@ pub mod mocking;
 pub mod notify;
 pub mod page_states;
 pub mod pages;
+pub mod startup_error;
 pub mod widgets;
 
 #[cfg(feature = "mocking")]

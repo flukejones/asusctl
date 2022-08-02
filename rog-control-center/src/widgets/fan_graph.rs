@@ -55,7 +55,7 @@ pub fn fan_graphs(
     let line = Line::new(PlotPoints::from_iter(points.clone())).width(2.0);
     let points = Points::new(PlotPoints::from_iter(points)).radius(3.0);
 
-    Plot::new("my_plot")
+    Plot::new("fan_curves")
         .view_aspect(1.666)
         // .center_x_axis(true)
         // .center_y_axis(true)

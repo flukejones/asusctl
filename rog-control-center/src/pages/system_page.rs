@@ -18,7 +18,7 @@ impl<'a> RogApp<'a> {
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.spacing_mut().item_spacing = egui::vec2(8.0, 10.0);
                 let rect = ui.available_rect_before_wrap();
-                egui::Grid::new("id_source")
+                egui::Grid::new("grid_of_bits")
                     .min_col_width(rect.width() / 2.0)
                     .show(ui, |ui| {
                         ui.vertical(|ui| {

@@ -1,7 +1,8 @@
 use rog_aura::layouts::KeyLayout;
 use rog_control_center::{
     config::Config, get_ipc_file, notify::start_notifications, on_tmp_dir_exists,
-    page_states::PageDataStates, RogApp, RogDbusClientBlocking, SHOW_GUI,
+    page_states::PageDataStates, startup_error::AppErrorShow, RogApp, RogDbusClientBlocking,
+    SHOW_GUI,
 };
 
 use std::{
@@ -23,6 +24,24 @@ const DATA_DIR: &str = env!("CARGO_MANIFEST_DIR");
 const BOARD_NAME: &str = "/sys/class/dmi/id/board_name";
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let native_options = eframe::NativeOptions {
+        decorated: false,
+        transparent: false,
+        min_window_size: Some(egui::vec2(840.0, 600.0)),
+        max_window_size: Some(egui::vec2(840.0, 600.0)),
+        ..Default::default()
+    };
+
+    let (dbus, _) = RogDbusClientBlocking::new()
+        .map_err(|e| {
+            eframe::run_native(
+                "ROG Control Center",
+                native_options.clone(),
+                Box::new(move |_| Box::new(AppErrorShow::new(e.to_string()))),
+            );
+        })
+        .unwrap();
+
     // Startup
     let mut config = Config::load()?;
     let start_closed = config.startup_in_background;
@@ -76,8 +95,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let notifs_enabled = Arc::new(AtomicBool::new(config.enable_notifications));
 
     let states = {
-        let (dbus, _) = RogDbusClientBlocking::new()?;
-        let supported = dbus.proxies().supported().supported_functions().unwrap();
+        let supported = dbus
+            .proxies()
+            .supported()
+            .supported_functions()
+            .map_err(|e| {
+                eframe::run_native(
+                    "ROG Control Center",
+                    native_options.clone(),
+                    Box::new(move |_| Box::new(AppErrorShow::new(e.to_string()))),
+                );
+            })
+            .unwrap();
         PageDataStates::new(
             layout,
             notifs_enabled.clone(),
@@ -112,14 +141,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     {
         Ok(tmp) => tmp,
         Err(_) => on_tmp_dir_exists().unwrap(),
-    };
-
-    let native_options = eframe::NativeOptions {
-        decorated: false,
-        transparent: false,
-        min_window_size: Some(egui::vec2(840.0, 600.0)),
-        max_window_size: Some(egui::vec2(840.0, 600.0)),
-        ..Default::default()
     };
 
     let should_show_gui = Arc::new(AtomicBool::new(!start_closed));
