@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased ]
 
+## [4.3.4] - 2022-08-03
+### Bugfix
+- ROGCC: Remove power setting from correct array
+
 ## [4.3.3] - 2022-08-02
 ### Added
 - `rog-control-center` has now been moved in to the main workspace due to

@@ -298,7 +298,7 @@ fn aura_power2(
                             break;
                         }
                     }
-                    enabled_states.x1866.remove(idx);
+                    enabled_states.x19b6.remove(idx);
                 }
             }
         };
