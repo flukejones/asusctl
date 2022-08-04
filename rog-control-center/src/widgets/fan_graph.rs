@@ -16,24 +16,26 @@ pub fn fan_graphs(
     ui.separator();
 
     let mut item = |p: Profile, ui: &mut Ui| {
+        ui.group(|ui|{
         ui.selectable_value(&mut curves.show_curve, p, format!("{p:?}"));
+        ui.add_enabled_ui(curves.show_curve == p ,|ui| {
+            ui.selectable_value(
+                &mut curves.show_graph,
+                FanCurvePU::CPU,
+                format!("{:?}", FanCurvePU::CPU),
+            );
+            ui.selectable_value(
+                &mut curves.show_graph,
+                FanCurvePU::GPU,
+                format!("{:?}", FanCurvePU::GPU),
+            );
+        });});
     };
 
     ui.horizontal_wrapped(|ui| {
         for a in curves.curves.iter() {
             item(*a.0, ui);
         }
-
-        ui.selectable_value(
-            &mut curves.show_graph,
-            FanCurvePU::CPU,
-            format!("{:?}", FanCurvePU::CPU),
-        );
-        ui.selectable_value(
-            &mut curves.show_graph,
-            FanCurvePU::GPU,
-            format!("{:?}", FanCurvePU::GPU),
-        );
     });
 
     let curve = curves.curves.get_mut(&curves.show_curve).unwrap();
