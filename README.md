@@ -66,6 +66,14 @@ will probably suffer another rename once it becomes generic enough to do so.
 - [X] Toggle bios setting for boot/POST sound
 - [X] Toggle bios setting for "dedicated gfx" mode on supported laptops (g-sync)
 
+# GUI
+
+A gui is now in the repo - ROG Control Center. At this time it is still a WIP, but it has almost all features in place already.
+
+![](/extra/system.png)
+![](/extra/fan-curves.png)
+![](/extra/keyboard.png)
+
 # BUILDING
 
 Requirements are rust >= 1.57 installed from rustup.io if the distro provided version is too old, and `make`.
