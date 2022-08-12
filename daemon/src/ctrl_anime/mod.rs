@@ -8,24 +8,20 @@ use logind_zbus::manager::ManagerProxy;
 use rog_anime::{
     error::AnimeError,
     usb::{
-        find_node, get_anime_type, pkt_for_apply, pkt_for_flush, pkt_for_set_boot, pkt_for_set_on,
-        pkts_for_init, PROD_ID, VENDOR_ID,
+        get_anime_type, pkt_for_apply, pkt_for_flush, pkt_for_set_boot, pkt_for_set_on,
+        pkts_for_init,
     },
     ActionData, AnimeDataBuffer, AnimePacketType, AnimeType,
 };
+use rog_platform::{hid_raw::HidRaw, usb_raw::USBRaw};
 use rog_supported::AnimeSupportedFunctions;
-use rusb::{Device, DeviceHandle};
 use smol::{stream::StreamExt, Executor};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::{
-    cell::RefCell,
     convert::TryFrom,
     error::Error,
     sync::{Arc, Mutex, MutexGuard},
     thread::sleep,
-};
-use std::{
-    sync::atomic::{AtomicBool, Ordering},
-    time::Duration,
 };
 
 use crate::{error::RogError, GetSupported};
@@ -36,14 +32,13 @@ impl GetSupported for CtrlAnime {
     type A = AnimeSupportedFunctions;
 
     fn get_supported() -> Self::A {
-        AnimeSupportedFunctions(CtrlAnime::get_device(VENDOR_ID, PROD_ID).is_ok())
+        AnimeSupportedFunctions(HidRaw::new("193b").is_ok())
     }
 }
 
 pub struct CtrlAnime {
-    _node: String,
+    node: USBRaw,
     anime_type: AnimeType,
-    handle: RefCell<DeviceHandle<rusb::GlobalContext>>,
     cache: AnimeConfigCached,
     config: AnimeConfig,
     // set to force thread to exit
@@ -55,57 +50,26 @@ pub struct CtrlAnime {
 impl CtrlAnime {
     #[inline]
     pub fn new(config: AnimeConfig) -> Result<CtrlAnime, Box<dyn Error>> {
-        let node = find_node("193b")?;
+        let node = USBRaw::new(0x193b)?;
         let anime_type = get_anime_type()?;
-        let device = Self::get_dev_handle()?;
 
         info!("Device has an AniMe Matrix display");
         let mut cache = AnimeConfigCached::default();
         cache.init_from_config(&config, anime_type)?;
 
         let ctrl = CtrlAnime {
-            _node: node,
+            node,
             anime_type,
-            handle: RefCell::new(device),
             cache,
             config,
             thread_exit: Arc::new(AtomicBool::new(false)),
             thread_running: Arc::new(AtomicBool::new(false)),
         };
-        ctrl.do_initialization();
+        ctrl.do_initialization()?;
 
         Ok(ctrl)
     }
-
-    fn get_dev_handle() -> Result<DeviceHandle<rusb::GlobalContext>, Box<dyn Error>> {
-        // We don't expect this ID to ever change
-        let device = CtrlAnime::get_device(0x0b05, 0x193b)?;
-
-        let mut device = device.open()?;
-        device.reset()?;
-
-        device.set_auto_detach_kernel_driver(true).map_err(|err| {
-            error!("Auto-detach kernel driver failed: {}", err);
-            err
-        })?;
-
-        device.claim_interface(0).map_err(|err| {
-            error!("Could not claim device interface: {}", err);
-            err
-        })?;
-
-        Ok(device)
-    }
-
-    fn get_device(vendor: u16, product: u16) -> Result<Device<rusb::GlobalContext>, rusb::Error> {
-        for device in rusb::devices()?.iter() {
-            let device_desc = device.device_descriptor()?;
-            if device_desc.vendor_id() == vendor && device_desc.product_id() == product {
-                return Ok(device);
-            }
-        }
-        Err(rusb::Error::NoDevice)
-    }
+    // let device = CtrlAnime::get_device(0x0b05, 0x193b)?;
 
     /// Start an action thread. This is classed as a singleton and there should be only
     /// one running - so the thread uses atomics to signal run/exit.
@@ -230,45 +194,6 @@ impl CtrlAnime {
             .ok();
     }
 
-    fn write_bytes(&self, message: &[u8]) {
-        // if let Ok(mut file) = OpenOptions::new().write(true).open(&self.node) {
-        //     println!("write: {:02x?}", &message);
-        //     return file
-        //         .write_all(message).unwrap();
-        // }
-        let mut error = false;
-
-        match self.handle.borrow().write_control(
-            0x21,  // request_type
-            0x09,  // request
-            0x35e, // value
-            0x00,  // index
-            message,
-            Duration::from_millis(200),
-        ) {
-            Ok(_) => {}
-            Err(err) => match err {
-                rusb::Error::Timeout => {}
-                _ => {
-                    error = true;
-                    error!("Failed to write to led interrupt: {}", err);
-                }
-            },
-        }
-
-        if error {
-            warn!("Will attempt to get AniMe device handle again");
-            match Self::get_dev_handle() {
-                Ok(dev) => {
-                    self.handle.replace(dev);
-                }
-                Err(err) => {
-                    error!("Failed to get AniMe device: {}", err);
-                }
-            }
-        }
-    }
-
     /// Write only a data packet. This will modify the leds brightness using the
     /// global brightness set in config.
     fn write_data_buffer(&self, mut buffer: AnimeDataBuffer) -> Result<(), RogError> {
@@ -281,16 +206,17 @@ impl CtrlAnime {
         }
         let data = AnimePacketType::try_from(buffer)?;
         for row in data.iter() {
-            self.write_bytes(row);
+            self.node.write_bytes(row)?;
         }
-        self.write_bytes(&pkt_for_flush());
+        self.node.write_bytes(&pkt_for_flush())?;
         Ok(())
     }
 
-    fn do_initialization(&self) {
+    fn do_initialization(&self) -> Result<(), RogError> {
         let pkts = pkts_for_init();
-        self.write_bytes(&pkts[0]);
-        self.write_bytes(&pkts[1]);
+        self.node.write_bytes(&pkts[0])?;
+        self.node.write_bytes(&pkts[1])?;
+        Ok(())
     }
 }
 
@@ -380,10 +306,12 @@ pub struct CtrlAnimeReloader(pub Arc<Mutex<CtrlAnime>>);
 impl crate::Reloadable for CtrlAnimeReloader {
     fn reload(&mut self) -> Result<(), RogError> {
         if let Ok(lock) = self.0.try_lock() {
-            lock.write_bytes(&pkt_for_set_on(lock.config.awake_enabled));
-            lock.write_bytes(&pkt_for_apply());
-            lock.write_bytes(&pkt_for_set_boot(lock.config.boot_anim_enabled));
-            lock.write_bytes(&pkt_for_apply());
+            lock.node
+                .write_bytes(&pkt_for_set_on(lock.config.awake_enabled))?;
+            lock.node.write_bytes(&pkt_for_apply())?;
+            lock.node
+                .write_bytes(&pkt_for_set_boot(lock.config.boot_anim_enabled))?;
+            lock.node.write_bytes(&pkt_for_apply())?;
 
             let action = lock.cache.boot.clone();
             CtrlAnime::run_thread(self.0.clone(), action, true);

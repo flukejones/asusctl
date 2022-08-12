@@ -1,6 +1,7 @@
 use crate::{config::Config, error::RogError, GetSupported};
 use async_trait::async_trait;
 use log::{error, info, warn};
+use rog_platform::platform::AsusPlatform;
 use rog_supported::RogBiosSupportedFunctions;
 use std::fs::OpenOptions;
 use std::io::BufRead;
@@ -15,15 +16,13 @@ use zbus::{dbus_interface, SignalContext};
 const INITRAMFS_PATH: &str = "/usr/sbin/update-initramfs";
 const DRACUT_PATH: &str = "/usr/bin/dracut";
 
-static ASUS_SWITCH_GRAPHIC_MODE: &str =
-    "/sys/firmware/efi/efivars/AsusSwitchGraphicMode-607005d5-3f75-4b2e-98f0-85ba66797a3e";
+// static ASUS_SWITCH_GRAPHIC_MODE: &str =
+//     "/sys/firmware/efi/efivars/AsusSwitchGraphicMode-607005d5-3f75-4b2e-98f0-85ba66797a3e";
 static ASUS_POST_LOGO_SOUND: &str =
     "/sys/firmware/efi/efivars/AsusPostLogoSound-607005d5-3f75-4b2e-98f0-85ba66797a3e";
-static ASUS_PANEL_OD_PATH: &str = "/sys/devices/platform/asus-nb-wmi/panel_od";
-static ASUS_DGPU_DISABLE_PATH: &str = "/sys/devices/platform/asus-nb-wmi/dgpu_disable";
-static ASUS_EGPU_ENABLE_PATH: &str = "/sys/devices/platform/asus-nb-wmi/egpu_enable";
 
 pub struct CtrlRogBios {
+    platform: AsusPlatform,
     _config: Arc<Mutex<Config>>,
 }
 
@@ -31,12 +30,24 @@ impl GetSupported for CtrlRogBios {
     type A = RogBiosSupportedFunctions;
 
     fn get_supported() -> Self::A {
+        let mut panel_overdrive = false;
+        let mut dgpu_disable = false;
+        let mut egpu_enable = false;
+        let mut dgpu_only = false;
+
+        if let Ok(platform) = AsusPlatform::new() {
+            panel_overdrive = platform.has_panel_od();
+            dgpu_disable = platform.has_dgpu_disable();
+            egpu_enable = platform.has_egpu_enable();
+            dgpu_only = platform.has_gpu_mux_mode();
+        }
+
         RogBiosSupportedFunctions {
             post_sound: Path::new(ASUS_POST_LOGO_SOUND).exists(),
-            dedicated_gfx: Path::new(ASUS_SWITCH_GRAPHIC_MODE).exists(),
-            panel_overdrive: Path::new(ASUS_PANEL_OD_PATH).exists(),
-            dgpu_disable: Path::new(ASUS_DGPU_DISABLE_PATH).exists(),
-            egpu_enable: Path::new(ASUS_EGPU_ENABLE_PATH).exists(),
+            dgpu_only,
+            panel_overdrive,
+            dgpu_disable,
+            egpu_enable,
         }
     }
 }
@@ -59,13 +70,14 @@ impl CtrlRogBios {
             .ok();
     }
 
-    fn dedicated_graphic_mode(&self) -> i8 {
-        Self::get_gfx_mode()
+    fn dedicated_graphic_mode(&self) -> bool {
+        self.platform
+            .get_gpu_mux_mode()
             .map_err(|err| {
                 warn!("CtrlRogBios: get_gfx_mode {}", err);
                 err
             })
-            .unwrap_or(-1)
+            .unwrap_or(false)
     }
 
     #[dbus_interface(signal)]
@@ -118,26 +130,14 @@ impl CtrlRogBios {
         }
     }
 
-    fn panel_overdrive(&self) -> i8 {
-        let path = ASUS_PANEL_OD_PATH;
-        if let Ok(mut file) = OpenOptions::new().read(true).open(path).map_err(|err| {
-            warn!("CtrlRogBios: panel_overdrive {}", err);
-            err
-        }) {
-            let mut buf = Vec::new();
-            file.read_to_end(&mut buf)
-                .map_err(|err| {
-                    warn!("CtrlRogBios: set_panel_overdrive {}", err);
-                    err
-                })
-                .ok();
-
-            if buf.len() >= 1 {
-                let tmp = String::from_utf8_lossy(&buf[0..1]);
-                return tmp.parse::<i8>().unwrap_or(-1);
-            }
-        }
-        -1
+    fn panel_overdrive(&self) -> bool {
+        self.platform
+            .get_panel_od()
+            .map_err(|err| {
+                warn!("CtrlRogBios: get panel overdrive {}", err);
+                err
+            })
+            .unwrap_or(false)
     }
 
     #[dbus_interface(signal)]
@@ -163,9 +163,8 @@ impl crate::Reloadable for CtrlRogBios {
 
 impl CtrlRogBios {
     pub fn new(config: Arc<Mutex<Config>>) -> Result<Self, RogError> {
-        if Path::new(ASUS_SWITCH_GRAPHIC_MODE).exists() {
-            CtrlRogBios::set_path_mutable(ASUS_SWITCH_GRAPHIC_MODE)?;
-        } else {
+        let platform = AsusPlatform::new()?;
+        if !platform.has_gpu_mux_mode() {
             info!("G-Sync Switchable Graphics not detected");
             info!("If your laptop is not a G-Sync enabled laptop then you can ignore this. Standard graphics switching will still work.");
         }
@@ -176,7 +175,10 @@ impl CtrlRogBios {
             info!("Switch for POST boot sound not detected");
         }
 
-        Ok(CtrlRogBios { _config: config })
+        Ok(CtrlRogBios {
+            platform,
+            _config: config,
+        })
     }
 
     fn set_path_mutable(path: &str) -> Result<(), RogError> {
@@ -189,48 +191,14 @@ impl CtrlRogBios {
         Ok(())
     }
 
-    pub fn has_dedicated_gfx_toggle() -> bool {
-        Path::new(ASUS_SWITCH_GRAPHIC_MODE).exists()
-    }
-
-    pub fn get_gfx_mode() -> Result<i8, RogError> {
-        let path = ASUS_SWITCH_GRAPHIC_MODE;
-        let mut file = OpenOptions::new()
-            .read(true)
-            .open(path)
-            .map_err(|err| RogError::Path(path.into(), err))?;
-
-        let mut data = Vec::new();
-        file.read_to_end(&mut data)
-            .map_err(|err| RogError::Read(path.into(), err))?;
-
-        let idx = data.len() - 1;
-        Ok(data[idx] as i8)
-    }
-
-    pub(super) fn set_gfx_mode(&self, dedicated: bool) -> Result<(), RogError> {
-        let path = ASUS_SWITCH_GRAPHIC_MODE;
-        let mut file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open(path)
-            .map_err(|err| RogError::Path(path.into(), err))?;
-
-        let mut data = Vec::new();
-        file.read_to_end(&mut data)?;
-
-        let idx = data.len() - 1;
-        if dedicated {
-            data[idx] = 1;
+    pub(super) fn set_gfx_mode(&self, enable: bool) -> Result<(), RogError> {
+        self.platform.set_gpu_mux_mode(enable)?;
+        self.update_initramfs(enable)?;
+        if enable {
             info!("Set system-level graphics mode: Dedicated Nvidia");
         } else {
-            data[idx] = 0;
             info!("Set system-level graphics mode: Optimus");
         }
-        file.write_all(&data)
-            .map_err(|err| RogError::Path(path.into(), err))?;
-
-        self.update_initramfs(dedicated)?;
         Ok(())
     }
 
@@ -358,42 +326,11 @@ impl CtrlRogBios {
         Ok(())
     }
 
-    fn set_panel_od(&mut self, overdrive: bool) -> Result<(), RogError> {
-        let path = ASUS_PANEL_OD_PATH;
-        let mut file = OpenOptions::new().write(true).open(path).map_err(|err| {
-            warn!("CtrlRogBios: set_panel_overdrive {}", err);
-            err
-        })?;
-
-        let s = if overdrive { '1' } else { '0' };
-        file.write(&[s as u8]).map_err(|err| {
+    fn set_panel_od(&mut self, enable: bool) -> Result<(), RogError> {
+        self.platform.set_panel_od(enable).map_err(|err| {
             warn!("CtrlRogBios: set_panel_overdrive {}", err);
             err
         })?;
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::CtrlRogBios;
-    use crate::config::Config;
-    use std::sync::{Arc, Mutex};
-
-    #[test]
-    #[ignore = "Must be manually tested"]
-    fn set_multizone_4key_config() {
-        let config = Config::default();
-
-        let controller = CtrlRogBios {
-            _config: Arc::new(Mutex::new(config)),
-        };
-
-        let res = controller.panel_overdrive();
-        assert_eq!(res, 1);
-
-        // controller.set_panel_od(false).unwrap();
-        // let res = controller.panel_overdrive();
-        // assert_eq!(res, 0);
     }
 }

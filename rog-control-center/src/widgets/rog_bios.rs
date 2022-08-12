@@ -90,7 +90,7 @@ pub fn rog_bios_group(
         }
     }
 
-    if supported.rog_bios_ctrl.dedicated_gfx {
+    if supported.rog_bios_ctrl.dgpu_only {
         if ui
             .add(egui::Checkbox::new(
                 &mut states.bios.dedicated_gfx,

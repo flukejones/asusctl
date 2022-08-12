@@ -1,7 +1,7 @@
 use std::{sync::atomic::Ordering, time::Duration};
 
 use egui::Color32;
-use rog_aura::AuraModeNum;
+use rog_aura::{AuraEffect, AuraModeNum};
 
 use crate::{
     widgets::{aura_modes_group, keyboard},
@@ -31,14 +31,14 @@ impl<'a> RogApp<'a> {
             .aura
             .modes
             .get(&states.aura.current_mode)
-            .unwrap()
+            .unwrap_or(&AuraEffect::default())
             .colour1;
 
         let c2 = states
             .aura
             .modes
             .get(&states.aura.current_mode)
-            .unwrap()
+            .unwrap_or(&AuraEffect::default())
             .colour2;
 
         let mut colour = Color32::from_rgb(c1.0, c1.1, c1.2);

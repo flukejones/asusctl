@@ -1,6 +1,5 @@
 use std::{
     f64::consts::PI,
-    io::Write,
     sync::{
         atomic::{AtomicBool, AtomicU8, Ordering},
         Arc,
@@ -12,18 +11,13 @@ use egui::{Button, RichText};
 use rog_supported::SupportedFunctions;
 
 use crate::{
-    config::Config, error::Result, get_ipc_file, page_states::PageDataStates, Page,
-    RogDbusClientBlocking, SHOWING_GUI,
+    config::Config, error::Result, page_states::PageDataStates, Page, RogDbusClientBlocking,
 };
 
 pub struct RogApp<'a> {
     pub page: Page,
     pub states: PageDataStates,
     pub supported: SupportedFunctions,
-    /// Should the app begin showing the GUI
-    pub begin_show_gui: Arc<AtomicBool>,
-    /// Is the app GUI closed (and running in bg)
-    pub running_in_bg: bool,
     // TODO: can probably just open and read whenever
     pub config: Config,
     pub asus_dbus: RogDbusClientBlocking<'a>,
@@ -40,9 +34,7 @@ pub struct RogApp<'a> {
 impl<'a> RogApp<'a> {
     /// Called once before the first frame.
     pub fn new(
-        start_closed: bool,
         config: Config,
-        show_gui: Arc<AtomicBool>,
         states: PageDataStates,
         _cc: &eframe::CreationContext<'_>,
     ) -> Result<Self> {
@@ -99,8 +91,6 @@ impl<'a> RogApp<'a> {
             supported,
             states,
             page: Page::System,
-            begin_show_gui: show_gui,
-            running_in_bg: start_closed,
             config,
             asus_dbus: dbus,
             oscillator1,
@@ -113,20 +103,10 @@ impl<'a> RogApp<'a> {
 }
 
 impl<'a> eframe::App for RogApp<'a> {
-    fn on_exit_event(&mut self) -> bool {
-        if self.config.run_in_background {
-            self.running_in_bg = true;
-            get_ipc_file().unwrap().write_all(&[0]).unwrap();
-            return false;
-        }
-        true
-    }
-
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         let Self {
-            begin_show_gui: should_show_gui,
             supported,
             asus_dbus: dbus,
             states,
@@ -143,21 +123,6 @@ impl<'a> eframe::App for RogApp<'a> {
             .ok();
 
         let page = self.page;
-
-        if should_show_gui.load(Ordering::SeqCst) {
-            let mut ipc_file = get_ipc_file().unwrap();
-            ipc_file.write_all(&[SHOWING_GUI]).unwrap();
-            should_show_gui.store(false, Ordering::SeqCst);
-            frame.set_visible(true);
-            self.running_in_bg = false;
-        }
-        if self.running_in_bg {
-            // Request to draw nothing at all
-            ctx.request_repaint_after(Duration::from_millis(500));
-            frame.set_visible(false);
-            return;
-        }
-        // Do all GUI display after this point
 
         self.top_bar(ctx, frame);
         self.side_panel(ctx);

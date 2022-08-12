@@ -44,6 +44,14 @@ pub fn on_tmp_dir_exists() -> Result<TempDir, std::io::Error> {
     let mut buf = [0u8; 4];
     let path = std::env::temp_dir().join("rog-gui");
 
+    if path.read_dir()?.next().is_none() {
+        std::fs::remove_dir_all(path)?;
+        return tempfile::Builder::new()
+            .prefix("rog-gui")
+            .rand_bytes(0)
+            .tempdir();
+    }
+
     let mut ipc_file = OpenOptions::new()
         .read(true)
         .write(true)

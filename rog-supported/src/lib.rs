@@ -40,7 +40,7 @@ pub struct LedSupportedFunctions {
 #[derive(Serialize, Deserialize, Type, Debug, Default)]
 pub struct RogBiosSupportedFunctions {
     pub post_sound: bool,
-    pub dedicated_gfx: bool,
+    pub dgpu_only: bool,
     pub panel_overdrive: bool,
     pub dgpu_disable: bool,
     pub egpu_enable: bool,
@@ -95,7 +95,7 @@ impl fmt::Display for RogBiosSupportedFunctions {
         writeln!(f, "\tPanel Overdrive: {}", self.panel_overdrive)?;
         writeln!(f, "\tdGPU disable switch: {}", self.dgpu_disable)?;
         writeln!(f, "\teGPU enable switch: {}", self.egpu_enable)?;
-        writeln!(f, "\tDedicated GFX switch: {}", self.dedicated_gfx)?;
+        writeln!(f, "\tDedicated GFX switch: {}", self.dgpu_only)?;
         Ok(())
     }
 }

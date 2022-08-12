@@ -774,7 +774,7 @@ fn handle_bios_option(
 
             for line in usage.iter().filter(|line| {
                 line.contains("sound") && supported.post_sound
-                    || line.contains("GPU") && supported.dedicated_gfx
+                    || line.contains("GPU") && supported.dgpu_only
                     || line.contains("panel") && supported.panel_overdrive
             }) {
                 println!("{}", line);
@@ -802,7 +802,7 @@ fn handle_bios_option(
             }
         }
         if cmd.dedicated_gfx_get {
-            let res = dbus.proxies().rog_bios().dedicated_graphic_mode()? == 1;
+            let res = dbus.proxies().rog_bios().dedicated_graphic_mode()?;
             println!("Bios dedicated GPU on: {}", res);
         }
 
@@ -810,7 +810,7 @@ fn handle_bios_option(
             dbus.proxies().rog_bios().set_panel_overdrive(opt)?;
         }
         if cmd.panel_overdrive_get {
-            let res = dbus.proxies().rog_bios().panel_overdrive()? == 1;
+            let res = dbus.proxies().rog_bios().panel_overdrive()?;
             println!("Panel overdrive on: {}", res);
         }
     }

@@ -1,8 +1,3 @@
-// Only these two packets must be 17 bytes
-static KBD_BRIGHT_PATH: &str = "/sys/class/leds/asus::kbd_backlight/brightness";
-static TUF_RGB_MODE_PATH: &str = "/sys/devices/platform/asus-nb-wmi/tuf_krgb_mode";
-static TUF_RGB_STATE_PATH: &str = "/sys/devices/platform/asus-nb-wmi/tuf_krgb_state";
-
 use crate::{
     error::RogError,
     laptops::{LaptopLedData, ASUS_KEYBOARD_DEVICES},
@@ -16,16 +11,13 @@ use rog_aura::{
     AuraEffect, LedBrightness, LED_MSG_LEN,
 };
 use rog_aura::{AuraZone, Direction, Speed, GRADIENT};
+use rog_platform::{hid_raw::HidRaw, keyboard_led::KeyboardLed};
 use rog_supported::LedSupportedFunctions;
 use smol::{stream::StreamExt, Executor};
-use std::path::Path;
+use std::collections::BTreeMap;
 use std::sync::Arc;
 use std::sync::Mutex;
-use std::{
-    collections::BTreeMap,
-    io::{Read, Write},
-};
-use std::{fs::OpenOptions, sync::MutexGuard};
+use std::sync::MutexGuard;
 use zbus::Connection;
 
 use crate::GetSupported;
@@ -44,19 +36,21 @@ impl GetSupported for CtrlKbdLed {
 
         let mut prod_id = AuraDevice::Unknown;
         for prod in ASUS_KEYBOARD_DEVICES.iter() {
-            if let Ok(_) = Self::find_led_node(prod) {
+            if let Ok(_) = HidRaw::new(prod) {
                 prod_id = AuraDevice::from(*prod);
                 break;
             }
         }
 
-        if Self::get_tuf_mode_path().is_some() {
-            prod_id = AuraDevice::Tuf;
+        if let Ok(p) = KeyboardLed::new() {
+            if p.has_keyboard_rgb_mode() {
+                prod_id = AuraDevice::Tuf;
+            }
         }
 
         LedSupportedFunctions {
             prod_id,
-            brightness_set: CtrlKbdLed::get_kbd_bright_path().is_some(),
+            brightness_set: KeyboardLed::new().is_ok(),
             stock_led_modes,
             multizone_led_mode,
             per_key_led_mode,
@@ -66,8 +60,8 @@ impl GetSupported for CtrlKbdLed {
 
 #[derive(Debug, PartialEq, PartialOrd)]
 pub enum LEDNode {
-    Tuf,
-    Rog(String),
+    KbdLed(KeyboardLed),
+    Rog(HidRaw),
     None,
 }
 
@@ -75,7 +69,7 @@ pub struct CtrlKbdLed {
     // TODO: config stores the keyboard type as an AuraPower, use or update this
     pub led_prod: Option<String>,
     pub led_node: LEDNode,
-    pub bright_node: String,
+    pub kd_brightness: KeyboardLed,
     pub supported_modes: LaptopLedData,
     pub flip_effect_write: bool,
     pub config: AuraConfig,
@@ -91,27 +85,11 @@ impl CtrlKbdLedTask {
     }
 
     fn update_config(lock: &mut CtrlKbdLed) -> Result<(), RogError> {
-        let mut file = OpenOptions::new()
-            .read(true)
-            .open(&lock.bright_node)
-            .map_err(|err| match err.kind() {
-                std::io::ErrorKind::NotFound => {
-                    RogError::MissingLedBrightNode((&lock.bright_node).into(), err)
-                }
-                _ => RogError::Path((&lock.bright_node).into(), err),
-            })?;
-        let mut buf = [0u8; 1];
-        file.read_exact(&mut buf)
-            .map_err(|err| RogError::Read("buffer".into(), err))?;
-        if let Some(num) = char::from(buf[0]).to_digit(10) {
-            if lock.config.brightness != num.into() {
-                lock.config.read();
-                lock.config.brightness = num.into();
-                lock.config.write();
-            }
-            return Ok(());
-        }
-        Err(RogError::ParseLed)
+        let bright = lock.kd_brightness.get_brightness()?;
+        lock.config.read();
+        lock.config.brightness = (bright as u32).into();
+        lock.config.write();
+        return Ok(());
     }
 }
 
@@ -189,9 +167,7 @@ impl crate::Reloadable for CtrlKbdLedReloader {
     fn reload(&mut self) -> Result<(), RogError> {
         if let Ok(mut ctrl) = self.0.try_lock() {
             ctrl.write_current_config_mode()?;
-            ctrl.set_power_states(&ctrl.config)
-                .map_err(|err| warn!("{err}"))
-                .ok();
+            ctrl.set_power_states().map_err(|err| warn!("{err}")).ok();
         }
         Ok(())
     }
@@ -210,7 +186,7 @@ impl CtrlKbdLed {
         let mut led_prod = None;
         let mut led_node = None;
         for prod in ASUS_KEYBOARD_DEVICES.iter() {
-            match Self::find_led_node(prod) {
+            match HidRaw::new(prod) {
                 Ok(node) => {
                     led_prod = Some(prod.to_string());
                     led_node = Some(node);
@@ -221,10 +197,10 @@ impl CtrlKbdLed {
             }
         }
 
-        let bright_node = Self::get_kbd_bright_path();
-        let tuf_node = Self::get_tuf_mode_path().is_some() || Self::get_tuf_state_path().is_some();
+        let bright_node = KeyboardLed::new();
+        let platform = KeyboardLed::new()?;
 
-        if led_node.is_none() && tuf_node && bright_node.is_none() {
+        if led_node.is_none() && !platform.has_keyboard_rgb_mode() {
             let dmi = sysfs_class::DmiId::default();
             if let Ok(prod_family) = dmi.product_family() {
                 if prod_family.contains("TUF") {
@@ -237,9 +213,9 @@ impl CtrlKbdLed {
         let led_node = if let Some(rog) = led_node {
             info!("Found ROG USB keyboard");
             LEDNode::Rog(rog)
-        } else if tuf_node {
+        } else if platform.has_keyboard_rgb_mode() {
             info!("Found TUF keyboard");
-            LEDNode::Tuf
+            LEDNode::KbdLed(platform)
         } else {
             LEDNode::None
         };
@@ -247,7 +223,7 @@ impl CtrlKbdLed {
         let ctrl = CtrlKbdLed {
             led_prod,
             led_node,
-            bright_node: bright_node.unwrap(), // If was none then we already returned above
+            kd_brightness: bright_node?, // If was none then we already returned above
             supported_modes,
             flip_effect_write: false,
             config,
@@ -255,58 +231,16 @@ impl CtrlKbdLed {
         Ok(ctrl)
     }
 
-    fn get_kbd_bright_path() -> Option<String> {
-        if Path::new(KBD_BRIGHT_PATH).exists() {
-            return Some(KBD_BRIGHT_PATH.to_string());
-        }
-        None
-    }
-
-    pub fn get_tuf_mode_path() -> Option<String> {
-        if Path::new(TUF_RGB_MODE_PATH).exists() {
-            return Some(TUF_RGB_MODE_PATH.to_string());
-        }
-        None
-    }
-
-    fn get_tuf_state_path() -> Option<String> {
-        if Path::new(TUF_RGB_STATE_PATH).exists() {
-            return Some(TUF_RGB_STATE_PATH.to_string());
-        }
-        None
-    }
-
     pub(super) fn get_brightness(&self) -> Result<u8, RogError> {
-        let mut file = OpenOptions::new()
-            .read(true)
-            .open(&self.bright_node)
-            .map_err(|err| match err.kind() {
-                std::io::ErrorKind::NotFound => {
-                    RogError::MissingLedBrightNode((&self.bright_node).into(), err)
-                }
-                _ => RogError::Path((&self.bright_node).into(), err),
-            })?;
-        let mut buf = [0u8; 1];
-        file.read_exact(&mut buf)
-            .map_err(|err| RogError::Read("buffer".into(), err))?;
-        Ok(buf[0])
+        self.kd_brightness
+            .get_brightness()
+            .map_err(|e| RogError::Platform(e))
     }
 
     pub(super) fn set_brightness(&self, brightness: LedBrightness) -> Result<(), RogError> {
-        let path = Path::new(&self.bright_node);
-        let mut file =
-            OpenOptions::new()
-                .write(true)
-                .open(&path)
-                .map_err(|err| match err.kind() {
-                    std::io::ErrorKind::NotFound => {
-                        RogError::MissingLedBrightNode((&self.bright_node).into(), err)
-                    }
-                    _ => RogError::Path((&self.bright_node).into(), err),
-                })?;
-        file.write_all(&[brightness.as_char_code()])
-            .map_err(|err| RogError::Read("buffer".into(), err))?;
-        Ok(())
+        self.kd_brightness
+            .set_brightness(brightness.as_char_code())
+            .map_err(|e| RogError::Platform(e))
     }
 
     pub fn next_brightness(&mut self) -> Result<(), RogError> {
@@ -332,66 +266,22 @@ impl CtrlKbdLed {
     }
 
     /// Set combination state for boot animation/sleep animation/all leds/keys leds/side leds LED active
-    pub(super) fn set_power_states(&self, config: &AuraConfig) -> Result<(), RogError> {
-        if LEDNode::Tuf == self.led_node {
-            if let Some(path) = Self::get_tuf_state_path() {
-                let mut file = OpenOptions::new().write(true).open(path)?;
-                if let Some(pwr) = AuraPowerConfig::to_tuf_bool_array(&config.enabled) {
-                    let buf = format!(
-                        "1 {} {} {} {}",
-                        pwr[1] as u8, pwr[2] as u8, pwr[3] as u8, pwr[4] as u8,
-                    );
-                    file.write_all(buf.as_bytes())?;
-                }
+    pub(super) fn set_power_states(&mut self) -> Result<(), RogError> {
+        if let LEDNode::KbdLed(platform) = &mut self.led_node {
+            if let Some(pwr) = AuraPowerConfig::to_tuf_bool_array(&self.config.enabled) {
+                let buf = [1, pwr[1] as u8, pwr[2] as u8, pwr[3] as u8, pwr[4] as u8];
+                platform.set_keyboard_rgb_state(&buf)?;
             }
-        } else {
-            let bytes = AuraPowerConfig::to_bytes(&config.enabled);
+        } else if let LEDNode::Rog(hid_raw) = &self.led_node {
+            let bytes = AuraPowerConfig::to_bytes(&self.config.enabled);
             let message = [0x5d, 0xbd, 0x01, bytes[0], bytes[1], bytes[2]];
 
-            self.write_bytes(&message)?;
-            self.write_bytes(&LED_SET)?;
+            hid_raw.write_bytes(&message)?;
+            hid_raw.write_bytes(&LED_SET)?;
             // Changes won't persist unless apply is set
-            self.write_bytes(&LED_APPLY)?;
+            hid_raw.write_bytes(&LED_APPLY)?;
         }
         Ok(())
-    }
-
-    pub(crate) fn find_led_node(id_product: &str) -> Result<String, RogError> {
-        let mut enumerator = udev::Enumerator::new().map_err(|err| {
-            warn!("{}", err);
-            RogError::Udev("enumerator failed".into(), err)
-        })?;
-        enumerator.match_subsystem("hidraw").map_err(|err| {
-            warn!("{}", err);
-            RogError::Udev("match_subsystem failed".into(), err)
-        })?;
-
-        for device in enumerator.scan_devices().map_err(|err| {
-            warn!("{}", err);
-            RogError::Udev("scan_devices failed".into(), err)
-        })? {
-            if let Some(parent) = device
-                .parent_with_subsystem_devtype("usb", "usb_device")
-                .map_err(|err| {
-                    warn!("{}", err);
-                    RogError::Udev("parent_with_subsystem_devtype failed".into(), err)
-                })?
-            {
-                if parent
-                    .attribute_value("idProduct")
-                    .ok_or_else(|| RogError::NotFound("LED idProduct".into()))?
-                    == id_product
-                {
-                    if let Some(dev_node) = device.devnode() {
-                        info!("Using device at: {:?} for LED control", dev_node);
-                        return Ok(dev_node.to_string_lossy().to_string());
-                    }
-                }
-            }
-        }
-        Err(RogError::MissingFunction(
-            "ASUS LED device node not found".into(),
-        ))
     }
 
     /// Set an Aura effect if the effect mode or zone is supported.
@@ -414,28 +304,17 @@ impl CtrlKbdLed {
         Ok(())
     }
 
-    /// Should only be used if the bytes you are writing are verified correct
-    fn write_bytes(&self, message: &[u8]) -> Result<(), RogError> {
-        if let LEDNode::Rog(led_node) = &self.led_node {
-            if let Ok(mut file) = OpenOptions::new().write(true).open(led_node) {
-                // println!("write: {:02x?}", &message);
-                return file
-                    .write_all(message)
-                    .map_err(|err| RogError::Write("write_bytes".into(), err));
-            }
-        }
-        Err(RogError::NoAuraNode)
-    }
-
     /// Write an effect block. This is for per-key
     fn _write_effect(&mut self, effect: &[Vec<u8>]) -> Result<(), RogError> {
-        if self.flip_effect_write {
-            for row in effect.iter().rev() {
-                self.write_bytes(row)?;
-            }
-        } else {
-            for row in effect.iter() {
-                self.write_bytes(row)?;
+        if let LEDNode::Rog(hid_raw) = &self.led_node {
+            if self.flip_effect_write {
+                for row in effect.iter().rev() {
+                    hid_raw.write_bytes(row)?;
+                }
+            } else {
+                for row in effect.iter() {
+                    hid_raw.write_bytes(row)?;
+                }
             }
         }
         self.flip_effect_write = !self.flip_effect_write;
@@ -478,19 +357,24 @@ impl CtrlKbdLed {
     }
 
     fn write_mode(&self, mode: &AuraEffect) -> Result<(), RogError> {
-        if LEDNode::Tuf == self.led_node {
-            let mut file = OpenOptions::new().write(true).open(TUF_RGB_MODE_PATH)?;
-            let buf = format!(
-                "1 {} {} {} {} {}",
-                mode.mode as u8, mode.colour1.0, mode.colour1.1, mode.colour1.2, mode.speed as u8,
-            );
-            file.write_all(buf.as_bytes())?;
-        } else {
+        if let LEDNode::KbdLed(platform) = &self.led_node {
+            let buf = [
+                1,
+                mode.mode as u8,
+                mode.colour1.0,
+                mode.colour1.1,
+                mode.colour1.2,
+                mode.speed as u8,
+            ];
+            platform.set_keyboard_rgb_mode(&buf)?;
+        } else if let LEDNode::Rog(hid_raw) = &self.led_node {
             let bytes: [u8; LED_MSG_LEN] = mode.into();
-            self.write_bytes(&bytes)?;
-            self.write_bytes(&LED_SET)?;
+            hid_raw.write_bytes(&bytes)?;
+            hid_raw.write_bytes(&LED_SET)?;
             // Changes won't persist unless apply is set
-            self.write_bytes(&LED_APPLY)?;
+            hid_raw.write_bytes(&LED_APPLY)?;
+        } else {
+            return Err(RogError::NoAuraKeyboard);
         }
         Ok(())
     }
@@ -562,6 +446,7 @@ impl CtrlKbdLed {
 #[cfg(test)]
 mod tests {
     use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour};
+    use rog_platform::keyboard_led::KeyboardLed;
 
     use crate::{
         ctrl_aura::{config::AuraConfig, controller::LEDNode},
@@ -585,7 +470,7 @@ mod tests {
         let mut controller = CtrlKbdLed {
             led_prod: None,
             led_node: LEDNode::None,
-            bright_node: String::new(),
+            kd_brightness: KeyboardLed::default(),
             supported_modes,
             flip_effect_write: false,
             config,
@@ -601,7 +486,7 @@ mod tests {
                 .set_effect(effect.clone())
                 .unwrap_err()
                 .to_string(),
-            "No Aura keyboard node found"
+            "No supported Aura keyboard"
         );
 
         effect.mode = AuraModeNum::Laser;
@@ -629,7 +514,7 @@ mod tests {
                 .set_effect(effect.clone())
                 .unwrap_err()
                 .to_string(),
-            "No Aura keyboard node found"
+            "No supported Aura keyboard"
         );
     }
 
@@ -647,7 +532,7 @@ mod tests {
         let mut controller = CtrlKbdLed {
             led_prod: None,
             led_node: LEDNode::None,
-            bright_node: String::new(),
+            kd_brightness: KeyboardLed::default(),
             supported_modes,
             flip_effect_write: false,
             config,
@@ -684,7 +569,7 @@ mod tests {
         let mut controller = CtrlKbdLed {
             led_prod: None,
             led_node: LEDNode::None,
-            bright_node: String::new(),
+            kd_brightness: KeyboardLed::default(),
             supported_modes,
             flip_effect_write: false,
             config,
@@ -699,7 +584,7 @@ mod tests {
                 .write_current_config_mode()
                 .unwrap_err()
                 .to_string(),
-            "No Aura keyboard node found"
+            "No supported Aura keyboard"
         );
         assert!(controller.config.multizone.is_some());
 

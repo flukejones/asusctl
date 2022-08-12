@@ -64,7 +64,12 @@ impl CtrlAnimeZbus {
         let states;
         'outer: loop {
             if let Ok(mut lock) = self.0.try_lock() {
-                lock.write_bytes(&pkt_for_set_on(status));
+                lock.node
+                    .write_bytes(&pkt_for_set_on(status))
+                    .map_err(|err| {
+                        warn!("rog_anime::run_animation:callback {}", err);
+                    })
+                    .ok();
                 lock.config.awake_enabled = status;
                 lock.config.write();
 
@@ -86,8 +91,18 @@ impl CtrlAnimeZbus {
         let states;
         'outer: loop {
             if let Ok(mut lock) = self.0.try_lock() {
-                lock.write_bytes(&pkt_for_set_boot(on));
-                lock.write_bytes(&pkt_for_apply());
+                lock.node
+                    .write_bytes(&pkt_for_set_boot(on))
+                    .map_err(|err| {
+                        warn!("rog_anime::run_animation:callback {}", err);
+                    })
+                    .ok();
+                lock.node
+                    .write_bytes(&pkt_for_apply())
+                    .map_err(|err| {
+                        warn!("rog_anime::run_animation:callback {}", err);
+                    })
+                    .ok();
                 lock.config.boot_anim_enabled = on;
                 lock.config.write();
 
