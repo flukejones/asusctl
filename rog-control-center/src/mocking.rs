@@ -62,7 +62,7 @@ impl Bios {
     pub fn post_boot_sound(&self) -> Result<i16> {
         Ok(1)
     }
-    pub fn dedicated_graphic_mode(&self) -> Result<i16> {
+    pub fn gpu_mux_mode(&self) -> Result<i16> {
         Ok(1)
     }
     pub fn panel_overdrive(&self) -> Result<i16> {
@@ -71,7 +71,7 @@ impl Bios {
     pub fn set_post_boot_sound(&self, _b: bool) -> Result<()> {
         Ok(())
     }
-    pub fn set_dedicated_graphic_mode(&self, _b: bool) -> Result<()> {
+    pub fn set_gpu_mux_mode(&self, _b: bool) -> Result<()> {
         Ok(())
     }
     pub fn set_panel_overdrive(&self, _b: bool) -> Result<()> {

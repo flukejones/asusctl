@@ -8,7 +8,7 @@ use std::{
 
 use egui::Vec2;
 use rog_aura::{layouts::KeyLayout, usb::AuraPowerDev, AuraEffect, AuraModeNum};
-use rog_platform::supported::SupportedFunctions;
+use rog_platform::{platform::GpuMuxMode, supported::SupportedFunctions};
 use rog_profiles::{fan_curve_set::FanCurveSet, FanCurvePU, Profile};
 
 use crate::{error::Result, RogDbusClientBlocking};
@@ -20,7 +20,7 @@ pub struct BiosState {
     /// updated, so the full state needs refresh
     pub was_notified: Arc<AtomicBool>,
     pub post_sound: bool,
-    pub dedicated_gfx: bool,
+    pub dedicated_gfx: GpuMuxMode,
     pub panel_overdrive: bool,
     pub dgpu_disable: bool,
     pub egpu_enable: bool,
@@ -40,9 +40,9 @@ impl BiosState {
                 false
             },
             dedicated_gfx: if supported.rog_bios_ctrl.dgpu_only {
-                dbus.proxies().rog_bios().dedicated_graphic_mode()?
+                dbus.proxies().rog_bios().gpu_mux_mode()?
             } else {
-                false
+                GpuMuxMode::NotSupported
             },
             panel_overdrive: if supported.rog_bios_ctrl.panel_overdrive {
                 dbus.proxies().rog_bios().panel_overdrive()?
@@ -337,7 +337,7 @@ impl Default for PageDataStates {
             bios: BiosState {
                 was_notified: Default::default(),
                 post_sound: Default::default(),
-                dedicated_gfx: Default::default(),
+                dedicated_gfx: GpuMuxMode::NotSupported,
                 panel_overdrive: Default::default(),
                 dgpu_disable: Default::default(),
                 egpu_enable: Default::default(),

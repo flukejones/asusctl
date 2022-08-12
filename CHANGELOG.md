@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   + hidraw
   + usbraw
 - Refactor how ROGCC handles IPC for background open, run-in-bg
+### Breaking
+- DBUS: rename path `/org/asuslinux/RogBios` to `/org/asuslinux/Platform`
+- DBUS: renamed `dedicated_graphic_mode` to `gpu_mux_mode` (`GpuMuxMode`)
+- DBUS: renamed `set_dedicated_graphic_mode` to `set_gpu_mux_mode` (`SetGpuMuxMode`)
+  + The methods above take an enum: 0 = Discrete, 1 = Optimus
 
 ## [4.3.4] - 2022-08-03
 ### Bugfix

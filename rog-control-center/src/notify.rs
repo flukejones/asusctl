@@ -5,7 +5,7 @@ use notify_rust::{Hint, Notification, NotificationHandle};
 use rog_aura::AuraEffect;
 use rog_dbus::{
     zbus_anime::AnimeProxy, zbus_charge::ChargeProxy, zbus_led::LedProxy,
-    zbus_profile::ProfileProxy, zbus_rogbios::RogBiosProxy,
+    zbus_profile::ProfileProxy, zbus_platform::RogBiosProxy,
 };
 use rog_profiles::Profile;
 use smol::{future, Executor};

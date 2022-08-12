@@ -20,7 +20,7 @@ pub mod ctrl_charge;
 /// - Fan min/max RPM curve
 pub mod ctrl_profiles;
 /// Control ASUS bios function such as boot sound, Optimus/Dedicated gfx mode
-pub mod ctrl_rog_bios;
+pub mod ctrl_platform;
 /// Laptop matching to determine capabilities
 pub mod laptops;
 

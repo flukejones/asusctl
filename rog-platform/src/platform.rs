@@ -1,9 +1,11 @@
 use std::path::PathBuf;
 
 use log::warn;
+use serde::{Deserialize, Serialize};
+use zvariant::Type;
 
 use crate::{
-    attr_bool,
+    attr_bool, attr_u8,
     error::{PlatformError, Result},
     to_device,
 };
@@ -60,10 +62,38 @@ impl AsusPlatform {
 
     attr_bool!(has_panel_od, get_panel_od, set_panel_od, "panel_od");
 
-    attr_bool!(
+    attr_u8!(
         has_gpu_mux_mode,
         get_gpu_mux_mode,
         set_gpu_mux_mode,
         "gpu_mux_mode"
     );
+}
+
+#[derive(Serialize, Deserialize, Type, Debug, PartialEq, Clone, Copy)]
+pub enum GpuMuxMode {
+    Discrete,
+    Optimus,
+    Error,
+    NotSupported,
+}
+
+impl From<u8> for GpuMuxMode {
+    fn from(m: u8) -> Self {
+        if m > 0 {
+            return Self::Optimus;
+        }
+        Self::Discrete
+    }
+}
+
+impl From<GpuMuxMode> for u8 {
+    fn from(m: GpuMuxMode) -> Self {
+        match m {
+            GpuMuxMode::Discrete => 0,
+            GpuMuxMode::Optimus => 1,
+            GpuMuxMode::Error => 254,
+            GpuMuxMode::NotSupported => 255,
+        }
+    }
 }

@@ -1,3 +1,6 @@
+//! This crate functions as a wrapper of all the relevant ASUS functionality
+//! on ROG, Strix, and TUF laptops.
+
 pub mod error;
 pub mod hid_raw;
 pub mod keyboard_led;

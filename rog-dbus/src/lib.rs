@@ -6,7 +6,7 @@ pub mod zbus_anime;
 pub mod zbus_charge;
 pub mod zbus_led;
 pub mod zbus_profile;
-pub mod zbus_rogbios;
+pub mod zbus_platform;
 pub mod zbus_supported;
 
 // use rog_anime::AnimePowerStates;
@@ -21,7 +21,7 @@ pub struct DbusProxiesBlocking<'a> {
     charge: zbus_charge::ChargeProxyBlocking<'a>,
     led: zbus_led::LedProxyBlocking<'a>,
     profile: zbus_profile::ProfileProxyBlocking<'a>,
-    rog_bios: zbus_rogbios::RogBiosProxyBlocking<'a>,
+    rog_bios: zbus_platform::RogBiosProxyBlocking<'a>,
     supported: zbus_supported::SupportedProxyBlocking<'a>,
 }
 
@@ -36,7 +36,7 @@ impl<'a> DbusProxiesBlocking<'a> {
                 led: zbus_led::LedProxyBlocking::new(&conn)?,
                 charge: zbus_charge::ChargeProxyBlocking::new(&conn)?,
                 profile: zbus_profile::ProfileProxyBlocking::new(&conn)?,
-                rog_bios: zbus_rogbios::RogBiosProxyBlocking::new(&conn)?,
+                rog_bios: zbus_platform::RogBiosProxyBlocking::new(&conn)?,
                 supported: zbus_supported::SupportedProxyBlocking::new(&conn)?,
             },
             conn,
@@ -59,7 +59,7 @@ impl<'a> DbusProxiesBlocking<'a> {
         &self.profile
     }
 
-    pub fn rog_bios(&self) -> &zbus_rogbios::RogBiosProxyBlocking<'a> {
+    pub fn rog_bios(&self) -> &zbus_platform::RogBiosProxyBlocking<'a> {
         &self.rog_bios
     }
 
@@ -90,7 +90,7 @@ pub struct DbusProxies<'a> {
     charge: zbus_charge::ChargeProxy<'a>,
     led: zbus_led::LedProxy<'a>,
     profile: zbus_profile::ProfileProxy<'a>,
-    rog_bios: zbus_rogbios::RogBiosProxy<'a>,
+    rog_bios: zbus_platform::RogBiosProxy<'a>,
     supported: zbus_supported::SupportedProxy<'a>,
 }
 
@@ -105,7 +105,7 @@ impl<'a> DbusProxies<'a> {
                 led: zbus_led::LedProxy::new(&conn).await?,
                 charge: zbus_charge::ChargeProxy::new(&conn).await?,
                 profile: zbus_profile::ProfileProxy::new(&conn).await?,
-                rog_bios: zbus_rogbios::RogBiosProxy::new(&conn).await?,
+                rog_bios: zbus_platform::RogBiosProxy::new(&conn).await?,
                 supported: zbus_supported::SupportedProxy::new(&conn).await?,
             },
             conn,
@@ -128,7 +128,7 @@ impl<'a> DbusProxies<'a> {
         &self.profile
     }
 
-    pub fn rog_bios(&self) -> &zbus_rogbios::RogBiosProxy<'a> {
+    pub fn rog_bios(&self) -> &zbus_platform::RogBiosProxy<'a> {
         &self.rog_bios
     }
 

@@ -18,7 +18,7 @@ use daemon::ctrl_aura::controller::{
 };
 use daemon::ctrl_charge::CtrlCharge;
 use daemon::ctrl_profiles::config::ProfileConfig;
-use daemon::ctrl_rog_bios::CtrlRogBios;
+use daemon::ctrl_platform::CtrlRogBios;
 use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
 };

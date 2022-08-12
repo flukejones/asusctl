@@ -1,10 +1,9 @@
 use crate::{config::Config, error::RogError, GetSupported};
 use async_trait::async_trait;
-use log::{error, info, warn};
-use rog_platform::platform::AsusPlatform;
+use log::{info, warn};
+use rog_platform::platform::{AsusPlatform, GpuMuxMode};
 use rog_platform::supported::RogBiosSupportedFunctions;
 use std::fs::OpenOptions;
-use std::io::BufRead;
 use std::io::{Read, Write};
 use std::path::Path;
 use std::process::Command;
@@ -13,11 +12,6 @@ use std::sync::Mutex;
 use zbus::Connection;
 use zbus::{dbus_interface, SignalContext};
 
-const INITRAMFS_PATH: &str = "/usr/sbin/update-initramfs";
-const DRACUT_PATH: &str = "/usr/bin/dracut";
-
-// static ASUS_SWITCH_GRAPHIC_MODE: &str =
-//     "/sys/firmware/efi/efivars/AsusSwitchGraphicMode-607005d5-3f75-4b2e-98f0-85ba66797a3e";
 static ASUS_POST_LOGO_SOUND: &str =
     "/sys/firmware/efi/efivars/AsusPostLogoSound-607005d5-3f75-4b2e-98f0-85ba66797a3e";
 
@@ -54,36 +48,34 @@ impl GetSupported for CtrlRogBios {
 
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl CtrlRogBios {
-    async fn set_dedicated_graphic_mode(
+    async fn set_gpu_mux_mode(
         &mut self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
-        dedicated: bool,
+        mode: GpuMuxMode,
     ) {
-        self.set_gfx_mode(dedicated)
+        self.set_gfx_mode(mode)
             .map_err(|err| {
                 warn!("CtrlRogBios: set_asus_switch_graphic_mode {}", err);
                 err
             })
             .ok();
-        Self::notify_dedicated_graphic_mode(&ctxt, dedicated)
-            .await
-            .ok();
+        Self::notify_gpu_mux_mode(&ctxt, mode).await.ok();
     }
 
-    fn dedicated_graphic_mode(&self) -> bool {
-        self.platform
-            .get_gpu_mux_mode()
-            .map_err(|err| {
-                warn!("CtrlRogBios: get_gfx_mode {}", err);
-                err
-            })
-            .unwrap_or(false)
+    fn gpu_mux_mode(&self) -> GpuMuxMode {
+        match self.platform.get_gpu_mux_mode() {
+            Ok(m) => m.into(),
+            Err(e) => {
+                warn!("CtrlRogBios: get_gfx_mode {}", e);
+                GpuMuxMode::Error
+            }
+        }
     }
 
     #[dbus_interface(signal)]
-    async fn notify_dedicated_graphic_mode(
+    async fn notify_gpu_mux_mode(
         signal_ctxt: &SignalContext<'_>,
-        dedicated: bool,
+        mode: GpuMuxMode,
     ) -> zbus::Result<()> {
     }
 
@@ -151,7 +143,7 @@ impl CtrlRogBios {
 #[async_trait]
 impl crate::ZbusAdd for CtrlRogBios {
     async fn add_to_server(self, server: &mut Connection) {
-        Self::add_to_server_helper(self, "/org/asuslinux/RogBios", server).await;
+        Self::add_to_server_helper(self, "/org/asuslinux/Platform", server).await;
     }
 }
 
@@ -191,10 +183,10 @@ impl CtrlRogBios {
         Ok(())
     }
 
-    pub(super) fn set_gfx_mode(&self, enable: bool) -> Result<(), RogError> {
-        self.platform.set_gpu_mux_mode(enable)?;
-        self.update_initramfs(enable)?;
-        if enable {
+    fn set_gfx_mode(&self, mode: GpuMuxMode) -> Result<(), RogError> {
+        self.platform.set_gpu_mux_mode(mode.into())?;
+        // self.update_initramfs(enable)?;
+        if mode == GpuMuxMode::Discrete {
             info!("Set system-level graphics mode: Dedicated Nvidia");
         } else {
             info!("Set system-level graphics mode: Optimus");
@@ -240,89 +232,6 @@ impl CtrlRogBios {
         file.write_all(&data)
             .map_err(|err| RogError::Path(path.into(), err))?;
 
-        Ok(())
-    }
-
-    // required for g-sync mode
-    fn update_initramfs(&self, dedicated: bool) -> Result<(), RogError> {
-        let mut initfs_cmd = None;
-
-        if Path::new(INITRAMFS_PATH).exists() {
-            let mut cmd = Command::new("update-initramfs");
-            cmd.arg("-u");
-            initfs_cmd = Some(cmd);
-            info!("Using initramfs update command 'update-initramfs'");
-        } else if Path::new(DRACUT_PATH).exists() {
-            let mut cmd = Command::new("dracut");
-            cmd.arg("-f");
-            cmd.arg("-q");
-            initfs_cmd = Some(cmd);
-            info!("Using initramfs update command 'dracut'");
-        }
-
-        if let Some(mut cmd) = initfs_cmd {
-            info!("Updating initramfs");
-
-            // If switching to Nvidia dedicated we need these modules included
-            if Path::new(DRACUT_PATH).exists() && dedicated {
-                cmd.arg("--add-drivers");
-                cmd.arg("nvidia nvidia-drm nvidia-modeset nvidia-uvm");
-                info!("System uses dracut, forcing nvidia modules to be included in init");
-            } else if Path::new(INITRAMFS_PATH).exists() {
-                let modules = vec![
-                    "nvidia\n",
-                    "nvidia-drm\n",
-                    "nvidia-modeset\n",
-                    "nvidia-uvm\n",
-                ];
-
-                let module_include = Path::new("/etc/initramfs-tools/modules");
-
-                if dedicated {
-                    let mut file = std::fs::OpenOptions::new()
-                        .append(true)
-                        .open(module_include)
-                        .map_err(|err| {
-                            RogError::Write(module_include.to_string_lossy().to_string(), err)
-                        })?;
-                    // add nvidia modules to module_include
-                    file.write_all(modules.concat().as_bytes())?;
-                } else {
-                    let file = std::fs::OpenOptions::new()
-                        .read(true)
-                        .open(module_include)
-                        .map_err(|err| {
-                            RogError::Write(module_include.to_string_lossy().to_string(), err)
-                        })?;
-
-                    let mut buf = Vec::new();
-                    // remove modules
-                    for line in std::io::BufReader::new(file).lines().flatten() {
-                        if !modules.contains(&line.as_str()) {
-                            buf.append(&mut line.as_bytes().to_vec());
-                        }
-                    }
-
-                    let file = std::fs::OpenOptions::new()
-                        .write(true)
-                        .open(module_include)
-                        .map_err(|err| {
-                            RogError::Write(module_include.to_string_lossy().to_string(), err)
-                        })?;
-                    std::io::BufWriter::new(file).write_all(&buf)?;
-                }
-            }
-
-            let status = cmd
-                .status()
-                .map_err(|err| RogError::Write(format!("{:?}", cmd), err))?;
-            if !status.success() {
-                error!("Ram disk update failed");
-                return Err(RogError::Initramfs("Ram disk update failed".into()));
-            } else {
-                info!("Successfully updated initramfs");
-            }
-        }
         Ok(())
     }
 

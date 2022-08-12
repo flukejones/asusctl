@@ -1,6 +1,6 @@
 use crate::{page_states::PageDataStates, RogDbusClientBlocking};
 use egui::Ui;
-use rog_platform::supported::SupportedFunctions;
+use rog_platform::{platform::GpuMuxMode, supported::SupportedFunctions};
 use rog_profiles::Profile;
 
 pub fn platform_profile(states: &mut PageDataStates, dbus: &RogDbusClientBlocking, ui: &mut Ui) {
@@ -91,16 +91,33 @@ pub fn rog_bios_group(
     }
 
     if supported.rog_bios_ctrl.dgpu_only {
-        if ui
-            .add(egui::Checkbox::new(
-                &mut states.bios.dedicated_gfx,
-                "G-Sync Dedicated GPU mode",
-            ))
-            .changed()
-        {
+        let mut changed = false;
+        ui.group(|ui| {
+            ui.vertical(|ui| {
+                ui.horizontal_wrapped(|ui| ui.label("GPU MUX mode (reboot required)"));
+                ui.horizontal_wrapped(|ui| {
+                    changed = ui
+                        .selectable_value(
+                            &mut states.bios.dedicated_gfx,
+                            GpuMuxMode::Discrete,
+                            "Dedicated (Ultimate)",
+                        )
+                        .clicked()
+                        || ui
+                            .selectable_value(
+                                &mut states.bios.dedicated_gfx,
+                                GpuMuxMode::Optimus,
+                                "Optimus (Hybrid)",
+                            )
+                            .clicked();
+                });
+            });
+        });
+
+        if changed {
             dbus.proxies()
                 .rog_bios()
-                .set_dedicated_graphic_mode(states.bios.dedicated_gfx)
+                .set_gpu_mux_mode(states.bios.dedicated_gfx)
                 .map_err(|err| {
                     states.error = Some(err.to_string());
                 })

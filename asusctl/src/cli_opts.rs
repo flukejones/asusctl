@@ -80,11 +80,11 @@ pub struct BiosCommand {
         meta = "",
         short = "D",
         no_long,
-        help = "activate dGPU dedicated/G-Sync: asusctl -d <true/false>, reboot required"
+        help = "Switch GPU MUX mode: 0 = Discrete, 1 = Optimus, reboot required"
     )]
-    pub dedicated_gfx_set: Option<bool>,
+    pub gpu_mux_mode_set: Option<u8>,
     #[options(no_long, short = "d", help = "get GPU mode")]
-    pub dedicated_gfx_get: bool,
+    pub gpu_mux_mode_get: bool,
     #[options(
         meta = "",
         short = "O",

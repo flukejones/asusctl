@@ -753,8 +753,8 @@ fn handle_bios_option(
     cmd: &BiosCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
     {
-        if (cmd.dedicated_gfx_set.is_none()
-            && !cmd.dedicated_gfx_get
+        if (cmd.gpu_mux_mode_set.is_none()
+            && !cmd.gpu_mux_mode_get
             && cmd.post_sound_set.is_none()
             && !cmd.post_sound_get
             && cmd.panel_overdrive_set.is_none()
@@ -785,21 +785,14 @@ fn handle_bios_option(
             println!("Bios POST sound on: {}", res);
         }
 
-        if let Some(opt) = cmd.dedicated_gfx_set {
+        if let Some(opt) = cmd.gpu_mux_mode_set {
             println!("Rebuilding initrd to include drivers");
-            dbus.proxies().rog_bios().set_dedicated_graphic_mode(opt)?;
+            dbus.proxies().rog_bios().set_gpu_mux_mode(opt.into())?;
             println!("The mode change is not active until you reboot, on boot the bios will make the required change");
-            if opt {
-                println!(
-                    "NOTE: on reboot your display manager will be forced to use Nvidia drivers"
-                );
-            } else {
-                println!("NOTE: after reboot you can then select regular graphics modes");
-            }
         }
-        if cmd.dedicated_gfx_get {
-            let res = dbus.proxies().rog_bios().dedicated_graphic_mode()?;
-            println!("Bios dedicated GPU on: {}", res);
+        if cmd.gpu_mux_mode_get {
+            let res = dbus.proxies().rog_bios().gpu_mux_mode()?;
+            println!("Bios GPU MUX: {:?}", res);
         }
 
         if let Some(opt) = cmd.panel_overdrive_set {
