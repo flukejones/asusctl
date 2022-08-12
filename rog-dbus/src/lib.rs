@@ -5,8 +5,8 @@ pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";
 pub mod zbus_anime;
 pub mod zbus_charge;
 pub mod zbus_led;
-pub mod zbus_profile;
 pub mod zbus_platform;
+pub mod zbus_profile;
 pub mod zbus_supported;
 
 // use rog_anime::AnimePowerStates;

@@ -6,7 +6,7 @@ use zvariant::Type;
 
 use crate::{
     ctrl_anime::CtrlAnime, ctrl_aura::controller::CtrlKbdLed, ctrl_charge::CtrlCharge,
-    ctrl_profiles::controller::CtrlPlatformProfile, ctrl_platform::CtrlRogBios, GetSupported,
+    ctrl_platform::CtrlRogBios, ctrl_profiles::controller::CtrlPlatformProfile, GetSupported,
 };
 
 use rog_platform::supported::*;

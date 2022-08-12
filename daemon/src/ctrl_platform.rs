@@ -1,7 +1,7 @@
 use crate::{config::Config, error::RogError, GetSupported};
 use async_trait::async_trait;
 use log::{info, warn};
-use rog_platform::platform::{AsusPlatform, GpuMuxMode};
+use rog_platform::platform::{AsusPlatform, GpuMode};
 use rog_platform::supported::RogBiosSupportedFunctions;
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
@@ -51,7 +51,7 @@ impl CtrlRogBios {
     async fn set_gpu_mux_mode(
         &mut self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
-        mode: GpuMuxMode,
+        mode: GpuMode,
     ) {
         self.set_gfx_mode(mode)
             .map_err(|err| {
@@ -62,12 +62,12 @@ impl CtrlRogBios {
         Self::notify_gpu_mux_mode(&ctxt, mode).await.ok();
     }
 
-    fn gpu_mux_mode(&self) -> GpuMuxMode {
+    fn gpu_mux_mode(&self) -> GpuMode {
         match self.platform.get_gpu_mux_mode() {
-            Ok(m) => m.into(),
+            Ok(m) => GpuMode::from_mux(m),
             Err(e) => {
                 warn!("CtrlRogBios: get_gfx_mode {}", e);
-                GpuMuxMode::Error
+                GpuMode::Error
             }
         }
     }
@@ -75,7 +75,7 @@ impl CtrlRogBios {
     #[dbus_interface(signal)]
     async fn notify_gpu_mux_mode(
         signal_ctxt: &SignalContext<'_>,
-        mode: GpuMuxMode,
+        mode: GpuMode,
     ) -> zbus::Result<()> {
     }
 
@@ -183,10 +183,10 @@ impl CtrlRogBios {
         Ok(())
     }
 
-    fn set_gfx_mode(&self, mode: GpuMuxMode) -> Result<(), RogError> {
-        self.platform.set_gpu_mux_mode(mode.into())?;
+    fn set_gfx_mode(&self, mode: GpuMode) -> Result<(), RogError> {
+        self.platform.set_gpu_mux_mode(mode.to_mux())?;
         // self.update_initramfs(enable)?;
-        if mode == GpuMuxMode::Discrete {
+        if mode == GpuMode::Discrete {
             info!("Set system-level graphics mode: Dedicated Nvidia");
         } else {
             info!("Set system-level graphics mode: Optimus");

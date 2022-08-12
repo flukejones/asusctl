@@ -14,6 +14,7 @@ use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, 
 use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClientBlocking;
+use rog_platform::platform::GpuMode;
 use rog_platform::supported::*;
 use rog_profiles::error::ProfileError;
 
@@ -787,7 +788,9 @@ fn handle_bios_option(
 
         if let Some(opt) = cmd.gpu_mux_mode_set {
             println!("Rebuilding initrd to include drivers");
-            dbus.proxies().rog_bios().set_gpu_mux_mode(opt.into())?;
+            dbus.proxies()
+                .rog_bios()
+                .set_gpu_mux_mode(GpuMode::from_mux(opt))?;
             println!("The mode change is not active until you reboot, on boot the bios will make the required change");
         }
         if cmd.gpu_mux_mode_get {

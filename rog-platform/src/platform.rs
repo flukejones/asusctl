@@ -71,29 +71,57 @@ impl AsusPlatform {
 }
 
 #[derive(Serialize, Deserialize, Type, Debug, PartialEq, Clone, Copy)]
-pub enum GpuMuxMode {
+pub enum GpuMode {
     Discrete,
     Optimus,
+    Integrated,
+    Egpu,
     Error,
     NotSupported,
 }
 
-impl From<u8> for GpuMuxMode {
-    fn from(m: u8) -> Self {
-        if m > 0 {
-            return Self::Optimus;
+impl GpuMode {
+    pub fn to_mux(&self) -> u8 {
+        if *self == Self::Discrete {
+            return 0;
         }
-        Self::Discrete
+        1
     }
-}
 
-impl From<GpuMuxMode> for u8 {
-    fn from(m: GpuMuxMode) -> Self {
-        match m {
-            GpuMuxMode::Discrete => 0,
-            GpuMuxMode::Optimus => 1,
-            GpuMuxMode::Error => 254,
-            GpuMuxMode::NotSupported => 255,
+    pub fn to_dgpu(&self) -> u8 {
+        if *self == Self::Integrated {
+            return 1;
         }
+        0
+    }
+
+    pub fn to_egpu(&self) -> u8 {
+        if *self == Self::Egpu {
+            return 1;
+        }
+        0
+    }
+
+    pub fn from_mux(num: u8) -> Self {
+        if num == 0 {
+            return Self::Discrete;
+        }
+        Self::Optimus
+    }
+
+    pub fn from_dgpu(num: u8) -> Self {
+        if num == 1 {
+            return Self::Integrated;
+        }
+        Self::Optimus
+    }
+
+    // `from_dgpu()` should be called also, and should take precedence if result
+    // are not equal.
+    pub fn from_egpu(num: u8) -> Self {
+        if num == 1 {
+            return Self::Egpu;
+        }
+        Self::Optimus
     }
 }

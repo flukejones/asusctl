@@ -1,6 +1,6 @@
 use crate::{page_states::PageDataStates, RogDbusClientBlocking};
 use egui::Ui;
-use rog_platform::{platform::GpuMuxMode, supported::SupportedFunctions};
+use rog_platform::{platform::GpuMode, supported::SupportedFunctions};
 use rog_profiles::Profile;
 
 pub fn platform_profile(states: &mut PageDataStates, dbus: &RogDbusClientBlocking, ui: &mut Ui) {
@@ -99,14 +99,14 @@ pub fn rog_bios_group(
                     changed = ui
                         .selectable_value(
                             &mut states.bios.dedicated_gfx,
-                            GpuMuxMode::Discrete,
+                            GpuMode::Discrete,
                             "Dedicated (Ultimate)",
                         )
                         .clicked()
                         || ui
                             .selectable_value(
                                 &mut states.bios.dedicated_gfx,
-                                GpuMuxMode::Optimus,
+                                GpuMode::Optimus,
                                 "Optimus (Hybrid)",
                             )
                             .clicked();

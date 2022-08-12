@@ -19,7 +19,7 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use rog_platform::platform::GpuMuxMode;
+use rog_platform::platform::GpuMode;
 use zbus_macros::dbus_proxy;
 
 #[dbus_proxy(
@@ -28,13 +28,13 @@ use zbus_macros::dbus_proxy;
 )]
 trait RogBios {
     /// DedicatedGraphicMode method
-    fn gpu_mux_mode(&self) -> zbus::Result<GpuMuxMode>;
+    fn gpu_mux_mode(&self) -> zbus::Result<GpuMode>;
 
     /// PostBootSound method
     fn post_boot_sound(&self) -> zbus::Result<i16>;
 
     /// SetDedicatedGraphicMode method
-    fn set_gpu_mux_mode(&self, mode: GpuMuxMode) -> zbus::Result<()>;
+    fn set_gpu_mux_mode(&self, mode: GpuMode) -> zbus::Result<()>;
 
     /// SetPostBootSound method
     fn set_post_boot_sound(&self, on: bool) -> zbus::Result<()>;
@@ -47,7 +47,7 @@ trait RogBios {
 
     /// NotifyDedicatedGraphicMode signal
     #[dbus_proxy(signal)]
-    fn notify_gpu_mux_mode(&self, mode: GpuMuxMode) -> zbus::Result<()>;
+    fn notify_gpu_mux_mode(&self, mode: GpuMode) -> zbus::Result<()>;
 
     /// NotifyPostBootSound signal
     #[dbus_proxy(signal)]
