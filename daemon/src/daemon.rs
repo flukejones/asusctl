@@ -59,7 +59,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("     rog-aura v{}", rog_aura::VERSION);
     info!("     rog-dbus v{}", rog_dbus::VERSION);
     info!(" rog-profiles v{}", rog_profiles::VERSION);
-    info!("rog-supported v{}", rog_supported::VERSION);
+    info!("rog-platform v{}", rog_platform::VERSION);
 
     let mut executor = Executor::new();
 

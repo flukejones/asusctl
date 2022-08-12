@@ -7,6 +7,13 @@ edition = "2021"
 
 [dependencies]
 log = "*"
+
+rog_aura = { path = "../rog-aura" }
+serde = "^1.0"
+serde_derive = "^1.0"
+zvariant = "^3.0"
+zvariant_derive = "^3.0"
+
 udev = "^0.6"
 rusb = "^0.9"
 sysfs-class = "^0.1"

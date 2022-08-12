@@ -5,7 +5,7 @@ use std::sync::{
 
 use egui::{RichText, Ui};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour, Speed};
-use rog_supported::SupportedFunctions;
+use rog_platform::supported::SupportedFunctions;
 
 use crate::{
     page_states::{AuraState, PageDataStates},

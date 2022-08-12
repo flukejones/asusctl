@@ -80,8 +80,8 @@ dependencies = [
  "notify-rust",
  "rog_aura",
  "rog_dbus",
+ "rog_platform",
  "rog_profiles",
- "rog_supported",
  "serde_json",
  "smol",
  "zbus",
@@ -98,8 +98,8 @@ dependencies = [
  "rog_anime",
  "rog_aura",
  "rog_dbus",
+ "rog_platform",
  "rog_profiles",
- "rog_supported",
  "sysfs-class",
  "tinybmp",
  "toml",
@@ -553,7 +553,6 @@ dependencies = [
  "rog_dbus",
  "rog_platform",
  "rog_profiles",
- "rog_supported",
  "serde",
  "serde_derive",
  "serde_json",
@@ -571,7 +570,7 @@ dependencies = [
  "dirs 4.0.0",
  "rog_anime",
  "rog_dbus",
- "rog_supported",
+ "rog_platform",
  "serde",
  "serde_derive",
  "serde_json",
@@ -1962,8 +1961,8 @@ dependencies = [
  "notify-rust",
  "rog_aura",
  "rog_dbus",
+ "rog_platform",
  "rog_profiles",
- "rog_supported",
  "serde",
  "serde_derive",
  "serde_json",
@@ -2005,8 +2004,8 @@ version = "4.2.1"
 dependencies = [
  "rog_anime",
  "rog_aura",
+ "rog_platform",
  "rog_profiles",
- "rog_supported",
  "zbus",
  "zbus_macros",
  "zvariant",
@@ -2017,9 +2016,14 @@ name = "rog_platform"
 version = "0.1.0"
 dependencies = [
  "log",
+ "rog_aura",
  "rusb",
+ "serde",
+ "serde_derive",
  "sysfs-class",
  "udev",
+ "zvariant",
+ "zvariant_derive",
 ]
 
 [[package]]
@@ -2029,17 +2033,6 @@ dependencies = [
  "serde",
  "serde_derive",
  "udev",
- "zvariant",
- "zvariant_derive",
-]
-
-[[package]]
-name = "rog_supported"
-version = "4.2.1"
-dependencies = [
- "rog_aura",
- "serde",
- "serde_derive",
  "zvariant",
  "zvariant_derive",
 ]

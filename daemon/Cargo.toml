@@ -20,7 +20,6 @@ path = "src/daemon.rs"
 [dependencies]
 rog_anime = { path = "../rog-anime", features = ["dbus"] }
 rog_aura = { path = "../rog-aura", features = ["dbus"] }
-rog_supported = { path = "../rog-supported" }
 rog_platform = { path = "../rog-platform" }
 rog_profiles = { path = "../rog-profiles" }
 rog_dbus = { path = "../rog-dbus" }

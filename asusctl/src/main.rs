@@ -14,12 +14,8 @@ use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, 
 use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClientBlocking;
+use rog_platform::supported::*;
 use rog_profiles::error::ProfileError;
-use rog_supported::SupportedFunctions;
-use rog_supported::{
-    AnimeSupportedFunctions, LedSupportedFunctions, PlatformProfileFunctions,
-    RogBiosSupportedFunctions,
-};
 
 use crate::aura_cli::LedBrightness;
 use crate::cli_opts::*;
@@ -102,7 +98,7 @@ fn print_versions() {
     println!("     rog-aura v{}", rog_aura::VERSION);
     println!("     rog-dbus v{}", rog_dbus::VERSION);
     println!(" rog-profiles v{}", rog_profiles::VERSION);
-    println!("rog-supported v{}", rog_supported::VERSION);
+    println!("rog-platform v{}", rog_platform::VERSION);
 }
 
 fn print_laptop_info() {

@@ -3,7 +3,7 @@ use crate::{config::Config, error::RogError, GetSupported};
 use async_trait::async_trait;
 use log::{info, warn};
 use logind_zbus::manager::ManagerProxy;
-use rog_supported::ChargeSupportedFunctions;
+use rog_platform::supported::ChargeSupportedFunctions;
 use smol::stream::StreamExt;
 use smol::Executor;
 use std::fs::OpenOptions;

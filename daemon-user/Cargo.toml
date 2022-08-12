@@ -21,7 +21,7 @@ serde_derive = "^1.0"
 
 rog_anime = { path = "../rog-anime" }
 rog_dbus = { path = "../rog-dbus" }
-rog_supported = { path = "../rog-supported" }
+rog_platform = { path = "../rog-platform" }
 
 dirs = "^4.0"
 

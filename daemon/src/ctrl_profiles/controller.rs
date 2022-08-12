@@ -4,9 +4,9 @@ use crate::error::RogError;
 use crate::{CtrlTask, GetSupported};
 use async_trait::async_trait;
 use log::{info, warn};
+use rog_platform::supported::PlatformProfileFunctions;
 use rog_profiles::error::ProfileError;
 use rog_profiles::{FanCurveProfiles, Profile};
-use rog_supported::PlatformProfileFunctions;
 use smol::Executor;
 
 use super::config::ProfileConfig;

@@ -9,10 +9,7 @@ use crate::{
     ctrl_profiles::controller::CtrlPlatformProfile, ctrl_rog_bios::CtrlRogBios, GetSupported,
 };
 
-use rog_supported::{
-    AnimeSupportedFunctions, ChargeSupportedFunctions, LedSupportedFunctions,
-    PlatformProfileFunctions, RogBiosSupportedFunctions,
-};
+use rog_platform::supported::*;
 
 #[derive(Serialize, Deserialize, Type)]
 pub struct SupportedFunctions {

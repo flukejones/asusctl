@@ -4,8 +4,8 @@ use crate::{
     RogApp, RogDbusClientBlocking,
 };
 use egui::Ui;
+use rog_platform::supported::SupportedFunctions;
 use rog_profiles::Profile;
-use rog_supported::SupportedFunctions;
 
 impl<'a> RogApp<'a> {
     pub fn fan_curve_page(&mut self, ctx: &egui::Context) {

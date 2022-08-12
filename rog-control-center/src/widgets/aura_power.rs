@@ -3,7 +3,7 @@ use rog_aura::{
     usb::{AuraDev1866, AuraDev19b6, AuraDevTuf, AuraDevice, AuraPowerDev},
     AuraZone,
 };
-use rog_supported::SupportedFunctions;
+use rog_platform::supported::SupportedFunctions;
 
 use crate::{page_states::PageDataStates, RogDbusClientBlocking};
 

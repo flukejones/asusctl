@@ -1,5 +1,3 @@
-pub static VERSION: &str = env!("CARGO_PKG_VERSION");
-
 use rog_aura::{usb::AuraDevice, AuraModeNum, AuraZone};
 use serde_derive::{Deserialize, Serialize};
 use std::fmt;

@@ -2,12 +2,15 @@ pub mod error;
 pub mod hid_raw;
 pub mod keyboard_led;
 pub mod platform;
+pub mod supported;
 pub mod usb_raw;
 
 use std::path::Path;
 
 use error::{PlatformError, Result};
 use udev::Device;
+
+pub static VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[macro_export]
 macro_rules! attr_bool {

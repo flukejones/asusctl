@@ -13,8 +13,7 @@ use rog_anime::{
     },
     ActionData, AnimeDataBuffer, AnimePacketType, AnimeType,
 };
-use rog_platform::{hid_raw::HidRaw, usb_raw::USBRaw};
-use rog_supported::AnimeSupportedFunctions;
+use rog_platform::{hid_raw::HidRaw, supported::AnimeSupportedFunctions, usb_raw::USBRaw};
 use smol::{stream::StreamExt, Executor};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::{

@@ -1,7 +1,7 @@
 use crate::{page_states::PageDataStates, RogDbusClientBlocking};
 use egui::Ui;
+use rog_platform::supported::SupportedFunctions;
 use rog_profiles::Profile;
-use rog_supported::SupportedFunctions;
 
 pub fn platform_profile(states: &mut PageDataStates, dbus: &RogDbusClientBlocking, ui: &mut Ui) {
     ui.heading("Platform profile");

@@ -8,7 +8,7 @@ use std::{
 };
 
 use egui::{Button, RichText};
-use rog_supported::SupportedFunctions;
+use rog_platform::supported::SupportedFunctions;
 
 use crate::{
     config::Config, error::Result, page_states::PageDataStates, Page, RogDbusClientBlocking,

@@ -15,7 +15,7 @@ eframe= { git = "https://github.com/emilk/egui" }
 rog_dbus = { path = "../rog-dbus" }
 rog_aura = { path = "../rog-aura" }
 rog_profiles = { path = "../rog-profiles" }
-rog_supported = { path = "../rog-supported" }
+rog_platform = { path = "../rog-platform" }
 # supergfxctl = { git = "https://gitlab.com/asus-linux/supergfxctl.git" }
 
 smol = "^1.2"

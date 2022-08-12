@@ -16,7 +16,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("  user daemon v{}", rog_user::VERSION);
     println!("    rog-anime v{}", rog_anime::VERSION);
     println!("     rog-dbus v{}", rog_dbus::VERSION);
-    println!("rog-supported v{}", rog_supported::VERSION);
+    println!("rog-platform v{}", rog_platform::VERSION);
 
     let (client, _) = RogDbusClientBlocking::new()?;
     let supported = client.proxies().supported().supported_functions()?;

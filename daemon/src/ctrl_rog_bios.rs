@@ -2,7 +2,7 @@ use crate::{config::Config, error::RogError, GetSupported};
 use async_trait::async_trait;
 use log::{error, info, warn};
 use rog_platform::platform::AsusPlatform;
-use rog_supported::RogBiosSupportedFunctions;
+use rog_platform::supported::RogBiosSupportedFunctions;
 use std::fs::OpenOptions;
 use std::io::BufRead;
 use std::io::{Read, Write};

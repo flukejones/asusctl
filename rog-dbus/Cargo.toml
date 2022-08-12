@@ -13,7 +13,7 @@ edition = "2018"
 rog_anime = { path = "../rog-anime" }
 rog_aura = { path = "../rog-aura" }
 rog_profiles = { path = "../rog-profiles" }
-rog_supported = { path = "../rog-supported" }
+rog_platform = { path = "../rog-platform" }
 zbus = "^2.2"
 zbus_macros = "^2.0"
 zvariant = "^3.0"

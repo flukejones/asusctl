@@ -8,8 +8,8 @@ use std::{
 
 use egui::Vec2;
 use rog_aura::{layouts::KeyLayout, usb::AuraPowerDev, AuraEffect, AuraModeNum};
+use rog_platform::supported::SupportedFunctions;
 use rog_profiles::{fan_curve_set::FanCurveSet, FanCurvePU, Profile};
-use rog_supported::SupportedFunctions;
 
 use crate::{error::Result, RogDbusClientBlocking};
 

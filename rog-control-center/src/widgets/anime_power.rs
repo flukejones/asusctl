@@ -1,5 +1,5 @@
 use egui::{RichText, Ui};
-use rog_supported::SupportedFunctions;
+use rog_platform::supported::SupportedFunctions;
 
 use crate::{page_states::PageDataStates, RogDbusClientBlocking};
 

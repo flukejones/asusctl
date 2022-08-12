@@ -11,8 +11,7 @@ use rog_aura::{
     AuraEffect, LedBrightness, LED_MSG_LEN,
 };
 use rog_aura::{AuraZone, Direction, Speed, GRADIENT};
-use rog_platform::{hid_raw::HidRaw, keyboard_led::KeyboardLed};
-use rog_supported::LedSupportedFunctions;
+use rog_platform::{hid_raw::HidRaw, keyboard_led::KeyboardLed, supported::LedSupportedFunctions};
 use smol::{stream::StreamExt, Executor};
 use std::collections::BTreeMap;
 use std::sync::Arc;
