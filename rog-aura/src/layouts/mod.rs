@@ -9,7 +9,7 @@ use crate::{error::Error, keys::Key};
 use serde::{Deserialize, Serialize};
 use std::{fs::OpenOptions, io::Read, path::Path, slice::Iter};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct KeyLayout {
     /// A series of board names that this layout can be used for. The board names
     /// stored with the layout can be globbed, e.g, GA401 will match all of the
@@ -48,7 +48,7 @@ impl KeyLayout {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct KeyRow {
     height: f32,
     row: Vec<Key>,

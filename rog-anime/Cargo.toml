@@ -15,7 +15,7 @@ exclude = ["data"]
 [features]
 default = ["dbus", "detect"]
 dbus = ["zvariant", "zbus"]
-detect = ["udev", "sysfs-class"]
+detect = ["sysfs-class"]
 
 [dependencies]
 png_pong = "^0.8.0"
@@ -31,5 +31,4 @@ glam = { version = "^0.21.2", features = ["serde"] }
 zvariant = { version = "^3.0", optional = true }
 zbus = { version = "^2.2", optional = true }
 
-udev = { version = "^0.6", optional = true }
 sysfs-class = { version = "^0.1", optional = true }

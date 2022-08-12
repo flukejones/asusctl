@@ -2,12 +2,12 @@ use crate::laptops::{LaptopLedData, ASUS_KEYBOARD_DEVICES};
 use log::{error, warn};
 use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Direction, LedBrightness, Speed, GRADIENT};
+use rog_platform::hid_raw::HidRaw;
+use rog_platform::keyboard_led::KeyboardLed;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashSet};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
-
-use super::controller::CtrlKbdLed;
 
 pub static AURA_CONFIG_PATH: &str = "/etc/asusd/aura.conf";
 
@@ -128,14 +128,16 @@ impl Default for AuraConfig {
     fn default() -> Self {
         let mut prod_id = AuraDevice::Unknown;
         for prod in ASUS_KEYBOARD_DEVICES.iter() {
-            if let Ok(_) = CtrlKbdLed::find_led_node(prod) {
+            if let Ok(_) = HidRaw::new(prod) {
                 prod_id = AuraDevice::from(*prod);
                 break;
             }
         }
 
-        if CtrlKbdLed::get_tuf_mode_path().is_some() {
-            prod_id = AuraDevice::Tuf;
+        if let Ok(p) = KeyboardLed::new() {
+            if p.has_keyboard_rgb_mode() {
+                prod_id = AuraDevice::Tuf;
+            }
         }
 
         let enabled = if prod_id == AuraDevice::X19B6 {

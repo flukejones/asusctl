@@ -1,4 +1,5 @@
 use rog_anime::error::AnimeError;
+use rog_platform::error::PlatformError;
 use rog_profiles::error::ProfileError;
 use std::convert::From;
 use std::fmt;
@@ -28,6 +29,7 @@ pub enum RogError {
     NoAuraKeyboard,
     NoAuraNode,
     Anime(AnimeError),
+    Platform(PlatformError),
 }
 
 impl fmt::Display for RogError {
@@ -57,6 +59,7 @@ impl fmt::Display for RogError {
             RogError::NoAuraKeyboard => write!(f, "No supported Aura keyboard"),
             RogError::NoAuraNode => write!(f, "No Aura keyboard node found"),
             RogError::Anime(deets) => write!(f, "AniMe Matrix error: {}", deets),
+            RogError::Platform(deets) => write!(f, "Asus Platform error: {}", deets),
         }
     }
 }
@@ -72,6 +75,12 @@ impl From<ProfileError> for RogError {
 impl From<AnimeError> for RogError {
     fn from(err: AnimeError) -> Self {
         RogError::Anime(err)
+    }
+}
+
+impl From<PlatformError> for RogError {
+    fn from(err: PlatformError) -> Self {
+        RogError::Platform(err)
     }
 }
 

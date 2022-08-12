@@ -1,5 +1,5 @@
 [workspace]
-members = ["asusctl", "asus-notify", "daemon", "daemon-user", "rog-supported", "rog-dbus", "rog-anime", "rog-aura", "rog-profiles", "rog-control-center"]
+members = ["asusctl", "asus-notify", "daemon", "daemon-user", "rog-platform", "rog-supported", "rog-dbus", "rog-anime", "rog-aura", "rog-profiles", "rog-control-center"]
 
 [profile.release]
 # thin = 57s, asusd = 9.0M

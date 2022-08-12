@@ -39,13 +39,13 @@ impl BiosState {
             } else {
                 false
             },
-            dedicated_gfx: if supported.rog_bios_ctrl.dedicated_gfx {
-                dbus.proxies().rog_bios().dedicated_graphic_mode()? != 0
+            dedicated_gfx: if supported.rog_bios_ctrl.dgpu_only {
+                dbus.proxies().rog_bios().dedicated_graphic_mode()?
             } else {
                 false
             },
             panel_overdrive: if supported.rog_bios_ctrl.panel_overdrive {
-                dbus.proxies().rog_bios().panel_overdrive()? != 0
+                dbus.proxies().rog_bios().panel_overdrive()?
             } else {
                 false
             },

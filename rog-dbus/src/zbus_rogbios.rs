@@ -27,7 +27,7 @@ use zbus_macros::dbus_proxy;
 )]
 trait RogBios {
     /// DedicatedGraphicMode method
-    fn dedicated_graphic_mode(&self) -> zbus::Result<i16>;
+    fn dedicated_graphic_mode(&self) -> zbus::Result<bool>;
 
     /// PostBootSound method
     fn post_boot_sound(&self) -> zbus::Result<i16>;
@@ -39,7 +39,7 @@ trait RogBios {
     fn set_post_boot_sound(&self, on: bool) -> zbus::Result<()>;
 
     /// PanelOverdrive method
-    fn panel_overdrive(&self) -> zbus::Result<i8>;
+    fn panel_overdrive(&self) -> zbus::Result<bool>;
 
     /// SetPanelOverdrive method
     fn set_panel_overdrive(&self, overdrive: bool) -> zbus::Result<()>;

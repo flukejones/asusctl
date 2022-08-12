@@ -21,14 +21,12 @@ path = "src/daemon.rs"
 rog_anime = { path = "../rog-anime", features = ["dbus"] }
 rog_aura = { path = "../rog-aura", features = ["dbus"] }
 rog_supported = { path = "../rog-supported" }
+rog_platform = { path = "../rog-platform" }
 rog_profiles = { path = "../rog-profiles" }
 rog_dbus = { path = "../rog-dbus" }
 
 async-trait = "^0.1"
 smol = "^1.2"
-
-rusb = "^0.9"
-udev = "^0.6"
 
 # cli and logging
 log = "^0.4"

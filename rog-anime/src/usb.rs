@@ -36,30 +36,6 @@ pub fn get_anime_type() -> Result<AnimeType, AnimeError> {
     Err(AnimeError::UnsupportedDevice)
 }
 
-/// Find the USB device node - known devices so far: `19b6`
-#[inline]
-pub fn find_node(id_product: &str) -> Result<String, AnimeError> {
-    let mut enumerator =
-        udev::Enumerator::new().map_err(|err| AnimeError::Udev("enumerator failed".into(), err))?;
-    enumerator
-        .match_subsystem("usb")
-        .map_err(|err| AnimeError::Udev("match_subsystem failed".into(), err))?;
-
-    for device in enumerator
-        .scan_devices()
-        .map_err(|err| AnimeError::Udev("scan_devices failed".into(), err))?
-    {
-        if let Some(attr) = device.attribute_value("idProduct") {
-            if attr == id_product {
-                if let Some(dev_node) = device.devnode() {
-                    return Ok(dev_node.to_string_lossy().to_string());
-                }
-            }
-        }
-    }
-    Err(AnimeError::NoDevice)
-}
-
 /// Get the two device initialization packets. These are required for device start
 /// after the laptop boots.
 #[inline]

@@ -78,7 +78,7 @@ impl CtrlKbdLedZbus {
 
             ctrl.config.write();
 
-            ctrl.set_power_states(&ctrl.config).map_err(|e| {
+            ctrl.set_power_states().map_err(|e| {
                 warn!("{}", e);
                 e
             })?;
