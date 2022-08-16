@@ -16,7 +16,7 @@ pub mod layouts;
 pub mod usb;
 
 pub const LED_MSG_LEN: usize = 17;
-pub static VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub const RED: Colour = Colour(0xff, 0x00, 0x00);
 pub const GREEN: Colour = Colour(0x00, 0xff, 0x00);

@@ -15,10 +15,10 @@ use udev::Device;
 #[cfg(feature = "dbus")]
 use zvariant_derive::Type;
 
-pub static PLATFORM_PROFILE: &str = "/sys/firmware/acpi/platform_profile";
-pub static PLATFORM_PROFILES: &str = "/sys/firmware/acpi/platform_profile_choices";
+pub const PLATFORM_PROFILE: &str = "/sys/firmware/acpi/platform_profile";
+pub const PLATFORM_PROFILES: &str = "/sys/firmware/acpi/platform_profile_choices";
 
-pub static VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub fn find_fan_curve_node() -> Result<Option<Device>, ProfileError> {
     let mut enumerator = udev::Enumerator::new()?;

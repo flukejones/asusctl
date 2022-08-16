@@ -39,7 +39,7 @@ use smol::{stream::StreamExt, Executor, Timer};
 use zbus::Connection;
 use zvariant::ObjectPath;
 
-pub static VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub trait Reloadable {
     fn reload(&mut self) -> Result<(), RogError>;

@@ -15,7 +15,8 @@ pub mod zbus_supported;
 // use std::sync::mpsc::{channel, Receiver};
 use zbus::{blocking, Connection, Result};
 
-pub static VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 pub struct DbusProxiesBlocking<'a> {
     anime: zbus_anime::AnimeProxyBlocking<'a>,
     charge: zbus_charge::ChargeProxyBlocking<'a>,

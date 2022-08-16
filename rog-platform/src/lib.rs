@@ -13,7 +13,7 @@ use std::path::Path;
 use error::{PlatformError, Result};
 use udev::Device;
 
-pub static VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[macro_export]
 macro_rules! attr_bool {

@@ -28,6 +28,20 @@ use nix::{sys::stat, unistd};
 use tempfile::TempDir;
 //use log::{error, info, warn};
 
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+pub fn print_versions() {
+    println!("App and daemon versions:");
+    println!("      rog-gui v{}", VERSION);
+    println!("        asusd v{}", daemon::VERSION);
+    println!("\nComponent crate versions:");
+    println!("    rog-anime v{}", rog_anime::VERSION);
+    println!("     rog-aura v{}", rog_aura::VERSION);
+    println!("     rog-dbus v{}", rog_dbus::VERSION);
+    println!(" rog-profiles v{}", rog_profiles::VERSION);
+    println!("rog-platform v{}", rog_platform::VERSION);
+}
+
 pub const SHOWING_GUI: u8 = 1;
 pub const SHOW_GUI: u8 = 2;
 

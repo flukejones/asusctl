@@ -32,4 +32,4 @@ pub mod error;
 /// Provides const methods to create the USB HID control packets
 pub mod usb;
 
-pub static VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");

@@ -1,8 +1,8 @@
 use rog_aura::layouts::KeyLayout;
 use rog_control_center::{
     config::Config, get_ipc_file, notify::start_notifications, on_tmp_dir_exists,
-    page_states::PageDataStates, startup_error::AppErrorShow, RogApp, RogDbusClientBlocking,
-    SHOWING_GUI, SHOW_GUI,
+    page_states::PageDataStates, print_versions, startup_error::AppErrorShow, RogApp,
+    RogDbusClientBlocking, SHOWING_GUI, SHOW_GUI,
 };
 
 use std::{
@@ -19,6 +19,8 @@ const DATA_DIR: &str = env!("CARGO_MANIFEST_DIR");
 const BOARD_NAME: &str = "/sys/class/dmi/id/board_name";
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    print_versions();
+
     let native_options = eframe::NativeOptions {
         decorated: false,
         transparent: false,
