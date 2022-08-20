@@ -75,6 +75,10 @@ impl std::str::FromStr for CurveData {
         let mut pwm_prev = 0;
         let mut percentages = false;
 
+        if input.split(',').count() < 8 {
+            return Err(ProfileError::NotEnoughPoints);
+        }
+
         for (index, value) in input.split(',').enumerate() {
             for (select, num) in value.splitn(2, |c| c == 'c' || c == ':').enumerate() {
                 if num.contains('%') {
@@ -265,7 +269,12 @@ mod tests {
         assert_eq!(
             string.as_str(),
             "CPU: 30c:1%,49c:1%,59c:3%,69c:3%,79c:30%,89c:49%,99c:56%,109c:58%"
-        )
+        );
+
+        let curve =
+            CurveData::from_str("30c:1%,49c:2%,59c:3%,69c:4%,79c:31%,89c:49%,99c:56%");
+
+        assert!(curve.is_err());
     }
 
     #[test]

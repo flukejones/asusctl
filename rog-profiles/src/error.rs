@@ -13,6 +13,7 @@ pub enum ProfileError {
     /// (pwm/temp, prev, next)
     ParseFanCurvePrevHigher(&'static str, u8, u8),
     ParseFanCurvePercentOver100(u8),
+    NotEnoughPoints,
     // Zbus(zbus::Error),
 }
 
@@ -24,6 +25,7 @@ impl fmt::Display for ProfileError {
             ProfileError::Read(path, error) => write!(f, "Read {}: {}", path, error),
             ProfileError::Write(path, error) => write!(f, "Write {}: {}", path, error),
             ProfileError::NotSupported => write!(f, "Not supported"),
+            ProfileError::NotEnoughPoints => write!(f, "Less than 8 curve points supplied"),
             ProfileError::NotFound(deets) => write!(f, "Not found: {}", deets),
             ProfileError::Io(detail) => write!(f, "std::io error: {}", detail),
             ProfileError::ParseProfileName => write!(f, "Invalid profile name"),
