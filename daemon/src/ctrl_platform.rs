@@ -1,8 +1,12 @@
+use crate::CtrlTask;
 use crate::{config::Config, error::RogError, GetSupported};
 use async_trait::async_trait;
 use log::{info, warn};
+use logind_zbus::manager::ManagerProxy;
 use rog_platform::platform::{AsusPlatform, GpuMode};
 use rog_platform::supported::RogBiosSupportedFunctions;
+use smol::stream::StreamExt;
+use smol::Executor;
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::Path;
@@ -15,9 +19,10 @@ use zbus::{dbus_interface, SignalContext};
 static ASUS_POST_LOGO_SOUND: &str =
     "/sys/firmware/efi/efivars/AsusPostLogoSound-607005d5-3f75-4b2e-98f0-85ba66797a3e";
 
+#[derive(Clone)]
 pub struct CtrlRogBios {
     platform: AsusPlatform,
-    _config: Arc<Mutex<Config>>,
+    config: Arc<Mutex<Config>>,
 }
 
 impl GetSupported for CtrlRogBios {
@@ -43,6 +48,95 @@ impl GetSupported for CtrlRogBios {
             dgpu_disable,
             egpu_enable,
         }
+    }
+}
+
+impl CtrlRogBios {
+    pub fn new(config: Arc<Mutex<Config>>) -> Result<Self, RogError> {
+        let platform = AsusPlatform::new()?;
+
+        if !platform.has_gpu_mux_mode() {
+            info!("G-Sync Switchable Graphics not detected");
+            info!("If your laptop is not a G-Sync enabled laptop then you can ignore this. Standard graphics switching will still work.");
+        }
+
+        if Path::new(ASUS_POST_LOGO_SOUND).exists() {
+            CtrlRogBios::set_path_mutable(ASUS_POST_LOGO_SOUND)?;
+        } else {
+            info!("Switch for POST boot sound not detected");
+        }
+
+        Ok(CtrlRogBios { platform, config })
+    }
+
+    fn set_path_mutable(path: &str) -> Result<(), RogError> {
+        let output = Command::new("/usr/bin/chattr")
+            .arg("-i")
+            .arg(path)
+            .output()
+            .map_err(|err| RogError::Path(path.into(), err))?;
+        info!("Set {} writeable: status: {}", path, output.status);
+        Ok(())
+    }
+
+    fn set_gfx_mode(&self, mode: GpuMode) -> Result<(), RogError> {
+        self.platform.set_gpu_mux_mode(mode.to_mux())?;
+        // self.update_initramfs(enable)?;
+        if mode == GpuMode::Discrete {
+            info!("Set system-level graphics mode: Dedicated Nvidia");
+        } else {
+            info!("Set system-level graphics mode: Optimus");
+        }
+        Ok(())
+    }
+
+    pub fn get_boot_sound() -> Result<i8, RogError> {
+        let path = ASUS_POST_LOGO_SOUND;
+        let mut file = OpenOptions::new()
+            .read(true)
+            .open(path)
+            .map_err(|err| RogError::Path(path.into(), err))?;
+
+        let mut data = Vec::new();
+        file.read_to_end(&mut data)
+            .map_err(|err| RogError::Read(path.into(), err))?;
+
+        let idx = data.len() - 1;
+        Ok(data[idx] as i8)
+    }
+
+    pub(super) fn set_boot_sound(on: bool) -> Result<(), RogError> {
+        let path = ASUS_POST_LOGO_SOUND;
+        let mut file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(path)
+            .map_err(|err| RogError::Path(path.into(), err))?;
+
+        let mut data = Vec::new();
+        file.read_to_end(&mut data)
+            .map_err(|err| RogError::Read(path.into(), err))?;
+
+        let idx = data.len() - 1;
+        if on {
+            data[idx] = 1;
+            info!("Set boot POST sound on");
+        } else {
+            data[idx] = 0;
+            info!("Set boot POST sound off");
+        }
+        file.write_all(&data)
+            .map_err(|err| RogError::Path(path.into(), err))?;
+
+        Ok(())
+    }
+
+    fn set_panel_od(&self, enable: bool) -> Result<(), RogError> {
+        self.platform.set_panel_od(enable).map_err(|err| {
+            warn!("CtrlRogBios: set_panel_overdrive {}", err);
+            err
+        })?;
+        Ok(())
     }
 }
 
@@ -118,6 +212,10 @@ impl CtrlRogBios {
             })
             .is_ok()
         {
+            if let Ok(mut lock) = self.config.try_lock() {
+                lock.panel_od = overdrive;
+                lock.write();
+            }
             Self::notify_panel_overdrive(&ctxt, overdrive).await.ok();
         }
     }
@@ -149,98 +247,84 @@ impl crate::ZbusAdd for CtrlRogBios {
 
 impl crate::Reloadable for CtrlRogBios {
     fn reload(&mut self) -> Result<(), RogError> {
+        let p = if let Ok(lock) = self.config.try_lock() {
+            lock.panel_od
+        } else {
+            false
+        };
+        self.set_panel_od(p)?;
         Ok(())
     }
 }
 
-impl CtrlRogBios {
-    pub fn new(config: Arc<Mutex<Config>>) -> Result<Self, RogError> {
-        let platform = AsusPlatform::new()?;
+#[async_trait]
+impl CtrlTask for CtrlRogBios {
+    async fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
+        let connection = Connection::system()
+            .await
+            .expect("CtrlRogBios could not create dbus connection");
 
-        if !platform.has_gpu_mux_mode() {
-            info!("G-Sync Switchable Graphics not detected");
-            info!("If your laptop is not a G-Sync enabled laptop then you can ignore this. Standard graphics switching will still work.");
-        }
+        let manager = ManagerProxy::new(&connection)
+            .await
+            .expect("CtrlRogBios could not create ManagerProxy");
 
-        if Path::new(ASUS_POST_LOGO_SOUND).exists() {
-            CtrlRogBios::set_path_mutable(ASUS_POST_LOGO_SOUND)?;
-        } else {
-            info!("Switch for POST boot sound not detected");
-        }
+        let platform = self.clone();
+        executor
+            .spawn(async move {
+                if let Ok(notif) = manager.receive_prepare_for_sleep().await {
+                    notif
+                        .for_each(|event| {
+                            if let Ok(args) = event.args() {
+                                // If waking up
+                                if !args.start {
+                                    info!("CtrlRogBios reloading panel_od");
+                                    if let Ok(lock) = platform.config.try_lock() {
+                                        platform
+                                            .set_panel_od(lock.panel_od)
+                                            .map_err(|err| {
+                                                warn!("CtrlCharge: set_limit {}", err);
+                                                err
+                                            })
+                                            .ok();
+                                    }
+                                }
+                            }
+                        })
+                        .await;
+                }
+            })
+            .detach();
 
-        Ok(CtrlRogBios {
-            platform,
-            _config: config,
-        })
-    }
+        let manager = ManagerProxy::new(&connection)
+            .await
+            .expect("CtrlCharge could not create ManagerProxy");
 
-    fn set_path_mutable(path: &str) -> Result<(), RogError> {
-        let output = Command::new("/usr/bin/chattr")
-            .arg("-i")
-            .arg(path)
-            .output()
-            .map_err(|err| RogError::Path(path.into(), err))?;
-        info!("Set {} writeable: status: {}", path, output.status);
-        Ok(())
-    }
-
-    fn set_gfx_mode(&self, mode: GpuMode) -> Result<(), RogError> {
-        self.platform.set_gpu_mux_mode(mode.to_mux())?;
-        // self.update_initramfs(enable)?;
-        if mode == GpuMode::Discrete {
-            info!("Set system-level graphics mode: Dedicated Nvidia");
-        } else {
-            info!("Set system-level graphics mode: Optimus");
-        }
-        Ok(())
-    }
-
-    pub fn get_boot_sound() -> Result<i8, RogError> {
-        let path = ASUS_POST_LOGO_SOUND;
-        let mut file = OpenOptions::new()
-            .read(true)
-            .open(path)
-            .map_err(|err| RogError::Path(path.into(), err))?;
-
-        let mut data = Vec::new();
-        file.read_to_end(&mut data)
-            .map_err(|err| RogError::Read(path.into(), err))?;
-
-        let idx = data.len() - 1;
-        Ok(data[idx] as i8)
-    }
-
-    pub(super) fn set_boot_sound(on: bool) -> Result<(), RogError> {
-        let path = ASUS_POST_LOGO_SOUND;
-        let mut file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open(path)
-            .map_err(|err| RogError::Path(path.into(), err))?;
-
-        let mut data = Vec::new();
-        file.read_to_end(&mut data)
-            .map_err(|err| RogError::Read(path.into(), err))?;
-
-        let idx = data.len() - 1;
-        if on {
-            data[idx] = 1;
-            info!("Set boot POST sound on");
-        } else {
-            data[idx] = 0;
-            info!("Set boot POST sound off");
-        }
-        file.write_all(&data)
-            .map_err(|err| RogError::Path(path.into(), err))?;
-
-        Ok(())
-    }
-
-    fn set_panel_od(&mut self, enable: bool) -> Result<(), RogError> {
-        self.platform.set_panel_od(enable).map_err(|err| {
-            warn!("CtrlRogBios: set_panel_overdrive {}", err);
-            err
-        })?;
+        let platform = self.clone();
+        executor
+            .spawn(async move {
+                if let Ok(notif) = manager.receive_prepare_for_shutdown().await {
+                    notif
+                        .for_each(|event| {
+                            if let Ok(args) = event.args() {
+                                // If waking up - intention is to catch hibernation event
+                                if !args.start {
+                                    info!("CtrlRogBios reloading panel_od");
+                                    if let Ok(lock) = platform.config.try_lock() {
+                                        platform
+                                            .set_panel_od(lock.panel_od)
+                                            .map_err(|err| {
+                                                warn!("CtrlCharge: set_limit {}", err);
+                                                err
+                                            })
+                                            .ok();
+                                    }
+                                }
+                            }
+                        })
+                        .await;
+                }
+            })
+            .detach();
         Ok(())
     }
 }

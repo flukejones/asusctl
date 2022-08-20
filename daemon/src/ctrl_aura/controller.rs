@@ -238,7 +238,7 @@ impl CtrlKbdLed {
 
     pub(super) fn set_brightness(&self, brightness: LedBrightness) -> Result<(), RogError> {
         self.kd_brightness
-            .set_brightness(brightness.as_char_code())
+            .set_brightness(brightness as u8)
             .map_err(|e| RogError::Platform(e))
     }
 

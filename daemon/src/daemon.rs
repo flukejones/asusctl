@@ -88,6 +88,9 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
                 .unwrap_or_else(|err| warn!("Battery charge limit: {}", err));
             // Then register to dbus server
             ctrl.add_to_server(&mut connection).await;
+
+            let task = CtrlRogBios::new(config.clone())?;
+            task.create_tasks(executor).await.ok();
         }
         Err(err) => {
             error!("rog_bios_control: {}", err);

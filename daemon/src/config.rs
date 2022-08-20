@@ -7,15 +7,18 @@ use std::path::PathBuf;
 pub static CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
 
 #[derive(Deserialize, Serialize, Default)]
+#[serde(default)]
 pub struct Config {
     /// Save charge limit for restoring on boot
     pub bat_charge_limit: u8,
+    pub panel_od: bool,
 }
 
 impl Config {
     fn new() -> Self {
         Config {
             bat_charge_limit: 100,
+            panel_od: false,
         }
     }
 

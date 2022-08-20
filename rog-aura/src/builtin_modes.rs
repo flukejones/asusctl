@@ -20,13 +20,6 @@ pub enum LedBrightness {
     High,
 }
 
-impl LedBrightness {
-    pub fn as_char_code(&self) -> u8 {
-        std::char::from_digit(*self as u32, 10)
-            .expect("LedBrightness.as_char_code failed to convert") as u8
-    }
-}
-
 impl From<u32> for LedBrightness {
     fn from(bright: u32) -> Self {
         match bright {
