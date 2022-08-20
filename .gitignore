@@ -5,3 +5,4 @@ cargo-config
 vendor-*
 vendor_*
 .vscode-ctags
+.vscode

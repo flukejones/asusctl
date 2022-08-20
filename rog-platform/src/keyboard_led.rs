@@ -3,13 +3,15 @@ use std::path::PathBuf;
 use log::warn;
 
 use crate::{
-    attr_u8, attr_u8_array,
+    attr_u8,
     error::{PlatformError, Result},
-    to_device,
+    has_attr, set_attr_u8_array, to_device,
 };
 
-#[derive(Debug, Default, PartialEq, PartialOrd)]
-pub struct KeyboardLed(PathBuf);
+#[derive(Debug, Default, PartialEq, PartialOrd, Clone)]
+pub struct KeyboardLed {
+    path: PathBuf,
+}
 
 impl KeyboardLed {
     pub fn new() -> Result<Self> {
@@ -34,26 +36,28 @@ impl KeyboardLed {
             warn!("{}", err);
             PlatformError::Udev("scan_devices failed".into(), err)
         })? {
-            return Ok(Self(device.syspath().to_owned()));
+            return Ok(Self {
+                path: device.syspath().to_owned(),
+            });
         }
         Err(PlatformError::MissingFunction(
             "asus::kbd_backlight not found".into(),
         ))
     }
 
-    attr_u8!(has_brightness, get_brightness, set_brightness, "brightness");
+    attr_u8!("brightness", path);
 
-    attr_u8_array!(
-        has_keyboard_rgb_mode,
-        get_keyboard_rgb_mode,
-        set_keyboard_rgb_mode,
+    has_attr!("kbd_rgb_mode" path);
+    set_attr_u8_array!(
+        /// kbd_rgb_mode can only be set, not read back
         "kbd_rgb_mode"
+        path
     );
 
-    attr_u8_array!(
-        has_keyboard_rgb_state,
-        get_keyboard_rgb_state,
-        set_keyboard_rgb_state,
+    has_attr!("kbd_rgb_state" path);
+    set_attr_u8_array!(
+        /// kbd_rgb_state can only be set, not read back
         "kbd_rgb_state"
+        path
     );
 }

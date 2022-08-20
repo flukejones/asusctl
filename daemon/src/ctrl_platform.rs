@@ -156,6 +156,7 @@ impl crate::Reloadable for CtrlRogBios {
 impl CtrlRogBios {
     pub fn new(config: Arc<Mutex<Config>>) -> Result<Self, RogError> {
         let platform = AsusPlatform::new()?;
+
         if !platform.has_gpu_mux_mode() {
             info!("G-Sync Switchable Graphics not detected");
             info!("If your laptop is not a G-Sync enabled laptop then you can ignore this. Standard graphics switching will still work.");

@@ -16,8 +16,8 @@ use daemon::ctrl_aura::config::AuraConfig;
 use daemon::ctrl_aura::controller::{
     CtrlKbdLed, CtrlKbdLedReloader, CtrlKbdLedTask, CtrlKbdLedZbus,
 };
-use daemon::ctrl_charge::CtrlCharge;
 use daemon::ctrl_platform::CtrlRogBios;
+use daemon::ctrl_power::CtrlPower;
 use daemon::ctrl_profiles::config::ProfileConfig;
 use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
@@ -94,7 +94,7 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
         }
     }
 
-    match CtrlCharge::new(config.clone()) {
+    match CtrlPower::new(config.clone()) {
         Ok(mut ctrl) => {
             // Do a reload of any settings
             ctrl.reload()
@@ -102,7 +102,7 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
             // Then register to dbus server
             ctrl.add_to_server(&mut connection).await;
 
-            let task = CtrlCharge::new(config)?;
+            let task = CtrlPower::new(config)?;
             task.create_tasks(executor).await.ok();
         }
         Err(err) => {

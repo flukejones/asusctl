@@ -5,8 +5,8 @@ use zbus::Connection;
 use zvariant::Type;
 
 use crate::{
-    ctrl_anime::CtrlAnime, ctrl_aura::controller::CtrlKbdLed, ctrl_charge::CtrlCharge,
-    ctrl_platform::CtrlRogBios, ctrl_profiles::controller::CtrlPlatformProfile, GetSupported,
+    ctrl_anime::CtrlAnime, ctrl_aura::controller::CtrlKbdLed, ctrl_platform::CtrlRogBios,
+    ctrl_power::CtrlPower, ctrl_profiles::controller::CtrlPlatformProfile, GetSupported,
 };
 
 use rog_platform::supported::*;
@@ -41,7 +41,7 @@ impl GetSupported for SupportedFunctions {
         SupportedFunctions {
             anime_ctrl: CtrlAnime::get_supported(),
             keyboard_led: CtrlKbdLed::get_supported(),
-            charge_ctrl: CtrlCharge::get_supported(),
+            charge_ctrl: CtrlPower::get_supported(),
             platform_profile: CtrlPlatformProfile::get_supported(),
             rog_bios_ctrl: CtrlRogBios::get_supported(),
         }

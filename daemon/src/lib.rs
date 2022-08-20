@@ -5,10 +5,10 @@ pub mod config;
 pub mod ctrl_anime;
 /// Keyboard LED brightness control, RGB, and LED display modes
 pub mod ctrl_aura;
-/// Control of battery charge level
-pub mod ctrl_charge;
 /// Control ASUS bios function such as boot sound, Optimus/Dedicated gfx mode
 pub mod ctrl_platform;
+/// Control of battery charge level
+pub mod ctrl_power;
 /// Control CPU min/max freq and turbo, fan mode, fan curves
 ///
 /// Intel machines can control:

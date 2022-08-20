@@ -4,7 +4,9 @@
 pub mod error;
 pub mod hid_raw;
 pub mod keyboard_led;
+pub(crate) mod macros;
 pub mod platform;
+pub mod power;
 pub mod supported;
 pub mod usb_raw;
 
@@ -14,66 +16,6 @@ use error::{PlatformError, Result};
 use udev::Device;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-#[macro_export]
-macro_rules! attr_bool {
-    ($hasser:ident, $getter:ident, $setter:ident, $attr_name:literal) => {
-        pub fn $hasser(&self) -> bool {
-            match to_device(&self.0) {
-                Ok(p) => crate::has_attr(&p, $attr_name),
-                Err(_) => false,
-            }
-        }
-
-        pub fn $getter(&self) -> Result<bool> {
-            crate::read_attr_bool(&to_device(&self.0)?, $attr_name)
-        }
-
-        pub fn $setter(&self, value: bool) -> Result<()> {
-            crate::write_attr_bool(&mut to_device(&self.0)?, $attr_name, value)
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! attr_u8 {
-    ($hasser:ident, $getter:ident, $setter:ident, $attr_name:literal) => {
-        pub fn $hasser(&self) -> bool {
-            match to_device(&self.0) {
-                Ok(p) => crate::has_attr(&p, $attr_name),
-                Err(_) => false,
-            }
-        }
-
-        pub fn $getter(&self) -> Result<u8> {
-            crate::read_attr_u8(&to_device(&self.0)?, $attr_name)
-        }
-
-        pub fn $setter(&self, value: u8) -> Result<()> {
-            crate::write_attr_u8(&mut to_device(&self.0)?, $attr_name, value)
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! attr_u8_array {
-    ($hasser:ident, $getter:ident, $setter:ident, $attr_name:literal) => {
-        pub fn $hasser(&self) -> bool {
-            match to_device(&self.0) {
-                Ok(p) => crate::has_attr(&p, $attr_name),
-                Err(_) => false,
-            }
-        }
-
-        pub fn $getter(&self) -> Result<Vec<u8>> {
-            crate::read_attr_u8_array(&to_device(&self.0)?, $attr_name)
-        }
-
-        pub fn $setter(&self, values: &[u8]) -> Result<()> {
-            crate::write_attr_u8_array(&mut to_device(&self.0)?, $attr_name, values)
-        }
-    };
-}
 
 pub(crate) fn to_device(sys_path: &Path) -> Result<Device> {
     Device::from_syspath(sys_path)

@@ -3,7 +3,7 @@ use serde_derive::{Deserialize, Serialize};
 use std::fmt;
 use zvariant_derive::Type;
 
-#[derive(Serialize, Deserialize, Type, Debug, Default)]
+#[derive(Serialize, Deserialize, Type, Debug, Default, Clone)]
 pub struct SupportedFunctions {
     pub anime_ctrl: AnimeSupportedFunctions,
     pub charge_ctrl: ChargeSupportedFunctions,
@@ -12,21 +12,21 @@ pub struct SupportedFunctions {
     pub rog_bios_ctrl: RogBiosSupportedFunctions,
 }
 
-#[derive(Serialize, Deserialize, Type, Debug, Default)]
+#[derive(Serialize, Deserialize, Type, Debug, Default, Clone)]
 pub struct AnimeSupportedFunctions(pub bool);
 
-#[derive(Serialize, Deserialize, Type, Debug, Default)]
+#[derive(Serialize, Deserialize, Type, Debug, Default, Clone)]
 pub struct ChargeSupportedFunctions {
     pub charge_level_set: bool,
 }
 
-#[derive(Serialize, Deserialize, Type, Debug, Default)]
+#[derive(Serialize, Deserialize, Type, Debug, Default, Clone)]
 pub struct PlatformProfileFunctions {
     pub platform_profile: bool,
     pub fan_curves: bool,
 }
 
-#[derive(Serialize, Deserialize, Type, Debug, Default)]
+#[derive(Serialize, Deserialize, Type, Debug, Default, Clone)]
 pub struct LedSupportedFunctions {
     pub prod_id: AuraDevice,
     pub brightness_set: bool,
@@ -35,7 +35,7 @@ pub struct LedSupportedFunctions {
     pub per_key_led_mode: bool,
 }
 
-#[derive(Serialize, Deserialize, Type, Debug, Default)]
+#[derive(Serialize, Deserialize, Type, Debug, Default, Clone)]
 pub struct RogBiosSupportedFunctions {
     pub post_sound: bool,
     pub dgpu_only: bool,

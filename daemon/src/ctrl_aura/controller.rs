@@ -42,7 +42,7 @@ impl GetSupported for CtrlKbdLed {
         }
 
         if let Ok(p) = KeyboardLed::new() {
-            if p.has_keyboard_rgb_mode() {
+            if p.has_kbd_rgb_mode() {
                 prod_id = AuraDevice::Tuf;
             }
         }
@@ -199,7 +199,7 @@ impl CtrlKbdLed {
         let bright_node = KeyboardLed::new();
         let platform = KeyboardLed::new()?;
 
-        if led_node.is_none() && !platform.has_keyboard_rgb_mode() {
+        if led_node.is_none() && !platform.has_kbd_rgb_mode() {
             let dmi = sysfs_class::DmiId::default();
             if let Ok(prod_family) = dmi.product_family() {
                 if prod_family.contains("TUF") {
@@ -212,7 +212,7 @@ impl CtrlKbdLed {
         let led_node = if let Some(rog) = led_node {
             info!("Found ROG USB keyboard");
             LEDNode::Rog(rog)
-        } else if platform.has_keyboard_rgb_mode() {
+        } else if platform.has_kbd_rgb_mode() {
             info!("Found TUF keyboard");
             LEDNode::KbdLed(platform)
         } else {
@@ -269,7 +269,7 @@ impl CtrlKbdLed {
         if let LEDNode::KbdLed(platform) = &mut self.led_node {
             if let Some(pwr) = AuraPowerConfig::to_tuf_bool_array(&self.config.enabled) {
                 let buf = [1, pwr[1] as u8, pwr[2] as u8, pwr[3] as u8, pwr[4] as u8];
-                platform.set_keyboard_rgb_state(&buf)?;
+                platform.set_kbd_rgb_state(&buf)?;
             }
         } else if let LEDNode::Rog(hid_raw) = &self.led_node {
             let bytes = AuraPowerConfig::to_bytes(&self.config.enabled);
@@ -365,7 +365,7 @@ impl CtrlKbdLed {
                 mode.colour1.2,
                 mode.speed as u8,
             ];
-            platform.set_keyboard_rgb_mode(&buf)?;
+            platform.set_kbd_rgb_mode(&buf)?;
         } else if let LEDNode::Rog(hid_raw) = &self.led_node {
             let bytes: [u8; LED_MSG_LEN] = mode.into();
             hid_raw.write_bytes(&bytes)?;
