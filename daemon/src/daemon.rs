@@ -85,7 +85,7 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
         Ok(mut ctrl) => {
             // Do a reload of any settings
             ctrl.reload()
-                .unwrap_or_else(|err| warn!("Battery charge limit: {}", err));
+                .unwrap_or_else(|err| warn!("CtrlRogBios: {}", err));
             // Then register to dbus server
             ctrl.add_to_server(&mut connection).await;
 
@@ -101,7 +101,7 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
         Ok(mut ctrl) => {
             // Do a reload of any settings
             ctrl.reload()
-                .unwrap_or_else(|err| warn!("Battery charge limit: {}", err));
+                .unwrap_or_else(|err| warn!("CtrlPower: {}", err));
             // Then register to dbus server
             ctrl.add_to_server(&mut connection).await;
 

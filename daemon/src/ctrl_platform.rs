@@ -245,12 +245,14 @@ impl crate::ZbusAdd for CtrlRogBios {
 
 impl crate::Reloadable for CtrlRogBios {
     fn reload(&mut self) -> Result<(), RogError> {
-        let p = if let Ok(lock) = self.config.try_lock() {
-            lock.panel_od
-        } else {
-            false
-        };
-        self.set_panel_od(p)?;
+        if self.platform.has_panel_od() {
+            let p = if let Ok(lock) = self.config.try_lock() {
+                lock.panel_od
+            } else {
+                false
+            };
+            self.set_panel_od(p)?;
+        }
         Ok(())
     }
 }
@@ -266,26 +268,30 @@ impl CtrlTask for CtrlRogBios {
             move || {
                 info!("CtrlRogBios reloading panel_od");
                 if let Ok(lock) = platform1.config.try_lock() {
-                    platform1
-                        .set_panel_od(lock.panel_od)
-                        .map_err(|err| {
-                            warn!("CtrlCharge: set_limit {}", err);
-                            err
-                        })
-                        .ok();
+                    if platform1.platform.has_panel_od() {
+                        platform1
+                            .set_panel_od(lock.panel_od)
+                            .map_err(|err| {
+                                warn!("CtrlCharge: set_limit {}", err);
+                                err
+                            })
+                            .ok();
+                    }
                 }
             },
             move || {},
             move || {
                 info!("CtrlRogBios reloading panel_od");
                 if let Ok(lock) = platform2.config.try_lock() {
-                    platform2
-                        .set_panel_od(lock.panel_od)
-                        .map_err(|err| {
-                            warn!("CtrlCharge: set_limit {}", err);
-                            err
-                        })
-                        .ok();
+                    if platform2.platform.has_panel_od() {
+                        platform2
+                            .set_panel_od(lock.panel_od)
+                            .map_err(|err| {
+                                warn!("CtrlCharge: set_limit {}", err);
+                                err
+                            })
+                            .ok();
+                    }
                 }
             },
         )
