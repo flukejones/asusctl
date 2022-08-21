@@ -771,7 +771,7 @@ fn handle_bios_option(
 
             for line in usage.iter().filter(|line| {
                 line.contains("sound") && supported.post_sound
-                    || line.contains("GPU") && supported.dgpu_only
+                    || line.contains("GPU") && supported.gpu_mux
                     || line.contains("panel") && supported.panel_overdrive
             }) {
                 println!("{}", line);

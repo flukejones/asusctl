@@ -12,7 +12,7 @@ use crate::{
 /// - dgpu_disable
 /// - egpu_enable
 /// - panel_od
-/// - dgpu_only
+/// - gpu_mux
 /// - keyboard_mode, set keyboard RGB mode and speed
 /// - keyboard_state, set keyboard power states
 #[derive(Debug, PartialEq, PartialOrd, Clone)]

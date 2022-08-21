@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   + usbraw
 - Refactor how ROGCC handles IPC for background open, run-in-bg
 - Refactor daemon task creation to be simpler (for development)
+- Rename dpu_only to gpu_mux. Update all related messages and info.
 ### Breaking
 - DBUS: rename path `/org/asuslinux/RogBios` to `/org/asuslinux/Platform`
 - DBUS: renamed `dedicated_graphic_mode` to `gpu_mux_mode` (`GpuMuxMode`)

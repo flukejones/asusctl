@@ -30,18 +30,18 @@ impl GetSupported for CtrlRogBios {
         let mut panel_overdrive = false;
         let mut dgpu_disable = false;
         let mut egpu_enable = false;
-        let mut dgpu_only = false;
+        let mut gpu_mux = false;
 
         if let Ok(platform) = AsusPlatform::new() {
             panel_overdrive = platform.has_panel_od();
             dgpu_disable = platform.has_dgpu_disable();
             egpu_enable = platform.has_egpu_enable();
-            dgpu_only = platform.has_gpu_mux_mode();
+            gpu_mux = platform.has_gpu_mux_mode();
         }
 
         RogBiosSupportedFunctions {
             post_sound: Path::new(ASUS_POST_LOGO_SOUND).exists(),
-            dgpu_only,
+            gpu_mux,
             panel_overdrive,
             dgpu_disable,
             egpu_enable,
@@ -54,8 +54,8 @@ impl CtrlRogBios {
         let platform = AsusPlatform::new()?;
 
         if !platform.has_gpu_mux_mode() {
-            info!("G-Sync Switchable Graphics not detected");
-            info!("If your laptop is not a G-Sync enabled laptop then you can ignore this. Standard graphics switching will still work.");
+            info!("G-Sync Switchable Graphics or GPU MUX not detected");
+            info!("Standard graphics switching will still work.");
         }
 
         if Path::new(ASUS_POST_LOGO_SOUND).exists() {

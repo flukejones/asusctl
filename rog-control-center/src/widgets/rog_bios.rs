@@ -90,7 +90,7 @@ pub fn rog_bios_group(
         }
     }
 
-    if supported.rog_bios_ctrl.dgpu_only {
+    if supported.rog_bios_ctrl.gpu_mux {
         let mut changed = false;
         ui.group(|ui| {
             ui.vertical(|ui| {

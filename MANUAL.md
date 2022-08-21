@@ -91,7 +91,7 @@ where the number is a percentage.
 Some options that you find in Armory Crate are available under this controller, so far there is:
 
 - POST sound: this is the sound you hear on bios boot post
-- G-Sync: this controls if the dGPU (Nvidia) is the *only* GPU, making it the main GPU and disabling the iGPU
+- GPU MUX: this controls if the dGPU is the *only* GPU, making it the main GPU and disabling the iGPU
 
 These options are not written to the config file as they are stored in efivars. The only way to change these is to use the exposed safe dbus methods, or use the `asusctl` CLI tool.
 
