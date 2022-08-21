@@ -5,19 +5,17 @@ use crate::{
 };
 use async_trait::async_trait;
 use log::{error, info, warn};
-use logind_zbus::manager::ManagerProxy;
 use rog_aura::{
     usb::{AuraDevice, LED_APPLY, LED_SET},
     AuraEffect, LedBrightness, LED_MSG_LEN,
 };
 use rog_aura::{AuraZone, Direction, Speed, GRADIENT};
 use rog_platform::{hid_raw::HidRaw, keyboard_led::KeyboardLed, supported::LedSupportedFunctions};
-use smol::{stream::StreamExt, Executor};
+use smol::Executor;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
-use zbus::Connection;
 
 use crate::GetSupported;
 
@@ -95,14 +93,6 @@ impl CtrlKbdLedTask {
 #[async_trait]
 impl CtrlTask for CtrlKbdLedTask {
     async fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
-        let connection = Connection::system()
-            .await
-            .expect("CtrlKbdLedTask could not create dbus connection");
-
-        let manager = ManagerProxy::new(&connection)
-            .await
-            .expect("CtrlKbdLedTask could not create ManagerProxy");
-
         let load_save = |start: bool, mut lock: MutexGuard<CtrlKbdLed>| {
             // If waking up
             if !start {
@@ -121,41 +111,41 @@ impl CtrlTask for CtrlKbdLedTask {
             }
         };
 
-        let inner = self.inner.clone();
-        executor
-            .spawn(async move {
-                if let Ok(notif) = manager.receive_prepare_for_sleep().await {
-                    notif
-                        .for_each(|event| {
-                            if let Ok(args) = event.args() {
-                                loop {
-                                    // Loop so that we do aquire the lock but also don't block other
-                                    // threads (prevents potential deadlocks)
-                                    if let Ok(lock) = inner.clone().try_lock() {
-                                        load_save(args.start, lock);
-                                        break;
-                                    }
-                                }
-                            }
-                        })
-                        .await;
+        let inner1 = self.inner.clone();
+        let inner2 = self.inner.clone();
+        let inner3 = self.inner.clone();
+        let inner4 = self.inner.clone();
+        self.create_sys_event_tasks(
+            executor,
+            // Loop so that we do aquire the lock but also don't block other
+            // threads (prevents potential deadlocks)
+            move || loop {
+                if let Ok(lock) = inner1.clone().try_lock() {
+                    load_save(true, lock);
+                    break;
                 }
-                if let Ok(notif) = manager.receive_prepare_for_shutdown().await {
-                    notif
-                        .for_each(|event| {
-                            if let Ok(args) = event.args() {
-                                loop {
-                                    if let Ok(lock) = inner.clone().try_lock() {
-                                        load_save(args.start, lock);
-                                        break;
-                                    }
-                                }
-                            }
-                        })
-                        .await;
+            },
+            move || loop {
+                if let Ok(lock) = inner2.clone().try_lock() {
+                    load_save(false, lock);
+                    break;
                 }
-            })
-            .detach();
+            },
+            move || loop {
+                if let Ok(lock) = inner3.clone().try_lock() {
+                    load_save(false, lock);
+                    break;
+                }
+            },
+            move || loop {
+                if let Ok(lock) = inner4.clone().try_lock() {
+                    load_save(false, lock);
+                    break;
+                }
+            },
+        )
+        .await;
+
         Ok(())
     }
 }

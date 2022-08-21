@@ -2,10 +2,8 @@ use crate::CtrlTask;
 use crate::{config::Config, error::RogError, GetSupported};
 use async_trait::async_trait;
 use log::{info, warn};
-use logind_zbus::manager::ManagerProxy;
 use rog_platform::platform::{AsusPlatform, GpuMode};
 use rog_platform::supported::RogBiosSupportedFunctions;
-use smol::stream::StreamExt;
 use smol::Executor;
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
@@ -260,71 +258,39 @@ impl crate::Reloadable for CtrlRogBios {
 #[async_trait]
 impl CtrlTask for CtrlRogBios {
     async fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
-        let connection = Connection::system()
-            .await
-            .expect("CtrlRogBios could not create dbus connection");
-
-        let manager = ManagerProxy::new(&connection)
-            .await
-            .expect("CtrlRogBios could not create ManagerProxy");
-
-        let platform = self.clone();
-        executor
-            .spawn(async move {
-                if let Ok(notif) = manager.receive_prepare_for_sleep().await {
-                    notif
-                        .for_each(|event| {
-                            if let Ok(args) = event.args() {
-                                // If waking up
-                                if !args.start {
-                                    info!("CtrlRogBios reloading panel_od");
-                                    if let Ok(lock) = platform.config.try_lock() {
-                                        platform
-                                            .set_panel_od(lock.panel_od)
-                                            .map_err(|err| {
-                                                warn!("CtrlCharge: set_limit {}", err);
-                                                err
-                                            })
-                                            .ok();
-                                    }
-                                }
-                            }
+        let platform1 = self.clone();
+        let platform2 = self.clone();
+        self.create_sys_event_tasks(
+            executor,
+            move || {},
+            move || {
+                info!("CtrlRogBios reloading panel_od");
+                if let Ok(lock) = platform1.config.try_lock() {
+                    platform1
+                        .set_panel_od(lock.panel_od)
+                        .map_err(|err| {
+                            warn!("CtrlCharge: set_limit {}", err);
+                            err
                         })
-                        .await;
+                        .ok();
                 }
-            })
-            .detach();
-
-        let manager = ManagerProxy::new(&connection)
-            .await
-            .expect("CtrlCharge could not create ManagerProxy");
-
-        let platform = self.clone();
-        executor
-            .spawn(async move {
-                if let Ok(notif) = manager.receive_prepare_for_shutdown().await {
-                    notif
-                        .for_each(|event| {
-                            if let Ok(args) = event.args() {
-                                // If waking up - intention is to catch hibernation event
-                                if !args.start {
-                                    info!("CtrlRogBios reloading panel_od");
-                                    if let Ok(lock) = platform.config.try_lock() {
-                                        platform
-                                            .set_panel_od(lock.panel_od)
-                                            .map_err(|err| {
-                                                warn!("CtrlCharge: set_limit {}", err);
-                                                err
-                                            })
-                                            .ok();
-                                    }
-                                }
-                            }
+            },
+            move || {},
+            move || {
+                info!("CtrlRogBios reloading panel_od");
+                if let Ok(lock) = platform2.config.try_lock() {
+                    platform2
+                        .set_panel_od(lock.panel_od)
+                        .map_err(|err| {
+                            warn!("CtrlCharge: set_limit {}", err);
+                            err
                         })
-                        .await;
+                        .ok();
                 }
-            })
-            .detach();
+            },
+        )
+        .await;
+
         Ok(())
     }
 }

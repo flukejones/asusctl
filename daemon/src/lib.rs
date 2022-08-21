@@ -35,6 +35,7 @@ use crate::error::RogError;
 use async_trait::async_trait;
 use config::Config;
 use log::warn;
+use logind_zbus::manager::ManagerProxy;
 use smol::{stream::StreamExt, Executor, Timer};
 use zbus::Connection;
 use zvariant::ObjectPath;
@@ -84,6 +85,64 @@ pub trait CtrlTask {
         executor
             .spawn(async move {
                 timer.for_each(|_| task()).await;
+            })
+            .detach();
+    }
+
+    /// Free helper method to create tasks to run on: sleep, wake, shutdown, boot
+    async fn create_sys_event_tasks(
+        &self,
+        executor: &mut Executor,
+        mut on_sleep: impl FnMut() + Send + 'static,
+        mut on_wake: impl FnMut() + Send + 'static,
+        mut on_shutdown: impl FnMut() + Send + 'static,
+        mut on_boot: impl FnMut() + Send + 'static,
+    ) {
+        let connection = Connection::system()
+            .await
+            .expect("Controller could not create dbus connection");
+
+        let manager = ManagerProxy::new(&connection)
+            .await
+            .expect("Controller could not create ManagerProxy");
+
+        executor
+            .spawn(async move {
+                if let Ok(notif) = manager.receive_prepare_for_sleep().await {
+                    notif
+                        .for_each(|event| {
+                            if let Ok(args) = event.args() {
+                                if args.start {
+                                    on_sleep();
+                                } else if !args.start() {
+                                    on_wake();
+                                }
+                            }
+                        })
+                        .await;
+                }
+            })
+            .detach();
+
+        let manager = ManagerProxy::new(&connection)
+            .await
+            .expect("Controller could not create ManagerProxy");
+
+        executor
+            .spawn(async move {
+                if let Ok(notif) = manager.receive_prepare_for_shutdown().await {
+                    notif
+                        .for_each(|event| {
+                            if let Ok(args) = event.args() {
+                                if args.start {
+                                    on_shutdown();
+                                } else if !args.start() {
+                                    on_boot();
+                                }
+                            }
+                        })
+                        .await;
+                }
             })
             .detach();
     }

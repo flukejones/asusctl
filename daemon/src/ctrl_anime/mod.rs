@@ -1,10 +1,8 @@
 pub mod config;
 pub mod zbus;
 
-use ::zbus::Connection;
 use async_trait::async_trait;
 use log::{error, info, warn};
-use logind_zbus::manager::ManagerProxy;
 use rog_anime::{
     error::AnimeError,
     usb::{
@@ -14,7 +12,7 @@ use rog_anime::{
     ActionData, AnimeDataBuffer, AnimePacketType, AnimeType,
 };
 use rog_platform::{hid_raw::HidRaw, supported::AnimeSupportedFunctions, usb_raw::USBRaw};
-use smol::{stream::StreamExt, Executor};
+use smol::Executor;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::{
     convert::TryFrom,
@@ -232,14 +230,6 @@ impl CtrlAnimeTask {
 #[async_trait]
 impl crate::CtrlTask for CtrlAnimeTask {
     async fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
-        let connection = Connection::system()
-            .await
-            .expect("CtrlAnimeTask could not create dbus connection");
-
-        let manager = ManagerProxy::new(&connection)
-            .await
-            .expect("CtrlAnimeTask could not create ManagerProxy");
-
         let run_action =
             |start: bool, lock: MutexGuard<CtrlAnime>, inner: Arc<Mutex<CtrlAnime>>| {
                 if start {
@@ -251,50 +241,40 @@ impl crate::CtrlTask for CtrlAnimeTask {
                 }
             };
 
-        let inner = self.inner.clone();
-        executor
-            .spawn(async move {
-                if let Ok(notif) = manager.receive_prepare_for_sleep().await {
-                    notif
-                        .for_each(|event| {
-                            if let Ok(args) = event.args() {
-                                // Loop is required to try an attempt to get the mutex *without* blocking
-                                // other threads - it is possible to end up with deadlocks otherwise.
-                                loop {
-                                    if let Ok(lock) = inner.clone().try_lock() {
-                                        run_action(args.start, lock, inner.clone());
-                                        break;
-                                    }
-                                }
-                            }
-                        })
-                        .await;
+        let inner1 = self.inner.clone();
+        let inner2 = self.inner.clone();
+        let inner3 = self.inner.clone();
+        let inner4 = self.inner.clone();
+        self.create_sys_event_tasks(
+            executor,
+            // Loop is required to try an attempt to get the mutex *without* blocking
+            // other threads - it is possible to end up with deadlocks otherwise.
+            move || loop {
+                if let Ok(lock) = inner1.clone().try_lock() {
+                    run_action(true, lock, inner1.clone());
+                    break;
                 }
-            })
-            .detach();
-
-        let manager = ManagerProxy::new(&connection)
-            .await
-            .expect("CtrlAnimeTask could not create ManagerProxy");
-
-        let inner = self.inner.clone();
-        executor
-            .spawn(async move {
-                if let Ok(notif) = manager.receive_prepare_for_shutdown().await {
-                    notif
-                        .for_each(|event| {
-                            if let Ok(args) = event.args() {
-                                loop {
-                                    if let Ok(lock) = inner.clone().try_lock() {
-                                        run_action(args.start, lock, inner.clone());
-                                    }
-                                }
-                            }
-                        })
-                        .await;
+            },
+            move || loop {
+                if let Ok(lock) = inner2.clone().try_lock() {
+                    run_action(false, lock, inner2.clone());
+                    break;
                 }
-            })
-            .detach();
+            },
+            move || loop {
+                if let Ok(lock) = inner3.clone().try_lock() {
+                    run_action(true, lock, inner3.clone());
+                    break;
+                }
+            },
+            move || loop {
+                if let Ok(lock) = inner4.clone().try_lock() {
+                    run_action(false, lock, inner4.clone());
+                    break;
+                }
+            },
+        )
+        .await;
 
         Ok(())
     }

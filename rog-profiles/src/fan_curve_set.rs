@@ -271,8 +271,7 @@ mod tests {
             "CPU: 30c:1%,49c:1%,59c:3%,69c:3%,79c:30%,89c:49%,99c:56%,109c:58%"
         );
 
-        let curve =
-            CurveData::from_str("30c:1%,49c:2%,59c:3%,69c:4%,79c:31%,89c:49%,99c:56%");
+        let curve = CurveData::from_str("30c:1%,49c:2%,59c:3%,69c:4%,79c:31%,89c:49%,99c:56%");
 
         assert!(curve.is_err());
     }

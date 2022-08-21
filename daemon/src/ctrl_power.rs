@@ -2,10 +2,8 @@ use crate::CtrlTask;
 use crate::{config::Config, error::RogError, GetSupported};
 use async_trait::async_trait;
 use log::{info, warn};
-use logind_zbus::manager::ManagerProxy;
 use rog_platform::power::AsusPower;
 use rog_platform::supported::ChargeSupportedFunctions;
-use smol::stream::StreamExt;
 use smol::Executor;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -111,71 +109,39 @@ impl CtrlPower {
 #[async_trait]
 impl CtrlTask for CtrlPower {
     async fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
-        let connection = Connection::system()
-            .await
-            .expect("CtrlCharge could not create dbus connection");
-
-        let manager = ManagerProxy::new(&connection)
-            .await
-            .expect("CtrlCharge could not create ManagerProxy");
-
-        let power = self.clone();
-        executor
-            .spawn(async move {
-                if let Ok(notif) = manager.receive_prepare_for_sleep().await {
-                    notif
-                        .for_each(|event| {
-                            if let Ok(args) = event.args() {
-                                // If waking up
-                                if !args.start {
-                                    info!("CtrlCharge reloading charge limit");
-                                    if let Ok(lock) = power.config.try_lock() {
-                                        power
-                                            .set(lock.bat_charge_limit)
-                                            .map_err(|err| {
-                                                warn!("CtrlCharge: set_limit {}", err);
-                                                err
-                                            })
-                                            .ok();
-                                    }
-                                }
-                            }
+        let power1 = self.clone();
+        let power2 = self.clone();
+        self.create_sys_event_tasks(
+            executor,
+            move || {},
+            move || {
+                info!("CtrlCharge reloading charge limit");
+                if let Ok(lock) = power1.config.try_lock() {
+                    power1
+                        .set(lock.bat_charge_limit)
+                        .map_err(|err| {
+                            warn!("CtrlCharge: set_limit {}", err);
+                            err
                         })
-                        .await;
+                        .ok();
                 }
-            })
-            .detach();
-
-        let manager = ManagerProxy::new(&connection)
-            .await
-            .expect("CtrlCharge could not create ManagerProxy");
-
-        let power = self.clone();
-        executor
-            .spawn(async move {
-                if let Ok(notif) = manager.receive_prepare_for_shutdown().await {
-                    notif
-                        .for_each(|event| {
-                            if let Ok(args) = event.args() {
-                                // If waking up - intention is to catch hibernation event
-                                if !args.start {
-                                    info!("CtrlCharge reloading charge limit");
-                                    if let Ok(lock) = power.config.try_lock() {
-                                        power
-                                            .set(lock.bat_charge_limit)
-                                            .map_err(|err| {
-                                                warn!("CtrlCharge: set_limit {}", err);
-                                                err
-                                            })
-                                            .ok();
-                                    }
-                                }
-                            }
+            },
+            move || {},
+            move || {
+                info!("CtrlCharge reloading charge limit");
+                if let Ok(lock) = power2.config.try_lock() {
+                    power2
+                        .set(lock.bat_charge_limit)
+                        .map_err(|err| {
+                            warn!("CtrlCharge: set_limit {}", err);
+                            err
                         })
-                        .await;
+                        .ok();
                 }
-            })
-            .detach();
+            },
+        )
+        .await;
+
         Ok(())
     }
 }
