@@ -9,9 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Create new rog-platform crate to manage all i/o in a universal way
   + kbd-led handling (requires kernel patches, TUF specific)
   + platform handling (asus-nb-wmi)
+  + power (basic, can be extended in future)
   + hidraw
   + usbraw
 - Refactor how ROGCC handles IPC for background open, run-in-bg
+- Refactor daemon task creation to be simpler (for development)
 ### Breaking
 - DBUS: rename path `/org/asuslinux/RogBios` to `/org/asuslinux/Platform`
 - DBUS: renamed `dedicated_graphic_mode` to `gpu_mux_mode` (`GpuMuxMode`)

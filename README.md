@@ -21,8 +21,8 @@ Now includes a GUI, `rog-control-center`.
 4. Respect the users resources: be small, light, and fast
 
 Point 3 means that the list of supported distros is very narrow - fedora is explicitly
-supported, while Ubuntu and openSUSE are level-2 support. All other distros are *not*
-supported (while asusd might still run fine on them). For best support use fedora 32+ Workstation.
+supported. All other distros are *not* supported (while asusd might still run fine on them).
+For best support use fedora 36+ Workstation.
 
 Point 4? asusd currently uses a tiny fraction of cpu time, and less than 1Mb of ram, the way
 a system-level daemon should.
@@ -41,18 +41,10 @@ Bus 001 Device 002: ID 0b05:1866 ASUSTek Computer, Inc. N-KEY Device
 ```
 
 then it may work without tweaks. Technically all other functions except the LED
-and AniMe parts should work regardless of your latop make. Eventually this project
-will probably suffer another rename once it becomes generic enough to do so.
+and AniMe parts should work regardless of your latop make.
 
-### Unsupported (e.g, TUF laptops)
-
-- `sudo systemctl mask asusd && sudo systemctl stop asusd`
-- `copy asusd-alt.service to /etc/systemd/system/`
-- `sudo systemctl enable asusd-alt`
-- `sudo systemctl start asusd-alt`
-- `asusctl -s`
-
-`asusd-alt.service` is in the `data` dir of this repo.
+**TUF Laptops**: support is coming. I recently aquired one of these machines and have written
+various patches for the kernel to add proper support (e.g, RGB control).
 
 ## Implemented
 
@@ -66,7 +58,7 @@ will probably suffer another rename once it becomes generic enough to do so.
 - [X] Set battery charge limit (with kernel supporting this)
 - [X] Fan curve control on G14 + G15. Requires kernel patch (should reach 5.15 kernel)
 - [X] Toggle bios setting for boot/POST sound
-- [X] Toggle bios setting for "dedicated gfx" mode on supported laptops (g-sync)
+- [X] Toggle bios setting for "dedicated gfx" mode on supported laptops (g-sync, or called MUX on 2022+ laptops)
 
 # GUI
 

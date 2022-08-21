@@ -9,17 +9,7 @@ pub mod ctrl_aura;
 pub mod ctrl_platform;
 /// Control of battery charge level
 pub mod ctrl_power;
-/// Control CPU min/max freq and turbo, fan mode, fan curves
-///
-/// Intel machines can control:
-/// - CPU min/max frequency
-/// - CPU turbo enable/disable
-/// - Fan mode (normal, boost, silent)
-///
-/// AMD machines can control:
-/// - CPU turbo enable/disable
-/// - Fan mode (normal, boost, silent)
-/// - Fan min/max RPM curve
+/// Control platform profiles + fan-curves if available
 pub mod ctrl_profiles;
 /// Laptop matching to determine capabilities
 pub mod laptops;
