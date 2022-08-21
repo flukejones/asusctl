@@ -39,7 +39,8 @@ impl GetSupported for CtrlKbdLed {
             }
         }
 
-        if let Ok(p) = KeyboardLed::new() {
+        let rgb = KeyboardLed::new();
+        if let Ok(p) = rgb.as_ref() {
             if p.has_kbd_rgb_mode() {
                 prod_id = AuraDevice::Tuf;
             }
@@ -47,7 +48,7 @@ impl GetSupported for CtrlKbdLed {
 
         LedSupportedFunctions {
             prod_id,
-            brightness_set: KeyboardLed::new().is_ok(),
+            brightness_set: rgb.is_ok(),
             stock_led_modes,
             multizone_led_mode,
             per_key_led_mode,
@@ -186,10 +187,9 @@ impl CtrlKbdLed {
             }
         }
 
-        let bright_node = KeyboardLed::new();
-        let platform = KeyboardLed::new()?;
+        let rgb_led = KeyboardLed::new()?;
 
-        if led_node.is_none() && !platform.has_kbd_rgb_mode() {
+        if led_node.is_none() && !rgb_led.has_kbd_rgb_mode() {
             let dmi = sysfs_class::DmiId::default();
             if let Ok(prod_family) = dmi.product_family() {
                 if prod_family.contains("TUF") {
@@ -202,9 +202,9 @@ impl CtrlKbdLed {
         let led_node = if let Some(rog) = led_node {
             info!("Found ROG USB keyboard");
             LEDNode::Rog(rog)
-        } else if platform.has_kbd_rgb_mode() {
+        } else if rgb_led.has_kbd_rgb_mode() {
             info!("Found TUF keyboard");
-            LEDNode::KbdLed(platform)
+            LEDNode::KbdLed(rgb_led.clone())
         } else {
             LEDNode::None
         };
@@ -212,7 +212,7 @@ impl CtrlKbdLed {
         let ctrl = CtrlKbdLed {
             led_prod,
             led_node,
-            kd_brightness: bright_node?, // If was none then we already returned above
+            kd_brightness: rgb_led, // If was none then we already returned above
             supported_modes,
             flip_effect_write: false,
             config,

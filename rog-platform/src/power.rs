@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use log::warn;
+use log::{info, warn};
 
 use crate::{
     attr_u8,
@@ -43,9 +43,25 @@ impl AsusPower {
         })? {
             if let Some(attr) = device.attribute_value("type") {
                 match attr.to_os_string().as_os_str().to_str() {
-                    Some("Mains") => mains = device.syspath().to_path_buf(),
-                    Some("Battery") => battery = device.syspath().to_path_buf(),
-                    Some("USB") => usb = Some(device.syspath().to_path_buf()),
+                    Some("Mains") => {
+                        info!("Found mains power at {:?}", device.sysname());
+                        mains = device.syspath().to_path_buf();
+                    }
+                    Some("Battery") => {
+                        // This check required due to an instance where another "not"
+                        // battery can be found
+                        if let Some(m) = device.attribute_value("manufacturer") {
+                            // Should always be ASUSTeK, but match on a lowercase part to be sure
+                            if m.to_string_lossy().to_lowercase().contains("asus") {
+                                info!("Found battery power at {:?}", device.sysname());
+                                battery = device.syspath().to_path_buf();
+                            }
+                        }
+                    }
+                    Some("USB") => {
+                        info!("Found USB-C power at {:?}", device.sysname());
+                        usb = Some(device.syspath().to_path_buf());
+                    }
                     _ => {}
                 };
             }

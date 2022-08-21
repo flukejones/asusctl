@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use log::warn;
+use log::{info, warn};
 use serde::{Deserialize, Serialize};
 use zvariant::Type;
 
@@ -41,6 +41,7 @@ impl AsusPlatform {
             warn!("{}", err);
             PlatformError::Udev("scan_devices failed".into(), err)
         })? {
+            info!("Found platform support at {:?}", device.sysname());
             return Ok(Self {
                 path: device.syspath().to_owned(),
             });

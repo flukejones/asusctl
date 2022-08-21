@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use log::warn;
+use log::{info, warn};
 
 use crate::{
     attr_u8,
@@ -36,6 +36,7 @@ impl KeyboardLed {
             warn!("{}", err);
             PlatformError::Udev("scan_devices failed".into(), err)
         })? {
+            info!("Found keyboard LED controls at {:?}", device.sysname());
             return Ok(Self {
                 path: device.syspath().to_owned(),
             });
