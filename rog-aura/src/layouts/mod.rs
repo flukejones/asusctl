@@ -1,3 +1,6 @@
+//! A series of pre-defined layouts. These were mostly used to generate an editable
+//! config.
+
 /// Hardcoded layout. Was used to generate a toml default
 pub mod g513;
 /// Hardcoded layout. Was used to generate a toml default
