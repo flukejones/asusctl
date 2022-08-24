@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use async_trait::async_trait;
 use log::warn;
-use rog_aura::{usb::AuraPowerDev, AuraEffect, AuraModeNum, LedBrightness};
+use rog_aura::{usb::AuraPowerDev, AuraEffect, AuraModeNum, LedBrightness, PerKeyRaw};
 use zbus::{dbus_interface, Connection, SignalContext};
 
 use super::controller::CtrlKbdLedZbus;
@@ -208,6 +208,13 @@ impl CtrlKbdLedZbus {
                 return ctrl.config.builtins.clone();
             }
         }
+    }
+
+    async fn per_key_raw(&self, data: PerKeyRaw) -> zbus::fdo::Result<()> {
+        if let Ok(mut ctrl) = self.0.try_lock() {
+            ctrl.write_per_key_block(&data)?;
+        }
+        Ok(())
     }
 
     /// Return the current LED brightness

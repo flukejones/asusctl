@@ -1,4 +1,10 @@
 use crate::keys::Key;
+use serde_derive::{Deserialize, Serialize};
+#[cfg(feature = "dbus")]
+use zvariant::Type;
+
+/// Represents the per-key raw USB packets
+pub type PerKeyRaw = Vec<Vec<u8>>;
 
 /// A `KeyColourArray` contains all data to change the full set of keyboard
 /// key colours individually.
@@ -7,16 +13,19 @@ use crate::keys::Key;
 /// to the keyboard EC. One row controls one group of keys, these keys are not
 /// necessarily all on the same row of the keyboard, with some splitting between
 /// two rows.
-#[derive(Clone)]
-pub struct KeyColourArray([[u8; 64]; 11]);
+#[cfg_attr(feature = "dbus", derive(Type))]
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct KeyColourArray(PerKeyRaw);
+
 impl Default for KeyColourArray {
     fn default() -> Self {
         Self::new()
     }
 }
+
 impl KeyColourArray {
     pub fn new() -> Self {
-        let mut set = [[0u8; 64]; 11];
+        let mut set = vec![vec![0u8; 64]; 11];
         for (count, row) in set.iter_mut().enumerate() {
             row[0] = 0x5d; // Report ID
             row[1] = 0xbc; // Mode = custom??, 0xb3 is builtin
@@ -211,15 +220,31 @@ impl KeyColourArray {
             Key::Fan | Key::Space | Key::BkSpc => return None,
         };
 
-        Some(&mut self.0[row][col..2])
+        Some(&mut self.0[row][col..=col + 2])
     }
 
     #[inline]
-    pub fn get(&self) -> &[[u8; 64]; 11] {
+    pub fn get(&self) -> PerKeyRaw {
+        self.0.clone()
+    }
+
+    #[inline]
+    pub fn get_ref(&self) -> &PerKeyRaw {
         &self.0
+    }
+
+    #[inline]
+    pub fn get_mut(&mut self) -> &mut PerKeyRaw {
+        &mut self.0
     }
 }
 
 pub trait KeyLayout {
     fn get_rows(&self) -> &Vec<[Key; 17]>;
+}
+
+impl From<KeyColourArray> for PerKeyRaw {
+    fn from(k: KeyColourArray) -> Self {
+        k.0
+    }
 }

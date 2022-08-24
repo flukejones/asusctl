@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, PartialEq, Copy, Clone, Serialize, Deserialize)]
 pub enum Key {
     VolUp,
     VolDown,
     MicMute,
+    #[default]
     Rog,
     Fan,
     Esc,
@@ -149,6 +150,13 @@ pub enum Key {
     ArrowSplitSpacer,
     /// A gap between regular rows and the rightside buttons
     RowEndSpacer,
+}
+
+impl Key {
+    pub fn is_placeholder(&self) -> bool {
+        let shape = KeyShape::from(self);
+        shape.is_blank() || shape.is_spacer()
+    }
 }
 
 /// Types of shapes of LED on keyboards. The shape is used for visual representations

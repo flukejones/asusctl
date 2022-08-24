@@ -24,7 +24,7 @@ use std::collections::BTreeMap;
 use zbus::{blocking::Connection, Result};
 use zbus_macros::dbus_proxy;
 
-use rog_aura::{usb::AuraPowerDev, AuraEffect, AuraModeNum, KeyColourArray, LedBrightness};
+use rog_aura::{usb::AuraPowerDev, AuraEffect, AuraModeNum, LedBrightness, PerKeyRaw};
 
 const BLOCKING_TIME: u64 = 40; // 100ms = 10 FPS, max 50ms = 20 FPS, 40ms = 25 FPS
 
@@ -52,6 +52,8 @@ trait Led {
     fn set_led_mode(&self, effect: &AuraEffect) -> zbus::Result<()>;
 
     fn set_leds_power(&self, options: AuraPowerDev, enabled: bool) -> zbus::Result<()>;
+
+    fn per_key_raw(&self, data: PerKeyRaw) -> zbus::fdo::Result<()>;
 
     /// NotifyLed signal
     #[dbus_proxy(signal)]
@@ -93,30 +95,9 @@ impl<'a> LedProxyPerkey<'a> {
     /// Intentionally blocks for 10ms after sending to allow the block to
     /// be written to the keyboard EC. This should not be async.
     #[inline]
-    pub fn set_per_key(&self, key_colour_array: &KeyColourArray) -> Result<()> {
-        let group = key_colour_array.get();
-        let mut vecs = Vec::with_capacity(group.len());
-        for v in group {
-            vecs.push(v.to_vec());
-        }
-        // TODO: let mode = AuraModes::PerKey(vecs);
-        // self.set_led_mode(&mode)?;
-
+    pub fn set_per_key(&self, per_key_raw: PerKeyRaw) -> Result<()> {
+        self.0.per_key_raw(per_key_raw)?;
         std::thread::sleep(std::time::Duration::from_millis(BLOCKING_TIME));
-
-        // if self.stop.load(Ordering::Relaxed) {
-        //     println!("Keyboard backlight was changed, exiting");
-        //     std::process::exit(1)
-        // }
-        Ok(())
-    }
-
-    /// This method must always be called before the very first write to initialise
-    /// the keyboard LED EC in the correct mode
-    #[inline]
-    pub fn init_effect(&self) -> Result<()> {
-        // TODO: let mode = AuraModes::PerKey(vec![vec![]]);
-        // self.0.set_led_mode(&serde_json::to_string(&mode).unwrap())
         Ok(())
     }
 }

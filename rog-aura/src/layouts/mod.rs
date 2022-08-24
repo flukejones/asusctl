@@ -49,6 +49,10 @@ impl KeyLayout {
     pub fn rows(&self) -> Iter<KeyRow> {
         self.rows.iter()
     }
+
+    pub fn rows_ref(&self) -> &[KeyRow] {
+        &self.rows
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -64,6 +68,10 @@ impl KeyRow {
 
     pub fn row(&self) -> Iter<Key> {
         self.row.iter()
+    }
+
+    pub fn row_ref(&self) -> &[Key] {
+        &self.row
     }
 
     pub fn height(&self) -> f32 {

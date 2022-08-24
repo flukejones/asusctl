@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use log::{error, info, warn};
 use rog_aura::{
     usb::{AuraDevice, LED_APPLY, LED_SET},
-    AuraEffect, LedBrightness, LED_MSG_LEN,
+    AuraEffect, KeyColourArray, LedBrightness, PerKeyRaw, LED_MSG_LEN,
 };
 use rog_aura::{AuraZone, Direction, Speed, GRADIENT};
 use rog_platform::{hid_raw::HidRaw, keyboard_led::KeyboardLed, supported::LedSupportedFunctions};
@@ -70,6 +70,7 @@ pub struct CtrlKbdLed {
     pub kd_brightness: KeyboardLed,
     pub supported_modes: LaptopLedData,
     pub flip_effect_write: bool,
+    pub per_key_mode_active: bool,
     pub config: AuraConfig,
 }
 
@@ -215,6 +216,7 @@ impl CtrlKbdLed {
             kd_brightness: rgb_led, // If was none then we already returned above
             supported_modes,
             flip_effect_write: false,
+            per_key_mode_active: false,
             config,
         };
         Ok(ctrl)
@@ -294,17 +296,24 @@ impl CtrlKbdLed {
     }
 
     /// Write an effect block. This is for per-key
-    fn _write_effect(&mut self, effect: &[Vec<u8>]) -> Result<(), RogError> {
-        if let LEDNode::Rog(hid_raw) = &self.led_node {
-            if self.flip_effect_write {
-                for row in effect.iter().rev() {
-                    hid_raw.write_bytes(row)?;
-                }
-            } else {
-                for row in effect.iter() {
-                    hid_raw.write_bytes(row)?;
-                }
+    pub fn write_per_key_block(&mut self, effect: &PerKeyRaw) -> Result<(), RogError> {
+        if !self.per_key_mode_active {
+            if let LEDNode::Rog(hid_raw) = &self.led_node {
+                let init = KeyColourArray::get_init_msg();
+                hid_raw.write_bytes(&init)?;
             }
+            self.per_key_mode_active = true;
+        }
+        if let LEDNode::Rog(hid_raw) = &self.led_node {
+            // if self.flip_effect_write {
+            //     for row in effect.iter().rev() {
+            //         hid_raw.write_bytes(row)?;
+            //     }
+            // } else {
+            for row in effect.iter() {
+                hid_raw.write_bytes(row)?;
+            }
+            // }
         }
         self.flip_effect_write = !self.flip_effect_write;
         Ok(())
@@ -345,7 +354,7 @@ impl CtrlKbdLed {
         Ok(())
     }
 
-    fn write_mode(&self, mode: &AuraEffect) -> Result<(), RogError> {
+    fn write_mode(&mut self, mode: &AuraEffect) -> Result<(), RogError> {
         if let LEDNode::KbdLed(platform) = &self.led_node {
             let buf = [
                 1,
@@ -365,6 +374,7 @@ impl CtrlKbdLed {
         } else {
             return Err(RogError::NoAuraKeyboard);
         }
+        self.per_key_mode_active = false;
         Ok(())
     }
 
@@ -387,17 +397,17 @@ impl CtrlKbdLed {
                 self.create_multizone_default()?;
             }
 
-            if let Some(multizones) = self.config.multizone.as_ref() {
+            if let Some(multizones) = self.config.multizone.as_mut() {
                 if let Some(set) = multizones.get(&mode) {
-                    for mode in set {
-                        self.write_mode(mode)?;
+                    for mode in set.clone() {
+                        self.write_mode(&mode)?;
                     }
                 }
             }
         } else {
             let mode = self.config.current_mode;
-            if let Some(effect) = self.config.builtins.get(&mode) {
-                self.write_mode(effect)?;
+            if let Some(effect) = self.config.builtins.get(&mode).cloned() {
+                self.write_mode(&effect)?;
             }
         }
 
@@ -462,6 +472,7 @@ mod tests {
             kd_brightness: KeyboardLed::default(),
             supported_modes,
             flip_effect_write: false,
+            per_key_mode_active: false,
             config,
         };
 
@@ -524,6 +535,7 @@ mod tests {
             kd_brightness: KeyboardLed::default(),
             supported_modes,
             flip_effect_write: false,
+            per_key_mode_active: false,
             config,
         };
 
@@ -561,6 +573,7 @@ mod tests {
             kd_brightness: KeyboardLed::default(),
             supported_modes,
             flip_effect_write: false,
+            per_key_mode_active: false,
             config,
         };
 
