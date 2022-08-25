@@ -5,28 +5,21 @@ use std::{
 };
 
 use rog_anime::{ActionLoader, AnimTime, AnimeType, Fade, Sequences, Vec2};
+use rog_aura::{keys::Key, Colour, Speed};
+use serde::de::DeserializeOwned;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::error::Error;
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct UserAnimeConfig {
-    pub name: String,
-    pub anime: Vec<ActionLoader>,
-}
+pub trait ConfigLoadSave<T> {
+    fn name(&self) -> String;
 
-impl UserAnimeConfig {
-    pub fn create_anime(&self, anime_type: AnimeType) -> Result<Sequences, Error> {
-        let mut seq = Sequences::new(anime_type);
+    fn default_with_name(name: String) -> T;
 
-        for (idx, action) in self.anime.iter().enumerate() {
-            seq.insert(idx, action)?;
-        }
-
-        Ok(seq)
-    }
-
-    pub fn write(&self) -> Result<(), Error> {
+    fn write(&self) -> Result<(), Error>
+    where
+        Self: serde::Serialize,
+    {
         let mut path = if let Some(dir) = dirs::config_dir() {
             dir
         } else {
@@ -37,7 +30,7 @@ impl UserAnimeConfig {
         if !path.exists() {
             create_dir(path.clone())?;
         }
-        let name = self.name.clone();
+        let name = self.name().clone();
         path.push(name + ".cfg");
 
         let mut file = OpenOptions::new()
@@ -51,7 +44,10 @@ impl UserAnimeConfig {
         Ok(())
     }
 
-    pub fn load_config(name: String) -> Result<UserAnimeConfig, Error> {
+    fn load(name: String) -> Result<T, Error>
+    where
+        T: DeserializeOwned + serde::Serialize,
+    {
         let mut path = if let Some(dir) = dirs::config_dir() {
             dir
         } else {
@@ -75,18 +71,46 @@ impl UserAnimeConfig {
 
         if let Ok(read_len) = file.read_to_string(&mut buf) {
             if read_len == 0 {
-                let default = UserAnimeConfig {
-                    name,
-                    ..Default::default()
-                };
+                let default = Self::default_with_name(name);
                 let json = serde_json::to_string_pretty(&default).unwrap();
                 file.write_all(json.as_bytes())?;
                 return Ok(default);
-            } else if let Ok(data) = serde_json::from_str::<UserAnimeConfig>(&buf) {
+            } else if let Ok(data) = serde_json::from_str::<T>(&buf) {
                 return Ok(data);
             }
         }
         Err(Error::ConfigLoadFail)
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct UserAnimeConfig {
+    pub name: String,
+    pub anime: Vec<ActionLoader>,
+}
+
+impl UserAnimeConfig {
+    pub fn create(&self, anime_type: AnimeType) -> Result<Sequences, Error> {
+        let mut seq = Sequences::new(anime_type);
+
+        for (idx, action) in self.anime.iter().enumerate() {
+            seq.insert(idx, action)?;
+        }
+
+        Ok(seq)
+    }
+}
+
+impl ConfigLoadSave<UserAnimeConfig> for UserAnimeConfig {
+    fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    fn default_with_name(name: String) -> Self {
+        UserAnimeConfig {
+            name,
+            ..Default::default()
+        }
     }
 }
 
@@ -151,20 +175,83 @@ impl Default for UserAnimeConfig {
     }
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct UserAuraConfig {
+    pub name: String,
+    pub aura: rog_aura::Sequences,
+}
+
+impl ConfigLoadSave<UserAuraConfig> for UserAuraConfig {
+    fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    fn default_with_name(name: String) -> Self {
+        UserAuraConfig {
+            name,
+            ..Default::default()
+        }
+    }
+}
+
+impl Default for UserAuraConfig {
+    fn default() -> Self {
+        let mut seq = rog_aura::Sequences::new();
+        let mut key = rog_aura::ActionData::new_breathe(
+            Key::W,
+            Colour(255, 0, 20),
+            Colour(20, 255, 0),
+            Speed::Low,
+        );
+
+        seq.push(key.clone());
+        key.set_key(Key::A);
+        seq.push(key.clone());
+        key.set_key(Key::S);
+        seq.push(key.clone());
+        key.set_key(Key::D);
+        seq.push(key);
+
+        let key = rog_aura::ActionData::new_breathe(
+            Key::F,
+            Colour(255, 0, 0),
+            Colour(255, 0, 0),
+            Speed::High,
+        );
+        seq.push(key);
+
+        let mut key = rog_aura::ActionData::new_static(Key::RCtrl, Colour(0, 0, 255));
+        seq.push(key.clone());
+        key.set_key(Key::LCtrl);
+        seq.push(key.clone());
+        key.set_key(Key::Esc);
+        seq.push(key);
+
+        Self {
+            name: "default".to_string(),
+            aura: seq,
+        }
+    }
+}
+
 #[derive(Debug, Default, Deserialize, Serialize)]
+#[serde(default)]
 pub struct UserConfig {
     /// Name of active anime config file in the user config directory
-    pub active_anime: String,
+    pub active_anime: Option<String>,
+    /// Name of active aura config file in the user config directory
+    pub active_aura: Option<String>,
 }
 
 impl UserConfig {
     pub fn new() -> Self {
         Self {
-            active_anime: "anime-default".to_string(),
+            active_anime: Some("anime-default".to_string()),
+            active_aura: Some("aura-default".to_string()),
         }
     }
 
-    pub fn load_config(&mut self) -> Result<(), Error> {
+    pub fn load(&mut self) -> Result<(), Error> {
         let mut path = if let Some(dir) = dirs::config_dir() {
             dir
         } else {
@@ -192,6 +279,7 @@ impl UserConfig {
                 file.write_all(json.as_bytes())?;
             } else if let Ok(data) = serde_json::from_str::<UserConfig>(&buf) {
                 self.active_anime = data.active_anime;
+                self.active_aura = data.active_aura;
                 return Ok(());
             }
         }

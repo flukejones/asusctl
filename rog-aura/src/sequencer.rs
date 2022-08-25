@@ -204,6 +204,9 @@ mod tests {
             colour: Default::default(),
         });
 
+        let s = serde_json::to_string_pretty(&seq).unwrap();
+        println!("{s}");
+
         seq.next_state(&layout);
         let packets = seq.create_packets();
 

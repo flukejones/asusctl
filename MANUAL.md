@@ -131,6 +131,62 @@ As of now only AniMe is active in this with configuration in `~/.config/rog/`. O
 
 The main config is `~/.config/rog/rog-user.cfg`
 
+#### Config options: Aura (per-key support only)
+
+`~/.config/rog/rog-user.cfg` contains a setting `"active_aura": "<FILENAME>"` where `<FILENAME>` is the name of the Aura config to use, located in the same directory and without the file postfix, e.g, `"active_anime": "aura-default"`
+
+An Aura config itself is a file with contents:
+
+```json
+{
+  [
+    {
+      "key": "F",
+      "action": {
+        "Breathe": {
+          "colour1": [
+            255,
+            127,
+            0
+          ],
+          "colour2": [
+            127,
+            0,
+            255
+          ],
+          "speed": "Med"
+        }
+      }
+    },
+    {
+    "key": "Esc",
+    "action": {
+      "Static": [
+        0,
+        0,
+        255
+      ]
+    }
+  ]
+}
+```
+
+At the moment there are only two effects available as shown in the example. More will come in the future
+but this may take me some time.
+
+**Aura layouts**: `asusd-user` does its best to find a suitable layout to use based on `/sys/class/dmi/id/board_name`.
+It looks at each of the files in `/usr/share/rog-gui/layouts/` and matches against the toml block looking like:
+```toml
+matches = [
+    'GX502',
+    'GU502',
+]
+```
+
+My laptop is a `GX502GW`, so `GX502` is a match. Note that these layouts are the physical representation of
+the keyboard and are used in the GUI also. The config that tells if per-key is supported is located in
+`/etc/asusd/asusd-ledmodes.toml`
+
 #### Config options: AniMe
 
 `~/.config/rog/rog-user.cfg` contains a setting `"active_anime": "<FILENAME>"` where `<FILENAME>` is the name of the AniMe config to use, located in the same directory and without the file postfix, e.g, `"active_anime": "anime-doom"`

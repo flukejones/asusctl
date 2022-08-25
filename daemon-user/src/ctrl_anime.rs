@@ -15,6 +15,7 @@ use zbus::dbus_interface;
 use zvariant::ObjectPath;
 use zvariant_derive::Type;
 
+use crate::user_config::ConfigLoadSave;
 use crate::{error::Error, user_config::UserAnimeConfig};
 
 #[derive(Debug, Clone, Deserialize, Serialize, Type)]

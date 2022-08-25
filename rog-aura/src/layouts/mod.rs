@@ -10,7 +10,12 @@ pub mod gx502;
 
 use crate::{error::Error, keys::Key};
 use serde::{Deserialize, Serialize};
-use std::{fs::OpenOptions, io::Read, path::Path, slice::Iter};
+use std::{
+    fs::{self, OpenOptions},
+    io::Read,
+    path::{Path, PathBuf},
+    slice::Iter,
+};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct KeyLayout {
@@ -52,6 +57,26 @@ impl KeyLayout {
 
     pub fn rows_ref(&self) -> &[KeyRow] {
         &self.rows
+    }
+
+    /// Find a layout matching the provided board name in the provided dir
+    pub fn find_layout(board_name: &str, mut data_path: PathBuf) -> Result<Self, Error> {
+        let mut layout = KeyLayout::ga401_layout(); // default
+
+        data_path.push("layouts");
+        let path = data_path.as_path();
+        for p in fs::read_dir(path).map_err(|e| {
+            println!("{:?}, {e}", path);
+            e
+        })? {
+            let tmp = KeyLayout::from_file(&p?.path()).unwrap();
+            if tmp.matches(board_name) {
+                layout = tmp;
+                break;
+            }
+        }
+
+        Ok(layout)
     }
 }
 

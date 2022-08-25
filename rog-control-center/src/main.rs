@@ -60,8 +60,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut board_name = String::new();
     file.read_to_string(&mut board_name)?;
 
-    let mut layout = KeyLayout::ga401_layout(); // default
-    let mut path = PathBuf::from(DATA_DIR);
     #[cfg(feature = "mocking")]
     {
         board_name = "gl504".to_string();
@@ -69,18 +67,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         path.push("rog-aura");
         path.push("data");
     }
-    path.push("layouts");
-    let path = path.as_path();
-    for p in fs::read_dir(path).map_err(|e| {
-        println!("{:?}, {e}", path);
-        e
-    })? {
-        let tmp = KeyLayout::from_file(&p?.path()).unwrap();
-        if tmp.matches(board_name.as_str()) {
-            layout = tmp;
-            break;
-        }
-    }
+
+    let layout = KeyLayout::find_layout(board_name.as_str(), PathBuf::from(DATA_DIR))
+        .map_err(|e| {
+            println!("{BOARD_NAME}, {e}");
+        })
+        .unwrap_or(KeyLayout::ga401_layout());
 
     // Cheap method to alert to notifications rather than spinning a thread for each
     // This is quite different when done in a retained mode app
