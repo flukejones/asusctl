@@ -1,28 +1,9 @@
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{keys::Key, Colour, KeyColourArray, PerKeyRaw, Speed};
-
-#[derive(Debug, Default, Clone, Deserialize, Serialize)]
-pub struct PerKey {
-    pub key: Key,
-    action: ActionData,
-    /// The end resulting colour after stepping through effect
-    #[serde(skip)]
-    colour: Colour,
-}
-
-impl PerKey {
-    pub fn new_breathe(key: Key, colour1: Colour, colour2: Colour, speed: Speed) -> Self {
-        Self {
-            key,
-            action: ActionData::new_breathe(colour1, colour2, speed),
-            colour: Default::default(),
-        }
-    }
-}
+use crate::{keys::Key, layouts::KeyLayout, Colour, KeyColourArray, PerKeyRaw, Speed};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub(super) enum ActionData {
+pub(super) enum Action {
     Static(Colour),
     Breathe {
         /// The starting colour
@@ -41,27 +22,101 @@ pub(super) enum ActionData {
     },
 }
 
-impl ActionData {
-    fn new_breathe(colour1: Colour, colour2: Colour, speed: Speed) -> Self {
-        Self::Breathe {
-            colour1,
-            colour2,
-            speed,
-            colour_actual: colour1,
-            count_flipped: false,
-            use_colour1: true,
-        }
-    }
-}
-
-impl Default for ActionData {
+impl Default for Action {
     fn default() -> Self {
         Self::Static(Colour::default())
     }
 }
 
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+pub struct ActionData {
+    key: Key,
+    action: Action,
+    // TODO: time
+    /// The end resulting colour after stepping through effect
+    #[serde(skip)]
+    colour: Colour,
+}
+
+impl ActionData {
+    pub fn set_key(&mut self, key: Key) {
+        self.key = key
+    }
+
+    pub fn new_static(key: Key, colour: Colour) -> Self {
+        Self {
+            key,
+            action: Action::Static(colour),
+            colour: Default::default(),
+        }
+    }
+
+    pub fn new_breathe(key: Key, colour1: Colour, colour2: Colour, speed: Speed) -> Self {
+        Self {
+            key,
+            action: Action::Breathe {
+                colour1,
+                colour2,
+                speed,
+                colour_actual: colour1,
+                count_flipped: false,
+                use_colour1: true,
+            },
+            colour: Default::default(),
+        }
+    }
+
+    pub fn next_state(&mut self, _layout: &KeyLayout) {
+        match &mut self.action {
+            Action::Static(c) => self.colour = *c,
+            Action::Breathe {
+                colour1,
+                colour2,
+                speed,
+                colour_actual,
+                count_flipped: flipped,
+                use_colour1,
+            } => {
+                let speed = 4 - <u8>::from(*speed);
+
+                let colour: &mut Colour;
+                if *colour_actual == Colour(0, 0, 0) {
+                    *use_colour1 = !*use_colour1;
+                }
+
+                if !*use_colour1 {
+                    colour = colour2;
+                } else {
+                    colour = colour1;
+                }
+
+                let r1_scale = colour.0 / speed / 2;
+                let g1_scale = colour.1 / speed / 2;
+                let b1_scale = colour.2 / speed / 2;
+
+                if *colour_actual == Colour(0, 0, 0) {
+                    *flipped = true;
+                } else if colour_actual >= colour {
+                    *flipped = false;
+                }
+
+                if !*flipped {
+                    colour_actual.0 = colour_actual.0.saturating_sub(r1_scale);
+                    colour_actual.1 = colour_actual.1.saturating_sub(g1_scale);
+                    colour_actual.2 = colour_actual.2.saturating_sub(b1_scale);
+                } else {
+                    colour_actual.0 = colour_actual.0.saturating_add(r1_scale);
+                    colour_actual.1 = colour_actual.1.saturating_add(g1_scale);
+                    colour_actual.2 = colour_actual.2.saturating_add(b1_scale);
+                }
+                self.colour = *colour_actual;
+            }
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Default)]
-pub struct Sequences(Vec<PerKey>);
+pub struct Sequences(Vec<ActionData>);
 
 impl Sequences {
     #[inline]
@@ -70,12 +125,12 @@ impl Sequences {
     }
 
     #[inline]
-    pub fn push(&mut self, action: PerKey) {
+    pub fn push(&mut self, action: ActionData) {
         self.0.push(action);
     }
 
     #[inline]
-    pub fn insert(&mut self, index: usize, action: PerKey) {
+    pub fn insert(&mut self, index: usize, action: ActionData) {
         self.0.insert(index, action);
     }
 
@@ -83,60 +138,16 @@ impl Sequences {
     /// is not in range then `None` is returned, otherwise the `ActionData` at that location
     /// is yeeted and returned.
     #[inline]
-    pub fn remove_item(&mut self, index: usize) -> Option<PerKey> {
+    pub fn remove_item(&mut self, index: usize) -> Option<ActionData> {
         if index < self.0.len() {
             return Some(self.0.remove(index));
         }
         None
     }
 
-    pub fn next_state(&mut self) {
+    pub fn next_state(&mut self, layout: &KeyLayout) {
         for effect in self.0.iter_mut() {
-            match &mut effect.action {
-                ActionData::Static(c) => effect.colour = *c,
-                ActionData::Breathe {
-                    colour1,
-                    colour2,
-                    speed,
-                    colour_actual,
-                    count_flipped: flipped,
-                    use_colour1,
-                } => {
-                    let speed = 4 - <u8>::from(*speed);
-
-                    let colour: &mut Colour;
-                    if *colour_actual == Colour(0, 0, 0) {
-                        *use_colour1 = !*use_colour1;
-                    }
-
-                    if !*use_colour1 {
-                        colour = colour2;
-                    } else {
-                        colour = colour1;
-                    }
-
-                    let r1_scale = colour.0 / speed / 2;
-                    let g1_scale = colour.1 / speed / 2;
-                    let b1_scale = colour.2 / speed / 2;
-
-                    if *colour_actual == Colour(0, 0, 0) {
-                        *flipped = true;
-                    } else if colour_actual >= colour {
-                        *flipped = false;
-                    }
-
-                    if !*flipped {
-                        colour_actual.0 = colour_actual.0.saturating_sub(r1_scale);
-                        colour_actual.1 = colour_actual.1.saturating_sub(g1_scale);
-                        colour_actual.2 = colour_actual.2.saturating_sub(b1_scale);
-                    } else {
-                        colour_actual.0 = colour_actual.0.saturating_add(r1_scale);
-                        colour_actual.1 = colour_actual.1.saturating_add(g1_scale);
-                        colour_actual.2 = colour_actual.2.saturating_add(b1_scale);
-                    }
-                    effect.colour = *colour_actual;
-                }
-            }
+            effect.next_state(layout);
         }
     }
 
@@ -155,18 +166,19 @@ impl Sequences {
 
 #[cfg(test)]
 mod tests {
-    use crate::{keys::Key, ActionData, Colour, PerKey, Sequences, Speed};
+    use crate::{keys::Key, layouts::KeyLayout, Action, ActionData, Colour, Sequences, Speed};
 
     #[test]
     fn single_key_next_state_then_create() {
+        let layout = KeyLayout::gx502_layout();
         let mut seq = Sequences::new();
-        seq.0.push(PerKey {
+        seq.0.push(ActionData {
             key: Key::F,
-            action: ActionData::Static(Colour(255, 127, 0)),
+            action: Action::Static(Colour(255, 127, 0)),
             colour: Default::default(),
         });
 
-        seq.next_state();
+        seq.next_state(&layout);
         let packets = seq.create_packets();
 
         assert_eq!(packets[0][0], 0x5d);
@@ -177,14 +189,22 @@ mod tests {
 
     #[test]
     fn cycle_breathe() {
+        let layout = KeyLayout::gx502_layout();
         let mut seq = Sequences::new();
-        seq.0.push(PerKey {
+        seq.0.push(ActionData {
             key: Key::F,
-            action: ActionData::new_breathe(Colour(255, 127, 0), Colour(127, 0, 255), Speed::Med),
+            action: Action::Breathe {
+                colour1: Colour(255, 127, 0),
+                colour2: Colour(127, 0, 255),
+                speed: Speed::Med,
+                colour_actual: Colour(255, 127, 0),
+                count_flipped: false,
+                use_colour1: true,
+            },
             colour: Default::default(),
         });
 
-        seq.next_state();
+        seq.next_state(&layout);
         let packets = seq.create_packets();
 
         assert_eq!(packets[0][0], 0x5d);
@@ -194,7 +214,7 @@ mod tests {
 
         // dbg!(&packets[5][33..=35]);
 
-        seq.next_state();
+        seq.next_state(&layout);
         let packets = seq.create_packets();
 
         assert_eq!(packets[0][0], 0x5d);

@@ -437,6 +437,25 @@ impl From<&AuraEffect> for [u8; LED_MSG_LEN] {
     }
 }
 
+impl From<&AuraEffect> for Vec<u8> {
+    fn from(aura: &AuraEffect) -> Self {
+        let mut msg = vec![0u8; LED_MSG_LEN];
+        msg[0] = 0x5d;
+        msg[1] = 0xb3;
+        msg[2] = aura.zone as u8;
+        msg[3] = aura.mode as u8;
+        msg[4] = aura.colour1.0;
+        msg[5] = aura.colour1.1;
+        msg[6] = aura.colour1.2;
+        msg[7] = aura.speed as u8;
+        msg[8] = aura.direction as u8;
+        msg[10] = aura.colour2.0;
+        msg[11] = aura.colour2.1;
+        msg[12] = aura.colour2.2;
+        msg
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{AuraEffect, AuraModeNum, AuraZone, Colour, Direction, Speed, LED_MSG_LEN};

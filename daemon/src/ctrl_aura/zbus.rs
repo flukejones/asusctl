@@ -212,7 +212,7 @@ impl CtrlKbdLedZbus {
 
     async fn per_key_raw(&self, data: PerKeyRaw) -> zbus::fdo::Result<()> {
         if let Ok(mut ctrl) = self.0.try_lock() {
-            ctrl.write_per_key_block(&data)?;
+            ctrl.write_effect_block(&data)?;
         }
         Ok(())
     }

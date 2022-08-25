@@ -26,6 +26,7 @@ impl Default for KeyColourArray {
 impl KeyColourArray {
     pub fn new() -> Self {
         let mut set = vec![vec![0u8; 64]; 11];
+        // set[0].copy_from_slice(&KeyColourArray::get_init_msg());
         for (count, row) in set.iter_mut().enumerate() {
             row[0] = 0x5d; // Report ID
             row[1] = 0xbc; // Mode = custom??, 0xb3 is builtin
@@ -237,10 +238,6 @@ impl KeyColourArray {
     pub fn get_mut(&mut self) -> &mut PerKeyRaw {
         &mut self.0
     }
-}
-
-pub trait KeyLayout {
-    fn get_rows(&self) -> &Vec<[Key; 17]>;
 }
 
 impl From<KeyColourArray> for PerKeyRaw {

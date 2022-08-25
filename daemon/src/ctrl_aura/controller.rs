@@ -295,27 +295,35 @@ impl CtrlKbdLed {
         Ok(())
     }
 
-    /// Write an effect block. This is for per-key
-    pub fn write_per_key_block(&mut self, effect: &PerKeyRaw) -> Result<(), RogError> {
-        if !self.per_key_mode_active {
+    /// Write an effect block. This is for per-key, but can be repurposed to
+    /// write the raw factory mode packets - when doing this it is expected that
+    /// only the first `Vec` (`effect[0]`) is valid.
+    pub fn write_effect_block(&mut self, effect: &PerKeyRaw) -> Result<(), RogError> {
+        let pkt_type = effect[0][1];
+        const PER_KEY_TYPE: u8 = 0xbc;
+
+        if pkt_type != PER_KEY_TYPE {
+            self.per_key_mode_active = false;
             if let LEDNode::Rog(hid_raw) = &self.led_node {
-                let init = KeyColourArray::get_init_msg();
-                hid_raw.write_bytes(&init)?;
+                hid_raw.write_bytes(&effect[0])?;
+                hid_raw.write_bytes(&LED_SET)?;
+                // hid_raw.write_bytes(&LED_APPLY)?;
             }
-            self.per_key_mode_active = true;
-        }
-        if let LEDNode::Rog(hid_raw) = &self.led_node {
-            // if self.flip_effect_write {
-            //     for row in effect.iter().rev() {
-            //         hid_raw.write_bytes(row)?;
-            //     }
-            // } else {
-            for row in effect.iter() {
-                hid_raw.write_bytes(row)?;
+        } else {
+            if !self.per_key_mode_active {
+                if let LEDNode::Rog(hid_raw) = &self.led_node {
+                    let init = KeyColourArray::get_init_msg();
+                    hid_raw.write_bytes(&init)?;
+                }
+                self.per_key_mode_active = true;
             }
-            // }
+            if let LEDNode::Rog(hid_raw) = &self.led_node {
+                for row in effect.iter() {
+                    hid_raw.write_bytes(row)?;
+                }
+            }
+            self.flip_effect_write = !self.flip_effect_write;
         }
-        self.flip_effect_write = !self.flip_effect_write;
         Ok(())
     }
 
