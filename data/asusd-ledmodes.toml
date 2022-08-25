@@ -177,7 +177,7 @@ per_key = false
 
 [[led_data]]
 prod_family = "ROG Strix"
-board_names = ["G513IC"]
+board_names = ["G513IC", "G513RC"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
 multizone = []
 per_key = false
