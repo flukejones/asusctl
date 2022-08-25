@@ -33,7 +33,7 @@ impl From<u32> for LedBrightness {
 }
 
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Debug, Clone, PartialEq, Copy, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Copy, Deserialize, Serialize)]
 pub struct Colour(pub u8, pub u8, pub u8);
 
 impl Default for Colour {
@@ -110,6 +110,15 @@ impl FromStr for Speed {
     }
 }
 
+impl From<Speed> for u8 {
+    fn from(s: Speed) -> u8 {
+        match s {
+            Speed::Low => 0,
+            Speed::Med => 1,
+            Speed::High => 2,
+        }
+    }
+}
 /// Used for Rainbow mode.
 ///
 /// Enum corresponds to the required integer value

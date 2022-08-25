@@ -2,17 +2,27 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::{keys::Key, Colour, KeyColourArray, PerKeyRaw, Speed};
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
 pub struct PerKey {
     pub key: Key,
-    pub action: ActionData,
+    action: ActionData,
     /// The end resulting colour after stepping through effect
     #[serde(skip)]
     colour: Colour,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub enum ActionData {
+impl PerKey {
+    pub fn new_breathe(key: Key, colour1: Colour, colour2: Colour, speed: Speed) -> Self {
+        Self {
+            key,
+            action: ActionData::new_breathe(colour1, colour2, speed),
+            colour: Default::default(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub(super) enum ActionData {
     Static(Colour),
     Breathe {
         /// The starting colour
@@ -23,11 +33,25 @@ pub enum ActionData {
         speed: Speed,
         /// Temporary data to help keep state
         #[serde(skip)]
-        colour1_actual: Colour,
-        /// Temporary data to help keep state
+        colour_actual: Colour,
         #[serde(skip)]
-        colour2_actual: Colour,
+        count_flipped: bool,
+        #[serde(skip)]
+        use_colour1: bool,
     },
+}
+
+impl ActionData {
+    fn new_breathe(colour1: Colour, colour2: Colour, speed: Speed) -> Self {
+        Self::Breathe {
+            colour1,
+            colour2,
+            speed,
+            colour_actual: Default::default(),
+            count_flipped: false,
+            use_colour1: true,
+        }
+    }
 }
 
 impl Default for ActionData {
@@ -68,16 +92,49 @@ impl Sequences {
 
     pub fn next_state(&mut self) {
         for effect in self.0.iter_mut() {
-            match effect.action {
-                ActionData::Static(c) => effect.colour = c,
+            match &mut effect.action {
+                ActionData::Static(c) => effect.colour = *c,
                 ActionData::Breathe {
                     colour1,
                     colour2,
                     speed,
-                    colour1_actual,
-                    colour2_actual,
+                    colour_actual,
+                    count_flipped: flipped,
+                    use_colour1,
                 } => {
-                    effect.colour = colour1;
+                    let speed = 4 - <u8>::from(*speed);
+
+                    let colour: &mut Colour;
+                    if *colour_actual == Colour(0, 0, 0) {
+                        *use_colour1 = !*use_colour1;
+                    }
+
+                    if !*use_colour1 {
+                        colour = colour2;
+                    } else {
+                        colour = colour1;
+                    }
+
+                    let r1_scale = colour.0 / speed / 2;
+                    let g1_scale = colour.1 / speed / 2;
+                    let b1_scale = colour.2 / speed / 2;
+
+                    if *colour_actual == Colour(0, 0, 0) {
+                        *flipped = true;
+                    } else if colour_actual >= colour {
+                        *flipped = false;
+                    }
+
+                    if !*flipped {
+                        colour_actual.0 = colour_actual.0.saturating_sub(r1_scale);
+                        colour_actual.1 = colour_actual.1.saturating_sub(g1_scale);
+                        colour_actual.2 = colour_actual.2.saturating_sub(b1_scale);
+                    } else {
+                        colour_actual.0 = colour_actual.0.saturating_add(r1_scale);
+                        colour_actual.1 = colour_actual.1.saturating_add(g1_scale);
+                        colour_actual.2 = colour_actual.2.saturating_add(b1_scale);
+                    }
+                    effect.colour = *colour_actual;
                 }
             }
         }
@@ -98,14 +155,14 @@ impl Sequences {
 
 #[cfg(test)]
 mod tests {
-    use crate::{keys::Key, Colour, PerKey, Sequences};
+    use crate::{keys::Key, ActionData, Colour, PerKey, Sequences, Speed};
 
     #[test]
     fn single_key_next_state_then_create() {
         let mut seq = Sequences::new();
         seq.0.push(PerKey {
             key: Key::F,
-            action: crate::ActionData::Static(Colour(255, 127, 0)),
+            action: ActionData::Static(Colour(255, 127, 0)),
             colour: Default::default(),
         });
 
@@ -115,6 +172,34 @@ mod tests {
         assert_eq!(packets[0][0], 0x5d);
         assert_eq!(packets[5][33], 255);
         assert_eq!(packets[5][34], 127);
+        assert_eq!(packets[5][35], 0);
+    }
+
+    #[test]
+    fn cycle_breathe() {
+        let mut seq = Sequences::new();
+        seq.0.push(PerKey {
+            key: Key::F,
+            action: ActionData::new_breathe(Colour(255, 127, 0), Colour(127, 0, 255), Speed::Med),
+            colour: Default::default(),
+        });
+
+        seq.next_state();
+        let packets = seq.create_packets();
+
+        assert_eq!(packets[0][0], 0x5d);
+        assert_eq!(packets[5][33], 124);
+        assert_eq!(packets[5][34], 0);
+        assert_eq!(packets[5][35], 0);
+
+        // dbg!(&packets[5][33..=35]);
+
+        seq.next_state();
+        let packets = seq.create_packets();
+
+        assert_eq!(packets[0][0], 0x5d);
+        assert_eq!(packets[5][33], 82);
+        assert_eq!(packets[5][34], 0);
         assert_eq!(packets[5][35], 0);
     }
 }
