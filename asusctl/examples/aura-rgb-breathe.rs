@@ -48,9 +48,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
         seq.next_state(&layout);
         let packets = seq.create_packets();
-        println!("{:#0x?}", &packets[0]);
 
         client.proxies().led().per_key_raw(packets)?;
-        std::thread::sleep(std::time::Duration::from_millis(300));
+        std::thread::sleep(std::time::Duration::from_millis(60));
     }
 }
