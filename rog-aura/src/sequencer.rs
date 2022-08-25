@@ -47,7 +47,7 @@ impl ActionData {
             colour1,
             colour2,
             speed,
-            colour_actual: Default::default(),
+            colour_actual: colour1,
             count_flipped: false,
             use_colour1: true,
         }
@@ -188,8 +188,8 @@ mod tests {
         let packets = seq.create_packets();
 
         assert_eq!(packets[0][0], 0x5d);
-        assert_eq!(packets[5][33], 124);
-        assert_eq!(packets[5][34], 0);
+        assert_eq!(packets[5][33], 213);
+        assert_eq!(packets[5][34], 106);
         assert_eq!(packets[5][35], 0);
 
         // dbg!(&packets[5][33..=35]);
@@ -198,8 +198,8 @@ mod tests {
         let packets = seq.create_packets();
 
         assert_eq!(packets[0][0], 0x5d);
-        assert_eq!(packets[5][33], 82);
-        assert_eq!(packets[5][34], 0);
+        assert_eq!(packets[5][33], 171);
+        assert_eq!(packets[5][34], 85);
         assert_eq!(packets[5][35], 0);
     }
 }
