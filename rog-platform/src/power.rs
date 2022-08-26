@@ -70,15 +70,9 @@ impl AsusPower {
                                 .attribute_value("charge_control_end_threshold")
                                 .is_some()
                             {
-                                if let Some(m) = device.attribute_value("energy_full_design") {
-                                    if let Ok(num) = m.to_string_lossy().parse::<u32>() {
-                                        if num >= 50_000_000 {
-                                            info!("Found battery power at {:?}, matched charge_control_end_threshold and energy_full_design", device.sysname());
-                                            battery = Some(device.syspath().to_path_buf());
-                                        }
-                                    }
-                                }
-                            } else if device.sysname().to_string_lossy().contains("BAT") {
+                                info!("Found battery power at {:?}, matched charge_control_end_threshold and energy_full_design", device.sysname());
+                                battery = Some(device.syspath().to_path_buf());
+                            } else if device.sysname().to_string_lossy().starts_with("BAT") {
                                 info!(
                                     "Found battery power at {:?}, sysfs path ended with BAT<n>",
                                     device.sysname()

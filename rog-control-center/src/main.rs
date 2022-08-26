@@ -6,7 +6,7 @@ use rog_control_center::{
 };
 
 use std::{
-    fs::{self, OpenOptions},
+    fs::OpenOptions,
     io::{Read, Write},
     path::PathBuf,
     sync::{atomic::AtomicBool, Arc},
