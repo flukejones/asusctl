@@ -1,6 +1,21 @@
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{keys::Key, layouts::KeyLayout, Colour, KeyColourArray, PerKeyRaw, Speed};
+use crate::{
+    keys::Key, layouts::KeyLayout, Colour, KeyColourArray, PerKeyRaw, PerZone, Speed,
+    ZonedColourArray,
+};
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub enum LedType {
+    Key(Key),
+    Zone(PerZone),
+}
+
+impl Default for LedType {
+    fn default() -> Self {
+        Self::Zone(PerZone::None)
+    }
+}
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub(super) enum Action {
@@ -30,7 +45,7 @@ impl Default for Action {
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
 pub struct ActionData {
-    key: Key,
+    led_type: LedType,
     action: Action,
     // TODO: time
     /// The end resulting colour after stepping through effect
@@ -39,21 +54,21 @@ pub struct ActionData {
 }
 
 impl ActionData {
-    pub fn set_key(&mut self, key: Key) {
-        self.key = key
+    pub fn set_led_type(&mut self, led_type: LedType) {
+        self.led_type = led_type
     }
 
-    pub fn new_static(key: Key, colour: Colour) -> Self {
+    pub fn new_static(led_type: LedType, colour: Colour) -> Self {
         Self {
-            key,
+            led_type,
             action: Action::Static(colour),
             colour: Default::default(),
         }
     }
 
-    pub fn new_breathe(key: Key, colour1: Colour, colour2: Colour, speed: Speed) -> Self {
+    pub fn new_breathe(led_type: LedType, colour1: Colour, colour2: Colour, speed: Speed) -> Self {
         Self {
-            key,
+            led_type,
             action: Action::Breathe {
                 colour1,
                 colour2,
@@ -153,27 +168,46 @@ impl Sequences {
 
     pub fn create_packets(&self) -> PerKeyRaw {
         let mut keys = KeyColourArray::new();
+        let mut zones = ZonedColourArray::new();
+        let mut is_per_key = false;
         for effect in self.0.iter() {
-            if let Some(rgb) = keys.rgb_for_key(effect.key) {
-                rgb[0] = effect.colour.0;
-                rgb[1] = effect.colour.1;
-                rgb[2] = effect.colour.2;
+            match effect.led_type {
+                LedType::Key(key) => {
+                    is_per_key = true;
+                    if let Some(rgb) = keys.rgb_for_key(key) {
+                        rgb[0] = effect.colour.0;
+                        rgb[1] = effect.colour.1;
+                        rgb[2] = effect.colour.2;
+                    }
+                }
+                LedType::Zone(z) => {
+                    let rgb = zones.rgb_for_zone(z);
+                    rgb[0] = effect.colour.0;
+                    rgb[1] = effect.colour.1;
+                    rgb[2] = effect.colour.2;
+                }
             }
         }
-        keys.into()
+        if is_per_key {
+            keys.into()
+        } else {
+            vec![zones.into()]
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{keys::Key, layouts::KeyLayout, Action, ActionData, Colour, Sequences, Speed};
+    use crate::{
+        keys::Key, layouts::KeyLayout, Action, ActionData, Colour, LedType, Sequences, Speed,
+    };
 
     #[test]
     fn single_key_next_state_then_create() {
         let layout = KeyLayout::gx502_layout();
         let mut seq = Sequences::new();
         seq.0.push(ActionData {
-            key: Key::F,
+            led_type: LedType::Key(Key::F),
             action: Action::Static(Colour(255, 127, 0)),
             colour: Default::default(),
         });
@@ -192,7 +226,7 @@ mod tests {
         let layout = KeyLayout::gx502_layout();
         let mut seq = Sequences::new();
         seq.0.push(ActionData {
-            key: Key::F,
+            led_type: LedType::Key(Key::F),
             action: Action::Breathe {
                 colour1: Colour(255, 127, 0),
                 colour2: Colour(127, 0, 255),

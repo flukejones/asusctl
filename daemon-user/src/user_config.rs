@@ -5,7 +5,7 @@ use std::{
 };
 
 use rog_anime::{ActionLoader, AnimTime, AnimeType, Fade, Sequences, Vec2};
-use rog_aura::{keys::Key, Colour, Speed};
+use rog_aura::{keys::Key, Colour, LedType, Speed};
 use serde::de::DeserializeOwned;
 use serde_derive::{Deserialize, Serialize};
 
@@ -198,33 +198,33 @@ impl Default for UserAuraConfig {
     fn default() -> Self {
         let mut seq = rog_aura::Sequences::new();
         let mut key = rog_aura::ActionData::new_breathe(
-            Key::W,
+            LedType::Key(Key::W),
             Colour(255, 0, 20),
             Colour(20, 255, 0),
             Speed::Low,
         );
 
         seq.push(key.clone());
-        key.set_key(Key::A);
+        key.set_led_type(LedType::Key(Key::A));
         seq.push(key.clone());
-        key.set_key(Key::S);
+        key.set_led_type(LedType::Key(Key::S));
         seq.push(key.clone());
-        key.set_key(Key::D);
+        key.set_led_type(LedType::Key(Key::D));
         seq.push(key);
 
         let key = rog_aura::ActionData::new_breathe(
-            Key::F,
+            LedType::Key(Key::F),
             Colour(255, 0, 0),
             Colour(255, 0, 0),
             Speed::High,
         );
         seq.push(key);
 
-        let mut key = rog_aura::ActionData::new_static(Key::RCtrl, Colour(0, 0, 255));
+        let mut key = rog_aura::ActionData::new_static(LedType::Key(Key::RCtrl), Colour(0, 0, 255));
         seq.push(key.clone());
-        key.set_key(Key::LCtrl);
+        key.set_led_type(LedType::Key(Key::LCtrl));
         seq.push(key.clone());
-        key.set_key(Key::Esc);
+        key.set_led_type(LedType::Key(Key::Esc));
         seq.push(key);
 
         Self {

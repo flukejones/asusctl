@@ -8,6 +8,10 @@ pub use builtin_modes::*;
 
 mod per_key_rgb;
 pub use per_key_rgb::*;
+
+mod per_zone;
+pub use per_zone::*;
+
 pub mod error;
 pub mod key_to_str;
 pub mod keys;

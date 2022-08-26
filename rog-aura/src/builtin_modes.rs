@@ -251,9 +251,10 @@ impl From<u8> for AuraModeNum {
 
 /// Base effects have no zoning, while multizone is 1-4
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Deserialize, Serialize)]
 pub enum AuraZone {
     /// Used if keyboard has no zones, or if setting all
+    #[default]
     None,
     /// Leftmost zone
     Key1,
@@ -269,12 +270,6 @@ pub enum AuraZone {
     BarLeft,
     /// The right part of a lightbar
     BarRight,
-}
-
-impl Default for AuraZone {
-    fn default() -> Self {
-        AuraZone::None
-    }
 }
 
 impl FromStr for AuraZone {

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added (v4.4.0)
 - Support for per-key config has been added to `asusd-user`. At the moment it is
   basic with only two effects done. Please see the manual for more information.
+- Support for per-zone effects on some laptops. As above.
 ### Changed
 - Create new rog-platform crate to manage all i/o in a universal way
   + kbd-led handling (requires kernel patches, TUF specific)

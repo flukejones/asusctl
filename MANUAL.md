@@ -141,7 +141,9 @@ An Aura config itself is a file with contents:
 {
   [
     {
-      "key": "F",
+      "led_type": {
+        "Key": "W"
+      },
       "action": {
         "Breathe": {
           "colour1": [
@@ -159,17 +161,33 @@ An Aura config itself is a file with contents:
       }
     },
     {
-    "key": "Esc",
-    "action": {
-      "Static": [
-        0,
-        0,
-        255
-      ]
+      "led_type": {
+        "Key": "Esc"
+      },
+      "action": {
+        "Static": [
+          0,
+          0,
+          255
+        ]
+      }
     }
   ]
 }
 ```
+
+If your laptop supports multizone, `"led_type"` can also be `"PerZone": <one of the following>`
+- `"None"`
+- `"KeyboardLeft"`
+- `"KeyboardCenterLeft"`
+- `"KeyboardCenterRight"`
+- `"KeyboardRight"`
+- `"LightbarRight"`
+- `"LightbarRightCorner"`
+- `"LightbarRightBottom"`
+- `"LightbarLeftBottom"`
+- `"LightbarLeftCorner"`
+- `"LightbarLeft"`
 
 At the moment there are only two effects available as shown in the example. More will come in the future
 but this may take me some time.
