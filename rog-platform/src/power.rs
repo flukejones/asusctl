@@ -47,30 +47,22 @@ impl AsusPower {
             PlatformError::Udev("scan_devices failed".into(), err)
         })? {
             if let Some(attr) = device.attribute_value("type") {
-                match attr.to_os_string().as_os_str().to_str() {
-                    Some("Mains") => {
+                info!("Power: Checking {:?}", device.syspath());
+                match attr.to_string_lossy().to_ascii_lowercase().trim() {
+                    "mains" => {
                         info!("Found mains power at {:?}", device.sysname());
                         mains = device.syspath().to_path_buf();
                     }
-                    Some("Battery") => {
+                    "battery" => {
                         // Priortised list of checks
+                        info!("Found a battery");
                         if battery.is_none() {
-                            // This check required due to an instance where another "not"
-                            // battery can be found
-                            if let Some(m) = device.attribute_value("manufacturer") {
-                                // Should always be ASUSTeK, but match on a lowercase part to be sure
-                                if m.to_string_lossy().to_lowercase().contains("asus") {
-                                    info!(
-                                        "Found battery power at {:?}, matched manufacturer",
-                                        device.sysname()
-                                    );
-                                    battery = Some(device.syspath().to_path_buf());
-                                }
-                            } else if device
+                            info!("Checking battery attributes");
+                            if device
                                 .attribute_value("charge_control_end_threshold")
                                 .is_some()
                             {
-                                info!("Found battery power at {:?}, matched charge_control_end_threshold and energy_full_design", device.sysname());
+                                info!("Found battery power at {:?}, matched charge_control_end_threshold", device.sysname());
                                 battery = Some(device.syspath().to_path_buf());
                             } else if device.sysname().to_string_lossy().starts_with("BAT") {
                                 info!(
@@ -78,18 +70,16 @@ impl AsusPower {
                                     device.sysname()
                                 );
                                 battery = Some(device.syspath().to_path_buf());
-                            } else if let Some(m) = device.attribute_value("type") {
-                                if m.to_string_lossy().to_lowercase().contains("battery") {
-                                    info!(
-                                        "Last resort: Found battery power at {:?}",
-                                        device.sysname()
-                                    );
-                                    battery = Some(device.syspath().to_path_buf());
-                                }
+                            } else {
+                                info!(
+                                    "Last resort: Found battery power at {:?} using type = Battery",
+                                    device.sysname()
+                                );
+                                battery = Some(device.syspath().to_path_buf());
                             }
                         }
                     }
-                    Some("USB") => {
+                    "usb" => {
                         info!("Found USB-C power at {:?}", device.sysname());
                         usb = Some(device.syspath().to_path_buf());
                     }
