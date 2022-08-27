@@ -131,7 +131,15 @@ As of now only AniMe is active in this with configuration in `~/.config/rog/`. O
 
 The main config is `~/.config/rog/rog-user.cfg`
 
-#### Config options: Aura (per-key support only)
+#### Config options: Aura, per-key and zoned
+
+I'm unsure of how many laptops this works on, so please try it.
+
+`led_type: Key` works only on actual per-key RGB keyboards.
+
+`led_type: PerZone` works on most zoned laptops but I've no idea if it works on unzoned. Please try it if you can.
+
+Does not work for TUF laptops.
 
 `~/.config/rog/rog-user.cfg` contains a setting `"active_aura": "<FILENAME>"` where `<FILENAME>` is the name of the Aura config to use, located in the same directory and without the file postfix, e.g, `"active_anime": "aura-default"`
 
