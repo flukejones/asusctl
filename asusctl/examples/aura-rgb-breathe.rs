@@ -1,6 +1,6 @@
 //! Using a combination of key-colour array plus a key layout to generate outputs.
 
-use rog_aura::{keys::Key, layouts::KeyLayout, Colour, LedType, Sequences, Speed, Effect, Breathe};
+use rog_aura::{keys::Key, layouts::KeyLayout, Breathe, Colour, Effect, LedType, Sequences, Speed};
 use rog_dbus::RogDbusClientBlocking;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -9,8 +9,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (client, _) = RogDbusClientBlocking::new().unwrap();
 
     let mut seq = Sequences::new();
-    let mut key = Effect::Breathe(
-        Breathe::new(LedType::Key(Key::W),
+    let mut key = Effect::Breathe(Breathe::new(
+        LedType::Key(Key::W),
         Colour(255, 127, 0),
         Colour(127, 0, 255),
         Speed::Med,
@@ -24,8 +24,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     key.set_led_type(LedType::Key(Key::D));
     seq.push(key.clone());
 
-    let mut key = Effect::Breathe(
-        Breathe::new(
+    let mut key = Effect::Breathe(Breathe::new(
         LedType::Key(Key::Q),
         Colour(127, 127, 127),
         Colour(127, 255, 255),
@@ -35,8 +34,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     key.set_led_type(LedType::Key(Key::E));
     seq.push(key.clone());
 
-    let mut key = Effect::Breathe(
-        Breathe::new(
+    let mut key = Effect::Breathe(Breathe::new(
         LedType::Key(Key::N1),
         Colour(166, 127, 166),
         Colour(127, 155, 20),

@@ -139,7 +139,7 @@ I'm unsure of how many laptops this works on, so please try it.
 
 `led_type: PerZone` works on most zoned laptops but I've no idea if it works on unzoned. Please try it if you can.
 
-Does not work for TUF laptops.
+For TUF use `"Zone": "None"` (and yes this does mean an audio EQ can be done now).
 
 `~/.config/rog/rog-user.cfg` contains a setting `"active_aura": "<FILENAME>"` where `<FILENAME>` is the name of the Aura config to use, located in the same directory and without the file postfix, e.g, `"active_anime": "aura-default"`
 
@@ -184,7 +184,7 @@ An Aura config itself is a file with contents:
         "led_type": {
           "Key": "N9"
         },
-        "colour": [
+        "start_colour": [
           0,
           0,
           255
@@ -197,7 +197,7 @@ An Aura config itself is a file with contents:
 }
 ```
 
-If your laptop supports multizone, `"led_type"` can also be `"PerZone": <one of the following>`
+If your laptop supports multizone, `"led_type"` can also be `"Zone": <one of the following>`
 - `"None"`
 - `"KeyboardLeft"`
 - `"KeyboardCenterLeft"`

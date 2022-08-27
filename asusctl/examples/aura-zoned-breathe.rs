@@ -1,6 +1,6 @@
 //! Using a combination of key-colour array plus a key layout to generate outputs.
 
-use rog_aura::{layouts::KeyLayout, Colour, LedType, PerZone, Sequences, Speed, Effect, Breathe};
+use rog_aura::{layouts::KeyLayout, Breathe, Colour, Effect, LedType, PerZone, Sequences, Speed};
 use rog_dbus::RogDbusClientBlocking;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -10,8 +10,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut seq = Sequences::new();
 
-    let zone = Effect::Breathe(
-        Breathe::new(
+    let zone = Effect::Breathe(Breathe::new(
         LedType::Zone(PerZone::KeyboardLeft),
         Colour(166, 127, 166),
         Colour(127, 155, 20),
@@ -19,8 +18,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     ));
     seq.push(zone);
 
-    let zone = Effect::Breathe(
-        Breathe::new(
+    let zone = Effect::Breathe(Breathe::new(
         LedType::Zone(PerZone::KeyboardCenterLeft),
         Colour(16, 127, 255),
         Colour(127, 15, 20),
@@ -28,8 +26,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     ));
     seq.push(zone);
 
-    let zone = Effect::Breathe(
-        Breathe::new(
+    let zone = Effect::Breathe(Breathe::new(
         LedType::Zone(PerZone::LightbarRightCorner),
         Colour(0, 255, 255),
         Colour(255, 0, 255),

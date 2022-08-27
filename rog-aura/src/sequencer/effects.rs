@@ -178,12 +178,13 @@ impl EffectState for Breathe {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Flicker {
     led_type: LedType,
-    /// The starting colour
-    colour: Colour,
+    start_colour: Colour,
     max_percentage: u8,
     min_percentage: u8,
     #[serde(skip)]
     count: u8,
+    #[serde(skip)]
+    colour: Colour,
 }
 
 impl Flicker {
@@ -194,6 +195,7 @@ impl Flicker {
             count: 4,
             max_percentage,
             min_percentage,
+            start_colour: colour,
         }
     }
 }
@@ -204,9 +206,13 @@ impl EffectState for Flicker {
             max_percentage,
             min_percentage,
             colour,
+            start_colour,
             ..
         } = self;
 
+        if self.count == 0 {
+            self.count = 4;
+        }
         self.count -= 1;
         if self.count != 0 {
             return;
@@ -214,15 +220,15 @@ impl EffectState for Flicker {
 
         // TODO: make a "percentage" method on Colour.
         let max_light = Colour(
-            (colour.0 as f32 / 100.0 * *max_percentage as f32) as u8,
-            (colour.1 as f32 / 100.0 * *max_percentage as f32) as u8,
-            (colour.2 as f32 / 100.0 * *max_percentage as f32) as u8,
+            (start_colour.0 as f32 / 100.0 * *max_percentage as f32) as u8,
+            (start_colour.1 as f32 / 100.0 * *max_percentage as f32) as u8,
+            (start_colour.2 as f32 / 100.0 * *max_percentage as f32) as u8,
         );
         // min light is a percentage of the set colour
         let min_light = Colour(
-            (colour.0 as f32 / 100.0 * *min_percentage as f32) as u8,
-            (colour.1 as f32 / 100.0 * *min_percentage as f32) as u8,
-            (colour.2 as f32 / 100.0 * *min_percentage as f32) as u8,
+            (start_colour.0 as f32 / 100.0 * *min_percentage as f32) as u8,
+            (start_colour.1 as f32 / 100.0 * *min_percentage as f32) as u8,
+            (start_colour.2 as f32 / 100.0 * *min_percentage as f32) as u8,
         );
 
         // Convert the 255 to percentage

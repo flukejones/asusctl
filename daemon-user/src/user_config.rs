@@ -5,7 +5,7 @@ use std::{
 };
 
 use rog_anime::{ActionLoader, AnimTime, AnimeType, Fade, Sequences, Vec2};
-use rog_aura::{keys::Key, Breathe, Colour, Effect, LedType, Speed, Static, Flicker};
+use rog_aura::{keys::Key, Breathe, Colour, Effect, Flicker, LedType, Speed, Static};
 use serde::de::DeserializeOwned;
 use serde_derive::{Deserialize, Serialize};
 
@@ -224,7 +224,12 @@ impl Default for UserAuraConfig {
         key.set_led_type(LedType::Key(Key::Esc));
         seq.push(key);
 
-        let key = Effect::Flicker(Flicker::new(LedType::Key(Key::N9), Colour(0, 0, 255), 80, 40));
+        let key = Effect::Flicker(Flicker::new(
+            LedType::Key(Key::N9),
+            Colour(0, 0, 255),
+            80,
+            40,
+        ));
         seq.push(key.clone());
 
         Self {

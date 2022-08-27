@@ -321,6 +321,13 @@ impl CtrlKbdLed {
                 for row in effect.iter() {
                     hid_raw.write_bytes(row)?;
                 }
+            } else if let LEDNode::KbdLed(tuf) = &self.led_node {
+                for row in effect.iter() {
+                    let r = row[9];
+                    let g = row[10];
+                    let b = row[11];
+                    tuf.set_kbd_rgb_mode(&[0, 0, r, g, b, 0])?;
+                }
             }
             self.flip_effect_write = !self.flip_effect_write;
         }

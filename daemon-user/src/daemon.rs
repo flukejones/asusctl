@@ -67,45 +67,45 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    if supported.keyboard_led.per_key_led_mode {
-        if let Some(cfg) = config.active_aura {
-            let mut aura_config = UserAuraConfig::load(cfg)?;
+    // if supported.keyboard_led.per_key_led_mode {
+    if let Some(cfg) = config.active_aura {
+        let mut aura_config = UserAuraConfig::load(cfg)?;
 
-            // Find and load a matching layout for laptop
-            let mut file = OpenOptions::new()
-                .read(true)
-                .open(PathBuf::from(BOARD_NAME))
-                .map_err(|e| {
-                    println!("{BOARD_NAME}, {e}");
-                    e
-                })?;
-            let mut board_name = String::new();
-            file.read_to_string(&mut board_name)?;
+        // Find and load a matching layout for laptop
+        let mut file = OpenOptions::new()
+            .read(true)
+            .open(PathBuf::from(BOARD_NAME))
+            .map_err(|e| {
+                println!("{BOARD_NAME}, {e}");
+                e
+            })?;
+        let mut board_name = String::new();
+        file.read_to_string(&mut board_name)?;
 
-            let layout = KeyLayout::find_layout(board_name.as_str(), PathBuf::from(DATA_DIR))
-                .map_err(|e| {
-                    println!("{BOARD_NAME}, {e}");
-                })
-                .unwrap_or(KeyLayout::ga401_layout());
+        let layout = KeyLayout::find_layout(board_name.as_str(), PathBuf::from(DATA_DIR))
+            .map_err(|e| {
+                println!("{BOARD_NAME}, {e}");
+            })
+            .unwrap_or(KeyLayout::ga401_layout());
 
-            executor
-                .spawn(async move {
-                    // Create server
-                    let (client, _) = RogDbusClientBlocking::new().unwrap();
-                    // let connection = Connection::session().await.unwrap();
-                    // connection.request_name(DBUS_NAME).await.unwrap();
+        executor
+            .spawn(async move {
+                // Create server
+                let (client, _) = RogDbusClientBlocking::new().unwrap();
+                // let connection = Connection::session().await.unwrap();
+                // connection.request_name(DBUS_NAME).await.unwrap();
 
-                    loop {
-                        aura_config.aura.next_state(&layout);
-                        let packets = aura_config.aura.create_packets();
+                loop {
+                    aura_config.aura.next_state(&layout);
+                    let packets = aura_config.aura.create_packets();
 
-                        client.proxies().led().per_key_raw(packets).unwrap();
-                        std::thread::sleep(std::time::Duration::from_millis(60));
-                    }
-                })
-                .detach();
-        }
+                    client.proxies().led().per_key_raw(packets).unwrap();
+                    std::thread::sleep(std::time::Duration::from_millis(60));
+                }
+            })
+            .detach();
     }
+    // }
 
     loop {
         smol::block_on(executor.tick());
