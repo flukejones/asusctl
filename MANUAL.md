@@ -139,37 +139,50 @@ An Aura config itself is a file with contents:
 
 ```json
 {
-  [
+  "name": "aura-default",
+  "aura": [
     {
-      "led_type": {
-        "Key": "W"
-      },
-      "action": {
-        "Breathe": {
-          "colour1": [
-            255,
-            127,
-            0
-          ],
-          "colour2": [
-            127,
-            0,
-            255
-          ],
-          "speed": "Med"
-        }
+      "Breathe": {
+        "led_type": {
+          "Key": "W"
+        },
+        "start_colour1": [
+          255,
+          0,
+          20
+        ],
+        "start_colour2": [
+          20,
+          255,
+          0
+        ],
+        "speed": "Low"
       }
     },
     {
-      "led_type": {
-        "Key": "Esc"
-      },
-      "action": {
-        "Static": [
+      "Static": {
+        "led_type": {
+          "Key": "Esc"
+        },
+        "colour": [
           0,
           0,
           255
         ]
+      }
+    },
+    {
+      "Flicker": {
+        "led_type": {
+          "Key": "N9"
+        },
+        "colour": [
+          0,
+          0,
+          255
+        ],
+        "max_percentage": 80,
+        "min_percentage": 40
       }
     }
   ]
@@ -189,7 +202,7 @@ If your laptop supports multizone, `"led_type"` can also be `"PerZone": <one of 
 - `"LightbarLeftCorner"`
 - `"LightbarLeft"`
 
-At the moment there are only two effects available as shown in the example. More will come in the future
+At the moment there are only three effects available as shown in the example. More will come in the future
 but this may take me some time.
 
 **Aura layouts**: `asusd-user` does its best to find a suitable layout to use based on `/sys/class/dmi/id/board_name`.

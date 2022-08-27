@@ -5,13 +5,13 @@ use std::{
 };
 
 use rog_anime::{ActionLoader, AnimTime, AnimeType, Fade, Sequences, Vec2};
-use rog_aura::{keys::Key, Colour, LedType, Speed};
+use rog_aura::{keys::Key, Breathe, Colour, Effect, LedType, Speed, Static, Flicker};
 use serde::de::DeserializeOwned;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::error::Error;
 
-pub trait ConfigLoadSave<T> {
+pub trait ConfigLoadSave<T: DeserializeOwned + serde::Serialize> {
     fn name(&self) -> String;
 
     fn default_with_name(name: String) -> T;
@@ -44,10 +44,7 @@ pub trait ConfigLoadSave<T> {
         Ok(())
     }
 
-    fn load(name: String) -> Result<T, Error>
-    where
-        T: DeserializeOwned + serde::Serialize,
-    {
+    fn load(name: String) -> Result<T, Error> {
         let mut path = if let Some(dir) = dirs::config_dir() {
             dir
         } else {
@@ -197,12 +194,12 @@ impl ConfigLoadSave<UserAuraConfig> for UserAuraConfig {
 impl Default for UserAuraConfig {
     fn default() -> Self {
         let mut seq = rog_aura::Sequences::new();
-        let mut key = rog_aura::ActionData::new_breathe(
+        let mut key = Effect::Breathe(Breathe::new(
             LedType::Key(Key::W),
             Colour(255, 0, 20),
             Colour(20, 255, 0),
             Speed::Low,
-        );
+        ));
 
         seq.push(key.clone());
         key.set_led_type(LedType::Key(Key::A));
@@ -212,20 +209,23 @@ impl Default for UserAuraConfig {
         key.set_led_type(LedType::Key(Key::D));
         seq.push(key);
 
-        let key = rog_aura::ActionData::new_breathe(
+        let key = Effect::Breathe(Breathe::new(
             LedType::Key(Key::F),
             Colour(255, 0, 0),
             Colour(255, 0, 0),
             Speed::High,
-        );
+        ));
         seq.push(key);
 
-        let mut key = rog_aura::ActionData::new_static(LedType::Key(Key::RCtrl), Colour(0, 0, 255));
+        let mut key = Effect::Static(Static::new(LedType::Key(Key::RCtrl), Colour(0, 0, 255)));
         seq.push(key.clone());
         key.set_led_type(LedType::Key(Key::LCtrl));
         seq.push(key.clone());
         key.set_led_type(LedType::Key(Key::Esc));
         seq.push(key);
+
+        let key = Effect::Flicker(Flicker::new(LedType::Key(Key::N9), Colour(0, 0, 255), 80, 40));
+        seq.push(key.clone());
 
         Self {
             name: "default".to_string(),
