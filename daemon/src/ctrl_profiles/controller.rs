@@ -1,5 +1,3 @@
-use std::sync::{Arc, Mutex};
-
 use crate::error::RogError;
 use crate::{CtrlTask, GetSupported};
 use async_trait::async_trait;
@@ -8,6 +6,7 @@ use rog_platform::supported::PlatformProfileFunctions;
 use rog_profiles::error::ProfileError;
 use rog_profiles::{FanCurveProfiles, Profile};
 use smol::Executor;
+use std::sync::{Arc, Mutex};
 
 use super::config::ProfileConfig;
 
@@ -56,48 +55,31 @@ impl crate::Reloadable for CtrlPlatformProfile {
 }
 
 impl CtrlPlatformProfile {
-    pub fn new(mut config: ProfileConfig) -> Result<Self, RogError> {
+    pub fn new(config: ProfileConfig) -> Result<Self, RogError> {
         if Profile::is_platform_profile_supported() {
             info!("Device has profile control available");
 
+            let mut controller = CtrlPlatformProfile { config };
             if FanCurveProfiles::get_device().is_ok() {
                 info!("Device has fan curves available");
-                if config.fan_curves.is_none() {
-                    let active = Profile::get_active_profile().unwrap_or(Profile::Balanced);
-                    let dev = FanCurveProfiles::get_device()?;
-                    let mut curves = FanCurveProfiles::default();
+                if controller.config.fan_curves.is_none() {
+                    controller.config.fan_curves = Some(Default::default());
+                    for _ in [Profile::Balanced, Profile::Performance, Profile::Quiet] {
+                        controller.set_next_profile()?;
+                        controller.set_active_curve_to_defaults()?;
 
-                    warn!("No default fan-curves: cycling profiles to set defaults");
-                    Profile::set_profile(Profile::Balanced)?;
-                    curves.read_from_dev_profile(Profile::Balanced, &dev);
-                    info!(
-                        "{:?}: {}",
-                        config.active_profile,
-                        String::from(curves.get_fan_curves_for(Profile::Balanced))
-                    );
-                    Profile::set_profile(Profile::Performance)?;
-                    curves.read_from_dev_profile(Profile::Performance, &dev);
-                    info!(
-                        "{:?}: {}",
-                        config.active_profile,
-                        String::from(curves.get_fan_curves_for(Profile::Performance))
-                    );
-                    Profile::set_profile(Profile::Quiet)?;
-                    curves.read_from_dev_profile(Profile::Quiet, &dev);
-                    info!(
-                        "{:?}: {}",
-                        config.active_profile,
-                        String::from(curves.get_fan_curves_for(Profile::Quiet))
-                    );
-
-                    Profile::set_profile(active)?;
-                    config.fan_curves = Some(curves);
-                    config.write();
-                    info!("Set fan curve defaults");
+                        let active = Profile::get_active_profile().unwrap_or(Profile::Balanced);
+                        if let Some(curves) = controller.config.fan_curves.as_ref() {
+                            info!(
+                                "{active:?}: {}",
+                                String::from(curves.get_fan_curves_for(active))
+                            );
+                        }
+                    }
                 }
             }
 
-            return Ok(CtrlPlatformProfile { config });
+            return Ok(controller);
         }
 
         Err(ProfileError::NotSupported.into())

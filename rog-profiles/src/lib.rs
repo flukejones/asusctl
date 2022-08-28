@@ -68,7 +68,6 @@ impl Profile {
 
     pub fn set_profile(profile: Profile) -> Result<(), ProfileError> {
         let mut file = OpenOptions::new().write(true).open(PLATFORM_PROFILE)?;
-
         file.write_all(<&str>::from(profile).as_bytes())?;
         Ok(())
     }
