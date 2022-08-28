@@ -100,7 +100,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let packets = aura_config.aura.create_packets();
 
                     client.proxies().led().per_key_raw(packets).unwrap();
-                    std::thread::sleep(std::time::Duration::from_millis(60));
+                    std::thread::sleep(std::time::Duration::from_millis(33));
                 }
             })
             .detach();

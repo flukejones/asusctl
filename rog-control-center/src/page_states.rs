@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeMap, HashMap, HashSet},
+    collections::{BTreeMap, HashSet},
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc,
@@ -72,7 +72,9 @@ impl ProfilesState {
         Ok(Self {
             was_notified,
             list: if supported.platform_profile.platform_profile {
-                dbus.proxies().profile().profiles()?
+                let mut list = dbus.proxies().profile().profiles()?;
+                list.sort();
+                list
             } else {
                 vec![]
             },
@@ -91,7 +93,7 @@ pub struct FanCurvesState {
     pub show_curve: Profile,
     pub show_graph: FanCurvePU,
     pub enabled: HashSet<Profile>,
-    pub curves: HashMap<Profile, FanCurveSet>,
+    pub curves: BTreeMap<Profile, FanCurveSet>,
     pub drag_delta: Vec2,
 }
 
@@ -118,7 +120,7 @@ impl FanCurvesState {
             HashSet::from([Profile::Balanced, Profile::Quiet, Profile::Performance])
         };
 
-        let mut curves: HashMap<Profile, FanCurveSet> = HashMap::new();
+        let mut curves: BTreeMap<Profile, FanCurveSet> = BTreeMap::new();
         profiles.iter().for_each(|p| {
             if supported.platform_profile.fan_curves {
                 if let Ok(curve) = dbus.proxies().profile().fan_curve_data(*p) {

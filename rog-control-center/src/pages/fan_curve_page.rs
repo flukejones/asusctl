@@ -66,6 +66,7 @@ impl<'a> RogApp<'a> {
                 }
             };
 
+            profiles.list.sort();
             for f in profiles.list.iter() {
                 item(*f, curves, curves.enabled.contains(f));
             }

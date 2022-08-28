@@ -137,9 +137,9 @@ I'm unsure of how many laptops this works on, so please try it.
 
 `led_type: Key` works only on actual per-key RGB keyboards.
 
-`led_type: PerZone` works on most zoned laptops but I've no idea if it works on unzoned. Please try it if you can.
+`led_type: Zone` works on zoned laptops.
 
-For TUF use `"Zone": "None"` (and yes this does mean an audio EQ can be done now).
+`led_type: Zone` set to `None` works on zoned ROG laptops, unzoned ROG laptops, and TUF laptops (and yes this does mean an audio EQ can be done now).
 
 `~/.config/rog/rog-user.cfg` contains a setting `"active_aura": "<FILENAME>"` where `<FILENAME>` is the name of the Aura config to use, located in the same directory and without the file postfix, e.g, `"active_anime": "aura-default"`
 
