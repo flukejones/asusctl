@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added three effects to use with Zoned or Per-Key:
   + Static, Breathe, Flicker. More to come.
 - Support for G713RS LED modes
+- Support for TUF laptop RGB (kernel patches required, these are submitted upstream)
 ### Changed
 - Create new rog-platform crate to manage all i/o in a universal way
   + kbd-led handling (requires kernel patches, TUF specific)
