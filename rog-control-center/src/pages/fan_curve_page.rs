@@ -74,7 +74,7 @@ impl<'a> RogApp<'a> {
 
         if changed {
             let selected_profile = curves.show_curve;
-            let selected_PU = curves.show_graph;
+            let selected_pu = curves.show_graph;
 
             let notif = curves.was_notified.clone();
             match FanCurvesState::new(notif, supported, dbus) {
@@ -83,7 +83,7 @@ impl<'a> RogApp<'a> {
             }
 
             curves.show_curve = selected_profile;
-            curves.show_graph = selected_PU;
+            curves.show_graph = selected_pu;
         }
     }
 }

@@ -43,12 +43,12 @@ Bus 001 Device 002: ID 0b05:1866 ASUSTek Computer, Inc. N-KEY Device
 then it may work without tweaks. Technically all other functions except the LED
 and AniMe parts should work regardless of your latop make.
 
-**TUF Laptops**: support is coming. I recently aquired one of these machines and have written
-various patches for the kernel to add proper support (e.g, RGB control).
+**TUF Laptops**: now supported provided the kernel is patched. These patches are submitted upstream and will be in version 6.1.x of the kernel (or thereabouts). See the blog on asus-linux.org for more info.
 
 ## Implemented
 
 - [X] System daemon
+- [X] GUI app
 - [X] User notifications daemon
 - [X] Setting/modifying built-in LED modes
 - [X] Per-key LED setting
@@ -56,9 +56,9 @@ various patches for the kernel to add proper support (e.g, RGB control).
 - [X] Saving settings for reload
 - [X] AniMatrix display on G14 models that include it
 - [X] Set battery charge limit (with kernel supporting this)
-- [X] Fan curve control on G14 + G15. Requires kernel patch (should reach 5.15 kernel)
+- [X] Fan curve control on supported laptops (G14/G15, some TUF like FA507)
 - [X] Toggle bios setting for boot/POST sound
-- [X] Toggle bios setting for "dedicated gfx" mode on supported laptops (g-sync, or called MUX on 2022+ laptops)
+- [X] Toggle GPU MUX (g-sync, or called MUX on 2022+ laptops)
 
 # GUI
 
