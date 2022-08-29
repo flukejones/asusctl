@@ -73,11 +73,17 @@ impl<'a> RogApp<'a> {
         });
 
         if changed {
+            let selected_profile = curves.show_curve;
+            let selected_PU = curves.show_graph;
+
             let notif = curves.was_notified.clone();
             match FanCurvesState::new(notif, supported, dbus) {
                 Ok(f) => *curves = f,
                 Err(e) => *do_error = Some(e.to_string()),
             }
+
+            curves.show_curve = selected_profile;
+            curves.show_graph = selected_PU;
         }
     }
 }
