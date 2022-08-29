@@ -134,9 +134,11 @@ impl Default for AuraConfig {
             }
         }
 
-        if let Ok(p) = KeyboardLed::new() {
-            if p.has_kbd_rgb_mode() {
-                prod_id = AuraDevice::Tuf;
+        if prod_id == AuraDevice::Unknown {
+            if let Ok(p) = KeyboardLed::new() {
+                if p.has_kbd_rgb_mode() {
+                    prod_id = AuraDevice::Tuf;
+                }
             }
         }
 
