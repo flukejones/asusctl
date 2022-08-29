@@ -227,11 +227,11 @@ fn aura_power2(
             .multizone_led_mode
             .contains(&AuraZone::BarRight);
 
-    let boot_bar = &mut enabled_states.x19b6.contains(&AuraDev19b6::BootBar);
+    let boot_bar = &mut enabled_states.x19b6.contains(&AuraDev19b6::AwakeBar);
     let boot_logo = &mut enabled_states.x19b6.contains(&AuraDev19b6::BootLogo);
     let boot_keyb = &mut enabled_states.x19b6.contains(&AuraDev19b6::BootKeyb);
 
-    let awake_bar = &mut enabled_states.x19b6.contains(&AuraDev19b6::AwakeBar);
+    let awake_bar = &mut enabled_states.x19b6.contains(&AuraDev19b6::BootBar);
     let awake_logo = &mut enabled_states.x19b6.contains(&AuraDev19b6::AwakeLogo);
     let awake_keyb = &mut enabled_states.x19b6.contains(&AuraDev19b6::AwakeKeyb);
 
@@ -319,9 +319,9 @@ fn aura_power2(
             .multizone_led_mode
             .contains(&AuraZone::BarLeft)
         {
-            modify(*boot_bar, AuraDev19b6::BootBar);
+            modify(*boot_bar, AuraDev19b6::AwakeBar);
             modify(*sleep_bar, AuraDev19b6::SleepBar);
-            modify(*awake_bar, AuraDev19b6::AwakeBar);
+            modify(*awake_bar, AuraDev19b6::BootBar);
         }
 
         let mut send = |enable: bool, data: Vec<AuraDev19b6>| {

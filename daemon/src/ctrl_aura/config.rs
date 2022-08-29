@@ -150,8 +150,8 @@ impl Default for AuraConfig {
                 AuraDev19b6::AwakeKeyb,
                 AuraDev19b6::ShutdownLogo,
                 AuraDev19b6::ShutdownKeyb,
-                AuraDev19b6::AwakeBar,
                 AuraDev19b6::BootBar,
+                AuraDev19b6::AwakeBar,
                 AuraDev19b6::SleepBar,
                 AuraDev19b6::ShutdownBar,
             ]))
