@@ -62,6 +62,12 @@ trait Profile {
     /// only for the currently active profile.
     fn set_active_curve_to_defaults(&self) -> zbus::Result<()>;
 
+    /// Reset the stored (self) and device curve to the defaults of the platform.
+    ///
+    /// Each platform_profile has a different default and the defualt can be read
+    /// only for the currently active profile.
+    fn reset_profile_curves(&self, profile: Profile) -> zbus::fdo::Result<()>;
+
     /// NotifyProfile signal
     #[dbus_proxy(signal)]
     fn notify_profile(&self, profile: Profile) -> zbus::Result<Profile>;

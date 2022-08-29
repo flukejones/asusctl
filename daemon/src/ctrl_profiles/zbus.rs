@@ -174,6 +174,30 @@ impl ProfileZbus {
         Ok(())
     }
 
+    /// Reset the stored (self) and device curve to the defaults of the platform.
+    ///
+    /// Each platform_profile has a different default and the defualt can be read
+    /// only for the currently active profile.
+    fn reset_profile_curves(&self, profile: Profile) -> zbus::fdo::Result<()> {
+        if let Ok(mut ctrl) = self.inner.try_lock() {
+            ctrl.config.read();
+            let active = Profile::get_active_profile().unwrap_or(Profile::Balanced);
+
+            Profile::set_profile(profile)
+                .map_err(|e| warn!("set_profile, {}", e))
+                .ok();
+            ctrl.set_active_curve_to_defaults()
+                .map_err(|e| warn!("Profile::set_active_curve_to_defaults, {}", e))
+                .ok();
+
+            Profile::set_profile(active)
+                .map_err(|e| warn!("set_profile, {}", e))
+                .ok();
+            ctrl.save_config();
+        }
+        Ok(())
+    }
+
     #[dbus_interface(signal)]
     async fn notify_profile(signal_ctxt: &SignalContext<'_>, profile: Profile) -> zbus::Result<()> {
     }

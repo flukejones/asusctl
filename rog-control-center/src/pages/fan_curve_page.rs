@@ -27,7 +27,7 @@ impl<'a> RogApp<'a> {
                 ui,
             );
 
-            fan_graphs(&mut states.profiles, &mut states.fan_curves, dbus, &mut states.error, ui);
+            fan_graphs(supported, &mut states.profiles, &mut states.fan_curves, dbus, &mut states.error, ui);
         });
     }
 

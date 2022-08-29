@@ -1,4 +1,5 @@
 use egui::{plot::Points, Ui};
+use rog_platform::supported::SupportedFunctions;
 use rog_profiles::{FanCurvePU, Profile};
 
 use crate::{
@@ -7,6 +8,7 @@ use crate::{
 };
 
 pub fn fan_graphs(
+    supported: &SupportedFunctions,
     profiles: &mut ProfilesState,
     curves: &mut FanCurvesState,
     dbus: &RogDbusClientBlocking,
@@ -108,15 +110,36 @@ pub fn fan_graphs(
             plot_ui.points(points)
         });
 
+    let mut set = false;
+    let mut reset = false;
     ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
-        if ui.add(egui::Button::new("Apply Fan-curve")).clicked() {
-            dbus.proxies()
-                .profile()
-                .set_fan_curve(profiles.current, data.clone())
-                .map_err(|err| {
-                    *do_error = Some(err.to_string());
-                })
-                .ok();
-        }
+        set = ui.add(egui::Button::new("Apply Fan-curve")).clicked();
+        reset = ui.add(egui::Button::new("Reset Profile")).clicked();
     });
+
+    if set {
+        dbus.proxies()
+            .profile()
+            .set_fan_curve(profiles.current, data.clone())
+            .map_err(|err| {
+                *do_error = Some(err.to_string());
+            })
+            .ok();
+    }
+
+    if reset {
+        dbus.proxies()
+            .profile()
+            .reset_profile_curves(profiles.current)
+            .map_err(|err| {
+                *do_error = Some(err.to_string());
+            })
+            .ok();
+
+        let notif = curves.was_notified.clone();
+        match FanCurvesState::new(notif, supported, dbus) {
+            Ok(f) => *curves = f,
+            Err(e) => *do_error = Some(e.to_string()),
+        }
+    }
 }

@@ -53,7 +53,10 @@ impl<'a> RogApp<'a> {
                     ui.horizontal(|ui| {
                         ui.spacing_mut().item_spacing.x = 0.0;
                         ui.label("Source code ");
-                        ui.hyperlink_to("rog-gui.", "https://gitlab.com/asus-linux/asusctl/-/tree/main/rog-control-center");
+                        ui.hyperlink_to(
+                            "rog-gui.",
+                            "https://gitlab.com/asus-linux/asusctl/-/tree/main/rog-control-center",
+                        );
                     });
                 });
             });
