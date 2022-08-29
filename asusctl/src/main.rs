@@ -604,22 +604,26 @@ fn handle_led_power2(
             aura_cli::SetAuraEnabled::Boot(arg) => {
                 check(arg.keyboard, AuraDev19b6::BootKeyb);
                 check(arg.logo, AuraDev19b6::BootLogo);
-                check(arg.lightbar, AuraDev19b6::AwakeBar);
+                check(arg.lightbar, AuraDev19b6::BootBar);
+                check(arg.lid, AuraDev19b6::AwakeLid);
             }
             aura_cli::SetAuraEnabled::Sleep(arg) => {
                 check(arg.keyboard, AuraDev19b6::SleepKeyb);
                 check(arg.logo, AuraDev19b6::SleepLogo);
                 check(arg.lightbar, AuraDev19b6::SleepBar);
+                check(arg.lid, AuraDev19b6::SleepLid);
             }
             aura_cli::SetAuraEnabled::Awake(arg) => {
                 check(arg.keyboard, AuraDev19b6::AwakeKeyb);
                 check(arg.logo, AuraDev19b6::AwakeLogo);
-                check(arg.lightbar, AuraDev19b6::BootBar);
+                check(arg.lightbar, AuraDev19b6::AwakeBar);
+                check(arg.lid, AuraDev19b6::AwakeLid);
             }
             aura_cli::SetAuraEnabled::Shutdown(arg) => {
                 check(arg.keyboard, AuraDev19b6::ShutdownKeyb);
                 check(arg.logo, AuraDev19b6::ShutdownLogo);
                 check(arg.lightbar, AuraDev19b6::ShutdownBar);
+                check(arg.lid, AuraDev19b6::ShutdownBar);
             }
         }
 

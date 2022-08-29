@@ -200,7 +200,11 @@ impl AuraDev19b6 {
         control.iter().for_each(|n| {
             a |= *n as u32;
         });
-        [(a & 0xff) as u8, ((a & 0xff00) >> 8) as u8, ((a & 0xff0000) >> 16) as u8]
+        [
+            (a & 0xff) as u8,
+            ((a & 0xff00) >> 8) as u8,
+            ((a & 0xff0000) >> 16) as u8,
+        ]
     }
 
     pub const fn dev_id() -> &'static str {

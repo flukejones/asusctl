@@ -49,6 +49,8 @@ pub struct AuraEnabled {
     pub logo: Option<bool>,
     #[options(meta = "", help = "<true/false>")]
     pub lightbar: Option<bool>,
+    #[options(meta = "", help = "<true/false>")]
+    pub lid: Option<bool>,
 }
 
 // impl FromStr for AuraEnabled {
