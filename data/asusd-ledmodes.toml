@@ -48,6 +48,13 @@ multizone = []
 per_key = false
 
 [[led_data]]
+prod_family = "ROG Zephyrus M16"
+board_names = ["GU603HR", "GU603HE", "GU603HM"]
+standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
+multizone = []
+per_key = false
+
+[[led_data]]
 prod_family = "ROG Zephyrus S17"
 board_names = ["GX703HS"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
