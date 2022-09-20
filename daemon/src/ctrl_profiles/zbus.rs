@@ -1,14 +1,21 @@
 use async_trait::async_trait;
+use inotify::Inotify;
+use inotify::WatchMask;
 use log::warn;
 use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::fan_curve_set::FanCurveSet;
 use rog_profiles::Profile;
+use rog_profiles::PLATFORM_PROFILE;
+use smol::Executor;
 use zbus::Connection;
 use zbus::SignalContext;
 
 use std::sync::Arc;
 use std::sync::Mutex;
 use zbus::{dbus_interface, fdo::Error};
+
+use crate::error::RogError;
+use crate::CtrlTask;
 
 use super::controller::CtrlPlatformProfile;
 
@@ -207,5 +214,47 @@ impl ProfileZbus {
 impl crate::ZbusAdd for ProfileZbus {
     async fn add_to_server(self, server: &mut Connection) {
         Self::add_to_server_helper(self, "/org/asuslinux/Profile", server).await;
+    }
+}
+
+#[async_trait]
+impl CtrlTask for ProfileZbus {
+    async fn create_tasks<'a>(
+        &self,
+        executor: &mut Executor<'a>,
+        signal: SignalContext<'a>,
+    ) -> Result<(), RogError> {
+        let ctrl = self.inner.clone();
+        let mut inotify = Inotify::init()?;
+        inotify.add_watch(PLATFORM_PROFILE, WatchMask::MODIFY)?;
+
+        executor
+            .spawn(async move {
+                let mut buffer = [0; 1024];
+                loop {
+                    if let Ok(events) = inotify.read_events_blocking(&mut buffer) {
+                        for _ in events {
+                            let mut active_profile = None;
+
+                            if let Ok(ref mut lock) = ctrl.try_lock() {
+                                let new_profile = Profile::get_active_profile().unwrap();
+                                if new_profile != lock.config.active_profile {
+                                    lock.config.active_profile = new_profile;
+                                    lock.write_profile_curve_to_platform().unwrap();
+                                    lock.save_config();
+                                    active_profile = Some(lock.config.active_profile);
+                                }
+                            }
+
+                            if let Some(active_profile) = active_profile {
+                                Self::notify_profile(&signal, active_profile).await.ok();
+                            }
+                        }
+                    }
+                }
+            })
+            .detach();
+
+        Ok(())
     }
 }

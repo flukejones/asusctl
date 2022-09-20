@@ -3,8 +3,7 @@ use std::error::Error;
 use std::io::Write;
 use std::sync::{Arc, Mutex};
 
-use ::zbus::Connection;
-use daemon::ctrl_profiles::controller::CtrlProfileTask;
+use ::zbus::{Connection, SignalContext};
 use log::LevelFilter;
 use log::{error, info, warn};
 use smol::Executor;
@@ -90,7 +89,8 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
             ctrl.add_to_server(&mut connection).await;
 
             let task = CtrlRogBios::new(config.clone())?;
-            task.create_tasks(executor).await.ok();
+            let sig = SignalContext::new(&connection, "/org/asuslinux/Platform")?;
+            task.create_tasks(executor, sig).await.ok();
         }
         Err(err) => {
             error!("rog_bios_control: {}", err);
@@ -106,7 +106,8 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
             ctrl.add_to_server(&mut connection).await;
 
             let task = CtrlPower::new(config)?;
-            task.create_tasks(executor).await.ok();
+            let sig = SignalContext::new(&connection, "/org/asuslinux/Charge")?;
+            task.create_tasks(executor, sig).await.ok();
         }
         Err(err) => {
             error!("charge_control: {}", err);
@@ -121,10 +122,12 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
                     .unwrap_or_else(|err| warn!("Profile control: {}", err));
 
                 let tmp = Arc::new(Mutex::new(ctrl));
-                let task = CtrlProfileTask::new(tmp.clone());
-                task.create_tasks(executor).await.ok();
+                //let task = CtrlProfileTask::new(tmp.clone());
+                //task.create_tasks(executor).await.ok();
+                let sig = SignalContext::new(&connection, "/org/asuslinux/Profile")?;
 
                 let task = ProfileZbus::new(tmp.clone());
+                task.create_tasks(executor, sig).await.ok();
                 task.add_to_server(&mut connection).await;
             }
             Err(err) => {
@@ -148,7 +151,8 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
             zbus.add_to_server(&mut connection).await;
 
             let task = CtrlAnimeTask::new(inner).await;
-            task.create_tasks(executor).await.ok();
+            let sig = SignalContext::new(&connection, "/org/asuslinux/Anime")?;
+            task.create_tasks(executor, sig).await.ok();
         }
         Err(err) => {
             error!("AniMe control: {}", err);
@@ -171,7 +175,8 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
                 .await;
 
             let task = CtrlKbdLedTask::new(inner);
-            task.create_tasks(executor).await.ok();
+            let sig = SignalContext::new(&connection, "/org/asuslinux/Aura")?;
+            task.create_tasks(executor, sig).await.ok();
         }
         Err(err) => {
             error!("Keyboard control: {}", err);

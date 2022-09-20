@@ -1,12 +1,9 @@
 use crate::error::RogError;
-use crate::{CtrlTask, GetSupported};
-use async_trait::async_trait;
+use crate::GetSupported;
 use log::{info, warn};
 use rog_platform::supported::PlatformProfileFunctions;
 use rog_profiles::error::ProfileError;
 use rog_profiles::{FanCurveProfiles, Profile};
-use smol::Executor;
-use std::sync::{Arc, Mutex};
 
 use super::config::ProfileConfig;
 
@@ -126,35 +123,6 @@ impl CtrlPlatformProfile {
                 curves.set_active_curve_to_defaults(self.config.active_profile, &mut device)?;
             }
         }
-        Ok(())
-    }
-}
-
-pub struct CtrlProfileTask {
-    ctrl: Arc<Mutex<CtrlPlatformProfile>>,
-}
-
-impl CtrlProfileTask {
-    pub fn new(ctrl: Arc<Mutex<CtrlPlatformProfile>>) -> Self {
-        Self { ctrl }
-    }
-}
-
-#[async_trait]
-impl CtrlTask for CtrlProfileTask {
-    async fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
-        let ctrl = self.ctrl.clone();
-        self.repeating_task(666, executor, move || {
-            if let Ok(ref mut lock) = ctrl.try_lock() {
-                let new_profile = Profile::get_active_profile().unwrap();
-                if new_profile != lock.config.active_profile {
-                    lock.config.active_profile = new_profile;
-                    lock.write_profile_curve_to_platform().unwrap();
-                    lock.save_config();
-                }
-            }
-        })
-        .await;
         Ok(())
     }
 }

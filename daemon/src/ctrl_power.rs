@@ -108,7 +108,11 @@ impl CtrlPower {
 
 #[async_trait]
 impl CtrlTask for CtrlPower {
-    async fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
+    async fn create_tasks<'a>(
+        &self,
+        executor: &mut Executor<'a>,
+        _: SignalContext<'a>,
+    ) -> Result<(), RogError> {
         let power1 = self.clone();
         let power2 = self.clone();
         self.create_sys_event_tasks(

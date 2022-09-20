@@ -24,10 +24,11 @@ use std::time::Duration;
 use crate::error::RogError;
 use async_trait::async_trait;
 use config::Config;
+use inotify::{Inotify, WatchMask};
 use log::warn;
 use logind_zbus::manager::ManagerProxy;
 use smol::{stream::StreamExt, Executor, Timer};
-use zbus::Connection;
+use zbus::{Connection, SignalContext};
 use zvariant::ObjectPath;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -62,7 +63,39 @@ pub trait ZbusAdd {
 pub trait CtrlTask {
     /// Implement to set up various tasks that may be required, using the `Executor`.
     /// No blocking loops are allowed, or they must be run on a separate thread.
-    async fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError>;
+    async fn create_tasks<'a>(
+        &self,
+        executor: &mut Executor<'a>,
+        signal: SignalContext<'a>,
+    ) -> Result<(), RogError>;
+
+    /// Free method to run a task when the path is modified
+    ///
+    /// Not very useful if you need to also do a zbus notification.
+    fn create_tasks_inotify(
+        &self,
+        executor: &mut Executor,
+        path: &str,
+        mut task: impl FnMut() + Send + 'static,
+    ) -> Result<(), RogError> {
+        let mut inotify = Inotify::init()?;
+        inotify.add_watch(path, WatchMask::MODIFY)?;
+        let mut buffer = [0; 1024];
+
+        executor
+            .spawn(async move {
+                loop {
+                    if let Ok(events) = inotify.read_events_blocking(&mut buffer) {
+                        for _ in events {
+                            task()
+                        }
+                    }
+                }
+            })
+            .detach();
+
+        Ok(())
+    }
 
     /// Create a timed repeating task
     async fn repeating_task(

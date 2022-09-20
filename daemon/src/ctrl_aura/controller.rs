@@ -16,6 +16,7 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
+use zbus::SignalContext;
 
 use crate::GetSupported;
 
@@ -94,7 +95,11 @@ impl CtrlKbdLedTask {
 
 #[async_trait]
 impl CtrlTask for CtrlKbdLedTask {
-    async fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
+    async fn create_tasks<'a>(
+        &self,
+        executor: &mut Executor<'a>,
+        _: SignalContext<'a>,
+    ) -> Result<(), RogError> {
         let load_save = |start: bool, mut lock: MutexGuard<CtrlKbdLed>| {
             // If waking up
             if !start {

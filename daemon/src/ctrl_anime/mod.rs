@@ -1,6 +1,7 @@
 pub mod config;
 pub mod zbus;
 
+use ::zbus::SignalContext;
 use async_trait::async_trait;
 use log::{error, info, warn};
 use rog_anime::{
@@ -229,7 +230,11 @@ impl CtrlAnimeTask {
 
 #[async_trait]
 impl crate::CtrlTask for CtrlAnimeTask {
-    async fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
+    async fn create_tasks<'a>(
+        &self,
+        executor: &mut Executor<'a>,
+        _: SignalContext<'a>,
+    ) -> Result<(), RogError> {
         let run_action =
             |start: bool, lock: MutexGuard<CtrlAnime>, inner: Arc<Mutex<CtrlAnime>>| {
                 if start {

@@ -259,7 +259,11 @@ impl crate::Reloadable for CtrlRogBios {
 
 #[async_trait]
 impl CtrlTask for CtrlRogBios {
-    async fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
+    async fn create_tasks<'a>(
+        &self,
+        executor: &mut Executor<'a>,
+        _: SignalContext<'a>,
+    ) -> Result<(), RogError> {
         let platform1 = self.clone();
         let platform2 = self.clone();
         self.create_sys_event_tasks(
