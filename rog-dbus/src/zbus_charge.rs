@@ -26,13 +26,13 @@ use zbus_macros::dbus_proxy;
     default_path = "/org/asuslinux/Charge"
 )]
 trait Charge {
-    /// Limit method
-    fn limit(&self) -> zbus::Result<i16>;
+    /// charge_control_end_threshold method
+    fn charge_control_end_threshold(&self) -> zbus::Result<u8>;
 
-    /// SetLimit method
-    fn set_limit(&self, limit: u8) -> zbus::Result<()>;
+    /// set_charge_control_end_threshold method
+    fn set_charge_control_end_threshold(&self, limit: u8) -> zbus::Result<()>;
 
     /// NotifyCharge signal
     #[dbus_proxy(signal)]
-    fn notify_charge(&self, limit: u8) -> zbus::Result<u8>;
+    fn notify_charge_control_end_threshold(&self, limit: u8) -> zbus::Result<u8>;
 }

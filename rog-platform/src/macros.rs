@@ -21,6 +21,7 @@ macro_rules! watch_attr {
             pub fn fn_name(&self) -> Result<inotify::Inotify> {
                 let mut path = self.$item.clone();
                 path.push($attr_name);
+                dbg!(&path);
                 let mut inotify = inotify::Inotify::init().unwrap();
                 inotify.add_watch(path.to_str().unwrap(), inotify::WatchMask::MODIFY).unwrap();
                 Ok(inotify)

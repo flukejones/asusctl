@@ -47,7 +47,7 @@ pub fn rog_bios_group(
     if ui.add(slider).drag_released() {
         dbus.proxies()
             .charge()
-            .set_limit(states.charge_limit as u8)
+            .set_charge_control_end_threshold(states.charge_limit as u8)
             .map_err(|err| {
                 states.error = Some(err.to_string());
             })
@@ -82,7 +82,7 @@ pub fn rog_bios_group(
         {
             dbus.proxies()
                 .rog_bios()
-                .set_panel_overdrive(states.bios.panel_overdrive)
+                .set_panel_od(states.bios.panel_overdrive)
                 .map_err(|err| {
                     states.error = Some(err.to_string());
                 })

@@ -140,7 +140,7 @@ impl CtrlTask for CtrlKbdLedTask {
             },
             move || loop {
                 if let Ok(lock) = inner3.clone().try_lock() {
-                    load_save(false, lock);
+                    load_save(true, lock);
                     break;
                 }
             },
@@ -152,6 +152,25 @@ impl CtrlTask for CtrlKbdLedTask {
             },
         )
         .await;
+
+        let ctrl2 = self.inner.clone();
+        if let Ok(ctrl) = self.inner.lock() {
+            let mut watch = ctrl.kd_brightness.monitor_brightness()?;
+            executor
+                .spawn(async move {
+                    let mut buffer = [0; 1024];
+                    loop {
+                        if let Ok(events) = watch.read_events_blocking(&mut buffer) {
+                            for _ in events {
+                                if let Ok(lock) = ctrl2.try_lock() {
+                                    load_save(true, lock);
+                                }
+                            }
+                        }
+                    }
+                })
+                .detach();
+        }
 
         Ok(())
     }

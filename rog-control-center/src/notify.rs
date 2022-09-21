@@ -103,7 +103,7 @@ pub fn start_notifications(
         .spawn(async move {
             let conn = zbus::Connection::system().await.unwrap();
             let proxy = ChargeProxy::new(&conn).await.unwrap();
-            if let Ok(p) = proxy.receive_notify_charge().await {
+            if let Ok(p) = proxy.receive_notify_charge_control_end_threshold().await {
                 p.for_each(|e| {
                     if let Ok(out) = e.args() {
                         if notifs_enabled1.load(Ordering::SeqCst) {

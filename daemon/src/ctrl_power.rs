@@ -1,5 +1,5 @@
-use crate::CtrlTask;
 use crate::{config::Config, error::RogError, GetSupported};
+use crate::{task_watch_item, CtrlTask};
 use async_trait::async_trait;
 use log::{info, warn};
 use rog_platform::power::AsusPower;
@@ -33,7 +33,7 @@ pub struct CtrlPower {
 
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl CtrlPower {
-    async fn set_limit(
+    async fn set_charge_control_end_threshold(
         &mut self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
         limit: u8,
@@ -47,19 +47,38 @@ impl CtrlPower {
                 err
             })
             .ok();
-        Self::notify_charge(&ctxt, limit).await?;
+        Self::notify_charge_control_end_threshold(&ctxt, limit).await?;
         Ok(())
     }
 
-    fn limit(&self) -> i8 {
-        if let Ok(config) = self.config.try_lock() {
-            return config.bat_charge_limit as i8;
+    fn charge_control_end_threshold(&self) -> u8 {
+        loop {
+            if let Ok(config) = self.config.try_lock() {
+                let limit = self
+                    .power
+                    .get_charge_control_end_threshold()
+                    .map_err(|err| {
+                        warn!("CtrlCharge: get_charge_control_end_threshold {}", err);
+                        err
+                    })
+                    .unwrap_or(100);
+                self.set(limit)
+                    .map_err(|err| {
+                        warn!("CtrlCharge: set_limit {}", err);
+                        err
+                    })
+                    .ok();
+
+                return config.bat_charge_limit;
+            }
         }
-        -1
     }
 
     #[dbus_interface(signal)]
-    async fn notify_charge(ctxt: &SignalContext<'_>, limit: u8) -> zbus::Result<()>;
+    async fn notify_charge_control_end_threshold(
+        ctxt: &SignalContext<'_>,
+        limit: u8,
+    ) -> zbus::Result<()>;
 }
 
 #[async_trait]
@@ -104,6 +123,8 @@ impl CtrlPower {
 
         Ok(())
     }
+
+    task_watch_item!(charge_control_end_threshold power);
 }
 
 #[async_trait]
@@ -111,7 +132,7 @@ impl CtrlTask for CtrlPower {
     async fn create_tasks<'a>(
         &self,
         executor: &mut Executor<'a>,
-        _: SignalContext<'a>,
+        signal_ctxt: SignalContext<'a>,
     ) -> Result<(), RogError> {
         let power1 = self.clone();
         let power2 = self.clone();
@@ -145,6 +166,8 @@ impl CtrlTask for CtrlPower {
             },
         )
         .await;
+
+        self.watch_charge_control_end_threshold(executor, signal_ctxt)?;
 
         Ok(())
     }

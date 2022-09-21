@@ -1,4 +1,4 @@
-use crate::CtrlTask;
+use crate::{CtrlTask, task_watch_item};
 use crate::{config::Config, error::RogError, GetSupported};
 use async_trait::async_trait;
 use log::{info, warn};
@@ -154,7 +154,7 @@ impl CtrlRogBios {
         Self::notify_gpu_mux_mode(&ctxt, mode).await.ok();
     }
 
-    fn get_gpu_mux_mode(&self) -> GpuMode {
+    fn gpu_mux_mode(&self) -> GpuMode {
         match self.platform.get_gpu_mux_mode() {
             Ok(m) => GpuMode::from_mux(m),
             Err(e) => {
@@ -220,7 +220,7 @@ impl CtrlRogBios {
     }
 
     /// Get the `panel_od` value from platform. Updates the stored value in internal config also.
-    fn get_panel_od(&self) -> bool {
+    fn panel_od(&self) -> bool {
         let od = self
             .platform
             .get_panel_od()
@@ -262,42 +262,9 @@ impl crate::Reloadable for CtrlRogBios {
     }
 }
 
-macro_rules! watch_item {
-    ($name:ident) => {
-        concat_idents::concat_idents!(fn_name = watch_, $name {
-        async fn fn_name<'a>(
-            &self,
-            executor: &mut Executor<'a>,
-            signal_ctxt: SignalContext<'a>,
-        ) -> Result<(), RogError> {
-            let ctrl = self.clone();
-            concat_idents::concat_idents!(watch_fn = monitor_, $name {
-            let mut watch = self.platform.watch_fn()?;
-            executor
-                .spawn(async move {
-                    let mut buffer = [0; 1024];
-                    loop {
-                        if let Ok(events) = watch.read_events_blocking(&mut buffer) {
-                            for _ in events {
-                                let value = concat_idents::concat_idents!(get_fn = get_, $name { ctrl.get_fn() });
-                                concat_idents::concat_idents!(notif_fn = notify_, $name {
-                                    Self::notif_fn(&signal_ctxt, value).await.unwrap();
-                                });
-                            }
-                        }
-                    }
-                })
-                .detach();
-            });
-            Ok(())
-        }
-        });
-    };
-}
-
 impl CtrlRogBios {
-    watch_item!(panel_od);
-    watch_item!(gpu_mux_mode);
+    task_watch_item!(panel_od platform);
+    task_watch_item!(gpu_mux_mode platform);
 }
 
 #[async_trait]
@@ -344,9 +311,8 @@ impl CtrlTask for CtrlRogBios {
         )
         .await;
 
-        self.watch_panel_od(executor, signal_ctxt.clone()).await?;
-        self.watch_gpu_mux_mode(executor, signal_ctxt.clone())
-            .await?;
+        self.watch_panel_od(executor, signal_ctxt.clone())?;
+        self.watch_gpu_mux_mode(executor, signal_ctxt.clone())?;
 
         Ok(())
     }

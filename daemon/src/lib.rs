@@ -58,6 +58,58 @@ pub trait ZbusAdd {
     }
 }
 
+/// This macro adds a function which spawns an `inotify` task on the passed in `Executor`.
+///
+/// The generated function is `watch_<name>()`. Self requires the following methods to be available:
+/// - `<name>() -> SomeValue`, functionally is a getter, but is allowed to have side effects.
+/// - `notify_<name>(SignalContext, SomeValue)`
+///
+/// In most cases if `SomeValue` is stored in a config then `<name>()` getter is expected to update it.
+///
+/// # Example
+///
+/// ```ignore
+/// impl CtrlRogBios {
+///     task_watch_item!(panel_od platform);
+///     task_watch_item!(gpu_mux_mode platform);
+/// }
+/// ```
+#[macro_export]
+macro_rules! task_watch_item {
+    ($name:ident $self_inner:ident) => {
+        concat_idents::concat_idents!(fn_name = watch_, $name {
+        fn fn_name<'a>(
+            &self,
+            executor: &mut Executor<'a>,
+            signal_ctxt: SignalContext<'a>,
+        ) -> Result<(), RogError> {
+            let ctrl = self.clone();
+            concat_idents::concat_idents!(watch_fn = monitor_, $name {
+            let mut watch = self.$self_inner.watch_fn()?;
+            executor
+                .spawn(async move {
+                    let mut buffer = [0; 1024];
+                    loop {
+                        if let Ok(events) = watch.read_events_blocking(&mut buffer) {
+                            for _ in events {
+                                let value = ctrl.$name();
+                                dbg!(value);
+                                concat_idents::concat_idents!(notif_fn = notify_, $name {
+                                    Self::notif_fn(&signal_ctxt, value).await.unwrap();
+                                });
+                            }
+                        }
+                    }
+                })
+                .detach();
+                dbg!("SPWADEWFWEFE");
+            });
+            Ok(())
+        }
+        });
+    };
+}
+
 /// Set up a task to run on the async executor
 #[async_trait]
 pub trait CtrlTask {

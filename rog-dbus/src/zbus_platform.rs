@@ -40,10 +40,10 @@ trait RogBios {
     fn set_post_boot_sound(&self, on: bool) -> zbus::Result<()>;
 
     /// PanelOverdrive method
-    fn panel_overdrive(&self) -> zbus::Result<bool>;
+    fn panel_od(&self) -> zbus::Result<bool>;
 
     /// SetPanelOverdrive method
-    fn set_panel_overdrive(&self, overdrive: bool) -> zbus::Result<()>;
+    fn set_panel_od(&self, overdrive: bool) -> zbus::Result<()>;
 
     /// NotifyDedicatedGraphicMode signal
     #[dbus_proxy(signal)]
