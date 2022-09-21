@@ -83,23 +83,22 @@ macro_rules! task_watch_item {
             executor: &mut Executor<'a>,
             signal_ctxt: SignalContext<'a>,
         ) -> Result<(), RogError> {
+            use zbus::export::futures_util::StreamExt;
+
             let ctrl = self.clone();
             concat_idents::concat_idents!(watch_fn = monitor_, $name {
             let mut watch = self.$self_inner.watch_fn()?;
             executor
                 .spawn(async move {
                     let mut buffer = [0; 1024];
-                    loop {
-                        if let Ok(events) = watch.read_events_blocking(&mut buffer) {
-                            for _ in events {
-                                let value = ctrl.$name();
-                                dbg!(value);
-                                concat_idents::concat_idents!(notif_fn = notify_, $name {
-                                    Self::notif_fn(&signal_ctxt, value).await.unwrap();
-                                });
-                            }
-                        }
-                    }
+                    watch.event_stream(&mut buffer).unwrap().for_each(|e|{
+                        let value = ctrl.$name();
+                        dbg!(value);
+                        concat_idents::concat_idents!(notif_fn = notify_, $name {
+                            Self::notif_fn(&signal_ctxt, value).await.unwrap();
+                        });
+                        smol::future::ready(())
+                    }).await;
                 })
                 .detach();
                 dbg!("SPWADEWFWEFE");
