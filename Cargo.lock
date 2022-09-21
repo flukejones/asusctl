@@ -575,6 +575,7 @@ name = "daemon"
 version = "4.4.0"
 dependencies = [
  "async-trait",
+ "concat-idents",
  "env_logger",
  "inotify",
  "log",

@@ -154,7 +154,7 @@ impl CtrlRogBios {
         Self::notify_gpu_mux_mode(&ctxt, mode).await.ok();
     }
 
-    fn gpu_mux_mode(&self) -> GpuMode {
+    fn get_gpu_mux_mode(&self) -> GpuMode {
         match self.platform.get_gpu_mux_mode() {
             Ok(m) => GpuMode::from_mux(m),
             Err(e) => {
@@ -203,6 +203,7 @@ impl CtrlRogBios {
         overdrive: bool,
     ) {
         if self
+            .platform
             .set_panel_od(overdrive)
             .map_err(|err| {
                 warn!("CtrlRogBios: set_panel_overdrive {}", err);
@@ -214,25 +215,29 @@ impl CtrlRogBios {
                 lock.panel_od = overdrive;
                 lock.write();
             }
-            Self::notify_panel_overdrive(&ctxt, overdrive).await.ok();
+            Self::notify_panel_od(&ctxt, overdrive).await.ok();
         }
     }
 
-    fn panel_overdrive(&self) -> bool {
-        self.platform
+    /// Get the `panel_od` value from platform. Updates the stored value in internal config also.
+    fn get_panel_od(&self) -> bool {
+        let od = self
+            .platform
             .get_panel_od()
             .map_err(|err| {
                 warn!("CtrlRogBios: get panel overdrive {}", err);
                 err
             })
-            .unwrap_or(false)
+            .unwrap_or(false);
+        if let Ok(mut lock) = self.config.try_lock() {
+            lock.panel_od = od;
+            lock.write();
+        }
+        od
     }
 
     #[dbus_interface(signal)]
-    async fn notify_panel_overdrive(
-        signal_ctxt: &SignalContext<'_>,
-        overdrive: bool,
-    ) -> zbus::Result<()> {
+    async fn notify_panel_od(signal_ctxt: &SignalContext<'_>, overdrive: bool) -> zbus::Result<()> {
     }
 }
 
@@ -257,12 +262,50 @@ impl crate::Reloadable for CtrlRogBios {
     }
 }
 
+macro_rules! watch_item {
+    ($name:ident) => {
+        concat_idents::concat_idents!(fn_name = watch_, $name {
+        async fn fn_name<'a>(
+            &self,
+            executor: &mut Executor<'a>,
+            signal_ctxt: SignalContext<'a>,
+        ) -> Result<(), RogError> {
+            let ctrl = self.clone();
+            concat_idents::concat_idents!(watch_fn = monitor_, $name {
+            let mut watch = self.platform.watch_fn()?;
+            executor
+                .spawn(async move {
+                    let mut buffer = [0; 1024];
+                    loop {
+                        if let Ok(events) = watch.read_events_blocking(&mut buffer) {
+                            for _ in events {
+                                let value = concat_idents::concat_idents!(get_fn = get_, $name { ctrl.get_fn() });
+                                concat_idents::concat_idents!(notif_fn = notify_, $name {
+                                    Self::notif_fn(&signal_ctxt, value).await.unwrap();
+                                });
+                            }
+                        }
+                    }
+                })
+                .detach();
+            });
+            Ok(())
+        }
+        });
+    };
+}
+
+impl CtrlRogBios {
+    watch_item!(panel_od);
+    watch_item!(gpu_mux_mode);
+}
+
 #[async_trait]
 impl CtrlTask for CtrlRogBios {
     async fn create_tasks<'a>(
         &self,
         executor: &mut Executor<'a>,
-        _: SignalContext<'a>,
+        signal_ctxt: SignalContext<'a>,
     ) -> Result<(), RogError> {
         let platform1 = self.clone();
         let platform2 = self.clone();
@@ -300,6 +343,10 @@ impl CtrlTask for CtrlRogBios {
             },
         )
         .await;
+
+        self.watch_panel_od(executor, signal_ctxt.clone()).await?;
+        self.watch_gpu_mux_mode(executor, signal_ctxt.clone())
+            .await?;
 
         Ok(())
     }

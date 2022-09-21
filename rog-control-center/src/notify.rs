@@ -86,7 +86,7 @@ pub fn start_notifications(
         .spawn(async move {
             let conn = zbus::Connection::system().await.unwrap();
             let proxy = RogBiosProxy::new(&conn).await.unwrap();
-            if let Ok(p) = proxy.receive_notify_panel_overdrive().await {
+            if let Ok(p) = proxy.receive_notify_panel_od().await {
                 p.for_each(|_| {
                     bios_notified.store(true, Ordering::SeqCst);
                     future::ready(())

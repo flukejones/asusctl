@@ -127,5 +127,6 @@ macro_rules! attr_u8_array {
         crate::has_attr!($attr_name $item);
         crate::get_attr_u8_array!($attr_name $item);
         crate::set_attr_u8_array!($attr_name $item);
+        crate::watch_attr!($attr_name $item);
     };
 }

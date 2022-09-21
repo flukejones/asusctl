@@ -55,5 +55,5 @@ trait RogBios {
 
     /// NotifyPanelOverdrive signal
     #[dbus_proxy(signal)]
-    fn notify_panel_overdrive(&self, overdrive: bool) -> zbus::Result<()>;
+    fn notify_panel_od(&self, overdrive: bool) -> zbus::Result<()>;
 }

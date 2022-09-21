@@ -222,7 +222,7 @@ impl CtrlTask for ProfileZbus {
     async fn create_tasks<'a>(
         &self,
         executor: &mut Executor<'a>,
-        signal: SignalContext<'a>,
+        signal_ctxt: SignalContext<'a>,
     ) -> Result<(), RogError> {
         let ctrl = self.inner.clone();
         let mut inotify = Inotify::init()?;
@@ -247,7 +247,9 @@ impl CtrlTask for ProfileZbus {
                             }
 
                             if let Some(active_profile) = active_profile {
-                                Self::notify_profile(&signal, active_profile).await.ok();
+                                Self::notify_profile(&signal_ctxt, active_profile)
+                                    .await
+                                    .ok();
                             }
                         }
                     }
