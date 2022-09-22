@@ -4,7 +4,6 @@ use async_trait::async_trait;
 use log::{info, warn};
 use rog_platform::platform::{AsusPlatform, GpuMode};
 use rog_platform::supported::RogBiosSupportedFunctions;
-use smol::Executor;
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::Path;
@@ -129,7 +128,7 @@ impl CtrlRogBios {
         Ok(())
     }
 
-    fn set_panel_od(&self, enable: bool) -> Result<(), RogError> {
+    fn set_panel_overdrive(&self, enable: bool) -> Result<(), RogError> {
         self.platform.set_panel_od(enable).map_err(|err| {
             warn!("CtrlRogBios: set_panel_overdrive {}", err);
             err
@@ -197,7 +196,7 @@ impl CtrlRogBios {
     #[dbus_interface(signal)]
     async fn notify_post_boot_sound(ctxt: &SignalContext<'_>, on: bool) -> zbus::Result<()> {}
 
-    async fn set_panel_overdrive(
+    async fn set_panel_od(
         &mut self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
         overdrive: bool,
@@ -256,7 +255,7 @@ impl crate::Reloadable for CtrlRogBios {
             } else {
                 false
             };
-            self.set_panel_od(p)?;
+            self.set_panel_overdrive(p)?;
         }
         Ok(())
     }
@@ -269,22 +268,17 @@ impl CtrlRogBios {
 
 #[async_trait]
 impl CtrlTask for CtrlRogBios {
-    async fn create_tasks<'a>(
-        &self,
-        executor: &mut Executor<'a>,
-        signal_ctxt: SignalContext<'a>,
-    ) -> Result<(), RogError> {
+    async fn create_tasks(&self, signal_ctxt: SignalContext<'static>) -> Result<(), RogError> {
         let platform1 = self.clone();
         let platform2 = self.clone();
         self.create_sys_event_tasks(
-            executor,
             move || {},
             move || {
                 info!("CtrlRogBios reloading panel_od");
                 if let Ok(lock) = platform1.config.try_lock() {
                     if platform1.platform.has_panel_od() {
                         platform1
-                            .set_panel_od(lock.panel_od)
+                            .set_panel_overdrive(lock.panel_od)
                             .map_err(|err| {
                                 warn!("CtrlCharge: set_limit {}", err);
                                 err
@@ -299,7 +293,7 @@ impl CtrlTask for CtrlRogBios {
                 if let Ok(lock) = platform2.config.try_lock() {
                     if platform2.platform.has_panel_od() {
                         platform2
-                            .set_panel_od(lock.panel_od)
+                            .set_panel_overdrive(lock.panel_od)
                             .map_err(|err| {
                                 warn!("CtrlCharge: set_limit {}", err);
                                 err
@@ -311,9 +305,8 @@ impl CtrlTask for CtrlRogBios {
         )
         .await;
 
-        self.watch_panel_od(executor, signal_ctxt.clone()).await?;
-        self.watch_gpu_mux_mode(executor, signal_ctxt.clone())
-            .await?;
+        self.watch_panel_od(signal_ctxt.clone()).await?;
+        self.watch_gpu_mux_mode(signal_ctxt.clone()).await?;
 
         Ok(())
     }

@@ -13,7 +13,6 @@ use rog_anime::{
     ActionData, AnimeDataBuffer, AnimePacketType, AnimeType,
 };
 use rog_platform::{hid_raw::HidRaw, supported::AnimeSupportedFunctions, usb_raw::USBRaw};
-use smol::Executor;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::{
     convert::TryFrom,
@@ -230,11 +229,7 @@ impl CtrlAnimeTask {
 
 #[async_trait]
 impl crate::CtrlTask for CtrlAnimeTask {
-    async fn create_tasks<'a>(
-        &self,
-        executor: &mut Executor<'a>,
-        _: SignalContext<'a>,
-    ) -> Result<(), RogError> {
+    async fn create_tasks(&self, _: SignalContext<'static>) -> Result<(), RogError> {
         let run_action =
             |start: bool, lock: MutexGuard<CtrlAnime>, inner: Arc<Mutex<CtrlAnime>>| {
                 if start {
@@ -251,7 +246,6 @@ impl crate::CtrlTask for CtrlAnimeTask {
         let inner3 = self.inner.clone();
         let inner4 = self.inner.clone();
         self.create_sys_event_tasks(
-            executor,
             // Loop is required to try an attempt to get the mutex *without* blocking
             // other threads - it is possible to end up with deadlocks otherwise.
             move || loop {

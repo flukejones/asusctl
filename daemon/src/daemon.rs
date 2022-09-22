@@ -2,11 +2,12 @@ use std::env;
 use std::error::Error;
 use std::io::Write;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 use ::zbus::{Connection, SignalContext};
 use log::LevelFilter;
 use log::{error, info, warn};
-use smol::Executor;
+use tokio::time::sleep;
 
 use daemon::ctrl_anime::config::AnimeConfig;
 use daemon::ctrl_anime::zbus::CtrlAnimeZbus;
@@ -31,7 +32,8 @@ use rog_profiles::Profile;
 
 static PROFILE_CONFIG_PATH: &str = "/etc/asusd/profile.conf";
 
-pub fn main() -> Result<(), Box<dyn std::error::Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut logger = env_logger::Builder::new();
     logger
         .target(env_logger::Target::Stdout)
@@ -60,14 +62,12 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!(" rog-profiles v{}", rog_profiles::VERSION);
     info!("rog-platform v{}", rog_platform::VERSION);
 
-    let mut executor = Executor::new();
-
-    smol::block_on(start_daemon(&mut executor))?;
+    start_daemon().await?;
     Ok(())
 }
 
 /// The actual main loop for the daemon
-async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>> {
+async fn start_daemon() -> Result<(), Box<dyn Error>> {
     let supported = SupportedFunctions::get_supported();
     print_board_info();
     println!("{}", serde_json::to_string_pretty(&supported)?);
@@ -90,7 +90,7 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
 
             let task = CtrlRogBios::new(config.clone())?;
             let sig = SignalContext::new(&connection, "/org/asuslinux/Platform")?;
-            task.create_tasks(executor, sig).await.ok();
+            task.create_tasks(sig).await.ok();
         }
         Err(err) => {
             error!("rog_bios_control: {}", err);
@@ -107,7 +107,7 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
 
             let task = CtrlPower::new(config)?;
             let sig = SignalContext::new(&connection, "/org/asuslinux/Charge")?;
-            task.create_tasks(executor, sig).await.ok();
+            task.create_tasks(sig).await.ok();
         }
         Err(err) => {
             error!("charge_control: {}", err);
@@ -127,7 +127,7 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
                 let sig = SignalContext::new(&connection, "/org/asuslinux/Profile")?;
 
                 let task = ProfileZbus::new(tmp.clone());
-                task.create_tasks(executor, sig).await.ok();
+                task.create_tasks(sig).await.ok();
                 task.add_to_server(&mut connection).await;
             }
             Err(err) => {
@@ -152,7 +152,7 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
 
             let task = CtrlAnimeTask::new(inner).await;
             let sig = SignalContext::new(&connection, "/org/asuslinux/Anime")?;
-            task.create_tasks(executor, sig).await.ok();
+            task.create_tasks(sig).await.ok();
         }
         Err(err) => {
             error!("AniMe control: {}", err);
@@ -176,7 +176,7 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
 
             let task = CtrlKbdLedTask::new(inner);
             let sig = SignalContext::new(&connection, "/org/asuslinux/Aura")?;
-            task.create_tasks(executor, sig).await.ok();
+            task.create_tasks(sig).await.ok();
         }
         Err(err) => {
             error!("Keyboard control: {}", err);
@@ -185,7 +185,9 @@ async fn start_daemon(executor: &mut Executor<'_>) -> Result<(), Box<dyn Error>>
 
     // Request dbus name after finishing initalizing all functions
     connection.request_name(DBUS_NAME).await?;
+
     loop {
-        smol::block_on(executor.tick());
+        // This is just a blocker to idle and ensure the reator reacts
+        sleep(Duration::from_millis(1000)).await;
     }
 }

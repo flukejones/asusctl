@@ -114,7 +114,7 @@ impl From<&AuraPowerConfig> for AuraPowerDev {
 }
 
 #[derive(Deserialize, Serialize)]
-#[serde(default)]
+// #[serde(default)]
 pub struct AuraConfig {
     pub brightness: LedBrightness,
     pub current_mode: AuraModeNum,
@@ -271,7 +271,7 @@ impl AuraConfig {
             if l == 0 {
                 warn!("File is empty {}", AURA_CONFIG_PATH);
             } else {
-                let x: AuraConfig = serde_json::from_str(&buf)
+                let x = serde_json::from_str(&buf)
                     .unwrap_or_else(|_| panic!("Could not deserialise {}", AURA_CONFIG_PATH));
                 *self = x;
             }

@@ -6,7 +6,7 @@ use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::fan_curve_set::FanCurveSet;
 use rog_profiles::Profile;
 use rog_profiles::PLATFORM_PROFILE;
-use smol::Executor;
+use zbus::export::futures_util::StreamExt;
 use zbus::Connection;
 use zbus::SignalContext;
 
@@ -219,43 +219,39 @@ impl crate::ZbusAdd for ProfileZbus {
 
 #[async_trait]
 impl CtrlTask for ProfileZbus {
-    async fn create_tasks<'a>(
-        &self,
-        executor: &mut Executor<'a>,
-        signal_ctxt: SignalContext<'a>,
-    ) -> Result<(), RogError> {
+    async fn create_tasks(&self, signal_ctxt: SignalContext<'static>) -> Result<(), RogError> {
         let ctrl = self.inner.clone();
-        let mut inotify = Inotify::init()?;
-        inotify.add_watch(PLATFORM_PROFILE, WatchMask::MODIFY)?;
+        let mut watch = Inotify::init()?;
+        watch.add_watch(PLATFORM_PROFILE, WatchMask::CLOSE_WRITE)?;
 
-        executor
-            .spawn(async move {
-                let mut buffer = [0; 1024];
-                loop {
-                    if let Ok(events) = inotify.read_events_blocking(&mut buffer) {
-                        for _ in events {
-                            let mut active_profile = None;
+        tokio::spawn(async move {
+            let mut buffer = [0; 32];
+            loop {
+                watch
+                    .event_stream(&mut buffer)
+                    .unwrap()
+                    .for_each(|_| async {
+                        let mut active_profile = None;
 
-                            if let Ok(ref mut lock) = ctrl.try_lock() {
-                                let new_profile = Profile::get_active_profile().unwrap();
-                                if new_profile != lock.config.active_profile {
-                                    lock.config.active_profile = new_profile;
-                                    lock.write_profile_curve_to_platform().unwrap();
-                                    lock.save_config();
-                                    active_profile = Some(lock.config.active_profile);
-                                }
-                            }
-
-                            if let Some(active_profile) = active_profile {
-                                Self::notify_profile(&signal_ctxt, active_profile)
-                                    .await
-                                    .ok();
+                        if let Ok(ref mut lock) = ctrl.try_lock() {
+                            let new_profile = Profile::get_active_profile().unwrap();
+                            if new_profile != lock.config.active_profile {
+                                lock.config.active_profile = new_profile;
+                                lock.write_profile_curve_to_platform().unwrap();
+                                lock.save_config();
+                                active_profile = Some(lock.config.active_profile);
                             }
                         }
-                    }
-                }
-            })
-            .detach();
+
+                        if let Some(active_profile) = active_profile {
+                            Self::notify_profile(&signal_ctxt.clone(), active_profile)
+                                .await
+                                .ok();
+                        }
+                    })
+                    .await;
+            }
+        });
 
         Ok(())
     }

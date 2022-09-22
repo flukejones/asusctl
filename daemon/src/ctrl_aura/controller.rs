@@ -11,12 +11,11 @@ use rog_aura::{
 };
 use rog_aura::{AuraZone, Direction, Speed, GRADIENT};
 use rog_platform::{hid_raw::HidRaw, keyboard_led::KeyboardLed, supported::LedSupportedFunctions};
-use smol::Executor;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::MutexGuard;
-use zbus::SignalContext;
+use zbus::{export::futures_util::StreamExt, SignalContext};
 
 use crate::GetSupported;
 
@@ -95,11 +94,7 @@ impl CtrlKbdLedTask {
 
 #[async_trait]
 impl CtrlTask for CtrlKbdLedTask {
-    async fn create_tasks<'a>(
-        &self,
-        executor: &mut Executor<'a>,
-        _: SignalContext<'a>,
-    ) -> Result<(), RogError> {
+    async fn create_tasks(&self, _: SignalContext<'static>) -> Result<(), RogError> {
         let load_save = |start: bool, mut lock: MutexGuard<CtrlKbdLed>| {
             // If waking up
             if !start {
@@ -123,7 +118,6 @@ impl CtrlTask for CtrlKbdLedTask {
         let inner3 = self.inner.clone();
         let inner4 = self.inner.clone();
         self.create_sys_event_tasks(
-            executor,
             // Loop so that we do aquire the lock but also don't block other
             // threads (prevents potential deadlocks)
             move || loop {
@@ -156,20 +150,18 @@ impl CtrlTask for CtrlKbdLedTask {
         let ctrl2 = self.inner.clone();
         if let Ok(ctrl) = self.inner.lock() {
             let mut watch = ctrl.kd_brightness.monitor_brightness()?;
-            executor
-                .spawn(async move {
-                    let mut buffer = [0; 1024];
-                    loop {
-                        if let Ok(events) = watch.read_events_blocking(&mut buffer) {
-                            for _ in events {
-                                if let Ok(lock) = ctrl2.try_lock() {
-                                    load_save(true, lock);
-                                }
-                            }
+            tokio::spawn(async move {
+                let mut buffer = [0; 32];
+                watch
+                    .event_stream(&mut buffer)
+                    .unwrap()
+                    .for_each(|_| async {
+                        if let Ok(lock) = ctrl2.try_lock() {
+                            load_save(true, lock);
                         }
-                    }
-                })
-                .detach();
+                    })
+                    .await;
+            });
         }
 
         Ok(())

@@ -4,7 +4,6 @@ use async_trait::async_trait;
 use log::{info, warn};
 use rog_platform::power::AsusPower;
 use rog_platform::supported::ChargeSupportedFunctions;
-use smol::Executor;
 use std::sync::Arc;
 use std::sync::Mutex;
 use zbus::dbus_interface;
@@ -62,12 +61,11 @@ impl CtrlPower {
                         err
                     })
                     .unwrap_or(100);
-                self.set(limit)
-                    .map_err(|err| {
-                        warn!("CtrlCharge: set_limit {}", err);
-                        err
-                    })
-                    .ok();
+                if let Ok(mut config) = self.config.try_lock() {
+                    config.read();
+                    config.bat_charge_limit = limit;
+                    config.write();
+                }
 
                 return config.bat_charge_limit;
             }
@@ -129,15 +127,10 @@ impl CtrlPower {
 
 #[async_trait]
 impl CtrlTask for CtrlPower {
-    async fn create_tasks<'a>(
-        &self,
-        executor: &mut Executor<'a>,
-        signal_ctxt: SignalContext<'a>,
-    ) -> Result<(), RogError> {
+    async fn create_tasks(&self, signal_ctxt: SignalContext<'static>) -> Result<(), RogError> {
         let power1 = self.clone();
         let power2 = self.clone();
         self.create_sys_event_tasks(
-            executor,
             move || {},
             move || {
                 info!("CtrlCharge reloading charge limit");
@@ -167,8 +160,7 @@ impl CtrlTask for CtrlPower {
         )
         .await;
 
-        self.watch_charge_control_end_threshold(executor, signal_ctxt)
-            .await?;
+        self.watch_charge_control_end_threshold(signal_ctxt).await?;
 
         Ok(())
     }
