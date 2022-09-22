@@ -1,5 +1,5 @@
-use crate::{CtrlTask, task_watch_item};
 use crate::{config::Config, error::RogError, GetSupported};
+use crate::{task_watch_item, CtrlTask};
 use async_trait::async_trait;
 use log::{info, warn};
 use rog_platform::platform::{AsusPlatform, GpuMode};
@@ -311,8 +311,9 @@ impl CtrlTask for CtrlRogBios {
         )
         .await;
 
-        self.watch_panel_od(executor, signal_ctxt.clone())?;
-        self.watch_gpu_mux_mode(executor, signal_ctxt.clone())?;
+        self.watch_panel_od(executor, signal_ctxt.clone()).await?;
+        self.watch_gpu_mux_mode(executor, signal_ctxt.clone())
+            .await?;
 
         Ok(())
     }

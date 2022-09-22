@@ -44,5 +44,5 @@ toml = "^0.5.8"
 # Device control
 sysfs-class = "^0.1.2" # used for backlight control and baord ID
 
-inotify = "0.10.0"
+inotify = { version = "0.10.0", default-features = false }
 concat-idents = "1.1.3"

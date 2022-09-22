@@ -78,7 +78,7 @@ pub trait ZbusAdd {
 macro_rules! task_watch_item {
     ($name:ident $self_inner:ident) => {
         concat_idents::concat_idents!(fn_name = watch_, $name {
-        fn fn_name<'a>(
+        async fn fn_name<'a>(
             &self,
             executor: &mut Executor<'a>,
             signal_ctxt: SignalContext<'a>,
@@ -91,17 +91,15 @@ macro_rules! task_watch_item {
             executor
                 .spawn(async move {
                     let mut buffer = [0; 1024];
-                    watch.event_stream(&mut buffer).unwrap().for_each(|e|{
+                    watch.event_stream(&mut buffer).unwrap().for_each(|_| async {
                         let value = ctrl.$name();
                         dbg!(value);
                         concat_idents::concat_idents!(notif_fn = notify_, $name {
                             Self::notif_fn(&signal_ctxt, value).await.unwrap();
                         });
-                        smol::future::ready(())
                     }).await;
                 })
                 .detach();
-                dbg!("SPWADEWFWEFE");
             });
             Ok(())
         }

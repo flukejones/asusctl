@@ -211,7 +211,9 @@ fn do_parsed(
     }
 
     if let Some(chg_limit) = parsed.chg_limit {
-        dbus.proxies().charge().set_charge_control_end_threshold(chg_limit)?;
+        dbus.proxies()
+            .charge()
+            .set_charge_control_end_threshold(chg_limit)?;
     }
 
     Ok(())

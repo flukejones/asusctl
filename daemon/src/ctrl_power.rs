@@ -167,7 +167,8 @@ impl CtrlTask for CtrlPower {
         )
         .await;
 
-        self.watch_charge_control_end_threshold(executor, signal_ctxt)?;
+        self.watch_charge_control_end_threshold(executor, signal_ctxt)
+            .await?;
 
         Ok(())
     }
