@@ -1,6 +1,7 @@
 pub mod config;
 pub mod zbus;
 
+use ::zbus::export::futures_util::lock::{Mutex, MutexGuard};
 use ::zbus::SignalContext;
 use async_trait::async_trait;
 use log::{error, info, warn};
@@ -14,12 +15,7 @@ use rog_anime::{
 };
 use rog_platform::{hid_raw::HidRaw, supported::AnimeSupportedFunctions, usb_raw::USBRaw};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::{
-    convert::TryFrom,
-    error::Error,
-    sync::{Arc, Mutex, MutexGuard},
-    thread::sleep,
-};
+use std::{convert::TryFrom, error::Error, sync::Arc, thread::sleep};
 
 use crate::{error::RogError, GetSupported};
 
@@ -85,6 +81,7 @@ impl CtrlAnime {
 
         // The only reason for this outer thread is to prevent blocking while waiting for the
         // next spawned thread to exit
+        // TODO: turn this in to async task (maybe? COuld still risk blocking main thread)
         std::thread::Builder::new()
             .name("AniMe system thread start".into())
             .spawn(move || {
@@ -95,7 +92,7 @@ impl CtrlAnime {
                 let thread_running;
                 let anime_type;
                 loop {
-                    if let Ok(lock) = inner.try_lock() {
+                    if let Some(lock) = inner.try_lock() {
                         thread_exit = lock.thread_exit.clone();
                         thread_running = lock.thread_running.clone();
                         anime_type = lock.anime_type;
@@ -139,9 +136,10 @@ impl CtrlAnime {
                                                 .ok();
                                             false // Don't exit yet
                                         })
-                                        .map_err(|err| {
-                                            warn!("rog_anime::run_animation:callback {}", err);
-                                            AnimeError::NoFrames
+                                        .map(|r| Ok(r))
+                                        .unwrap_or_else(|| {
+                                            warn!("rog_anime::run_animation:callback failed");
+                                            Err(AnimeError::NoFrames)
                                         })
                                 }) {
                                     warn!("rog_anime::run_animation:Animation {}", err);
@@ -150,7 +148,7 @@ impl CtrlAnime {
                             }
                             ActionData::Image(image) => {
                                 once = false;
-                                if let Ok(lock) = inner.try_lock() {
+                                if let Some(lock) = inner.try_lock() {
                                     lock.write_data_buffer(image.as_ref().clone())
                                         .map_err(|e| error!("{}", e))
                                         .ok();
@@ -171,7 +169,7 @@ impl CtrlAnime {
                     }
                 }
                 // Clear the display on exit
-                if let Ok(lock) = inner.try_lock() {
+                if let Some(lock) = inner.try_lock() {
                     if let Ok(data) =
                         AnimeDataBuffer::from_vec(anime_type, vec![0u8; anime_type.data_length()])
                             .map_err(|e| error!("{}", e))
@@ -249,25 +247,25 @@ impl crate::CtrlTask for CtrlAnimeTask {
             // Loop is required to try an attempt to get the mutex *without* blocking
             // other threads - it is possible to end up with deadlocks otherwise.
             move || loop {
-                if let Ok(lock) = inner1.clone().try_lock() {
+                if let Some(lock) = inner1.try_lock() {
                     run_action(true, lock, inner1.clone());
                     break;
                 }
             },
             move || loop {
-                if let Ok(lock) = inner2.clone().try_lock() {
+                if let Some(lock) = inner2.try_lock() {
                     run_action(false, lock, inner2.clone());
                     break;
                 }
             },
             move || loop {
-                if let Ok(lock) = inner3.clone().try_lock() {
+                if let Some(lock) = inner3.try_lock() {
                     run_action(true, lock, inner3.clone());
                     break;
                 }
             },
             move || loop {
-                if let Ok(lock) = inner4.clone().try_lock() {
+                if let Some(lock) = inner4.try_lock() {
                     run_action(false, lock, inner4.clone());
                     break;
                 }
@@ -281,9 +279,10 @@ impl crate::CtrlTask for CtrlAnimeTask {
 
 pub struct CtrlAnimeReloader(pub Arc<Mutex<CtrlAnime>>);
 
+#[async_trait]
 impl crate::Reloadable for CtrlAnimeReloader {
-    fn reload(&mut self) -> Result<(), RogError> {
-        if let Ok(lock) = self.0.try_lock() {
+    async fn reload(&mut self) -> Result<(), RogError> {
+        if let Some(lock) = self.0.try_lock() {
             lock.node
                 .write_bytes(&pkt_for_set_on(lock.config.awake_enabled))?;
             lock.node.write_bytes(&pkt_for_apply())?;

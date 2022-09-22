@@ -13,9 +13,13 @@ use rog_aura::{AuraZone, Direction, Speed, GRADIENT};
 use rog_platform::{hid_raw::HidRaw, keyboard_led::KeyboardLed, supported::LedSupportedFunctions};
 use std::collections::BTreeMap;
 use std::sync::Arc;
-use std::sync::Mutex;
-use std::sync::MutexGuard;
-use zbus::{export::futures_util::StreamExt, SignalContext};
+use zbus::{
+    export::futures_util::{
+        lock::{Mutex, MutexGuard},
+        StreamExt,
+    },
+    SignalContext,
+};
 
 use crate::GetSupported;
 
@@ -121,25 +125,25 @@ impl CtrlTask for CtrlKbdLedTask {
             // Loop so that we do aquire the lock but also don't block other
             // threads (prevents potential deadlocks)
             move || loop {
-                if let Ok(lock) = inner1.clone().try_lock() {
+                if let Some(lock) = inner1.try_lock() {
                     load_save(true, lock);
                     break;
                 }
             },
             move || loop {
-                if let Ok(lock) = inner2.clone().try_lock() {
+                if let Some(lock) = inner2.try_lock() {
                     load_save(false, lock);
                     break;
                 }
             },
             move || loop {
-                if let Ok(lock) = inner3.clone().try_lock() {
+                if let Some(lock) = inner3.try_lock() {
                     load_save(true, lock);
                     break;
                 }
             },
             move || loop {
-                if let Ok(lock) = inner4.clone().try_lock() {
+                if let Some(lock) = inner4.try_lock() {
                     load_save(false, lock);
                     break;
                 }
@@ -148,21 +152,20 @@ impl CtrlTask for CtrlKbdLedTask {
         .await;
 
         let ctrl2 = self.inner.clone();
-        if let Ok(ctrl) = self.inner.lock() {
-            let mut watch = ctrl.kd_brightness.monitor_brightness()?;
-            tokio::spawn(async move {
-                let mut buffer = [0; 32];
-                watch
-                    .event_stream(&mut buffer)
-                    .unwrap()
-                    .for_each(|_| async {
-                        if let Ok(lock) = ctrl2.try_lock() {
-                            load_save(true, lock);
-                        }
-                    })
-                    .await;
-            });
-        }
+        let ctrl = self.inner.lock().await;
+        let mut watch = ctrl.kd_brightness.monitor_brightness()?;
+        tokio::spawn(async move {
+            let mut buffer = [0; 32];
+            watch
+                .event_stream(&mut buffer)
+                .unwrap()
+                .for_each(|_| async {
+                    if let Some(lock) = ctrl2.try_lock() {
+                        load_save(true, lock);
+                    }
+                })
+                .await;
+        });
 
         Ok(())
     }
@@ -170,12 +173,12 @@ impl CtrlTask for CtrlKbdLedTask {
 
 pub struct CtrlKbdLedReloader(pub Arc<Mutex<CtrlKbdLed>>);
 
+#[async_trait]
 impl crate::Reloadable for CtrlKbdLedReloader {
-    fn reload(&mut self) -> Result<(), RogError> {
-        if let Ok(mut ctrl) = self.0.try_lock() {
-            ctrl.write_current_config_mode()?;
-            ctrl.set_power_states().map_err(|err| warn!("{err}")).ok();
-        }
+    async fn reload(&mut self) -> Result<(), RogError> {
+        let mut ctrl = self.0.lock().await;
+        ctrl.write_current_config_mode()?;
+        ctrl.set_power_states().map_err(|err| warn!("{err}")).ok();
         Ok(())
     }
 }

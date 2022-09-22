@@ -57,8 +57,8 @@ impl AsusPlatform {
     attr_bool!("egpu_enable", path);
     attr_bool!("panel_od", path);
     attr_u8!("gpu_mux_mode", path);
+    // This is technically the same as `platform_profile` since both are tied in-kernel
     attr_u8!("throttle_thermal_policy", path);
-
     // The acpi platform_profile support
     attr_u8!("platform_profile", pp_path);
 }

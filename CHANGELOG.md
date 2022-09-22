@@ -17,10 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use loops to ensure that mutex is gained for LED changes.
 - asusctl now uses tokio for async runtime. This helps simplify some code.
 ### Breaking
-- DBUS: all charge control methods renamed:
+- DBUS: all charge control methods renamed to:
   - `ChargeControlEndThreshold`
   - `SetChargeControlEndThreshold`
   - `NotifyChargeControlEndThreshold`
+  - `PanelOd` (form PanelOverdrive)
+  - `SetPanelOd`
+  - `NotifyPanelOd`
 
 ## [v4.4.0] - 2022-08-29
 ### Added

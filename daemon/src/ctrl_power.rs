@@ -5,8 +5,8 @@ use log::{info, warn};
 use rog_platform::power::AsusPower;
 use rog_platform::supported::ChargeSupportedFunctions;
 use std::sync::Arc;
-use std::sync::Mutex;
 use zbus::dbus_interface;
+use zbus::export::futures_util::lock::Mutex;
 use zbus::Connection;
 use zbus::SignalContext;
 
@@ -52,7 +52,7 @@ impl CtrlPower {
 
     fn charge_control_end_threshold(&self) -> u8 {
         loop {
-            if let Ok(config) = self.config.try_lock() {
+            if let Some(config) = self.config.try_lock() {
                 let limit = self
                     .power
                     .get_charge_control_end_threshold()
@@ -61,7 +61,7 @@ impl CtrlPower {
                         err
                     })
                     .unwrap_or(100);
-                if let Ok(mut config) = self.config.try_lock() {
+                if let Some(mut config) = self.config.try_lock() {
                     config.read();
                     config.bat_charge_limit = limit;
                     config.write();
@@ -80,15 +80,16 @@ impl CtrlPower {
 }
 
 #[async_trait]
-impl crate::ZbusAdd for CtrlPower {
+impl crate::ZbusRun for CtrlPower {
     async fn add_to_server(self, server: &mut Connection) {
         Self::add_to_server_helper(self, "/org/asuslinux/Charge", server).await;
     }
 }
 
+#[async_trait]
 impl crate::Reloadable for CtrlPower {
-    fn reload(&mut self) -> Result<(), RogError> {
-        if let Ok(mut config) = self.config.try_lock() {
+    async fn reload(&mut self) -> Result<(), RogError> {
+        if let Some(mut config) = self.config.try_lock() {
             config.read();
             self.set(config.bat_charge_limit)?;
         }
@@ -113,7 +114,7 @@ impl CtrlPower {
 
         info!("Battery charge limit: {}", limit);
 
-        if let Ok(mut config) = self.config.try_lock() {
+        if let Some(mut config) = self.config.try_lock() {
             config.read();
             config.bat_charge_limit = limit;
             config.write();
@@ -134,7 +135,7 @@ impl CtrlTask for CtrlPower {
             move || {},
             move || {
                 info!("CtrlCharge reloading charge limit");
-                if let Ok(lock) = power1.config.try_lock() {
+                if let Some(lock) = power1.config.try_lock() {
                     power1
                         .set(lock.bat_charge_limit)
                         .map_err(|err| {
@@ -147,7 +148,7 @@ impl CtrlTask for CtrlPower {
             move || {},
             move || {
                 info!("CtrlCharge reloading charge limit");
-                if let Ok(lock) = power2.config.try_lock() {
+                if let Some(lock) = power2.config.try_lock() {
                     power2
                         .set(lock.bat_charge_limit)
                         .map_err(|err| {

@@ -1,6 +1,6 @@
 [package]
 name = "daemon"
-version = "4.4.0"
+version = "4.5.0-rc1"
 license = "MPL-2.0"
 readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]
@@ -44,5 +44,4 @@ toml = "^0.5.8"
 # Device control
 sysfs-class = "^0.1.2" # used for backlight control and baord ID
 
-inotify = { version = "0.10.0", default-features = false }
 concat-idents = "1.1.3"

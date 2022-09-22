@@ -9,7 +9,7 @@ use std::io::{Read, Write};
 use std::path::Path;
 use std::process::Command;
 use std::sync::Arc;
-use std::sync::Mutex;
+use zbus::export::futures_util::lock::Mutex;
 use zbus::Connection;
 use zbus::{dbus_interface, SignalContext};
 
@@ -210,7 +210,7 @@ impl CtrlRogBios {
             })
             .is_ok()
         {
-            if let Ok(mut lock) = self.config.try_lock() {
+            if let Some(mut lock) = self.config.try_lock() {
                 lock.panel_od = overdrive;
                 lock.write();
             }
@@ -228,7 +228,7 @@ impl CtrlRogBios {
                 err
             })
             .unwrap_or(false);
-        if let Ok(mut lock) = self.config.try_lock() {
+        if let Some(mut lock) = self.config.try_lock() {
             lock.panel_od = od;
             lock.write();
         }
@@ -241,16 +241,17 @@ impl CtrlRogBios {
 }
 
 #[async_trait]
-impl crate::ZbusAdd for CtrlRogBios {
+impl crate::ZbusRun for CtrlRogBios {
     async fn add_to_server(self, server: &mut Connection) {
         Self::add_to_server_helper(self, "/org/asuslinux/Platform", server).await;
     }
 }
 
+#[async_trait]
 impl crate::Reloadable for CtrlRogBios {
-    fn reload(&mut self) -> Result<(), RogError> {
+    async fn reload(&mut self) -> Result<(), RogError> {
         if self.platform.has_panel_od() {
-            let p = if let Ok(lock) = self.config.try_lock() {
+            let p = if let Some(lock) = self.config.try_lock() {
                 lock.panel_od
             } else {
                 false
@@ -275,7 +276,7 @@ impl CtrlTask for CtrlRogBios {
             move || {},
             move || {
                 info!("CtrlRogBios reloading panel_od");
-                if let Ok(lock) = platform1.config.try_lock() {
+                if let Some(lock) = platform1.config.try_lock() {
                     if platform1.platform.has_panel_od() {
                         platform1
                             .set_panel_overdrive(lock.panel_od)
@@ -290,7 +291,7 @@ impl CtrlTask for CtrlRogBios {
             move || {},
             move || {
                 info!("CtrlRogBios reloading panel_od");
-                if let Ok(lock) = platform2.config.try_lock() {
+                if let Some(lock) = platform2.config.try_lock() {
                     if platform2.platform.has_panel_od() {
                         platform2
                             .set_panel_overdrive(lock.panel_od)

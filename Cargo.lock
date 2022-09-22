@@ -572,12 +572,11 @@ checksum = "b365fabc795046672053e29c954733ec3b05e4be654ab130fe8f1f94d7051f35"
 
 [[package]]
 name = "daemon"
-version = "4.4.0"
+version = "4.5.0-rc1"
 dependencies = [
  "async-trait",
  "concat-idents",
  "env_logger",
- "inotify",
  "log",
  "logind-zbus",
  "rog_anime",

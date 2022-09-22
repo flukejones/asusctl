@@ -19,24 +19,22 @@ pub mod ctrl_supported;
 
 pub mod error;
 
-use std::time::Duration;
-
 use crate::error::RogError;
 use async_trait::async_trait;
 use log::warn;
 use logind_zbus::manager::ManagerProxy;
-use tokio::time;
 use zbus::{export::futures_util::StreamExt, Connection, SignalContext};
 use zvariant::ObjectPath;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+#[async_trait]
 pub trait Reloadable {
-    fn reload(&mut self) -> Result<(), RogError>;
+    async fn reload(&mut self) -> Result<(), RogError>;
 }
 
 #[async_trait]
-pub trait ZbusAdd {
+pub trait ZbusRun {
     async fn add_to_server(self, server: &mut Connection);
 
     async fn add_to_server_helper(
@@ -110,14 +108,16 @@ pub trait CtrlTask {
     /// No blocking loops are allowed, or they must be run on a separate thread.
     async fn create_tasks(&self, signal: SignalContext<'static>) -> Result<(), RogError>;
 
-    /// Create a timed repeating task
-    async fn repeating_task(&self, millis: u64, mut task: impl FnMut() + Send + 'static) {
-        let mut timer = time::interval(Duration::from_millis(millis));
-        tokio::spawn(async move {
-            timer.tick().await;
-            task();
-        });
-    }
+    // /// Create a timed repeating task
+    // async fn repeating_task(&self, millis: u64, mut task: impl FnMut() + Send + 'static) {
+    //     use std::time::Duration;
+    //     use tokio::time;
+    //     let mut timer = time::interval(Duration::from_millis(millis));
+    //     tokio::spawn(async move {
+    //         timer.tick().await;
+    //         task();
+    //     });
+    // }
 
     /// Free helper method to create tasks to run on: sleep, wake, shutdown, boot
     ///

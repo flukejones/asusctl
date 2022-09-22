@@ -1,9 +1,10 @@
 use std::env;
 use std::error::Error;
 use std::io::Write;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::Duration;
 
+use ::zbus::export::futures_util::lock::Mutex;
 use ::zbus::{Connection, SignalContext};
 use log::LevelFilter;
 use log::{error, info, warn};
@@ -26,7 +27,7 @@ use daemon::{
     ctrl_profiles::{controller::CtrlPlatformProfile, zbus::ProfileZbus},
     laptops::LaptopLedData,
 };
-use daemon::{CtrlTask, Reloadable, ZbusAdd};
+use daemon::{CtrlTask, Reloadable, ZbusRun};
 use rog_dbus::DBUS_NAME;
 use rog_profiles::Profile;
 
@@ -84,6 +85,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
         Ok(mut ctrl) => {
             // Do a reload of any settings
             ctrl.reload()
+                .await
                 .unwrap_or_else(|err| warn!("CtrlRogBios: {}", err));
             // Then register to dbus server
             ctrl.add_to_server(&mut connection).await;
@@ -101,6 +103,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
         Ok(mut ctrl) => {
             // Do a reload of any settings
             ctrl.reload()
+                .await
                 .unwrap_or_else(|err| warn!("CtrlPower: {}", err));
             // Then register to dbus server
             ctrl.add_to_server(&mut connection).await;
@@ -119,14 +122,12 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
         match CtrlPlatformProfile::new(profile_config) {
             Ok(mut ctrl) => {
                 ctrl.reload()
+                    .await
                     .unwrap_or_else(|err| warn!("Profile control: {}", err));
 
-                let tmp = Arc::new(Mutex::new(ctrl));
-                //let task = CtrlProfileTask::new(tmp.clone());
-                //task.create_tasks(executor).await.ok();
                 let sig = SignalContext::new(&connection, "/org/asuslinux/Profile")?;
 
-                let task = ProfileZbus::new(tmp.clone());
+                let task = ProfileZbus::new(Arc::new(Mutex::new(ctrl)));
                 task.create_tasks(sig).await.ok();
                 task.add_to_server(&mut connection).await;
             }
@@ -145,6 +146,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
             let mut reload = CtrlAnimeReloader(inner.clone());
             reload
                 .reload()
+                .await
                 .unwrap_or_else(|err| warn!("AniMe: {}", err));
 
             let zbus = CtrlAnimeZbus(inner.clone());
@@ -168,6 +170,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
             let mut reload = CtrlKbdLedReloader(inner.clone());
             reload
                 .reload()
+                .await
                 .unwrap_or_else(|err| warn!("Keyboard LED control: {}", err));
 
             CtrlKbdLedZbus::new(inner.clone())

@@ -1,6 +1,8 @@
 use crate::error::RogError;
 use crate::GetSupported;
+use async_trait::async_trait;
 use log::{info, warn};
+use rog_platform::platform::AsusPlatform;
 use rog_platform::supported::PlatformProfileFunctions;
 use rog_profiles::error::ProfileError;
 use rog_profiles::{FanCurveProfiles, Profile};
@@ -9,6 +11,7 @@ use super::config::ProfileConfig;
 
 pub struct CtrlPlatformProfile {
     pub config: ProfileConfig,
+    pub platform: AsusPlatform,
 }
 
 impl GetSupported for CtrlPlatformProfile {
@@ -36,9 +39,10 @@ impl GetSupported for CtrlPlatformProfile {
     }
 }
 
+#[async_trait]
 impl crate::Reloadable for CtrlPlatformProfile {
     /// Fetch the active profile and use that to set all related components up
-    fn reload(&mut self) -> Result<(), RogError> {
+    async fn reload(&mut self) -> Result<(), RogError> {
         if let Some(curves) = &mut self.config.fan_curves {
             if let Ok(mut device) = FanCurveProfiles::get_device() {
                 // There is a possibility that the curve was default zeroed, so this call initialises
@@ -53,10 +57,11 @@ impl crate::Reloadable for CtrlPlatformProfile {
 
 impl CtrlPlatformProfile {
     pub fn new(config: ProfileConfig) -> Result<Self, RogError> {
-        if Profile::is_platform_profile_supported() {
+        let platform = AsusPlatform::new()?;
+        if platform.has_platform_profile() || platform.has_throttle_thermal_policy() {
             info!("Device has profile control available");
 
-            let mut controller = CtrlPlatformProfile { config };
+            let mut controller = CtrlPlatformProfile { config, platform };
             if FanCurveProfiles::get_device().is_ok() {
                 info!("Device has fan curves available");
                 if controller.config.fan_curves.is_none() {

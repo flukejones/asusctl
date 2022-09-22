@@ -1,17 +1,14 @@
 use async_trait::async_trait;
-use inotify::Inotify;
-use inotify::WatchMask;
 use log::warn;
 use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::fan_curve_set::FanCurveSet;
 use rog_profiles::Profile;
-use rog_profiles::PLATFORM_PROFILE;
+use zbus::export::futures_util::lock::Mutex;
 use zbus::export::futures_util::StreamExt;
 use zbus::Connection;
 use zbus::SignalContext;
 
 use std::sync::Arc;
-use std::sync::Mutex;
 use zbus::{dbus_interface, fdo::Error};
 
 use crate::error::RogError;
@@ -47,27 +44,21 @@ impl ProfileZbus {
     /// Toggle to next platform_profile. Names provided by `Profiles`.
     /// If fan-curves are supported will also activate a fan curve for profile.
     async fn next_profile(&mut self, #[zbus(signal_context)] ctxt: SignalContext<'_>) {
-        let mut profile = None;
-        if let Ok(mut ctrl) = self.inner.try_lock() {
-            ctrl.set_next_profile()
-                .unwrap_or_else(|err| warn!("{}", err));
-            ctrl.save_config();
-            profile = Some(ctrl.config.active_profile);
-        }
-        if let Some(profile) = profile {
-            Self::notify_profile(&ctxt, profile).await.ok();
-        }
+        let mut ctrl = self.inner.lock().await;
+        ctrl.set_next_profile()
+            .unwrap_or_else(|err| warn!("{}", err));
+        ctrl.save_config();
+
+        Self::notify_profile(&ctxt, ctrl.config.active_profile)
+            .await
+            .ok();
     }
 
     /// Fetch the active profile name
-    fn active_profile(&mut self) -> zbus::fdo::Result<Profile> {
-        if let Ok(mut ctrl) = self.inner.try_lock() {
-            ctrl.config.read();
-            return Ok(ctrl.config.active_profile);
-        }
-        Err(Error::Failed(
-            "Failed to get active profile name".to_string(),
-        ))
+    async fn active_profile(&mut self) -> zbus::fdo::Result<Profile> {
+        let mut ctrl = self.inner.lock().await;
+        ctrl.config.read();
+        Ok(ctrl.config.active_profile)
     }
 
     /// Set this platform_profile name as active
@@ -76,93 +67,85 @@ impl ProfileZbus {
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
         profile: Profile,
     ) {
-        let mut tmp = None;
-        if let Ok(mut ctrl) = self.inner.try_lock() {
-            // Read first just incase the user has modified the config before calling this
-            ctrl.config.read();
-            Profile::set_profile(profile)
-                .map_err(|e| warn!("set_profile, {}", e))
-                .ok();
-            ctrl.config.active_profile = profile;
+        let mut ctrl = self.inner.lock().await;
+        // Read first just incase the user has modified the config before calling this
+        ctrl.config.read();
+        Profile::set_profile(profile)
+            .map_err(|e| warn!("set_profile, {}", e))
+            .ok();
+        ctrl.config.active_profile = profile;
+        ctrl.write_profile_curve_to_platform()
+            .map_err(|e| warn!("write_profile_curve_to_platform, {}", e))
+            .ok();
+
+        ctrl.save_config();
+
+        Self::notify_profile(&ctxt, ctrl.config.active_profile)
+            .await
+            .ok();
+    }
+
+    /// Get a list of profiles that have fan-curves enabled.
+    async fn enabled_fan_profiles(&mut self) -> zbus::fdo::Result<Vec<Profile>> {
+        let mut ctrl = self.inner.lock().await;
+        ctrl.config.read();
+        if let Some(curves) = &ctrl.config.fan_curves {
+            return Ok(curves.get_enabled_curve_profiles().to_vec());
+        }
+        return Err(Error::Failed(UNSUPPORTED_MSG.to_string()));
+    }
+
+    /// Set a profile fan curve enabled status. Will also activate a fan curve if in the
+    /// same profile mode
+    async fn set_fan_curve_enabled(
+        &mut self,
+        profile: Profile,
+        enabled: bool,
+    ) -> zbus::fdo::Result<()> {
+        let mut ctrl = self.inner.lock().await;
+        ctrl.config.read();
+        return if let Some(curves) = &mut ctrl.config.fan_curves {
+            curves.set_profile_curve_enabled(profile, enabled);
+
             ctrl.write_profile_curve_to_platform()
                 .map_err(|e| warn!("write_profile_curve_to_platform, {}", e))
                 .ok();
 
             ctrl.save_config();
-            tmp = Some(ctrl.config.active_profile);
-        }
-        if let Some(profile) = tmp {
-            Self::notify_profile(&ctxt, profile).await.ok();
-        }
-    }
-
-    /// Get a list of profiles that have fan-curves enabled.
-    fn enabled_fan_profiles(&mut self) -> zbus::fdo::Result<Vec<Profile>> {
-        if let Ok(mut ctrl) = self.inner.try_lock() {
-            ctrl.config.read();
-            if let Some(curves) = &ctrl.config.fan_curves {
-                return Ok(curves.get_enabled_curve_profiles().to_vec());
-            }
-            return Err(Error::Failed(UNSUPPORTED_MSG.to_string()));
-        }
-        Err(Error::Failed(
-            "Failed to get enabled fan curve names".to_string(),
-        ))
-    }
-
-    /// Set a profile fan curve enabled status. Will also activate a fan curve if in the
-    /// same profile mode
-    fn set_fan_curve_enabled(&mut self, profile: Profile, enabled: bool) -> zbus::fdo::Result<()> {
-        if let Ok(mut ctrl) = self.inner.try_lock() {
-            ctrl.config.read();
-            return if let Some(curves) = &mut ctrl.config.fan_curves {
-                curves.set_profile_curve_enabled(profile, enabled);
-
-                ctrl.write_profile_curve_to_platform()
-                    .map_err(|e| warn!("write_profile_curve_to_platform, {}", e))
-                    .ok();
-
-                ctrl.save_config();
-                Ok(())
-            } else {
-                Err(Error::Failed(UNSUPPORTED_MSG.to_string()))
-            };
-        }
-        Err(Error::Failed(
-            "Failed to get enabled fan curve names".to_string(),
-        ))
+            Ok(())
+        } else {
+            Err(Error::Failed(UNSUPPORTED_MSG.to_string()))
+        };
     }
 
     /// Get the fan-curve data for the currently active Profile
-    fn fan_curve_data(&mut self, profile: Profile) -> zbus::fdo::Result<FanCurveSet> {
-        if let Ok(mut ctrl) = self.inner.try_lock() {
-            ctrl.config.read();
-            if let Some(curves) = &ctrl.config.fan_curves {
-                let curve = curves.get_fan_curves_for(profile);
-                return Ok(curve.clone());
-            }
-            return Err(Error::Failed(UNSUPPORTED_MSG.to_string()));
+    async fn fan_curve_data(&mut self, profile: Profile) -> zbus::fdo::Result<FanCurveSet> {
+        let mut ctrl = self.inner.lock().await;
+        ctrl.config.read();
+        if let Some(curves) = &ctrl.config.fan_curves {
+            let curve = curves.get_fan_curves_for(profile);
+            return Ok(curve.clone());
         }
-        Err(Error::Failed("Failed to get fan curve data".to_string()))
+        return Err(Error::Failed(UNSUPPORTED_MSG.to_string()));
     }
 
     /// Set the fan curve for the specified profile.
     /// Will also activate the fan curve if the user is in the same mode.
-    fn set_fan_curve(&self, profile: Profile, curve: CurveData) -> zbus::fdo::Result<()> {
-        if let Ok(mut ctrl) = self.inner.try_lock() {
-            ctrl.config.read();
-            if let Some(curves) = &mut ctrl.config.fan_curves {
-                curves
-                    .save_fan_curve(curve, profile)
-                    .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
-            } else {
-                return Err(Error::Failed(UNSUPPORTED_MSG.to_string()));
-            }
-            ctrl.write_profile_curve_to_platform()
-                .map_err(|e| warn!("Profile::set_profile, {}", e))
-                .ok();
-            ctrl.save_config();
+    async fn set_fan_curve(&self, profile: Profile, curve: CurveData) -> zbus::fdo::Result<()> {
+        let mut ctrl = self.inner.lock().await;
+        ctrl.config.read();
+        if let Some(curves) = &mut ctrl.config.fan_curves {
+            curves
+                .save_fan_curve(curve, profile)
+                .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
+        } else {
+            return Err(Error::Failed(UNSUPPORTED_MSG.to_string()));
         }
+        ctrl.write_profile_curve_to_platform()
+            .map_err(|e| warn!("Profile::set_profile, {}", e))
+            .ok();
+        ctrl.save_config();
+
         Ok(())
     }
 
@@ -170,14 +153,13 @@ impl ProfileZbus {
     ///
     /// Each platform_profile has a different default and the defualt can be read
     /// only for the currently active profile.
-    fn set_active_curve_to_defaults(&self) -> zbus::fdo::Result<()> {
-        if let Ok(mut ctrl) = self.inner.try_lock() {
-            ctrl.config.read();
-            ctrl.set_active_curve_to_defaults()
-                .map_err(|e| warn!("Profile::set_active_curve_to_defaults, {}", e))
-                .ok();
-            ctrl.save_config();
-        }
+    async fn set_active_curve_to_defaults(&self) -> zbus::fdo::Result<()> {
+        let mut ctrl = self.inner.lock().await;
+        ctrl.config.read();
+        ctrl.set_active_curve_to_defaults()
+            .map_err(|e| warn!("Profile::set_active_curve_to_defaults, {}", e))
+            .ok();
+        ctrl.save_config();
         Ok(())
     }
 
@@ -185,23 +167,22 @@ impl ProfileZbus {
     ///
     /// Each platform_profile has a different default and the defualt can be read
     /// only for the currently active profile.
-    fn reset_profile_curves(&self, profile: Profile) -> zbus::fdo::Result<()> {
-        if let Ok(mut ctrl) = self.inner.try_lock() {
-            ctrl.config.read();
-            let active = Profile::get_active_profile().unwrap_or(Profile::Balanced);
+    async fn reset_profile_curves(&self, profile: Profile) -> zbus::fdo::Result<()> {
+        let mut ctrl = self.inner.lock().await;
+        ctrl.config.read();
+        let active = Profile::get_active_profile().unwrap_or(Profile::Balanced);
 
-            Profile::set_profile(profile)
-                .map_err(|e| warn!("set_profile, {}", e))
-                .ok();
-            ctrl.set_active_curve_to_defaults()
-                .map_err(|e| warn!("Profile::set_active_curve_to_defaults, {}", e))
-                .ok();
+        Profile::set_profile(profile)
+            .map_err(|e| warn!("set_profile, {}", e))
+            .ok();
+        ctrl.set_active_curve_to_defaults()
+            .map_err(|e| warn!("Profile::set_active_curve_to_defaults, {}", e))
+            .ok();
 
-            Profile::set_profile(active)
-                .map_err(|e| warn!("set_profile, {}", e))
-                .ok();
-            ctrl.save_config();
-        }
+        Profile::set_profile(active)
+            .map_err(|e| warn!("set_profile, {}", e))
+            .ok();
+        ctrl.save_config();
         Ok(())
     }
 
@@ -211,7 +192,7 @@ impl ProfileZbus {
 }
 
 #[async_trait]
-impl crate::ZbusAdd for ProfileZbus {
+impl crate::ZbusRun for ProfileZbus {
     async fn add_to_server(self, server: &mut Connection) {
         Self::add_to_server_helper(self, "/org/asuslinux/Profile", server).await;
     }
@@ -221,36 +202,32 @@ impl crate::ZbusAdd for ProfileZbus {
 impl CtrlTask for ProfileZbus {
     async fn create_tasks(&self, signal_ctxt: SignalContext<'static>) -> Result<(), RogError> {
         let ctrl = self.inner.clone();
-        let mut watch = Inotify::init()?;
-        watch.add_watch(PLATFORM_PROFILE, WatchMask::CLOSE_WRITE)?;
+        let mut watch = self
+            .inner
+            .lock()
+            .await
+            .platform
+            .monitor_platform_profile()?;
 
         tokio::spawn(async move {
             let mut buffer = [0; 32];
-            loop {
-                watch
-                    .event_stream(&mut buffer)
-                    .unwrap()
-                    .for_each(|_| async {
-                        let mut active_profile = None;
+            watch
+                .event_stream(&mut buffer)
+                .unwrap()
+                .for_each(|_| async {
+                    let mut lock = ctrl.lock().await;
+                    let new_profile = Profile::get_active_profile().unwrap();
+                    if new_profile != lock.config.active_profile {
+                        lock.config.active_profile = new_profile;
+                        lock.write_profile_curve_to_platform().unwrap();
+                        lock.save_config();
+                    }
 
-                        if let Ok(ref mut lock) = ctrl.try_lock() {
-                            let new_profile = Profile::get_active_profile().unwrap();
-                            if new_profile != lock.config.active_profile {
-                                lock.config.active_profile = new_profile;
-                                lock.write_profile_curve_to_platform().unwrap();
-                                lock.save_config();
-                                active_profile = Some(lock.config.active_profile);
-                            }
-                        }
-
-                        if let Some(active_profile) = active_profile {
-                            Self::notify_profile(&signal_ctxt.clone(), active_profile)
-                                .await
-                                .ok();
-                        }
-                    })
-                    .await;
-            }
+                    Self::notify_profile(&signal_ctxt.clone(), lock.config.active_profile)
+                        .await
+                        .ok();
+                })
+                .await;
         });
 
         Ok(())

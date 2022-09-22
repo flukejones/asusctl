@@ -28,7 +28,7 @@ impl SupportedFunctions {
 }
 
 #[async_trait]
-impl crate::ZbusAdd for SupportedFunctions {
+impl crate::ZbusRun for SupportedFunctions {
     async fn add_to_server(self, server: &mut Connection) {
         Self::add_to_server_helper(self, "/org/asuslinux/Supported", server).await;
     }
