@@ -18,35 +18,43 @@ Then for each trait that is required a new struct is required that can have the 
 
 Main controller:
 
+For a very simple controller that doesn't need exclusive access you can clone across threads
+
 ```rust
-/// For a very simple controller that doesn't need exclusive access you can clone across threads
 #[derive(Clone)]
 pub struct CtrlAnime {
     <things the controller requires>
     config: Arc<Mutex<Config>>,
 }
 
+// This is the task trait used for such things as file watches, or logind
+// notifications (boot/suspend/shutdown etc)
 impl crate::CtrlTask for CtrlAnime {}
+
+// The trait to easily add the controller to Zbus to enable the zbus derived functions
+// to be polled, run, react etc.
 impl crate::ZbusAdd for CtrlAnime {}
 
 impl CtrlAnime {}
 ```
 
+ Otherwise, you will need to share the controller via mutex
+
 ```rust
-/// Otherwise, you will need to share the controller via mutex
 pub struct CtrlAnime {
     <things the controller requires>
 }
 // Like this
 #[derive(Clone)]
 pub struct CtrlAnimeTask(Arc<Mutex<CtrlAnime>>);
+
 #[derive(Clone)]
 pub struct CtrlAnimeZbus(Arc<Mutex<CtrlAnime>>);
 
 impl CtrlAnime {}
 ```
 
-The task trait. There are three ways to implement this:
+The task trait:
 
 ```rust
 // Mutex should always be async mutex

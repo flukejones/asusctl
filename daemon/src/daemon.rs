@@ -5,27 +5,22 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use ::zbus::export::futures_util::lock::Mutex;
-use ::zbus::{Connection, SignalContext};
+use ::zbus::Connection;
+use daemon::ctrl_anime::CtrlAnime;
 use log::LevelFilter;
 use log::{error, info, warn};
 use tokio::time::sleep;
 
-use daemon::ctrl_anime::config::AnimeConfig;
-use daemon::ctrl_anime::zbus::CtrlAnimeZbus;
-use daemon::ctrl_anime::*;
-use daemon::ctrl_aura::config::AuraConfig;
-use daemon::ctrl_aura::controller::{
-    CtrlKbdLed, CtrlKbdLedReloader, CtrlKbdLedTask, CtrlKbdLedZbus,
-};
-use daemon::ctrl_platform::CtrlRogBios;
+use daemon::ctrl_anime::{config::AnimeConfig, trait_impls::CtrlAnimeZbus};
+use daemon::ctrl_aura::{config::AuraConfig, controller::CtrlKbdLed, trait_impls::CtrlKbdLedZbus};
+use daemon::ctrl_platform::CtrlPlatform;
 use daemon::ctrl_power::CtrlPower;
-use daemon::ctrl_profiles::config::ProfileConfig;
+use daemon::ctrl_profiles::{
+    config::ProfileConfig, controller::CtrlPlatformProfile, trait_impls::ProfileZbus,
+};
+use daemon::laptops::LaptopLedData;
 use daemon::{
     config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
-};
-use daemon::{
-    ctrl_profiles::{controller::CtrlPlatformProfile, zbus::ProfileZbus},
-    laptops::LaptopLedData,
 };
 use daemon::{CtrlTask, Reloadable, ZbusRun};
 use rog_dbus::DBUS_NAME;
@@ -81,80 +76,43 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
 
     supported.add_to_server(&mut connection).await;
 
-    match CtrlRogBios::new(config.clone()) {
-        Ok(mut ctrl) => {
-            // Do a reload of any settings
-            ctrl.reload()
-                .await
-                .unwrap_or_else(|err| warn!("CtrlRogBios: {}", err));
-            // Then register to dbus server
-            ctrl.add_to_server(&mut connection).await;
-
-            let task = CtrlRogBios::new(config.clone())?;
-            let sig = SignalContext::new(&connection, "/org/asuslinux/Platform")?;
-            task.create_tasks(sig).await.ok();
+    match CtrlPlatform::new(config.clone()) {
+        Ok(ctrl) => {
+            start_tasks(ctrl, &mut connection).await?;
         }
         Err(err) => {
-            error!("rog_bios_control: {}", err);
+            error!("CtrlPlatform: {}", err);
         }
     }
 
     match CtrlPower::new(config.clone()) {
-        Ok(mut ctrl) => {
-            // Do a reload of any settings
-            ctrl.reload()
-                .await
-                .unwrap_or_else(|err| warn!("CtrlPower: {}", err));
-            // Then register to dbus server
-            ctrl.add_to_server(&mut connection).await;
-
-            let task = CtrlPower::new(config)?;
-            let sig = SignalContext::new(&connection, "/org/asuslinux/Charge")?;
-            task.create_tasks(sig).await.ok();
+        Ok(ctrl) => {
+            start_tasks(ctrl, &mut connection).await?;
         }
         Err(err) => {
-            error!("charge_control: {}", err);
+            error!("CtrlPower: {}", err);
         }
     }
 
     if Profile::is_platform_profile_supported() {
         let profile_config = ProfileConfig::load(PROFILE_CONFIG_PATH.into());
         match CtrlPlatformProfile::new(profile_config) {
-            Ok(mut ctrl) => {
-                ctrl.reload()
-                    .await
-                    .unwrap_or_else(|err| warn!("Profile control: {}", err));
-
-                let sig = SignalContext::new(&connection, "/org/asuslinux/Profile")?;
-
-                let task = ProfileZbus::new(Arc::new(Mutex::new(ctrl)));
-                task.create_tasks(sig).await.ok();
-                task.add_to_server(&mut connection).await;
+            Ok(ctrl) => {
+                let zbus = ProfileZbus(Arc::new(Mutex::new(ctrl)));
+                start_tasks(zbus, &mut connection).await?;
             }
             Err(err) => {
                 error!("Profile control: {}", err);
             }
         }
     } else {
-        warn!("platform_profile support not found. This requires kernel 5.15.x or the patch applied: https://lkml.org/lkml/2021/8/18/1022");
+        warn!("platform_profile support not found");
     }
 
     match CtrlAnime::new(AnimeConfig::load()) {
         Ok(ctrl) => {
-            let inner = Arc::new(Mutex::new(ctrl));
-
-            let mut reload = CtrlAnimeReloader(inner.clone());
-            reload
-                .reload()
-                .await
-                .unwrap_or_else(|err| warn!("AniMe: {}", err));
-
-            let zbus = CtrlAnimeZbus(inner.clone());
-            zbus.add_to_server(&mut connection).await;
-
-            let task = CtrlAnimeTask::new(inner).await;
-            let sig = SignalContext::new(&connection, "/org/asuslinux/Anime")?;
-            task.create_tasks(sig).await.ok();
+            let zbus = CtrlAnimeZbus(Arc::new(Mutex::new(ctrl)));
+            start_tasks(zbus, &mut connection).await?;
         }
         Err(err) => {
             error!("AniMe control: {}", err);
@@ -165,21 +123,8 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     let aura_config = AuraConfig::load(&laptop);
     match CtrlKbdLed::new(laptop, aura_config) {
         Ok(ctrl) => {
-            let inner = Arc::new(Mutex::new(ctrl));
-
-            let mut reload = CtrlKbdLedReloader(inner.clone());
-            reload
-                .reload()
-                .await
-                .unwrap_or_else(|err| warn!("Keyboard LED control: {}", err));
-
-            CtrlKbdLedZbus::new(inner.clone())
-                .add_to_server(&mut connection)
-                .await;
-
-            let task = CtrlKbdLedTask::new(inner);
-            let sig = SignalContext::new(&connection, "/org/asuslinux/Aura")?;
-            task.create_tasks(sig).await.ok();
+            let zbus = CtrlKbdLedZbus(Arc::new(Mutex::new(ctrl)));
+            start_tasks(zbus, &mut connection).await?;
         }
         Err(err) => {
             error!("Keyboard control: {}", err);
@@ -193,4 +138,21 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
         // This is just a blocker to idle and ensure the reator reacts
         sleep(Duration::from_millis(1000)).await;
     }
+}
+
+async fn start_tasks<T>(mut zbus: T, connection: &mut Connection) -> Result<(), Box<dyn Error>>
+where
+    T: ZbusRun + Reloadable + CtrlTask + Clone,
+{
+    let task = zbus.clone();
+
+    zbus.reload()
+        .await
+        .unwrap_or_else(|err| warn!("Controller error: {}", err));
+    zbus.add_to_server(connection).await;
+
+    task.create_tasks(CtrlKbdLedZbus::signal_context(&connection)?)
+        .await
+        .ok();
+    Ok(())
 }

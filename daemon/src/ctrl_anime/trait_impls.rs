@@ -1,22 +1,28 @@
+use super::CtrlAnime;
+use crate::error::RogError;
 use async_trait::async_trait;
-use log::warn;
+use log::{info, warn};
 use rog_anime::{
     usb::{pkt_for_apply, pkt_for_set_boot, pkt_for_set_on},
     AnimeDataBuffer, AnimePowerStates,
 };
-use zbus::{dbus_interface, export::futures_util::lock::Mutex, Connection, SignalContext};
-
 use std::sync::{atomic::Ordering, Arc};
+use zbus::{
+    dbus_interface,
+    export::futures_util::lock::{Mutex, MutexGuard},
+    Connection, SignalContext,
+};
 
-use super::CtrlAnime;
+pub(super) const ZBUS_PATH: &str = "/org/asuslinux/Anime";
 
+#[derive(Clone)]
 pub struct CtrlAnimeZbus(pub Arc<Mutex<CtrlAnime>>);
 
 /// The struct with the main dbus methods requires this trait
 #[async_trait]
 impl crate::ZbusRun for CtrlAnimeZbus {
     async fn add_to_server(self, server: &mut Connection) {
-        Self::add_to_server_helper(self, "/org/asuslinux/Anime", server).await;
+        Self::add_to_server_helper(self, ZBUS_PATH, server).await;
     }
 }
 
@@ -133,4 +139,78 @@ impl CtrlAnimeZbus {
         ctxt: &SignalContext<'_>,
         data: AnimePowerStates,
     ) -> zbus::Result<()>;
+}
+
+#[async_trait]
+impl crate::CtrlTask for CtrlAnimeZbus {
+    fn zbus_path() -> &'static str {
+        ZBUS_PATH
+    }
+
+    async fn create_tasks(&self, _: SignalContext<'static>) -> Result<(), RogError> {
+        let run_action =
+            |start: bool, lock: MutexGuard<CtrlAnime>, inner: Arc<Mutex<CtrlAnime>>| {
+                if start {
+                    info!("CtrlAnimeTask running sleep animation");
+                    CtrlAnime::run_thread(inner.clone(), lock.cache.shutdown.clone(), true);
+                } else {
+                    info!("CtrlAnimeTask running wake animation");
+                    CtrlAnime::run_thread(inner.clone(), lock.cache.wake.clone(), true);
+                }
+            };
+
+        let inner1 = self.0.clone();
+        let inner2 = self.0.clone();
+        let inner3 = self.0.clone();
+        let inner4 = self.0.clone();
+        self.create_sys_event_tasks(
+            // Loop is required to try an attempt to get the mutex *without* blocking
+            // other threads - it is possible to end up with deadlocks otherwise.
+            move || loop {
+                if let Some(lock) = inner1.try_lock() {
+                    run_action(true, lock, inner1.clone());
+                    break;
+                }
+            },
+            move || loop {
+                if let Some(lock) = inner2.try_lock() {
+                    run_action(false, lock, inner2.clone());
+                    break;
+                }
+            },
+            move || loop {
+                if let Some(lock) = inner3.try_lock() {
+                    run_action(true, lock, inner3.clone());
+                    break;
+                }
+            },
+            move || loop {
+                if let Some(lock) = inner4.try_lock() {
+                    run_action(false, lock, inner4.clone());
+                    break;
+                }
+            },
+        )
+        .await;
+
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl crate::Reloadable for CtrlAnimeZbus {
+    async fn reload(&mut self) -> Result<(), RogError> {
+        if let Some(lock) = self.0.try_lock() {
+            lock.node
+                .write_bytes(&pkt_for_set_on(lock.config.awake_enabled))?;
+            lock.node.write_bytes(&pkt_for_apply())?;
+            lock.node
+                .write_bytes(&pkt_for_set_boot(lock.config.boot_anim_enabled))?;
+            lock.node.write_bytes(&pkt_for_apply())?;
+
+            let action = lock.cache.boot.clone();
+            CtrlAnime::run_thread(self.0.clone(), action, true);
+        }
+        Ok(())
+    }
 }

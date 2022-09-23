@@ -26,34 +26,6 @@ use logind_zbus::manager::ManagerProxy;
 use zbus::{export::futures_util::StreamExt, Connection, SignalContext};
 use zvariant::ObjectPath;
 
-pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-#[async_trait]
-pub trait Reloadable {
-    async fn reload(&mut self) -> Result<(), RogError>;
-}
-
-#[async_trait]
-pub trait ZbusRun {
-    async fn add_to_server(self, server: &mut Connection);
-
-    async fn add_to_server_helper(
-        iface: impl zbus::Interface,
-        path: &str,
-        server: &mut Connection,
-    ) {
-        server
-            .object_server()
-            .at(&ObjectPath::from_str_unchecked(path), iface)
-            .await
-            .map_err(|err| {
-                warn!("{}: add_to_server {}", path, err);
-                err
-            })
-            .ok();
-    }
-}
-
 /// This macro adds a function which spawns an `inotify` task on the passed in `Executor`.
 ///
 /// The generated function is `watch_<name>()`. Self requires the following methods to be available:
@@ -101,9 +73,43 @@ macro_rules! task_watch_item {
     };
 }
 
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+#[async_trait]
+pub trait Reloadable {
+    async fn reload(&mut self) -> Result<(), RogError>;
+}
+
+#[async_trait]
+pub trait ZbusRun {
+    async fn add_to_server(self, server: &mut Connection);
+
+    async fn add_to_server_helper(
+        iface: impl zbus::Interface,
+        path: &str,
+        server: &mut Connection,
+    ) {
+        server
+            .object_server()
+            .at(&ObjectPath::from_str_unchecked(path), iface)
+            .await
+            .map_err(|err| {
+                warn!("{}: add_to_server {}", path, err);
+                err
+            })
+            .ok();
+    }
+}
+
 /// Set up a task to run on the async executor
 #[async_trait]
 pub trait CtrlTask {
+    fn zbus_path() -> &'static str;
+
+    fn signal_context(connection: &Connection) -> Result<SignalContext<'static>, zbus::Error> {
+        SignalContext::new(connection, Self::zbus_path())
+    }
+
     /// Implement to set up various tasks that may be required, using the `Executor`.
     /// No blocking loops are allowed, or they must be run on a separate thread.
     async fn create_tasks(&self, signal: SignalContext<'static>) -> Result<(), RogError>;

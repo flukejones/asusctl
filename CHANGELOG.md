@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `PanelOd` (form PanelOverdrive)
   - `SetPanelOd`
   - `NotifyPanelOd`
+  - Path `/org/asuslinux/Charge` changed to `/org/asuslinux/Power`
 
 ## [v4.4.0] - 2022-08-29
 ### Added

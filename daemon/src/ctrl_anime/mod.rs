@@ -1,25 +1,19 @@
 pub mod config;
-pub mod zbus;
+/// Implements CtrlTask, Reloadable, ZbusRun
+pub mod trait_impls;
 
-use ::zbus::export::futures_util::lock::{Mutex, MutexGuard};
-use ::zbus::SignalContext;
-use async_trait::async_trait;
+use self::config::{AnimeConfig, AnimeConfigCached};
+use crate::{error::RogError, GetSupported};
+use ::zbus::export::futures_util::lock::Mutex;
 use log::{error, info, warn};
 use rog_anime::{
     error::AnimeError,
-    usb::{
-        get_anime_type, pkt_for_apply, pkt_for_flush, pkt_for_set_boot, pkt_for_set_on,
-        pkts_for_init,
-    },
+    usb::{get_anime_type, pkt_for_flush, pkts_for_init},
     ActionData, AnimeDataBuffer, AnimePacketType, AnimeType,
 };
 use rog_platform::{hid_raw::HidRaw, supported::AnimeSupportedFunctions, usb_raw::USBRaw};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::{convert::TryFrom, error::Error, sync::Arc, thread::sleep};
-
-use crate::{error::RogError, GetSupported};
-
-use self::config::{AnimeConfig, AnimeConfigCached};
 
 impl GetSupported for CtrlAnime {
     type A = AnimeSupportedFunctions;
@@ -211,88 +205,6 @@ impl CtrlAnime {
         let pkts = pkts_for_init();
         self.node.write_bytes(&pkts[0])?;
         self.node.write_bytes(&pkts[1])?;
-        Ok(())
-    }
-}
-
-pub struct CtrlAnimeTask {
-    inner: Arc<Mutex<CtrlAnime>>,
-}
-
-impl CtrlAnimeTask {
-    pub async fn new(inner: Arc<Mutex<CtrlAnime>>) -> CtrlAnimeTask {
-        Self { inner }
-    }
-}
-
-#[async_trait]
-impl crate::CtrlTask for CtrlAnimeTask {
-    async fn create_tasks(&self, _: SignalContext<'static>) -> Result<(), RogError> {
-        let run_action =
-            |start: bool, lock: MutexGuard<CtrlAnime>, inner: Arc<Mutex<CtrlAnime>>| {
-                if start {
-                    info!("CtrlAnimeTask running sleep animation");
-                    CtrlAnime::run_thread(inner.clone(), lock.cache.shutdown.clone(), true);
-                } else {
-                    info!("CtrlAnimeTask running wake animation");
-                    CtrlAnime::run_thread(inner.clone(), lock.cache.wake.clone(), true);
-                }
-            };
-
-        let inner1 = self.inner.clone();
-        let inner2 = self.inner.clone();
-        let inner3 = self.inner.clone();
-        let inner4 = self.inner.clone();
-        self.create_sys_event_tasks(
-            // Loop is required to try an attempt to get the mutex *without* blocking
-            // other threads - it is possible to end up with deadlocks otherwise.
-            move || loop {
-                if let Some(lock) = inner1.try_lock() {
-                    run_action(true, lock, inner1.clone());
-                    break;
-                }
-            },
-            move || loop {
-                if let Some(lock) = inner2.try_lock() {
-                    run_action(false, lock, inner2.clone());
-                    break;
-                }
-            },
-            move || loop {
-                if let Some(lock) = inner3.try_lock() {
-                    run_action(true, lock, inner3.clone());
-                    break;
-                }
-            },
-            move || loop {
-                if let Some(lock) = inner4.try_lock() {
-                    run_action(false, lock, inner4.clone());
-                    break;
-                }
-            },
-        )
-        .await;
-
-        Ok(())
-    }
-}
-
-pub struct CtrlAnimeReloader(pub Arc<Mutex<CtrlAnime>>);
-
-#[async_trait]
-impl crate::Reloadable for CtrlAnimeReloader {
-    async fn reload(&mut self) -> Result<(), RogError> {
-        if let Some(lock) = self.0.try_lock() {
-            lock.node
-                .write_bytes(&pkt_for_set_on(lock.config.awake_enabled))?;
-            lock.node.write_bytes(&pkt_for_apply())?;
-            lock.node
-                .write_bytes(&pkt_for_set_boot(lock.config.boot_anim_enabled))?;
-            lock.node.write_bytes(&pkt_for_apply())?;
-
-            let action = lock.cache.boot.clone();
-            CtrlAnime::run_thread(self.0.clone(), action, true);
-        }
         Ok(())
     }
 }

@@ -1,16 +1,39 @@
-use std::collections::BTreeMap;
-
 use async_trait::async_trait;
-use log::warn;
+use log::{error, info, warn};
 use rog_aura::{usb::AuraPowerDev, AuraEffect, AuraModeNum, LedBrightness, PerKeyRaw};
-use zbus::{dbus_interface, Connection, SignalContext};
+use std::{collections::BTreeMap, sync::Arc};
+use zbus::{
+    dbus_interface,
+    export::futures_util::{
+        lock::{Mutex, MutexGuard},
+        StreamExt,
+    },
+    Connection, SignalContext,
+};
 
-use super::controller::CtrlKbdLedZbus;
+use crate::{error::RogError, CtrlTask};
+
+use super::controller::CtrlKbdLed;
+
+pub(super) const ZBUS_PATH: &str = "/org/asuslinux/Aura";
+
+#[derive(Clone)]
+pub struct CtrlKbdLedZbus(pub Arc<Mutex<CtrlKbdLed>>);
+
+impl CtrlKbdLedZbus {
+    fn update_config(lock: &mut CtrlKbdLed) -> Result<(), RogError> {
+        let bright = lock.kd_brightness.get_brightness()?;
+        lock.config.read();
+        lock.config.brightness = (bright as u32).into();
+        lock.config.write();
+        return Ok(());
+    }
+}
 
 #[async_trait]
 impl crate::ZbusRun for CtrlKbdLedZbus {
     async fn add_to_server(self, server: &mut Connection) {
-        Self::add_to_server_helper(self, "/org/asuslinux/Aura", server).await;
+        Self::add_to_server_helper(self, ZBUS_PATH, server).await;
     }
 }
 
@@ -205,4 +228,93 @@ impl CtrlKbdLedZbus {
         signal_ctxt: &SignalContext<'_>,
         data: &AuraPowerDev,
     ) -> zbus::Result<()>;
+}
+
+#[async_trait]
+impl CtrlTask for CtrlKbdLedZbus {
+    fn zbus_path() -> &'static str {
+        ZBUS_PATH
+    }
+
+    async fn create_tasks(&self, _: SignalContext<'static>) -> Result<(), RogError> {
+        let load_save = |start: bool, mut lock: MutexGuard<CtrlKbdLed>| {
+            // If waking up
+            if !start {
+                info!("CtrlKbdLedTask reloading brightness and modes");
+                lock.set_brightness(lock.config.brightness)
+                    .map_err(|e| error!("CtrlKbdLedTask: {e}"))
+                    .ok();
+                lock.write_current_config_mode()
+                    .map_err(|e| error!("CtrlKbdLedTask: {e}"))
+                    .ok();
+            } else if start {
+                info!("CtrlKbdLedTask saving last brightness");
+                Self::update_config(&mut lock)
+                    .map_err(|e| error!("CtrlKbdLedTask: {e}"))
+                    .ok();
+            }
+        };
+
+        let inner1 = self.0.clone();
+        let inner2 = self.0.clone();
+        let inner3 = self.0.clone();
+        let inner4 = self.0.clone();
+        self.create_sys_event_tasks(
+            // Loop so that we do aquire the lock but also don't block other
+            // threads (prevents potential deadlocks)
+            move || loop {
+                if let Some(lock) = inner1.try_lock() {
+                    load_save(true, lock);
+                    break;
+                }
+            },
+            move || loop {
+                if let Some(lock) = inner2.try_lock() {
+                    load_save(false, lock);
+                    break;
+                }
+            },
+            move || loop {
+                if let Some(lock) = inner3.try_lock() {
+                    load_save(true, lock);
+                    break;
+                }
+            },
+            move || loop {
+                if let Some(lock) = inner4.try_lock() {
+                    load_save(false, lock);
+                    break;
+                }
+            },
+        )
+        .await;
+
+        let ctrl2 = self.0.clone();
+        let ctrl = self.0.lock().await;
+        let mut watch = ctrl.kd_brightness.monitor_brightness()?;
+        tokio::spawn(async move {
+            let mut buffer = [0; 32];
+            watch
+                .event_stream(&mut buffer)
+                .unwrap()
+                .for_each(|_| async {
+                    if let Some(lock) = ctrl2.try_lock() {
+                        load_save(true, lock);
+                    }
+                })
+                .await;
+        });
+
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl crate::Reloadable for CtrlKbdLedZbus {
+    async fn reload(&mut self) -> Result<(), RogError> {
+        let mut ctrl = self.0.lock().await;
+        ctrl.write_current_config_mode()?;
+        ctrl.set_power_states().map_err(|err| warn!("{err}")).ok();
+        Ok(())
+    }
 }

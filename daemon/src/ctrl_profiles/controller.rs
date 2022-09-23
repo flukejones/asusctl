@@ -1,6 +1,5 @@
 use crate::error::RogError;
 use crate::GetSupported;
-use async_trait::async_trait;
 use log::{info, warn};
 use rog_platform::platform::AsusPlatform;
 use rog_platform::supported::PlatformProfileFunctions;
@@ -36,22 +35,6 @@ impl GetSupported for CtrlPlatformProfile {
             platform_profile: Profile::is_platform_profile_supported(),
             fan_curves: fan_curve_supported,
         }
-    }
-}
-
-#[async_trait]
-impl crate::Reloadable for CtrlPlatformProfile {
-    /// Fetch the active profile and use that to set all related components up
-    async fn reload(&mut self) -> Result<(), RogError> {
-        if let Some(curves) = &mut self.config.fan_curves {
-            if let Ok(mut device) = FanCurveProfiles::get_device() {
-                // There is a possibility that the curve was default zeroed, so this call initialises
-                // the data from system read and we need to save it after
-                curves.write_profile_curve_to_platform(self.config.active_profile, &mut device)?;
-                self.config.write();
-            }
-        }
-        Ok(())
     }
 }
 

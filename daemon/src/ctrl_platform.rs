@@ -13,16 +13,17 @@ use zbus::export::futures_util::lock::Mutex;
 use zbus::Connection;
 use zbus::{dbus_interface, SignalContext};
 
-static ASUS_POST_LOGO_SOUND: &str =
+const ZBUS_PATH: &str = "/org/asuslinux/Platform";
+const ASUS_POST_LOGO_SOUND: &str =
     "/sys/firmware/efi/efivars/AsusPostLogoSound-607005d5-3f75-4b2e-98f0-85ba66797a3e";
 
 #[derive(Clone)]
-pub struct CtrlRogBios {
+pub struct CtrlPlatform {
     platform: AsusPlatform,
     config: Arc<Mutex<Config>>,
 }
 
-impl GetSupported for CtrlRogBios {
+impl GetSupported for CtrlPlatform {
     type A = RogBiosSupportedFunctions;
 
     fn get_supported() -> Self::A {
@@ -48,7 +49,7 @@ impl GetSupported for CtrlRogBios {
     }
 }
 
-impl CtrlRogBios {
+impl CtrlPlatform {
     pub fn new(config: Arc<Mutex<Config>>) -> Result<Self, RogError> {
         let platform = AsusPlatform::new()?;
 
@@ -58,12 +59,12 @@ impl CtrlRogBios {
         }
 
         if Path::new(ASUS_POST_LOGO_SOUND).exists() {
-            CtrlRogBios::set_path_mutable(ASUS_POST_LOGO_SOUND)?;
+            CtrlPlatform::set_path_mutable(ASUS_POST_LOGO_SOUND)?;
         } else {
             info!("Switch for POST boot sound not detected");
         }
 
-        Ok(CtrlRogBios { platform, config })
+        Ok(CtrlPlatform { platform, config })
     }
 
     fn set_path_mutable(path: &str) -> Result<(), RogError> {
@@ -138,7 +139,7 @@ impl CtrlRogBios {
 }
 
 #[dbus_interface(name = "org.asuslinux.Daemon")]
-impl CtrlRogBios {
+impl CtrlPlatform {
     async fn set_gpu_mux_mode(
         &mut self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
@@ -241,14 +242,14 @@ impl CtrlRogBios {
 }
 
 #[async_trait]
-impl crate::ZbusRun for CtrlRogBios {
+impl crate::ZbusRun for CtrlPlatform {
     async fn add_to_server(self, server: &mut Connection) {
         Self::add_to_server_helper(self, "/org/asuslinux/Platform", server).await;
     }
 }
 
 #[async_trait]
-impl crate::Reloadable for CtrlRogBios {
+impl crate::Reloadable for CtrlPlatform {
     async fn reload(&mut self) -> Result<(), RogError> {
         if self.platform.has_panel_od() {
             let p = if let Some(lock) = self.config.try_lock() {
@@ -262,13 +263,17 @@ impl crate::Reloadable for CtrlRogBios {
     }
 }
 
-impl CtrlRogBios {
+impl CtrlPlatform {
     task_watch_item!(panel_od platform);
     task_watch_item!(gpu_mux_mode platform);
 }
 
 #[async_trait]
-impl CtrlTask for CtrlRogBios {
+impl CtrlTask for CtrlPlatform {
+    fn zbus_path() -> &'static str {
+        ZBUS_PATH
+    }
+
     async fn create_tasks(&self, signal_ctxt: SignalContext<'static>) -> Result<(), RogError> {
         let platform1 = self.clone();
         let platform2 = self.clone();

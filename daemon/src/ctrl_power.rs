@@ -10,6 +10,8 @@ use zbus::export::futures_util::lock::Mutex;
 use zbus::Connection;
 use zbus::SignalContext;
 
+const ZBUS_PATH: &str = "/org/asuslinux/Power";
+
 impl GetSupported for CtrlPower {
     type A = ChargeSupportedFunctions;
 
@@ -82,7 +84,7 @@ impl CtrlPower {
 #[async_trait]
 impl crate::ZbusRun for CtrlPower {
     async fn add_to_server(self, server: &mut Connection) {
-        Self::add_to_server_helper(self, "/org/asuslinux/Charge", server).await;
+        Self::add_to_server_helper(self, ZBUS_PATH, server).await;
     }
 }
 
@@ -128,6 +130,10 @@ impl CtrlPower {
 
 #[async_trait]
 impl CtrlTask for CtrlPower {
+    fn zbus_path() -> &'static str {
+        ZBUS_PATH
+    }
+
     async fn create_tasks(&self, signal_ctxt: SignalContext<'static>) -> Result<(), RogError> {
         let power1 = self.clone();
         let power2 = self.clone();

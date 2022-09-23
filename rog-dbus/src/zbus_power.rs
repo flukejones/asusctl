@@ -23,9 +23,9 @@ use zbus_macros::dbus_proxy;
 
 #[dbus_proxy(
     interface = "org.asuslinux.Daemon",
-    default_path = "/org/asuslinux/Charge"
+    default_path = "/org/asuslinux/Power"
 )]
-trait Charge {
+trait Power {
     /// charge_control_end_threshold method
     fn charge_control_end_threshold(&self) -> zbus::Result<u8>;
 
