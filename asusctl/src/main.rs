@@ -211,7 +211,9 @@ fn do_parsed(
     }
 
     if let Some(chg_limit) = parsed.chg_limit {
-        dbus.proxies().charge().set_limit(chg_limit)?;
+        dbus.proxies()
+            .charge()
+            .set_charge_control_end_threshold(chg_limit)?;
     }
 
     Ok(())
@@ -803,10 +805,10 @@ fn handle_bios_option(
         }
 
         if let Some(opt) = cmd.panel_overdrive_set {
-            dbus.proxies().rog_bios().set_panel_overdrive(opt)?;
+            dbus.proxies().rog_bios().set_panel_od(opt)?;
         }
         if cmd.panel_overdrive_get {
-            let res = dbus.proxies().rog_bios().panel_overdrive()?;
+            let res = dbus.proxies().rog_bios().panel_od()?;
             println!("Panel overdrive on: {}", res);
         }
     }

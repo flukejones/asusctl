@@ -4,7 +4,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased ]
+## [Unreleased - 4.5.0]
+### Added
+- intofy watches on:
+  - `charge_control_end_threshold`
+  - `panel_od`
+  - `gpu_mux_mode`
+  - `platform_profile`
+  - keyboard brightness
+  - These allow for updating any associated config and sending dbus notifications.
+- New dbus methods
+  - `DgpuDisable`
+  - `SetDgpuDisable`
+  - `NotifyDgpuDisable`
+  - `EgpuEnable`
+  - `SetEgpuEnable`
+  - `NotifyEgpuEnable`
+  - `MainsOnline` (This is AC, check if plugged in or not)
+  - `NotifyMainsOnline`
+### Changed
+- Use loops to ensure that mutex is gained for LED changes.
+- asusctl now uses tokio for async runtime. This helps simplify some code.
+### Breaking
+- DBUS: all charge control methods renamed to:
+  - `ChargeControlEndThreshold`
+  - `SetChargeControlEndThreshold`
+  - `NotifyChargeControlEndThreshold`
+  - `PanelOd` (form PanelOverdrive)
+  - `SetPanelOd`
+  - `NotifyPanelOd`
+  - Path `/org/asuslinux/Charge` changed to `/org/asuslinux/Power`
 
 ## [v4.4.0] - 2022-08-29
 ### Added

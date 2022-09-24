@@ -39,7 +39,7 @@ impl<'a> RogApp<'a> {
                     Button::new(RichText::new("❌").size(height - 4.0)).frame(false),
                 );
                 if close_response.clicked() {
-                    frame.quit();
+                    frame.close();
                 }
             });
         });

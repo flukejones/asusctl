@@ -4,8 +4,8 @@
 use notify_rust::{Hint, Notification, NotificationHandle};
 use rog_aura::AuraEffect;
 use rog_dbus::{
-    zbus_anime::AnimeProxy, zbus_charge::ChargeProxy, zbus_led::LedProxy,
-    zbus_platform::RogBiosProxy, zbus_profile::ProfileProxy,
+    zbus_anime::AnimeProxy, zbus_led::LedProxy, zbus_platform::RogBiosProxy,
+    zbus_power::PowerProxy, zbus_profile::ProfileProxy,
 };
 use rog_profiles::Profile;
 use smol::{future, Executor};
@@ -70,7 +70,7 @@ pub fn start_notifications(
                     if let Ok(out) = e.args() {
                         if notifs_enabled1.load(Ordering::SeqCst) {
                             if let Ok(ref mut lock) = last_notif.try_lock() {
-                                notify!(do_post_sound_notif, lock, &out.sound());
+                                notify!(do_post_sound_notif, lock, &out.on());
                             }
                         }
                         bios_notified1.store(true, Ordering::SeqCst);
@@ -86,7 +86,7 @@ pub fn start_notifications(
         .spawn(async move {
             let conn = zbus::Connection::system().await.unwrap();
             let proxy = RogBiosProxy::new(&conn).await.unwrap();
-            if let Ok(p) = proxy.receive_notify_panel_overdrive().await {
+            if let Ok(p) = proxy.receive_notify_panel_od().await {
                 p.for_each(|_| {
                     bios_notified.store(true, Ordering::SeqCst);
                     future::ready(())
@@ -102,8 +102,8 @@ pub fn start_notifications(
     executor
         .spawn(async move {
             let conn = zbus::Connection::system().await.unwrap();
-            let proxy = ChargeProxy::new(&conn).await.unwrap();
-            if let Ok(p) = proxy.receive_notify_charge().await {
+            let proxy = PowerProxy::new(&conn).await.unwrap();
+            if let Ok(p) = proxy.receive_notify_charge_control_end_threshold().await {
                 p.for_each(|e| {
                     if let Ok(out) = e.args() {
                         if notifs_enabled1.load(Ordering::SeqCst) {

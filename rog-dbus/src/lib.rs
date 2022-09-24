@@ -3,9 +3,9 @@ pub static DBUS_PATH: &str = "/org/asuslinux/Daemon";
 pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";
 
 pub mod zbus_anime;
-pub mod zbus_charge;
 pub mod zbus_led;
 pub mod zbus_platform;
+pub mod zbus_power;
 pub mod zbus_profile;
 pub mod zbus_supported;
 
@@ -19,7 +19,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub struct DbusProxiesBlocking<'a> {
     anime: zbus_anime::AnimeProxyBlocking<'a>,
-    charge: zbus_charge::ChargeProxyBlocking<'a>,
+    charge: zbus_power::PowerProxyBlocking<'a>,
     led: zbus_led::LedProxyBlocking<'a>,
     profile: zbus_profile::ProfileProxyBlocking<'a>,
     rog_bios: zbus_platform::RogBiosProxyBlocking<'a>,
@@ -35,7 +35,7 @@ impl<'a> DbusProxiesBlocking<'a> {
             DbusProxiesBlocking {
                 anime: zbus_anime::AnimeProxyBlocking::new(&conn)?,
                 led: zbus_led::LedProxyBlocking::new(&conn)?,
-                charge: zbus_charge::ChargeProxyBlocking::new(&conn)?,
+                charge: zbus_power::PowerProxyBlocking::new(&conn)?,
                 profile: zbus_profile::ProfileProxyBlocking::new(&conn)?,
                 rog_bios: zbus_platform::RogBiosProxyBlocking::new(&conn)?,
                 supported: zbus_supported::SupportedProxyBlocking::new(&conn)?,
@@ -48,7 +48,7 @@ impl<'a> DbusProxiesBlocking<'a> {
         &self.anime
     }
 
-    pub fn charge(&self) -> &zbus_charge::ChargeProxyBlocking<'a> {
+    pub fn charge(&self) -> &zbus_power::PowerProxyBlocking<'a> {
         &self.charge
     }
 
@@ -88,7 +88,7 @@ impl<'a> RogDbusClientBlocking<'a> {
 
 pub struct DbusProxies<'a> {
     anime: zbus_anime::AnimeProxy<'a>,
-    charge: zbus_charge::ChargeProxy<'a>,
+    charge: zbus_power::PowerProxy<'a>,
     led: zbus_led::LedProxy<'a>,
     profile: zbus_profile::ProfileProxy<'a>,
     rog_bios: zbus_platform::RogBiosProxy<'a>,
@@ -104,7 +104,7 @@ impl<'a> DbusProxies<'a> {
             DbusProxies {
                 anime: zbus_anime::AnimeProxy::new(&conn).await?,
                 led: zbus_led::LedProxy::new(&conn).await?,
-                charge: zbus_charge::ChargeProxy::new(&conn).await?,
+                charge: zbus_power::PowerProxy::new(&conn).await?,
                 profile: zbus_profile::ProfileProxy::new(&conn).await?,
                 rog_bios: zbus_platform::RogBiosProxy::new(&conn).await?,
                 supported: zbus_supported::SupportedProxy::new(&conn).await?,
@@ -117,7 +117,7 @@ impl<'a> DbusProxies<'a> {
         &self.anime
     }
 
-    pub fn charge(&self) -> &zbus_charge::ChargeProxy<'a> {
+    pub fn charge(&self) -> &zbus_power::PowerProxy<'a> {
         &self.charge
     }
 

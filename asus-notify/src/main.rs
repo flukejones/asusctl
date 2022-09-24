@@ -1,7 +1,7 @@
 use notify_rust::{Hint, Notification, NotificationHandle};
 use rog_aura::AuraEffect;
 use rog_dbus::{
-    zbus_charge::ChargeProxy, zbus_led::LedProxy, zbus_platform::RogBiosProxy,
+    zbus_led::LedProxy, zbus_platform::RogBiosProxy, zbus_power::PowerProxy,
     zbus_profile::ProfileProxy,
 };
 use rog_profiles::Profile;
@@ -54,7 +54,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 p.for_each(|e| {
                     if let Ok(out) = e.args() {
                         if let Ok(ref mut lock) = x.try_lock() {
-                            notify!(do_post_sound_notif, lock, &out.sound());
+                            notify!(do_post_sound_notif, lock, &out.on());
                         }
                     }
                     future::ready(())
@@ -69,8 +69,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     executor
         .spawn(async move {
             let conn = zbus::Connection::system().await.unwrap();
-            let proxy = ChargeProxy::new(&conn).await.unwrap();
-            if let Ok(p) = proxy.receive_notify_charge().await {
+            let proxy = PowerProxy::new(&conn).await.unwrap();
+            if let Ok(p) = proxy.receive_notify_charge_control_end_threshold().await {
                 p.for_each(|e| {
                     if let Ok(out) = e.args() {
                         if let Ok(ref mut lock) = x.try_lock() {

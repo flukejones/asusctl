@@ -1,3 +1,4 @@
 pub mod config;
 pub mod controller;
-pub mod zbus;
+/// Implements CtrlTask, Reloadable, ZbusRun
+pub mod trait_impls;

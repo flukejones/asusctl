@@ -21,9 +21,19 @@ macro_rules! watch_attr {
             pub fn fn_name(&self) -> Result<inotify::Inotify> {
                 let mut path = self.$item.clone();
                 path.push($attr_name);
-                let mut inotify = inotify::Inotify::init().unwrap();
-                inotify.add_watch(path.to_str().unwrap(), inotify::WatchMask::MODIFY).unwrap();
-                Ok(inotify)
+                if let Some(path) = path.to_str() {
+                    let mut inotify = inotify::Inotify::init()?;
+                    inotify.add_watch(path, inotify::WatchMask::MODIFY)
+                        .map_err(|e| {
+                            if e.kind() == std::io::ErrorKind::NotFound {
+                                PlatformError::AttrNotFound(format!("{}", $attr_name))
+                            } else {
+                                PlatformError::IoPath(format!("{}", path), e)
+                            }
+                        })?;
+                    return Ok(inotify);
+                }
+                Err(PlatformError::AttrNotFound(format!("{}", $attr_name)))
             }
         });
     };
@@ -127,5 +137,6 @@ macro_rules! attr_u8_array {
         crate::has_attr!($attr_name $item);
         crate::get_attr_u8_array!($attr_name $item);
         crate::set_attr_u8_array!($attr_name $item);
+        crate::watch_attr!($attr_name $item);
     };
 }

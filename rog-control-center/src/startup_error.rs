@@ -27,7 +27,7 @@ impl eframe::App for AppErrorShow {
                             .add(Button::new(RichText::new("Okay").size(20.0)))
                             .clicked()
                         {
-                            frame.quit();
+                            frame.close();
                         }
                     });
                 });

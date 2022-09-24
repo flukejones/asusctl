@@ -1,6 +1,6 @@
 [package]
 name = "daemon"
-version = "4.4.0"
+version = "4.5.0-rc3"
 license = "MPL-2.0"
 readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]
@@ -25,7 +25,7 @@ rog_profiles = { path = "../rog-profiles" }
 rog_dbus = { path = "../rog-dbus" }
 
 async-trait = "^0.1"
-smol = "^1.2"
+tokio = { version = "^1.21.1", features = ["macros", "rt-multi-thread", "time"]}
 
 # cli and logging
 log = "^0.4"
@@ -43,3 +43,5 @@ toml = "^0.5.8"
 
 # Device control
 sysfs-class = "^0.1.2" # used for backlight control and baord ID
+
+concat-idents = "1.1.3"

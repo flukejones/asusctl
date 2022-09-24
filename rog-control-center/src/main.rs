@@ -156,7 +156,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             start_closed = false;
             continue;
         }
-        dbg!("asda");
     }
     Ok(())
 }

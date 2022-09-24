@@ -1,17 +1,16 @@
 use crate::error::RogError;
-use crate::{CtrlTask, GetSupported};
-use async_trait::async_trait;
+use crate::GetSupported;
 use log::{info, warn};
+use rog_platform::platform::AsusPlatform;
 use rog_platform::supported::PlatformProfileFunctions;
 use rog_profiles::error::ProfileError;
 use rog_profiles::{FanCurveProfiles, Profile};
-use smol::Executor;
-use std::sync::{Arc, Mutex};
 
 use super::config::ProfileConfig;
 
 pub struct CtrlPlatformProfile {
     pub config: ProfileConfig,
+    pub platform: AsusPlatform,
 }
 
 impl GetSupported for CtrlPlatformProfile {
@@ -39,27 +38,13 @@ impl GetSupported for CtrlPlatformProfile {
     }
 }
 
-impl crate::Reloadable for CtrlPlatformProfile {
-    /// Fetch the active profile and use that to set all related components up
-    fn reload(&mut self) -> Result<(), RogError> {
-        if let Some(curves) = &mut self.config.fan_curves {
-            if let Ok(mut device) = FanCurveProfiles::get_device() {
-                // There is a possibility that the curve was default zeroed, so this call initialises
-                // the data from system read and we need to save it after
-                curves.write_profile_curve_to_platform(self.config.active_profile, &mut device)?;
-                self.config.write();
-            }
-        }
-        Ok(())
-    }
-}
-
 impl CtrlPlatformProfile {
     pub fn new(config: ProfileConfig) -> Result<Self, RogError> {
-        if Profile::is_platform_profile_supported() {
+        let platform = AsusPlatform::new()?;
+        if platform.has_platform_profile() || platform.has_throttle_thermal_policy() {
             info!("Device has profile control available");
 
-            let mut controller = CtrlPlatformProfile { config };
+            let mut controller = CtrlPlatformProfile { config, platform };
             if FanCurveProfiles::get_device().is_ok() {
                 info!("Device has fan curves available");
                 if controller.config.fan_curves.is_none() {
@@ -126,35 +111,6 @@ impl CtrlPlatformProfile {
                 curves.set_active_curve_to_defaults(self.config.active_profile, &mut device)?;
             }
         }
-        Ok(())
-    }
-}
-
-pub struct CtrlProfileTask {
-    ctrl: Arc<Mutex<CtrlPlatformProfile>>,
-}
-
-impl CtrlProfileTask {
-    pub fn new(ctrl: Arc<Mutex<CtrlPlatformProfile>>) -> Self {
-        Self { ctrl }
-    }
-}
-
-#[async_trait]
-impl CtrlTask for CtrlProfileTask {
-    async fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
-        let ctrl = self.ctrl.clone();
-        self.repeating_task(666, executor, move || {
-            if let Ok(ref mut lock) = ctrl.try_lock() {
-                let new_profile = Profile::get_active_profile().unwrap();
-                if new_profile != lock.config.active_profile {
-                    lock.config.active_profile = new_profile;
-                    lock.write_profile_curve_to_platform().unwrap();
-                    lock.save_config();
-                }
-            }
-        })
-        .await;
         Ok(())
     }
 }

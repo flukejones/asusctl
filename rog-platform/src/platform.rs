@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, str::FromStr};
 
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
@@ -20,6 +20,7 @@ use crate::{
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct AsusPlatform {
     path: PathBuf,
+    pp_path: PathBuf,
 }
 
 impl AsusPlatform {
@@ -44,6 +45,7 @@ impl AsusPlatform {
             info!("Found platform support at {:?}", device.sysname());
             return Ok(Self {
                 path: device.syspath().to_owned(),
+                pp_path: PathBuf::from_str("/sys/firmware/acpi").unwrap(),
             });
         }
         Err(PlatformError::MissingFunction(
@@ -55,6 +57,10 @@ impl AsusPlatform {
     attr_bool!("egpu_enable", path);
     attr_bool!("panel_od", path);
     attr_u8!("gpu_mux_mode", path);
+    // This is technically the same as `platform_profile` since both are tied in-kernel
+    attr_u8!("throttle_thermal_policy", path);
+    // The acpi platform_profile support
+    attr_u8!("platform_profile", pp_path);
 }
 
 #[derive(Serialize, Deserialize, Type, Debug, PartialEq, Clone, Copy)]

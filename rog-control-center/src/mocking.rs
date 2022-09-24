@@ -65,7 +65,7 @@ impl Bios {
     pub fn gpu_mux_mode(&self) -> Result<i16> {
         Ok(1)
     }
-    pub fn panel_overdrive(&self) -> Result<i16> {
+    pub fn panel_od(&self) -> Result<i16> {
         Ok(1)
     }
     pub fn set_post_boot_sound(&self, _b: bool) -> Result<()> {
@@ -74,7 +74,7 @@ impl Bios {
     pub fn set_gpu_mux_mode(&self, _b: bool) -> Result<()> {
         Ok(())
     }
-    pub fn set_panel_overdrive(&self, _b: bool) -> Result<()> {
+    pub fn set_panel_od(&self, _b: bool) -> Result<()> {
         Ok(())
     }
 }
@@ -217,7 +217,7 @@ impl Supported {
             rog_bios_ctrl: RogBiosSupportedFunctions {
                 post_sound: true,
                 dedicated_gfx: true,
-                panel_overdrive: true,
+                panel_od: true,
                 dgpu_disable: true,
                 egpu_enable: true,
             },

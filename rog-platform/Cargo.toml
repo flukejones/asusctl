@@ -18,5 +18,6 @@ udev = "^0.6"
 rusb = "^0.9"
 sysfs-class = "^0.1"
 inotify = "^0.10.0"
+# inotify = { version = "0.10.0", default-features = false }
 
 concat-idents = "1.1.3"

@@ -1,21 +1,15 @@
 use crate::{
     error::RogError,
     laptops::{LaptopLedData, ASUS_KEYBOARD_DEVICES},
-    CtrlTask,
 };
-use async_trait::async_trait;
-use log::{error, info, warn};
+use log::{info, warn};
 use rog_aura::{
     usb::{AuraDevice, LED_APPLY, LED_SET},
     AuraEffect, KeyColourArray, LedBrightness, PerKeyRaw, LED_MSG_LEN,
 };
 use rog_aura::{AuraZone, Direction, Speed, GRADIENT};
 use rog_platform::{hid_raw::HidRaw, keyboard_led::KeyboardLed, supported::LedSupportedFunctions};
-use smol::Executor;
 use std::collections::BTreeMap;
-use std::sync::Arc;
-use std::sync::Mutex;
-use std::sync::MutexGuard;
 
 use crate::GetSupported;
 
@@ -72,104 +66,6 @@ pub struct CtrlKbdLed {
     pub flip_effect_write: bool,
     pub per_key_mode_active: bool,
     pub config: AuraConfig,
-}
-
-pub struct CtrlKbdLedTask {
-    inner: Arc<Mutex<CtrlKbdLed>>,
-}
-
-impl CtrlKbdLedTask {
-    pub fn new(inner: Arc<Mutex<CtrlKbdLed>>) -> Self {
-        Self { inner }
-    }
-
-    fn update_config(lock: &mut CtrlKbdLed) -> Result<(), RogError> {
-        let bright = lock.kd_brightness.get_brightness()?;
-        lock.config.read();
-        lock.config.brightness = (bright as u32).into();
-        lock.config.write();
-        return Ok(());
-    }
-}
-
-#[async_trait]
-impl CtrlTask for CtrlKbdLedTask {
-    async fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
-        let load_save = |start: bool, mut lock: MutexGuard<CtrlKbdLed>| {
-            // If waking up
-            if !start {
-                info!("CtrlKbdLedTask reloading brightness and modes");
-                lock.set_brightness(lock.config.brightness)
-                    .map_err(|e| error!("CtrlKbdLedTask: {e}"))
-                    .ok();
-                lock.write_current_config_mode()
-                    .map_err(|e| error!("CtrlKbdLedTask: {e}"))
-                    .ok();
-            } else if start {
-                info!("CtrlKbdLedTask saving last brightness");
-                Self::update_config(&mut lock)
-                    .map_err(|e| error!("CtrlKbdLedTask: {e}"))
-                    .ok();
-            }
-        };
-
-        let inner1 = self.inner.clone();
-        let inner2 = self.inner.clone();
-        let inner3 = self.inner.clone();
-        let inner4 = self.inner.clone();
-        self.create_sys_event_tasks(
-            executor,
-            // Loop so that we do aquire the lock but also don't block other
-            // threads (prevents potential deadlocks)
-            move || loop {
-                if let Ok(lock) = inner1.clone().try_lock() {
-                    load_save(true, lock);
-                    break;
-                }
-            },
-            move || loop {
-                if let Ok(lock) = inner2.clone().try_lock() {
-                    load_save(false, lock);
-                    break;
-                }
-            },
-            move || loop {
-                if let Ok(lock) = inner3.clone().try_lock() {
-                    load_save(false, lock);
-                    break;
-                }
-            },
-            move || loop {
-                if let Ok(lock) = inner4.clone().try_lock() {
-                    load_save(false, lock);
-                    break;
-                }
-            },
-        )
-        .await;
-
-        Ok(())
-    }
-}
-
-pub struct CtrlKbdLedReloader(pub Arc<Mutex<CtrlKbdLed>>);
-
-impl crate::Reloadable for CtrlKbdLedReloader {
-    fn reload(&mut self) -> Result<(), RogError> {
-        if let Ok(mut ctrl) = self.0.try_lock() {
-            ctrl.write_current_config_mode()?;
-            ctrl.set_power_states().map_err(|err| warn!("{err}")).ok();
-        }
-        Ok(())
-    }
-}
-
-pub struct CtrlKbdLedZbus(pub Arc<Mutex<CtrlKbdLed>>);
-
-impl CtrlKbdLedZbus {
-    pub fn new(inner: Arc<Mutex<CtrlKbdLed>>) -> Self {
-        Self(inner)
-    }
 }
 
 impl CtrlKbdLed {
@@ -393,7 +289,7 @@ impl CtrlKbdLed {
         Ok(())
     }
 
-    fn write_current_config_mode(&mut self) -> Result<(), RogError> {
+    pub(super) fn write_current_config_mode(&mut self) -> Result<(), RogError> {
         if self.config.multizone_on {
             let mode = self.config.current_mode;
             let mut create = false;

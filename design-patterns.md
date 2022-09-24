@@ -18,81 +18,112 @@ Then for each trait that is required a new struct is required that can have the 
 
 Main controller:
 
+For a very simple controller that doesn't need exclusive access you can clone across threads
+
+```rust
+#[derive(Clone)]
+pub struct CtrlAnime {
+    <things the controller requires>
+    config: Arc<Mutex<Config>>,
+}
+
+// This is the task trait used for such things as file watches, or logind
+// notifications (boot/suspend/shutdown etc)
+impl crate::CtrlTask for CtrlAnime {}
+
+// The trait to easily add the controller to Zbus to enable the zbus derived functions
+// to be polled, run, react etc.
+impl crate::ZbusAdd for CtrlAnime {}
+
+impl CtrlAnime {}
+```
+
+ Otherwise, you will need to share the controller via mutex
+
 ```rust
 pub struct CtrlAnime {
     <things the controller requires>
 }
+// Like this
+#[derive(Clone)]
+pub struct CtrlAnimeTask(Arc<Mutex<CtrlAnime>>);
 
-impl CtrlAnime {
-    <functions the controller exposes>
-}
+#[derive(Clone)]
+pub struct CtrlAnimeZbus(Arc<Mutex<CtrlAnime>>);
+
+impl CtrlAnime {}
 ```
 
-The task trait. There are three ways to implement this:
+The task trait:
 
 ```rust
+// Mutex should always be async mutex
 pub struct CtrlAnimeTask(Arc<Mutex<CtrlAnime>>);
 
 impl crate::CtrlTask for CtrlAnimeTask {
     // This will run once only
-    fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
-       if let Ok(lock) = self.inner.try_lock() {
-            <some action>
-        }
+    async fn create_tasks(&self, signal_ctxt: SignalContext<'static>) -> Result<(), RogError> {
+       let lock self.inner.lock().await;
+        <some action>
         Ok(())
     }
 
     // This will run until the notification stream closes (which in most cases will be never)
-    fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
-        let connection = Connection::system().await.unwrap();
-        let manager = ManagerProxy::new(&connection).await.unwrap();
-
-        let inner = self.inner.clone();
-        executor
-            .spawn(async move {
-                // A notification from logind dbus interface
-                if let Ok(p) = manager.receive_prepare_for_sleep().await {
-                    // A stream that will continuously output events
-                    p.for_each(|_| {
-                        if let Ok(lock) = inner.try_lock() {
-                            // Do stuff here
-                        }
-                    })
-                    .await;
+    async fn create_tasks(&self, signal_ctxt: SignalContext<'static>) -> Result<(), RogError> {
+        let inner1 = self.inner.clone();
+        let inner2 = self.inner.clone();
+        let inner3 = self.inner.clone();
+        let inner4 = self.inner.clone();
+        // This is a free method on CtrlTask trait
+        self.create_sys_event_tasks(
+            // Loop is required to try an attempt to get the mutex *without* blocking
+            // other threads - it is possible to end up with deadlocks otherwise.
+            move || loop {
+                if let Some(lock) = inner1.try_lock() {
+                    run_action(true, lock, inner1.clone());
+                    break;
                 }
-            })
-            .detach();
-    }
-
-    // This task will run every 500 milliseconds
-    fn create_tasks(&self, executor: &mut Executor) -> Result<(), RogError> {
-        let inner = self.inner.clone();
-        // This is a provided free trait to help set up a repeating task
-        self.repeating_task(500, executor, move || {
-            if let Ok(lock) = inner.try_lock() {
-                // Do stuff here
-            }
-        })
+            },
+            move || loop {
+                if let Some(lock) = inner2.try_lock() {
+                    run_action(false, lock, inner2.clone());
+                    break;
+                }
+            },
+            move || loop {
+                if let Some(lock) = inner3.try_lock() {
+                    run_action(true, lock, inner3.clone());
+                    break;
+                }
+            },
+            move || loop {
+                if let Some(lock) = inner4.try_lock() {
+                    run_action(false, lock, inner4.clone());
+                    break;
+                }
+            },
+        )
         .await;
     }
 }
 ```
 
 The reloader trait
+
 ```rust
 pub struct CtrlAnimeReloader(Arc<Mutex<CtrlAnime>>);
 
 impl crate::Reloadable for CtrlAnimeReloader {
-    fn reload(&mut self) -> Result<(), RogError> {
-        if let Ok(lock) = self.inner.try_lock() {
-            <some action>
-        }
+    async fn reload(&mut self) -> Result<(), RogError> {
+        let lock = self.inner.lock().await;
+        <some action>
         Ok(())
     }
 }
 ```
 
 The Zbus requirements:
+
 ```rust
 pub struct CtrlAnimeZbus(Arc<Mutex<CtrlAnime>>);
 
@@ -106,10 +137,9 @@ impl crate::ZbusAdd for CtrlAnimeZbus {
 
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl CtrlAnimeZbus {
-    fn <zbus method>() {
-       if let Ok(lock) = self.inner.try_lock() {
-            <some action>
-        }
+    async fn <zbus method>() {
+       let lock = self.inner.lock().await;
+        <some action>
     }
 }
 ```

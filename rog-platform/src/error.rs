@@ -15,7 +15,8 @@ pub enum PlatformError {
     AttrNotFound(String),
     MissingFunction(String),
     MissingLedBrightNode(String, std::io::Error),
-    Io(String, std::io::Error),
+    IoPath(String, std::io::Error),
+    Io(std::io::Error),
     NoAuraKeyboard,
     NoAuraNode,
 }
@@ -33,9 +34,10 @@ impl fmt::Display for PlatformError {
             PlatformError::Write(path, error) => write!(f, "Write {}: {}", path, error),
             PlatformError::NotSupported => write!(f, "Not supported"),
             PlatformError::AttrNotFound(deets) => write!(f, "Attribute not found: {}", deets),
+            PlatformError::Io(deets) => write!(f, "std::io error: {}", deets),
             PlatformError::MissingFunction(deets) => write!(f, "Missing functionality: {}", deets),
             PlatformError::MissingLedBrightNode(path, error) => write!(f, "Led node at {} is missing, please check you have the required patch or dkms module installed: {}", path, error),
-            PlatformError::Io(path, detail) => write!(f, "std::io error: {} {}", path, detail),
+            PlatformError::IoPath(path, detail) => write!(f, "{} {}", path, detail),
             PlatformError::NoAuraKeyboard => write!(f, "No supported Aura keyboard"),
             PlatformError::NoAuraNode => write!(f, "No Aura keyboard node found"),
         }
@@ -47,5 +49,11 @@ impl std::error::Error for PlatformError {}
 impl From<rusb::Error> for PlatformError {
     fn from(err: rusb::Error) -> Self {
         PlatformError::USB(err)
+    }
+}
+
+impl From<std::io::Error> for PlatformError {
+    fn from(err: std::io::Error) -> Self {
+        PlatformError::Io(err)
     }
 }

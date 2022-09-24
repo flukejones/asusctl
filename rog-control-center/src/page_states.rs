@@ -45,7 +45,7 @@ impl BiosState {
                 GpuMode::NotSupported
             },
             panel_overdrive: if supported.rog_bios_ctrl.panel_overdrive {
-                dbus.proxies().rog_bios().panel_overdrive()?
+                dbus.proxies().rog_bios().panel_od()?
             } else {
                 false
             },
@@ -258,7 +258,7 @@ pub struct PageDataStates {
     pub anime: AnimeState,
     pub profiles: ProfilesState,
     pub fan_curves: FanCurvesState,
-    pub charge_limit: i16,
+    pub charge_limit: u8,
     pub error: Option<String>,
 }
 
@@ -279,7 +279,7 @@ impl PageDataStates {
             keyboard_layout,
             notifs_enabled,
             was_notified: charge_notified,
-            charge_limit: dbus.proxies().charge().limit()?,
+            charge_limit: dbus.proxies().charge().charge_control_end_threshold()?,
             bios: BiosState::new(bios_notified, supported, dbus)?,
             aura: AuraState::new(aura_notified, supported, dbus)?,
             anime: AnimeState::new(anime_notified, supported, dbus)?,
@@ -296,7 +296,7 @@ impl PageDataStates {
     ) -> Result<bool> {
         let mut notified = false;
         if self.was_notified.load(Ordering::SeqCst) {
-            self.charge_limit = dbus.proxies().charge().limit()?;
+            self.charge_limit = dbus.proxies().charge().charge_control_end_threshold()?;
             self.was_notified.store(false, Ordering::SeqCst);
             notified = true;
         }
