@@ -70,7 +70,7 @@ pub fn start_notifications(
                     if let Ok(out) = e.args() {
                         if notifs_enabled1.load(Ordering::SeqCst) {
                             if let Ok(ref mut lock) = last_notif.try_lock() {
-                                notify!(do_post_sound_notif, lock, &out.sound());
+                                notify!(do_post_sound_notif, lock, &out.on());
                             }
                         }
                         bios_notified1.store(true, Ordering::SeqCst);

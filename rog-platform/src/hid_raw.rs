@@ -21,11 +21,13 @@ impl HidRaw {
 
         for device in enumerator
             .scan_devices()
-            .map_err(|e| PlatformError::Io("enumerator".to_owned(), e))?
+            .map_err(|e| PlatformError::IoPath("enumerator".to_owned(), e))?
         {
             if let Some(parent) = device
                 .parent_with_subsystem_devtype("usb", "usb_device")
-                .map_err(|e| PlatformError::Io(device.devpath().to_string_lossy().to_string(), e))?
+                .map_err(|e| {
+                    PlatformError::IoPath(device.devpath().to_string_lossy().to_string(), e)
+                })?
             {
                 if let Some(parent) = parent.attribute_value("idProduct") {
                     if parent == id_product {
@@ -47,9 +49,9 @@ impl HidRaw {
         let mut file = OpenOptions::new()
             .write(true)
             .open(&self.0)
-            .map_err(|e| PlatformError::Io(self.0.to_string_lossy().to_string(), e))?;
+            .map_err(|e| PlatformError::IoPath(self.0.to_string_lossy().to_string(), e))?;
         // println!("write: {:02x?}", &message);
         file.write_all(message)
-            .map_err(|e| PlatformError::Io(self.0.to_string_lossy().to_string(), e))
+            .map_err(|e| PlatformError::IoPath(self.0.to_string_lossy().to_string(), e))
     }
 }

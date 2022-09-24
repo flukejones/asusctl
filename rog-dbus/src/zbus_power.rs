@@ -29,10 +29,17 @@ trait Power {
     /// charge_control_end_threshold method
     fn charge_control_end_threshold(&self) -> zbus::Result<u8>;
 
+    /// MainsOnline method
+    fn mains_online(&self) -> zbus::Result<bool>;
+
     /// set_charge_control_end_threshold method
     fn set_charge_control_end_threshold(&self, limit: u8) -> zbus::Result<()>;
 
     /// NotifyCharge signal
     #[dbus_proxy(signal)]
     fn notify_charge_control_end_threshold(&self, limit: u8) -> zbus::Result<u8>;
+
+    /// NotifyMainsOnline signal
+    #[dbus_proxy(signal)]
+    fn notify_mains_online(&self, on: bool) -> zbus::Result<()>;
 }

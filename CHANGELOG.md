@@ -13,6 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `platform_profile`
   - keyboard brightness
   - These allow for updating any associated config and sending dbus notifications.
+- New dbus methods
+  - `DgpuDisable`
+  - `SetDgpuDisable`
+  - `NotifyDgpuDisable`
+  - `EgpuEnable`
+  - `SetEgpuEnable`
+  - `NotifyEgpuEnable`
+  - `MainsOnline` (This is AC, check if plugged in or not)
+  - `NotifyMainsOnline`
 ### Changed
 - Use loops to ensure that mutex is gained for LED changes.
 - asusctl now uses tokio for async runtime. This helps simplify some code.

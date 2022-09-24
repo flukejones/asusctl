@@ -225,7 +225,7 @@ impl CtrlPlatform {
             .platform
             .get_panel_od()
             .map_err(|err| {
-                warn!("CtrlRogBios: get panel overdrive {}", err);
+                warn!("CtrlRogBios: get_panel_od {}", err);
                 err
             })
             .unwrap_or(false);
@@ -238,6 +238,73 @@ impl CtrlPlatform {
 
     #[dbus_interface(signal)]
     async fn notify_panel_od(signal_ctxt: &SignalContext<'_>, overdrive: bool) -> zbus::Result<()> {
+    }
+
+    async fn set_dgpu_disable(
+        &mut self,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+        disable: bool,
+    ) {
+        if self
+            .platform
+            .set_dgpu_disable(disable)
+            .map_err(|err| {
+                warn!("CtrlRogBios: set_dgpu_disable {}", err);
+                err
+            })
+            .is_ok()
+        {
+            Self::notify_dgpu_disable(&ctxt, disable).await.ok();
+        }
+    }
+
+    fn dgpu_disable(&self) -> bool {
+        self.platform
+            .get_dgpu_disable()
+            .map_err(|err| {
+                warn!("CtrlRogBios: get_dgpu_disable {}", err);
+                err
+            })
+            .unwrap_or(false)
+    }
+
+    #[dbus_interface(signal)]
+    async fn notify_dgpu_disable(
+        signal_ctxt: &SignalContext<'_>,
+        disable: bool,
+    ) -> zbus::Result<()> {
+    }
+
+    async fn set_egpu_enable(
+        &mut self,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+        enable: bool,
+    ) {
+        if self
+            .platform
+            .set_egpu_enable(enable)
+            .map_err(|err| {
+                warn!("CtrlRogBios: set_egpu_enable {}", err);
+                err
+            })
+            .is_ok()
+        {
+            Self::notify_egpu_enable(&ctxt, enable).await.ok();
+        }
+    }
+
+    fn egpu_enable(&self) -> bool {
+        self.platform
+            .get_egpu_enable()
+            .map_err(|err| {
+                warn!("CtrlRogBios: get_egpu_enable {}", err);
+                err
+            })
+            .unwrap_or(false)
+    }
+
+    #[dbus_interface(signal)]
+    async fn notify_egpu_enable(signal_ctxt: &SignalContext<'_>, enable: bool) -> zbus::Result<()> {
     }
 }
 
@@ -265,6 +332,8 @@ impl crate::Reloadable for CtrlPlatform {
 
 impl CtrlPlatform {
     task_watch_item!(panel_od platform);
+    task_watch_item!(dgpu_disable platform);
+    task_watch_item!(egpu_enable platform);
     task_watch_item!(gpu_mux_mode platform);
 }
 
@@ -312,6 +381,8 @@ impl CtrlTask for CtrlPlatform {
         .await;
 
         self.watch_panel_od(signal_ctxt.clone()).await?;
+        self.watch_dgpu_disable(signal_ctxt.clone()).await?;
+        self.watch_egpu_enable(signal_ctxt.clone()).await?;
         self.watch_gpu_mux_mode(signal_ctxt.clone()).await?;
 
         Ok(())

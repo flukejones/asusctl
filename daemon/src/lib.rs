@@ -56,16 +56,20 @@ macro_rules! task_watch_item {
 
             let ctrl = self.clone();
             concat_idents::concat_idents!(watch_fn = monitor_, $name {
-            let mut watch = self.$self_inner.watch_fn()?;
-            tokio::spawn(async move {
-                    let mut buffer = [0; 32];
-                    watch.event_stream(&mut buffer).unwrap().for_each(|_| async {
-                        let value = ctrl.$name();
-                        concat_idents::concat_idents!(notif_fn = notify_, $name {
-                            Self::notif_fn(&signal_ctxt, value).await.unwrap();
+                match self.$self_inner.watch_fn() {
+                    Ok(mut watch) => {
+                        tokio::spawn(async move {
+                            let mut buffer = [0; 32];
+                            watch.event_stream(&mut buffer).unwrap().for_each(|_| async {
+                                let value = ctrl.$name();
+                                concat_idents::concat_idents!(notif_fn = notify_, $name {
+                                    Self::notif_fn(&signal_ctxt, value).await.unwrap();
+                                });
+                            }).await;
                         });
-                    }).await;
-                });
+                    }
+                    Err(e) => info!("inotify watch failed: {}. You can ignore this if your device does not support the feature", e),
+                }
             });
             Ok(())
         }

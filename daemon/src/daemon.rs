@@ -115,7 +115,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
             start_tasks(zbus, &mut connection).await?;
         }
         Err(err) => {
-            error!("AniMe control: {}", err);
+            info!("AniMe control: {}", err);
         }
     }
 

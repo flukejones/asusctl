@@ -102,4 +102,5 @@ impl AsusPower {
     }
 
     attr_u8!("charge_control_end_threshold", battery);
+    attr_u8!("online", mains);
 }
