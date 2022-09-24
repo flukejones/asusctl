@@ -1,8 +1,4 @@
-//TODO: a lot of app state refresh depends on this so there needs
-// to be an extra AtomicBool for checking if notifications are enabled
-
 use notify_rust::{Hint, Notification, NotificationHandle};
-use rog_aura::AuraEffect;
 use rog_dbus::{
     zbus_anime::AnimeProxy, zbus_led::LedProxy, zbus_platform::RogBiosProxy,
     zbus_power::PowerProxy, zbus_profile::ProfileProxy,
@@ -11,6 +7,7 @@ use rog_profiles::Profile;
 use smol::{future, Executor};
 use std::{
     error::Error,
+    fmt::Display,
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc, Mutex,
@@ -22,23 +19,13 @@ use zbus::export::futures_util::StreamExt;
 const NOTIF_HEADER: &str = "ROG Control";
 
 macro_rules! notify {
-    ($notifier:ident, $last_notif:ident, $data:expr) => {
+    ($notifier:expr, $last_notif:ident) => {
         if let Some(notif) = $last_notif.take() {
             notif.close();
         }
-        if let Ok(x) = $notifier($data) {
+        if let Ok(x) = $notifier {
             $last_notif.replace(x);
         }
-    };
-}
-
-macro_rules! base_notification {
-    ($body:expr) => {
-        Notification::new()
-            .summary(NOTIF_HEADER)
-            .body($body)
-            .timeout(2000)
-            .show()
     };
 }
 
@@ -70,7 +57,7 @@ pub fn start_notifications(
                     if let Ok(out) = e.args() {
                         if notifs_enabled1.load(Ordering::SeqCst) {
                             if let Ok(ref mut lock) = last_notif.try_lock() {
-                                notify!(do_post_sound_notif, lock, &out.on());
+                                notify!(do_notification("BIOS Post sound", &out.on()), lock);
                             }
                         }
                         bios_notified1.store(true, Ordering::SeqCst);
@@ -82,13 +69,59 @@ pub fn start_notifications(
         })
         .detach();
 
+    let bios_notified1 = bios_notified.clone();
     executor
         .spawn(async move {
             let conn = zbus::Connection::system().await.unwrap();
             let proxy = RogBiosProxy::new(&conn).await.unwrap();
             if let Ok(p) = proxy.receive_notify_panel_od().await {
                 p.for_each(|_| {
-                    bios_notified.store(true, Ordering::SeqCst);
+                    bios_notified1.store(true, Ordering::SeqCst);
+                    future::ready(())
+                })
+                .await;
+            };
+        })
+        .detach();
+
+    let bios_notified1 = bios_notified.clone();
+    executor
+        .spawn(async move {
+            let conn = zbus::Connection::system().await.unwrap();
+            let proxy = RogBiosProxy::new(&conn).await.unwrap();
+            if let Ok(p) = proxy.receive_notify_dgpu_disable().await {
+                p.for_each(|_| {
+                    bios_notified1.store(true, Ordering::SeqCst);
+                    future::ready(())
+                })
+                .await;
+            };
+        })
+        .detach();
+
+    let bios_notified1 = bios_notified.clone();
+    executor
+        .spawn(async move {
+            let conn = zbus::Connection::system().await.unwrap();
+            let proxy = RogBiosProxy::new(&conn).await.unwrap();
+            if let Ok(p) = proxy.receive_notify_egpu_enable().await {
+                p.for_each(|_| {
+                    bios_notified1.store(true, Ordering::SeqCst);
+                    future::ready(())
+                })
+                .await;
+            };
+        })
+        .detach();
+
+    let bios_notified1 = bios_notified.clone();
+    executor
+        .spawn(async move {
+            let conn = zbus::Connection::system().await.unwrap();
+            let proxy = RogBiosProxy::new(&conn).await.unwrap();
+            if let Ok(p) = proxy.receive_notify_gpu_mux_mode().await {
+                p.for_each(|_| {
+                    bios_notified1.store(true, Ordering::SeqCst);
                     future::ready(())
                 })
                 .await;
@@ -108,7 +141,10 @@ pub fn start_notifications(
                     if let Ok(out) = e.args() {
                         if notifs_enabled1.load(Ordering::SeqCst) {
                             if let Ok(ref mut lock) = last_notif.try_lock() {
-                                notify!(do_charge_notif, lock, &out.limit);
+                                notify!(
+                                    do_notification("Battery charge limit changed to", &out.limit),
+                                    lock
+                                );
                             }
                         }
                         charge_notified.store(true, Ordering::SeqCst);
@@ -132,7 +168,7 @@ pub fn start_notifications(
                     if let Ok(out) = e.args() {
                         if notifs_enabled1.load(Ordering::SeqCst) {
                             if let Ok(ref mut lock) = last_notif.try_lock() {
-                                notify!(do_thermal_notif, lock, &out.profile);
+                                notify!(do_thermal_notif(&out.profile), lock);
                             }
                         }
                         profiles_notified.store(true, Ordering::SeqCst);
@@ -157,7 +193,13 @@ pub fn start_notifications(
                     if let Ok(out) = e.args() {
                         if notifs_enabled1.load(Ordering::SeqCst) {
                             if let Ok(ref mut lock) = last_notif.try_lock() {
-                                notify!(do_led_notif, lock, &out.data);
+                                notify!(
+                                    do_notification(
+                                        "Keyboard LED mode changed to",
+                                        &out.data.mode_name()
+                                    ),
+                                    lock
+                                );
                             }
                         }
                         aura_notif.store(true, Ordering::SeqCst);
@@ -218,6 +260,20 @@ pub fn start_notifications(
     Ok(())
 }
 
+fn do_notification<T>(
+    message: &str,
+    data: &T,
+) -> Result<NotificationHandle, notify_rust::error::Error>
+where
+    T: Display,
+{
+    Notification::new()
+        .summary(NOTIF_HEADER)
+        .body(&format!("{message} {data}"))
+        .timeout(2000)
+        .show()
+}
+
 fn do_thermal_notif(profile: &Profile) -> Result<NotificationHandle, Box<dyn Error>> {
     let icon = match profile {
         Profile::Balanced => "asus_notif_yellow",
@@ -238,19 +294,4 @@ fn do_thermal_notif(profile: &Profile) -> Result<NotificationHandle, Box<dyn Err
         .icon(icon)
         .show()?;
     Ok(x)
-}
-
-fn do_led_notif(ledmode: &AuraEffect) -> Result<NotificationHandle, notify_rust::error::Error> {
-    base_notification!(&format!(
-        "Keyboard LED mode changed to {}",
-        ledmode.mode_name()
-    ))
-}
-
-fn do_charge_notif(limit: &u8) -> Result<NotificationHandle, notify_rust::error::Error> {
-    base_notification!(&format!("Battery charge limit changed to {}", limit))
-}
-
-fn do_post_sound_notif(on: &bool) -> Result<NotificationHandle, notify_rust::error::Error> {
-    base_notification!(&format!("BIOS Post sound {}", on))
 }
