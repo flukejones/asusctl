@@ -188,3 +188,10 @@ board_names = ["G513IC", "G513RC"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
 multizone = []
 per_key = false
+
+[[led_data]]
+prod_family = "ROG Flow X16"
+board_names = ["GV601RW", "GV601RM"]
+standard = ["Static", "Breathe", "Strobe", "Pulse"]
+multizone = []
+per_key = false
