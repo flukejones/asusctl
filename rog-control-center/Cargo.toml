@@ -1,6 +1,6 @@
 [package]
 name = "rog-control-center"
-version = "1.1.1"
+version.workspace = true
 authors = ["Luke D. Jones <luke@ljones.dev>"]
 edition = "2021"
 
@@ -20,18 +20,16 @@ rog_profiles = { path = "../rog-profiles" }
 rog_platform = { path = "../rog-platform" }
 # supergfxctl = { git = "https://gitlab.com/asus-linux/supergfxctl.git" }
 
-smol = "^1.2"
+smol.workspace = true
 
-serde = "^1.0"
-toml = "^0.5"
-serde_json = "^1.0"
-serde_derive = "^1.0"
-zbus = "^2.3"
+serde.workspace = true
+toml.workspace = true
+serde_json.workspace = true
+serde_derive.workspace = true
+zbus.workspace = true
+dirs.workspace = true
+
+notify-rust.workspace = true
+
 nix = "^0.20.0"
 tempfile = "3.2.0"
-dirs = "3.0.1"
-
-[dependencies.notify-rust]
-version = "^4.3"
-default-features = false
-features = ["z"]

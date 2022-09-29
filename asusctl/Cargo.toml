@@ -1,26 +1,23 @@
 [package]
 name = "asusctl"
-version = "4.3.3"
 authors = ["Luke D Jones <luke@ljones.dev>"]
-edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+edition = "2021"
+version.workspace = true
 
 [dependencies]
-zbus = "^2.2"
 rog_anime = { path = "../rog-anime" }
 rog_aura = { path = "../rog-aura" }
 rog_dbus = { path = "../rog-dbus" }
 rog_profiles = { path = "../rog-profiles" }
 rog_platform = { path = "../rog-platform" }
 daemon = { path = "../daemon" }
-gumdrop = "^0.8"
-toml = "^0.5.8"
 
-sysfs-class = "^0.1.2"
+gumdrop.workspace = true
+toml.workspace = true
+sysfs-class.workspace = true
 
 [dev-dependencies]
-tinybmp = "^0.3.3"
-glam = "^0.21.2"
+gif.workspace = true
+tinybmp.workspace = true
+glam.workspace = true
 rog_dbus = { path = "../rog-dbus" }
-gif = "^0.11.2"
