@@ -1,4 +1,4 @@
-image: rustdocker/rust:stable
+image: rustdocker/rust:latest
 
 before_script:
   - apt-get update -qq && apt-get install -y -qq libdbus-1-dev libclang-dev libudev-dev libfontconfig1-dev
