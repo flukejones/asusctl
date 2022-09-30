@@ -8,7 +8,7 @@ use crate::{
     has_attr, set_attr_u8_array, to_device,
 };
 
-#[derive(Debug, Default, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Clone)]
 pub struct KeyboardLed {
     path: PathBuf,
 }
@@ -32,10 +32,12 @@ impl KeyboardLed {
                 PlatformError::Udev("match_subsystem failed".into(), err)
             })?;
 
-        for device in enumerator.scan_devices().map_err(|err| {
+        if let Some(device) = (enumerator.scan_devices().map_err(|err| {
             warn!("{}", err);
             PlatformError::Udev("scan_devices failed".into(), err)
-        })? {
+        })?)
+        .next()
+        {
             info!("Found keyboard LED controls at {:?}", device.sysname());
             return Ok(Self {
                 path: device.syspath().to_owned(),

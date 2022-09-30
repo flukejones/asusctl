@@ -151,7 +151,7 @@ where
         .unwrap_or_else(|err| warn!("Controller error: {}", err));
     zbus.add_to_server(connection).await;
 
-    task.create_tasks(CtrlKbdLedZbus::signal_context(&connection)?)
+    task.create_tasks(CtrlKbdLedZbus::signal_context(connection)?)
         .await
         .ok();
     Ok(())

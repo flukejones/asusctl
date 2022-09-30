@@ -45,7 +45,7 @@ pub fn print_versions() {
 pub const SHOWING_GUI: u8 = 1;
 pub const SHOW_GUI: u8 = 2;
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub enum Page {
     System,
     AuraEffects,

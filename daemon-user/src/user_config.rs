@@ -30,7 +30,7 @@ pub trait ConfigLoadSave<T: DeserializeOwned + serde::Serialize> {
         if !path.exists() {
             create_dir(path.clone())?;
         }
-        let name = self.name().clone();
+        let name = self.name();
         path.push(name + ".cfg");
 
         let mut file = OpenOptions::new()
@@ -230,7 +230,7 @@ impl Default for UserAuraConfig {
             80,
             40,
         ));
-        seq.push(key.clone());
+        seq.push(key);
 
         Self {
             name: "default".to_string(),

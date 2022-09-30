@@ -17,7 +17,7 @@ use crate::{
 /// - gpu_mux
 /// - keyboard_mode, set keyboard RGB mode and speed
 /// - keyboard_state, set keyboard power states
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Clone)]
 pub struct AsusPlatform {
     path: PathBuf,
     pp_path: PathBuf,
@@ -38,10 +38,12 @@ impl AsusPlatform {
             PlatformError::Udev("match_subsystem failed".into(), err)
         })?;
 
-        for device in enumerator.scan_devices().map_err(|err| {
+        if let Some(device) = (enumerator.scan_devices().map_err(|err| {
             warn!("{}", err);
             PlatformError::Udev("scan_devices failed".into(), err)
-        })? {
+        })?)
+        .next()
+        {
             info!("Found platform support at {:?}", device.sysname());
             return Ok(Self {
                 path: device.syspath().to_owned(),
@@ -63,7 +65,7 @@ impl AsusPlatform {
     attr_u8!("platform_profile", pp_path);
 }
 
-#[derive(Serialize, Deserialize, Type, Debug, PartialEq, Clone, Copy)]
+#[derive(Serialize, Deserialize, Type, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum GpuMode {
     Discrete,
     Optimus,

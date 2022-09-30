@@ -114,7 +114,7 @@ pub fn start_notifications(
         })
         .detach();
 
-    let bios_notified1 = bios_notified.clone();
+    let bios_notified1 = bios_notified;
     executor
         .spawn(async move {
             let conn = zbus::Connection::system().await.unwrap();
@@ -181,9 +181,9 @@ pub fn start_notifications(
         .detach();
 
     // LED notif
-    let last_notif = last_notification.clone();
+    let last_notif = last_notification;
     let aura_notif = aura_notified.clone();
-    let notifs_enabled1 = notifs_enabled.clone();
+    let notifs_enabled1 = notifs_enabled;
     executor
         .spawn(async move {
             let conn = zbus::Connection::system().await.unwrap();

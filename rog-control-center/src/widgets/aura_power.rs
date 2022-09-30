@@ -73,10 +73,10 @@ fn aura_power1(
                 if ui.toggle_value(&mut keyboard, "Keyboard").changed() {
                     changed = true;
                 }
-                if !supported.keyboard_led.multizone_led_mode.is_empty() {
-                    if ui.toggle_value(&mut lightbar, "Lightbar").changed() {
-                        changed = true;
-                    }
+                if !supported.keyboard_led.multizone_led_mode.is_empty()
+                    && ui.toggle_value(&mut lightbar, "Lightbar").changed()
+                {
+                    changed = true;
                 }
             });
             ui.horizontal_wrapped(|ui| {

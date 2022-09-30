@@ -5,7 +5,7 @@ macro_rules! has_attr {
             $(#[$doc_comment])*
             pub fn fn_name(&self) -> bool {
                 match to_device(&self.$item) {
-                    Ok(p) => crate::has_attr(&p, $attr_name),
+                    Ok(p) => $crate::has_attr(&p, $attr_name),
                     Err(_) => false,
                 }
             }
@@ -45,7 +45,7 @@ macro_rules! get_attr_bool {
         concat_idents::concat_idents!(fn_name = get_, $attr_name {
             $(#[$doc_comment])*
             pub fn fn_name(&self) -> Result<bool> {
-                crate::read_attr_bool(&to_device(&self.$item)?, $attr_name)
+                $crate::read_attr_bool(&to_device(&self.$item)?, $attr_name)
             }
         });
     };
@@ -57,7 +57,7 @@ macro_rules! set_attr_bool {
         concat_idents::concat_idents!(fn_name = set_, $attr_name {
             $(#[$doc_comment])*
             pub fn fn_name(&self, value: bool) -> Result<()> {
-                crate::write_attr_bool(&mut to_device(&self.$item)?, $attr_name, value)
+                $crate::write_attr_bool(&mut to_device(&self.$item)?, $attr_name, value)
             }
         });
     };
@@ -66,10 +66,10 @@ macro_rules! set_attr_bool {
 #[macro_export]
 macro_rules! attr_bool {
     ($attr_name:literal, $item:ident) => {
-        crate::has_attr!($attr_name $item);
-        crate::get_attr_bool!( $attr_name $item);
-        crate::set_attr_bool!($attr_name $item);
-        crate::watch_attr!($attr_name $item);
+        $crate::has_attr!($attr_name $item);
+        $crate::get_attr_bool!( $attr_name $item);
+        $crate::set_attr_bool!($attr_name $item);
+        $crate::watch_attr!($attr_name $item);
     };
 }
 
@@ -79,7 +79,7 @@ macro_rules! get_attr_u8 {
         concat_idents::concat_idents!(fn_name = get_, $attr_name {
             $(#[$doc_comment])*
             pub fn fn_name(&self) -> Result<u8> {
-                crate::read_attr_u8(&to_device(&self.$item)?, $attr_name)
+                $crate::read_attr_u8(&to_device(&self.$item)?, $attr_name)
             }
         });
     };
@@ -91,7 +91,7 @@ macro_rules! set_attr_u8 {
         concat_idents::concat_idents!(fn_name = set_, $attr_name {
             $(#[$doc_comment])*
             pub fn fn_name(&self, value: u8) -> Result<()> {
-                crate::write_attr_u8(&mut to_device(&self.$item)?, $attr_name, value)
+                $crate::write_attr_u8(&mut to_device(&self.$item)?, $attr_name, value)
             }
         });
     };
@@ -100,10 +100,10 @@ macro_rules! set_attr_u8 {
 #[macro_export]
 macro_rules! attr_u8 {
     ($attr_name:literal, $item:ident) => {
-        crate::has_attr!($attr_name $item);
-        crate::get_attr_u8!($attr_name $item);
-        crate::set_attr_u8!($attr_name $item);
-        crate::watch_attr!($attr_name $item);
+        $crate::has_attr!($attr_name $item);
+        $crate::get_attr_u8!($attr_name $item);
+        $crate::set_attr_u8!($attr_name $item);
+        $crate::watch_attr!($attr_name $item);
     };
 }
 
@@ -113,7 +113,7 @@ macro_rules! get_attr_u8_array {
         concat_idents::concat_idents!(fn_name = get_, $attr_name {
             $(#[$doc_comment])*
             pub fn fn_name(&self) -> Result<Vec<u8>> {
-                crate::read_attr_u8_array(&to_device(&self.$item)?, $attr_name)
+                $crate::read_attr_u8_array(&to_device(&self.$item)?, $attr_name)
             }
         });
     };
@@ -125,7 +125,7 @@ macro_rules! set_attr_u8_array {
         concat_idents::concat_idents!(fn_name = set_, $attr_name {
             $(#[$doc_comment])*
             pub fn fn_name(&self, values: &[u8]) -> Result<()> {
-                crate::write_attr_u8_array(&mut to_device(&self.$item)?, $attr_name, values)
+                $crate::write_attr_u8_array(&mut to_device(&self.$item)?, $attr_name, values)
             }
         });
     };
@@ -134,9 +134,9 @@ macro_rules! set_attr_u8_array {
 #[macro_export]
 macro_rules! attr_u8_array {
     ($attr_name:literal, $item:ident) => {
-        crate::has_attr!($attr_name $item);
-        crate::get_attr_u8_array!($attr_name $item);
-        crate::set_attr_u8_array!($attr_name $item);
-        crate::watch_attr!($attr_name $item);
+        $crate::has_attr!($attr_name $item);
+        $crate::get_attr_u8_array!($attr_name $item);
+        $crate::set_attr_u8_array!($attr_name $item);
+        $crate::watch_attr!($attr_name $item);
     };
 }

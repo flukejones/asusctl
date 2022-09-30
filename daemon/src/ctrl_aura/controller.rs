@@ -27,7 +27,7 @@ impl GetSupported for CtrlKbdLed {
 
         let mut prod_id = AuraDevice::Unknown;
         for prod in ASUS_KEYBOARD_DEVICES.iter() {
-            if let Ok(_) = HidRaw::new(prod) {
+            if HidRaw::new(prod).is_ok() {
                 prod_id = AuraDevice::from(*prod);
                 break;
             }
@@ -50,7 +50,7 @@ impl GetSupported for CtrlKbdLed {
     }
 }
 
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Debug, PartialEq, Eq, PartialOrd)]
 pub enum LEDNode {
     KbdLed(KeyboardLed),
     Rog(HidRaw),
@@ -121,13 +121,13 @@ impl CtrlKbdLed {
     pub(super) fn get_brightness(&self) -> Result<u8, RogError> {
         self.kd_brightness
             .get_brightness()
-            .map_err(|e| RogError::Platform(e))
+            .map_err(RogError::Platform)
     }
 
     pub(super) fn set_brightness(&self, brightness: LedBrightness) -> Result<(), RogError> {
         self.kd_brightness
             .set_brightness(brightness as u8)
-            .map_err(|e| RogError::Platform(e))
+            .map_err(RogError::Platform)
     }
 
     pub fn next_brightness(&mut self) -> Result<(), RogError> {
@@ -176,10 +176,9 @@ impl CtrlKbdLed {
     /// On success the aura config file is read to refresh cached values, then the effect is
     /// stored and config written to disk.
     pub(crate) fn set_effect(&mut self, effect: AuraEffect) -> Result<(), RogError> {
-        if !self.supported_modes.standard.contains(&effect.mode) {
-            return Err(RogError::AuraEffectNotSupported);
-        } else if effect.zone != AuraZone::None
-            && !self.supported_modes.multizone.contains(&effect.zone)
+        if !self.supported_modes.standard.contains(&effect.mode)
+            || effect.zone != AuraZone::None
+                && !self.supported_modes.multizone.contains(&effect.zone)
         {
             return Err(RogError::AuraEffectNotSupported);
         }
@@ -387,9 +386,11 @@ mod tests {
             config,
         };
 
-        let mut effect = AuraEffect::default();
-        effect.colour1 = Colour(0xff, 0x00, 0xff);
-        effect.zone = AuraZone::None;
+        let mut effect = AuraEffect {
+            colour1: Colour(0xff, 0x00, 0xff),
+            zone: AuraZone::None,
+            ..Default::default()
+        };
 
         // This error comes from write_bytes because we don't have a keyboard node stored
         assert_eq!(
@@ -422,7 +423,7 @@ mod tests {
         controller.supported_modes.multizone.push(AuraZone::Key2);
         assert_eq!(
             controller
-                .set_effect(effect.clone())
+                .set_effect(effect)
                 .unwrap_err()
                 .to_string(),
             "No supported Aura keyboard"

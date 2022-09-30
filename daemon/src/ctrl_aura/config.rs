@@ -27,11 +27,11 @@ impl AuraPowerConfig {
         match control {
             AuraPowerConfig::AuraDevTuf(_) => [0, 0, 0],
             AuraPowerConfig::AuraDev1866(c) => {
-                let c: Vec<AuraDev1866> = c.iter().map(|v| *v).collect();
+                let c: Vec<AuraDev1866> = c.iter().copied().collect();
                 AuraDev1866::to_bytes(&c)
             }
             AuraPowerConfig::AuraDev19b6(c) => {
-                let c: Vec<AuraDev19b6> = c.iter().map(|v| *v).collect();
+                let c: Vec<AuraDev19b6> = c.iter().copied().collect();
                 AuraDev19b6::to_bytes(&c)
             }
         }
@@ -95,19 +95,19 @@ impl From<&AuraPowerConfig> for AuraPowerDev {
     fn from(config: &AuraPowerConfig) -> Self {
         match config {
             AuraPowerConfig::AuraDevTuf(d) => AuraPowerDev {
-                tuf: d.iter().map(|o| *o).collect(),
+                tuf: d.iter().copied().collect(),
                 x1866: vec![],
                 x19b6: vec![],
             },
             AuraPowerConfig::AuraDev1866(d) => AuraPowerDev {
                 tuf: vec![],
-                x1866: d.iter().map(|o| *o).collect(),
+                x1866: d.iter().copied().collect(),
                 x19b6: vec![],
             },
             AuraPowerConfig::AuraDev19b6(d) => AuraPowerDev {
                 tuf: vec![],
                 x1866: vec![],
-                x19b6: d.iter().map(|o| *o).collect(),
+                x19b6: d.iter().copied().collect(),
             },
         }
     }
@@ -128,7 +128,7 @@ impl Default for AuraConfig {
     fn default() -> Self {
         let mut prod_id = AuraDevice::Unknown;
         for prod in ASUS_KEYBOARD_DEVICES.iter() {
-            if let Ok(_) = HidRaw::new(prod) {
+            if HidRaw::new(prod).is_ok() {
                 prod_id = AuraDevice::from(*prod);
                 break;
             }
@@ -335,26 +335,34 @@ mod tests {
     fn set_multizone_4key_config() {
         let mut config = AuraConfig::default();
 
-        let mut effect = AuraEffect::default();
-        effect.colour1 = Colour(0xff, 0x00, 0xff);
-        effect.zone = AuraZone::Key1;
+        let effect = AuraEffect {
+            colour1: Colour(0xff, 0x00, 0xff),
+            zone: AuraZone::Key1,
+            ..Default::default()
+        };
         config.set_builtin(effect);
 
         assert!(config.multizone.is_some());
 
-        let mut effect = AuraEffect::default();
-        effect.colour1 = Colour(0x00, 0xff, 0xff);
-        effect.zone = AuraZone::Key2;
+        let effect = AuraEffect {
+            colour1: Colour(0x00, 0xff, 0xff),
+            zone: AuraZone::Key2,
+            ..Default::default()
+        };
         config.set_builtin(effect);
 
-        let mut effect = AuraEffect::default();
-        effect.colour1 = Colour(0xff, 0xff, 0x00);
-        effect.zone = AuraZone::Key3;
+        let effect = AuraEffect {
+            colour1: Colour(0xff, 0xff, 0x00),
+            zone: AuraZone::Key3,
+            ..Default::default()
+        };
         config.set_builtin(effect);
 
-        let mut effect = AuraEffect::default();
-        effect.colour1 = Colour(0x00, 0xff, 0x00);
-        effect.zone = AuraZone::Key4;
+        let effect = AuraEffect {
+            colour1: Colour(0x00, 0xff, 0x00),
+            zone: AuraZone::Key4,
+            ..Default::default()
+        };
         let effect_clone = effect.clone();
         config.set_builtin(effect);
         // This should replace existing
@@ -373,25 +381,33 @@ mod tests {
     fn set_multizone_multimode_config() {
         let mut config = AuraConfig::default();
 
-        let mut effect = AuraEffect::default();
-        effect.zone = AuraZone::Key1;
+        let effect = AuraEffect {
+            zone: AuraZone::Key1,
+            ..Default::default()
+        };
         config.set_builtin(effect);
 
         assert!(config.multizone.is_some());
 
-        let mut effect = AuraEffect::default();
-        effect.zone = AuraZone::Key2;
-        effect.mode = AuraModeNum::Breathe;
+        let effect = AuraEffect {
+            zone: AuraZone::Key2,
+            mode: AuraModeNum::Breathe,
+            ..Default::default()
+        };
         config.set_builtin(effect);
 
-        let mut effect = AuraEffect::default();
-        effect.zone = AuraZone::Key3;
-        effect.mode = AuraModeNum::Comet;
+        let effect = AuraEffect {
+            zone: AuraZone::Key3,
+            mode: AuraModeNum::Comet,
+            ..Default::default()
+        };
         config.set_builtin(effect);
 
-        let mut effect = AuraEffect::default();
-        effect.zone = AuraZone::Key4;
-        effect.mode = AuraModeNum::Pulse;
+        let effect = AuraEffect {
+            zone: AuraZone::Key4,
+            mode: AuraModeNum::Pulse,
+            ..Default::default()
+        };
         config.set_builtin(effect);
 
         let res = config.multizone.unwrap();

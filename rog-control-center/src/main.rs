@@ -72,7 +72,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .map_err(|e| {
             println!("{BOARD_NAME}, {e}");
         })
-        .unwrap_or(KeyLayout::ga401_layout());
+        .unwrap_or_else(|_| KeyLayout::ga401_layout());
 
     // Cheap method to alert to notifications rather than spinning a thread for each
     // This is quite different when done in a retained mode app

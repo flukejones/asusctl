@@ -54,7 +54,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 p.for_each(|e| {
                     if let Ok(out) = e.args() {
                         if let Ok(ref mut lock) = x.try_lock() {
-                            notify!(do_post_sound_notif, lock, &out.on());
+                            notify!(do_post_sound_notif, lock, out.on());
                         }
                     }
                     future::ready(())

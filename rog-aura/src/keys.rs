@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, PartialEq, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Serialize, Deserialize)]
 pub enum Key {
     VolUp,
     VolDown,
@@ -235,51 +235,44 @@ impl KeyShape {
     /// A blank is used to space keys out in GUI's and can be used or ignored
     /// depednign on the per-key effect
     pub const fn is_blank(&self) -> bool {
-        match self {
+        matches!(
+            self,
             Self::NormalBlank
-            | Self::FuncBlank
-            | Self::ArrowBlank
-            | Self::ArrowSplitBlank
-            | Self::ArrowRegularBlank => true,
-            _ => false,
-        }
+                | Self::FuncBlank
+                | Self::ArrowBlank
+                | Self::ArrowSplitBlank
+                | Self::ArrowRegularBlank
+        )
     }
 
     /// A spacer is used to space keys out in GUI's, but ignored in per-key effects
     pub const fn is_spacer(&self) -> bool {
-        match self {
+        matches!(
+            self,
             Self::FuncSpacer
-            | Self::NormalSpacer
-            | Self::ArrowSpacer
-            | Self::ArrowSplitSpacer
-            | Self::ArrowRegularSpacer => true,
-            _ => false,
-        }
+                | Self::NormalSpacer
+                | Self::ArrowSpacer
+                | Self::ArrowSplitSpacer
+                | Self::ArrowRegularSpacer
+        )
     }
 
     /// All keys with a postfix of some number
     pub const fn is_group(&self) -> bool {
-        match self {
-            Self::LShift3 | Self::RShift3 => true,
-            Self::Return3 | Self::Space5 | Self::Backspace3 => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            Self::LShift3 | Self::RShift3 | Self::Return3 | Self::Space5 | Self::Backspace3
+        )
     }
 
     /// Mostly intended as a helper for signalling when to draw a
     /// split/compact arrow cluster
     pub const fn is_arrow_cluster(&self) -> bool {
-        match self {
-            Self::Arrow | Self::ArrowBlank | Self::ArrowSpacer => true,
-            _ => false,
-        }
+        matches!(self, Self::Arrow | Self::ArrowBlank | Self::ArrowSpacer)
     }
 
     pub const fn is_arrow_splits(&self) -> bool {
-        match self {
-            Self::ArrowSplit | Self::ArrowSplitBlank | Self::ArrowSplitSpacer => true,
-            _ => false,
-        }
+        matches!(self, Self::Arrow | Self::ArrowBlank | Self::ArrowSpacer)
     }
 }
 

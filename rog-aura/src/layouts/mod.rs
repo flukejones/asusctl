@@ -35,9 +35,9 @@ impl KeyLayout {
         let mut buf = String::new();
         let read_len = file.read_to_string(&mut buf)?;
         if read_len == 0 {
-            return Err(Error::Io(std::io::ErrorKind::InvalidData.into()));
+            Err(Error::Io(std::io::ErrorKind::InvalidData.into()))
         } else {
-            return Ok(toml::from_str::<Self>(&buf)?);
+            Ok(toml::from_str::<Self>(&buf)?)
         }
     }
 

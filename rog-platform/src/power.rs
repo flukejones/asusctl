@@ -15,7 +15,7 @@ use crate::{
 /// - gpu_mux
 /// - keyboard_mode, set keyboard RGB mode and speed
 /// - keyboard_state, set keyboard power states
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Clone)]
 pub struct AsusPower {
     mains: PathBuf,
     battery: PathBuf,

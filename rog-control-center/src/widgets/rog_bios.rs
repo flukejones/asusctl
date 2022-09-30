@@ -54,40 +54,38 @@ pub fn rog_bios_group(
             .ok();
     }
 
-    if supported.rog_bios_ctrl.post_sound {
-        if ui
+    if supported.rog_bios_ctrl.post_sound
+        && ui
             .add(egui::Checkbox::new(
                 &mut states.bios.post_sound,
                 "POST sound",
             ))
             .changed()
-        {
-            dbus.proxies()
-                .rog_bios()
-                .set_post_boot_sound(states.bios.post_sound)
-                .map_err(|err| {
-                    states.error = Some(err.to_string());
-                })
-                .ok();
-        }
+    {
+        dbus.proxies()
+            .rog_bios()
+            .set_post_boot_sound(states.bios.post_sound)
+            .map_err(|err| {
+                states.error = Some(err.to_string());
+            })
+            .ok();
     }
 
-    if supported.rog_bios_ctrl.post_sound {
-        if ui
+    if supported.rog_bios_ctrl.post_sound
+        && ui
             .add(egui::Checkbox::new(
                 &mut states.bios.panel_overdrive,
                 "Panel overdrive",
             ))
             .changed()
-        {
-            dbus.proxies()
-                .rog_bios()
-                .set_panel_od(states.bios.panel_overdrive)
-                .map_err(|err| {
-                    states.error = Some(err.to_string());
-                })
-                .ok();
-        }
+    {
+        dbus.proxies()
+            .rog_bios()
+            .set_panel_od(states.bios.panel_overdrive)
+            .map_err(|err| {
+                states.error = Some(err.to_string());
+            })
+            .ok();
     }
 
     if supported.rog_bios_ctrl.gpu_mux {

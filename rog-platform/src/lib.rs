@@ -51,7 +51,7 @@ pub fn write_attr_bool(device: &mut Device, attr: &str, value: bool) -> Result<(
 pub fn read_attr_u8(device: &Device, attr_name: &str) -> Result<u8> {
     if let Some(value) = device.attribute_value(attr_name) {
         let tmp = value.to_string_lossy();
-        return Ok(tmp.parse::<u8>().map_err(|_| PlatformError::ParseNum)?);
+        return tmp.parse::<u8>().map_err(|_| PlatformError::ParseNum);
     }
     Err(PlatformError::AttrNotFound(attr_name.to_string()))
 }
@@ -67,7 +67,7 @@ pub fn read_attr_u8_array(device: &Device, attr_name: &str) -> Result<Vec<u8>> {
         let tmp = value.to_string_lossy();
         let tmp = tmp
             .split(' ')
-            .map(|v| u8::from_str_radix(v, 10).unwrap_or(0))
+            .map(|v| v.parse::<u8>().unwrap_or(0))
             .collect();
         return Ok(tmp);
     }
@@ -94,7 +94,7 @@ mod tests {
 
         let tmp: Vec<u8> = tmp
             .split(' ')
-            .map(|v| u8::from_str_radix(v, 10).unwrap_or(0))
+            .map(|v| v.parse::<u8>().unwrap_or(0))
             .collect();
         assert_eq!(tmp, &[1, 2, 3, 4, 5]);
     }

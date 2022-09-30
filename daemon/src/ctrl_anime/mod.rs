@@ -130,7 +130,7 @@ impl CtrlAnime {
                                                 .ok();
                                             false // Don't exit yet
                                         })
-                                        .map(|r| Ok(r))
+                                        .map(Ok)
                                         .unwrap_or_else(|| {
                                             warn!("rog_anime::run_animation:callback failed");
                                             Err(AnimeError::NoFrames)

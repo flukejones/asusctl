@@ -21,7 +21,7 @@ pub const fn aura_brightness_bytes(brightness: u8) -> [u8; 17] {
 }
 
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Clone, Debug, PartialEq, PartialOrd, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Serialize, Deserialize, Default)]
 pub enum AuraDevice {
     Tuf,
     X1854,
@@ -127,7 +127,7 @@ impl BitOr<AuraDev1866> for AuraDev1866 {
     type Output = u32;
 
     fn bitor(self, rhs: AuraDev1866) -> Self::Output {
-        return self as u32 | rhs as u32;
+        self as u32 | rhs as u32
     }
 }
 
@@ -135,7 +135,7 @@ impl BitAnd<AuraDev1866> for AuraDev1866 {
     type Output = u32;
 
     fn bitand(self, rhs: AuraDev1866) -> Self::Output {
-        return self as u32 & rhs as u32;
+        self as u32 & rhs as u32
     }
 }
 
@@ -178,14 +178,14 @@ pub enum AuraDev19b6 {
     SleepKeyb = 1 << 5,
     ShutdownLogo = 1 << 6,
     ShutdownKeyb = 1 << 7,
-    BootBar = 1 << 7 + 2,
-    AwakeBar = 1 << 7 + 3,
-    SleepBar = 1 << 7 + 4,
-    ShutdownBar = 1 << 7 + 5,
-    BootLid = 1 << 15 + 1,
-    AwakeLid = 1 << 15 + 2,
-    SleepLid = 1 << 15 + 3,
-    ShutdownLid = 1 << 15 + 4,
+    BootBar = 1 << (7 + 2),
+    AwakeBar = 1 << (7 + 3),
+    SleepBar = 1 << (7 + 4),
+    ShutdownBar = 1 << (7 + 5),
+    BootLid = 1 << (15 + 1),
+    AwakeLid = 1 << (15 + 2),
+    SleepLid = 1 << (15 + 3),
+    ShutdownLid = 1 << (15 + 4),
 }
 
 impl From<AuraDev19b6> for u32 {
@@ -216,7 +216,7 @@ impl BitOr<AuraDev19b6> for AuraDev19b6 {
     type Output = u16;
 
     fn bitor(self, rhs: AuraDev19b6) -> Self::Output {
-        return self as u16 | rhs as u16;
+        self as u16 | rhs as u16
     }
 }
 
@@ -224,7 +224,7 @@ impl BitAnd<AuraDev19b6> for AuraDev19b6 {
     type Output = u16;
 
     fn bitand(self, rhs: AuraDev19b6) -> Self::Output {
-        return self as u16 & rhs as u16;
+        self as u16 & rhs as u16
     }
 }
 

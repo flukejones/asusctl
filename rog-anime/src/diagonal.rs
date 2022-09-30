@@ -131,14 +131,14 @@ impl AnimeDiagonal {
     #[inline]
     pub fn into_data_buffer(&self, anime_type: AnimeType) -> Result<AnimeDataBuffer> {
         match anime_type {
-            AnimeType::GA401 => self.into_ga401_packets(),
-            AnimeType::GA402 => self.into_ga402_packets(),
+            AnimeType::GA401 => self.to_ga401_packets(),
+            AnimeType::GA402 => self.to_ga402_packets(),
         }
     }
 
     /// Do conversion from the nested Vec in AnimeMatrix to the two required
     /// packets suitable for sending over USB
-    fn into_ga401_packets(&self) -> Result<AnimeDataBuffer> {
+    fn to_ga401_packets(&self) -> Result<AnimeDataBuffer> {
         let mut buf = vec![0u8; AnimeType::GA401.data_length()];
 
         buf[1..=32].copy_from_slice(&self.get_row(0, 3, 32));
@@ -200,12 +200,12 @@ impl AnimeDiagonal {
         AnimeDataBuffer::from_vec(crate::AnimeType::GA401, buf)
     }
 
-    fn into_ga402_packets(&self) -> Result<AnimeDataBuffer> {
+    fn to_ga402_packets(&self) -> Result<AnimeDataBuffer> {
         let mut buf = vec![0u8; AnimeType::GA402.data_length()];
         let mut start_index: usize = 0;
 
         fn copy_slice(
-            buf: &mut Vec<u8>,
+            buf: &mut [u8],
             anime: &AnimeDiagonal,
             x: usize,
             y: usize,

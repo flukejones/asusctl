@@ -123,14 +123,14 @@ impl CtrlAnimeZbus {
     #[dbus_interface(property)]
     async fn awake_enabled(&self) -> bool {
         let lock = self.0.lock().await;
-        return lock.config.awake_enabled;
+        lock.config.awake_enabled
     }
 
     /// Get the status of if factory system-status animations are enabled
     #[dbus_interface(property)]
     async fn boot_enabled(&self) -> bool {
         let lock = self.0.lock().await;
-        return lock.config.boot_anim_enabled;
+        lock.config.boot_anim_enabled
     }
 
     /// Notify listeners of the status of AniMe LED power and factory system-status animations
@@ -152,10 +152,10 @@ impl crate::CtrlTask for CtrlAnimeZbus {
             |start: bool, lock: MutexGuard<CtrlAnime>, inner: Arc<Mutex<CtrlAnime>>| {
                 if start {
                     info!("CtrlAnimeTask running sleep animation");
-                    CtrlAnime::run_thread(inner.clone(), lock.cache.shutdown.clone(), true);
+                    CtrlAnime::run_thread(inner, lock.cache.shutdown.clone(), true);
                 } else {
                     info!("CtrlAnimeTask running wake animation");
-                    CtrlAnime::run_thread(inner.clone(), lock.cache.wake.clone(), true);
+                    CtrlAnime::run_thread(inner, lock.cache.wake.clone(), true);
                 }
             };
 

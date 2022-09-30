@@ -29,23 +29,22 @@ mod profiles_cli;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = args().skip(1).collect();
 
-    let parsed: CliStart;
     let missing_argument_k = gumdrop::Error::missing_argument(Opt::Short('k'));
-    match CliStart::parse_args_default(&args) {
+    let parsed = match CliStart::parse_args_default(&args) {
         Ok(p) => {
-            parsed = p;
+            p
         }
         Err(err) if err.to_string() == missing_argument_k.to_string() => {
-            parsed = CliStart {
+            CliStart {
                 kbd_bright: Some(LedBrightness::new(None)),
                 ..Default::default()
-            };
+            }
         }
         Err(err) => {
             eprintln!("source {}", err);
             std::process::exit(2);
         }
-    }
+    };
 
     let (dbus, _) = RogDbusClientBlocking::new()
         .map_err(|e| {
@@ -376,7 +375,7 @@ fn handle_anime(
 }
 
 fn verify_brightness(brightness: f32) {
-    if brightness < 0.0 || brightness > 1.0 {
+    if !(0.0..=1.0).contains(&brightness) {
         println!(
             "Image and global brightness must be between 0.0 and 1.0 (inclusive), was {}",
             brightness
@@ -474,7 +473,7 @@ fn handle_led_power1(
     }
 
     println!("These options are for keyboards of product ID 0x1866 or TUF only");
-    return Ok(());
+    Ok(())
 }
 
 fn handle_led_power_1_do_1866(

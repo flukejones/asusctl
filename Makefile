@@ -114,5 +114,10 @@ ifeq ($(VENDORED),1)
 	tar pxf vendor_asusctl_$(VERSION).tar.xz
 endif
 	cargo build $(ARGS)
+	strip -s ./target/release/$(BIN_C)
+	strip -s ./target/release/$(BIN_D)
+	strip -s ./target/release/$(BIN_U)
+	strip -s ./target/release/$(BIN_N)
+	strip -s ./target/release/$(BIN_ROG)
 
 .PHONY: all clean distclean install uninstall update build

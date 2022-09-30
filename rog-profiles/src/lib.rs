@@ -114,7 +114,7 @@ impl std::str::FromStr for Profile {
 }
 
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Deserialize, Serialize, Debug, PartialEq, Clone, Copy)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum FanCurvePU {
     CPU,
     GPU,

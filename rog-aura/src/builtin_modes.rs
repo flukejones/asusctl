@@ -12,7 +12,7 @@ use zvariant::Type;
 use crate::{error::Error, LED_MSG_LEN};
 
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum LedBrightness {
     Off,
     Low,
@@ -33,7 +33,7 @@ impl From<u32> for LedBrightness {
 }
 
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Debug, Clone, PartialEq, PartialOrd, Copy, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Copy, Deserialize, Serialize)]
 pub struct Colour(pub u8, pub u8, pub u8);
 
 impl Default for Colour {
@@ -85,7 +85,7 @@ impl From<Colour> for [u8; 3] {
 }
 
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum Speed {
     Low = 0xe1,
     Med = 0xeb,
@@ -123,7 +123,7 @@ impl From<Speed> for u8 {
 ///
 /// Enum corresponds to the required integer value
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Debug, Copy, Clone, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum Direction {
     Right,
     Left,
@@ -251,7 +251,7 @@ impl From<u8> for AuraModeNum {
 
 /// Base effects have no zoning, while multizone is 1-4
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Debug, Default, Copy, Clone, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum AuraZone {
     /// Used if keyboard has no zones, or if setting all
     #[default]

@@ -4,7 +4,7 @@ use log::{info, warn};
 
 use crate::error::{PlatformError, Result};
 
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Clone)]
 pub struct HidRaw(PathBuf);
 
 impl HidRaw {

@@ -262,6 +262,7 @@ pub struct PageDataStates {
     pub error: Option<String>,
 }
 
+#[allow(clippy::too_many_arguments)]
 impl PageDataStates {
     pub fn new(
         keyboard_layout: KeyLayout,

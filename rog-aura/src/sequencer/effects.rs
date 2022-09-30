@@ -138,16 +138,15 @@ impl EffectState for Breathe {
 
         let speed = 4 - <u8>::from(*speed);
 
-        let colour: &mut Colour;
         if *colour_actual == Colour(0, 0, 0) {
             *use_colour1 = !*use_colour1;
         }
 
-        if !*use_colour1 {
-            colour = colour2;
+        let colour = if !*use_colour1 {
+            colour2
         } else {
-            colour = colour1;
-        }
+            colour1
+        };
 
         let r1_scale = colour.0 / speed / 2;
         let g1_scale = colour.1 / speed / 2;

@@ -202,21 +202,16 @@ impl CtrlPlatform {
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
         overdrive: bool,
     ) {
-        if self
-            .platform
-            .set_panel_od(overdrive)
-            .map_err(|err| {
-                warn!("CtrlRogBios: set_panel_overdrive {}", err);
-                err
-            })
-            .is_ok()
-        {
-            if let Some(mut lock) = self.config.try_lock() {
-                lock.panel_od = overdrive;
-                lock.write();
+        match self.platform.set_panel_od(overdrive) {
+            Ok(_) => {
+                if let Some(mut lock) = self.config.try_lock() {
+                    lock.panel_od = overdrive;
+                    lock.write();
+                }
+                Self::notify_panel_od(&ctxt, overdrive).await.ok();
             }
-            Self::notify_panel_od(&ctxt, overdrive).await.ok();
-        }
+            Err(err) => warn!("CtrlRogBios: set_panel_overdrive {}", err),
+        };
     }
 
     /// Get the `panel_od` value from platform. Updates the stored value in internal config also.
@@ -245,17 +240,12 @@ impl CtrlPlatform {
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
         disable: bool,
     ) {
-        if self
-            .platform
-            .set_dgpu_disable(disable)
-            .map_err(|err| {
-                warn!("CtrlRogBios: set_dgpu_disable {}", err);
-                err
-            })
-            .is_ok()
-        {
-            Self::notify_dgpu_disable(&ctxt, disable).await.ok();
-        }
+        match self.platform.set_dgpu_disable(disable) {
+            Ok(_) => {
+                Self::notify_dgpu_disable(&ctxt, disable).await.ok();
+            }
+            Err(err) => warn!("CtrlRogBios: set_dgpu_disable {}", err),
+        };
     }
 
     fn dgpu_disable(&self) -> bool {
@@ -280,17 +270,12 @@ impl CtrlPlatform {
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
         enable: bool,
     ) {
-        if self
-            .platform
-            .set_egpu_enable(enable)
-            .map_err(|err| {
-                warn!("CtrlRogBios: set_egpu_enable {}", err);
-                err
-            })
-            .is_ok()
-        {
-            Self::notify_egpu_enable(&ctxt, enable).await.ok();
-        }
+        match self.platform.set_egpu_enable(enable) {
+            Ok(_) => {
+                Self::notify_egpu_enable(&ctxt, enable).await.ok();
+            }
+            Err(err) => warn!("CtrlRogBios: set_egpu_enable {}", err),
+        };
     }
 
     fn egpu_enable(&self) -> bool {

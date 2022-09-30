@@ -26,7 +26,7 @@ impl CtrlKbdLedZbus {
         lock.config.read();
         lock.config.brightness = (bright as u32).into();
         lock.config.write();
-        return Ok(());
+        Ok(())
     }
 }
 
@@ -192,19 +192,19 @@ impl CtrlKbdLedZbus {
     // #[dbus_interface(property)]
     async fn leds_enabled(&self) -> AuraPowerDev {
         let ctrl = self.0.lock().await;
-        return AuraPowerDev::from(&ctrl.config.enabled);
+        AuraPowerDev::from(&ctrl.config.enabled)
     }
 
     /// Return the current mode data
     async fn led_mode(&self) -> AuraModeNum {
         let ctrl = self.0.lock().await;
-        return ctrl.config.current_mode;
+        ctrl.config.current_mode
     }
 
     /// Return a list of available modes
     async fn led_modes(&self) -> BTreeMap<AuraModeNum, AuraEffect> {
         let ctrl = self.0.lock().await;
-        return ctrl.config.builtins.clone();
+        ctrl.config.builtins.clone()
     }
 
     async fn per_key_raw(&self, data: PerKeyRaw) -> zbus::fdo::Result<()> {

@@ -88,7 +88,7 @@ impl AnimeImage {
         width: u32,
         anime_type: AnimeType,
     ) -> Result<Self> {
-        if bright < 0.0 || bright > 1.0 {
+        if !(0.0..=1.0).contains(&bright) {
             return Err(AnimeError::InvalidBrightness(bright));
         }
 

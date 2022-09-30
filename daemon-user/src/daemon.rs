@@ -86,7 +86,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .map_err(|e| {
                 println!("{BOARD_NAME}, {e}");
             })
-            .unwrap_or(KeyLayout::ga401_layout());
+            .unwrap_or_else(|_| KeyLayout::ga401_layout());
 
         executor
             .spawn(async move {

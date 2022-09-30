@@ -9,7 +9,9 @@ stages:
 
 test:
   script:
-    - cargo check #+nightly check --features "clippy"
+    - rustup component add clippy
+    - cargo check
+    - cargo clippy
     - cargo test
 
 build:

@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use crate::error::{PlatformError, Result};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct USBRaw(DeviceHandle<rusb::GlobalContext>);
 
 impl USBRaw {
@@ -43,6 +43,6 @@ impl USBRaw {
                 message,
                 Duration::from_millis(200),
             )
-            .map_err(|e| PlatformError::USB(e))
+            .map_err(PlatformError::USB)
     }
 }
