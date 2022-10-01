@@ -85,6 +85,7 @@ macro_rules! get_attr_u8 {
     };
 }
 
+/// Most attributes expect `u8` as a char, so `1` should be written as `b'1'`.
 #[macro_export]
 macro_rules! set_attr_u8 {
     ($(#[$doc_comment:meta])? $attr_name:literal $item:ident) => {

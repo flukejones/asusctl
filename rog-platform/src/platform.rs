@@ -76,25 +76,26 @@ pub enum GpuMode {
 }
 
 impl GpuMode {
-    pub fn to_mux(&self) -> u8 {
+    /// For writing to `gpu_mux_mode` attribute
+    pub fn to_mux_attr(&self) -> u8 {
         if *self == Self::Discrete {
-            return 0;
+            return b'0';
         }
-        1
+        b'1'
     }
 
-    pub fn to_dgpu(&self) -> u8 {
+    pub fn to_dgpu_attr(&self) -> u8 {
         if *self == Self::Integrated {
-            return 1;
+            return b'1';
         }
-        0
+        b'0'
     }
 
-    pub fn to_egpu(&self) -> u8 {
+    pub fn to_egpu_attr(&self) -> u8 {
         if *self == Self::Egpu {
-            return 1;
+            return b'1';
         }
-        0
+        b'0'
     }
 
     pub fn from_mux(num: u8) -> Self {

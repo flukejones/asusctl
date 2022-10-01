@@ -422,10 +422,7 @@ mod tests {
 
         controller.supported_modes.multizone.push(AuraZone::Key2);
         assert_eq!(
-            controller
-                .set_effect(effect)
-                .unwrap_err()
-                .to_string(),
+            controller.set_effect(effect).unwrap_err().to_string(),
             "No supported Aura keyboard"
         );
     }

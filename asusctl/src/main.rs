@@ -31,15 +31,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let missing_argument_k = gumdrop::Error::missing_argument(Opt::Short('k'));
     let parsed = match CliStart::parse_args_default(&args) {
-        Ok(p) => {
-            p
-        }
-        Err(err) if err.to_string() == missing_argument_k.to_string() => {
-            CliStart {
-                kbd_bright: Some(LedBrightness::new(None)),
-                ..Default::default()
-            }
-        }
+        Ok(p) => p,
+        Err(err) if err.to_string() == missing_argument_k.to_string() => CliStart {
+            kbd_bright: Some(LedBrightness::new(None)),
+            ..Default::default()
+        },
         Err(err) => {
             eprintln!("source {}", err);
             std::process::exit(2);

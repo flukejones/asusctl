@@ -142,11 +142,7 @@ impl EffectState for Breathe {
             *use_colour1 = !*use_colour1;
         }
 
-        let colour = if !*use_colour1 {
-            colour2
-        } else {
-            colour1
-        };
+        let colour = if !*use_colour1 { colour2 } else { colour1 };
 
         let r1_scale = colour.0 / speed / 2;
         let g1_scale = colour.1 / speed / 2;

@@ -78,7 +78,7 @@ impl CtrlPlatform {
     }
 
     fn set_gfx_mode(&self, mode: GpuMode) -> Result<(), RogError> {
-        self.platform.set_gpu_mux_mode(mode.to_mux())?;
+        self.platform.set_gpu_mux_mode(mode.to_mux_attr())?;
         // self.update_initramfs(enable)?;
         if mode == GpuMode::Discrete {
             info!("Set system-level graphics mode: Dedicated Nvidia");
