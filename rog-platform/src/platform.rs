@@ -58,7 +58,7 @@ impl AsusPlatform {
     attr_bool!("dgpu_disable", path);
     attr_bool!("egpu_enable", path);
     attr_bool!("panel_od", path);
-    attr_u8!("gpu_mux_mode", path);
+    attr_bool!("gpu_mux_mode", path);
     // This is technically the same as `platform_profile` since both are tied in-kernel
     attr_u8!("throttle_thermal_policy", path);
     // The acpi platform_profile support
@@ -77,25 +77,25 @@ pub enum GpuMode {
 
 impl GpuMode {
     /// For writing to `gpu_mux_mode` attribute
-    pub fn to_mux_attr(&self) -> u8 {
+    pub fn to_mux_attr(&self) -> bool {
         if *self == Self::Discrete {
-            return b'0';
+            return false;
         }
-        b'1'
+        true
     }
 
     pub fn to_dgpu_attr(&self) -> u8 {
         if *self == Self::Integrated {
-            return b'1';
+            return 1;
         }
-        b'0'
+        0
     }
 
     pub fn to_egpu_attr(&self) -> u8 {
         if *self == Self::Egpu {
-            return b'1';
+            return 1;
         }
-        b'0'
+        0
     }
 
     pub fn from_mux(num: u8) -> Self {

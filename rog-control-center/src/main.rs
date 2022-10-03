@@ -22,6 +22,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     print_versions();
 
     let native_options = eframe::NativeOptions {
+        vsync: false,
         decorated: false,
         transparent: false,
         min_window_size: Some(egui::vec2(840.0, 600.0)),

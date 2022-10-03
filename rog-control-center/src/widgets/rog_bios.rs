@@ -92,7 +92,8 @@ pub fn rog_bios_group(
         let mut changed = false;
         ui.group(|ui| {
             ui.vertical(|ui| {
-                ui.horizontal_wrapped(|ui| ui.label("GPU MUX mode (reboot required)"));
+                ui.horizontal_wrapped(|ui| ui.label("GPU MUX mode"));
+                ui.horizontal_wrapped(|ui| ui.label("NOTE: Value does not change until rebooted"));
                 ui.horizontal_wrapped(|ui| {
                     changed = ui
                         .selectable_value(

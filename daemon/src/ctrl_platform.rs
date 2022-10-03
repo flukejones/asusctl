@@ -147,7 +147,7 @@ impl CtrlPlatform {
     ) {
         self.set_gfx_mode(mode)
             .map_err(|err| {
-                warn!("CtrlRogBios: set_asus_switch_graphic_mode {}", err);
+                warn!("CtrlRogBios: set_gpu_mux_mode {}", err);
                 err
             })
             .ok();
@@ -156,7 +156,7 @@ impl CtrlPlatform {
 
     fn gpu_mux_mode(&self) -> GpuMode {
         match self.platform.get_gpu_mux_mode() {
-            Ok(m) => GpuMode::from_mux(m),
+            Ok(m) => GpuMode::from_mux(m as u8),
             Err(e) => {
                 warn!("CtrlRogBios: get_gfx_mode {}", e);
                 GpuMode::Error
