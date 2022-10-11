@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `NotifyEgpuEnable`
   - `MainsOnline` (This is AC, check if plugged in or not)
   - `NotifyMainsOnline`
+- `nvidia-powerd.service` will now enable or disable depending on the AC power state
+  and on resume/boot (hybrid boot). It has been proven that this nvidia daemon can be
+  problematic when on battery, not allowing the dgpu to suspend within decent time and
+  sometimes blocking it completely.
 ### Changed
 - Use loops to ensure that mutex is gained for LED changes.
 - asusctl now uses tokio for async runtime. This helps simplify some code.
@@ -30,7 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `ChargeControlEndThreshold`
   - `SetChargeControlEndThreshold`
   - `NotifyChargeControlEndThreshold`
-  - `PanelOd` (form PanelOverdrive)
+- DBUS: all panel overdrive methods renamed to:
+  - `PanelOd` (from PanelOverdrive)
   - `SetPanelOd`
   - `NotifyPanelOd`
   - Path `/org/asuslinux/Charge` changed to `/org/asuslinux/Power`

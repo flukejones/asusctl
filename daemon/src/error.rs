@@ -30,6 +30,9 @@ pub enum RogError {
     NoAuraNode,
     Anime(AnimeError),
     Platform(PlatformError),
+    SystemdUnitAction(String),
+    SystemdUnitWaitTimeout(String),
+    Command(String, std::io::Error),
 }
 
 impl fmt::Display for RogError {
@@ -60,6 +63,17 @@ impl fmt::Display for RogError {
             RogError::NoAuraNode => write!(f, "No Aura keyboard node found"),
             RogError::Anime(deets) => write!(f, "AniMe Matrix error: {}", deets),
             RogError::Platform(deets) => write!(f, "Asus Platform error: {}", deets),
+            RogError::SystemdUnitAction(action) => {
+                write!(f, "systemd unit action {} failed", action)
+            }
+            RogError::SystemdUnitWaitTimeout(state) => {
+                write!(
+                    f,
+                    "Timed out waiting for systemd unit change {} state",
+                    state
+                )
+            }
+            RogError::Command(func, error) => write!(f, "Command exec error: {}: {}", func, error),
         }
     }
 }

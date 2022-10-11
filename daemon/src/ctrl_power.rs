@@ -1,3 +1,4 @@
+use crate::systemd::{do_systemd_unit_action, SystemdUnitAction};
 use crate::{config::Config, error::RogError, GetSupported};
 use crate::{task_watch_item, CtrlTask};
 use async_trait::async_trait;
@@ -5,13 +6,15 @@ use log::{info, warn};
 use rog_platform::power::AsusPower;
 use rog_platform::supported::ChargeSupportedFunctions;
 use std::sync::Arc;
+use std::time::Duration;
+use tokio::time::sleep;
 use zbus::dbus_interface;
 use zbus::export::futures_util::lock::Mutex;
-use zbus::export::futures_util::StreamExt;
 use zbus::Connection;
 use zbus::SignalContext;
 
 const ZBUS_PATH: &str = "/org/asuslinux/Power";
+const NVIDIA_POWERD: &str = "nvidia-powerd.service";
 
 impl GetSupported for CtrlPower {
     type A = ChargeSupportedFunctions;
@@ -163,6 +166,16 @@ impl CtrlTask for CtrlPower {
                         })
                         .ok();
                 }
+                if let Ok(value) = power1.power.get_online() {
+                    let action = if value == 1 {
+                        SystemdUnitAction::Restart
+                    } else {
+                        SystemdUnitAction::Stop
+                    };
+                    if do_systemd_unit_action(action, NVIDIA_POWERD).is_ok() {
+                        info!("CtrlPower task: did {action:?} on {NVIDIA_POWERD}");
+                    }
+                }
             },
             move || {},
             move || {
@@ -176,6 +189,16 @@ impl CtrlTask for CtrlPower {
                         })
                         .ok();
                 }
+                if let Ok(value) = power2.power.get_online() {
+                    let action = if value == 1 {
+                        SystemdUnitAction::Restart
+                    } else {
+                        SystemdUnitAction::Stop
+                    };
+                    if do_systemd_unit_action(action, NVIDIA_POWERD).is_ok() {
+                        info!("CtrlPower task: did {action:?} on {NVIDIA_POWERD}");
+                    }
+                }
             },
         )
         .await;
@@ -184,25 +207,32 @@ impl CtrlTask for CtrlPower {
             .await?;
 
         let ctrl = self.clone();
-        match ctrl.power.monitor_online() {
-            Ok(mut watch) => {
-                tokio::spawn(async move {
-                    let mut buffer = [0; 32];
-                    watch
-                        .event_stream(&mut buffer)
-                        .unwrap()
-                        .for_each(|_| async {
-                            if let Ok(value) = ctrl.power.get_online() {
-                                Self::notify_mains_online(&signal_ctxt, value == 1)
-                                    .await
-                                    .unwrap();
-                            }
-                        })
-                        .await;
-                });
+        dbg!("CtrlPower");
+        tokio::spawn(async move {
+            let mut online = 10;
+            loop {
+                if let Ok(value) = ctrl.power.get_online() {
+                    if online != value {
+                        online = value;
+                        let action = if value == 1 {
+                            SystemdUnitAction::Restart
+                        } else {
+                            SystemdUnitAction::Stop
+                        };
+                        if do_systemd_unit_action(action, NVIDIA_POWERD).is_ok() {
+                            info!("CtrlPower task: did {action:?} on {NVIDIA_POWERD}");
+                        }
+
+                        Self::notify_mains_online(&signal_ctxt, value == 1)
+                            .await
+                            .unwrap();
+                    }
+                }
+                // The inotify doesn't pick up events when the kernel changes internal value
+                // so we need to watch it with a thread and sleep unfortunately
+                sleep(Duration::from_secs(1)).await;
             }
-            Err(e) => info!("inotify watch failed: {}", e),
-        }
+        });
 
         Ok(())
     }

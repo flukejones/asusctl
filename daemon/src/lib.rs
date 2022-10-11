@@ -14,6 +14,8 @@ pub mod ctrl_profiles;
 /// Laptop matching to determine capabilities
 pub mod laptops;
 
+pub mod systemd;
+
 /// Fetch all supported functions for the laptop
 pub mod ctrl_supported;
 
