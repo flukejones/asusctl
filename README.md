@@ -16,9 +16,9 @@ Now includes a GUI, `rog-control-center`.
 ## Goals
 
 1. To provide an interface for rootless control of some system functions most users wish to control such as fan speeds, keyboard LEDs, graphics modes.
-2. Enable third-party apps to use the above with dbus methods
-3. To make the above as easy as possible for new users
-4. Respect the users resources: be small, light, and fast
+2. Enable third-party apps to use the above with dbus methods.
+3. To make the above as easy as possible for new users.
+4. Respect the users resources: be small, light, and fast.
 
 Point 3 means that the list of supported distros is very narrow - fedora is explicitly
 supported. All other distros are *not* supported (while asusd might still run fine on them).
@@ -41,7 +41,7 @@ Bus 001 Device 002: ID 0b05:1866 ASUSTek Computer, Inc. N-KEY Device
 ```
 
 then it may work without tweaks. Technically all other functions except the LED
-and AniMe parts should work regardless of your latop make.
+and AniMe parts should work regardless of your laptop's make.
 
 **TUF Laptops**: now supported provided the kernel is patched. These patches are submitted upstream and will be in version 6.1.x of the kernel (or thereabouts). See the blog on asus-linux.org for more info.
 
@@ -62,7 +62,7 @@ and AniMe parts should work regardless of your latop make.
 
 # GUI
 
-A gui is now in the repo - ROG Control Center. At this time it is still a WIP, but it has almost all features in place already.
+A GUI is now in the repo - ROG Control Center. At this time it is still a WIP, but it has almost all features in place already.
 
 ![](/extra/system.png)
 ![](/extra/fan-curves.png)
@@ -72,7 +72,7 @@ A gui is now in the repo - ROG Control Center. At this time it is still a WIP, b
 
 Requirements are rust >= 1.57 installed from rustup.io if the distro provided version is too old, and `make`.
 
-**Ubuntu (unsuported):**
+**Ubuntu (unsupported):**
 
     apt install libclang-dev libudev-dev
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
