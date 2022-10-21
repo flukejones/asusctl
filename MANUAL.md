@@ -7,7 +7,7 @@ but can also be used with non-asus laptops with reduced features.
 
 - `asusd`: The main system daemon. It is autostarted by a udev rule and systemd unit.
 - `asusd-user`: The user level daemon. Currently will run an anime sequence, with RGB keyboard sequences soon.
-- `asusctl`: The CLI for interacting with the system daemon
+- `asusctl`: The CLI for interacting with the system daemon.
 - `asus-notify`: A notification daemon with a user systemd unit that can be enabled.
 
 ## `asusd`
@@ -69,7 +69,7 @@ per_key = false
 
 1. `prod_family`: you can find this in `journalctl -b -u asusd`, or `cat /sys/class/dmi/id/product_name`. It should be copied as written. There can be multiple `led-data` groups of the same `prod_family` with differing `board_names`.
 2. `board_names`: is an array of board names in this product family. Find this in the journal as above or by `cat /sys/class/dmi/id/board_name`.
-3. `standard` are the factory preset modes, the names should corrospond to Armory Crate names
+3. `standard` are the factory preset modes, the names should corrospond to Armory Crate names.
 4. `multizone`: some models have 4 to 7 zones of LED control as shown in the example. If the laptop has no zones then an empty array will suffice.
 5. `per_key`: enable per-key RGB effects. The keyboard must support this or it has no effect.
 
@@ -106,7 +106,7 @@ A common use of asusctl is to bind the `fn+f5` (fan) key to `asusctl profile -n`
 
 #### Fan curves
 
-Fan curve support requires a laptop that supports it (this is detected automatically) and the kernel patch from [here](https://lkml.org/lkml/2021/10/23/250) which is accepted for the 5.17 kernel release .
+Fan curve support requires a laptop that supports it (this is detected automatically) and the kernel patch from [here](https://lkml.org/lkml/2021/10/23/250) which is accepted for the 5.17 kernel release.
 
 The fan curve format can be of varying formats:
 
@@ -115,19 +115,19 @@ The fan curve format can be of varying formats:
 - `30 0,40 5,50 10,60 20,70 35,80 55,90 65,100 65"`
 - `30 0 40 5 50 10 60 20 70 35 80 55 90 65 100 65"`
 
-the order must always be the same "temperature:percentage", lowest from left to rigth being highest.
+the order must always be the same "temperature:percentage", lowest from left to right being highest.
 
-The config file is located at `/etc/asusd/profile.conf` and is self-descriptive. On first run it is populated with the system EC defaults.
+The config file is located at `/etc/asusd/profile.conf` and is self-descriptive. In the initial run, it is populated with the system EC defaults.
 
 ### Support controller
 
-There is one more controller; the support controller. The sole pupose of this controller is to querie all the other controllers for information about their support level for the host laptop. Returns a json string.
+There is one more controller; the support controller. The sole pupose of this controller is to query all the other controllers for information about their support level for the host laptop. Returns a json string.
 
 ## asusd-user
 
-`asusd-user` is a usermode daemon. The intended purpose is to provide a method for users to run there own custom per-key keyboard effects and modes, AniMe sequences, and possibly their own profiles - all without overwriting the *base* system config. As such some parts of the system daemon will migrate to the user daemon over time with the expectation that the Linux system runs both.
+`asusd-user` is a usermode daemon. The intended purpose is to provide a method for users to run their own custom per-key keyboard effects and modes, AniMe sequences, and possibly their own profiles - all without overwriting the *base* system config. As such some parts of the system daemon will migrate to the user daemon over time with the expectation that the Linux system runs both.
 
-As of now only AniMe is active in this with configuration in `~/.config/rog/`. On first run defaults are created that are intended to work as examples.
+As of now only AniMe is active in this with configuration in `~/.config/rog/`. In the initial run, defaults are created that are intended to work as examples.
 
 The main config is `~/.config/rog/rog-user.cfg`
 
