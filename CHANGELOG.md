@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and on resume/boot (hybrid boot). It has been proven that this nvidia daemon can be
   problematic when on battery, not allowing the dgpu to suspend within decent time and
   sometimes blocking it completely.
+- Notification to rog-control-center of dGPU state change
 ### Changed
 - Use loops to ensure that mutex is gained for LED changes.
 - asusctl now uses tokio for async runtime. This helps simplify some code.

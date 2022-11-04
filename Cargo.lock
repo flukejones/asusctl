@@ -2459,6 +2459,7 @@ dependencies = [
 [[package]]
 name = "supergfxctl"
 version = "5.0.2"
+source = "git+https://gitlab.com/asus-linux/supergfxctl.git#f8f9a5a843e6960a13a5fd2c02995c7c979cbfba"
 dependencies = [
  "env_logger",
  "gumdrop",
