@@ -14,6 +14,7 @@ use std::{
     },
     thread::spawn,
 };
+use supergfxctl::pci_device::GfxPower;
 use zbus::export::futures_util::StreamExt;
 
 const NOTIF_HEADER: &str = "ROG Control";
@@ -62,6 +63,42 @@ pub fn start_notifications(
                         }
                         bios_notified1.store(true, Ordering::SeqCst);
                     }
+                    future::ready(())
+                })
+                .await;
+            };
+        })
+        .detach();
+
+    let notifs_enabled1 = notifs_enabled.clone();
+    let last_notif = last_notification.clone();
+    let bios_notified1 = bios_notified.clone();
+    executor
+        .spawn(async move {
+            let conn = zbus::Connection::system().await.unwrap();
+            let proxy = supergfxctl::zbus_proxy::DaemonProxy::new(&conn)
+                .await
+                .unwrap();
+            if let Ok(p) = proxy.receive_notify_gfx_status().await {
+                p.for_each(|e| {
+                    if let Ok(out) = e.args() {
+                        if notifs_enabled1.load(Ordering::SeqCst) {
+                            let status = out.status();
+                            if *status != GfxPower::Unknown {
+                                // Required check because status cycles through active/unknown/suspended
+                                if let Ok(ref mut lock) = last_notif.try_lock() {
+                                    notify!(
+                                        do_notification(
+                                            "dGPU status changed:",
+                                            &format!("{status:?}",)
+                                        ),
+                                        lock
+                                    );
+                                }
+                            }
+                        }
+                    }
+                    bios_notified1.store(true, Ordering::SeqCst);
                     future::ready(())
                 })
                 .await;
