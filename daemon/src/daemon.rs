@@ -10,6 +10,7 @@ use daemon::ctrl_anime::CtrlAnime;
 use log::LevelFilter;
 use log::{error, info, warn};
 use tokio::time::sleep;
+use zbus::SignalContext;
 
 use daemon::ctrl_anime::{config::AnimeConfig, trait_impls::CtrlAnimeZbus};
 use daemon::ctrl_aura::{config::AuraConfig, controller::CtrlKbdLed, trait_impls::CtrlKbdLedZbus};
@@ -78,7 +79,8 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
 
     match CtrlPlatform::new(config.clone()) {
         Ok(ctrl) => {
-            start_tasks(ctrl, &mut connection).await?;
+            let sig_ctx = CtrlPlatform::signal_context(&connection)?;
+            start_tasks(ctrl, &mut connection, sig_ctx).await?;
         }
         Err(err) => {
             error!("CtrlPlatform: {}", err);
@@ -87,7 +89,8 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
 
     match CtrlPower::new(config.clone()) {
         Ok(ctrl) => {
-            start_tasks(ctrl, &mut connection).await?;
+            let sig_ctx = CtrlPower::signal_context(&connection)?;
+            start_tasks(ctrl, &mut connection, sig_ctx).await?;
         }
         Err(err) => {
             error!("CtrlPower: {}", err);
@@ -99,7 +102,8 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
         match CtrlPlatformProfile::new(profile_config) {
             Ok(ctrl) => {
                 let zbus = ProfileZbus(Arc::new(Mutex::new(ctrl)));
-                start_tasks(zbus, &mut connection).await?;
+                let sig_ctx = ProfileZbus::signal_context(&connection)?;
+                start_tasks(zbus, &mut connection, sig_ctx).await?;
             }
             Err(err) => {
                 error!("Profile control: {}", err);
@@ -112,7 +116,8 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     match CtrlAnime::new(AnimeConfig::load()) {
         Ok(ctrl) => {
             let zbus = CtrlAnimeZbus(Arc::new(Mutex::new(ctrl)));
-            start_tasks(zbus, &mut connection).await?;
+            let sig_ctx = CtrlAnimeZbus::signal_context(&connection)?;
+            start_tasks(zbus, &mut connection, sig_ctx).await?;
         }
         Err(err) => {
             info!("AniMe control: {}", err);
@@ -124,7 +129,8 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     match CtrlKbdLed::new(laptop, aura_config) {
         Ok(ctrl) => {
             let zbus = CtrlKbdLedZbus(Arc::new(Mutex::new(ctrl)));
-            start_tasks(zbus, &mut connection).await?;
+            let sig_ctx = CtrlKbdLedZbus::signal_context(&connection)?;
+            start_tasks(zbus, &mut connection, sig_ctx).await?;
         }
         Err(err) => {
             error!("Keyboard control: {}", err);
@@ -140,7 +146,11 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     }
 }
 
-async fn start_tasks<T>(mut zbus: T, connection: &mut Connection) -> Result<(), Box<dyn Error>>
+async fn start_tasks<T>(
+    mut zbus: T,
+    connection: &mut Connection,
+    signal_ctx: SignalContext<'static>,
+) -> Result<(), Box<dyn Error>>
 where
     T: ZbusRun + Reloadable + CtrlTask + Clone,
 {
@@ -151,8 +161,6 @@ where
         .unwrap_or_else(|err| warn!("Controller error: {}", err));
     zbus.add_to_server(connection).await;
 
-    task.create_tasks(CtrlKbdLedZbus::signal_context(connection)?)
-        .await
-        .ok();
+    task.create_tasks(signal_ctx).await.ok();
     Ok(())
 }

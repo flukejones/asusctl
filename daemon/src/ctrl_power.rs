@@ -52,13 +52,15 @@ impl CtrlPower {
                 err
             })
             .ok();
-        Self::notify_charge_control_end_threshold(&ctxt, limit).await?;
+        Self::notify_charge_control_end_threshold(&ctxt, limit)
+            .await
+            .ok();
         Ok(())
     }
 
     fn charge_control_end_threshold(&self) -> u8 {
         loop {
-            if let Some(config) = self.config.try_lock() {
+            if let Some(mut config) = self.config.try_lock() {
                 let limit = self
                     .power
                     .get_charge_control_end_threshold()
@@ -67,11 +69,10 @@ impl CtrlPower {
                         err
                     })
                     .unwrap_or(100);
-                if let Some(mut config) = self.config.try_lock() {
-                    config.read();
-                    config.bat_charge_limit = limit;
-                    config.write();
-                }
+
+                config.read();
+                config.bat_charge_limit = limit;
+                config.write();
 
                 return config.bat_charge_limit;
             }
@@ -207,7 +208,6 @@ impl CtrlTask for CtrlPower {
             .await?;
 
         let ctrl = self.clone();
-        dbg!("CtrlPower");
         tokio::spawn(async move {
             let mut online = 10;
             loop {

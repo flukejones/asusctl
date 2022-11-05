@@ -216,7 +216,6 @@ impl CtrlTask for ProfileZbus {
                         lock.write_profile_curve_to_platform().unwrap();
                         lock.save_config();
                     }
-
                     Self::notify_profile(&signal_ctxt.clone(), lock.config.active_profile)
                         .await
                         .ok();

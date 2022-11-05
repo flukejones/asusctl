@@ -23,7 +23,7 @@ macro_rules! watch_attr {
                 path.push($attr_name);
                 if let Some(path) = path.to_str() {
                     let mut inotify = inotify::Inotify::init()?;
-                    inotify.add_watch(path, inotify::WatchMask::MODIFY)
+                    inotify.add_watch(path, inotify::WatchMask::CLOSE_WRITE)
                         .map_err(|e| {
                             if e.kind() == std::io::ErrorKind::NotFound {
                                 PlatformError::AttrNotFound(format!("{}", $attr_name))

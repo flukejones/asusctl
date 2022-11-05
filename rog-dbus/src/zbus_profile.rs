@@ -70,5 +70,5 @@ trait Profile {
 
     /// NotifyProfile signal
     #[dbus_proxy(signal)]
-    fn notify_profile(&self, profile: Profile) -> zbus::Result<Profile>;
+    async fn notify_profile(&self, profile: Profile) -> zbus::Result<Profile>;
 }
