@@ -1,4 +1,4 @@
-use std::{path::PathBuf, str::FromStr};
+use std::{fmt::Display, path::PathBuf, str::FromStr};
 
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
@@ -119,5 +119,18 @@ impl GpuMode {
             return Self::Egpu;
         }
         Self::Optimus
+    }
+}
+
+impl Display for GpuMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GpuMode::Discrete => write!(f, "Discrete"),
+            GpuMode::Optimus => write!(f, "Optimus"),
+            GpuMode::Integrated => write!(f, "Integrated"),
+            GpuMode::Egpu => write!(f, "eGPU"),
+            GpuMode::Error => write!(f, "Error"),
+            GpuMode::NotSupported => write!(f, "Not Supported"),
+        }
     }
 }

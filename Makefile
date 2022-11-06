@@ -15,7 +15,6 @@ BIN_ROG := rog-control-center
 BIN_C := asusctl
 BIN_D := asusd
 BIN_U := asusd-user
-BIN_N := asus-notify
 LEDCFG := asusd-ledmodes.toml
 
 SRC := Cargo.toml Cargo.lock Makefile $(shell find -type f -wholename '**/src/*.rs')
@@ -48,14 +47,12 @@ install:
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_C)" "$(DESTDIR)$(bindir)/$(BIN_C)"
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_D)" "$(DESTDIR)$(bindir)/$(BIN_D)"
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_U)" "$(DESTDIR)$(bindir)/$(BIN_U)"
-	$(INSTALL_PROGRAM) "./target/release/$(BIN_N)" "$(DESTDIR)$(bindir)/$(BIN_N)"
 
 	$(INSTALL_DATA) "./data/$(BIN_D).rules" "$(DESTDIR)$(libdir)/udev/rules.d/99-$(BIN_D).rules"
 	$(INSTALL_DATA) "./data/$(LEDCFG)" "$(DESTDIR)/etc/asusd/$(LEDCFG)"
 	$(INSTALL_DATA) "./data/$(BIN_D).conf" "$(DESTDIR)$(datarootdir)/dbus-1/system.d/$(BIN_D).conf"
 
 	$(INSTALL_DATA) "./data/$(BIN_D).service" "$(DESTDIR)$(libdir)/systemd/system/$(BIN_D).service"
-	$(INSTALL_DATA) "./data/$(BIN_N).service" "$(DESTDIR)$(libdir)/systemd/user/$(BIN_N).service"
 	$(INSTALL_DATA) "./data/$(BIN_U).service" "$(DESTDIR)$(libdir)/systemd/user/$(BIN_U).service"
 
 	$(INSTALL_DATA) "./data/icons/asus_notif_yellow.png" "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/asus_notif_yellow.png"
@@ -78,12 +75,10 @@ uninstall:
 
 	rm -f "$(DESTDIR)$(bindir)/$(BIN_C)"
 	rm -f "$(DESTDIR)$(bindir)/$(BIN_D)"
-	rm -f "$(DESTDIR)$(bindir)/$(BIN_N)"
 	rm -f "$(DESTDIR)$(libdir)/udev/rules.d/99-$(BIN_D).rules"
 	rm -f "$(DESTDIR)/etc/asusd/$(LEDCFG)"
 	rm -f "$(DESTDIR)$(datarootdir)/dbus-1/system.d/$(BIN_D).conf"
 	rm -f "$(DESTDIR)$(libdir)/systemd/system/$(BIN_D).service"
-	rm -r "$(DESTDIR)$(libdir)/systemd/user/$(BIN_N).service"
 	rm -r "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/asus_notif_yellow.png"
 	rm -r "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/asus_notif_green.png"
 	rm -r "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/asus_notif_red.png"
@@ -117,7 +112,6 @@ endif
 	strip -s ./target/release/$(BIN_C)
 	strip -s ./target/release/$(BIN_D)
 	strip -s ./target/release/$(BIN_U)
-	strip -s ./target/release/$(BIN_N)
 	strip -s ./target/release/$(BIN_ROG)
 
 .PHONY: all clean distclean install uninstall update build

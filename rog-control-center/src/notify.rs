@@ -6,7 +6,6 @@ use rog_dbus::{
 use rog_profiles::Profile;
 use smol::{future, Executor};
 use std::{
-    error::Error,
     fmt::Display,
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -30,6 +29,43 @@ macro_rules! notify {
     };
 }
 
+macro_rules! recv_notif {
+    ($executor:ident,
+        $proxy:ident,
+        $signal:ident,
+        $was_notified:ident,
+        $last_notif:ident,
+        $notif_enabled:ident,
+        [$($out_arg:ident)+],
+        $msg:literal,
+        $notifier:ident) => {
+        let last_notif = $last_notif.clone();
+        let notifs_enabled1 = $notif_enabled.clone();
+        let notified = $was_notified.clone();
+        // TODO: make a macro or generic function or something...
+        $executor
+            .spawn(async move {
+                let conn = zbus::Connection::system().await.unwrap();
+                let proxy = $proxy::new(&conn).await.unwrap();
+                if let Ok(p) = proxy.$signal().await {
+                    p.for_each(|e| {
+                        if let Ok(out) = e.args() {
+                            if notifs_enabled1.load(Ordering::SeqCst) {
+                                if let Ok(ref mut lock) = last_notif.try_lock() {
+                                    notify!($notifier($msg, &out$(.$out_arg)+()), lock);
+                                }
+                            }
+                            notified.store(true, Ordering::SeqCst);
+                        }
+                        future::ready(())
+                    })
+                    .await;
+                };
+            })
+            .detach();
+    };
+}
+
 type SharedHandle = Arc<Mutex<Option<NotificationHandle>>>;
 
 pub fn start_notifications(
@@ -45,24 +81,127 @@ pub fn start_notifications(
 
     let executor = Executor::new();
     // BIOS notif
-    let last_notif = last_notification.clone();
-    let notifs_enabled1 = notifs_enabled.clone();
-    let bios_notified1 = bios_notified.clone();
-    // TODO: make a macro or generic function or something...
+    recv_notif!(
+        executor,
+        RogBiosProxy,
+        receive_notify_post_boot_sound,
+        bios_notified,
+        last_notification,
+        notifs_enabled,
+        [on],
+        "BIOS Post sound",
+        do_notification
+    );
+
+    recv_notif!(
+        executor,
+        RogBiosProxy,
+        receive_notify_panel_od,
+        bios_notified,
+        last_notification,
+        notifs_enabled,
+        [overdrive],
+        "BIOS Panel Overdrive",
+        do_notification
+    );
+
+    recv_notif!(
+        executor,
+        RogBiosProxy,
+        receive_notify_dgpu_disable,
+        bios_notified,
+        last_notification,
+        notifs_enabled,
+        [disable],
+        "BIOS dGPU disabled",
+        do_notification
+    );
+
+    recv_notif!(
+        executor,
+        RogBiosProxy,
+        receive_notify_egpu_enable,
+        bios_notified,
+        last_notification,
+        notifs_enabled,
+        [enable],
+        "BIOS eGPU enabled",
+        do_notification
+    );
+
+    recv_notif!(
+        executor,
+        RogBiosProxy,
+        receive_notify_gpu_mux_mode,
+        bios_notified,
+        last_notification,
+        notifs_enabled,
+        [mode],
+        "BIOS GPU MUX mode (reboot required)",
+        do_notification
+    );
+
+    // Charge notif
+    recv_notif!(
+        executor,
+        PowerProxy,
+        receive_notify_charge_control_end_threshold,
+        charge_notified,
+        last_notification,
+        notifs_enabled,
+        [limit],
+        "Battery charge limit changed to",
+        do_notification
+    );
+
+    // Profile notif
+    recv_notif!(
+        executor,
+        ProfileProxy,
+        receive_notify_profile,
+        profiles_notified,
+        last_notification,
+        notifs_enabled,
+        [profile],
+        "Profile changed to",
+        do_thermal_notif
+    );
+    // notify!(do_thermal_notif(&out.profile), lock);
+
+    // LED notif
+    recv_notif!(
+        executor,
+        LedProxy,
+        receive_notify_led,
+        aura_notified,
+        last_notification,
+        notifs_enabled,
+        [data mode_name],
+        "Keyboard LED mode changed to",
+        do_notification
+    );
+
     executor
         .spawn(async move {
             let conn = zbus::Connection::system().await.unwrap();
-            let proxy = RogBiosProxy::new(&conn).await.unwrap();
-            if let Ok(p) = proxy.receive_notify_post_boot_sound().await {
-                p.for_each(|e| {
-                    if let Ok(out) = e.args() {
-                        if notifs_enabled1.load(Ordering::SeqCst) {
-                            if let Ok(ref mut lock) = last_notif.try_lock() {
-                                notify!(do_notification("BIOS Post sound", &out.on()), lock);
-                            }
-                        }
-                        bios_notified1.store(true, Ordering::SeqCst);
-                    }
+            let proxy = LedProxy::new(&conn).await.unwrap();
+            if let Ok(p) = proxy.receive_all_signals().await {
+                p.for_each(|_| {
+                    aura_notified.store(true, Ordering::SeqCst);
+                    future::ready(())
+                })
+                .await;
+            };
+        })
+        .detach();
+
+    executor
+        .spawn(async move {
+            let conn = zbus::Connection::system().await.unwrap();
+            let proxy = AnimeProxy::new(&conn).await.unwrap();
+            if let Ok(p) = proxy.receive_power_states().await {
+                p.for_each(|_| {
+                    anime_notified.store(true, Ordering::SeqCst);
                     future::ready(())
                 })
                 .await;
@@ -106,195 +245,26 @@ pub fn start_notifications(
         })
         .detach();
 
-    let bios_notified1 = bios_notified.clone();
-    executor
-        .spawn(async move {
-            let conn = zbus::Connection::system().await.unwrap();
-            let proxy = RogBiosProxy::new(&conn).await.unwrap();
-            if let Ok(p) = proxy.receive_notify_panel_od().await {
-                p.for_each(|_| {
-                    bios_notified1.store(true, Ordering::SeqCst);
-                    future::ready(())
-                })
-                .await;
-            };
-        })
-        .detach();
-
-    let bios_notified1 = bios_notified.clone();
-    executor
-        .spawn(async move {
-            let conn = zbus::Connection::system().await.unwrap();
-            let proxy = RogBiosProxy::new(&conn).await.unwrap();
-            if let Ok(p) = proxy.receive_notify_dgpu_disable().await {
-                p.for_each(|_| {
-                    bios_notified1.store(true, Ordering::SeqCst);
-                    future::ready(())
-                })
-                .await;
-            };
-        })
-        .detach();
-
-    let bios_notified1 = bios_notified.clone();
-    executor
-        .spawn(async move {
-            let conn = zbus::Connection::system().await.unwrap();
-            let proxy = RogBiosProxy::new(&conn).await.unwrap();
-            if let Ok(p) = proxy.receive_notify_egpu_enable().await {
-                p.for_each(|_| {
-                    bios_notified1.store(true, Ordering::SeqCst);
-                    future::ready(())
-                })
-                .await;
-            };
-        })
-        .detach();
-
-    let bios_notified1 = bios_notified;
-    executor
-        .spawn(async move {
-            let conn = zbus::Connection::system().await.unwrap();
-            let proxy = RogBiosProxy::new(&conn).await.unwrap();
-            if let Ok(p) = proxy.receive_notify_gpu_mux_mode().await {
-                p.for_each(|_| {
-                    bios_notified1.store(true, Ordering::SeqCst);
-                    future::ready(())
-                })
-                .await;
-            };
-        })
-        .detach();
-
-    // Charge notif
-    let last_notif = last_notification.clone();
-    let notifs_enabled1 = notifs_enabled.clone();
-    executor
-        .spawn(async move {
-            let conn = zbus::Connection::system().await.unwrap();
-            let proxy = PowerProxy::new(&conn).await.unwrap();
-            if let Ok(p) = proxy.receive_notify_charge_control_end_threshold().await {
-                p.for_each(|e| {
-                    if let Ok(out) = e.args() {
-                        if notifs_enabled1.load(Ordering::SeqCst) {
-                            if let Ok(ref mut lock) = last_notif.try_lock() {
-                                notify!(
-                                    do_notification("Battery charge limit changed to", &out.limit),
-                                    lock
-                                );
-                            }
-                        }
-                        charge_notified.store(true, Ordering::SeqCst);
-                    }
-                    future::ready(())
-                })
-                .await;
-            };
-        })
-        .detach();
-
-    // Profile notif
-    let last_notif = last_notification.clone();
-    let notifs_enabled1 = notifs_enabled.clone();
-    executor
-        .spawn(async move {
-            let conn = zbus::Connection::system().await.unwrap();
-            let proxy = ProfileProxy::new(&conn).await.unwrap();
-            if let Ok(p) = proxy.receive_notify_profile().await {
-                p.for_each(|e| {
-                    if let Ok(out) = e.args() {
-                        if notifs_enabled1.load(Ordering::SeqCst) {
-                            if let Ok(ref mut lock) = last_notif.try_lock() {
-                                notify!(do_thermal_notif(&out.profile), lock);
-                            }
-                        }
-                        profiles_notified.store(true, Ordering::SeqCst);
-                    }
-                    future::ready(())
-                })
-                .await;
-            };
-        })
-        .detach();
-
-    // LED notif
-    let last_notif = last_notification;
-    let aura_notif = aura_notified.clone();
-    let notifs_enabled1 = notifs_enabled;
-    executor
-        .spawn(async move {
-            let conn = zbus::Connection::system().await.unwrap();
-            let proxy = LedProxy::new(&conn).await.unwrap();
-            if let Ok(p) = proxy.receive_notify_led().await {
-                p.for_each(|e| {
-                    if let Ok(out) = e.args() {
-                        if notifs_enabled1.load(Ordering::SeqCst) {
-                            if let Ok(ref mut lock) = last_notif.try_lock() {
-                                notify!(
-                                    do_notification(
-                                        "Keyboard LED mode changed to",
-                                        &out.data.mode_name()
-                                    ),
-                                    lock
-                                );
-                            }
-                        }
-                        aura_notif.store(true, Ordering::SeqCst);
-                    }
-                    future::ready(())
-                })
-                .await;
-            };
-        })
-        .detach();
-
-    let aura_notif = aura_notified.clone();
-    executor
-        .spawn(async move {
-            let conn = zbus::Connection::system().await.unwrap();
-            let proxy = LedProxy::new(&conn).await.unwrap();
-            if let Ok(p) = proxy.receive_notify_led().await {
-                p.for_each(|_| {
-                    aura_notif.store(true, Ordering::SeqCst);
-                    future::ready(())
-                })
-                .await;
-            };
-        })
-        .detach();
-
-    executor
-        .spawn(async move {
-            let conn = zbus::Connection::system().await.unwrap();
-            let proxy = LedProxy::new(&conn).await.unwrap();
-            if let Ok(p) = proxy.receive_all_signals().await {
-                p.for_each(|_| {
-                    aura_notified.store(true, Ordering::SeqCst);
-                    future::ready(())
-                })
-                .await;
-            };
-        })
-        .detach();
-
-    executor
-        .spawn(async move {
-            let conn = zbus::Connection::system().await.unwrap();
-            let proxy = AnimeProxy::new(&conn).await.unwrap();
-            if let Ok(p) = proxy.receive_power_states().await {
-                p.for_each(|_| {
-                    anime_notified.store(true, Ordering::SeqCst);
-                    future::ready(())
-                })
-                .await;
-            };
-        })
-        .detach();
-
     spawn(move || loop {
         smol::block_on(executor.tick());
     });
     Ok(())
+}
+
+fn base_notification<T>(message: &str, data: &T) -> Notification
+where
+    T: Display,
+{
+    let mut notif = Notification::new();
+
+    notif
+        .summary(NOTIF_HEADER)
+        .body(&format!("{message} {data}"))
+        .timeout(2000)
+        .hint(Hint::Resident(true))
+        .hint(Hint::Category("device".into()));
+
+    notif
 }
 
 fn do_notification<T>(
@@ -304,31 +274,19 @@ fn do_notification<T>(
 where
     T: Display,
 {
-    Notification::new()
-        .summary(NOTIF_HEADER)
-        .body(&format!("{message} {data}"))
-        .timeout(2000)
-        .show()
+    base_notification(message, data).show()
 }
 
-fn do_thermal_notif(profile: &Profile) -> Result<NotificationHandle, Box<dyn Error>> {
+fn do_thermal_notif(
+    message: &str,
+    profile: &Profile,
+) -> Result<NotificationHandle, notify_rust::error::Error> {
     let icon = match profile {
         Profile::Balanced => "asus_notif_yellow",
         Profile::Performance => "asus_notif_red",
         Profile::Quiet => "asus_notif_green",
     };
     let profile: &str = (*profile).into();
-    let x = Notification::new()
-        .summary("ASUS ROG")
-        .body(&format!(
-            "Thermal profile changed to {}",
-            profile.to_uppercase(),
-        ))
-        .hint(Hint::Resident(true))
-        .timeout(2000)
-        .hint(Hint::Category("device".into()))
-        //.hint(Hint::Transient(true))
-        .icon(icon)
-        .show()?;
-    Ok(x)
+    let mut notif = base_notification(message, &profile.to_uppercase());
+    notif.icon(icon).show()
 }

@@ -2,6 +2,7 @@ pub mod error;
 pub mod fan_curve_set;
 
 use std::{
+    fmt::Display,
     fs::OpenOptions,
     io::{Read, Write},
     path::Path,
@@ -110,6 +111,12 @@ impl std::str::FromStr for Profile {
             "quiet" => Ok(Profile::Quiet),
             _ => Err(ProfileError::ParseProfileName),
         }
+    }
+}
+
+impl Display for Profile {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
 

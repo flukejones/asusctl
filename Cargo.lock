@@ -76,20 +76,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "23b62fc65de8e4e7f52534fb52b0f3ed04746ae267519eef2a83941e8085068b"
 
 [[package]]
-name = "asus-notify"
-version = "4.5.0-rc4"
-dependencies = [
- "notify-rust",
- "rog_aura",
- "rog_dbus",
- "rog_platform",
- "rog_profiles",
- "serde_json",
- "smol",
- "zbus 3.4.0",
-]
-
-[[package]]
 name = "asusctl"
 version = "4.5.0-rc4"
 dependencies = [
