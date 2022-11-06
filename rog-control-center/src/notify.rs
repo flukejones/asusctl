@@ -1,8 +1,10 @@
+use crate::error::Result;
 use notify_rust::{Hint, Notification, NotificationHandle};
 use rog_dbus::{
     zbus_anime::AnimeProxy, zbus_led::LedProxy, zbus_platform::RogBiosProxy,
     zbus_power::PowerProxy, zbus_profile::ProfileProxy,
 };
+use rog_platform::platform::GpuMode;
 use rog_profiles::Profile;
 use smol::{future, Executor};
 use std::{
@@ -15,7 +17,6 @@ use std::{
 };
 use supergfxctl::pci_device::GfxPower;
 use zbus::export::futures_util::StreamExt;
-use crate::error::Result;
 
 const NOTIF_HEADER: &str = "ROG Control";
 
@@ -139,7 +140,7 @@ pub fn start_notifications(
         notifs_enabled,
         [mode],
         "BIOS GPU MUX mode (reboot required)",
-        do_notification
+        mux_notification
     );
 
     // Charge notif
@@ -280,28 +281,28 @@ where
     notif
 }
 
-fn do_notification<T>(
-    message: &str,
-    data: &T,
-) -> Result<NotificationHandle>
+fn do_notification<T>(message: &str, data: &T) -> Result<NotificationHandle>
 where
     T: Display,
 {
     Ok(base_notification(message, data).show()?)
 }
 
-fn ac_power_notification(
-    message: &str,
-    on: &bool,
-) -> Result<NotificationHandle> {
-    let data = if *on { "plugged".to_string() } else { "unplugged".to_string() };
+fn ac_power_notification(message: &str, on: &bool) -> Result<NotificationHandle> {
+    let data = if *on {
+        "plugged".to_string()
+    } else {
+        "unplugged".to_string()
+    };
     Ok(base_notification(message, &data).show()?)
 }
 
-fn do_thermal_notif(
-    message: &str,
-    profile: &Profile,
-) -> Result<NotificationHandle> {
+/// Actual GpuMode unused as data is never correct until switched by reboot
+fn mux_notification(message: &str, _: &GpuMode) -> Result<NotificationHandle> {
+    Ok(base_notification(message, &"").show()?)
+}
+
+fn do_thermal_notif(message: &str, profile: &Profile) -> Result<NotificationHandle> {
     let icon = match profile {
         Profile::Balanced => "asus_notif_yellow",
         Profile::Performance => "asus_notif_red",
