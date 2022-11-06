@@ -28,5 +28,6 @@ use zbus_macros::dbus_proxy;
 )]
 trait Supported {
     /// SupportedFunctions method
+    #[inline]
     fn supported_functions(&self) -> zbus::Result<SupportedFunctions>;
 }

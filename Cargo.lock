@@ -203,17 +203,6 @@ dependencies = [
 
 [[package]]
 name = "async-recursion"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7d78656ba01f1b93024b7c3a0467f1608e4be67d725749fdcd7d2c7678fd7a2"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "async-recursion"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2cda8f4bcc10624c4e85bc66b3f452cca98cfa5ca002dc83a16aad2367641bea"
@@ -610,7 +599,7 @@ dependencies = [
  "sysfs-class",
  "tokio",
  "toml",
- "zbus 3.4.0",
+ "zbus",
  "zvariant",
 ]
 
@@ -627,7 +616,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "smol",
- "zbus 3.4.0",
+ "zbus",
  "zvariant",
  "zvariant_derive",
 ]
@@ -1145,9 +1134,9 @@ dependencies = [
 
 [[package]]
 name = "glam"
-version = "0.21.3"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "518faa5064866338b013ff9b2350dc318e14cc4fcd6cb8206d7e7c9886c98815"
+checksum = "12f597d56c1bd55a811a1be189459e8fad2bbc272616375602443bdfb37fa774"
 dependencies = [
  "serde",
 ]
@@ -1440,7 +1429,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c2bd5667a34b046e66f21ac2c016b1f4b41318423f9282b4e04f755ad947817"
 dependencies = [
  "serde",
- "zbus 3.4.0",
+ "zbus",
  "zvariant",
 ]
 
@@ -1615,19 +1604,6 @@ dependencies = [
 
 [[package]]
 name = "nix"
-version = "0.23.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f866317acbd3a240710c63f065ffb1e4fd466259045ccb504130b7f668f35c6"
-dependencies = [
- "bitflags",
- "cc",
- "cfg-if",
- "libc",
- "memoffset",
-]
-
-[[package]]
-name = "nix"
 version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "195cdbc1741b8134346d515b3a56a1c94b0912758009cfd53f99ea0f57b065fc"
@@ -1680,14 +1656,13 @@ dependencies = [
 
 [[package]]
 name = "notify-rust"
-version = "4.5.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "368e89ea58df747ce88be669ae44e79783c1d30bfd540ad0fc520b3f41f0b3b0"
+version = "4.5.11"
+source = "git+https://github.com/flukejones/notify-rust.git#6033d06377d6d601207ae31861cda560d03a9aa8"
 dependencies = [
  "mac-notification-sys",
  "serde",
  "tauri-winrt-notification",
- "zbus 2.3.2",
+ "zbus",
  "zvariant",
  "zvariant_derive",
 ]
@@ -1772,16 +1747,6 @@ name = "once_cell"
 version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "86f0b0d4bf799edbc74508c1e8bf170ff5f41238e5f8225603ca7caaae2b7860"
-
-[[package]]
-name = "ordered-stream"
-version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44630c059eacfd6e08bdaa51b1db2ce33119caa4ddc1235e923109aa5f25ccb1"
-dependencies = [
- "futures-core",
- "pin-project-lite",
-]
 
 [[package]]
 name = "ordered-stream"
@@ -2066,7 +2031,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "toml",
- "zbus 3.4.0",
+ "zbus",
 ]
 
 [[package]]
@@ -2081,7 +2046,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "sysfs-class",
- "zbus 3.4.0",
+ "zbus",
  "zvariant",
 ]
 
@@ -2104,8 +2069,8 @@ dependencies = [
  "rog_aura",
  "rog_platform",
  "rog_profiles",
- "zbus 3.4.0",
- "zbus_macros 3.4.0",
+ "zbus",
+ "zbus_macros",
  "zvariant",
 ]
 
@@ -2260,15 +2225,6 @@ dependencies = [
 
 [[package]]
 name = "sha1"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1da05c97445caa12d05e848c4a4fcbbea29e748ac28f7e80e9b010392063770"
-dependencies = [
- "sha1_smol",
-]
-
-[[package]]
-name = "sha1"
 version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f04293dc80c3993519f2d7f6f511707ee7094fe0c6d3406feb330cdb3540eba3"
@@ -2277,12 +2233,6 @@ dependencies = [
  "cpufeatures",
  "digest",
 ]
-
-[[package]]
-name = "sha1_smol"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae1a47186c03a32177042e55dbc5fd5aee900b8e0069a8d70fba96a9375cd012"
 
 [[package]]
 name = "shared_library"
@@ -2447,7 +2397,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "udev",
- "zbus 3.4.0",
+ "zbus",
  "zvariant",
  "zvariant_derive",
 ]
@@ -3245,46 +3195,6 @@ checksum = "d2d7d3948613f75c98fd9328cfdcc45acc4d360655289d0a7d4ec931392200a3"
 
 [[package]]
 name = "zbus"
-version = "2.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d8f1a037b2c4a67d9654dc7bdfa8ff2e80555bbefdd3c1833c1d1b27c963a6b"
-dependencies = [
- "async-broadcast",
- "async-channel",
- "async-executor",
- "async-io",
- "async-lock",
- "async-recursion 0.3.2",
- "async-task",
- "async-trait",
- "byteorder",
- "derivative",
- "dirs",
- "enumflags2",
- "event-listener",
- "futures-core",
- "futures-sink",
- "futures-util",
- "hex",
- "lazy_static",
- "nix 0.23.1",
- "once_cell",
- "ordered-stream 0.0.1",
- "rand",
- "serde",
- "serde_repr",
- "sha1 0.6.1",
- "static_assertions",
- "tracing",
- "uds_windows",
- "winapi",
- "zbus_macros 2.3.2",
- "zbus_names",
- "zvariant",
-]
-
-[[package]]
-name = "zbus"
 version = "3.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78a0b85c5608c27d2306d67e955b9c6e23a42d824205c85038a7afbe19c0ae22"
@@ -3294,7 +3204,7 @@ dependencies = [
  "async-executor",
  "async-io",
  "async-lock",
- "async-recursion 1.0.0",
+ "async-recursion",
  "async-task",
  "async-trait",
  "byteorder",
@@ -3309,32 +3219,19 @@ dependencies = [
  "lazy_static",
  "nix 0.25.0",
  "once_cell",
- "ordered-stream 0.1.1",
+ "ordered-stream",
  "rand",
  "serde",
  "serde_repr",
- "sha1 0.10.5",
+ "sha1",
  "static_assertions",
  "tokio",
  "tracing",
  "uds_windows",
  "winapi",
- "zbus_macros 3.4.0",
+ "zbus_macros",
  "zbus_names",
  "zvariant",
-]
-
-[[package]]
-name = "zbus_macros"
-version = "2.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f8fb5186d1c87ae88cf234974c240671238b4a679158ad3b94ec465237349a6"
-dependencies = [
- "proc-macro-crate",
- "proc-macro2",
- "quote",
- "regex",
- "syn",
 ]
 
 [[package]]

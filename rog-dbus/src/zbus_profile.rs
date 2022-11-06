@@ -31,44 +31,55 @@ use zbus_macros::dbus_proxy;
 )]
 trait Profile {
     /// Get the fan-curve data for the currently active Profile
+    #[inline]
     fn fan_curve_data(&self, profile: Profile) -> zbus::Result<FanCurveSet>;
 
     /// Fetch the active profile name
+    #[inline]
     fn active_profile(&self) -> zbus::Result<Profile>;
 
     /// Get a list of profiles that have fan-curves enabled.
+    #[inline]
     fn enabled_fan_profiles(&self) -> zbus::Result<Vec<Profile>>;
 
     /// Toggle to next platform_profile. Names provided by `Profiles`.
     /// If fan-curves are supported will also activate a fan curve for profile.
+    #[inline]
     fn next_profile(&self) -> zbus::Result<()>;
 
     /// Fetch profile names
+    #[inline]
     fn profiles(&self) -> zbus::Result<Vec<Profile>>;
 
     /// Set this platform_profile name as active
+    #[inline]
     fn set_active_profile(&self, profile: Profile) -> zbus::Result<()>;
 
     /// Set a profile fan curve enabled status. Will also activate a fan curve.
+    #[inline]
     fn set_fan_curve_enabled(&self, profile: Profile, enabled: bool) -> zbus::Result<()>;
 
     /// Set the fan curve for the specified profile, or the profile the user is
     /// currently in if profile == None. Will also activate the fan curve.
+    #[inline]
     fn set_fan_curve(&self, profile: Profile, curve: CurveData) -> zbus::Result<()>;
 
     /// Reset the stored (self) and device curve to the defaults of the platform.
     ///
     /// Each platform_profile has a different default and the defualt can be read
     /// only for the currently active profile.
+    #[inline]
     fn set_active_curve_to_defaults(&self) -> zbus::Result<()>;
 
     /// Reset the stored (self) and device curve to the defaults of the platform.
     ///
     /// Each platform_profile has a different default and the defualt can be read
     /// only for the currently active profile.
+    #[inline]
     fn reset_profile_curves(&self, profile: Profile) -> zbus::fdo::Result<()>;
 
     /// NotifyProfile signal
+    #[inline]
     #[dbus_proxy(signal)]
     async fn notify_profile(&self, profile: Profile) -> zbus::Result<Profile>;
 }
