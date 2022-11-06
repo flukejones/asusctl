@@ -91,11 +91,9 @@ fn main() -> Result<()> {
     let states = setup_page_state_and_notifs(layout.clone(), &config, native_options.clone(), &dbus).unwrap();
 
     loop {
-        dbg!();
         if !start_closed {
             start_app(states.clone(), native_options.clone())?;
         }
-        dbg!();
 
         let config = Config::load().unwrap();
         if !config.run_in_background {
@@ -108,11 +106,9 @@ fn main() -> Result<()> {
             // process writes to the IPC (so there is data to actually read)
             if get_ipc_file().unwrap().read(&mut buf).is_ok() && buf[0] == SHOW_GUI {
                 start_closed = false;
-                dbg!();
                 continue;
             }
         }
-        dbg!();
     }
     Ok(())
 }
