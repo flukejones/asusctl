@@ -21,15 +21,13 @@ rog_platform = { path = "../rog-platform" }
 supergfxctl = { git = "https://gitlab.com/asus-linux/supergfxctl.git" }
 #supergfxctl = { path = "../../supergfxctl" }
 
-smol.workspace = true
-
+tokio.workspace = true
 serde.workspace = true
 toml.workspace = true
 serde_json.workspace = true
 serde_derive.workspace = true
 zbus.workspace = true
 dirs.workspace = true
-
 notify-rust.workspace = true
 
 nix = "^0.20.0"

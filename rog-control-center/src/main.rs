@@ -1,12 +1,12 @@
 use eframe::NativeOptions;
 use rog_aura::layouts::KeyLayout;
 use rog_control_center::{
-    error::Result,
-    config::Config, get_ipc_file, notify::start_notifications, on_tmp_dir_exists,
+    config::Config, error::Result, get_ipc_file, notify::start_notifications, on_tmp_dir_exists,
     page_states::PageDataStates, print_versions, startup_error::AppErrorShow, RogApp,
     RogDbusClientBlocking, SHOWING_GUI, SHOW_GUI,
 };
 use rog_platform::supported::SupportedFunctions;
+use tokio::runtime::Runtime;
 
 use std::{
     fs::OpenOptions,
@@ -23,6 +23,11 @@ const BOARD_NAME: &str = "/sys/class/dmi/id/board_name";
 
 fn main() -> Result<()> {
     print_versions();
+
+    // start tokio
+    let rt = Runtime::new().expect("Unable to create Runtime");
+    // Enter the runtime so that `tokio::spawn` is available immediately.
+    let _enter = rt.enter();
 
     let native_options = eframe::NativeOptions {
         vsync: true,
@@ -88,7 +93,9 @@ fn main() -> Result<()> {
         Err(_) => on_tmp_dir_exists().unwrap(),
     };
 
-    let states = setup_page_state_and_notifs(layout.clone(), &config, native_options.clone(), &dbus).unwrap();
+    let states =
+        setup_page_state_and_notifs(layout.clone(), &config, native_options.clone(), &dbus)
+            .unwrap();
 
     loop {
         if !start_closed {
@@ -110,6 +117,11 @@ fn main() -> Result<()> {
             }
         }
     }
+
+    // loop {
+    //     // This is just a blocker to idle and ensure the reator reacts
+    //     sleep(Duration::from_millis(1000)).await;
+    // }
     Ok(())
 }
 
@@ -165,10 +177,7 @@ fn setup_page_state_and_notifs(
     )
 }
 
-fn start_app(
-    states: PageDataStates,
-    native_options: NativeOptions,
-) -> Result<()> {
+fn start_app(states: PageDataStates, native_options: NativeOptions) -> Result<()> {
     let mut ipc_file = get_ipc_file().unwrap();
     ipc_file.write_all(&[SHOWING_GUI]).unwrap();
     eframe::run_native(

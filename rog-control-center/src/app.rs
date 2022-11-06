@@ -103,7 +103,7 @@ impl<'a> RogApp<'a> {
 }
 
 impl<'a> eframe::App for RogApp<'a> {
-  /// Called each time the UI needs repainting, which may be many times per second.
+    /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         let Self {

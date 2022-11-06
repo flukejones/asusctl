@@ -2062,9 +2062,9 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "smol",
  "supergfxctl",
  "tempfile",
+ "tokio",
  "toml",
  "zbus 3.4.0",
 ]
@@ -2436,7 +2436,7 @@ dependencies = [
 [[package]]
 name = "supergfxctl"
 version = "5.0.2"
-source = "git+https://gitlab.com/asus-linux/supergfxctl.git#f8f9a5a843e6960a13a5fd2c02995c7c979cbfba"
+source = "git+https://gitlab.com/asus-linux/supergfxctl.git#e551271c53231d650123246cab43ccd42ffe926a"
 dependencies = [
  "env_logger",
  "gumdrop",
@@ -2599,7 +2599,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a9e03c497dc955702ba729190dc4aac6f2a0ce97f913e5b1b5912fc5039d9099"
 dependencies = [
  "autocfg",
+ "bytes",
  "libc",
+ "memchr",
  "mio",
  "num_cpus",
  "pin-project-lite",
@@ -3304,6 +3306,7 @@ dependencies = [
  "futures-sink",
  "futures-util",
  "hex",
+ "lazy_static",
  "nix 0.25.0",
  "once_cell",
  "ordered-stream 0.1.1",
@@ -3312,6 +3315,7 @@ dependencies = [
  "serde_repr",
  "sha1 0.10.5",
  "static_assertions",
+ "tokio",
  "tracing",
  "uds_windows",
  "winapi",

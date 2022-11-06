@@ -6,17 +6,15 @@ use rog_dbus::{
 };
 use rog_platform::platform::GpuMode;
 use rog_profiles::Profile;
-use smol::{future, Executor};
 use std::{
     fmt::Display,
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc, Mutex,
     },
-    thread::spawn,
 };
 use supergfxctl::pci_device::GfxPower;
-use zbus::export::futures_util::StreamExt;
+use zbus::export::futures_util::{future, StreamExt};
 
 const NOTIF_HEADER: &str = "ROG Control";
 
@@ -32,8 +30,7 @@ macro_rules! notify {
 }
 
 macro_rules! recv_notif {
-    ($executor:ident,
-        $proxy:ident,
+    ($proxy:ident,
         $signal:ident,
         $was_notified:ident,
         $last_notif:ident,
@@ -45,8 +42,7 @@ macro_rules! recv_notif {
         let notifs_enabled1 = $notif_enabled.clone();
         let notified = $was_notified.clone();
         // TODO: make a macro or generic function or something...
-        $executor
-            .spawn(async move {
+        tokio::spawn(async move {
                 let conn = zbus::Connection::system().await.unwrap();
                 let proxy = $proxy::new(&conn).await.unwrap();
                 if let Ok(p) = proxy.$signal().await {
@@ -63,8 +59,7 @@ macro_rules! recv_notif {
                     })
                     .await;
                 };
-            })
-            .detach();
+            });
     };
 }
 
@@ -81,10 +76,8 @@ pub fn start_notifications(
 ) -> Result<()> {
     let last_notification: SharedHandle = Arc::new(Mutex::new(None));
 
-    let executor = Executor::new();
     // BIOS notif
     recv_notif!(
-        executor,
         RogBiosProxy,
         receive_notify_post_boot_sound,
         bios_notified,
@@ -96,7 +89,6 @@ pub fn start_notifications(
     );
 
     recv_notif!(
-        executor,
         RogBiosProxy,
         receive_notify_panel_od,
         bios_notified,
@@ -108,7 +100,6 @@ pub fn start_notifications(
     );
 
     recv_notif!(
-        executor,
         RogBiosProxy,
         receive_notify_dgpu_disable,
         bios_notified,
@@ -120,7 +111,6 @@ pub fn start_notifications(
     );
 
     recv_notif!(
-        executor,
         RogBiosProxy,
         receive_notify_egpu_enable,
         bios_notified,
@@ -132,7 +122,6 @@ pub fn start_notifications(
     );
 
     recv_notif!(
-        executor,
         RogBiosProxy,
         receive_notify_gpu_mux_mode,
         bios_notified,
@@ -145,7 +134,6 @@ pub fn start_notifications(
 
     // Charge notif
     recv_notif!(
-        executor,
         PowerProxy,
         receive_notify_charge_control_end_threshold,
         charge_notified,
@@ -157,7 +145,6 @@ pub fn start_notifications(
     );
 
     recv_notif!(
-        executor,
         PowerProxy,
         receive_notify_mains_online,
         bios_notified,
@@ -170,7 +157,6 @@ pub fn start_notifications(
 
     // Profile notif
     recv_notif!(
-        executor,
         ProfileProxy,
         receive_notify_profile,
         profiles_notified,
@@ -184,7 +170,6 @@ pub fn start_notifications(
 
     // LED notif
     recv_notif!(
-        executor,
         LedProxy,
         receive_notify_led,
         aura_notified,
@@ -195,73 +180,64 @@ pub fn start_notifications(
         do_notification
     );
 
-    executor
-        .spawn(async move {
-            let conn = zbus::Connection::system().await.unwrap();
-            let proxy = LedProxy::new(&conn).await.unwrap();
-            if let Ok(p) = proxy.receive_all_signals().await {
-                p.for_each(|_| {
-                    aura_notified.store(true, Ordering::SeqCst);
-                    future::ready(())
-                })
-                .await;
-            };
-        })
-        .detach();
+    tokio::spawn(async move {
+        let conn = zbus::Connection::system().await.unwrap();
+        let proxy = LedProxy::new(&conn).await.unwrap();
+        if let Ok(p) = proxy.receive_all_signals().await {
+            p.for_each(|_| {
+                aura_notified.store(true, Ordering::SeqCst);
+                future::ready(())
+            })
+            .await;
+        };
+    });
 
-    executor
-        .spawn(async move {
-            let conn = zbus::Connection::system().await.unwrap();
-            let proxy = AnimeProxy::new(&conn).await.unwrap();
-            if let Ok(p) = proxy.receive_power_states().await {
-                p.for_each(|_| {
-                    anime_notified.store(true, Ordering::SeqCst);
-                    future::ready(())
-                })
-                .await;
-            };
-        })
-        .detach();
+    tokio::spawn(async move {
+        let conn = zbus::Connection::system().await.unwrap();
+        let proxy = AnimeProxy::new(&conn).await.unwrap();
+        if let Ok(p) = proxy.receive_power_states().await {
+            p.for_each(|_| {
+                anime_notified.store(true, Ordering::SeqCst);
+                future::ready(())
+            })
+            .await;
+        };
+    });
 
     let notifs_enabled1 = notifs_enabled.clone();
     let last_notif = last_notification.clone();
     let bios_notified1 = bios_notified.clone();
-    executor
-        .spawn(async move {
-            let conn = zbus::Connection::system().await.unwrap();
-            let proxy = supergfxctl::zbus_proxy::DaemonProxy::new(&conn)
-                .await
-                .unwrap();
-            if let Ok(p) = proxy.receive_notify_gfx_status().await {
-                p.for_each(|e| {
-                    if let Ok(out) = e.args() {
-                        if notifs_enabled1.load(Ordering::SeqCst) {
-                            let status = out.status();
-                            if *status != GfxPower::Unknown {
-                                // Required check because status cycles through active/unknown/suspended
-                                if let Ok(ref mut lock) = last_notif.try_lock() {
-                                    notify!(
-                                        do_notification(
-                                            "dGPU status changed:",
-                                            &format!("{status:?}",)
-                                        ),
-                                        lock
-                                    );
-                                }
+    tokio::spawn(async move {
+        let conn = zbus::Connection::system().await.unwrap();
+        let proxy = supergfxctl::zbus_proxy::DaemonProxy::new(&conn)
+            .await
+            .unwrap();
+        if let Ok(p) = proxy.receive_notify_gfx_status().await {
+            p.for_each(|e| {
+                if let Ok(out) = e.args() {
+                    if notifs_enabled1.load(Ordering::SeqCst) {
+                        let status = out.status();
+                        if *status != GfxPower::Unknown {
+                            // Required check because status cycles through active/unknown/suspended
+                            if let Ok(ref mut lock) = last_notif.try_lock() {
+                                notify!(
+                                    do_notification(
+                                        "dGPU status changed:",
+                                        &format!("{status:?}",)
+                                    ),
+                                    lock
+                                );
                             }
                         }
                     }
-                    bios_notified1.store(true, Ordering::SeqCst);
-                    future::ready(())
-                })
-                .await;
-            };
-        })
-        .detach();
-
-    spawn(move || loop {
-        smol::block_on(executor.tick());
+                }
+                bios_notified1.store(true, Ordering::SeqCst);
+                future::ready(())
+            })
+            .await;
+        };
     });
+
     Ok(())
 }
 

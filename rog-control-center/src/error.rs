@@ -10,7 +10,7 @@ pub enum Error {
     ConfigLockFail,
     XdgVars,
     Zbus(zbus::Error),
-    Notification(notify_rust::error::Error)
+    Notification(notify_rust::error::Error),
 }
 
 impl fmt::Display for Error {
