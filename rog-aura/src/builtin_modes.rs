@@ -325,8 +325,8 @@ impl AuraEffect {
         &self.mode
     }
 
-    pub fn mode_name(&self) -> String {
-        (<&str>::from(&self.mode)).to_string()
+    pub fn mode_name(&self) -> &str {
+        <&str>::from(&self.mode)
     }
 
     pub fn mode_num(&self) -> u8 {

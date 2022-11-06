@@ -246,7 +246,7 @@ impl AnimeState {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PageDataStates {
     pub keyboard_layout: KeyLayout,
     pub notifs_enabled: Arc<AtomicBool>,

@@ -16,7 +16,7 @@ impl<'a> RogApp<'a> {
         } = self;
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Experimental application for asusd");
+            ui.heading("Base settings");
 
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.spacing_mut().item_spacing = egui::vec2(8.0, 10.0);

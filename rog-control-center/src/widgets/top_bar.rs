@@ -1,4 +1,4 @@
-use egui::{vec2, Align2, Button, FontId, Id, Rect, RichText, Sense, Vec2};
+use egui::{vec2, Align2, FontId, Id, Sense};
 
 use crate::{RogApp, VERSION};
 
@@ -27,20 +27,20 @@ impl<'a> RogApp<'a> {
                 let height = titlebar_rect.height();
                 // Paint the title:
                 ui.painter().text(
-                    titlebar_rect.center_top() + vec2(0.0, height / 2.0),
-                    Align2::CENTER_CENTER,
-                    format!("ROG Control Center v{}", VERSION),
+                    titlebar_rect.right_top() + vec2(0.0, height / 2.0),
+                    Align2::RIGHT_CENTER,
+                    format!("v{}", VERSION),
                     FontId::proportional(height - 2.0),
                     text_color,
                 );
-                // Add the close button:
-                let close_response = ui.put(
-                    Rect::from_min_size(titlebar_rect.right_top(), Vec2::splat(height)),
-                    Button::new(RichText::new("❌").size(height - 4.0)).frame(false),
-                );
-                if close_response.clicked() {
-                    frame.close();
-                }
+                // // Add the close button:
+                // let close_response = ui.put(
+                //     Rect::from_min_size(titlebar_rect.right_top(), Vec2::splat(height)),
+                //     Button::new(RichText::new("❌").size(height - 4.0)).frame(false),
+                // );
+                // if close_response.clicked() {
+                //     frame.close();
+                // }
             });
         });
     }

@@ -8,8 +8,8 @@ edition = "2021"
 mocking = []
 
 [dependencies]
-egui = { git = "https://github.com/emilk/egui" }
-eframe= { git = "https://github.com/emilk/egui" }
+egui = { git = "https://github.com/flukejones/egui" }
+eframe= { git = "https://github.com/flukejones/egui" }
 #eframe= { git = "https://github.com/emilk/egui", default-features = false, features = ["dark-light", "default_fonts", "wgpu"] }
 
 daemon = { path = "../daemon" }

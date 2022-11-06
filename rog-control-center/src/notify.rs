@@ -15,6 +15,7 @@ use std::{
 };
 use supergfxctl::pci_device::GfxPower;
 use zbus::export::futures_util::StreamExt;
+use crate::error::Result;
 
 const NOTIF_HEADER: &str = "ROG Control";
 
@@ -76,7 +77,7 @@ pub fn start_notifications(
     profiles_notified: Arc<AtomicBool>,
     _fans_notified: Arc<AtomicBool>,
     notifs_enabled: Arc<AtomicBool>,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<()> {
     let last_notification: SharedHandle = Arc::new(Mutex::new(None));
 
     let executor = Executor::new();
@@ -101,7 +102,7 @@ pub fn start_notifications(
         last_notification,
         notifs_enabled,
         [overdrive],
-        "BIOS Panel Overdrive",
+        "Panel Overdrive enabled:",
         do_notification
     );
 
@@ -152,6 +153,18 @@ pub fn start_notifications(
         [limit],
         "Battery charge limit changed to",
         do_notification
+    );
+
+    recv_notif!(
+        executor,
+        PowerProxy,
+        receive_notify_mains_online,
+        bios_notified,
+        last_notification,
+        notifs_enabled,
+        [on],
+        "AC Power power is",
+        ac_power_notification
     );
 
     // Profile notif
@@ -261,7 +274,7 @@ where
         .summary(NOTIF_HEADER)
         .body(&format!("{message} {data}"))
         .timeout(2000)
-        .hint(Hint::Resident(true))
+        //.hint(Hint::Resident(true))
         .hint(Hint::Category("device".into()));
 
     notif
@@ -270,17 +283,25 @@ where
 fn do_notification<T>(
     message: &str,
     data: &T,
-) -> Result<NotificationHandle, notify_rust::error::Error>
+) -> Result<NotificationHandle>
 where
     T: Display,
 {
-    base_notification(message, data).show()
+    Ok(base_notification(message, data).show()?)
+}
+
+fn ac_power_notification(
+    message: &str,
+    on: &bool,
+) -> Result<NotificationHandle> {
+    let data = if *on { "plugged".to_string() } else { "unplugged".to_string() };
+    Ok(base_notification(message, &data).show()?)
 }
 
 fn do_thermal_notif(
     message: &str,
     profile: &Profile,
-) -> Result<NotificationHandle, notify_rust::error::Error> {
+) -> Result<NotificationHandle> {
     let icon = match profile {
         Profile::Balanced => "asus_notif_yellow",
         Profile::Performance => "asus_notif_red",
@@ -288,5 +309,5 @@ fn do_thermal_notif(
     };
     let profile: &str = (*profile).into();
     let mut notif = base_notification(message, &profile.to_uppercase());
-    notif.icon(icon).show()
+    Ok(notif.icon(icon).show()?)
 }

@@ -1,9 +1,12 @@
+use eframe::NativeOptions;
 use rog_aura::layouts::KeyLayout;
 use rog_control_center::{
+    error::Result,
     config::Config, get_ipc_file, notify::start_notifications, on_tmp_dir_exists,
     page_states::PageDataStates, print_versions, startup_error::AppErrorShow, RogApp,
     RogDbusClientBlocking, SHOWING_GUI, SHOW_GUI,
 };
+use rog_platform::supported::SupportedFunctions;
 
 use std::{
     fs::OpenOptions,
@@ -18,12 +21,12 @@ const DATA_DIR: &str = "/usr/share/rog-gui/";
 const DATA_DIR: &str = env!("CARGO_MANIFEST_DIR");
 const BOARD_NAME: &str = "/sys/class/dmi/id/board_name";
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<()> {
     print_versions();
 
     let native_options = eframe::NativeOptions {
-        vsync: false,
-        decorated: false,
+        vsync: true,
+        decorated: true,
         transparent: false,
         min_window_size: Some(egui::vec2(840.0, 600.0)),
         max_window_size: Some(egui::vec2(840.0, 600.0)),
@@ -75,6 +78,51 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         })
         .unwrap_or_else(|_| KeyLayout::ga401_layout());
 
+    // tmp-dir must live to the end of program life
+    let _tmp_dir = match tempfile::Builder::new()
+        .prefix("rog-gui")
+        .rand_bytes(0)
+        .tempdir()
+    {
+        Ok(tmp) => tmp,
+        Err(_) => on_tmp_dir_exists().unwrap(),
+    };
+
+    let states = setup_page_state_and_notifs(layout.clone(), &config, native_options.clone(), &dbus).unwrap();
+
+    loop {
+        dbg!();
+        if !start_closed {
+            start_app(states.clone(), native_options.clone())?;
+        }
+        dbg!();
+
+        let config = Config::load().unwrap();
+        if !config.run_in_background {
+            break;
+        }
+
+        if config.run_in_background {
+            let mut buf = [0u8; 4];
+            // blocks until it is read, typically the read will happen after a second
+            // process writes to the IPC (so there is data to actually read)
+            if get_ipc_file().unwrap().read(&mut buf).is_ok() && buf[0] == SHOW_GUI {
+                start_closed = false;
+                dbg!();
+                continue;
+            }
+        }
+        dbg!();
+    }
+    Ok(())
+}
+
+fn setup_page_state_and_notifs(
+    keyboard_layout: KeyLayout,
+    config: &Config,
+    native_options: NativeOptions,
+    dbus: &RogDbusClientBlocking,
+) -> Result<PageDataStates> {
     // Cheap method to alert to notifications rather than spinning a thread for each
     // This is quite different when done in a retained mode app
     let charge_notified = Arc::new(AtomicBool::new(false));
@@ -95,68 +143,42 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         notifs_enabled.clone(),
     )?;
 
-    // tmp-dir must live to the end of program life
-    let _tmp_dir = match tempfile::Builder::new()
-        .prefix("rog-gui")
-        .rand_bytes(0)
-        .tempdir()
-    {
-        Ok(tmp) => tmp,
-        Err(_) => on_tmp_dir_exists().unwrap(),
-    };
-
-    loop {
-        let states = {
-            let supported = match dbus.proxies().supported().supported_functions() {
-                Ok(s) => s,
-                Err(e) => {
-                    eframe::run_native(
-                        "ROG Control Center",
-                        native_options.clone(),
-                        Box::new(move |_| Box::new(AppErrorShow::new(e.to_string()))),
-                    );
-                    return Ok(());
-                }
-            };
-
-            PageDataStates::new(
-                layout.clone(),
-                notifs_enabled.clone(),
-                charge_notified.clone(),
-                bios_notified.clone(),
-                aura_notified.clone(),
-                anime_notified.clone(),
-                profiles_notified.clone(),
-                fans_notified.clone(),
-                &supported,
-                &dbus,
-            )?
-        };
-
-        if !start_closed {
-            let mut ipc_file = get_ipc_file().unwrap();
-            ipc_file.write_all(&[SHOWING_GUI]).unwrap();
+    let supported = match dbus.proxies().supported().supported_functions() {
+        Ok(s) => s,
+        Err(e) => {
             eframe::run_native(
                 "ROG Control Center",
-                native_options.clone(),
-                Box::new(move |cc| {
-                    Box::new(RogApp::new(Config::load().unwrap(), states, cc).unwrap())
-                }),
+                native_options,
+                Box::new(move |_| Box::new(AppErrorShow::new(e.to_string()))),
             );
+            SupportedFunctions::default()
         }
+    };
 
-        let config = Config::load().unwrap();
-        if !config.run_in_background {
-            break;
-        }
+    PageDataStates::new(
+        keyboard_layout,
+        notifs_enabled.clone(),
+        charge_notified.clone(),
+        bios_notified.clone(),
+        aura_notified.clone(),
+        anime_notified.clone(),
+        profiles_notified.clone(),
+        fans_notified.clone(),
+        &supported,
+        &dbus,
+    )
+}
 
-        let mut buf = [0u8; 4];
-        // blocks until it is read, typically the read will happen after a second
-        // process writes to the IPC (so there is data to actually read)
-        if get_ipc_file().unwrap().read(&mut buf).is_ok() && buf[0] == SHOW_GUI {
-            start_closed = false;
-            continue;
-        }
-    }
+fn start_app(
+    states: PageDataStates,
+    native_options: NativeOptions,
+) -> Result<()> {
+    let mut ipc_file = get_ipc_file().unwrap();
+    ipc_file.write_all(&[SHOWING_GUI]).unwrap();
+    eframe::run_native(
+        "ROG Control Center",
+        native_options,
+        Box::new(move |cc| Box::new(RogApp::new(Config::load().unwrap(), states, cc).unwrap())),
+    );
     Ok(())
 }

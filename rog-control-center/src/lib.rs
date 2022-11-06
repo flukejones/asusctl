@@ -75,7 +75,7 @@ pub fn on_tmp_dir_exists() -> Result<TempDir, std::io::Error> {
     // If the app is running this ends up stacked on top of SHOWING_GUI
     ipc_file.write_all(&[SHOW_GUI])?;
     // tiny sleep to give the app a chance to respond
-    sleep(Duration::from_millis(10));
+    sleep(Duration::from_millis(100));
     ipc_file.read(&mut buf).ok();
 
     // First entry is the actual state
