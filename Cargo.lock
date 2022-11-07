@@ -77,7 +77,7 @@ checksum = "23b62fc65de8e4e7f52534fb52b0f3ed04746ae267519eef2a83941e8085068b"
 
 [[package]]
 name = "asusctl"
-version = "4.5.0-rc5"
+version = "4.5.0"
 dependencies = [
  "daemon",
  "gif",
@@ -581,7 +581,7 @@ checksum = "b365fabc795046672053e29c954733ec3b05e4be654ab130fe8f1f94d7051f35"
 
 [[package]]
 name = "daemon"
-version = "4.5.0-rc5"
+version = "4.5.0"
 dependencies = [
  "async-trait",
  "concat-idents",
@@ -605,7 +605,7 @@ dependencies = [
 
 [[package]]
 name = "daemon-user"
-version = "4.5.0-rc5"
+version = "4.5.0"
 dependencies = [
  "dirs",
  "rog_anime",
@@ -1373,9 +1373,9 @@ checksum = "fc7fcc620a3bff7cdd7a365be3376c97191aeaccc2a603e600951e452615bf89"
 
 [[package]]
 name = "libloading"
-version = "0.7.3"
+version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "efbc0f03f9a775e9f6aed295c6a1ba2253c5757a9e03d55c6caa46a681abcddd"
+checksum = "b67380fd3b2fbe7527a606e18729d21c6f3951633d0500574c4dc22d2d638b9f"
 dependencies = [
  "cfg-if",
  "winapi",
@@ -2011,7 +2011,7 @@ dependencies = [
 
 [[package]]
 name = "rog-control-center"
-version = "4.5.0-rc5"
+version = "4.5.0"
 dependencies = [
  "daemon",
  "dirs",
@@ -2036,7 +2036,7 @@ dependencies = [
 
 [[package]]
 name = "rog_anime"
-version = "4.5.0-rc5"
+version = "4.5.0"
 dependencies = [
  "gif",
  "glam",
@@ -2052,7 +2052,7 @@ dependencies = [
 
 [[package]]
 name = "rog_aura"
-version = "4.5.0-rc5"
+version = "4.5.0"
 dependencies = [
  "serde",
  "serde_derive",
@@ -2063,7 +2063,7 @@ dependencies = [
 
 [[package]]
 name = "rog_dbus"
-version = "4.5.0-rc5"
+version = "4.5.0"
 dependencies = [
  "rog_anime",
  "rog_aura",
@@ -2076,7 +2076,7 @@ dependencies = [
 
 [[package]]
 name = "rog_platform"
-version = "4.5.0-rc5"
+version = "4.5.0"
 dependencies = [
  "concat-idents",
  "inotify",
@@ -2093,7 +2093,7 @@ dependencies = [
 
 [[package]]
 name = "rog_profiles"
-version = "4.5.0-rc5"
+version = "4.5.0"
 dependencies = [
  "serde",
  "serde_derive",
@@ -2386,10 +2386,8 @@ dependencies = [
 [[package]]
 name = "supergfxctl"
 version = "5.0.2"
-source = "git+https://gitlab.com/asus-linux/supergfxctl.git#e551271c53231d650123246cab43ccd42ffe926a"
+source = "git+https://gitlab.com/asus-linux/supergfxctl.git#3ee8fdfaa1cc79d0fe116cbd67269603e4e7bafe"
 dependencies = [
- "env_logger",
- "gumdrop",
  "log",
  "logind-zbus",
  "serde",
@@ -2549,9 +2547,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a9e03c497dc955702ba729190dc4aac6f2a0ce97f913e5b1b5912fc5039d9099"
 dependencies = [
  "autocfg",
- "bytes",
  "libc",
- "memchr",
  "mio",
  "num_cpus",
  "pin-project-lite",
@@ -3216,7 +3212,6 @@ dependencies = [
  "futures-sink",
  "futures-util",
  "hex",
- "lazy_static",
  "nix 0.25.0",
  "once_cell",
  "ordered-stream",
@@ -3225,7 +3220,6 @@ dependencies = [
  "serde_repr",
  "sha1",
  "static_assertions",
- "tokio",
  "tracing",
  "uds_windows",
  "winapi",
