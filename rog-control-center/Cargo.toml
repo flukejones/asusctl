@@ -18,8 +18,8 @@ rog_dbus = { path = "../rog-dbus" }
 rog_aura = { path = "../rog-aura" }
 rog_profiles = { path = "../rog-profiles" }
 rog_platform = { path = "../rog-platform" }
-supergfxctl = { git = "https://gitlab.com/asus-linux/supergfxctl.git" }
-#supergfxctl = { path = "../../supergfxctl" }
+supergfxctl = { git = "https://gitlab.com/asus-linux/supergfxctl.git", default-features = false }
+#supergfxctl = { path = "../../supergfxctl", default-features = false }
 
 tokio.workspace = true
 serde.workspace = true
