@@ -1,33 +1,47 @@
-use eframe::NativeOptions;
+use eframe::{IconData, NativeOptions};
+use log::{error, LevelFilter};
 use rog_aura::layouts::KeyLayout;
+use rog_control_center::tray::{AppToTray, TrayToApp};
 use rog_control_center::{
     config::Config, error::Result, get_ipc_file, notify::start_notifications, on_tmp_dir_exists,
-    page_states::PageDataStates, print_versions, startup_error::AppErrorShow, RogApp,
-    RogDbusClientBlocking, SHOWING_GUI, SHOW_GUI,
+    page_states::PageDataStates, print_versions, startup_error::AppErrorShow, tray::init_tray,
+    RogApp, RogDbusClientBlocking, SHOWING_GUI, SHOW_GUI,
 };
 use rog_platform::supported::SupportedFunctions;
-use tokio::runtime::Runtime;
-
+use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::Mutex;
 use std::{
     fs::OpenOptions,
     io::{Read, Write},
     path::PathBuf,
     sync::{atomic::AtomicBool, Arc},
 };
+use tokio::runtime::Runtime;
 
 #[cfg(not(feature = "mocking"))]
 const DATA_DIR: &str = "/usr/share/rog-gui/";
 #[cfg(feature = "mocking")]
 const DATA_DIR: &str = env!("CARGO_MANIFEST_DIR");
 const BOARD_NAME: &str = "/sys/class/dmi/id/board_name";
+const APP_ICON_PATH: &str = "/usr/share/icons/hicolor/512x512/apps/rog-control-center.png";
 
 fn main() -> Result<()> {
     print_versions();
+    let mut logger = env_logger::Builder::new();
+    logger
+        .target(env_logger::Target::Stdout)
+        .format(|buf, record| writeln!(buf, "{}: {}", record.level(), record.args()))
+        .filter(None, LevelFilter::Info)
+        .init();
 
     // start tokio
     let rt = Runtime::new().expect("Unable to create Runtime");
     // Enter the runtime so that `tokio::spawn` is available immediately.
     let _enter = rt.enter();
+
+    let (send, recv) = channel();
+    let update_tray = Arc::new(Mutex::new(send));
+    let app_cmd = Arc::new(init_tray(recv));
 
     let native_options = eframe::NativeOptions {
         vsync: true,
@@ -36,6 +50,7 @@ fn main() -> Result<()> {
         min_window_size: Some(egui::vec2(840.0, 600.0)),
         max_window_size: Some(egui::vec2(840.0, 600.0)),
         run_and_return: true,
+        icon_data: Some(load_icon()),
         ..Default::default()
     };
 
@@ -93,13 +108,18 @@ fn main() -> Result<()> {
         Err(_) => on_tmp_dir_exists().unwrap(),
     };
 
-    let states =
-        setup_page_state_and_notifs(layout.clone(), &config, native_options.clone(), &dbus)
-            .unwrap();
+    let states = setup_page_state_and_notifs(
+        layout.clone(),
+        &config,
+        native_options.clone(),
+        &dbus,
+        update_tray,
+    )
+    .unwrap();
 
     loop {
         if !start_closed {
-            start_app(states.clone(), native_options.clone())?;
+            start_app(states.clone(), native_options.clone(), app_cmd.clone())?;
         }
 
         let config = Config::load().unwrap();
@@ -130,6 +150,7 @@ fn setup_page_state_and_notifs(
     config: &Config,
     native_options: NativeOptions,
     dbus: &RogDbusClientBlocking,
+    update_tray: Arc<Mutex<Sender<AppToTray>>>,
 ) -> Result<PageDataStates> {
     // Cheap method to alert to notifications rather than spinning a thread for each
     // This is quite different when done in a retained mode app
@@ -149,6 +170,7 @@ fn setup_page_state_and_notifs(
         profiles_notified.clone(),
         fans_notified.clone(),
         notifs_enabled.clone(),
+        update_tray,
     )?;
 
     let supported = match dbus.proxies().supported().supported_functions() {
@@ -177,13 +199,57 @@ fn setup_page_state_and_notifs(
     )
 }
 
-fn start_app(states: PageDataStates, native_options: NativeOptions) -> Result<()> {
+fn start_app(
+    states: PageDataStates,
+    native_options: NativeOptions,
+    app_cmd: Arc<Receiver<TrayToApp>>,
+) -> Result<()> {
     let mut ipc_file = get_ipc_file().unwrap();
     ipc_file.write_all(&[SHOWING_GUI]).unwrap();
     eframe::run_native(
         "ROG Control Center",
         native_options,
-        Box::new(move |cc| Box::new(RogApp::new(Config::load().unwrap(), states, cc).unwrap())),
+        Box::new(move |cc| {
+            Box::new(RogApp::new(Config::load().unwrap(), states, app_cmd, cc).unwrap())
+        }),
     );
     Ok(())
+}
+
+/// Bah.. the icon dosn't work on wayland anyway, but we'll leave it in for now.
+fn load_icon() -> IconData {
+    let path = PathBuf::from(APP_ICON_PATH);
+    let mut buf = Vec::new();
+    let mut rgba = Vec::new();
+    let mut height = 512;
+    let mut width = 512;
+    if path.exists() {
+        if let Ok(mut file) = OpenOptions::new()
+            .read(true)
+            .open(path)
+            .map_err(|e| error!("Error opening app icon: {e:?}"))
+        {
+            file.read_to_end(&mut buf)
+                .map_err(|e| error!("Error reading app icon: {e:?}"))
+                .ok();
+
+            let data = std::io::Cursor::new(buf);
+            let decoder = png_pong::Decoder::new(data).unwrap().into_steps();
+            let png_pong::Step { raster, delay: _ } = decoder.last().unwrap().unwrap();
+
+            if let png_pong::PngRaster::Rgba8(ras) = raster {
+                rgba = ras.as_u8_slice().to_vec();
+                width = ras.width();
+                height = ras.height();
+            }
+        }
+    } else {
+        error!("Missing {APP_ICON_PATH}")
+    }
+
+    IconData {
+        height,
+        width,
+        rgba,
+    }
 }

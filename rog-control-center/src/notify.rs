@@ -1,4 +1,4 @@
-use crate::error::Result;
+use crate::{error::Result, tray::AppToTray};
 use notify_rust::{Hint, Notification, NotificationHandle};
 use rog_dbus::{
     zbus_anime::AnimeProxy, zbus_led::LedProxy, zbus_platform::RogBiosProxy,
@@ -10,6 +10,7 @@ use std::{
     fmt::Display,
     sync::{
         atomic::{AtomicBool, Ordering},
+        mpsc::Sender,
         Arc, Mutex,
     },
 };
@@ -73,6 +74,7 @@ pub fn start_notifications(
     profiles_notified: Arc<AtomicBool>,
     _fans_notified: Arc<AtomicBool>,
     notifs_enabled: Arc<AtomicBool>,
+    update_tray: Arc<Mutex<Sender<AppToTray>>>,
 ) -> Result<()> {
     let last_notification: SharedHandle = Arc::new(Mutex::new(None));
 
@@ -227,6 +229,9 @@ pub fn start_notifications(
                                     ),
                                     lock
                                 );
+                                if let Ok(lock) = update_tray.try_lock() {
+                                    lock.send(AppToTray::DgpuStatus(*status)).ok();
+                                }
                             }
                         }
                     }

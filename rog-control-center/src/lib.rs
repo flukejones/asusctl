@@ -18,6 +18,7 @@ pub mod page_states;
 pub mod pages;
 pub mod startup_error;
 pub mod widgets;
+pub mod tray;
 
 #[cfg(feature = "mocking")]
 pub use mocking::RogDbusClientBlocking;
@@ -96,7 +97,7 @@ pub fn get_ipc_file() -> Result<File, crate::error::Error> {
     let tmp_dir = std::env::temp_dir().join("rog-gui");
     let fifo_path = tmp_dir.join("ipc.pipe");
     if let Err(e) = unistd::mkfifo(&fifo_path, stat::Mode::S_IRWXU) {
-        if !matches!(e, nix::Error::Sys(nix::errno::Errno::EEXIST)) {
+        if !matches!(e, nix::errno::Errno::EEXIST) {
             return Err(e)?;
         }
     }

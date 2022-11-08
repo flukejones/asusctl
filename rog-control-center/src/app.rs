@@ -2,16 +2,18 @@ use std::{
     f64::consts::PI,
     sync::{
         atomic::{AtomicBool, AtomicU8, Ordering},
+        mpsc::Receiver,
         Arc,
     },
-    time::{Duration, Instant},
+    time::{Duration, Instant}, io::Write,
 };
 
 use egui::{Button, RichText};
 use rog_platform::supported::SupportedFunctions;
 
 use crate::{
-    config::Config, error::Result, page_states::PageDataStates, Page, RogDbusClientBlocking,
+    config::Config, error::Result, page_states::PageDataStates, tray::TrayToApp, Page,
+    RogDbusClientBlocking, get_ipc_file, SHOW_GUI,
 };
 
 pub struct RogApp<'a> {
@@ -29,6 +31,7 @@ pub struct RogApp<'a> {
     pub oscillator_freq: Arc<AtomicU8>,
     /// A toggle that toggles true/false when the oscillator reaches 0
     pub oscillator_toggle: Arc<AtomicBool>,
+    pub app_cmd: Arc<Receiver<TrayToApp>>,
 }
 
 impl<'a> RogApp<'a> {
@@ -36,6 +39,7 @@ impl<'a> RogApp<'a> {
     pub fn new(
         config: Config,
         states: PageDataStates,
+        app_cmd: Arc<Receiver<TrayToApp>>,
         _cc: &eframe::CreationContext<'_>,
     ) -> Result<Self> {
         let (dbus, _) = RogDbusClientBlocking::new()?;
@@ -98,7 +102,22 @@ impl<'a> RogApp<'a> {
             oscillator3,
             oscillator_toggle,
             oscillator_freq,
+            app_cmd,
         })
+    }
+
+    fn check_app_cmds(&mut self, _ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        let Self { app_cmd, .. } = self;
+        
+        if let Ok(cmd) = app_cmd.try_recv() {
+            match cmd {
+                TrayToApp::Open => {
+                    dbg!();
+                    get_ipc_file().unwrap().write_all(&[SHOW_GUI]).ok();
+                },
+                TrayToApp::Quit => _frame.close(),
+            }
+        }
     }
 }
 
@@ -106,12 +125,15 @@ impl<'a> eframe::App for RogApp<'a> {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        self.check_app_cmds(ctx, frame);
+        
         let Self {
             supported,
             asus_dbus: dbus,
             states,
             ..
         } = self;
+
         states
             .refresh_if_notfied(supported, dbus)
             .map(|repaint| {
