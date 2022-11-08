@@ -9,6 +9,7 @@ ENV{DMI_FAMILY}=="*TUF*", GOTO="asusd_start"
 ENV{DMI_FAMILY}=="*ROG*", GOTO="asusd_start"
 ENV{DMI_FAMILY}=="*Zephyrus*", GOTO="asusd_start"
 ENV{DMI_FAMILY}=="*Strix*", GOTO="asusd_start"
+ENV{DMI_FAMILY}=="*Vivobook*", GOTO="asusd_start"
 # No match so
 GOTO="asusd_end"
 
