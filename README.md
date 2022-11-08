@@ -85,6 +85,15 @@ Requirements are rust >= 1.57 installed from rustup.io if the distro provided ve
     make
     sudo make install
 
+**openSUSE:**
+
+Works with KDE Plasma (without GTK packages)
+
+    zypper in -t pattern devel_basis
+    zypper in rustup cmake clang-devel systemd-devel glib2-devel cairo-devel atkmm-devel pangomm-devel gdk-pixbuf-devel gtk3-devel
+    make
+    sudo make install
+
 ## Installing
 - Fedora copr = https://copr.fedorainfracloud.org/coprs/lukenukem/asus-linux/
 - openSUSE = https://download.opensuse.org/repositories/home:/luke_nukem:/asus/
