@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ## [v4.5.1]
+### Added
+- Support for FA506IE LED modes (Author: Herohtar)
 ### Changed
 - Add a basic system tray icon with crappy status for dGPU
 

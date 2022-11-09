@@ -14,7 +14,7 @@ per_key = false
 
 [[led_data]]
 prod_family = "ASUS TUF Gaming A15"
-board_names = ["FA506IE"]
+board_names = ["FA506I"]
 standard = ["Static", "Breathe", "Strobe", "Pulse"]
 multizone = []
 per_key = false
