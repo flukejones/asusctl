@@ -49,11 +49,11 @@ pub fn init_tray(recv_command: Receiver<AppToTray>) -> Receiver<TrayToApp> {
                 match command {
                     AppToTray::DgpuStatus(s) => {
                         match s {
-                            GfxPower::Active => tray.set_icon("gpu-nvidia"),
-                            GfxPower::Suspended => tray.set_icon("gpu-integrated"),
-                            GfxPower::Off => tray.set_icon("rog-control-center"),
-                            GfxPower::AsusDisabled => tray.set_icon("gpu-integrated"),
-                            GfxPower::AsusMuxDiscreet => tray.set_icon("gpu-nvidia"),
+                            GfxPower::Active => tray.set_icon("asus_notif_red"),
+                            GfxPower::Suspended => tray.set_icon("asus_notif_blue"),
+                            GfxPower::Off => tray.set_icon("asus_notif_green"),
+                            GfxPower::AsusDisabled => tray.set_icon("asus_notif_white"),
+                            GfxPower::AsusMuxDiscreet => tray.set_icon("asus_notif_red"),
                             GfxPower::Unknown => tray.set_icon("gpu-integrated"),
                         }
                         .ok();

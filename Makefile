@@ -57,7 +57,10 @@ install:
 
 	$(INSTALL_DATA) "./data/icons/asus_notif_yellow.png" "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/asus_notif_yellow.png"
 	$(INSTALL_DATA) "./data/icons/asus_notif_green.png" "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/asus_notif_green.png"
+	$(INSTALL_DATA) "./data/icons/asus_notif_blue.png" "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/asus_notif_blue.png"
 	$(INSTALL_DATA) "./data/icons/asus_notif_red.png" "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/asus_notif_red.png"
+	$(INSTALL_DATA) "./data/icons/asus_notif_orange.png" "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/asus_notif_orange.png"
+	$(INSTALL_DATA) "./data/icons/asus_notif_white.png" "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/asus_notif_white.png"
 
 	$(INSTALL_DATA) "./data/icons/scalable/gpu-compute.svg" "$(DESTDIR)$(datarootdir)/icons/hicolor/scalable/status/gpu-compute.svg"
 	$(INSTALL_DATA) "./data/icons/scalable/gpu-hybrid.svg" "$(DESTDIR)$(datarootdir)/icons/hicolor/scalable/status/gpu-hybrid.svg"
