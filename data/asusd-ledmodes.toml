@@ -13,6 +13,13 @@ multizone = []
 per_key = false
 
 [[led_data]]
+prod_family = "ASUS TUF Gaming A15"
+board_names = ["FA506IE"]
+standard = ["Static", "Breathe", "Strobe", "Pulse"]
+multizone = []
+per_key = false
+
+[[led_data]]
 prod_family = "Zephyrus S"
 board_names = ["GX502", "GX701", "G531", "GL531", "G532"]
 standard = ["Static", "Breathe", "Strobe", "Rainbow", "Star", "Rain", "Highlight", "Laser", "Ripple", "Pulse", "Comet", "Flash"]
