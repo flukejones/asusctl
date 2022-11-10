@@ -6,17 +6,18 @@ use std::{
 use serde_derive::{Deserialize, Serialize};
 //use log::{error, info, warn};
 
-use crate::error::Error;
+use crate::{error::Error, notify::EnabledNotifications};
 
 const CFG_DIR: &str = "rog";
 const CFG_FILE_NAME: &str = "rog-control-center.cfg";
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(default)]
 pub struct Config {
     pub run_in_background: bool,
     pub startup_in_background: bool,
     pub enable_notifications: bool,
+    pub enabled_notifications: EnabledNotifications,
 }
 
 impl Default for Config {
@@ -25,6 +26,7 @@ impl Default for Config {
             run_in_background: true,
             startup_in_background: false,
             enable_notifications: true,
+            enabled_notifications: EnabledNotifications::default(),
         }
     }
 }
@@ -65,7 +67,7 @@ impl Config {
         Err(Error::ConfigLoadFail)
     }
 
-    pub fn save(&self) -> Result<(), Error> {
+    pub fn save(&mut self, enabled_notifications: &EnabledNotifications) -> Result<(), Error> {
         let mut path = if let Some(dir) = dirs::config_dir() {
             dir
         } else {
@@ -85,6 +87,7 @@ impl Config {
             .truncate(true)
             .open(&path)?;
 
+        self.enabled_notifications = enabled_notifications.clone();
         let t = toml::to_string_pretty(&self).unwrap();
         file.write_all(t.as_bytes())?;
         Ok(())

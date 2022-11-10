@@ -1,19 +1,20 @@
 use std::{
     f64::consts::PI,
+    io::Write,
     sync::{
         atomic::{AtomicBool, AtomicU8, Ordering},
         mpsc::Receiver,
         Arc,
     },
-    time::{Duration, Instant}, io::Write,
+    time::{Duration, Instant},
 };
 
 use egui::{Button, RichText};
 use rog_platform::supported::SupportedFunctions;
 
 use crate::{
-    config::Config, error::Result, page_states::PageDataStates, tray::TrayToApp, Page,
-    RogDbusClientBlocking, get_ipc_file, SHOW_GUI,
+    config::Config, error::Result, get_ipc_file, page_states::PageDataStates, tray::TrayToApp,
+    Page, RogDbusClientBlocking, SHOW_GUI,
 };
 
 pub struct RogApp<'a> {
@@ -108,13 +109,13 @@ impl<'a> RogApp<'a> {
 
     fn check_app_cmds(&mut self, _ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let Self { app_cmd, .. } = self;
-        
+
         if let Ok(cmd) = app_cmd.try_recv() {
             match cmd {
                 TrayToApp::Open => {
                     dbg!();
                     get_ipc_file().unwrap().write_all(&[SHOW_GUI]).ok();
-                },
+                }
                 TrayToApp::Quit => _frame.close(),
             }
         }
@@ -126,7 +127,7 @@ impl<'a> eframe::App for RogApp<'a> {
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         self.check_app_cmds(ctx, frame);
-        
+
         let Self {
             supported,
             asus_dbus: dbus,

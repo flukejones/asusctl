@@ -12,7 +12,6 @@ egui = { git = "https://github.com/flukejones/egui" }
 eframe= { git = "https://github.com/flukejones/egui" }
 #eframe= { git = "https://github.com/emilk/egui", default-features = false, features = ["dark-light", "default_fonts", "wgpu"] }
 
-tray-item = "0.7.1"
 libappindicator = "0.7" # Tray icon
 gtk = "0.15"
 

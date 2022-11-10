@@ -2,7 +2,7 @@ use std::{
     collections::{BTreeMap, HashSet},
     sync::{
         atomic::{AtomicBool, Ordering},
-        Arc,
+        Arc, Mutex,
     },
 };
 
@@ -11,7 +11,7 @@ use rog_aura::{layouts::KeyLayout, usb::AuraPowerDev, AuraEffect, AuraModeNum};
 use rog_platform::{platform::GpuMode, supported::SupportedFunctions};
 use rog_profiles::{fan_curve_set::FanCurveSet, FanCurvePU, Profile};
 
-use crate::{error::Result, RogDbusClientBlocking};
+use crate::{error::Result, notify::EnabledNotifications, RogDbusClientBlocking};
 
 #[derive(Clone, Debug)]
 pub struct BiosState {
@@ -249,7 +249,7 @@ impl AnimeState {
 #[derive(Debug, Clone)]
 pub struct PageDataStates {
     pub keyboard_layout: KeyLayout,
-    pub notifs_enabled: Arc<AtomicBool>,
+    pub enabled_notifications: Arc<Mutex<EnabledNotifications>>,
     pub was_notified: Arc<AtomicBool>,
     /// Because much of the app state here is the same as `RogBiosSupportedFunctions`
     /// we can re-use that structure.
@@ -266,7 +266,7 @@ pub struct PageDataStates {
 impl PageDataStates {
     pub fn new(
         keyboard_layout: KeyLayout,
-        notifs_enabled: Arc<AtomicBool>,
+        enabled_notifications: Arc<Mutex<EnabledNotifications>>,
         charge_notified: Arc<AtomicBool>,
         bios_notified: Arc<AtomicBool>,
         aura_notified: Arc<AtomicBool>,
@@ -278,7 +278,7 @@ impl PageDataStates {
     ) -> Result<Self> {
         Ok(Self {
             keyboard_layout,
-            notifs_enabled,
+            enabled_notifications,
             was_notified: charge_notified,
             charge_limit: dbus.proxies().charge().charge_control_end_threshold()?,
             bios: BiosState::new(bios_notified, supported, dbus)?,
@@ -335,7 +335,7 @@ impl Default for PageDataStates {
     fn default() -> Self {
         Self {
             keyboard_layout: KeyLayout::ga401_layout(),
-            notifs_enabled: Default::default(),
+            enabled_notifications: Default::default(),
             was_notified: Default::default(),
             bios: BiosState {
                 was_notified: Default::default(),

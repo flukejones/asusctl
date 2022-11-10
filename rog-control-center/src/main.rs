@@ -1,6 +1,7 @@
 use eframe::{IconData, NativeOptions};
 use log::{error, LevelFilter};
 use rog_aura::layouts::KeyLayout;
+use rog_control_center::notify::EnabledNotifications;
 use rog_control_center::tray::{AppToTray, TrayToApp};
 use rog_control_center::{
     config::Config, error::Result, get_ipc_file, notify::start_notifications, on_tmp_dir_exists,
@@ -39,10 +40,6 @@ fn main() -> Result<()> {
     // Enter the runtime so that `tokio::spawn` is available immediately.
     let _enter = rt.enter();
 
-    let (send, recv) = channel();
-    let update_tray = Arc::new(Mutex::new(send));
-    let app_cmd = Arc::new(init_tray(recv));
-
     let native_options = eframe::NativeOptions {
         vsync: true,
         decorated: true,
@@ -64,14 +61,32 @@ fn main() -> Result<()> {
         })
         .unwrap();
 
+    let supported = match dbus.proxies().supported().supported_functions() {
+        Ok(s) => s,
+        Err(e) => {
+            eframe::run_native(
+                "ROG Control Center",
+                native_options.clone(),
+                Box::new(move |_| Box::new(AppErrorShow::new(e.to_string()))),
+            );
+            SupportedFunctions::default()
+        }
+    };
+
+    let (send, recv) = channel();
+    let update_tray = Arc::new(Mutex::new(send));
+    let app_cmd = Arc::new(init_tray(supported.clone(), recv));
+
     // Startup
     let mut config = Config::load()?;
     let mut start_closed = config.startup_in_background;
 
     if config.startup_in_background {
         config.run_in_background = true;
-        config.save()?;
+        let tmp = config.enabled_notifications.clone(); // ends up being a double clone, oh well.
+        config.save(&tmp)?;
     }
+    let enabled_notifications = EnabledNotifications::tokio_mutex(&config);
 
     // Find and load a matching layout for laptop
     let mut file = OpenOptions::new()
@@ -109,11 +124,11 @@ fn main() -> Result<()> {
     };
 
     let states = setup_page_state_and_notifs(
-        layout.clone(),
-        &config,
-        native_options.clone(),
+        layout,
         &dbus,
+        enabled_notifications,
         update_tray,
+        &supported,
     )
     .unwrap();
 
@@ -147,10 +162,10 @@ fn main() -> Result<()> {
 
 fn setup_page_state_and_notifs(
     keyboard_layout: KeyLayout,
-    config: &Config,
-    native_options: NativeOptions,
     dbus: &RogDbusClientBlocking,
+    enabled_notifications: Arc<Mutex<EnabledNotifications>>,
     update_tray: Arc<Mutex<Sender<AppToTray>>>,
+    supported: &SupportedFunctions,
 ) -> Result<PageDataStates> {
     // Cheap method to alert to notifications rather than spinning a thread for each
     // This is quite different when done in a retained mode app
@@ -160,7 +175,6 @@ fn setup_page_state_and_notifs(
     let anime_notified = Arc::new(AtomicBool::new(false));
     let profiles_notified = Arc::new(AtomicBool::new(false));
     let fans_notified = Arc::new(AtomicBool::new(false));
-    let notifs_enabled = Arc::new(AtomicBool::new(config.enable_notifications));
 
     start_notifications(
         charge_notified.clone(),
@@ -169,33 +183,21 @@ fn setup_page_state_and_notifs(
         anime_notified.clone(),
         profiles_notified.clone(),
         fans_notified.clone(),
-        notifs_enabled.clone(),
+        enabled_notifications.clone(),
         update_tray,
     )?;
 
-    let supported = match dbus.proxies().supported().supported_functions() {
-        Ok(s) => s,
-        Err(e) => {
-            eframe::run_native(
-                "ROG Control Center",
-                native_options,
-                Box::new(move |_| Box::new(AppErrorShow::new(e.to_string()))),
-            );
-            SupportedFunctions::default()
-        }
-    };
-
     PageDataStates::new(
         keyboard_layout,
-        notifs_enabled.clone(),
-        charge_notified.clone(),
-        bios_notified.clone(),
-        aura_notified.clone(),
-        anime_notified.clone(),
-        profiles_notified.clone(),
-        fans_notified.clone(),
-        &supported,
-        &dbus,
+        enabled_notifications,
+        charge_notified,
+        bios_notified,
+        aura_notified,
+        anime_notified,
+        profiles_notified,
+        fans_notified,
+        supported,
+        dbus,
     )
 }
 

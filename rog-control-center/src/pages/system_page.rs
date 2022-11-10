@@ -27,23 +27,21 @@ impl<'a> RogApp<'a> {
                         /******************************************************/
                         ui.vertical(|ui| {
                             ui.separator();
-                            app_settings(config, states, ui);
-                        });
-
-                        ui.vertical(|ui| {
-                            ui.separator();
                             if supported.platform_profile.platform_profile {
                                 platform_profile(states, dbus, ui);
                             }
+                        });
+                        ui.vertical(|ui| {
+                            ui.separator();
+                            aura_power_group(supported, states, dbus, ui);
                         });
                         ui.end_row();
 
                         /******************************************************/
                         ui.vertical(|ui| {
                             ui.separator();
-                            aura_power_group(supported, states, dbus, ui);
+                            app_settings(config, states, ui);
                         });
-
                         ui.vertical(|ui| {
                             ui.separator();
                             rog_bios_group(supported, states, dbus, ui);

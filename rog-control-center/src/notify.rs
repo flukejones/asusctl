@@ -1,23 +1,70 @@
-use crate::{error::Result, tray::AppToTray};
-use notify_rust::{Hint, Notification, NotificationHandle};
+use crate::{config::Config, error::Result, tray::AppToTray};
+use notify_rust::{Hint, Notification, NotificationHandle, Urgency};
 use rog_dbus::{
     zbus_anime::AnimeProxy, zbus_led::LedProxy, zbus_platform::RogBiosProxy,
     zbus_power::PowerProxy, zbus_profile::ProfileProxy,
 };
 use rog_platform::platform::GpuMode;
 use rog_profiles::Profile;
+use serde::{Deserialize, Serialize};
 use std::{
     fmt::Display,
+    process::Command,
     sync::{
         atomic::{AtomicBool, Ordering},
         mpsc::Sender,
         Arc, Mutex,
     },
 };
-use supergfxctl::pci_device::GfxPower;
+use supergfxctl::{pci_device::GfxPower, zbus_proxy::DaemonProxy as SuperProxy};
 use zbus::export::futures_util::{future, StreamExt};
 
 const NOTIF_HEADER: &str = "ROG Control";
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(default)]
+pub struct EnabledNotifications {
+    pub receive_notify_post_boot_sound: bool,
+    pub receive_notify_panel_od: bool,
+    pub receive_notify_dgpu_disable: bool,
+    pub receive_notify_egpu_enable: bool,
+    pub receive_notify_gpu_mux_mode: bool,
+    pub receive_notify_charge_control_end_threshold: bool,
+    pub receive_notify_mains_online: bool,
+    pub receive_notify_profile: bool,
+    pub receive_notify_led: bool,
+    /// Anime
+    pub receive_power_states: bool,
+    pub receive_notify_gfx: bool,
+    pub receive_notify_gfx_status: bool,
+    pub all_enabled: bool,
+}
+
+impl Default for EnabledNotifications {
+    fn default() -> Self {
+        Self {
+            receive_notify_post_boot_sound: false,
+            receive_notify_panel_od: true,
+            receive_notify_dgpu_disable: true,
+            receive_notify_egpu_enable: true,
+            receive_notify_gpu_mux_mode: true,
+            receive_notify_charge_control_end_threshold: true,
+            receive_notify_mains_online: false,
+            receive_notify_profile: true,
+            receive_notify_led: false,
+            receive_power_states: false,
+            receive_notify_gfx: false,
+            receive_notify_gfx_status: false,
+            all_enabled: false,
+        }
+    }
+}
+
+impl EnabledNotifications {
+    pub fn tokio_mutex(config: &Config) -> Arc<Mutex<Self>> {
+        Arc::new(Mutex::new(config.enabled_notifications.clone()))
+    }
+}
 
 macro_rules! notify {
     ($notifier:expr, $last_notif:ident) => {
@@ -46,19 +93,19 @@ macro_rules! recv_notif {
         tokio::spawn(async move {
                 let conn = zbus::Connection::system().await.unwrap();
                 let proxy = $proxy::new(&conn).await.unwrap();
-                if let Ok(p) = proxy.$signal().await {
-                    p.for_each(|e| {
+                if let Ok(mut p) = proxy.$signal().await {
+                    while let Some(e) = p.next().await {
                         if let Ok(out) = e.args() {
-                            if notifs_enabled1.load(Ordering::SeqCst) {
-                                if let Ok(ref mut lock) = last_notif.try_lock() {
-                                    notify!($notifier($msg, &out$(.$out_arg)+()), lock);
+                            if let Ok(config) = notifs_enabled1.lock() {
+                                if config.all_enabled && config.$signal {
+                                    if let Ok(ref mut lock) = last_notif.try_lock() {
+                                        notify!($notifier($msg, &out$(.$out_arg)+()), lock);
+                                    }
+                                    notified.store(true, Ordering::SeqCst);
                                 }
                             }
-                            notified.store(true, Ordering::SeqCst);
                         }
-                        future::ready(())
-                    })
-                    .await;
+                    }
                 };
             });
     };
@@ -73,8 +120,8 @@ pub fn start_notifications(
     anime_notified: Arc<AtomicBool>,
     profiles_notified: Arc<AtomicBool>,
     _fans_notified: Arc<AtomicBool>,
-    notifs_enabled: Arc<AtomicBool>,
-    update_tray: Arc<Mutex<Sender<AppToTray>>>,
+    enabled_notifications: Arc<Mutex<EnabledNotifications>>,
+    update_tray: Arc<std::sync::Mutex<Sender<AppToTray>>>,
 ) -> Result<()> {
     let last_notification: SharedHandle = Arc::new(Mutex::new(None));
 
@@ -84,7 +131,7 @@ pub fn start_notifications(
         receive_notify_post_boot_sound,
         bios_notified,
         last_notification,
-        notifs_enabled,
+        enabled_notifications,
         [on],
         "BIOS Post sound",
         do_notification
@@ -95,7 +142,7 @@ pub fn start_notifications(
         receive_notify_panel_od,
         bios_notified,
         last_notification,
-        notifs_enabled,
+        enabled_notifications,
         [overdrive],
         "Panel Overdrive enabled:",
         do_notification
@@ -106,7 +153,7 @@ pub fn start_notifications(
         receive_notify_dgpu_disable,
         bios_notified,
         last_notification,
-        notifs_enabled,
+        enabled_notifications,
         [disable],
         "BIOS dGPU disabled",
         do_notification
@@ -117,7 +164,7 @@ pub fn start_notifications(
         receive_notify_egpu_enable,
         bios_notified,
         last_notification,
-        notifs_enabled,
+        enabled_notifications,
         [enable],
         "BIOS eGPU enabled",
         do_notification
@@ -128,10 +175,10 @@ pub fn start_notifications(
         receive_notify_gpu_mux_mode,
         bios_notified,
         last_notification,
-        notifs_enabled,
+        enabled_notifications,
         [mode],
-        "BIOS GPU MUX mode (reboot required)",
-        mux_notification
+        "Reboot required. BIOS GPU MUX mode set to",
+        do_mux_notification
     );
 
     // Charge notif
@@ -140,7 +187,7 @@ pub fn start_notifications(
         receive_notify_charge_control_end_threshold,
         charge_notified,
         last_notification,
-        notifs_enabled,
+        enabled_notifications,
         [limit],
         "Battery charge limit changed to",
         do_notification
@@ -151,7 +198,7 @@ pub fn start_notifications(
         receive_notify_mains_online,
         bios_notified,
         last_notification,
-        notifs_enabled,
+        enabled_notifications,
         [on],
         "AC Power power is",
         ac_power_notification
@@ -163,7 +210,7 @@ pub fn start_notifications(
         receive_notify_profile,
         profiles_notified,
         last_notification,
-        notifs_enabled,
+        enabled_notifications,
         [profile],
         "Profile changed to",
         do_thermal_notif
@@ -176,7 +223,7 @@ pub fn start_notifications(
         receive_notify_led,
         aura_notified,
         last_notification,
-        notifs_enabled,
+        enabled_notifications,
         [data mode_name],
         "Keyboard LED mode changed to",
         do_notification
@@ -206,40 +253,73 @@ pub fn start_notifications(
         };
     });
 
-    let notifs_enabled1 = notifs_enabled.clone();
-    let last_notif = last_notification.clone();
+    recv_notif!(
+        SuperProxy,
+        receive_notify_gfx,
+        bios_notified,
+        last_notification,
+        enabled_notifications,
+        [mode],
+        "Gfx mode changed to",
+        do_notification
+    );
+
+    // recv_notif!(
+    //     SuperProxy,
+    //     receive_notify_action,
+    //     bios_notified,
+    //     last_gfx_action_notif,
+    //     enabled_notifications,
+    //     [action],
+    //     "Gfx mode change requires",
+    //     do_gfx_action_notif
+    // );
+
     let bios_notified1 = bios_notified.clone();
     tokio::spawn(async move {
         let conn = zbus::Connection::system().await.unwrap();
-        let proxy = supergfxctl::zbus_proxy::DaemonProxy::new(&conn)
-            .await
-            .unwrap();
-        if let Ok(p) = proxy.receive_notify_gfx_status().await {
-            p.for_each(|e| {
+        let proxy = SuperProxy::new(&conn).await.unwrap();
+        if let Ok(mut p) = proxy.receive_notify_action().await {
+            while let Some(e) = p.next().await {
                 if let Ok(out) = e.args() {
-                    if notifs_enabled1.load(Ordering::SeqCst) {
-                        let status = out.status();
-                        if *status != GfxPower::Unknown {
-                            // Required check because status cycles through active/unknown/suspended
-                            if let Ok(ref mut lock) = last_notif.try_lock() {
-                                notify!(
-                                    do_notification(
-                                        "dGPU status changed:",
-                                        &format!("{status:?}",)
-                                    ),
-                                    lock
-                                );
-                                if let Ok(lock) = update_tray.try_lock() {
-                                    lock.send(AppToTray::DgpuStatus(*status)).ok();
+                    let action = out.action();
+                    do_gfx_action_notif("Gfx mode change requires", &format!("{action:?}",))
+                        .unwrap();
+                }
+            }
+            bios_notified1.store(true, Ordering::SeqCst);
+        };
+    });
+
+    let notifs_enabled1 = enabled_notifications;
+    let last_notif = last_notification;
+    let bios_notified1 = bios_notified;
+    tokio::spawn(async move {
+        let conn = zbus::Connection::system().await.unwrap();
+        let proxy = SuperProxy::new(&conn).await.unwrap();
+        if let Ok(mut p) = proxy.receive_notify_gfx_status().await {
+            while let Some(e) = p.next().await {
+                if let Ok(out) = e.args() {
+                    let status = out.status();
+                    if *status != GfxPower::Unknown {
+                        if let Ok(config) = notifs_enabled1.lock() {
+                            if config.all_enabled && config.receive_notify_gfx_status {
+                                // Required check because status cycles through active/unknown/suspended
+                                if let Ok(ref mut lock) = last_notif.try_lock() {
+                                    notify!(
+                                        do_gpu_status_notif("dGPU status changed:", status),
+                                        lock
+                                    );
                                 }
                             }
                         }
+                        if let Ok(lock) = update_tray.try_lock() {
+                            lock.send(AppToTray::DgpuStatus(*status)).ok();
+                        }
                     }
                 }
-                bios_notified1.store(true, Ordering::SeqCst);
-                future::ready(())
-            })
-            .await;
+            }
+            bios_notified1.store(true, Ordering::SeqCst);
         };
     });
 
@@ -278,11 +358,6 @@ fn ac_power_notification(message: &str, on: &bool) -> Result<NotificationHandle>
     Ok(base_notification(message, &data).show()?)
 }
 
-/// Actual GpuMode unused as data is never correct until switched by reboot
-fn mux_notification(message: &str, _: &GpuMode) -> Result<NotificationHandle> {
-    Ok(base_notification(message, &"").show()?)
-}
-
 fn do_thermal_notif(message: &str, profile: &Profile) -> Result<NotificationHandle> {
     let icon = match profile {
         Profile::Balanced => "asus_notif_yellow",
@@ -292,4 +367,50 @@ fn do_thermal_notif(message: &str, profile: &Profile) -> Result<NotificationHand
     let profile: &str = (*profile).into();
     let mut notif = base_notification(message, &profile.to_uppercase());
     Ok(notif.icon(icon).show()?)
+}
+
+fn do_gpu_status_notif(message: &str, data: &GfxPower) -> Result<NotificationHandle> {
+    // eww
+    let mut notif = base_notification(message, &<&str>::from(data).to_string());
+    let icon = match data {
+        GfxPower::Active => "asus_notif_red",
+        GfxPower::Suspended => "asus_notif_blue",
+        GfxPower::Off => "asus_notif_green",
+        GfxPower::AsusDisabled => "asus_notif_white",
+        GfxPower::AsusMuxDiscreet => "asus_notif_red",
+        GfxPower::Unknown => "gpu-integrated",
+    };
+    notif.icon(icon);
+    Ok(Notification::show(&notif)?)
+}
+
+fn do_gfx_action_notif<T>(message: &str, data: &T) -> Result<()>
+where
+    T: Display,
+{
+    let mut notif = base_notification(message, data);
+    notif.action("gnome-session-quit", "Logout");
+    notif.urgency(Urgency::Critical);
+    notif.timeout(3000);
+    notif.icon("dialog-warning");
+    notif.hint(Hint::Transient(true));
+    let handle = notif.show()?;
+    handle.wait_for_action(|id| {
+        if id == "gnome-session-quit" {
+            let mut cmd = Command::new("gnome-session-quit");
+            cmd.spawn().ok();
+        } else if id == "__closed" {
+            // TODO: cancel the switching
+        }
+    });
+    Ok(())
+}
+
+/// Actual GpuMode unused as data is never correct until switched by reboot
+fn do_mux_notification(message: &str, _: &GpuMode) -> Result<NotificationHandle> {
+    let mut notif = base_notification(message, &"");
+    notif.urgency(Urgency::Critical);
+    notif.icon("system-reboot-symbolic");
+    notif.hint(Hint::Transient(true));
+    Ok(notif.show()?)
 }

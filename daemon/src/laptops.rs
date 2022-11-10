@@ -90,7 +90,7 @@ impl LedSupportFile {
         let mut loaded = false;
         let mut data = LedSupportFile::default();
         // Load user configs first so they are first to be checked
-        if let Ok(mut file) = OpenOptions::new().read(true).open(&ASUS_LED_MODE_USER_CONF) {
+        if let Ok(mut file) = OpenOptions::new().read(true).open(ASUS_LED_MODE_USER_CONF) {
             let mut buf = String::new();
             if let Ok(l) = file.read_to_string(&mut buf) {
                 if l == 0 {
@@ -107,7 +107,7 @@ impl LedSupportFile {
             }
         }
         // Load and append the default LED support data
-        if let Ok(mut file) = OpenOptions::new().read(true).open(&ASUS_LED_MODE_CONF) {
+        if let Ok(mut file) = OpenOptions::new().read(true).open(ASUS_LED_MODE_CONF) {
             let mut buf = String::new();
             if let Ok(l) = file.read_to_string(&mut buf) {
                 if l == 0 {

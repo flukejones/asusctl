@@ -61,7 +61,7 @@ impl Config {
     pub fn read(&mut self) {
         let mut file = OpenOptions::new()
             .read(true)
-            .open(&CONFIG_PATH)
+            .open(CONFIG_PATH)
             .unwrap_or_else(|err| panic!("Error reading {}: {}", CONFIG_PATH, err));
         let mut buf = String::new();
         if let Ok(l) = file.read_to_string(&mut buf) {

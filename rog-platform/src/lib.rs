@@ -78,7 +78,7 @@ pub fn write_attr_u8_array(device: &mut Device, attr: &str, values: &[u8]) -> Re
     let tmp: String = values.iter().map(|v| format!("{} ", v)).collect();
     let tmp = tmp.trim();
     device
-        .set_attribute_value(attr, &tmp)
+        .set_attribute_value(attr, tmp)
         .map_err(|e| PlatformError::IoPath(attr.into(), e))
 }
 

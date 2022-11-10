@@ -1,5 +1,3 @@
-use std::sync::atomic::Ordering;
-
 use egui::Ui;
 
 use crate::{config::Config, page_states::PageDataStates};
@@ -8,6 +6,12 @@ pub fn app_settings(config: &mut Config, states: &mut PageDataStates, ui: &mut U
     ui.heading("ROG GUI Settings");
     // ui.label("Options are incomplete. Awake + Boot should work");
 
+    let mut enabled_notifications = if let Ok(lock) = states.enabled_notifications.lock() {
+        lock.clone()
+    } else {
+        Default::default()
+    };
+
     if ui
         .checkbox(&mut config.run_in_background, "Run in Background")
         .clicked()
@@ -15,17 +19,70 @@ pub fn app_settings(config: &mut Config, states: &mut PageDataStates, ui: &mut U
             .checkbox(&mut config.startup_in_background, "Startup Hidden")
             .clicked()
         || ui
-            .checkbox(&mut config.enable_notifications, "Enable Notifications")
+            .checkbox(
+                &mut enabled_notifications.all_enabled,
+                "Enable Notifications",
+            )
+            .clicked()
+        || ui
+            .checkbox(
+                &mut enabled_notifications.receive_notify_gfx_status,
+                "Enable dGPU status notification",
+            )
+            .clicked()
+        || ui
+            .checkbox(
+                &mut enabled_notifications.receive_notify_dgpu_disable,
+                "Enable dGPU disablement notification",
+            )
+            .clicked()
+        || ui
+            .checkbox(
+                &mut enabled_notifications.receive_notify_egpu_enable,
+                "Enable eGPU enablement notification",
+            )
+            .clicked()
+        || ui
+            .checkbox(
+                &mut enabled_notifications.receive_notify_mains_online,
+                "Enable mains (AC) power notification",
+            )
+            .clicked()
+        || ui
+            .checkbox(
+                &mut enabled_notifications.receive_notify_charge_control_end_threshold,
+                "Enable charge threshold notification",
+            )
+            .clicked()
+        || ui
+            .checkbox(
+                &mut enabled_notifications.receive_notify_profile,
+                "Enable profile change notification",
+            )
+            .clicked()
+        || ui
+            .checkbox(
+                &mut enabled_notifications.receive_notify_panel_od,
+                "Enable panel overdrive notification",
+            )
+            .clicked()
+        || ui
+            .checkbox(
+                &mut enabled_notifications.receive_notify_post_boot_sound,
+                "Enable BIOS post sound notification",
+            )
             .clicked()
     {
-        states
-            .notifs_enabled
-            .store(config.enable_notifications, Ordering::SeqCst);
-        config
-            .save()
-            .map_err(|err| {
-                states.error = Some(err.to_string());
-            })
-            .ok();
+        if let Ok(mut lock) = states.enabled_notifications.lock() {
+            // Replace inner content before save
+            *lock = enabled_notifications;
+
+            config
+                .save(&lock)
+                .map_err(|err| {
+                    states.error = Some(err.to_string());
+                })
+                .ok();
+        }
     }
 }
