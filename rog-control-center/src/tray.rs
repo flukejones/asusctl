@@ -17,6 +17,8 @@ use crate::{error::Result, get_ipc_file, SHOW_GUI};
 use libappindicator::{AppIndicator, AppIndicatorStatus};
 use supergfxctl::pci_device::{GfxMode, GfxPower};
 
+use log::trace;
+
 const TRAY_APP_ICON: &str = "rog-control-center";
 const TRAY_LABEL: &str = "ROG Control Center";
 
@@ -257,10 +259,11 @@ pub fn init_tray(
             if gtk::events_pending() {
                 // This is blocking until any events are available
                 gtk::main_iteration();
-            } else {
-                // Don't spool at max speed if no gtk events
-                std::thread::sleep(Duration::from_millis(300));
+                continue;
             }
+            // Don't spool at max speed if no gtk events
+            std::thread::sleep(Duration::from_millis(300));
+            trace!("Tray loop ticked");
         }
     });
 
