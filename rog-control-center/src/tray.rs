@@ -238,6 +238,7 @@ pub fn init_tray(
         //***********************************
         // finally do
         tray.tray.set_menu(&mut tray.menu);
+        tray.set_icon(TRAY_APP_ICON);
         //***********************************
 
         loop {
