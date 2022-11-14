@@ -1,12 +1,11 @@
 use egui::{RichText, Ui};
 use rog_platform::supported::SupportedFunctions;
 
-use crate::{page_states::PageDataStates, RogDbusClientBlocking};
+use crate::page_states::PageDataStates;
 
 pub fn anime_power_group(
     _supported: &SupportedFunctions,
     states: &mut PageDataStates,
-    dbus: &mut RogDbusClientBlocking,
     ui: &mut Ui,
 ) {
     ui.heading("AniMe Matrix Settings");
@@ -43,7 +42,9 @@ pub fn anime_power_group(
             });
             ui.horizontal_wrapped(|ui| {
                 if ui.checkbox(&mut states.anime.boot, "Enable").changed() {
-                    dbus.proxies()
+                    states
+                        .asus_dbus
+                        .proxies()
                         .anime()
                         .set_boot_on_off(states.anime.boot)
                         .map_err(|err| {
@@ -54,7 +55,9 @@ pub fn anime_power_group(
             });
             ui.horizontal_wrapped(|ui| {
                 if ui.checkbox(&mut states.anime.awake, "Enable").changed() {
-                    dbus.proxies()
+                    states
+                        .asus_dbus
+                        .proxies()
                         .anime()
                         .set_on_off(states.anime.awake)
                         .map_err(|err| {

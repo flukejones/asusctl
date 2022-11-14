@@ -64,7 +64,6 @@ macro_rules! task_watch_item {
                             let mut buffer = [0; 32];
                             watch.event_stream(&mut buffer).unwrap().for_each(|_| async {
                                 let value = ctrl.$name();
-                                dbg!(&value);
                                 concat_idents::concat_idents!(notif_fn = notify_, $name {
                                     Self::notif_fn(&signal_ctxt, value).await.ok();
                                 });

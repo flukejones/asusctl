@@ -136,8 +136,7 @@ pub fn fan_graphs(
             })
             .ok();
 
-        let notif = curves.was_notified.clone();
-        match FanCurvesState::new(notif, supported, dbus) {
+        match FanCurvesState::new(supported, dbus) {
             Ok(f) => *curves = f,
             Err(e) => *do_error = Some(e.to_string()),
         }

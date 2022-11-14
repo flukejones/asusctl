@@ -4,16 +4,15 @@ use egui::Color32;
 use rog_aura::{AuraEffect, AuraModeNum};
 
 use crate::{
+    page_states::PageDataStates,
     widgets::{aura_modes_group, keyboard},
     RogApp,
 };
 
-impl<'a> RogApp<'a> {
-    pub fn aura_page(&mut self, ctx: &egui::Context) {
+impl RogApp {
+    pub fn aura_page(&mut self, states: &mut PageDataStates, ctx: &egui::Context) {
         let Self {
             supported,
-            states,
-            asus_dbus: dbus,
             oscillator1,
             oscillator2,
             oscillator3,
@@ -26,7 +25,6 @@ impl<'a> RogApp<'a> {
         let blue = oscillator3.load(Ordering::SeqCst) as u32;
         states.aura.nudge_wave(red as u8, green as u8, blue as u8);
         // let osc = c.0 * 255 / osc;
-        // dbg!(osc);
         let c1 = states
             .aura
             .modes
@@ -72,7 +70,7 @@ impl<'a> RogApp<'a> {
 
         // TODO: animation of colour changes/periods/blending
         egui::CentralPanel::default().show(ctx, |ui| {
-            aura_modes_group(supported, states, oscillator_freq, dbus, ui);
+            aura_modes_group(supported, states, oscillator_freq, ui);
 
             keyboard(ui, &states.keyboard_layout, &mut states.aura, colour);
         });

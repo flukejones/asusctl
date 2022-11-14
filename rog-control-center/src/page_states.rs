@@ -1,24 +1,28 @@
 use std::{
     collections::{BTreeMap, HashSet},
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc, Mutex,
-    },
+    sync::{atomic::Ordering, Arc, Mutex},
 };
 
 use egui::Vec2;
 use rog_aura::{layouts::KeyLayout, usb::AuraPowerDev, AuraEffect, AuraModeNum};
 use rog_platform::{platform::GpuMode, supported::SupportedFunctions};
 use rog_profiles::{fan_curve_set::FanCurveSet, FanCurvePU, Profile};
+use supergfxctl::{
+    pci_device::{GfxMode, GfxPower},
+    zbus_proxy::DaemonProxyBlocking as GfxProxyBlocking,
+};
 
-use crate::{error::Result, notify::EnabledNotifications, RogDbusClientBlocking};
+use crate::{
+    error::Result,
+    notify::{EnabledNotifications, WasNotified},
+    RogDbusClientBlocking,
+};
 
 #[derive(Clone, Debug)]
 pub struct BiosState {
     /// To be shared to a thread that checks notifications.
     /// It's a bit general in that it won't provide *what* was
     /// updated, so the full state needs refresh
-    pub was_notified: Arc<AtomicBool>,
     pub post_sound: bool,
     pub dedicated_gfx: GpuMode,
     pub panel_overdrive: bool,
@@ -27,13 +31,8 @@ pub struct BiosState {
 }
 
 impl BiosState {
-    pub fn new(
-        was_notified: Arc<AtomicBool>,
-        supported: &SupportedFunctions,
-        dbus: &RogDbusClientBlocking,
-    ) -> Result<Self> {
+    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking) -> Result<Self> {
         Ok(Self {
-            was_notified,
             post_sound: if supported.rog_bios_ctrl.post_sound {
                 dbus.proxies().rog_bios().post_boot_sound()? != 0
             } else {
@@ -58,19 +57,13 @@ impl BiosState {
 
 #[derive(Clone, Debug)]
 pub struct ProfilesState {
-    pub was_notified: Arc<AtomicBool>,
     pub list: Vec<Profile>,
     pub current: Profile,
 }
 
 impl ProfilesState {
-    pub fn new(
-        was_notified: Arc<AtomicBool>,
-        supported: &SupportedFunctions,
-        dbus: &RogDbusClientBlocking,
-    ) -> Result<Self> {
+    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking) -> Result<Self> {
         Ok(Self {
-            was_notified,
             list: if supported.platform_profile.platform_profile {
                 let mut list = dbus.proxies().profile().profiles()?;
                 list.sort();
@@ -89,7 +82,6 @@ impl ProfilesState {
 
 #[derive(Clone, Debug)]
 pub struct FanCurvesState {
-    pub was_notified: Arc<AtomicBool>,
     pub show_curve: Profile,
     pub show_graph: FanCurvePU,
     pub enabled: HashSet<Profile>,
@@ -98,11 +90,7 @@ pub struct FanCurvesState {
 }
 
 impl FanCurvesState {
-    pub fn new(
-        was_notified: Arc<AtomicBool>,
-        supported: &SupportedFunctions,
-        dbus: &RogDbusClientBlocking,
-    ) -> Result<Self> {
+    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking) -> Result<Self> {
         let profiles = if supported.platform_profile.platform_profile {
             dbus.proxies().profile().profiles()?
         } else {
@@ -143,7 +131,6 @@ impl FanCurvesState {
         };
 
         Ok(Self {
-            was_notified,
             show_curve,
             show_graph: FanCurvePU::CPU,
             enabled,
@@ -155,7 +142,6 @@ impl FanCurvesState {
 
 #[derive(Clone, Debug)]
 pub struct AuraState {
-    pub was_notified: Arc<AtomicBool>,
     pub current_mode: AuraModeNum,
     pub modes: BTreeMap<AuraModeNum, AuraEffect>,
     pub enabled: AuraPowerDev,
@@ -167,13 +153,8 @@ pub struct AuraState {
 }
 
 impl AuraState {
-    pub fn new(
-        was_notified: Arc<AtomicBool>,
-        supported: &SupportedFunctions,
-        dbus: &RogDbusClientBlocking,
-    ) -> Result<Self> {
+    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking) -> Result<Self> {
         Ok(Self {
-            was_notified,
             current_mode: if !supported.keyboard_led.stock_led_modes.is_empty() {
                 dbus.proxies().led().led_mode().unwrap_or_default()
             } else {
@@ -214,7 +195,6 @@ impl AuraState {
 
 #[derive(Clone, Debug)]
 pub struct AnimeState {
-    pub was_notified: Arc<AtomicBool>,
     pub bright: u8,
     pub boot: bool,
     pub awake: bool,
@@ -222,13 +202,8 @@ pub struct AnimeState {
 }
 
 impl AnimeState {
-    pub fn new(
-        was_notified: Arc<AtomicBool>,
-        supported: &SupportedFunctions,
-        dbus: &RogDbusClientBlocking,
-    ) -> Result<Self> {
+    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking) -> Result<Self> {
         Ok(Self {
-            was_notified,
             boot: if supported.anime_ctrl.0 {
                 dbus.proxies().anime().boot_enabled()?
             } else {
@@ -246,11 +221,25 @@ impl AnimeState {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
+pub struct GfxState {
+    pub mode: GfxMode,
+    pub power_status: GfxPower,
+}
+
+impl GfxState {
+    pub fn new(_supported: &SupportedFunctions, dbus: &GfxProxyBlocking) -> Result<Self> {
+        Ok(Self {
+            mode: dbus.mode()?,
+            power_status: dbus.power()?,
+        })
+    }
+}
+
 pub struct PageDataStates {
     pub keyboard_layout: KeyLayout,
     pub enabled_notifications: Arc<Mutex<EnabledNotifications>>,
-    pub was_notified: Arc<AtomicBool>,
+    pub was_notified: WasNotified,
     /// Because much of the app state here is the same as `RogBiosSupportedFunctions`
     /// we can re-use that structure.
     pub bios: BiosState,
@@ -258,87 +247,116 @@ pub struct PageDataStates {
     pub anime: AnimeState,
     pub profiles: ProfilesState,
     pub fan_curves: FanCurvesState,
+    pub gfx_state: GfxState,
     pub charge_limit: u8,
     pub error: Option<String>,
+    /// Specific field for the tray only so that we can know when it does need update.
+    /// The tray should set this to false when done.
+    pub tray_should_update: bool,
+    pub app_should_update: bool,
+    pub asus_dbus: RogDbusClientBlocking<'static>,
+    pub gfx_dbus: GfxProxyBlocking<'static>,
 }
 
-#[allow(clippy::too_many_arguments)]
 impl PageDataStates {
+    /// Creates self, including the relevant dbus connections and proixies for internal use
     pub fn new(
         keyboard_layout: KeyLayout,
         enabled_notifications: Arc<Mutex<EnabledNotifications>>,
-        charge_notified: Arc<AtomicBool>,
-        bios_notified: Arc<AtomicBool>,
-        aura_notified: Arc<AtomicBool>,
-        anime_notified: Arc<AtomicBool>,
-        profiles_notified: Arc<AtomicBool>,
-        fans_notified: Arc<AtomicBool>,
         supported: &SupportedFunctions,
-        dbus: &RogDbusClientBlocking,
     ) -> Result<Self> {
+        let (asus_dbus, conn) = RogDbusClientBlocking::new().unwrap();
+        let gfx_dbus = GfxProxyBlocking::new(&conn).unwrap();
         Ok(Self {
             keyboard_layout,
             enabled_notifications,
-            was_notified: charge_notified,
-            charge_limit: dbus.proxies().charge().charge_control_end_threshold()?,
-            bios: BiosState::new(bios_notified, supported, dbus)?,
-            aura: AuraState::new(aura_notified, supported, dbus)?,
-            anime: AnimeState::new(anime_notified, supported, dbus)?,
-            profiles: ProfilesState::new(profiles_notified, supported, dbus)?,
-            fan_curves: FanCurvesState::new(fans_notified, supported, dbus)?,
+            was_notified: WasNotified::default(),
+            charge_limit: asus_dbus
+                .proxies()
+                .charge()
+                .charge_control_end_threshold()?,
+            bios: BiosState::new(supported, &asus_dbus)?,
+            aura: AuraState::new(supported, &asus_dbus)?,
+            anime: AnimeState::new(supported, &asus_dbus)?,
+            profiles: ProfilesState::new(supported, &asus_dbus)?,
+            fan_curves: FanCurvesState::new(supported, &asus_dbus)?,
+            gfx_state: GfxState::new(supported, &gfx_dbus)?,
             error: None,
+            tray_should_update: true,
+            app_should_update: true,
+            asus_dbus,
+            gfx_dbus,
         })
     }
 
-    pub fn refresh_if_notfied(
-        &mut self,
-        supported: &SupportedFunctions,
-        dbus: &RogDbusClientBlocking,
-    ) -> Result<bool> {
+    pub fn refresh_if_notfied(&mut self, supported: &SupportedFunctions) -> Result<bool> {
         let mut notified = false;
-        if self.was_notified.load(Ordering::SeqCst) {
-            self.charge_limit = dbus.proxies().charge().charge_control_end_threshold()?;
-            self.was_notified.store(false, Ordering::SeqCst);
+        if self.was_notified.charge.load(Ordering::SeqCst) {
+            self.charge_limit = self
+                .asus_dbus
+                .proxies()
+                .charge()
+                .charge_control_end_threshold()?;
+            self.was_notified.charge.store(false, Ordering::SeqCst);
             notified = true;
+            self.tray_should_update = true;
+            self.app_should_update = true;
         }
 
-        if self.aura.was_notified.load(Ordering::SeqCst) {
-            self.aura = AuraState::new(self.aura.was_notified.clone(), supported, dbus)?;
-            self.aura.was_notified.store(false, Ordering::SeqCst);
+        if self.was_notified.aura.load(Ordering::SeqCst) {
+            self.aura = AuraState::new(supported, &self.asus_dbus)?;
+            self.was_notified.aura.store(false, Ordering::SeqCst);
             notified = true;
+            self.tray_should_update = true;
+            self.app_should_update = true;
         }
 
-        if self.bios.was_notified.load(Ordering::SeqCst) {
-            self.bios = BiosState::new(self.bios.was_notified.clone(), supported, dbus)?;
-            self.bios.was_notified.store(false, Ordering::SeqCst);
+        if self.was_notified.bios.load(Ordering::SeqCst) {
+            self.bios = BiosState::new(supported, &self.asus_dbus)?;
+            self.was_notified.bios.store(false, Ordering::SeqCst);
             notified = true;
+            self.tray_should_update = true;
+            self.app_should_update = true;
         }
 
-        if self.profiles.was_notified.load(Ordering::SeqCst) {
-            self.profiles =
-                ProfilesState::new(self.profiles.was_notified.clone(), supported, dbus)?;
-            self.profiles.was_notified.store(false, Ordering::SeqCst);
+        if self.was_notified.profiles.load(Ordering::SeqCst) {
+            self.profiles = ProfilesState::new(supported, &self.asus_dbus)?;
+            self.was_notified.profiles.store(false, Ordering::SeqCst);
             notified = true;
+            self.tray_should_update = true;
+            self.app_should_update = true;
         }
 
-        if self.fan_curves.was_notified.load(Ordering::SeqCst) {
-            self.fan_curves =
-                FanCurvesState::new(self.fan_curves.was_notified.clone(), supported, dbus)?;
-            self.fan_curves.was_notified.store(false, Ordering::SeqCst);
+        if self.was_notified.fans.load(Ordering::SeqCst) {
+            self.fan_curves = FanCurvesState::new(supported, &self.asus_dbus)?;
+            self.was_notified.fans.store(false, Ordering::SeqCst);
             notified = true;
+            self.tray_should_update = true;
+            self.app_should_update = true;
         }
+
+        if self.was_notified.gfx.load(Ordering::SeqCst) {
+            self.gfx_state = GfxState::new(supported, &self.gfx_dbus)?;
+            self.was_notified.gfx.store(false, Ordering::SeqCst);
+            notified = true;
+            self.tray_should_update = true;
+            self.app_should_update = true;
+        }
+
         Ok(notified)
     }
 }
 
 impl Default for PageDataStates {
     fn default() -> Self {
+        let (asus_dbus, conn) = RogDbusClientBlocking::new().unwrap();
+        let gfx_dbus = GfxProxyBlocking::new(&conn).unwrap();
+
         Self {
             keyboard_layout: KeyLayout::ga401_layout(),
             enabled_notifications: Default::default(),
-            was_notified: Default::default(),
+            was_notified: WasNotified::default(),
             bios: BiosState {
-                was_notified: Default::default(),
                 post_sound: Default::default(),
                 dedicated_gfx: GpuMode::NotSupported,
                 panel_overdrive: Default::default(),
@@ -346,7 +364,6 @@ impl Default for PageDataStates {
                 egpu_enable: Default::default(),
             },
             aura: AuraState {
-                was_notified: Default::default(),
                 current_mode: AuraModeNum::Static,
                 modes: Default::default(),
                 enabled: AuraPowerDev {
@@ -360,27 +377,32 @@ impl Default for PageDataStates {
                 wave_blue: Default::default(),
             },
             anime: AnimeState {
-                was_notified: Default::default(),
                 bright: Default::default(),
                 boot: Default::default(),
                 awake: Default::default(),
                 sleep: Default::default(),
             },
             profiles: ProfilesState {
-                was_notified: Default::default(),
                 list: Default::default(),
                 current: Default::default(),
             },
             fan_curves: FanCurvesState {
-                was_notified: Default::default(),
                 show_curve: Default::default(),
                 show_graph: Default::default(),
                 enabled: Default::default(),
                 curves: Default::default(),
                 drag_delta: Default::default(),
             },
+            gfx_state: GfxState {
+                mode: GfxMode::None,
+                power_status: GfxPower::Unknown,
+            },
             charge_limit: Default::default(),
             error: Default::default(),
+            tray_should_update: true,
+            app_should_update: true,
+            asus_dbus,
+            gfx_dbus,
         }
     }
 }

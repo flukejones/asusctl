@@ -1,10 +1,8 @@
 use std::{
     f64::consts::PI,
-    io::Write,
     sync::{
         atomic::{AtomicBool, AtomicU8, Ordering},
-        mpsc::Receiver,
-        Arc,
+        Arc, Mutex,
     },
     time::{Duration, Instant},
 };
@@ -13,17 +11,15 @@ use egui::{Button, RichText};
 use rog_platform::supported::SupportedFunctions;
 
 use crate::{
-    config::Config, error::Result, get_ipc_file, page_states::PageDataStates, tray::TrayToApp,
-    Page, RogDbusClientBlocking, SHOW_GUI,
+    config::Config, error::Result, page_states::PageDataStates, Page, RogDbusClientBlocking,
 };
 
-pub struct RogApp<'a> {
+pub struct RogApp {
     pub page: Page,
-    pub states: PageDataStates,
+    pub states: Arc<Mutex<PageDataStates>>,
     pub supported: SupportedFunctions,
     // TODO: can probably just open and read whenever
     pub config: Config,
-    pub asus_dbus: RogDbusClientBlocking<'a>,
     /// Oscillator in percentage
     pub oscillator1: Arc<AtomicU8>,
     pub oscillator2: Arc<AtomicU8>,
@@ -32,15 +28,13 @@ pub struct RogApp<'a> {
     pub oscillator_freq: Arc<AtomicU8>,
     /// A toggle that toggles true/false when the oscillator reaches 0
     pub oscillator_toggle: Arc<AtomicBool>,
-    pub app_cmd: Arc<Receiver<TrayToApp>>,
 }
 
-impl<'a> RogApp<'a> {
+impl RogApp {
     /// Called once before the first frame.
     pub fn new(
         config: Config,
-        states: PageDataStates,
-        app_cmd: Arc<Receiver<TrayToApp>>,
+        states: Arc<Mutex<PageDataStates>>,
         _cc: &eframe::CreationContext<'_>,
     ) -> Result<Self> {
         let (dbus, _) = RogDbusClientBlocking::new()?;
@@ -60,6 +54,9 @@ impl<'a> RogApp<'a> {
         let oscillator_freq1 = oscillator_freq.clone();
         let oscillator_toggle = Arc::new(AtomicBool::new(false));
         let oscillator_toggle1 = oscillator_toggle.clone();
+
+        let states1 = states.clone();
+        let supported1 = supported.clone();
         std::thread::spawn(move || {
             let started = Instant::now();
             let mut toggled = false;
@@ -88,6 +85,14 @@ impl<'a> RogApp<'a> {
                 oscillator1_1.store(tmp1, Ordering::SeqCst);
                 oscillator1_2.store(tmp2, Ordering::SeqCst);
                 oscillator1_3.store(tmp3, Ordering::SeqCst);
+
+                if let Ok(mut states) = states1.try_lock() {
+                    states
+                        .refresh_if_notfied(&supported1)
+                        .map_err(|e| states.error = Some(e.to_string()))
+                        .ok();
+                }
+
                 std::thread::sleep(Duration::from_millis(33));
             }
         });
@@ -97,88 +102,72 @@ impl<'a> RogApp<'a> {
             states,
             page: Page::System,
             config,
-            asus_dbus: dbus,
             oscillator1,
             oscillator2,
             oscillator3,
             oscillator_toggle,
             oscillator_freq,
-            app_cmd,
         })
-    }
-
-    fn check_app_cmds(&mut self, _ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let Self { app_cmd, .. } = self;
-
-        if let Ok(cmd) = app_cmd.try_recv() {
-            match cmd {
-                TrayToApp::Open => {
-                    dbg!();
-                    get_ipc_file().unwrap().write_all(&[SHOW_GUI]).ok();
-                }
-                TrayToApp::Quit => _frame.close(),
-            }
-        }
     }
 }
 
-impl<'a> eframe::App for RogApp<'a> {
+impl eframe::App for RogApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        self.check_app_cmds(ctx, frame);
+        let states = self.states.clone();
 
-        let Self {
-            supported,
-            asus_dbus: dbus,
-            states,
-            ..
-        } = self;
-
-        states
-            .refresh_if_notfied(supported, dbus)
-            .map(|repaint| {
-                if repaint {
-                    ctx.request_repaint();
-                }
-            })
-            .map_err(|e| self.states.error = Some(e.to_string()))
-            .ok();
+        if let Ok(mut states) = states.try_lock() {
+            if states.app_should_update {
+                states.app_should_update = false;
+                ctx.request_repaint();
+            }
+        }
 
         let page = self.page;
 
         self.top_bar(ctx, frame);
         self.side_panel(ctx);
 
-        if let Some(err) = self.states.error.clone() {
-            egui::CentralPanel::default().show(ctx, |ui| {
-                ui.heading(RichText::new("Error!").size(28.0));
+        let mut was_error = false;
 
-                ui.centered_and_justified(|ui| {
-                    ui.label(RichText::new(format!("The error was: {:?}", err)).size(22.0));
-                });
-            });
-            egui::TopBottomPanel::bottom("error_bar")
-                .default_height(26.0)
-                .show(ctx, |ui| {
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
-                        if ui
-                            .add(Button::new(RichText::new("Okay").size(20.0)))
-                            .clicked()
-                        {
-                            self.states.error = None;
-                        }
+        if let Ok(mut states) = states.try_lock() {
+            if let Some(err) = states.error.clone() {
+                was_error = true;
+                egui::CentralPanel::default().show(ctx, |ui| {
+                    ui.heading(RichText::new("Error!").size(28.0));
+
+                    ui.centered_and_justified(|ui| {
+                        ui.label(RichText::new(format!("The error was: {:?}", err)).size(22.0));
                     });
                 });
-        } else if page == Page::System {
-            self.system_page(ctx);
-        } else if page == Page::AuraEffects {
-            self.aura_page(ctx);
-        // TODO: Anime page is not complete
-        // } else if page == Page::AnimeMatrix {
-        //     self.anime_page(ctx);
-        } else if page == Page::FanCurves {
-            self.fan_curve_page(ctx);
+                egui::TopBottomPanel::bottom("error_bar")
+                    .default_height(26.0)
+                    .show(ctx, |ui| {
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+                            if ui
+                                .add(Button::new(RichText::new("Okay").size(20.0)))
+                                .clicked()
+                            {
+                                states.error = None;
+                            }
+                        });
+                    });
+            }
+        }
+        if !was_error {
+            if let Ok(mut states) = states.try_lock() {
+                if page == Page::System {
+                    self.system_page(&mut states, ctx);
+                } else if page == Page::AuraEffects {
+                    self.aura_page(&mut states, ctx);
+                // TODO: Anime page is not complete
+                // } else if page == Page::AnimeMatrix {
+                //     self.anime_page(ctx);
+                } else if page == Page::FanCurves {
+                    self.fan_curve_page(&mut states, ctx);
+                }
+            }
         }
     }
 }

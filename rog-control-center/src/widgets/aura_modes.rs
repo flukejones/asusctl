@@ -7,16 +7,12 @@ use egui::{RichText, Ui};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour, Speed};
 use rog_platform::supported::SupportedFunctions;
 
-use crate::{
-    page_states::{AuraState, PageDataStates},
-    RogDbusClientBlocking,
-};
+use crate::page_states::{AuraState, PageDataStates};
 
 pub fn aura_modes_group(
     supported: &SupportedFunctions,
     states: &mut PageDataStates,
     freq: &mut Arc<AtomicU8>,
-    dbus: &mut RogDbusClientBlocking,
     ui: &mut Ui,
 ) {
     let mut changed = false;
@@ -172,8 +168,7 @@ pub fn aura_modes_group(
     ui.separator();
     ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
         if ui.add(egui::Button::new("Cancel")).clicked() {
-            let notif = states.aura.was_notified.clone();
-            match AuraState::new(notif, supported, dbus) {
+            match AuraState::new(supported, &states.asus_dbus) {
                 Ok(a) => states.aura.modes = a.modes,
                 Err(e) => states.error = Some(e.to_string()),
             }
@@ -202,7 +197,9 @@ pub fn aura_modes_group(
     if changed {
         states.aura.current_mode = selected;
 
-        dbus.proxies()
+        states
+            .asus_dbus
+            .proxies()
             .led()
             .set_led_mode(states.aura.modes.get(&selected).unwrap())
             .map_err(|err| {

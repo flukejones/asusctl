@@ -5,32 +5,22 @@ use rog_aura::{
 };
 use rog_platform::supported::SupportedFunctions;
 
-use crate::{page_states::PageDataStates, RogDbusClientBlocking};
+use crate::page_states::PageDataStates;
 
-pub fn aura_power_group(
-    supported: &SupportedFunctions,
-    states: &mut PageDataStates,
-    dbus: &mut RogDbusClientBlocking,
-    ui: &mut Ui,
-) {
+pub fn aura_power_group(supported: &SupportedFunctions, states: &mut PageDataStates, ui: &mut Ui) {
     ui.heading("LED settings");
 
     match supported.keyboard_led.prod_id {
         AuraDevice::X1854 | AuraDevice::X1869 | AuraDevice::X1866 => {
-            aura_power1(supported, states, dbus, ui)
+            aura_power1(supported, states, ui)
         }
-        AuraDevice::X19B6 => aura_power2(supported, states, dbus, ui),
-        AuraDevice::Tuf => aura_power1(supported, states, dbus, ui),
+        AuraDevice::X19B6 => aura_power2(supported, states, ui),
+        AuraDevice::Tuf => aura_power1(supported, states, ui),
         AuraDevice::Unknown => {}
     }
 }
 
-fn aura_power1(
-    supported: &SupportedFunctions,
-    states: &mut PageDataStates,
-    dbus: &mut RogDbusClientBlocking,
-    ui: &mut Ui,
-) {
+fn aura_power1(supported: &SupportedFunctions, states: &mut PageDataStates, ui: &mut Ui) {
     let enabled_states = &mut states.aura.enabled;
     let mut boot = enabled_states.x1866.contains(&AuraDev1866::Boot);
     let mut sleep = enabled_states.x1866.contains(&AuraDev1866::Sleep);
@@ -144,7 +134,9 @@ fn aura_power1(
                     x19b6: vec![],
                 };
                 // build data to send
-                dbus.proxies()
+                states
+                    .asus_dbus
+                    .proxies()
                     .led()
                     .set_leds_power(options, enable)
                     .map_err(|err| {
@@ -193,7 +185,9 @@ fn aura_power1(
                     x19b6: vec![],
                 };
                 // build data to send
-                dbus.proxies()
+                states
+                    .asus_dbus
+                    .proxies()
                     .led()
                     .set_leds_power(options, enable)
                     .map_err(|err| {
@@ -207,12 +201,7 @@ fn aura_power1(
     }
 }
 
-fn aura_power2(
-    supported: &SupportedFunctions,
-    states: &mut PageDataStates,
-    dbus: &mut RogDbusClientBlocking,
-    ui: &mut Ui,
-) {
+fn aura_power2(supported: &SupportedFunctions, states: &mut PageDataStates, ui: &mut Ui) {
     let enabled_states = &mut states.aura.enabled;
     let has_logo = supported
         .keyboard_led
@@ -331,7 +320,9 @@ fn aura_power2(
                 x19b6: data,
             };
             // build data to send
-            dbus.proxies()
+            states
+                .asus_dbus
+                .proxies()
                 .led()
                 .set_leds_power(options, enable)
                 .map_err(|err| {

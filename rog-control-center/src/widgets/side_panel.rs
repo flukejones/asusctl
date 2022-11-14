@@ -1,6 +1,6 @@
 use crate::{Page, RogApp};
 
-impl<'a> RogApp<'a> {
+impl RogApp {
     pub fn side_panel(&mut self, ctx: &egui::Context) {
         egui::SidePanel::left("side_panel")
             .resizable(false)

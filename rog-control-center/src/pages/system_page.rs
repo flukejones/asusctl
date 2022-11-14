@@ -1,18 +1,15 @@
 use crate::{
+    page_states::PageDataStates,
     widgets::{
         anime_power_group, app_settings, aura_power_group, platform_profile, rog_bios_group,
     },
     RogApp,
 };
 
-impl<'a> RogApp<'a> {
-    pub fn system_page(&mut self, ctx: &egui::Context) {
+impl RogApp {
+    pub fn system_page(&mut self, states: &mut PageDataStates, ctx: &egui::Context) {
         let Self {
-            config,
-            supported,
-            states,
-            asus_dbus: dbus,
-            ..
+            config, supported, ..
         } = self;
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -28,12 +25,12 @@ impl<'a> RogApp<'a> {
                         ui.vertical(|ui| {
                             ui.separator();
                             if supported.platform_profile.platform_profile {
-                                platform_profile(states, dbus, ui);
+                                platform_profile(states, ui);
                             }
                         });
                         ui.vertical(|ui| {
                             ui.separator();
-                            aura_power_group(supported, states, dbus, ui);
+                            aura_power_group(supported, states, ui);
                         });
                         ui.end_row();
 
@@ -44,7 +41,7 @@ impl<'a> RogApp<'a> {
                         });
                         ui.vertical(|ui| {
                             ui.separator();
-                            rog_bios_group(supported, states, dbus, ui);
+                            rog_bios_group(supported, states, ui);
                         });
                         ui.end_row();
 
@@ -52,7 +49,7 @@ impl<'a> RogApp<'a> {
                         ui.vertical(|ui| {
                             ui.separator();
                             if supported.anime_ctrl.0 {
-                                anime_power_group(supported, states, dbus, ui);
+                                anime_power_group(supported, states, ui);
                             }
                         });
                         ui.vertical(|ui| {

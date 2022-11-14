@@ -2,7 +2,7 @@ use egui::{vec2, Align2, FontId, Id, Sense};
 
 use crate::{RogApp, VERSION};
 
-impl<'a> RogApp<'a> {
+impl RogApp {
     pub fn top_bar(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:

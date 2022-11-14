@@ -1,9 +1,9 @@
-use crate::{page_states::PageDataStates, RogDbusClientBlocking};
+use crate::page_states::PageDataStates;
 use egui::Ui;
 use rog_platform::{platform::GpuMode, supported::SupportedFunctions};
 use rog_profiles::Profile;
 
-pub fn platform_profile(states: &mut PageDataStates, dbus: &RogDbusClientBlocking, ui: &mut Ui) {
+pub fn platform_profile(states: &mut PageDataStates, ui: &mut Ui) {
     ui.heading("Platform profile");
 
     let mut changed = false;
@@ -23,7 +23,9 @@ pub fn platform_profile(states: &mut PageDataStates, dbus: &RogDbusClientBlockin
     });
 
     if changed {
-        dbus.proxies()
+        states
+            .asus_dbus
+            .proxies()
             .profile()
             .set_active_profile(states.profiles.current)
             .map_err(|err| {
@@ -33,19 +35,16 @@ pub fn platform_profile(states: &mut PageDataStates, dbus: &RogDbusClientBlockin
     };
 }
 
-pub fn rog_bios_group(
-    supported: &SupportedFunctions,
-    states: &mut PageDataStates,
-    dbus: &mut RogDbusClientBlocking,
-    ui: &mut Ui,
-) {
+pub fn rog_bios_group(supported: &SupportedFunctions, states: &mut PageDataStates, ui: &mut Ui) {
     ui.heading("Bios options");
 
     let slider = egui::Slider::new(&mut states.charge_limit, 20..=100)
         .text("Charging limit")
         .step_by(1.0);
     if ui.add(slider).drag_released() {
-        dbus.proxies()
+        states
+            .asus_dbus
+            .proxies()
             .charge()
             .set_charge_control_end_threshold(states.charge_limit as u8)
             .map_err(|err| {
@@ -62,7 +61,9 @@ pub fn rog_bios_group(
             ))
             .changed()
     {
-        dbus.proxies()
+        states
+            .asus_dbus
+            .proxies()
             .rog_bios()
             .set_post_boot_sound(states.bios.post_sound)
             .map_err(|err| {
@@ -79,7 +80,9 @@ pub fn rog_bios_group(
             ))
             .changed()
     {
-        dbus.proxies()
+        states
+            .asus_dbus
+            .proxies()
             .rog_bios()
             .set_panel_od(states.bios.panel_overdrive)
             .map_err(|err| {
@@ -114,7 +117,9 @@ pub fn rog_bios_group(
         });
 
         if changed {
-            dbus.proxies()
+            states
+                .asus_dbus
+                .proxies()
                 .rog_bios()
                 .set_gpu_mux_mode(states.bios.dedicated_gfx)
                 .map_err(|err| {

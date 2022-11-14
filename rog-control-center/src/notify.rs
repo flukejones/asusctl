@@ -1,4 +1,4 @@
-use crate::{config::Config, error::Result, tray::AppToTray};
+use crate::{config::Config, error::Result};
 use notify_rust::{Hint, Notification, NotificationHandle, Urgency};
 use rog_dbus::{
     zbus_anime::AnimeProxy, zbus_led::LedProxy, zbus_platform::RogBiosProxy,
@@ -12,7 +12,6 @@ use std::{
     process::Command,
     sync::{
         atomic::{AtomicBool, Ordering},
-        mpsc::Sender,
         Arc, Mutex,
     },
 };
@@ -66,6 +65,18 @@ impl EnabledNotifications {
     }
 }
 
+/// Intended as a help to determine if daemon controllers notified state
+#[derive(Debug, Default, Clone)]
+pub struct WasNotified {
+    pub charge: Arc<AtomicBool>,
+    pub bios: Arc<AtomicBool>,
+    pub aura: Arc<AtomicBool>,
+    pub anime: Arc<AtomicBool>,
+    pub profiles: Arc<AtomicBool>,
+    pub fans: Arc<AtomicBool>,
+    pub gfx: Arc<AtomicBool>,
+}
+
 macro_rules! notify {
     ($notifier:expr, $last_notif:ident) => {
         if let Some(notif) = $last_notif.take() {
@@ -77,6 +88,7 @@ macro_rules! notify {
     };
 }
 
+// TODO: drop the macro and use generics plus closure
 macro_rules! recv_notif {
     ($proxy:ident,
         $signal:ident,
@@ -101,9 +113,9 @@ macro_rules! recv_notif {
                                     if let Ok(ref mut lock) = last_notif.try_lock() {
                                         notify!($notifier($msg, &out$(.$out_arg)+()), lock);
                                     }
-                                    notified.store(true, Ordering::SeqCst);
                                 }
                             }
+                            notified.store(true, Ordering::SeqCst);
                         }
                     }
                 };
@@ -114,16 +126,20 @@ macro_rules! recv_notif {
 type SharedHandle = Arc<Mutex<Option<NotificationHandle>>>;
 
 pub fn start_notifications(
-    charge_notified: Arc<AtomicBool>,
-    bios_notified: Arc<AtomicBool>,
-    aura_notified: Arc<AtomicBool>,
-    anime_notified: Arc<AtomicBool>,
-    profiles_notified: Arc<AtomicBool>,
-    _fans_notified: Arc<AtomicBool>,
+    was_notified: WasNotified,
     enabled_notifications: Arc<Mutex<EnabledNotifications>>,
-    update_tray: Arc<std::sync::Mutex<Sender<AppToTray>>>,
 ) -> Result<()> {
     let last_notification: SharedHandle = Arc::new(Mutex::new(None));
+
+    let WasNotified {
+        bios: bios_notified,
+        charge: charge_notified,
+        profiles: profiles_notified,
+        aura: aura_notified,
+        anime: anime_notified,
+        gfx: gfx_notified,
+        ..
+    } = was_notified;
 
     // BIOS notif
     recv_notif!(
@@ -275,7 +291,6 @@ pub fn start_notifications(
     //     do_gfx_action_notif
     // );
 
-    let bios_notified1 = bios_notified.clone();
     tokio::spawn(async move {
         let conn = zbus::Connection::system().await.unwrap();
         let proxy = SuperProxy::new(&conn).await.unwrap();
@@ -285,15 +300,14 @@ pub fn start_notifications(
                     let action = out.action();
                     do_gfx_action_notif("Gfx mode change requires", &format!("{action:?}",))
                         .unwrap();
+                    bios_notified.store(true, Ordering::SeqCst);
                 }
             }
-            bios_notified1.store(true, Ordering::SeqCst);
         };
     });
 
     let notifs_enabled1 = enabled_notifications;
     let last_notif = last_notification;
-    let bios_notified1 = bios_notified;
     tokio::spawn(async move {
         let conn = zbus::Connection::system().await.unwrap();
         let proxy = SuperProxy::new(&conn).await.unwrap();
@@ -313,13 +327,10 @@ pub fn start_notifications(
                                 }
                             }
                         }
-                        if let Ok(lock) = update_tray.try_lock() {
-                            lock.send(AppToTray::DgpuStatus(*status)).ok();
-                        }
+                        gfx_notified.store(true, Ordering::SeqCst);
                     }
                 }
             }
-            bios_notified1.store(true, Ordering::SeqCst);
         };
     });
 

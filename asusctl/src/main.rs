@@ -539,7 +539,6 @@ fn handle_led_power_1_do_tuf(
         x19b6: vec![],
         tuf: enabled,
     };
-    dbg!(&data);
     dbus.proxies().led().set_leds_power(data, true)?;
 
     let data = AuraPowerDev {

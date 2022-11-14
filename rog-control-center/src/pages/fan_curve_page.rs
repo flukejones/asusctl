@@ -1,5 +1,5 @@
 use crate::{
-    page_states::{FanCurvesState, ProfilesState},
+    page_states::{FanCurvesState, PageDataStates, ProfilesState},
     widgets::fan_graphs,
     RogApp, RogDbusClientBlocking,
 };
@@ -7,14 +7,9 @@ use egui::Ui;
 use rog_platform::supported::SupportedFunctions;
 use rog_profiles::Profile;
 
-impl<'a> RogApp<'a> {
-    pub fn fan_curve_page(&mut self, ctx: &egui::Context) {
-        let Self {
-            supported,
-            states,
-            asus_dbus: dbus,
-            ..
-        } = self;
+impl RogApp {
+    pub fn fan_curve_page(&mut self, states: &mut PageDataStates, ctx: &egui::Context) {
+        let Self { supported, .. } = self;
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Custom fan curves");
@@ -23,11 +18,11 @@ impl<'a> RogApp<'a> {
                 supported,
                 &mut states.profiles,
                 &mut states.fan_curves,
-                dbus, &mut states.error,
+                &states.asus_dbus, &mut states.error,
                 ui,
             );
 
-            fan_graphs(supported, &mut states.profiles, &mut states.fan_curves, dbus, &mut states.error, ui);
+            fan_graphs(supported, &mut states.profiles, &mut states.fan_curves, &states.asus_dbus, &mut states.error, ui);
         });
     }
 
@@ -76,8 +71,7 @@ impl<'a> RogApp<'a> {
             let selected_profile = curves.show_curve;
             let selected_pu = curves.show_graph;
 
-            let notif = curves.was_notified.clone();
-            match FanCurvesState::new(notif, supported, dbus) {
+            match FanCurvesState::new(supported, dbus) {
                 Ok(f) => *curves = f,
                 Err(e) => *do_error = Some(e.to_string()),
             }

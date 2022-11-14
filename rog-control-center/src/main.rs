@@ -2,20 +2,19 @@ use eframe::{IconData, NativeOptions};
 use log::{error, LevelFilter};
 use rog_aura::layouts::KeyLayout;
 use rog_control_center::notify::EnabledNotifications;
-use rog_control_center::tray::{AppToTray, TrayToApp};
+use rog_control_center::tray::init_tray;
 use rog_control_center::{
     config::Config, error::Result, get_ipc_file, notify::start_notifications, on_tmp_dir_exists,
-    page_states::PageDataStates, print_versions, startup_error::AppErrorShow, tray::init_tray,
-    RogApp, RogDbusClientBlocking, SHOWING_GUI, SHOW_GUI,
+    page_states::PageDataStates, print_versions, startup_error::AppErrorShow, RogApp,
+    RogDbusClientBlocking, SHOWING_GUI, SHOW_GUI,
 };
 use rog_platform::supported::SupportedFunctions;
-use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Mutex;
 use std::{
     fs::OpenOptions,
     io::{Read, Write},
     path::PathBuf,
-    sync::{atomic::AtomicBool, Arc},
+    sync::Arc,
 };
 use tokio::runtime::Runtime;
 
@@ -73,10 +72,6 @@ fn main() -> Result<()> {
         }
     };
 
-    let (send, recv) = channel();
-    let update_tray = Arc::new(Mutex::new(send));
-    let app_cmd = Arc::new(init_tray(supported.clone(), recv));
-
     // Startup
     let mut config = Config::load()?;
     let mut start_closed = config.startup_in_background;
@@ -123,18 +118,15 @@ fn main() -> Result<()> {
         Err(_) => on_tmp_dir_exists().unwrap(),
     };
 
-    let states = setup_page_state_and_notifs(
-        layout,
-        &dbus,
-        enabled_notifications,
-        update_tray,
-        &supported,
-    )
-    .unwrap();
+    let states = Arc::new(Mutex::new(
+        setup_page_state_and_notifs(layout, enabled_notifications, &supported).unwrap(),
+    ));
+
+    init_tray(supported, states.clone());
 
     loop {
         if !start_closed {
-            start_app(states.clone(), native_options.clone(), app_cmd.clone())?;
+            start_app(states.clone(), native_options.clone())?;
         }
 
         let config = Config::load().unwrap();
@@ -162,58 +154,24 @@ fn main() -> Result<()> {
 
 fn setup_page_state_and_notifs(
     keyboard_layout: KeyLayout,
-    dbus: &RogDbusClientBlocking,
     enabled_notifications: Arc<Mutex<EnabledNotifications>>,
-    update_tray: Arc<Mutex<Sender<AppToTray>>>,
     supported: &SupportedFunctions,
 ) -> Result<PageDataStates> {
-    // Cheap method to alert to notifications rather than spinning a thread for each
-    // This is quite different when done in a retained mode app
-    let charge_notified = Arc::new(AtomicBool::new(false));
-    let bios_notified = Arc::new(AtomicBool::new(false));
-    let aura_notified = Arc::new(AtomicBool::new(false));
-    let anime_notified = Arc::new(AtomicBool::new(false));
-    let profiles_notified = Arc::new(AtomicBool::new(false));
-    let fans_notified = Arc::new(AtomicBool::new(false));
+    let page_states =
+        PageDataStates::new(keyboard_layout, enabled_notifications.clone(), supported)?;
 
-    start_notifications(
-        charge_notified.clone(),
-        bios_notified.clone(),
-        aura_notified.clone(),
-        anime_notified.clone(),
-        profiles_notified.clone(),
-        fans_notified.clone(),
-        enabled_notifications.clone(),
-        update_tray,
-    )?;
+    start_notifications(page_states.was_notified.clone(), enabled_notifications)?;
 
-    PageDataStates::new(
-        keyboard_layout,
-        enabled_notifications,
-        charge_notified,
-        bios_notified,
-        aura_notified,
-        anime_notified,
-        profiles_notified,
-        fans_notified,
-        supported,
-        dbus,
-    )
+    Ok(page_states)
 }
 
-fn start_app(
-    states: PageDataStates,
-    native_options: NativeOptions,
-    app_cmd: Arc<Receiver<TrayToApp>>,
-) -> Result<()> {
+fn start_app(states: Arc<Mutex<PageDataStates>>, native_options: NativeOptions) -> Result<()> {
     let mut ipc_file = get_ipc_file().unwrap();
     ipc_file.write_all(&[SHOWING_GUI]).unwrap();
     eframe::run_native(
         "ROG Control Center",
         native_options,
-        Box::new(move |cc| {
-            Box::new(RogApp::new(Config::load().unwrap(), states, app_cmd, cc).unwrap())
-        }),
+        Box::new(move |cc| Box::new(RogApp::new(Config::load().unwrap(), states, cc).unwrap())),
     );
     Ok(())
 }

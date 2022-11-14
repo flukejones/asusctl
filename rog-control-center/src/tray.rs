@@ -4,7 +4,6 @@
 use std::{
     io::Write,
     sync::{
-        atomic::{AtomicBool, AtomicU8, Ordering},
         mpsc::{channel, Receiver},
         Arc, Mutex,
     },
@@ -12,18 +11,14 @@ use std::{
 };
 
 use gtk::{gio::Icon, prelude::*};
-use rog_dbus::{
-    zbus_platform::{RogBiosProxy, RogBiosProxyBlocking},
-    zbus_power::PowerProxy,
-};
+use rog_dbus::zbus_platform::RogBiosProxyBlocking;
 use rog_platform::{platform::GpuMode, supported::SupportedFunctions};
-use zbus::export::futures_util::StreamExt;
 
-use crate::{error::Result, get_ipc_file, SHOW_GUI};
+use crate::{error::Result, get_ipc_file, page_states::PageDataStates, SHOW_GUI};
 use libappindicator::{AppIndicator, AppIndicatorStatus};
 use supergfxctl::{
     pci_device::{GfxMode, GfxPower},
-    zbus_proxy::DaemonProxyBlocking,
+    zbus_proxy::DaemonProxyBlocking as GfxProxyBlocking,
 };
 
 use log::trace;
@@ -85,14 +80,19 @@ pub struct ROGTray {
     tray: AppIndicator,
     menu: gtk::Menu,
     icon: &'static str,
+    bios_proxy: RogBiosProxyBlocking<'static>,
+    gfx_proxy: GfxProxyBlocking<'static>,
 }
 
 impl ROGTray {
     pub fn new() -> Result<Self> {
+        let conn = zbus::blocking::Connection::system().unwrap();
         let rog_tray = Self {
             tray: AppIndicator::new(TRAY_LABEL, TRAY_APP_ICON),
             menu: gtk::Menu::new(),
             icon: TRAY_APP_ICON,
+            bios_proxy: RogBiosProxyBlocking::new(&conn).unwrap(),
+            gfx_proxy: GfxProxyBlocking::new(&conn).unwrap(),
         };
         Ok(rog_tray)
     }
@@ -200,25 +200,22 @@ impl ROGTray {
     }
 
     fn menu_add_panel_od(&mut self, panel_od: bool) {
+        let bios = self.bios_proxy.clone();
         self.add_check_menu_item("Panel Overdrive", panel_od, move |this| {
-            let conn = zbus::blocking::Connection::system().unwrap();
-            let bios = RogBiosProxyBlocking::new(&conn).unwrap();
             bios.set_panel_od(this.is_active()).unwrap();
         });
     }
 
     fn menu_add_gpu(&mut self, supported: &SupportedFunctions, current_mode: GfxMode) {
-        let conn = zbus::blocking::Connection::system().unwrap();
-        let gfx_dbus = supergfxctl::zbus_proxy::DaemonProxyBlocking::new(&conn).unwrap();
-
-        let mode = gfx_dbus.mode().unwrap();
+        let gfx_dbus = self.gfx_proxy.clone();
         let mut gpu_menu = RadioGroup::new("Integrated", move |_| {
             let mode = gfx_dbus.mode().unwrap();
             if mode != GfxMode::Integrated {
                 gfx_dbus.set_mode(&GfxMode::Integrated).unwrap();
             }
         });
-        let gfx_dbus = supergfxctl::zbus_proxy::DaemonProxyBlocking::new(&conn).unwrap();
+
+        let gfx_dbus = self.gfx_proxy.clone();
         gpu_menu.add("Hybrid", move |_| {
             let mode = gfx_dbus.mode().unwrap();
             if mode != GfxMode::Hybrid {
@@ -226,7 +223,7 @@ impl ROGTray {
             }
         });
         if supported.rog_bios_ctrl.gpu_mux {
-            let gfx_dbus = rog_dbus::zbus_platform::RogBiosProxyBlocking::new(&conn).unwrap();
+            let gfx_dbus = self.bios_proxy.clone();
             gpu_menu.add("Ultimate (Reboot required)", move |_| {
                 let mode = gfx_dbus.gpu_mux_mode().unwrap();
                 if mode != GpuMode::Discrete {
@@ -235,7 +232,7 @@ impl ROGTray {
             });
         }
         if supported.rog_bios_ctrl.egpu_enable {
-            let gfx_dbus = supergfxctl::zbus_proxy::DaemonProxyBlocking::new(&conn).unwrap();
+            let gfx_dbus = self.gfx_proxy.clone();
             gpu_menu.add("eGPU", move |_| {
                 let mode = gfx_dbus.mode().unwrap();
                 if mode != GfxMode::Egpu {
@@ -244,9 +241,9 @@ impl ROGTray {
             });
         }
 
-        let active = match mode {
+        let active = match current_mode {
             GfxMode::AsusMuxDiscreet => "Discreet".to_string(),
-            _ => mode.to_string(),
+            _ => current_mode.to_string(),
         };
         self.add_radio_sub_menu(
             &format!("GPU Mode: {current_mode}"),
@@ -284,56 +281,10 @@ impl ROGTray {
 
 pub fn init_tray(
     supported: SupportedFunctions,
-    recv_command: Receiver<AppToTray>,
+    states: Arc<Mutex<PageDataStates>>,
 ) -> Receiver<TrayToApp> {
     let (send, recv) = channel();
     let _send = Arc::new(Mutex::new(send));
-    let update_menu = Arc::new(AtomicBool::new(false));
-    let update_charge = Arc::new(AtomicU8::new(100));
-    let update_panel_od = Arc::new(AtomicBool::new(false));
-
-    // TODO: mostly follows same pattern as the notify macro stuff. Should make it gerneric
-    let update_menu1 = update_menu.clone();
-    let update_charge1 = update_charge.clone();
-    tokio::spawn(async move {
-        let conn = zbus::Connection::system().await.unwrap();
-        let proxy = PowerProxy::new(&conn).await.unwrap();
-        let charge_limit = proxy.charge_control_end_threshold().await.unwrap();
-        update_charge1.store(charge_limit, Ordering::Relaxed);
-        update_menu1.store(true, Ordering::Relaxed);
-
-        if let Ok(mut p) = proxy.receive_notify_charge_control_end_threshold().await {
-            while let Some(e) = p.next().await {
-                if let Ok(out) = e.args() {
-                    update_charge1.store(out.limit, Ordering::Relaxed);
-                    update_menu1.store(true, Ordering::Relaxed);
-                }
-            }
-        };
-    });
-
-    let update_menu1 = update_menu.clone();
-    let update_panel_od1 = update_panel_od.clone();
-    tokio::spawn(async move {
-        let conn = zbus::Connection::system().await.unwrap();
-        let proxy = RogBiosProxy::new(&conn).await.unwrap();
-        let charge_limit = proxy.panel_od().await.unwrap();
-        update_panel_od1.store(charge_limit, Ordering::Relaxed);
-        update_menu1.store(true, Ordering::Relaxed);
-
-        if let Ok(mut p) = proxy.receive_notify_panel_od().await {
-            while let Some(e) = p.next().await {
-                if let Ok(out) = e.args() {
-                    update_panel_od1.store(out.overdrive, Ordering::Relaxed);
-                    update_menu1.store(true, Ordering::Relaxed);
-                }
-            }
-        };
-    });
-
-    let conn = zbus::blocking::Connection::system().unwrap();
-    let proxy = DaemonProxyBlocking::new(&conn).unwrap();
-    let mode = proxy.mode().unwrap();
 
     std::thread::spawn(move || {
         gtk::init().unwrap(); // Make this the main thread for gtk
@@ -343,28 +294,24 @@ pub fn init_tray(
         tray.set_icon(TRAY_APP_ICON);
 
         loop {
-            if update_menu.load(Ordering::Relaxed) {
-                tray.rebuild_and_update(
-                    &supported,
-                    mode,
-                    update_charge.load(Ordering::Relaxed),
-                    update_panel_od.load(Ordering::Relaxed),
-                );
-                update_menu.store(false, Ordering::Relaxed);
-            }
+            if let Ok(mut lock) = states.lock() {
+                if lock.tray_should_update {
+                    tray.rebuild_and_update(
+                        &supported,
+                        lock.gfx_state.mode,
+                        lock.charge_limit,
+                        lock.bios.panel_overdrive,
+                    );
+                    lock.tray_should_update = false;
 
-            if let Ok(command) = recv_command.try_recv() {
-                match command {
-                    AppToTray::DgpuStatus(s) => {
-                        match s {
-                            GfxPower::Active => tray.set_icon("asus_notif_red"),
-                            GfxPower::Suspended => tray.set_icon("asus_notif_blue"),
-                            GfxPower::Off => tray.set_icon("asus_notif_green"),
-                            GfxPower::AsusDisabled => tray.set_icon("asus_notif_white"),
-                            GfxPower::AsusMuxDiscreet => tray.set_icon("asus_notif_red"),
-                            GfxPower::Unknown => tray.set_icon("gpu-integrated"),
-                        };
-                    }
+                    match lock.gfx_state.power_status {
+                        GfxPower::Active => tray.set_icon("asus_notif_red"),
+                        GfxPower::Suspended => tray.set_icon("asus_notif_blue"),
+                        GfxPower::Off => tray.set_icon("asus_notif_green"),
+                        GfxPower::AsusDisabled => tray.set_icon("asus_notif_white"),
+                        GfxPower::AsusMuxDiscreet => tray.set_icon("asus_notif_red"),
+                        GfxPower::Unknown => tray.set_icon("gpu-integrated"),
+                    };
                 }
             }
 
