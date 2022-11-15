@@ -1,4 +1,4 @@
-use crate::{config::Config, error::Result};
+use crate::{config::Config, error::Result, page_states::PageDataStates};
 use notify_rust::{Hint, Notification, NotificationHandle, Urgency};
 use rog_dbus::{
     zbus_anime::AnimeProxy, zbus_led::LedProxy, zbus_platform::RogBiosProxy,
@@ -10,10 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     fmt::Display,
     process::Command,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc, Mutex,
-    },
+    sync::{Arc, Mutex},
 };
 use supergfxctl::{pci_device::GfxPower, zbus_proxy::DaemonProxy as SuperProxy};
 use zbus::export::futures_util::{future, StreamExt};
@@ -65,18 +62,6 @@ impl EnabledNotifications {
     }
 }
 
-/// Intended as a help to determine if daemon controllers notified state
-#[derive(Debug, Default, Clone)]
-pub struct WasNotified {
-    pub charge: Arc<AtomicBool>,
-    pub bios: Arc<AtomicBool>,
-    pub aura: Arc<AtomicBool>,
-    pub anime: Arc<AtomicBool>,
-    pub profiles: Arc<AtomicBool>,
-    pub fans: Arc<AtomicBool>,
-    pub gfx: Arc<AtomicBool>,
-}
-
 macro_rules! notify {
     ($notifier:expr, $last_notif:ident) => {
         if let Some(notif) = $last_notif.take() {
@@ -92,16 +77,18 @@ macro_rules! notify {
 macro_rules! recv_notif {
     ($proxy:ident,
         $signal:ident,
-        $was_notified:ident,
         $last_notif:ident,
         $notif_enabled:ident,
-        [$($out_arg:ident)+],
+        $page_states:ident,
+        ($($args: tt)*),
+        ($($out_arg:tt)+),
         $msg:literal,
         $notifier:ident) => {
+
         let last_notif = $last_notif.clone();
         let notifs_enabled1 = $notif_enabled.clone();
-        let notified = $was_notified.clone();
-        // TODO: make a macro or generic function or something...
+        let page_states1 = $page_states.clone();
+
         tokio::spawn(async move {
                 let conn = zbus::Connection::system().await.unwrap();
                 let proxy = $proxy::new(&conn).await.unwrap();
@@ -110,12 +97,15 @@ macro_rules! recv_notif {
                         if let Ok(out) = e.args() {
                             if let Ok(config) = notifs_enabled1.lock() {
                                 if config.all_enabled && config.$signal {
-                                    if let Ok(ref mut lock) = last_notif.try_lock() {
-                                        notify!($notifier($msg, &out$(.$out_arg)+()), lock);
+                                    if let Ok(ref mut lock) = last_notif.lock() {
+                                        notify!($notifier($msg, &out.$($out_arg)+()), lock);
                                     }
                                 }
                             }
-                            notified.store(true, Ordering::SeqCst);
+                            if let Ok(mut lock) = page_states1.lock() {
+                                lock.$($args)+ = *out.$($out_arg)+();
+                                lock.set_notified();
+                            }
                         }
                     }
                 };
@@ -126,29 +116,20 @@ macro_rules! recv_notif {
 type SharedHandle = Arc<Mutex<Option<NotificationHandle>>>;
 
 pub fn start_notifications(
-    was_notified: WasNotified,
+    page_states: Arc<Mutex<PageDataStates>>,
     enabled_notifications: Arc<Mutex<EnabledNotifications>>,
 ) -> Result<()> {
     let last_notification: SharedHandle = Arc::new(Mutex::new(None));
-
-    let WasNotified {
-        bios: bios_notified,
-        charge: charge_notified,
-        profiles: profiles_notified,
-        aura: aura_notified,
-        anime: anime_notified,
-        gfx: gfx_notified,
-        ..
-    } = was_notified;
 
     // BIOS notif
     recv_notif!(
         RogBiosProxy,
         receive_notify_post_boot_sound,
-        bios_notified,
         last_notification,
         enabled_notifications,
-        [on],
+        page_states,
+        (bios.post_sound),
+        (on),
         "BIOS Post sound",
         do_notification
     );
@@ -156,10 +137,11 @@ pub fn start_notifications(
     recv_notif!(
         RogBiosProxy,
         receive_notify_panel_od,
-        bios_notified,
         last_notification,
         enabled_notifications,
-        [overdrive],
+        page_states,
+        (bios.panel_overdrive),
+        (overdrive),
         "Panel Overdrive enabled:",
         do_notification
     );
@@ -167,10 +149,11 @@ pub fn start_notifications(
     recv_notif!(
         RogBiosProxy,
         receive_notify_dgpu_disable,
-        bios_notified,
         last_notification,
         enabled_notifications,
-        [disable],
+        page_states,
+        (bios.dgpu_disable),
+        (disable),
         "BIOS dGPU disabled",
         do_notification
     );
@@ -178,10 +161,11 @@ pub fn start_notifications(
     recv_notif!(
         RogBiosProxy,
         receive_notify_egpu_enable,
-        bios_notified,
         last_notification,
         enabled_notifications,
-        [enable],
+        page_states,
+        (bios.egpu_enable),
+        (enable),
         "BIOS eGPU enabled",
         do_notification
     );
@@ -189,10 +173,11 @@ pub fn start_notifications(
     recv_notif!(
         RogBiosProxy,
         receive_notify_gpu_mux_mode,
-        bios_notified,
         last_notification,
         enabled_notifications,
-        [mode],
+        page_states,
+        (bios.dedicated_gfx),
+        (mode),
         "Reboot required. BIOS GPU MUX mode set to",
         do_mux_notification
     );
@@ -201,10 +186,11 @@ pub fn start_notifications(
     recv_notif!(
         PowerProxy,
         receive_notify_charge_control_end_threshold,
-        charge_notified,
         last_notification,
         enabled_notifications,
-        [limit],
+        page_states,
+        (power_state.charge_limit),
+        (limit),
         "Battery charge limit changed to",
         do_notification
     );
@@ -212,10 +198,11 @@ pub fn start_notifications(
     recv_notif!(
         PowerProxy,
         receive_notify_mains_online,
-        bios_notified,
         last_notification,
         enabled_notifications,
-        [on],
+        page_states,
+        (power_state.ac_power),
+        (on),
         "AC Power power is",
         ac_power_notification
     );
@@ -224,10 +211,11 @@ pub fn start_notifications(
     recv_notif!(
         ProfileProxy,
         receive_notify_profile,
-        profiles_notified,
         last_notification,
         enabled_notifications,
-        [profile],
+        page_states,
+        (profiles.current),
+        (profile),
         "Profile changed to",
         do_thermal_notif
     );
@@ -237,32 +225,24 @@ pub fn start_notifications(
     recv_notif!(
         LedProxy,
         receive_notify_led,
-        aura_notified,
         last_notification,
         enabled_notifications,
-        [data mode_name],
+        page_states,
+        (aura.current_mode),
+        (data.mode),
         "Keyboard LED mode changed to",
         do_notification
     );
 
-    tokio::spawn(async move {
-        let conn = zbus::Connection::system().await.unwrap();
-        let proxy = LedProxy::new(&conn).await.unwrap();
-        if let Ok(p) = proxy.receive_all_signals().await {
-            p.for_each(|_| {
-                aura_notified.store(true, Ordering::SeqCst);
-                future::ready(())
-            })
-            .await;
-        };
-    });
-
+    let page_states1 = page_states.clone();
     tokio::spawn(async move {
         let conn = zbus::Connection::system().await.unwrap();
         let proxy = AnimeProxy::new(&conn).await.unwrap();
         if let Ok(p) = proxy.receive_power_states().await {
             p.for_each(|_| {
-                anime_notified.store(true, Ordering::SeqCst);
+                if let Ok(_lock) = page_states1.lock() {
+                    // TODO: lock.anime.
+                }
                 future::ready(())
             })
             .await;
@@ -272,10 +252,11 @@ pub fn start_notifications(
     recv_notif!(
         SuperProxy,
         receive_notify_gfx,
-        bios_notified,
         last_notification,
         enabled_notifications,
-        [mode],
+        page_states,
+        (gfx_state.mode),
+        (mode),
         "Gfx mode changed to",
         do_notification
     );
@@ -300,7 +281,6 @@ pub fn start_notifications(
                     let action = out.action();
                     do_gfx_action_notif("Gfx mode change requires", &format!("{action:?}",))
                         .unwrap();
-                    bios_notified.store(true, Ordering::SeqCst);
                 }
             }
         };
@@ -314,20 +294,23 @@ pub fn start_notifications(
         if let Ok(mut p) = proxy.receive_notify_gfx_status().await {
             while let Some(e) = p.next().await {
                 if let Ok(out) = e.args() {
-                    let status = out.status();
-                    if *status != GfxPower::Unknown {
+                    let status = out.status;
+                    if status != GfxPower::Unknown {
                         if let Ok(config) = notifs_enabled1.lock() {
                             if config.all_enabled && config.receive_notify_gfx_status {
                                 // Required check because status cycles through active/unknown/suspended
-                                if let Ok(ref mut lock) = last_notif.try_lock() {
+                                if let Ok(ref mut lock) = last_notif.lock() {
                                     notify!(
-                                        do_gpu_status_notif("dGPU status changed:", status),
+                                        do_gpu_status_notif("dGPU status changed:", &status),
                                         lock
                                     );
                                 }
                             }
                         }
-                        gfx_notified.store(true, Ordering::SeqCst);
+                        if let Ok(mut lock) = page_states.lock() {
+                            lock.gfx_state.power_status = status;
+                            lock.set_notified();
+                        }
                     }
                 }
             }

@@ -55,8 +55,6 @@ impl RogApp {
         let oscillator_toggle = Arc::new(AtomicBool::new(false));
         let oscillator_toggle1 = oscillator_toggle.clone();
 
-        let states1 = states.clone();
-        let supported1 = supported.clone();
         std::thread::spawn(move || {
             let started = Instant::now();
             let mut toggled = false;
@@ -85,13 +83,6 @@ impl RogApp {
                 oscillator1_1.store(tmp1, Ordering::SeqCst);
                 oscillator1_2.store(tmp2, Ordering::SeqCst);
                 oscillator1_3.store(tmp3, Ordering::SeqCst);
-
-                if let Ok(mut states) = states1.try_lock() {
-                    states
-                        .refresh_if_notfied(&supported1)
-                        .map_err(|e| states.error = Some(e.to_string()))
-                        .ok();
-                }
 
                 std::thread::sleep(Duration::from_millis(33));
             }

@@ -299,7 +299,7 @@ pub fn init_tray(
                     tray.rebuild_and_update(
                         &supported,
                         lock.gfx_state.mode,
-                        lock.charge_limit,
+                        lock.power_state.charge_limit,
                         lock.bios.panel_overdrive,
                     );
                     lock.tray_should_update = false;

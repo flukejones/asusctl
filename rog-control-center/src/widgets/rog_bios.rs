@@ -38,7 +38,7 @@ pub fn platform_profile(states: &mut PageDataStates, ui: &mut Ui) {
 pub fn rog_bios_group(supported: &SupportedFunctions, states: &mut PageDataStates, ui: &mut Ui) {
     ui.heading("Bios options");
 
-    let slider = egui::Slider::new(&mut states.charge_limit, 20..=100)
+    let slider = egui::Slider::new(&mut states.power_state.charge_limit, 20..=100)
         .text("Charging limit")
         .step_by(1.0);
     if ui.add(slider).drag_released() {
@@ -46,7 +46,7 @@ pub fn rog_bios_group(supported: &SupportedFunctions, states: &mut PageDataState
             .asus_dbus
             .proxies()
             .charge()
-            .set_charge_control_end_threshold(states.charge_limit as u8)
+            .set_charge_control_end_threshold(states.power_state.charge_limit as u8)
             .map_err(|err| {
                 states.error = Some(err.to_string());
             })

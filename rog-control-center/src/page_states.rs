@@ -1,6 +1,6 @@
 use std::{
     collections::{BTreeMap, HashSet},
-    sync::{atomic::Ordering, Arc, Mutex},
+    sync::{Arc, Mutex},
 };
 
 use egui::Vec2;
@@ -12,11 +12,7 @@ use supergfxctl::{
     zbus_proxy::DaemonProxyBlocking as GfxProxyBlocking,
 };
 
-use crate::{
-    error::Result,
-    notify::{EnabledNotifications, WasNotified},
-    RogDbusClientBlocking,
-};
+use crate::{error::Result, notify::EnabledNotifications, RogDbusClientBlocking};
 
 #[derive(Clone, Debug)]
 pub struct BiosState {
@@ -236,10 +232,24 @@ impl GfxState {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct PowerState {
+    pub charge_limit: u8,
+    pub ac_power: bool,
+}
+
+impl PowerState {
+    pub fn new(_supported: &SupportedFunctions, dbus: &RogDbusClientBlocking) -> Result<Self> {
+        Ok(Self {
+            charge_limit: dbus.proxies().charge().charge_control_end_threshold()?,
+            ac_power: dbus.proxies().charge().mains_online()?,
+        })
+    }
+}
+
 pub struct PageDataStates {
     pub keyboard_layout: KeyLayout,
     pub enabled_notifications: Arc<Mutex<EnabledNotifications>>,
-    pub was_notified: WasNotified,
     /// Because much of the app state here is the same as `RogBiosSupportedFunctions`
     /// we can re-use that structure.
     pub bios: BiosState,
@@ -248,7 +258,7 @@ pub struct PageDataStates {
     pub profiles: ProfilesState,
     pub fan_curves: FanCurvesState,
     pub gfx_state: GfxState,
-    pub charge_limit: u8,
+    pub power_state: PowerState,
     pub error: Option<String>,
     /// Specific field for the tray only so that we can know when it does need update.
     /// The tray should set this to false when done.
@@ -270,11 +280,7 @@ impl PageDataStates {
         Ok(Self {
             keyboard_layout,
             enabled_notifications,
-            was_notified: WasNotified::default(),
-            charge_limit: asus_dbus
-                .proxies()
-                .charge()
-                .charge_control_end_threshold()?,
+            power_state: PowerState::new(supported, &asus_dbus)?,
             bios: BiosState::new(supported, &asus_dbus)?,
             aura: AuraState::new(supported, &asus_dbus)?,
             anime: AnimeState::new(supported, &asus_dbus)?,
@@ -289,61 +295,9 @@ impl PageDataStates {
         })
     }
 
-    pub fn refresh_if_notfied(&mut self, supported: &SupportedFunctions) -> Result<bool> {
-        let mut notified = false;
-        if self.was_notified.charge.load(Ordering::SeqCst) {
-            self.charge_limit = self
-                .asus_dbus
-                .proxies()
-                .charge()
-                .charge_control_end_threshold()?;
-            self.was_notified.charge.store(false, Ordering::SeqCst);
-            notified = true;
-            self.tray_should_update = true;
-            self.app_should_update = true;
-        }
-
-        if self.was_notified.aura.load(Ordering::SeqCst) {
-            self.aura = AuraState::new(supported, &self.asus_dbus)?;
-            self.was_notified.aura.store(false, Ordering::SeqCst);
-            notified = true;
-            self.tray_should_update = true;
-            self.app_should_update = true;
-        }
-
-        if self.was_notified.bios.load(Ordering::SeqCst) {
-            self.bios = BiosState::new(supported, &self.asus_dbus)?;
-            self.was_notified.bios.store(false, Ordering::SeqCst);
-            notified = true;
-            self.tray_should_update = true;
-            self.app_should_update = true;
-        }
-
-        if self.was_notified.profiles.load(Ordering::SeqCst) {
-            self.profiles = ProfilesState::new(supported, &self.asus_dbus)?;
-            self.was_notified.profiles.store(false, Ordering::SeqCst);
-            notified = true;
-            self.tray_should_update = true;
-            self.app_should_update = true;
-        }
-
-        if self.was_notified.fans.load(Ordering::SeqCst) {
-            self.fan_curves = FanCurvesState::new(supported, &self.asus_dbus)?;
-            self.was_notified.fans.store(false, Ordering::SeqCst);
-            notified = true;
-            self.tray_should_update = true;
-            self.app_should_update = true;
-        }
-
-        if self.was_notified.gfx.load(Ordering::SeqCst) {
-            self.gfx_state = GfxState::new(supported, &self.gfx_dbus)?;
-            self.was_notified.gfx.store(false, Ordering::SeqCst);
-            notified = true;
-            self.tray_should_update = true;
-            self.app_should_update = true;
-        }
-
-        Ok(notified)
+    pub fn set_notified(&mut self) {
+        self.tray_should_update = true;
+        self.app_should_update = true;
     }
 }
 
@@ -355,7 +309,6 @@ impl Default for PageDataStates {
         Self {
             keyboard_layout: KeyLayout::ga401_layout(),
             enabled_notifications: Default::default(),
-            was_notified: WasNotified::default(),
             bios: BiosState {
                 post_sound: Default::default(),
                 dedicated_gfx: GpuMode::NotSupported,
@@ -397,7 +350,10 @@ impl Default for PageDataStates {
                 mode: GfxMode::None,
                 power_status: GfxPower::Unknown,
             },
-            charge_limit: Default::default(),
+            power_state: PowerState {
+                charge_limit: 99,
+                ac_power: false,
+            },
             error: Default::default(),
             tray_should_update: true,
             app_should_update: true,
