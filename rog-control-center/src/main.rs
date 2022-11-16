@@ -1,11 +1,11 @@
 use eframe::{IconData, NativeOptions};
-use log::{error, LevelFilter};
+use log::{error, info, LevelFilter};
 use rog_aura::layouts::KeyLayout;
 use rog_control_center::notify::EnabledNotifications;
 use rog_control_center::tray::init_tray;
 use rog_control_center::{
     config::Config, error::Result, get_ipc_file, notify::start_notifications, on_tmp_dir_exists,
-    page_states::PageDataStates, print_versions, startup_error::AppErrorShow, RogApp,
+    print_versions, startup_error::AppErrorShow, system_state::SystemState, RogApp,
     RogDbusClientBlocking, SHOWING_GUI, SHOW_GUI,
 };
 use rog_platform::supported::SupportedFunctions;
@@ -118,7 +118,7 @@ fn main() -> Result<()> {
         Err(_) => on_tmp_dir_exists().unwrap(),
     };
 
-    let states = setup_page_state_and_notifs(layout, enabled_notifications, &supported).unwrap();
+    let states = setup_page_state_and_notifs(layout, enabled_notifications, &supported)?;
 
     init_tray(supported, states.clone());
 
@@ -127,7 +127,7 @@ fn main() -> Result<()> {
             start_app(states.clone(), native_options.clone())?;
         }
 
-        let config = Config::load().unwrap();
+        let config = Config::load()?;
         if !config.run_in_background {
             break;
         }
@@ -136,7 +136,7 @@ fn main() -> Result<()> {
             let mut buf = [0u8; 4];
             // blocks until it is read, typically the read will happen after a second
             // process writes to the IPC (so there is data to actually read)
-            if get_ipc_file().unwrap().read(&mut buf).is_ok() && buf[0] == SHOW_GUI {
+            if get_ipc_file()?.read(&mut buf).is_ok() && buf[0] == SHOW_GUI {
                 start_closed = false;
                 continue;
             }
@@ -154,8 +154,8 @@ fn setup_page_state_and_notifs(
     keyboard_layout: KeyLayout,
     enabled_notifications: Arc<Mutex<EnabledNotifications>>,
     supported: &SupportedFunctions,
-) -> Result<Arc<Mutex<PageDataStates>>> {
-    let page_states = Arc::new(Mutex::new(PageDataStates::new(
+) -> Result<Arc<Mutex<SystemState>>> {
+    let page_states = Arc::new(Mutex::new(SystemState::new(
         keyboard_layout,
         enabled_notifications.clone(),
         supported,
@@ -166,9 +166,9 @@ fn setup_page_state_and_notifs(
     Ok(page_states)
 }
 
-fn start_app(states: Arc<Mutex<PageDataStates>>, native_options: NativeOptions) -> Result<()> {
-    let mut ipc_file = get_ipc_file().unwrap();
-    ipc_file.write_all(&[SHOWING_GUI]).unwrap();
+fn start_app(states: Arc<Mutex<SystemState>>, native_options: NativeOptions) -> Result<()> {
+    let mut ipc_file = get_ipc_file()?;
+    ipc_file.write_all(&[SHOWING_GUI])?;
     eframe::run_native(
         "ROG Control Center",
         native_options,
@@ -202,6 +202,7 @@ fn load_icon() -> IconData {
                 rgba = ras.as_u8_slice().to_vec();
                 width = ras.width();
                 height = ras.height();
+                info!("Loaded app icon. Not actually supported in Wayland yet");
             }
         }
     } else {

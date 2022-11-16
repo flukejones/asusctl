@@ -1,9 +1,9 @@
-use crate::page_states::PageDataStates;
+use crate::system_state::SystemState;
 use egui::Ui;
 use rog_platform::{platform::GpuMode, supported::SupportedFunctions};
 use rog_profiles::Profile;
 
-pub fn platform_profile(states: &mut PageDataStates, ui: &mut Ui) {
+pub fn platform_profile(states: &mut SystemState, ui: &mut Ui) {
     ui.heading("Platform profile");
 
     let mut changed = false;
@@ -35,7 +35,7 @@ pub fn platform_profile(states: &mut PageDataStates, ui: &mut Ui) {
     };
 }
 
-pub fn rog_bios_group(supported: &SupportedFunctions, states: &mut PageDataStates, ui: &mut Ui) {
+pub fn rog_bios_group(supported: &SupportedFunctions, states: &mut SystemState, ui: &mut Ui) {
     ui.heading("Bios options");
 
     let slider = egui::Slider::new(&mut states.power_state.charge_limit, 20..=100)

@@ -1,8 +1,8 @@
 use egui::Ui;
 
-use crate::{config::Config, page_states::PageDataStates};
+use crate::{config::Config, system_state::SystemState};
 
-pub fn app_settings(config: &mut Config, states: &mut PageDataStates, ui: &mut Ui) {
+pub fn app_settings(config: &mut Config, states: &mut SystemState, ui: &mut Ui) {
     ui.heading("ROG GUI Settings");
     // ui.label("Options are incomplete. Awake + Boot should work");
 

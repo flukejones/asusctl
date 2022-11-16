@@ -3,7 +3,7 @@ use rog_platform::supported::SupportedFunctions;
 use rog_profiles::{FanCurvePU, Profile};
 
 use crate::{
-    page_states::{FanCurvesState, ProfilesState},
+    system_state::{FanCurvesState, ProfilesState},
     RogDbusClientBlocking,
 };
 

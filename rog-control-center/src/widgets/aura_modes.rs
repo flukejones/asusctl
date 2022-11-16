@@ -7,11 +7,11 @@ use egui::{RichText, Ui};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour, Speed};
 use rog_platform::supported::SupportedFunctions;
 
-use crate::page_states::{AuraState, PageDataStates};
+use crate::system_state::{AuraState, SystemState};
 
 pub fn aura_modes_group(
     supported: &SupportedFunctions,
-    states: &mut PageDataStates,
+    states: &mut SystemState,
     freq: &mut Arc<AtomicU8>,
     ui: &mut Ui,
 ) {

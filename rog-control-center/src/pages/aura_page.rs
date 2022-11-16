@@ -4,13 +4,13 @@ use egui::Color32;
 use rog_aura::{AuraEffect, AuraModeNum};
 
 use crate::{
-    page_states::PageDataStates,
+    system_state::SystemState,
     widgets::{aura_modes_group, keyboard},
     RogApp,
 };
 
 impl RogApp {
-    pub fn aura_page(&mut self, states: &mut PageDataStates, ctx: &egui::Context) {
+    pub fn aura_page(&mut self, states: &mut SystemState, ctx: &egui::Context) {
         let Self {
             supported,
             oscillator1,

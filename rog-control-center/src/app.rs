@@ -11,12 +11,12 @@ use egui::{Button, RichText};
 use rog_platform::supported::SupportedFunctions;
 
 use crate::{
-    config::Config, error::Result, page_states::PageDataStates, Page, RogDbusClientBlocking,
+    config::Config, error::Result, system_state::SystemState, Page, RogDbusClientBlocking,
 };
 
 pub struct RogApp {
     pub page: Page,
-    pub states: Arc<Mutex<PageDataStates>>,
+    pub states: Arc<Mutex<SystemState>>,
     pub supported: SupportedFunctions,
     // TODO: can probably just open and read whenever
     pub config: Config,
@@ -34,7 +34,7 @@ impl RogApp {
     /// Called once before the first frame.
     pub fn new(
         config: Config,
-        states: Arc<Mutex<PageDataStates>>,
+        states: Arc<Mutex<SystemState>>,
         _cc: &eframe::CreationContext<'_>,
     ) -> Result<Self> {
         let (dbus, _) = RogDbusClientBlocking::new()?;

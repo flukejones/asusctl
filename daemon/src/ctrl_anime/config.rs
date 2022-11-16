@@ -145,7 +145,7 @@ impl AnimeConfig {
             .read(true)
             .write(true)
             .create(true)
-            .open(&ANIME_CONFIG_PATH)
+            .open(ANIME_CONFIG_PATH)
             .unwrap_or_else(|_| {
                 panic!(
                     "The file {} or directory /etc/asusd/ is missing",
@@ -249,7 +249,7 @@ impl AnimeConfig {
     pub fn read(&mut self) {
         let mut file = OpenOptions::new()
             .read(true)
-            .open(&ANIME_CONFIG_PATH)
+            .open(ANIME_CONFIG_PATH)
             .unwrap_or_else(|err| panic!("Error reading {}: {}", ANIME_CONFIG_PATH, err));
         let mut buf = String::new();
         if let Ok(l) = file.read_to_string(&mut buf) {

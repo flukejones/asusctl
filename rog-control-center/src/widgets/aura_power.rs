@@ -5,9 +5,9 @@ use rog_aura::{
 };
 use rog_platform::supported::SupportedFunctions;
 
-use crate::page_states::PageDataStates;
+use crate::system_state::SystemState;
 
-pub fn aura_power_group(supported: &SupportedFunctions, states: &mut PageDataStates, ui: &mut Ui) {
+pub fn aura_power_group(supported: &SupportedFunctions, states: &mut SystemState, ui: &mut Ui) {
     ui.heading("LED settings");
 
     match supported.keyboard_led.prod_id {
@@ -20,7 +20,7 @@ pub fn aura_power_group(supported: &SupportedFunctions, states: &mut PageDataSta
     }
 }
 
-fn aura_power1(supported: &SupportedFunctions, states: &mut PageDataStates, ui: &mut Ui) {
+fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mut Ui) {
     let enabled_states = &mut states.aura.enabled;
     let mut boot = enabled_states.x1866.contains(&AuraDev1866::Boot);
     let mut sleep = enabled_states.x1866.contains(&AuraDev1866::Sleep);
@@ -201,7 +201,7 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut PageDataStates, ui: 
     }
 }
 
-fn aura_power2(supported: &SupportedFunctions, states: &mut PageDataStates, ui: &mut Ui) {
+fn aura_power2(supported: &SupportedFunctions, states: &mut SystemState, ui: &mut Ui) {
     let enabled_states = &mut states.aura.enabled;
     let has_logo = supported
         .keyboard_led

@@ -1,5 +1,5 @@
 use crate::{
-    page_states::PageDataStates,
+    system_state::SystemState,
     widgets::{
         anime_power_group, app_settings, aura_power_group, platform_profile, rog_bios_group,
     },
@@ -7,7 +7,7 @@ use crate::{
 };
 
 impl RogApp {
-    pub fn system_page(&mut self, states: &mut PageDataStates, ctx: &egui::Context) {
+    pub fn system_page(&mut self, states: &mut SystemState, ctx: &egui::Context) {
         let Self {
             config, supported, ..
         } = self;

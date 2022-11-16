@@ -1,4 +1,5 @@
-use crate::{config::Config, error::Result, page_states::PageDataStates};
+use crate::{config::Config, error::Result, system_state::SystemState};
+use log::{error, info, trace};
 use notify_rust::{Hint, Notification, NotificationHandle, Urgency};
 use rog_dbus::{
     zbus_anime::AnimeProxy, zbus_led::LedProxy, zbus_platform::RogBiosProxy,
@@ -90,14 +91,22 @@ macro_rules! recv_notif {
         let page_states1 = $page_states.clone();
 
         tokio::spawn(async move {
-                let conn = zbus::Connection::system().await.unwrap();
-                let proxy = $proxy::new(&conn).await.unwrap();
+                let conn = zbus::Connection::system().await.map_err(|e| {
+                        log::error!("zbus signal: {}: {e}", stringify!($signal));
+                        e
+                    }).unwrap();
+                let proxy = $proxy::new(&conn).await.map_err(|e| {
+                        log::error!("zbus signal: {}: {e}", stringify!($signal));
+                        e
+                    }).unwrap();
                 if let Ok(mut p) = proxy.$signal().await {
+                    info!("Started zbus signal thread: {}", stringify!($signal));
                     while let Some(e) = p.next().await {
                         if let Ok(out) = e.args() {
                             if let Ok(config) = notifs_enabled1.lock() {
                                 if config.all_enabled && config.$signal {
                                     if let Ok(ref mut lock) = last_notif.lock() {
+                                        trace!("zbus signal {} locked last_notif", stringify!($signal));
                                         notify!($notifier($msg, &out.$($out_arg)+()), lock);
                                     }
                                 }
@@ -116,7 +125,7 @@ macro_rules! recv_notif {
 type SharedHandle = Arc<Mutex<Option<NotificationHandle>>>;
 
 pub fn start_notifications(
-    page_states: Arc<Mutex<PageDataStates>>,
+    page_states: Arc<Mutex<SystemState>>,
     enabled_notifications: Arc<Mutex<EnabledNotifications>>,
 ) -> Result<()> {
     let last_notification: SharedHandle = Arc::new(Mutex::new(None));
@@ -236,9 +245,22 @@ pub fn start_notifications(
 
     let page_states1 = page_states.clone();
     tokio::spawn(async move {
-        let conn = zbus::Connection::system().await.unwrap();
-        let proxy = AnimeProxy::new(&conn).await.unwrap();
+        let conn = zbus::Connection::system()
+            .await
+            .map_err(|e| {
+                error!("zbus signal: receive_power_states: {e}");
+                e
+            })
+            .unwrap();
+        let proxy = AnimeProxy::new(&conn)
+            .await
+            .map_err(|e| {
+                error!("zbus signal: receive_power_states: {e}");
+                e
+            })
+            .unwrap();
         if let Ok(p) = proxy.receive_power_states().await {
+            info!("Started zbus signal thread: receive_power_states");
             p.for_each(|_| {
                 if let Ok(_lock) = page_states1.lock() {
                     // TODO: lock.anime.
@@ -273,13 +295,30 @@ pub fn start_notifications(
     // );
 
     tokio::spawn(async move {
-        let conn = zbus::Connection::system().await.unwrap();
-        let proxy = SuperProxy::new(&conn).await.unwrap();
+        let conn = zbus::Connection::system()
+            .await
+            .map_err(|e| {
+                error!("zbus signal: receive_notify_action: {e}");
+                e
+            })
+            .unwrap();
+        let proxy = SuperProxy::new(&conn)
+            .await
+            .map_err(|e| {
+                error!("zbus signal: receive_notify_action: {e}");
+                e
+            })
+            .unwrap();
         if let Ok(mut p) = proxy.receive_notify_action().await {
+            info!("Started zbus signal thread: receive_notify_action");
             while let Some(e) = p.next().await {
                 if let Ok(out) = e.args() {
                     let action = out.action();
                     do_gfx_action_notif("Gfx mode change requires", &format!("{action:?}",))
+                        .map_err(|e| {
+                            error!("zbus signal: do_gfx_action_notif: {e}");
+                            e
+                        })
                         .unwrap();
                 }
             }
@@ -289,9 +328,22 @@ pub fn start_notifications(
     let notifs_enabled1 = enabled_notifications;
     let last_notif = last_notification;
     tokio::spawn(async move {
-        let conn = zbus::Connection::system().await.unwrap();
-        let proxy = SuperProxy::new(&conn).await.unwrap();
+        let conn = zbus::Connection::system()
+            .await
+            .map_err(|e| {
+                error!("zbus signal: receive_notify_gfx_status: {e}");
+                e
+            })
+            .unwrap();
+        let proxy = SuperProxy::new(&conn)
+            .await
+            .map_err(|e| {
+                error!("zbus signal: receive_notify_gfx_status: {e}");
+                e
+            })
+            .unwrap();
         if let Ok(mut p) = proxy.receive_notify_gfx_status().await {
+            info!("Started zbus signal thread: receive_notify_gfx_status");
             while let Some(e) = p.next().await {
                 if let Ok(out) = e.args() {
                     let status = out.status;

@@ -1,7 +1,7 @@
 use egui::{Align, Color32, Vec2};
 use rog_aura::{keys::KeyShape, layouts::KeyLayout, AuraModeNum};
 
-use crate::page_states::AuraState;
+use crate::system_state::AuraState;
 
 pub fn keyboard(
     ui: &mut egui::Ui,

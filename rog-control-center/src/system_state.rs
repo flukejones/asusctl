@@ -247,7 +247,9 @@ impl PowerState {
     }
 }
 
-pub struct PageDataStates {
+///  State stored from system daemons. This is shared with: tray, zbus notifications thread
+/// and the GUI app thread.
+pub struct SystemState {
     pub keyboard_layout: KeyLayout,
     pub enabled_notifications: Arc<Mutex<EnabledNotifications>>,
     /// Because much of the app state here is the same as `RogBiosSupportedFunctions`
@@ -268,7 +270,7 @@ pub struct PageDataStates {
     pub gfx_dbus: GfxProxyBlocking<'static>,
 }
 
-impl PageDataStates {
+impl SystemState {
     /// Creates self, including the relevant dbus connections and proixies for internal use
     pub fn new(
         keyboard_layout: KeyLayout,
@@ -301,7 +303,7 @@ impl PageDataStates {
     }
 }
 
-impl Default for PageDataStates {
+impl Default for SystemState {
     fn default() -> Self {
         let (asus_dbus, conn) = RogDbusClientBlocking::new().unwrap();
         let gfx_dbus = GfxProxyBlocking::new(&conn).unwrap();

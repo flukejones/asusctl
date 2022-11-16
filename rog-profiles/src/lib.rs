@@ -52,7 +52,7 @@ impl Profile {
     }
 
     pub fn get_active_profile() -> Result<Profile, ProfileError> {
-        let mut file = OpenOptions::new().read(true).open(&PLATFORM_PROFILE)?;
+        let mut file = OpenOptions::new().read(true).open(PLATFORM_PROFILE)?;
 
         let mut buf = String::new();
         file.read_to_string(&mut buf)?;
@@ -60,7 +60,7 @@ impl Profile {
     }
 
     pub fn get_profile_names() -> Result<Vec<Profile>, ProfileError> {
-        let mut file = OpenOptions::new().read(true).open(&PLATFORM_PROFILES)?;
+        let mut file = OpenOptions::new().read(true).open(PLATFORM_PROFILES)?;
 
         let mut buf = String::new();
         file.read_to_string(&mut buf)?;

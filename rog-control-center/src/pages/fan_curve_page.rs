@@ -1,5 +1,5 @@
 use crate::{
-    page_states::{FanCurvesState, PageDataStates, ProfilesState},
+    system_state::{FanCurvesState, ProfilesState, SystemState},
     widgets::fan_graphs,
     RogApp, RogDbusClientBlocking,
 };
@@ -8,7 +8,7 @@ use rog_platform::supported::SupportedFunctions;
 use rog_profiles::Profile;
 
 impl RogApp {
-    pub fn fan_curve_page(&mut self, states: &mut PageDataStates, ctx: &egui::Context) {
+    pub fn fan_curve_page(&mut self, states: &mut SystemState, ctx: &egui::Context) {
         let Self { supported, .. } = self;
 
         egui::CentralPanel::default().show(ctx, |ui| {

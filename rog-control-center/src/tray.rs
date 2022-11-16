@@ -14,14 +14,14 @@ use gtk::{gio::Icon, prelude::*};
 use rog_dbus::zbus_platform::RogBiosProxyBlocking;
 use rog_platform::{platform::GpuMode, supported::SupportedFunctions};
 
-use crate::{error::Result, get_ipc_file, page_states::PageDataStates, SHOW_GUI};
+use crate::{error::Result, get_ipc_file, system_state::SystemState, SHOW_GUI};
 use libappindicator::{AppIndicator, AppIndicatorStatus};
 use supergfxctl::{
     pci_device::{GfxMode, GfxPower},
     zbus_proxy::DaemonProxyBlocking as GfxProxyBlocking,
 };
 
-use log::trace;
+use log::{debug, error, info, trace};
 
 const TRAY_APP_ICON: &str = "rog-control-center";
 const TRAY_LABEL: &str = "ROG Control Center";
@@ -86,13 +86,22 @@ pub struct ROGTray {
 
 impl ROGTray {
     pub fn new() -> Result<Self> {
-        let conn = zbus::blocking::Connection::system().unwrap();
+        let conn = zbus::blocking::Connection::system().map_err(|e| {
+            error!("ROGTray: {e}");
+            e
+        })?;
         let rog_tray = Self {
             tray: AppIndicator::new(TRAY_LABEL, TRAY_APP_ICON),
             menu: gtk::Menu::new(),
             icon: TRAY_APP_ICON,
-            bios_proxy: RogBiosProxyBlocking::new(&conn).unwrap(),
-            gfx_proxy: GfxProxyBlocking::new(&conn).unwrap(),
+            bios_proxy: RogBiosProxyBlocking::new(&conn).map_err(|e| {
+                error!("ROGTray: {e}");
+                e
+            })?,
+            gfx_proxy: GfxProxyBlocking::new(&conn).map_err(|e| {
+                error!("ROGTray: {e}");
+                e
+            })?,
         };
         Ok(rog_tray)
     }
@@ -126,7 +135,11 @@ impl ROGTray {
 
         let menu = gtk::Menu::new();
         for item in sub_menu.0.iter() {
-            item.set_active(item.label().unwrap() == active_label);
+            if let Some(label) = item.label() {
+                item.set_active(label == active_label);
+            } else {
+                item.set_active(false);
+            }
             item.set_no_show_all(false);
             item.show_all();
             menu.add(item);
@@ -135,7 +148,7 @@ impl ROGTray {
         header_item.set_submenu(Some(&menu));
     }
 
-    fn add_menu_item<F>(&mut self, label: &str, cb: F)
+    fn _add_menu_item<F>(&mut self, label: &str, cb: F)
     where
         F: Fn() + Send + 'static,
     {
@@ -183,60 +196,124 @@ impl ROGTray {
         self.tray.set_menu(&mut self.menu);
     }
 
-    fn set_status(&mut self, status: AppIndicatorStatus) {
+    fn _set_status(&mut self, status: AppIndicatorStatus) {
         self.tray.set_status(status)
     }
 
     fn menu_add_base(&mut self) {
         self.add_icon_menu_item("Open app", "asus_notif_red", move || {
-            get_ipc_file().unwrap().write_all(&[SHOW_GUI]).ok();
+            if let Ok(mut ipc) = get_ipc_file().map_err(|e| {
+                error!("ROGTray: get_ipc_file: {}", e);
+            }) {
+                ipc.write_all(&[SHOW_GUI]).ok();
+            }
         });
 
         self.add_separator();
+        debug!("ROGTray: built base menu");
     }
 
-    fn menu_add_charge_limit(&mut self, limit: u8) {
-        self.add_inactive_label(&format!("Charge limit: {limit}"));
+    fn menu_add_charge_limit(&mut self, supported: &SupportedFunctions, limit: u8) {
+        if supported.charge_ctrl.charge_level_set {
+            self.add_inactive_label(&format!("Charge limit: {limit}"));
+            debug!("ROGTray: appended charge limit menu");
+        }
     }
 
-    fn menu_add_panel_od(&mut self, panel_od: bool) {
-        let bios = self.bios_proxy.clone();
-        self.add_check_menu_item("Panel Overdrive", panel_od, move |this| {
-            bios.set_panel_od(this.is_active()).unwrap();
-        });
+    fn menu_add_panel_od(&mut self, supported: &SupportedFunctions, panel_od: bool) {
+        if supported.rog_bios_ctrl.panel_overdrive {
+            let bios = self.bios_proxy.clone();
+            self.add_check_menu_item("Panel Overdrive", panel_od, move |this| {
+                bios.set_panel_od(this.is_active())
+                    .map_err(|e| {
+                        error!("ROGTray: set_panel_od: {e}");
+                        e
+                    })
+                    .ok();
+            });
+            debug!("ROGTray: appended panel overdrive menu");
+        }
     }
 
     fn menu_add_gpu(&mut self, supported: &SupportedFunctions, current_mode: GfxMode) {
         let gfx_dbus = self.gfx_proxy.clone();
         let mut gpu_menu = RadioGroup::new("Integrated", move |_| {
-            let mode = gfx_dbus.mode().unwrap();
+            let mode = gfx_dbus
+                .mode()
+                .map_err(|e| {
+                    error!("ROGTray: mode: {e}");
+                    e
+                })
+                .unwrap_or(GfxMode::None);
             if mode != GfxMode::Integrated {
-                gfx_dbus.set_mode(&GfxMode::Integrated).unwrap();
+                gfx_dbus
+                    .set_mode(&GfxMode::Integrated)
+                    .map_err(|e| {
+                        error!("ROGTray: srt_mode: {e}");
+                        e
+                    })
+                    .ok();
             }
         });
 
         let gfx_dbus = self.gfx_proxy.clone();
         gpu_menu.add("Hybrid", move |_| {
-            let mode = gfx_dbus.mode().unwrap();
+            let mode = gfx_dbus
+                .mode()
+                .map_err(|e| {
+                    error!("ROGTray: mode: {e}");
+                    e
+                })
+                .unwrap_or(GfxMode::None);
             if mode != GfxMode::Hybrid {
-                gfx_dbus.set_mode(&GfxMode::Hybrid).unwrap();
+                gfx_dbus
+                    .set_mode(&GfxMode::Hybrid)
+                    .map_err(|e| {
+                        error!("ROGTray: set_mode: {e}");
+                        e
+                    })
+                    .ok();
             }
         });
         if supported.rog_bios_ctrl.gpu_mux {
             let gfx_dbus = self.bios_proxy.clone();
             gpu_menu.add("Ultimate (Reboot required)", move |_| {
-                let mode = gfx_dbus.gpu_mux_mode().unwrap();
+                let mode = gfx_dbus
+                    .gpu_mux_mode()
+                    .map_err(|e| {
+                        error!("ROGTray: mode: {e}");
+                        e
+                    })
+                    .unwrap_or(GpuMode::Error);
                 if mode != GpuMode::Discrete {
-                    gfx_dbus.set_gpu_mux_mode(GpuMode::Discrete).unwrap();
+                    gfx_dbus
+                        .set_gpu_mux_mode(GpuMode::Discrete)
+                        .map_err(|e| {
+                            error!("ROGTray: set_mode: {e}");
+                            e
+                        })
+                        .ok();
                 }
             });
         }
         if supported.rog_bios_ctrl.egpu_enable {
             let gfx_dbus = self.gfx_proxy.clone();
             gpu_menu.add("eGPU", move |_| {
-                let mode = gfx_dbus.mode().unwrap();
+                let mode = gfx_dbus
+                    .mode()
+                    .map_err(|e| {
+                        error!("ROGTray: mode: {e}");
+                        e
+                    })
+                    .unwrap_or(GfxMode::None);
                 if mode != GfxMode::Egpu {
-                    gfx_dbus.set_mode(&GfxMode::Egpu).unwrap();
+                    gfx_dbus
+                        .set_mode(&GfxMode::Egpu)
+                        .map_err(|e| {
+                            error!("ROGTray: set_mode: {e}");
+                            e
+                        })
+                        .ok();
                 }
             });
         }
@@ -250,10 +327,13 @@ impl ROGTray {
             active.as_str(),
             gpu_menu,
         );
+
+        debug!("ROGTray: appended gpu menu");
     }
 
     fn menu_clear(&mut self) {
         self.menu = gtk::Menu::new();
+        debug!("ROGTray: cleared self");
     }
 
     /// Reset GTK menu to internal state, this can be called after clearing and rebuilding the menu too.
@@ -272,8 +352,8 @@ impl ROGTray {
     ) {
         self.menu_clear();
         self.menu_add_base();
-        self.menu_add_charge_limit(charge_limit);
-        self.menu_add_panel_od(panel_od);
+        self.menu_add_charge_limit(supported, charge_limit);
+        self.menu_add_panel_od(supported, panel_od);
         self.menu_add_gpu(supported, current_gfx_mode);
         self.menu_update();
     }
@@ -281,17 +361,39 @@ impl ROGTray {
 
 pub fn init_tray(
     supported: SupportedFunctions,
-    states: Arc<Mutex<PageDataStates>>,
+    states: Arc<Mutex<SystemState>>,
 ) -> Receiver<TrayToApp> {
     let (send, recv) = channel();
     let _send = Arc::new(Mutex::new(send));
 
     std::thread::spawn(move || {
-        gtk::init().unwrap(); // Make this the main thread for gtk
+        if gtk::init()
+            .map_err(|e| {
+                error!("ROGTray: gtk init {e}");
+                e
+            })
+            .is_err()
+        {
+            return;
+        } // Make this the main thread for gtk
+        debug!("init_tray gtk");
 
-        let mut tray = ROGTray::new().unwrap();
+        let mut tray = match ROGTray::new() {
+            Ok(t) => {
+                info!("init_tray: built menus");
+                t
+            }
+            Err(e) => {
+                error!("ROGTray: tray init {e}");
+                if let Ok(mut states) = states.lock() {
+                    states.error = Some(format!("Could not start tray: {e}"));
+                }
+                return;
+            }
+        };
         tray.rebuild_and_update(&supported, GfxMode::Hybrid, 100, false);
         tray.set_icon(TRAY_APP_ICON);
+        info!("Started ROGTray");
 
         loop {
             if let Ok(mut lock) = states.lock() {
@@ -303,6 +405,7 @@ pub fn init_tray(
                         lock.bios.panel_overdrive,
                     );
                     lock.tray_should_update = false;
+                    debug!("ROGTray: rebuilt menus due to state change");
 
                     match lock.gfx_state.power_status {
                         GfxPower::Active => tray.set_icon("asus_notif_red"),

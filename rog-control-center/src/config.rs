@@ -1,9 +1,9 @@
+use log::{error, info, warn};
+use serde_derive::{Deserialize, Serialize};
 use std::{
     fs::{create_dir, OpenOptions},
     io::{Read, Write},
 };
-
-use serde_derive::{Deserialize, Serialize};
 //use log::{error, info, warn};
 
 use crate::{error::Error, notify::EnabledNotifications};
@@ -34,14 +34,17 @@ impl Default for Config {
 impl Config {
     pub fn load() -> Result<Config, Error> {
         let mut path = if let Some(dir) = dirs::config_dir() {
+            info!("Found XDG config dir {dir:?}");
             dir
         } else {
+            error!("Could not get XDG config dir");
             return Err(Error::XdgVars);
         };
 
         path.push(CFG_DIR);
         if !path.exists() {
             create_dir(path.clone())?;
+            info!("Created {path:?}");
         }
 
         path.push(CFG_FILE_NAME);
@@ -56,11 +59,13 @@ impl Config {
 
         if let Ok(read_len) = file.read_to_string(&mut buf) {
             if read_len == 0 {
+                warn!("Zero len read of Config file");
                 let default = Config::default();
                 let t = toml::to_string_pretty(&default).unwrap();
                 file.write_all(t.as_bytes())?;
                 return Ok(default);
             } else if let Ok(data) = toml::from_str::<Config>(&buf) {
+                info!("Loaded config file {path:?}");
                 return Ok(data);
             }
         }
@@ -77,6 +82,7 @@ impl Config {
         path.push(CFG_DIR);
         if !path.exists() {
             create_dir(path.clone())?;
+            info!("Created {path:?}");
         }
 
         path.push(CFG_FILE_NAME);
@@ -90,6 +96,7 @@ impl Config {
         self.enabled_notifications = enabled_notifications.clone();
         let t = toml::to_string_pretty(&self).unwrap();
         file.write_all(t.as_bytes())?;
+        info!("Saved config file {path:?}");
         Ok(())
     }
 }
