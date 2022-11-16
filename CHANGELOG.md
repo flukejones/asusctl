@@ -5,17 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-## [v4.5.1- RC2]
-- Share pagestates with tray process in ROGCC
-
-## [v4.5.1- RC1]
+## [v4.5.1]
 ### Added
 - Support for FA506IE LED modes (Author: Herohtar)
 ### Changed
 - Add a basic system tray with dGPU status and gpu mode switch actions
 - Fixup some notifications in ROGCC
 - Add config options for notifications for ROGCC
-- Share pagestates with tray process in ROGCC
+- Share states with tray process in ROGCC
+- Share tates with tray process in ROGCC
 
 ## [v4.5.0]
 ### Added
