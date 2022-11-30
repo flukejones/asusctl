@@ -2,7 +2,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use udev::Device;
 #[cfg(feature = "dbus")]
-use zvariant_derive::Type;
+use zbus::zvariant::Type;
 
 use crate::{error::ProfileError, FanCurvePU};
 

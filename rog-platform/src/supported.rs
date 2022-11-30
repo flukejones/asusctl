@@ -1,7 +1,7 @@
 use rog_aura::{usb::AuraDevice, AuraModeNum, AuraZone};
 use serde_derive::{Deserialize, Serialize};
 use std::fmt;
-use zvariant_derive::Type;
+use zbus::zvariant::Type;
 
 #[derive(Serialize, Deserialize, Type, Debug, Default, Clone)]
 pub struct SupportedFunctions {

@@ -7,7 +7,7 @@ use std::{
 use log::info;
 use serde_derive::{Deserialize, Serialize};
 #[cfg(feature = "dbus")]
-use zvariant::Type;
+use zbus::zvariant::Type;
 
 use crate::{
     error::{AnimeError, Result},

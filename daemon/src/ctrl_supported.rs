@@ -1,8 +1,6 @@
 use async_trait::async_trait;
 use serde_derive::{Deserialize, Serialize};
-use zbus::dbus_interface;
-use zbus::Connection;
-use zvariant::Type;
+use zbus::{dbus_interface, zvariant::Type, Connection};
 
 use crate::{
     ctrl_anime::CtrlAnime, ctrl_aura::controller::CtrlKbdLed, ctrl_platform::CtrlPlatform,

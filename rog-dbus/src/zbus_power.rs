@@ -19,7 +19,7 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use zbus_macros::dbus_proxy;
+use zbus::dbus_proxy;
 
 #[dbus_proxy(
     interface = "org.asuslinux.Daemon",
@@ -27,24 +27,19 @@ use zbus_macros::dbus_proxy;
 )]
 trait Power {
     /// charge_control_end_threshold method
-    #[inline]
     fn charge_control_end_threshold(&self) -> zbus::Result<u8>;
 
     /// MainsOnline method
-    #[inline]
     fn mains_online(&self) -> zbus::Result<bool>;
 
     /// set_charge_control_end_threshold method
-    #[inline]
     fn set_charge_control_end_threshold(&self, limit: u8) -> zbus::Result<()>;
 
     /// NotifyCharge signal
-    #[inline]
     #[dbus_proxy(signal)]
     fn notify_charge_control_end_threshold(&self, limit: u8) -> zbus::Result<u8>;
 
     /// NotifyMainsOnline signal
-    #[inline]
     #[dbus_proxy(signal)]
     fn notify_mains_online(&self, on: bool) -> zbus::Result<()>;
 }

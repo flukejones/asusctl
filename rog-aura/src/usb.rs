@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::ops::{BitAnd, BitOr};
 #[cfg(feature = "dbus")]
-use zvariant::Type;
+use zbus::zvariant::Type;
 
 pub const LED_INIT1: [u8; 2] = [0x5d, 0xb9];
 pub const LED_INIT2: &str = "]ASUS Tech.Inc."; // ] == 0x5d

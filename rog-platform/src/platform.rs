@@ -2,7 +2,7 @@ use std::{fmt::Display, path::PathBuf, str::FromStr};
 
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
-use zvariant::Type;
+use zbus::zvariant::Type;
 
 use crate::{
     attr_bool, attr_u8,

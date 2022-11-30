@@ -21,8 +21,8 @@
 
 use std::collections::BTreeMap;
 
+use zbus::dbus_proxy;
 use zbus::{blocking::Connection, Result};
-use zbus_macros::dbus_proxy;
 
 use rog_aura::{usb::AuraPowerDev, AuraEffect, AuraModeNum, LedBrightness, PerKeyRaw};
 
@@ -34,60 +34,46 @@ const BLOCKING_TIME: u64 = 40; // 100ms = 10 FPS, max 50ms = 20 FPS, 40ms = 25 F
 )]
 trait Led {
     /// NextLedMode method
-    #[inline]
     fn next_led_mode(&self) -> zbus::Result<()>;
 
     /// PrevLedMode method
-    #[inline]
     fn prev_led_mode(&self) -> zbus::Result<()>;
 
     /// Toggle to next led brightness
-    #[inline]
     fn next_led_brightness(&self) -> zbus::Result<()>;
 
     /// Toggle to previous led brightness
-    #[inline]
     fn prev_led_brightness(&self) -> zbus::Result<()>;
 
     /// SetBrightness method
-    #[inline]
     fn set_brightness(&self, brightness: LedBrightness) -> zbus::Result<()>;
 
     /// SetLedMode method
-    #[inline]
     fn set_led_mode(&self, effect: &AuraEffect) -> zbus::Result<()>;
 
-    #[inline]
     fn set_leds_power(&self, options: AuraPowerDev, enabled: bool) -> zbus::Result<()>;
 
-    #[inline]
     fn per_key_raw(&self, data: PerKeyRaw) -> zbus::fdo::Result<()>;
 
     /// NotifyLed signal
-    #[inline]
     #[dbus_proxy(signal)]
     fn notify_led(&self, data: AuraEffect) -> zbus::Result<()>;
 
     #[dbus_proxy(signal)]
-    #[inline]
     fn notify_power_states(&self, data: AuraPowerDev) -> zbus::Result<()>;
 
     /// LedBrightness property
-    #[inline]
     #[dbus_proxy(property)]
     fn led_brightness(&self) -> zbus::Result<i16>;
 
     /// LedMode property
-    #[inline]
     fn led_mode(&self) -> zbus::Result<AuraModeNum>;
 
     /// LedModes property
-    #[inline]
     fn led_modes(&self) -> zbus::Result<BTreeMap<AuraModeNum, AuraEffect>>;
 
     // As property doesn't work for AuraPowerDev (complexity of serialization?)
     // #[dbus_proxy(property)]
-    #[inline]
     fn leds_enabled(&self) -> zbus::Result<AuraPowerDev>;
 }
 

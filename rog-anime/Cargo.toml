@@ -14,7 +14,7 @@ exclude = ["data"]
 
 [features]
 default = ["dbus", "detect"]
-dbus = ["zvariant", "zbus"]
+dbus = ["zbus"]
 detect = ["sysfs-class"]
 
 [dependencies]
@@ -28,7 +28,6 @@ serde_derive.workspace = true
 
 glam.workspace = true
 
-zvariant = { workspace = true, optional = true }
 zbus = { workspace = true, optional = true }
 
 sysfs-class = { workspace = true, optional = true }

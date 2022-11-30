@@ -28,5 +28,3 @@ rog_dbus = { path = "../rog-dbus" }
 rog_platform = { path = "../rog-platform" }
 
 zbus.workspace = true
-zvariant.workspace = true
-zvariant_derive.workspace = true

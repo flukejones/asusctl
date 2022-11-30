@@ -25,8 +25,7 @@ use crate::error::RogError;
 use async_trait::async_trait;
 use log::warn;
 use logind_zbus::manager::ManagerProxy;
-use zbus::{export::futures_util::StreamExt, Connection, SignalContext};
-use zvariant::ObjectPath;
+use zbus::{export::futures_util::StreamExt, zvariant::ObjectPath, Connection, SignalContext};
 
 /// This macro adds a function which spawns an `inotify` task on the passed in `Executor`.
 ///

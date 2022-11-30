@@ -20,7 +20,7 @@
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
 use rog_platform::supported::SupportedFunctions;
-use zbus_macros::dbus_proxy;
+use zbus::dbus_proxy;
 
 #[dbus_proxy(
     interface = "org.asuslinux.Daemon",
@@ -28,6 +28,5 @@ use zbus_macros::dbus_proxy;
 )]
 trait Supported {
     /// SupportedFunctions method
-    #[inline]
     fn supported_functions(&self) -> zbus::Result<SupportedFunctions>;
 }

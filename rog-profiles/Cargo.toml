@@ -6,12 +6,11 @@ edition = "2021"
 
 [features]
 default = ["dbus"]
-dbus = ["zvariant", "zvariant_derive"]
+dbus = ["zbus"]
 
 [dependencies]
 udev.workspace = true
 serde.workspace = true
 serde_derive.workspace = true
 
-zvariant = { workspace = true, optional = true }
-zvariant_derive = { workspace = true, optional = true }
+zbus = { workspace = true, optional = true }

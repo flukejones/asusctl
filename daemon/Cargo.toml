@@ -32,7 +32,6 @@ log.workspace = true
 env_logger.workspace = true
 
 zbus.workspace = true
-zvariant.workspace = true
 logind-zbus.workspace = true
 
 # serialisation

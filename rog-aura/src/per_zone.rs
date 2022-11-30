@@ -1,6 +1,6 @@
 use serde_derive::{Deserialize, Serialize};
 #[cfg(feature = "dbus")]
-use zvariant::Type;
+use zbus::zvariant::Type;
 
 /// Represents the zoned raw USB packets
 pub type ZonedRaw = Vec<u8>;

@@ -20,7 +20,7 @@
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
 use rog_platform::platform::GpuMode;
-use zbus_macros::dbus_proxy;
+use zbus::dbus_proxy;
 
 #[dbus_proxy(
     interface = "org.asuslinux.Daemon",
@@ -28,62 +28,48 @@ use zbus_macros::dbus_proxy;
 )]
 trait RogBios {
     /// DgpuDisable method
-    #[inline]
     fn dgpu_disable(&self) -> zbus::Result<bool>;
 
     /// EgpuEnable method
-    #[inline]
     fn egpu_enable(&self) -> zbus::Result<bool>;
 
     /// GpuMuxMode method
-    #[inline]
     fn gpu_mux_mode(&self) -> zbus::Result<GpuMode>;
 
     /// PanelOd method
-    #[inline]
     fn panel_od(&self) -> zbus::Result<bool>;
 
     /// PostBootSound method
-    #[inline]
     fn post_boot_sound(&self) -> zbus::Result<i16>;
 
     /// SetDgpuDisable method
-    #[inline]
     fn set_dgpu_disable(&self, disable: bool) -> zbus::Result<()>;
 
     /// SetEgpuEnable method
-    #[inline]
     fn set_egpu_enable(&self, enable: bool) -> zbus::Result<()>;
 
     /// SetGpuMuxMode method
-    #[inline]
     fn set_gpu_mux_mode(&self, mode: GpuMode) -> zbus::Result<()>;
 
     /// SetPanelOd method
-    #[inline]
     fn set_panel_od(&self, overdrive: bool) -> zbus::Result<()>;
 
     /// SetPostBootSound method
-    #[inline]
     fn set_post_boot_sound(&self, on: bool) -> zbus::Result<()>;
 
     /// NotifyDgpuDisable signal
-    #[inline]
     #[dbus_proxy(signal)]
     fn notify_dgpu_disable(&self, disable: bool) -> zbus::Result<()>;
 
     /// NotifyEgpuEnable signal
-    #[inline]
     #[dbus_proxy(signal)]
     fn notify_egpu_enable(&self, enable: bool) -> zbus::Result<()>;
 
     /// NotifyGpuMuxMode signal
-    #[inline]
     #[dbus_proxy(signal)]
     fn notify_gpu_mux_mode(&self, mode: GpuMode) -> zbus::Result<()>;
 
     /// NotifyPanelOd signal
-    #[inline]
     #[dbus_proxy(signal)]
     fn notify_panel_od(&self, overdrive: bool) -> zbus::Result<()>;
 

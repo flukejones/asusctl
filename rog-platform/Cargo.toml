@@ -8,8 +8,7 @@ log.workspace = true
 rog_aura = { path = "../rog-aura" }
 serde.workspace = true
 serde_derive.workspace = true
-zvariant.workspace = true
-zvariant_derive.workspace = true
+zbus.workspace = true
 sysfs-class.workspace = true
 concat-idents.workspace = true
 udev.workspace = true
