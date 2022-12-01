@@ -81,7 +81,7 @@ Requirements are rust >= 1.57 installed from rustup.io if the distro provided ve
 
 **fedora:**
 
-    dnf install cmake clang-devel systemd-devel gtk3-devel
+    dnf install cmake clang-devel systemd-devel gtk3-devel cargo
     make
     sudo make install
 
