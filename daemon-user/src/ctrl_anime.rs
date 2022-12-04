@@ -103,7 +103,7 @@ impl<'a> CtrlAnimeInner<'static> {
                             .write(output)
                             .map_err(|e| AnimeError::Dbus(format!("{}", e)))
                             .map(|_| false)
-                    })?;
+                    });
                 }
                 ActionData::Image(image) => {
                     self.client
@@ -124,10 +124,10 @@ impl<'a> CtrlAnimeInner<'static> {
                         sleep(Duration::from_millis(1));
                     }
                 }
-                ActionData::AudioEq => {}
-                ActionData::SystemInfo => {}
-                ActionData::TimeDate => {}
-                ActionData::Matrix => {}
+                ActionData::AudioEq
+                | ActionData::SystemInfo
+                | ActionData::TimeDate
+                | ActionData::Matrix => {}
             }
         }
 
@@ -143,7 +143,7 @@ pub struct CtrlAnime<'a> {
     inner_early_return: Arc<AtomicBool>,
 }
 
-impl<'a> CtrlAnime<'static> {
+impl CtrlAnime<'static> {
     pub fn new(
         config: Arc<Mutex<UserAnimeConfig>>,
         inner: Arc<Mutex<CtrlAnimeInner<'static>>>,
@@ -185,7 +185,7 @@ impl CtrlAnime<'static> {
     pub fn insert_asus_gif(
         &mut self,
         index: u32,
-        file: String,
+        file: &str,
         time: Timer,
         brightness: f32,
     ) -> zbus::fdo::Result<String> {
@@ -223,7 +223,7 @@ impl CtrlAnime<'static> {
     pub fn insert_image_gif(
         &mut self,
         index: u32,
-        file: String,
+        file: &str,
         scale: f32,
         angle: f32,
         xy: (f32, f32),
@@ -269,7 +269,7 @@ impl CtrlAnime<'static> {
     pub fn insert_image(
         &mut self,
         index: u32,
-        file: String,
+        file: &str,
         scale: f32,
         angle: f32,
         xy: (f32, f32),

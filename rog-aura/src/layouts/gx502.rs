@@ -5,7 +5,7 @@ impl KeyLayout {
     pub fn gx502_layout() -> Self {
         Self {
             matches: vec!["GX502".into(), "GU502".into()],
-            locale: "US".to_string(),
+            locale: "US".to_owned(),
             rows: vec![
                 KeyRow::new(
                     0.8,

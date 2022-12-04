@@ -139,17 +139,17 @@ impl From<&Key> for &str {
             Key::MediaStop => "Media Stop",
             Key::MediaNext => "Media Next",
             Key::MediaPrev => "Media Previous",
-            Key::NormalBlank => "",
-            Key::NormalSpacer => "",
-            Key::FuncBlank => "",
-            Key::FuncSpacer => "",
-            Key::ArrowBlank => "",
-            Key::ArrowSpacer => "",
-            Key::ArrowRegularBlank => "",
-            Key::ArrowRegularSpacer => "",
-            Key::ArrowSplitBlank => "",
-            Key::ArrowSplitSpacer => "",
-            Key::RowEndSpacer => "",
+            Key::NormalBlank
+            | Key::NormalSpacer
+            | Key::FuncBlank
+            | Key::FuncSpacer
+            | Key::ArrowBlank
+            | Key::ArrowSpacer
+            | Key::ArrowRegularBlank
+            | Key::ArrowRegularSpacer
+            | Key::ArrowSplitBlank
+            | Key::ArrowSplitSpacer
+            | Key::RowEndSpacer => "",
         }
     }
 }

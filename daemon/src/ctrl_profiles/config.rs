@@ -43,7 +43,8 @@ impl ProfileConfig {
                     "Could not deserialise {}.\nWill rename to {}-old and recreate config",
                     config_path, config_path
                 );
-                let cfg_old = config_path.clone() + "-old";
+                let mut cfg_old = config_path.clone();
+                cfg_old.push_str("-old");
                 std::fs::rename(config_path.clone(), cfg_old).unwrap_or_else(|err| {
                     panic!(
                         "Could not rename. Please remove {} then restart service: Error {}",

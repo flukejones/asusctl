@@ -1,5 +1,5 @@
 pub mod config;
-/// Implements CtrlTask, Reloadable, ZbusRun
+/// Implements `CtrlTask`, Reloadable, `ZbusRun`
 pub mod trait_impls;
 
 use self::config::{AnimeConfig, AnimeConfigCached};
@@ -62,7 +62,7 @@ impl CtrlAnime {
     /// one running - so the thread uses atomics to signal run/exit.
     ///
     /// Because this also writes to the usb device, other write tries (display only) *must*
-    /// get the mutex lock and set the thread_exit atomic.
+    /// get the mutex lock and set the `thread_exit` atomic.
     fn run_thread(inner: Arc<Mutex<CtrlAnime>>, actions: Vec<ActionData>, mut once: bool) {
         if actions.is_empty() {
             warn!("AniMe system actions was empty");
@@ -106,13 +106,13 @@ impl CtrlAnime {
 
                 'main: loop {
                     thread_running.store(true, Ordering::SeqCst);
-                    for action in actions.iter() {
+                    for action in &actions {
                         if thread_exit.load(Ordering::SeqCst) {
                             break 'main;
                         }
                         match action {
                             ActionData::Animation(frames) => {
-                                if let Err(err) = rog_anime::run_animation(frames, &|frame| {
+                                rog_anime::run_animation(frames, &|frame| {
                                     if thread_exit.load(Ordering::Acquire) {
                                         info!("rog-anime: frame-loop was asked to exit");
                                         return Ok(true); // Do safe exit
@@ -130,15 +130,14 @@ impl CtrlAnime {
                                                 .ok();
                                             false // Don't exit yet
                                         })
-                                        .map(Ok)
-                                        .unwrap_or_else(|| {
-                                            warn!("rog_anime::run_animation:callback failed");
-                                            Err(AnimeError::NoFrames)
-                                        })
-                                }) {
-                                    warn!("rog_anime::run_animation:Animation {}", err);
-                                    break 'main;
-                                };
+                                        .map_or_else(
+                                            || {
+                                                warn!("rog_anime::run_animation:callback failed");
+                                                Err(AnimeError::NoFrames)
+                                            },
+                                            Ok,
+                                        )
+                                });
                             }
                             ActionData::Image(image) => {
                                 once = false;
@@ -149,10 +148,10 @@ impl CtrlAnime {
                                 }
                             }
                             ActionData::Pause(duration) => sleep(*duration),
-                            ActionData::AudioEq => {}
-                            ActionData::SystemInfo => {}
-                            ActionData::TimeDate => {}
-                            ActionData::Matrix => {}
+                            ActionData::AudioEq
+                            | ActionData::SystemInfo
+                            | ActionData::TimeDate
+                            | ActionData::Matrix => {}
                         }
                     }
                     if thread_exit.load(Ordering::SeqCst) {
@@ -194,7 +193,7 @@ impl CtrlAnime {
             *led = bright as u8;
         }
         let data = AnimePacketType::try_from(buffer)?;
-        for row in data.iter() {
+        for row in &data {
             self.node.write_bytes(row)?;
         }
         self.node.write_bytes(&pkt_for_flush())?;

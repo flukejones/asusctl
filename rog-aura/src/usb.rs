@@ -36,14 +36,10 @@ impl From<&str> for AuraDevice {
     fn from(s: &str) -> Self {
         match s.to_lowercase().as_str() {
             "tuf" => AuraDevice::Tuf,
-            "1866" => AuraDevice::X1866,
-            "1869" => AuraDevice::X1869,
-            "1854" => AuraDevice::X1854,
-            "19b6" => AuraDevice::X19B6,
-            "0x1866" => AuraDevice::X1866,
-            "0x1869" => AuraDevice::X1869,
-            "0x1854" => AuraDevice::X1854,
-            "0x19b6" => AuraDevice::X19B6,
+            "1866" | "0x1866" => AuraDevice::X1866,
+            "1869" | "0x1869" => AuraDevice::X1869,
+            "1854" | "0x1854" => AuraDevice::X1854,
+            "19b6" | "0x19b6" => AuraDevice::X19B6,
             _ => AuraDevice::Unknown,
         }
     }
@@ -108,9 +104,9 @@ impl From<AuraDev1866> for u32 {
 impl AuraDev1866 {
     pub fn to_bytes(control: &[Self]) -> [u8; 3] {
         let mut a: u32 = 0;
-        control.iter().for_each(|n| {
+        for n in control {
             a |= *n as u32;
-        });
+        }
         [
             ((a & 0xff0000) >> 16) as u8,
             ((a & 0xff00) >> 8) as u8,
@@ -197,9 +193,9 @@ impl From<AuraDev19b6> for u32 {
 impl AuraDev19b6 {
     pub fn to_bytes(control: &[Self]) -> [u8; 3] {
         let mut a: u32 = 0;
-        control.iter().for_each(|n| {
+        for n in control {
             a |= *n as u32;
-        });
+        }
         [
             (a & 0xff) as u8,
             ((a & 0xff00) >> 8) as u8,

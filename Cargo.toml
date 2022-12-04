@@ -20,19 +20,19 @@ serde_json = "^1.0"
 toml = "^0.5.9"
 
 log = "^0.4"
-env_logger = "^0.9.3"
+env_logger = "^0.10.0"
 
 glam = { version = "^0.22", features = ["serde"] }
 gumdrop = "^0.8"
-udev = "^0.6"
+udev = "^0.7"
 rusb = "^0.9"
 sysfs-class = "^0.1.3"
 inotify = "^0.10.0"
 
 png_pong = "^0.8"
 pix = "^0.13"
-tinybmp = "^0.3"
-gif = "^0.11"
+tinybmp = "^0.4.0"
+gif = "^0.12.0"
 
 notify-rust = { git = "https://github.com/flukejones/notify-rust.git", default-features = false, features = ["z"] }
 

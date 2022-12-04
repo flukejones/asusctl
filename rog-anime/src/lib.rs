@@ -7,11 +7,11 @@ pub use data::*;
 mod grid;
 pub use grid::*;
 
-/// Transform a PNG image for displaying on AniMe matrix display
+/// Transform a PNG image for displaying on `AniMe` matrix display
 mod image;
 pub use image::*;
 
-/// A grid of data that is intended to be read out and displayed on the ANiMe as
+/// A grid of data that is intended to be read out and displayed on the `AniMe` as
 /// a diagonal
 mod diagonal;
 pub use diagonal::*;

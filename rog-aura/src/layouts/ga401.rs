@@ -5,7 +5,7 @@ impl KeyLayout {
     pub fn ga401_layout() -> Self {
         Self {
             matches: vec!["GA401".into(), "GA402".into()],
-            locale: "US".to_string(),
+            locale: "US".to_owned(),
             rows: vec![
                 KeyRow::new(
                     0.8,

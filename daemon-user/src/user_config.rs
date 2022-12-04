@@ -114,7 +114,7 @@ impl ConfigLoadSave<UserAnimeConfig> for UserAnimeConfig {
 impl Default for UserAnimeConfig {
     fn default() -> Self {
         Self {
-            name: "default".to_string(),
+            name: "default".to_owned(),
             anime: vec![
                 ActionLoader::AsusImage {
                     file: "/usr/share/asusd/anime/custom/diagonal-template.png".into(),
@@ -233,7 +233,7 @@ impl Default for UserAuraConfig {
         seq.push(key);
 
         Self {
-            name: "default".to_string(),
+            name: "default".to_owned(),
             aura: seq,
         }
     }
@@ -251,8 +251,8 @@ pub struct UserConfig {
 impl UserConfig {
     pub fn new() -> Self {
         Self {
-            active_anime: Some("anime-default".to_string()),
-            active_aura: Some("aura-default".to_string()),
+            active_anime: Some("anime-default".to_owned()),
+            active_aura: Some("aura-default".to_owned()),
         }
     }
 

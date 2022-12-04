@@ -23,7 +23,7 @@ pub enum PlatformError {
 
 impl fmt::Display for PlatformError {
     // This trait requires `fmt` with this exact signature.
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             PlatformError::ParseVendor => write!(f, "Parse gfx vendor error"),
             PlatformError::ParseNum => write!(f, "Parse number error"),

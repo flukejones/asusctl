@@ -11,12 +11,12 @@ use crate::{
 };
 
 /// The "platform" device provides access to things like:
-/// - dgpu_disable
-/// - egpu_enable
-/// - panel_od
-/// - gpu_mux
-/// - keyboard_mode, set keyboard RGB mode and speed
-/// - keyboard_state, set keyboard power states
+/// - `dgpu_disable`
+/// - `egpu_enable`
+/// - `panel_od`
+/// - `gpu_mux`
+/// - `keyboard_mode`, set keyboard RGB mode and speed
+/// - `keyboard_state`, set keyboard power states
 #[derive(Debug, PartialEq, Eq, PartialOrd, Clone)]
 pub struct AsusPlatform {
     path: PathBuf,

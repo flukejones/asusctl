@@ -37,7 +37,7 @@ pub enum RogError {
 
 impl fmt::Display for RogError {
     // This trait requires `fmt` with this exact signature.
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             RogError::ParseVendor => write!(f, "Parse gfx vendor error"),
             RogError::ParseLed => write!(f, "Parse LED error"),
@@ -51,7 +51,7 @@ impl fmt::Display for RogError {
             RogError::DoTask(deets) => write!(f, "Task error: {}", deets),
             RogError::MissingFunction(deets) => write!(f, "Missing functionality: {}", deets),
             RogError::MissingLedBrightNode(path, error) => write!(f, "Led node at {} is missing, please check you have the required patch or dkms module installed: {}", path, error),
-            RogError::ReloadFail(deets) => write!(f, "Task error: {}", deets),
+            RogError::ReloadFail(deets) => write!(f, "Reload error: {}", deets),
             RogError::Profiles(deets) => write!(f, "Profile error: {}", deets),
             RogError::Initramfs(detail) => write!(f, "Initiramfs error: {}", detail),
             RogError::Modprobe(detail) => write!(f, "Modprobe error: {}", detail),

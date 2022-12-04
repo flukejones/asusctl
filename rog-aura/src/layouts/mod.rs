@@ -43,7 +43,7 @@ impl KeyLayout {
 
     pub fn matches(&self, board_name: &str) -> bool {
         let board = board_name.to_ascii_uppercase();
-        for tmp in self.matches.iter() {
+        for tmp in &self.matches {
             if board.contains(tmp.as_str()) {
                 return true;
             }
@@ -91,7 +91,7 @@ impl KeyRow {
         Self { height, row }
     }
 
-    pub fn row(&self) -> Iter<Key> {
+    pub fn row(&self) -> Iter<'_, Key> {
         self.row.iter()
     }
 

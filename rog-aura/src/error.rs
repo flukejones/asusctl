@@ -13,7 +13,7 @@ pub enum Error {
 
 impl fmt::Display for Error {
     // This trait requires `fmt` with this exact signature.
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::ParseColour => write!(f, "Could not parse colour"),
             Error::ParseSpeed => write!(f, "Could not parse speed"),

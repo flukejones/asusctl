@@ -93,7 +93,7 @@ impl AnimeGrid {
 impl TryFrom<AnimeGrid> for AnimeDataBuffer {
     type Error = AnimeError;
 
-    /// Do conversion from the nested Vec in AniMeMatrix to the two required
+    /// Do conversion from the nested Vec in anime matrix to the two required
     /// packets suitable for sending over USB
     fn try_from(anime: AnimeGrid) -> Result<Self> {
         let mut buf = vec![0u8; anime.anime_type.data_length()];

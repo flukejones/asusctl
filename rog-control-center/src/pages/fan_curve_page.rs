@@ -30,7 +30,7 @@ impl RogApp {
         supported: &SupportedFunctions,
         profiles: &mut ProfilesState,
         curves: &mut FanCurvesState,
-        dbus: &RogDbusClientBlocking,
+        dbus: &RogDbusClientBlocking<'_>,
         do_error: &mut Option<String>,
         ui: &mut Ui,
     ) {
@@ -62,7 +62,7 @@ impl RogApp {
             };
 
             profiles.list.sort();
-            for f in profiles.list.iter() {
+            for f in &profiles.list {
                 item(*f, curves, curves.enabled.contains(f));
             }
         });

@@ -47,8 +47,7 @@ impl AnimeType {
     /// The width of diagonal images
     pub fn width(&self) -> usize {
         match self {
-            AnimeType::GA401 => 74,
-            AnimeType::GA402 => 74,
+            AnimeType::GA401 | AnimeType::GA402 => 74,
         }
     }
 
@@ -103,8 +102,8 @@ impl AnimeDataBuffer {
 
     /// Create from a vector of bytes
     ///
-    /// # Panics
-    /// Will panic if the vector length is not `ANIME_DATA_LEN`
+    /// # Errors
+    /// Will error if the vector length is not `ANIME_DATA_LEN`
     #[inline]
     pub fn from_vec(anime: AnimeType, data: Vec<u8>) -> Result<Self> {
         if data.len() != anime.data_length() {
@@ -147,10 +146,7 @@ impl TryFrom<AnimeDataBuffer> for AnimePacketType {
 /// This runs the animations as a blocking loop by using the `callback` to write data
 ///
 /// If `callback` is `Ok(true)` then `run_animation` will exit the animation loop early.
-pub fn run_animation(
-    frames: &AnimeGif,
-    callback: &dyn Fn(AnimeDataBuffer) -> Result<bool>,
-) -> Result<()> {
+pub fn run_animation(frames: &AnimeGif, callback: &dyn Fn(AnimeDataBuffer) -> Result<bool>) {
     let mut count = 0;
     let start = Instant::now();
 
@@ -215,9 +211,10 @@ pub fn run_animation(
                 }
             }
 
+            // TODO: Log this error
             if matches!(callback(output), Ok(true)) {
                 info!("rog-anime: frame-loop callback asked to exit early");
-                return Ok(());
+                return;
             }
 
             if timed && Instant::now().duration_since(start) > run_time {
@@ -232,5 +229,4 @@ pub fn run_animation(
             }
         }
     }
-    Ok(())
 }

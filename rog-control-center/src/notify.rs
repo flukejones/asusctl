@@ -397,9 +397,9 @@ where
 
 fn ac_power_notification(message: &str, on: &bool) -> Result<NotificationHandle> {
     let data = if *on {
-        "plugged".to_string()
+        "plugged".to_owned()
     } else {
-        "unplugged".to_string()
+        "unplugged".to_owned()
     };
     Ok(base_notification(message, &data).show()?)
 }
@@ -417,13 +417,12 @@ fn do_thermal_notif(message: &str, profile: &Profile) -> Result<NotificationHand
 
 fn do_gpu_status_notif(message: &str, data: &GfxPower) -> Result<NotificationHandle> {
     // eww
-    let mut notif = base_notification(message, &<&str>::from(data).to_string());
+    let mut notif = base_notification(message, &<&str>::from(data).to_owned());
     let icon = match data {
-        GfxPower::Active => "asus_notif_red",
         GfxPower::Suspended => "asus_notif_blue",
         GfxPower::Off => "asus_notif_green",
         GfxPower::AsusDisabled => "asus_notif_white",
-        GfxPower::AsusMuxDiscreet => "asus_notif_red",
+        GfxPower::AsusMuxDiscreet | GfxPower::Active => "asus_notif_red",
         GfxPower::Unknown => "gpu-integrated",
     };
     notif.icon(icon);
@@ -452,7 +451,7 @@ where
     Ok(())
 }
 
-/// Actual GpuMode unused as data is never correct until switched by reboot
+/// Actual `GpuMode` unused as data is never correct until switched by reboot
 fn do_mux_notification(message: &str, _: &GpuMode) -> Result<NotificationHandle> {
     let mut notif = base_notification(message, &"");
     notif.urgency(Urgency::Critical);

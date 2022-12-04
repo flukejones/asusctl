@@ -25,7 +25,6 @@ impl From<u32> for LedBrightness {
         match bright {
             0 => LedBrightness::Off,
             1 => LedBrightness::Low,
-            2 => LedBrightness::Med,
             3 => LedBrightness::High,
             _ => LedBrightness::Med,
         }
@@ -179,21 +178,7 @@ impl Display for AuraModeNum {
 
 impl From<AuraModeNum> for String {
     fn from(mode: AuraModeNum) -> Self {
-        match mode {
-            AuraModeNum::Static => "Static",
-            AuraModeNum::Breathe => "Breathe",
-            AuraModeNum::Strobe => "Strobe",
-            AuraModeNum::Rainbow => "Rainbow",
-            AuraModeNum::Star => "Stars",
-            AuraModeNum::Rain => "Rain",
-            AuraModeNum::Highlight => "Highlight",
-            AuraModeNum::Laser => "Laser",
-            AuraModeNum::Ripple => "Ripple",
-            AuraModeNum::Pulse => "Pulse",
-            AuraModeNum::Comet => "Comet",
-            AuraModeNum::Flash => "Flash",
-        }
-        .to_string()
+        <&str>::from(&mode).to_owned()
     }
 }
 
@@ -218,7 +203,6 @@ impl From<&AuraModeNum> for &str {
 impl From<&str> for AuraModeNum {
     fn from(mode: &str) -> Self {
         match mode {
-            "Static" => AuraModeNum::Static,
             "Breathe" => AuraModeNum::Breathe,
             "Strobe" => AuraModeNum::Strobe,
             "Rainbow" => AuraModeNum::Rainbow,
@@ -238,7 +222,6 @@ impl From<&str> for AuraModeNum {
 impl From<u8> for AuraModeNum {
     fn from(mode: u8) -> Self {
         match mode {
-            0 => AuraModeNum::Static,
             1 => AuraModeNum::Breathe,
             2 => AuraModeNum::Strobe,
             3 => AuraModeNum::Rainbow,
@@ -284,22 +267,14 @@ impl FromStr for AuraZone {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s = s.to_lowercase();
         match s.to_ascii_lowercase().as_str() {
-            "0" => Ok(AuraZone::None),
-            "none" => Ok(AuraZone::None),
-            "1" => Ok(AuraZone::Key1),
-            "one" => Ok(AuraZone::Key1),
-            "2" => Ok(AuraZone::Key2),
-            "two" => Ok(AuraZone::Key2),
-            "3" => Ok(AuraZone::Key3),
-            "three" => Ok(AuraZone::Key3),
-            "4" => Ok(AuraZone::Key4),
-            "four" => Ok(AuraZone::Key4),
-            "5" => Ok(AuraZone::Logo),
-            "logo" => Ok(AuraZone::Logo),
-            "6" => Ok(AuraZone::BarLeft),
-            "lightbar-left" => Ok(AuraZone::BarLeft),
-            "7" => Ok(AuraZone::BarRight),
-            "lightbar-right" => Ok(AuraZone::BarRight),
+            "0" | "none" => Ok(AuraZone::None),
+            "1" | "one" => Ok(AuraZone::Key1),
+            "2" | "two" => Ok(AuraZone::Key2),
+            "3" | "three" => Ok(AuraZone::Key3),
+            "4" | "four" => Ok(AuraZone::Key4),
+            "5" | "logo" => Ok(AuraZone::Logo),
+            "6" | "lightbar-left" => Ok(AuraZone::BarLeft),
+            "7" | "lightbar-right" => Ok(AuraZone::BarRight),
             _ => Err(Error::ParseSpeed),
         }
     }
@@ -395,18 +370,20 @@ impl AuraEffect {
     /// factory mode accepts only one colour.
     pub const fn allowed_parameters(mode: AuraModeNum) -> AuraParameters {
         match mode {
-            AuraModeNum::Static => AuraParameters::new(true, true, false, false, false),
+            AuraModeNum::Static
+            | AuraModeNum::Highlight
+            | AuraModeNum::Pulse
+            | AuraModeNum::Comet
+            | AuraModeNum::Flash => AuraParameters::new(true, true, false, false, false),
             AuraModeNum::Breathe => AuraParameters::new(true, true, true, true, false),
-            AuraModeNum::Strobe => AuraParameters::new(true, false, false, true, false),
+            AuraModeNum::Strobe | AuraModeNum::Rain => {
+                AuraParameters::new(true, false, false, true, false)
+            }
             AuraModeNum::Rainbow => AuraParameters::new(true, false, false, true, true),
             AuraModeNum::Star => AuraParameters::new(true, true, true, true, true),
-            AuraModeNum::Rain => AuraParameters::new(true, false, false, true, false),
-            AuraModeNum::Highlight => AuraParameters::new(true, true, false, false, false),
-            AuraModeNum::Laser => AuraParameters::new(true, true, false, true, false),
-            AuraModeNum::Ripple => AuraParameters::new(true, true, false, true, false),
-            AuraModeNum::Pulse => AuraParameters::new(true, true, false, false, false),
-            AuraModeNum::Comet => AuraParameters::new(true, true, false, false, false),
-            AuraModeNum::Flash => AuraParameters::new(true, true, false, false, false),
+            AuraModeNum::Laser | AuraModeNum::Ripple => {
+                AuraParameters::new(true, true, false, true, false)
+            }
         }
     }
 }

@@ -134,9 +134,9 @@ fn do_parsed(
         Some(CliCommand::LedPow2(pow)) => handle_led_power2(dbus, &supported.keyboard_led, pow)?,
         Some(CliCommand::Profile(cmd)) => handle_profile(dbus, &supported.platform_profile, cmd)?,
         Some(CliCommand::FanCurve(cmd)) => {
-            handle_fan_curve(dbus, &supported.platform_profile, cmd)?
+            handle_fan_curve(dbus, &supported.platform_profile, cmd)?;
         }
-        Some(CliCommand::Graphics(_)) => do_gfx()?,
+        Some(CliCommand::Graphics(_)) => do_gfx(),
         Some(CliCommand::Anime(cmd)) => handle_anime(dbus, &supported.anime_ctrl, cmd)?,
         Some(CliCommand::Bios(cmd)) => handle_bios_option(dbus, &supported.rog_bios_ctrl, cmd)?,
         None => {
@@ -214,14 +214,13 @@ fn do_parsed(
     Ok(())
 }
 
-fn do_gfx() -> Result<(), Box<dyn std::error::Error>> {
+fn do_gfx() {
     println!("Please use supergfxctl for graphics switching. supergfxctl is the result of making asusctl graphics switching generic so all laptops can use it");
     println!("This command will be removed in future");
-    Ok(())
 }
 
 fn handle_anime(
-    dbus: &RogDbusClientBlocking,
+    dbus: &RogDbusClientBlocking<'_>,
     _supported: &AnimeSupportedFunctions,
     cmd: &AnimeCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -237,14 +236,14 @@ fn handle_anime(
         }
     }
     if let Some(anime_turn) = cmd.enable {
-        dbus.proxies().anime().set_on_off(anime_turn)?
+        dbus.proxies().anime().set_on_off(anime_turn)?;
     }
     if let Some(anime_boot) = cmd.boot_enable {
-        dbus.proxies().anime().set_boot_on_off(anime_boot)?
+        dbus.proxies().anime().set_boot_on_off(anime_boot)?;
     }
     if let Some(bright) = cmd.brightness {
         verify_brightness(bright);
-        dbus.proxies().anime().set_brightness(bright)?
+        dbus.proxies().anime().set_brightness(bright)?;
     }
     if cmd.clear {
         let anime_type = get_anime_type()?;
@@ -381,7 +380,7 @@ fn verify_brightness(brightness: f32) {
 }
 
 fn handle_led_mode(
-    dbus: &RogDbusClientBlocking,
+    dbus: &RogDbusClientBlocking<'_>,
     supported: &LedSupportedFunctions,
     mode: &LedModeCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -438,7 +437,7 @@ fn handle_led_mode(
 }
 
 fn handle_led_power1(
-    dbus: &RogDbusClientBlocking,
+    dbus: &RogDbusClientBlocking<'_>,
     supported: &LedSupportedFunctions,
     power: &LedPowerCommand1,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -473,7 +472,7 @@ fn handle_led_power1(
 }
 
 fn handle_led_power_1_do_1866(
-    dbus: &RogDbusClientBlocking,
+    dbus: &RogDbusClientBlocking<'_>,
     power: &LedPowerCommand1,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut enabled: Vec<AuraDev1866> = Vec::new();
@@ -513,7 +512,7 @@ fn handle_led_power_1_do_1866(
 }
 
 fn handle_led_power_1_do_tuf(
-    dbus: &RogDbusClientBlocking,
+    dbus: &RogDbusClientBlocking<'_>,
     power: &LedPowerCommand1,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut enabled: Vec<AuraDevTuf> = Vec::new();
@@ -552,7 +551,7 @@ fn handle_led_power_1_do_tuf(
 }
 
 fn handle_led_power2(
-    dbus: &RogDbusClientBlocking,
+    dbus: &RogDbusClientBlocking<'_>,
     supported: &LedSupportedFunctions,
     power: &LedPowerCommand2,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -564,8 +563,8 @@ fn handle_led_power2(
         println!("Commands available");
 
         if let Some(cmdlist) = LedPowerCommand2::command_list() {
-            let commands: Vec<String> = cmdlist.lines().map(|s| s.to_string()).collect();
-            for command in commands.iter() {
+            let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
+            for command in &commands {
                 println!("{}", command);
             }
         }
@@ -581,7 +580,7 @@ fn handle_led_power2(
         }
 
         if supported.prod_id != AuraDevice::X19B6 {
-            println!("This option applies only to keyboards with product ID 0x19b6")
+            println!("This option applies only to keyboards with product ID 0x19b6");
         }
 
         let mut enabled: Vec<AuraDev19b6> = Vec::new();
@@ -646,7 +645,7 @@ fn handle_led_power2(
 }
 
 fn handle_profile(
-    dbus: &RogDbusClientBlocking,
+    dbus: &RogDbusClientBlocking<'_>,
     supported: &PlatformProfileFunctions,
     cmd: &ProfileCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -687,7 +686,7 @@ fn handle_profile(
 }
 
 fn handle_fan_curve(
-    dbus: &RogDbusClientBlocking,
+    dbus: &RogDbusClientBlocking<'_>,
     supported: &PlatformProfileFunctions,
     cmd: &FanCurveCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -749,7 +748,7 @@ fn handle_fan_curve(
 }
 
 fn handle_bios_option(
-    dbus: &RogDbusClientBlocking,
+    dbus: &RogDbusClientBlocking<'_>,
     supported: &RogBiosSupportedFunctions,
     cmd: &BiosCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -764,10 +763,7 @@ fn handle_bios_option(
         {
             println!("Missing arg or command\n");
 
-            let usage: Vec<String> = BiosCommand::usage()
-                .lines()
-                .map(|s| s.to_string())
-                .collect();
+            let usage: Vec<String> = BiosCommand::usage().lines().map(|s| s.to_owned()).collect();
 
             for line in usage.iter().filter(|line| {
                 line.contains("sound") && supported.post_sound

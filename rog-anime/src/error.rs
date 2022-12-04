@@ -26,7 +26,7 @@ pub enum AnimeError {
 
 impl fmt::Display for AnimeError {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             AnimeError::NoFrames => write!(f, "No frames in PNG"),
             AnimeError::Io(e) => write!(f, "Could not open: {}", e),

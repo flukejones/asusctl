@@ -105,7 +105,7 @@ impl ToString for LedBrightness {
             Some(0x02) => "high",
             _ => "unknown",
         };
-        s.to_string()
+        s.to_owned()
     }
 }
 

@@ -1,5 +1,6 @@
 [package]
 name = "daemon-user"
+license = "MPL-2.0"
 version.workspace = true
 authors = ["Luke D Jones <luke@ljones.dev>"]
 edition = "2021"

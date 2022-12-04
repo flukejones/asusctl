@@ -1,7 +1,7 @@
 [package]
 name = "rog_anime"
-version.workspace = true
 license = "MPL-2.0"
+version.workspace = true
 readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]
 repository = "https://gitlab.com/asus-linux/asus-nb-ctrl"
