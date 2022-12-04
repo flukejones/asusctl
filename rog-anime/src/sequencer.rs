@@ -7,7 +7,7 @@ use crate::{
     error::Result, AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType,
 };
 
-/// All the possible AniMe actions that can be used. This enum is intended to be
+/// All the possible `AniMe` actions that can be used. This enum is intended to be
 /// a helper for loading up `ActionData`.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum ActionLoader {
@@ -44,7 +44,7 @@ pub enum ActionLoader {
     Pause(Duration),
 }
 
-/// All the possible AniMe actions that can be used. The enum is intended to be
+/// All the possible `AniMe` actions that can be used. The enum is intended to be
 /// used in a array allowing the user to cycle through a series of actions.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum ActionData {
@@ -194,7 +194,7 @@ impl Sequences {
         None
     }
 
-    pub fn iter(&self) -> ActionIterator {
+    pub fn iter(&self) -> ActionIterator<'_> {
         ActionIterator {
             actions: self,
             next_idx: 0,

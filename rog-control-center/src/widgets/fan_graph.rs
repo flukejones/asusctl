@@ -11,7 +11,7 @@ pub fn fan_graphs(
     supported: &SupportedFunctions,
     profiles: &mut ProfilesState,
     curves: &mut FanCurvesState,
-    dbus: &RogDbusClientBlocking,
+    dbus: &RogDbusClientBlocking<'_>,
     do_error: &mut Option<String>,
     ui: &mut Ui,
 ) {
@@ -36,7 +36,7 @@ pub fn fan_graphs(
     };
 
     ui.horizontal_wrapped(|ui| {
-        for a in curves.curves.iter() {
+        for a in &curves.curves {
             item(*a.0, ui);
         }
     });
@@ -57,8 +57,8 @@ pub fn fan_graphs(
         [x, y]
     });
 
-    let line = Line::new(PlotPoints::from_iter(points.clone())).width(2.0);
-    let points = Points::new(PlotPoints::from_iter(points)).radius(3.0);
+    let line = Line::new(points.clone().collect::<PlotPoints>()).width(2.0);
+    let points = Points::new(points.collect::<PlotPoints>()).radius(3.0);
 
     Plot::new("fan_curves")
         .view_aspect(1.666)
@@ -107,7 +107,7 @@ pub fn fan_graphs(
                 }
             }
             plot_ui.line(line);
-            plot_ui.points(points)
+            plot_ui.points(points);
         });
 
     let mut set = false;

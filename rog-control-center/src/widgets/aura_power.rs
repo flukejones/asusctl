@@ -12,7 +12,7 @@ pub fn aura_power_group(supported: &SupportedFunctions, states: &mut SystemState
 
     match supported.keyboard_led.prod_id {
         AuraDevice::X1854 | AuraDevice::X1869 | AuraDevice::X1866 => {
-            aura_power1(supported, states, ui)
+            aura_power1(supported, states, ui);
         }
         AuraDevice::X19B6 => aura_power2(supported, states, ui),
         AuraDevice::Tuf => aura_power1(supported, states, ui),

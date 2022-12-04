@@ -17,7 +17,7 @@ pub fn platform_profile(states: &mut SystemState, ui: &mut Ui) {
     };
 
     ui.horizontal_wrapped(|ui| {
-        for a in states.profiles.list.iter() {
+        for a in &states.profiles.list {
             item(*a, ui);
         }
     });
@@ -46,7 +46,7 @@ pub fn rog_bios_group(supported: &SupportedFunctions, states: &mut SystemState, 
             .asus_dbus
             .proxies()
             .charge()
-            .set_charge_control_end_threshold(states.power_state.charge_limit as u8)
+            .set_charge_control_end_threshold(states.power_state.charge_limit)
             .map_err(|err| {
                 states.error = Some(err.to_string());
             })

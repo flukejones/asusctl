@@ -1,5 +1,6 @@
 [package]
 name = "rog-control-center"
+license = "MPL-2.0"
 version.workspace = true
 authors = ["Luke D. Jones <luke@ljones.dev>"]
 edition = "2021"
@@ -13,7 +14,7 @@ eframe= { git = "https://github.com/flukejones/egui" }
 #eframe= { git = "https://github.com/emilk/egui", default-features = false, features = ["dark-light", "default_fonts", "wgpu"] }
 
 libappindicator = "0.7" # Tray icon
-gtk = "0.15"
+gtk = "0.15.5"
 
 daemon = { path = "../daemon" }
 rog_anime = { path = "../rog-anime" }
@@ -38,5 +39,5 @@ notify-rust.workspace = true
 
 png_pong.workspace = true
 
-nix = "^0.25"
+nix = "^0.26.1"
 tempfile = "3.3.0"

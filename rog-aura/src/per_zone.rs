@@ -43,8 +43,7 @@ impl ZonedColourArray {
 
     pub fn rgb_for_zone(&mut self, zone: PerZone) -> &mut [u8] {
         match zone {
-            PerZone::None => &mut self.0[9..=11],
-            PerZone::KeyboardLeft => &mut self.0[9..=11],
+            PerZone::None | PerZone::KeyboardLeft => &mut self.0[9..=11],
             PerZone::KeyboardCenterLeft => &mut self.0[12..=14],
             PerZone::KeyboardCenterRight => &mut self.0[15..=17],
             PerZone::KeyboardRight => &mut self.0[18..=20],

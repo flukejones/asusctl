@@ -47,7 +47,7 @@ impl CtrlAnimeZbus {
         let mut lock = self.0.lock().await;
         let mut bright = bright;
         if bright < 0.0 {
-            bright = 0.0
+            bright = 0.0;
         } else if bright > 1.0 {
             bright = 1.0;
         }
@@ -149,7 +149,7 @@ impl crate::CtrlTask for CtrlAnimeZbus {
 
     async fn create_tasks(&self, _: SignalContext<'static>) -> Result<(), RogError> {
         let run_action =
-            |start: bool, lock: MutexGuard<CtrlAnime>, inner: Arc<Mutex<CtrlAnime>>| {
+            |start: bool, lock: MutexGuard<'_, CtrlAnime>, inner: Arc<Mutex<CtrlAnime>>| {
                 if start {
                     info!("CtrlAnimeTask running sleep animation");
                     CtrlAnime::run_thread(inner, lock.cache.shutdown.clone(), true);

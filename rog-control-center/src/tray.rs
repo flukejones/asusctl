@@ -128,13 +128,18 @@ impl ROGTray {
         self.menu.show_all();
     }
 
-    fn add_radio_sub_menu(&mut self, header_label: &str, active_label: &str, sub_menu: RadioGroup) {
+    fn add_radio_sub_menu(
+        &mut self,
+        header_label: &str,
+        active_label: &str,
+        sub_menu: &RadioGroup,
+    ) {
         let header_item = gtk::MenuItem::with_label(header_label);
         header_item.show_all();
         self.menu.add(&header_item);
 
         let menu = gtk::Menu::new();
-        for item in sub_menu.0.iter() {
+        for item in &sub_menu.0 {
             if let Some(label) = item.label() {
                 item.set_active(label == active_label);
             } else {
@@ -197,7 +202,7 @@ impl ROGTray {
     }
 
     fn _set_status(&mut self, status: AppIndicatorStatus) {
-        self.tray.set_status(status)
+        self.tray.set_status(status);
     }
 
     fn menu_add_base(&mut self) {
@@ -319,13 +324,13 @@ impl ROGTray {
         }
 
         let active = match current_mode {
-            GfxMode::AsusMuxDiscreet => "Discreet".to_string(),
+            GfxMode::AsusMuxDiscreet => "Discreet".to_owned(),
             _ => current_mode.to_string(),
         };
         self.add_radio_sub_menu(
             &format!("GPU Mode: {current_mode}"),
             active.as_str(),
-            gpu_menu,
+            &gpu_menu,
         );
 
         debug!("ROGTray: appended gpu menu");
@@ -408,11 +413,12 @@ pub fn init_tray(
                     debug!("ROGTray: rebuilt menus due to state change");
 
                     match lock.gfx_state.power_status {
-                        GfxPower::Active => tray.set_icon("asus_notif_red"),
                         GfxPower::Suspended => tray.set_icon("asus_notif_blue"),
                         GfxPower::Off => tray.set_icon("asus_notif_green"),
                         GfxPower::AsusDisabled => tray.set_icon("asus_notif_white"),
-                        GfxPower::AsusMuxDiscreet => tray.set_icon("asus_notif_red"),
+                        GfxPower::AsusMuxDiscreet | GfxPower::Active => {
+                            tray.set_icon("asus_notif_red")
+                        }
                         GfxPower::Unknown => tray.set_icon("gpu-integrated"),
                     };
                 }

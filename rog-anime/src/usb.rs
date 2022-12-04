@@ -1,4 +1,4 @@
-//! Utils for writing to the AniMe USB device
+//! Utils for writing to the `AniMe` USB device
 //!
 //! Use of the device requires a few steps:
 //! 1. Initialise the device by writing the two packets from `get_init_packets()`
@@ -63,7 +63,7 @@ pub const fn pkt_for_flush() -> [u8; PACKET_SIZE] {
 }
 
 /// Get the packet required for setting the device to on, on boot. Requires
-/// pkt_for_apply()` to be written after.
+/// `pkt_for_apply()` to be written after.
 #[inline]
 pub const fn pkt_for_set_boot(status: bool) -> [u8; PACKET_SIZE] {
     let mut pkt = [0; PACKET_SIZE];

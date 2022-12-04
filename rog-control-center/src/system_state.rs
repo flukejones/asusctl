@@ -27,7 +27,7 @@ pub struct BiosState {
 }
 
 impl BiosState {
-    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking) -> Result<Self> {
+    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
         Ok(Self {
             post_sound: if supported.rog_bios_ctrl.post_sound {
                 dbus.proxies().rog_bios().post_boot_sound()? != 0
@@ -58,7 +58,7 @@ pub struct ProfilesState {
 }
 
 impl ProfilesState {
-    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking) -> Result<Self> {
+    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
         Ok(Self {
             list: if supported.platform_profile.platform_profile {
                 let mut list = dbus.proxies().profile().profiles()?;
@@ -86,26 +86,25 @@ pub struct FanCurvesState {
 }
 
 impl FanCurvesState {
-    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking) -> Result<Self> {
+    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
         let profiles = if supported.platform_profile.platform_profile {
             dbus.proxies().profile().profiles()?
         } else {
             vec![Profile::Balanced, Profile::Quiet, Profile::Performance]
         };
         let enabled = if supported.platform_profile.fan_curves {
-            HashSet::from_iter(
-                dbus.proxies()
-                    .profile()
-                    .enabled_fan_profiles()?
-                    .iter()
-                    .cloned(),
-            )
+            dbus.proxies()
+                .profile()
+                .enabled_fan_profiles()?
+                .iter()
+                .cloned()
+                .collect::<HashSet<_>>()
         } else {
             HashSet::from([Profile::Balanced, Profile::Quiet, Profile::Performance])
         };
 
         let mut curves: BTreeMap<Profile, FanCurveSet> = BTreeMap::new();
-        profiles.iter().for_each(|p| {
+        for p in &profiles {
             if supported.platform_profile.fan_curves {
                 if let Ok(curve) = dbus.proxies().profile().fan_curve_data(*p) {
                     curves.insert(*p, curve);
@@ -118,7 +117,7 @@ impl FanCurvesState {
                 curve.gpu.temp = [20, 30, 40, 50, 70, 80, 90, 100];
                 curves.insert(*p, curve);
             }
-        });
+        }
 
         let show_curve = if supported.platform_profile.fan_curves {
             dbus.proxies().profile().active_profile()?
@@ -149,7 +148,7 @@ pub struct AuraState {
 }
 
 impl AuraState {
-    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking) -> Result<Self> {
+    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
         Ok(Self {
             current_mode: if !supported.keyboard_led.stock_led_modes.is_empty() {
                 dbus.proxies().led().led_mode().unwrap_or_default()
@@ -198,7 +197,7 @@ pub struct AnimeState {
 }
 
 impl AnimeState {
-    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking) -> Result<Self> {
+    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
         Ok(Self {
             boot: if supported.anime_ctrl.0 {
                 dbus.proxies().anime().boot_enabled()?
@@ -224,7 +223,7 @@ pub struct GfxState {
 }
 
 impl GfxState {
-    pub fn new(_supported: &SupportedFunctions, dbus: &GfxProxyBlocking) -> Result<Self> {
+    pub fn new(_supported: &SupportedFunctions, dbus: &GfxProxyBlocking<'_>) -> Result<Self> {
         Ok(Self {
             mode: dbus.mode()?,
             power_status: dbus.power()?,
@@ -239,7 +238,7 @@ pub struct PowerState {
 }
 
 impl PowerState {
-    pub fn new(_supported: &SupportedFunctions, dbus: &RogDbusClientBlocking) -> Result<Self> {
+    pub fn new(_supported: &SupportedFunctions, dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
         Ok(Self {
             charge_limit: dbus.proxies().charge().charge_control_end_threshold()?,
             ac_power: dbus.proxies().charge().mains_online()?,

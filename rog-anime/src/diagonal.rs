@@ -52,39 +52,43 @@ impl AnimeDiagonal {
 
         let mut matrix = AnimeDiagonal::new(anime_type, duration);
 
-        match raster {
+        match &raster {
             png_pong::PngRaster::Gray8(ras) => {
-                Self::pixels_from_8bit(ras, &mut matrix, bright, true)
+                Self::pixels_from_8bit(ras, &mut matrix, bright, true);
             }
             png_pong::PngRaster::Graya8(ras) => {
-                Self::pixels_from_8bit(ras, &mut matrix, bright, true)
+                Self::pixels_from_8bit(ras, &mut matrix, bright, true);
             }
             png_pong::PngRaster::Rgb8(ras) => {
-                Self::pixels_from_8bit(ras, &mut matrix, bright, false)
+                Self::pixels_from_8bit(ras, &mut matrix, bright, false);
             }
             png_pong::PngRaster::Rgba8(ras) => {
-                Self::pixels_from_8bit(ras, &mut matrix, bright, false)
+                Self::pixels_from_8bit(ras, &mut matrix, bright, false);
             }
             png_pong::PngRaster::Gray16(ras) => {
-                Self::pixels_from_16bit(ras, &mut matrix, bright, true)
+                Self::pixels_from_16bit(ras, &mut matrix, bright, true);
             }
             png_pong::PngRaster::Rgb16(ras) => {
-                Self::pixels_from_16bit(ras, &mut matrix, bright, false)
+                Self::pixels_from_16bit(ras, &mut matrix, bright, false);
             }
             png_pong::PngRaster::Graya16(ras) => {
-                Self::pixels_from_16bit(ras, &mut matrix, bright, true)
+                Self::pixels_from_16bit(ras, &mut matrix, bright, true);
             }
             png_pong::PngRaster::Rgba16(ras) => {
-                Self::pixels_from_16bit(ras, &mut matrix, bright, false)
+                Self::pixels_from_16bit(ras, &mut matrix, bright, false);
             }
-            _ => return Err(AnimeError::Format),
+            png_pong::PngRaster::Palette(..) => return Err(AnimeError::Format),
         };
 
         Ok(matrix)
     }
 
-    fn pixels_from_8bit<P>(ras: pix::Raster<P>, matrix: &mut AnimeDiagonal, bright: f32, grey: bool)
-    where
+    fn pixels_from_8bit<P>(
+        ras: &pix::Raster<P>,
+        matrix: &mut AnimeDiagonal,
+        bright: f32,
+        grey: bool,
+    ) where
         P: pix::el::Pixel<Chan = pix::chan::Ch8>,
     {
         let width = ras.width();
@@ -105,7 +109,7 @@ impl AnimeDiagonal {
     }
 
     fn pixels_from_16bit<P>(
-        ras: pix::Raster<P>,
+        ras: &pix::Raster<P>,
         matrix: &mut AnimeDiagonal,
         bright: f32,
         grey: bool,
@@ -136,7 +140,7 @@ impl AnimeDiagonal {
         }
     }
 
-    /// Do conversion from the nested Vec in AnimeMatrix to the two required
+    /// Do conversion from the nested Vec in `AnimeMatrix` to the two required
     /// packets suitable for sending over USB
     fn to_ga401_packets(&self) -> Result<AnimeDataBuffer> {
         let mut buf = vec![0u8; AnimeType::GA401.data_length()];

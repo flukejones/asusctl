@@ -32,7 +32,7 @@ impl ProfileZbus {
             return Ok(profiles);
         }
         Err(Error::Failed(
-            "Failed to get all profile details".to_string(),
+            "Failed to get all profile details".to_owned(),
         ))
     }
 
@@ -85,9 +85,9 @@ impl ProfileZbus {
         let mut ctrl = self.0.lock().await;
         ctrl.config.read();
         if let Some(curves) = &ctrl.config.fan_curves {
-            return Ok(curves.get_enabled_curve_profiles().to_vec());
+            return Ok(curves.get_enabled_curve_profiles());
         }
-        Err(Error::Failed(UNSUPPORTED_MSG.to_string()))
+        Err(Error::Failed(UNSUPPORTED_MSG.to_owned()))
     }
 
     /// Set a profile fan curve enabled status. Will also activate a fan curve if in the
@@ -109,7 +109,7 @@ impl ProfileZbus {
             ctrl.save_config();
             Ok(())
         } else {
-            Err(Error::Failed(UNSUPPORTED_MSG.to_string()))
+            Err(Error::Failed(UNSUPPORTED_MSG.to_owned()))
         }
     }
 
@@ -121,7 +121,7 @@ impl ProfileZbus {
             let curve = curves.get_fan_curves_for(profile);
             return Ok(curve.clone());
         }
-        Err(Error::Failed(UNSUPPORTED_MSG.to_string()))
+        Err(Error::Failed(UNSUPPORTED_MSG.to_owned()))
     }
 
     /// Set the fan curve for the specified profile.
@@ -134,7 +134,7 @@ impl ProfileZbus {
                 .save_fan_curve(curve, profile)
                 .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
         } else {
-            return Err(Error::Failed(UNSUPPORTED_MSG.to_string()));
+            return Err(Error::Failed(UNSUPPORTED_MSG.to_owned()));
         }
         ctrl.write_profile_curve_to_platform()
             .map_err(|e| warn!("Profile::set_profile, {}", e))

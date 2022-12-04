@@ -30,7 +30,7 @@ impl Default for Pixel {
 /// is to be used to sample an image and set the LED brightness.
 ///
 /// The position of the Led in `LedPositions` determines the placement in the final
-/// data packets when written to the AniMe.
+/// data packets when written to the `AniMe`.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Led(f32, f32, u8);
 
@@ -58,7 +58,7 @@ impl Led {
 
 /// Container of `Led`, each of which specifies a position within the image
 /// The main use of this is to position and sample colours for the final image
-/// to show on AniMe
+/// to show on `AniMe`
 pub struct AnimeImage {
     pub scale: Vec2,
     /// Angle in radians
@@ -294,8 +294,8 @@ impl AnimeImage {
             let x0 = led_from_px.mul_vec3(pos + Vec3::new(0.0, -0.5, 0.0));
 
             const GROUP: [f32; 4] = [0.0, 0.5, 1.0, 1.5];
-            for u in GROUP.iter() {
-                for v in GROUP.iter() {
+            for u in &GROUP {
+                for v in &GROUP {
                     let sample = x0 + *u * du + *v * dv;
 
                     let x = sample.x as i32;
@@ -399,7 +399,7 @@ impl AnimeImage {
         let png_pong::Step { raster, delay: _ } = decoder.last().ok_or(AnimeError::NoFrames)??;
 
         let width;
-        let pixels = match raster {
+        let pixels = match &raster {
             png_pong::PngRaster::Gray8(ras) => {
                 width = ras.width();
                 Self::pixels_from_8bit(ras, true)
@@ -432,7 +432,7 @@ impl AnimeImage {
                 width = ras.width();
                 Self::pixels_from_16bit(ras, false)
             }
-            _ => return Err(AnimeError::Format),
+            png_pong::PngRaster::Palette(..) => return Err(AnimeError::Format),
         };
 
         let mut matrix = AnimeImage::new(
@@ -449,7 +449,7 @@ impl AnimeImage {
         Ok(matrix)
     }
 
-    fn pixels_from_8bit<P>(ras: pix::Raster<P>, grey: bool) -> Vec<Pixel>
+    fn pixels_from_8bit<P>(ras: &pix::Raster<P>, grey: bool) -> Vec<Pixel>
     where
         P: pix::el::Pixel<Chan = pix::chan::Ch8>,
     {
@@ -468,7 +468,7 @@ impl AnimeImage {
             .collect()
     }
 
-    fn pixels_from_16bit<P>(ras: pix::Raster<P>, grey: bool) -> Vec<Pixel>
+    fn pixels_from_16bit<P>(ras: &pix::Raster<P>, grey: bool) -> Vec<Pixel>
     where
         P: pix::el::Pixel<Chan = pix::chan::Ch16>,
     {
@@ -491,7 +491,7 @@ impl AnimeImage {
 impl TryFrom<&AnimeImage> for AnimeDataBuffer {
     type Error = AnimeError;
 
-    /// Do conversion from the nested Vec in AnimeDataBuffer to the two required
+    /// Do conversion from the nested Vec in `AnimeDataBuffer` to the two required
     /// packets suitable for sending over USB
     fn try_from(leds: &AnimeImage) -> Result<Self> {
         let mut l: Vec<u8> = leds

@@ -206,7 +206,7 @@ fn load_icon() -> IconData {
             }
         }
     } else {
-        error!("Missing {APP_ICON_PATH}")
+        error!("Missing {APP_ICON_PATH}");
     }
 
     IconData {

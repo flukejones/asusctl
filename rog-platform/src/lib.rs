@@ -19,7 +19,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub(crate) fn to_device(sys_path: &Path) -> Result<Device> {
     Device::from_syspath(sys_path)
-        .map_err(|e| PlatformError::Udev("Couldn't transform syspath to device".to_string(), e))
+        .map_err(|e| PlatformError::Udev("Couldn't transform syspath to device".to_owned(), e))
 }
 
 pub fn has_attr(device: &Device, attr_name: &str) -> bool {
@@ -39,7 +39,7 @@ pub fn read_attr_bool(device: &Device, attr_name: &str) -> Result<bool> {
         }
         return Ok(true);
     }
-    Err(PlatformError::AttrNotFound(attr_name.to_string()))
+    Err(PlatformError::AttrNotFound(attr_name.to_owned()))
 }
 
 pub fn write_attr_bool(device: &mut Device, attr: &str, value: bool) -> Result<()> {
@@ -53,7 +53,7 @@ pub fn read_attr_u8(device: &Device, attr_name: &str) -> Result<u8> {
         let tmp = value.to_string_lossy();
         return tmp.parse::<u8>().map_err(|_| PlatformError::ParseNum);
     }
-    Err(PlatformError::AttrNotFound(attr_name.to_string()))
+    Err(PlatformError::AttrNotFound(attr_name.to_owned()))
 }
 
 pub fn write_attr_u8(device: &mut Device, attr: &str, value: u8) -> Result<()> {
@@ -71,7 +71,7 @@ pub fn read_attr_u8_array(device: &Device, attr_name: &str) -> Result<Vec<u8>> {
             .collect();
         return Ok(tmp);
     }
-    Err(PlatformError::AttrNotFound(attr_name.to_string()))
+    Err(PlatformError::AttrNotFound(attr_name.to_owned()))
 }
 
 pub fn write_attr_u8_array(device: &mut Device, attr: &str, values: &[u8]) -> Result<()> {

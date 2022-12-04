@@ -81,7 +81,7 @@ impl<'a> RogDbusClientBlocking<'a> {
         Ok((RogDbusClientBlocking { proxies }, conn))
     }
 
-    pub fn proxies(&self) -> &DbusProxiesBlocking {
+    pub fn proxies(&self) -> &DbusProxiesBlocking<'_> {
         &self.proxies
     }
 }
@@ -150,7 +150,7 @@ impl<'a> RogDbusClient<'a> {
         Ok((RogDbusClient { proxies }, conn))
     }
 
-    pub fn proxies(&self) -> &DbusProxies {
+    pub fn proxies(&self) -> &DbusProxies<'_> {
         &self.proxies
     }
 }

@@ -15,7 +15,7 @@ pub enum Error {
 
 impl fmt::Display for Error {
     // This trait requires `fmt` with this exact signature.
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::Io(err) => write!(f, "Failed to open: {}", err),
             Error::Nix(err) => write!(f, "Error: {}", err),

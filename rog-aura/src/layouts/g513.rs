@@ -6,7 +6,7 @@ impl KeyLayout {
     pub fn g513_layout() -> Self {
         Self {
             matches: vec!["G513".into()],
-            locale: "US".to_string(),
+            locale: "US".to_owned(),
             rows: vec![
                 KeyRow::new(
                     0.8,
