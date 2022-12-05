@@ -43,7 +43,7 @@ pub fn fan_graphs(
 
     let curve = curves.curves.get_mut(&curves.show_curve).unwrap();
 
-    use egui::plot::{Line, Plot, PlotPoints};
+    use egui::plot::{Line, Plot};
 
     let data = if curves.show_graph == FanCurvePU::CPU {
         &mut curve.cpu
@@ -51,14 +51,40 @@ pub fn fan_graphs(
         &mut curve.gpu
     };
 
-    let points = data.temp.iter().enumerate().map(|(idx, x)| {
-        let x = *x as f64;
-        let y = ((data.pwm[idx] as u32) * 100 / 255) as f64;
-        [x, y]
-    });
+    let mut points: Vec<[f64; 2]> = data
+        .temp
+        .iter()
+        .enumerate()
+        .map(|(idx, x)| {
+            let x = *x as f64;
+            let y = ((data.pwm[idx] as u32) * 100 / 255) as f64;
+            [x, y]
+        })
+        .collect();
 
-    let line = Line::new(points.clone().collect::<PlotPoints>()).width(2.0);
-    let points = Points::new(points.collect::<PlotPoints>()).radius(3.0);
+    for i in 0..points.len() - 1 {
+        if i > 0 && i < points.len() - 1 {
+            if points[i][0] < points[i - 1][0] {
+                points[i][0] = points[i - 1][0] + 1.0;
+                data.temp[i] = points[i - 1][0] as u8;
+            }
+            if points[i][0] >= points[i + 1][0] {
+                points[i + 1][0] = points[i][0] + 1.0;
+                data.temp[i + 1] = points[i][0] as u8;
+            }
+            if points[i][1] < points[i - 1][1] {
+                points[i][1] = points[i - 1][1] + 1.0;
+                data.pwm[i] = (points[i - 1][1] * 255.0 / 100.0 + 1.0).floor() as u8;
+            }
+            if points[i][1] >= points[i + 1][1] {
+                points[i + 1][1] = points[i][1] + 1.0;
+                data.pwm[i + 1] = (points[i][1] * 255.0 / 100.0 + 1.0).floor() as u8;
+            }
+        }
+    }
+
+    let line = Line::new(points.clone()).width(2.0);
+    let points = Points::new(points).radius(3.0);
 
     Plot::new("fan_curves")
         .view_aspect(1.666)
@@ -85,7 +111,7 @@ pub fn fan_graphs(
                 let mut idx = 0;
 
                 if let Some(point) = plot_ui.pointer_coordinate() {
-                    let mut x: i32 = 255;
+                    let mut x: i32 = point.x as i32;
                     for (i, n) in data.temp.iter().enumerate() {
                         let tmp = x.min((point.x as i32 - *n as i32).abs());
                         if tmp < x {
