@@ -83,7 +83,7 @@ checksum = "23b62fc65de8e4e7f52534fb52b0f3ed04746ae267519eef2a83941e8085068b"
 
 [[package]]
 name = "asusctl"
-version = "4.5.2"
+version = "4.5.3-RC1"
 dependencies = [
  "daemon",
  "gif",
@@ -636,7 +636,7 @@ checksum = "b365fabc795046672053e29c954733ec3b05e4be654ab130fe8f1f94d7051f35"
 
 [[package]]
 name = "daemon"
-version = "4.5.2"
+version = "4.5.3-RC1"
 dependencies = [
  "async-trait",
  "concat-idents",
@@ -659,7 +659,7 @@ dependencies = [
 
 [[package]]
 name = "daemon-user"
-version = "4.5.2"
+version = "4.5.3-RC1"
 dependencies = [
  "dirs",
  "rog_anime",
@@ -2428,7 +2428,7 @@ dependencies = [
 
 [[package]]
 name = "rog-control-center"
-version = "4.5.2"
+version = "4.5.3-RC1"
 dependencies = [
  "daemon",
  "dirs",
@@ -2458,7 +2458,7 @@ dependencies = [
 
 [[package]]
 name = "rog_anime"
-version = "4.5.2"
+version = "4.5.3-RC1"
 dependencies = [
  "gif",
  "glam",
@@ -2473,7 +2473,7 @@ dependencies = [
 
 [[package]]
 name = "rog_aura"
-version = "4.5.2"
+version = "4.5.3-RC1"
 dependencies = [
  "serde",
  "serde_derive",
@@ -2484,7 +2484,7 @@ dependencies = [
 
 [[package]]
 name = "rog_dbus"
-version = "4.5.2"
+version = "4.5.3-RC1"
 dependencies = [
  "rog_anime",
  "rog_aura",
@@ -2495,7 +2495,7 @@ dependencies = [
 
 [[package]]
 name = "rog_platform"
-version = "4.5.2"
+version = "4.5.3-RC1"
 dependencies = [
  "concat-idents",
  "inotify",
@@ -2511,7 +2511,7 @@ dependencies = [
 
 [[package]]
 name = "rog_profiles"
-version = "4.5.2"
+version = "4.5.3-RC1"
 dependencies = [
  "serde",
  "serde_derive",
