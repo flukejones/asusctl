@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Adjust how fan graph in ROGCC works, deny incorrect graphs
+
 ## [v4.5.2]
 ### Changed
 - Update dependencies and bump version
