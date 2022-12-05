@@ -20,7 +20,7 @@ fn main() {
         }
 
         for c in (0..35).into_iter().step_by(step) {
-            for i in matrix.get_mut()[c].iter_mut() {
+            for i in &mut matrix.get_mut()[c] {
                 *i = 50;
             }
         }

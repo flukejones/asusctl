@@ -237,7 +237,7 @@ impl CtrlTask for CtrlKbdLedZbus {
     }
 
     async fn create_tasks(&self, _: SignalContext<'static>) -> Result<(), RogError> {
-        let load_save = |start: bool, mut lock: MutexGuard<CtrlKbdLed>| {
+        let load_save = |start: bool, mut lock: MutexGuard<'_, CtrlKbdLed>| {
             // If waking up
             if !start {
                 info!("CtrlKbdLedTask reloading brightness and modes");

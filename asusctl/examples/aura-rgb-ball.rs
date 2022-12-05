@@ -6,17 +6,17 @@ use rog_aura::{
     KeyColourArray,
 };
 use rog_dbus::RogDbusClientBlocking;
-use std::collections::LinkedList;
+use std::collections::VecDeque;
 
 #[derive(Debug, Clone)]
 struct Ball {
     position: (f32, f32),
     direction: (f32, f32),
-    trail: LinkedList<(f32, f32)>,
+    trail: VecDeque<(f32, f32)>,
 }
 impl Ball {
     fn new(x: f32, y: f32, trail_len: u32) -> Self {
-        let mut trail = LinkedList::new();
+        let mut trail = VecDeque::new();
         for _ in 1..=trail_len {
             trail.push_back((x, y));
         }

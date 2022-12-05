@@ -26,7 +26,7 @@ impl GetSupported for CtrlKbdLed {
         let per_key_led_mode = laptop.per_key;
 
         let mut prod_id = AuraDevice::Unknown;
-        for prod in ASUS_KEYBOARD_DEVICES.iter() {
+        for prod in &ASUS_KEYBOARD_DEVICES {
             if HidRaw::new(prod).is_ok() {
                 prod_id = AuraDevice::from(*prod);
                 break;
@@ -72,10 +72,10 @@ impl CtrlKbdLed {
     pub fn new(supported_modes: LaptopLedData, config: AuraConfig) -> Result<Self, RogError> {
         let mut led_prod = None;
         let mut led_node = None;
-        for prod in ASUS_KEYBOARD_DEVICES.iter() {
+        for prod in &ASUS_KEYBOARD_DEVICES {
             match HidRaw::new(prod) {
                 Ok(node) => {
-                    led_prod = Some(prod.to_string());
+                    led_prod = Some((*prod).to_owned());
                     led_node = Some(node);
                     info!("Looked for keyboard controller 0x{prod}: Found");
                     break;
@@ -335,7 +335,7 @@ impl CtrlKbdLed {
                 colour2: *GRADIENT.get(GRADIENT.len() - i).unwrap_or(&GRADIENT[6]),
                 speed: Speed::Med,
                 direction: Direction::Left,
-            })
+            });
         }
         if default.is_empty() {
             return Err(RogError::AuraEffectNotSupported);
@@ -370,7 +370,7 @@ mod tests {
         // Checking to ensure set_mode errors when unsupported modes are tried
         let config = AuraConfig::default();
         let supported_modes = LaptopLedData {
-            prod_family: "".into(),
+            prod_family: String::new(),
             board_names: vec![],
             standard: vec![AuraModeNum::Static],
             multizone: vec![],
@@ -432,7 +432,7 @@ mod tests {
         // Checking to ensure set_mode errors when unsupported modes are tried
         let config = AuraConfig::default();
         let supported_modes = LaptopLedData {
-            prod_family: "".into(),
+            prod_family: String::new(),
             board_names: vec![],
             standard: vec![AuraModeNum::Static],
             multizone: vec![],
@@ -470,7 +470,7 @@ mod tests {
         // Checking to ensure set_mode errors when unsupported modes are tried
         let config = AuraConfig::default();
         let supported_modes = LaptopLedData {
-            prod_family: "".into(),
+            prod_family: String::new(),
             board_names: vec![],
             standard: vec![AuraModeNum::Static],
             multizone: vec![AuraZone::Key1, AuraZone::Key2],

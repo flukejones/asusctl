@@ -93,7 +93,6 @@ impl From<Profile> for &str {
 impl From<&str> for Profile {
     fn from(profile: &str) -> Profile {
         match profile.to_ascii_lowercase().trim() {
-            "balanced" => Profile::Balanced,
             "performance" => Profile::Performance,
             "quiet" => Profile::Quiet,
             _ => Profile::Balanced,
@@ -202,7 +201,7 @@ impl FanCurveProfiles {
 
     /// Reset the stored (self) and device curve to the defaults of the platform.
     ///
-    /// Each platform_profile has a different default and the defualt can be read
+    /// Each `platform_profile` has a different default and the defualt can be read
     /// only for the currently active profile.
     pub fn set_active_curve_to_defaults(
         &mut self,
@@ -296,12 +295,12 @@ impl FanCurveProfiles {
                 FanCurvePU::GPU => &self.balanced.gpu,
             },
             Profile::Performance => match pu {
-                FanCurvePU::CPU => &self.balanced.cpu,
-                FanCurvePU::GPU => &self.balanced.gpu,
+                FanCurvePU::CPU => &self.performance.cpu,
+                FanCurvePU::GPU => &self.performance.gpu,
             },
             Profile::Quiet => match pu {
-                FanCurvePU::CPU => &self.balanced.cpu,
-                FanCurvePU::GPU => &self.balanced.gpu,
+                FanCurvePU::CPU => &self.quiet.cpu,
+                FanCurvePU::GPU => &self.quiet.gpu,
             },
         }
     }

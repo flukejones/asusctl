@@ -127,7 +127,7 @@ pub struct AuraConfig {
 impl Default for AuraConfig {
     fn default() -> Self {
         let mut prod_id = AuraDevice::Unknown;
-        for prod in ASUS_KEYBOARD_DEVICES.iter() {
+        for prod in &ASUS_KEYBOARD_DEVICES {
             if HidRaw::new(prod).is_ok() {
                 prod_id = AuraDevice::from(*prod);
                 break;
@@ -242,7 +242,7 @@ impl AuraConfig {
                         colour2: *GRADIENT.get(GRADIENT.len() - i).unwrap_or(&GRADIENT[6]),
                         speed: Speed::Med,
                         direction: Direction::Left,
-                    })
+                    });
                 }
                 if let Some(m) = config.multizone.as_mut() {
                     m.insert(*n, default);
@@ -287,34 +287,31 @@ impl AuraConfig {
 
     /// Set the mode data, current mode, and if multizone enabled.
     ///
-    /// Multipurpose, will accept AuraEffect with zones and put in the correct store.
+    /// Multipurpose, will accept `AuraEffect` with zones and put in the correct store.
     pub fn set_builtin(&mut self, effect: AuraEffect) {
         self.current_mode = effect.mode;
-        match effect.zone() {
-            AuraZone::None => {
-                self.builtins.insert(*effect.mode(), effect);
-                self.multizone_on = false;
-            }
-            _ => {
-                if let Some(multi) = self.multizone.as_mut() {
-                    if let Some(fx) = multi.get_mut(effect.mode()) {
-                        for fx in fx.iter_mut() {
-                            if fx.zone == effect.zone {
-                                *fx = effect;
-                                return;
-                            }
+        if effect.zone() == AuraZone::None {
+            self.builtins.insert(*effect.mode(), effect);
+            self.multizone_on = false;
+        } else {
+            if let Some(multi) = self.multizone.as_mut() {
+                if let Some(fx) = multi.get_mut(effect.mode()) {
+                    for fx in fx.iter_mut() {
+                        if fx.zone == effect.zone {
+                            *fx = effect;
+                            return;
                         }
-                        fx.push(effect);
-                    } else {
-                        multi.insert(*effect.mode(), vec![effect]);
                     }
+                    fx.push(effect);
                 } else {
-                    let mut tmp = BTreeMap::new();
-                    tmp.insert(*effect.mode(), vec![effect]);
-                    self.multizone = Some(tmp);
+                    multi.insert(*effect.mode(), vec![effect]);
                 }
-                self.multizone_on = true;
+            } else {
+                let mut tmp = BTreeMap::new();
+                tmp.insert(*effect.mode(), vec![effect]);
+                self.multizone = Some(tmp);
             }
+            self.multizone_on = true;
         }
     }
 

@@ -26,7 +26,7 @@ mod aura_cli;
 mod cli_opts;
 mod profiles_cli;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() {
     let args: Vec<String> = args().skip(1).collect();
 
     let missing_argument_k = gumdrop::Error::missing_argument(Opt::Short('k'));
@@ -44,7 +44,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let (dbus, _) = RogDbusClientBlocking::new()
         .map_err(|e| {
-            print_error_help(Box::new(e), None);
+            print_error_help(&e, None);
             std::process::exit(3);
         })
         .unwrap();
@@ -54,7 +54,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .supported()
         .supported_functions()
         .map_err(|e| {
-            print_error_help(Box::new(e), None);
+            print_error_help(&e, None);
             std::process::exit(4);
         })
         .unwrap();
@@ -63,17 +63,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         print_versions();
         println!();
         print_laptop_info();
-        return Ok(());
     }
 
     if let Err(err) = do_parsed(&parsed, &supported, &dbus) {
-        print_error_help(err, Some(&supported));
+        print_error_help(&*err, Some(&supported));
     }
-
-    Ok(())
 }
 
-fn print_error_help(err: Box<dyn std::error::Error>, supported: Option<&SupportedFunctions>) {
+fn print_error_help(err: &dyn std::error::Error, supported: Option<&SupportedFunctions>) {
     check_service("asusd");
     println!("\nError: {}\n", err);
     print_versions();
@@ -126,7 +123,7 @@ fn check_service(name: &str) -> bool {
 fn do_parsed(
     parsed: &CliStart,
     supported: &SupportedFunctions,
-    dbus: &RogDbusClientBlocking,
+    dbus: &RogDbusClientBlocking<'_>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     match &parsed.command {
         Some(CliCommand::LedMode(mode)) => handle_led_mode(dbus, &supported.keyboard_led, mode)?,
@@ -150,7 +147,7 @@ fn do_parsed(
                 println!("{}", CliStart::usage());
                 println!();
                 if let Some(cmdlist) = CliStart::command_list() {
-                    let commands: Vec<String> = cmdlist.lines().map(|s| s.to_string()).collect();
+                    let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
                     for command in commands.iter().filter(|command| {
                         if !matches!(
                             supported.keyboard_led.prod_id,
@@ -674,7 +671,9 @@ fn handle_profile(
 
     if cmd.list {
         let res = dbus.proxies().profile().profiles()?;
-        res.iter().for_each(|p| println!("{:?}", p));
+        for p in &res {
+            println!("{:?}", p);
+        }
     }
 
     if cmd.profile_get {

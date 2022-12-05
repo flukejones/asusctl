@@ -35,7 +35,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     loop {
         matrix.angle += 0.05;
         if matrix.angle > PI * 2.0 {
-            matrix.angle = 0.0
+            matrix.angle = 0.0;
         }
         matrix.update();
 

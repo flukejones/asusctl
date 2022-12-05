@@ -71,7 +71,7 @@ impl LaptopLedData {
 }
 
 impl LedSupportFile {
-    /// Consumes the LEDModes
+    /// Consumes the `LEDModes`
     fn matcher(self, prod_family: &str, board_name: &str) -> Option<LaptopLedData> {
         for config in self.led_data {
             if prod_family.contains(&config.prod_family) {

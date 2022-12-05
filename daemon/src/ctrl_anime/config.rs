@@ -86,25 +86,25 @@ impl AnimeConfigCached {
         anime_type: AnimeType,
     ) -> Result<(), AnimeError> {
         let mut sys = Vec::with_capacity(config.system.len());
-        for ani in config.system.iter() {
+        for ani in &config.system {
             sys.push(ActionData::from_anime_action(anime_type, ani)?);
         }
         self.system = sys;
 
         let mut boot = Vec::with_capacity(config.boot.len());
-        for ani in config.boot.iter() {
+        for ani in &config.boot {
             boot.push(ActionData::from_anime_action(anime_type, ani)?);
         }
         self.boot = boot;
 
         let mut wake = Vec::with_capacity(config.wake.len());
-        for ani in config.wake.iter() {
+        for ani in &config.wake {
             wake.push(ActionData::from_anime_action(anime_type, ani)?);
         }
         self.wake = wake;
 
         let mut shutdown = Vec::with_capacity(config.shutdown.len());
-        for ani in config.shutdown.iter() {
+        for ani in &config.shutdown {
             shutdown.push(ActionData::from_anime_action(anime_type, ani)?);
         }
         self.shutdown = shutdown;

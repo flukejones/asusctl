@@ -417,7 +417,7 @@ pub fn init_tray(
                         GfxPower::Off => tray.set_icon("asus_notif_green"),
                         GfxPower::AsusDisabled => tray.set_icon("asus_notif_white"),
                         GfxPower::AsusMuxDiscreet | GfxPower::Active => {
-                            tray.set_icon("asus_notif_red")
+                            tray.set_icon("asus_notif_red");
                         }
                         GfxPower::Unknown => tray.set_icon("gpu-integrated"),
                     };
