@@ -22,7 +22,7 @@ impl RogApp {
                 ui,
             );
 
-            fan_graphs(supported, &mut states.profiles, &mut states.fan_curves, &states.asus_dbus, &mut states.error, ui);
+            fan_graphs(supported, &mut states.fan_curves, &states.asus_dbus, &mut states.error, ui);
         });
     }
 

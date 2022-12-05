@@ -9,7 +9,6 @@ use crate::{
 
 pub fn fan_graphs(
     supported: &SupportedFunctions,
-    profiles: &mut ProfilesState,
     curves: &mut FanCurvesState,
     dbus: &RogDbusClientBlocking<'_>,
     do_error: &mut Option<String>,
