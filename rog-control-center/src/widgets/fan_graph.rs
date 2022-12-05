@@ -137,26 +137,43 @@ pub fn fan_graphs(
         });
 
     let mut set = false;
+    let mut clear = false;
     let mut reset = false;
     ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
-        set = ui.add(egui::Button::new("Apply Fan-curve")).clicked();
-        reset = ui.add(egui::Button::new("Reset Profile")).clicked();
+        set = ui.add(egui::Button::new("Apply Profile")).clicked();
+        clear = ui.add(egui::Button::new("Clear Profile Changes")).clicked();
+        reset = ui.add(egui::Button::new("Factory Reset Profile")).clicked();
     });
 
     if set {
         dbus.proxies()
             .profile()
-            .set_fan_curve(profiles.current, data.clone())
+            .set_fan_curve(curves.show_curve, data.clone())
             .map_err(|err| {
                 *do_error = Some(err.to_string());
             })
             .ok();
     }
 
+    if clear {
+        if let Ok(curve) = dbus
+            .proxies()
+            .profile()
+            .fan_curve_data(curves.show_curve)
+            .map_err(|err| {
+                *do_error = Some(err.to_string());
+            })
+        {
+            if let Some(value) = curves.curves.get_mut(&curves.show_curve) {
+                *value = curve;
+            }
+        }
+    }
+
     if reset {
         dbus.proxies()
             .profile()
-            .reset_profile_curves(profiles.current)
+            .reset_profile_curves(curves.show_curve)
             .map_err(|err| {
                 *do_error = Some(err.to_string());
             })
