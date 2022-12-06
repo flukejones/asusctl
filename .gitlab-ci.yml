@@ -17,7 +17,7 @@ cache:
       - target/release/.cargo-lock
 
 before_script:
-  - apt-get update -qq && apt-get install -y -qq libudev-dev libgtk-3-dev
+  - apt-get update -qq && apt-get install -y -qq libudev-dev libgtk-3-dev grep
 
 stages:
     - format
@@ -26,13 +26,16 @@ stages:
     - release
 
 format:
-  image: rust:latest
+  except:
+    - tags
   script:
     - echo "nightly" > rust-toolchain
     - rustup component add rustfmt
     - cargo fmt --check
 
 check:
+  except:
+    - tags
   script:
     - rustup component add clippy
     - cargo check
@@ -41,6 +44,8 @@ check:
     - cargo install cargo-cranky && cargo cranky
 
 test:
+  except:
+    - tags
   script:
     - cargo test
 
