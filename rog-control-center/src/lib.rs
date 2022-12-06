@@ -13,11 +13,11 @@ pub mod config;
 pub mod error;
 #[cfg(feature = "mocking")]
 pub mod mocking;
-pub mod notify;
 pub mod pages;
 pub mod startup_error;
 pub mod system_state;
 pub mod tray;
+pub mod update_and_notify;
 pub mod widgets;
 
 #[cfg(feature = "mocking")]

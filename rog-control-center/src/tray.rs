@@ -351,6 +351,7 @@ impl ROGTray {
     fn rebuild_and_update(
         &mut self,
         supported: &SupportedFunctions,
+        has_supergfx: bool,
         current_gfx_mode: GfxMode,
         charge_limit: u8,
         panel_od: bool,
@@ -359,7 +360,9 @@ impl ROGTray {
         self.menu_add_base();
         self.menu_add_charge_limit(supported, charge_limit);
         self.menu_add_panel_od(supported, panel_od);
-        self.menu_add_gpu(supported, current_gfx_mode);
+        if has_supergfx {
+            self.menu_add_gpu(supported, current_gfx_mode);
+        }
         self.menu_update();
     }
 }
@@ -370,6 +373,12 @@ pub fn init_tray(
 ) -> Receiver<TrayToApp> {
     let (send, recv) = channel();
     let _send = Arc::new(Mutex::new(send));
+
+    let has_supergfx = if let Ok(lock) = states.try_lock() {
+        lock.gfx_state.has_supergfx
+    } else {
+        false
+    };
 
     std::thread::spawn(move || {
         if gtk::init()
@@ -396,7 +405,7 @@ pub fn init_tray(
                 return;
             }
         };
-        tray.rebuild_and_update(&supported, GfxMode::Hybrid, 100, false);
+        tray.rebuild_and_update(&supported, has_supergfx, GfxMode::Hybrid, 100, false);
         tray.set_icon(TRAY_APP_ICON);
         info!("Started ROGTray");
 
@@ -405,6 +414,7 @@ pub fn init_tray(
                 if lock.tray_should_update {
                     tray.rebuild_and_update(
                         &supported,
+                        has_supergfx,
                         lock.gfx_state.mode,
                         lock.power_state.charge_limit,
                         lock.bios.panel_overdrive,
@@ -419,7 +429,13 @@ pub fn init_tray(
                         GfxPower::AsusMuxDiscreet | GfxPower::Active => {
                             tray.set_icon("asus_notif_red");
                         }
-                        GfxPower::Unknown => tray.set_icon("gpu-integrated"),
+                        GfxPower::Unknown => {
+                            if has_supergfx {
+                                tray.set_icon("gpu-integrated");
+                            } else {
+                                tray.set_icon("asus_notif_red");
+                            }
+                        }
                     };
                 }
             }

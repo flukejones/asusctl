@@ -6,7 +6,7 @@ use std::{
 };
 //use log::{error, info, warn};
 
-use crate::{error::Error, notify::EnabledNotifications};
+use crate::{error::Error, update_and_notify::EnabledNotifications};
 
 const CFG_DIR: &str = "rog";
 const CFG_FILE_NAME: &str = "rog-control-center.cfg";

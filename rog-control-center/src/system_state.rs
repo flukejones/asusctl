@@ -12,7 +12,7 @@ use supergfxctl::{
     zbus_proxy::DaemonProxyBlocking as GfxProxyBlocking,
 };
 
-use crate::{error::Result, notify::EnabledNotifications, RogDbusClientBlocking};
+use crate::{error::Result, update_and_notify::EnabledNotifications, RogDbusClientBlocking};
 use log::error;
 
 #[derive(Clone, Debug, Default)]
@@ -219,6 +219,7 @@ impl AnimeState {
 
 #[derive(Clone, Debug)]
 pub struct GfxState {
+    pub has_supergfx: bool,
     pub mode: GfxMode,
     pub power_status: GfxPower,
 }
@@ -226,8 +227,9 @@ pub struct GfxState {
 impl GfxState {
     pub fn new(_supported: &SupportedFunctions, dbus: &GfxProxyBlocking<'_>) -> Result<Self> {
         Ok(Self {
-            mode: dbus.mode()?,
-            power_status: dbus.power()?,
+            has_supergfx: dbus.mode().is_ok(),
+            mode: dbus.mode().unwrap_or_default(),
+            power_status: dbus.power().unwrap_or_default(),
         })
     }
 }
@@ -235,6 +237,7 @@ impl GfxState {
 impl Default for GfxState {
     fn default() -> Self {
         Self {
+            has_supergfx: false,
             mode: GfxMode::None,
             power_status: GfxPower::Unknown,
         }
@@ -401,6 +404,7 @@ impl Default for SystemState {
                 drag_delta: Default::default(),
             },
             gfx_state: GfxState {
+                has_supergfx: false,
                 mode: GfxMode::None,
                 power_status: GfxPower::Unknown,
             },

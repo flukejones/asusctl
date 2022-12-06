@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [v4.5.4]
+### Changed
+- ROGCC:: Allow ROGCC to run without supergfxd
+- ROGCC: Tray/notifs now reads dGPU status directly via supergfx crate (supergfxd not required)
+- Add rust-toolchain to force minimum rust version
+
 ## [v4.5.3]
 ### Changed
 - Adjust how fan graph in ROGCC works, deny incorrect graphs

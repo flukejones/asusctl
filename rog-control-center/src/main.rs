@@ -1,12 +1,12 @@
 use eframe::{IconData, NativeOptions};
 use log::{error, info, LevelFilter};
 use rog_aura::layouts::KeyLayout;
-use rog_control_center::notify::EnabledNotifications;
 use rog_control_center::tray::init_tray;
+use rog_control_center::update_and_notify::EnabledNotifications;
 use rog_control_center::{
-    config::Config, error::Result, get_ipc_file, notify::start_notifications, on_tmp_dir_exists,
-    print_versions, startup_error::AppErrorShow, system_state::SystemState, RogApp,
-    RogDbusClientBlocking, SHOWING_GUI, SHOW_GUI,
+    config::Config, error::Result, get_ipc_file, on_tmp_dir_exists, print_versions,
+    startup_error::AppErrorShow, system_state::SystemState, update_and_notify::start_notifications,
+    RogApp, RogDbusClientBlocking, SHOWING_GUI, SHOW_GUI,
 };
 use rog_platform::supported::SupportedFunctions;
 use std::sync::Mutex;
