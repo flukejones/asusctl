@@ -228,8 +228,8 @@ impl GfxState {
     pub fn new(_supported: &SupportedFunctions, dbus: &GfxProxyBlocking<'_>) -> Result<Self> {
         Ok(Self {
             has_supergfx: dbus.mode().is_ok(),
-            mode: dbus.mode().unwrap_or_default(),
-            power_status: dbus.power().unwrap_or_default(),
+            mode: dbus.mode().unwrap_or(GfxMode::None),
+            power_status: dbus.power().unwrap_or(GfxPower::Unknown),
         })
     }
 }
