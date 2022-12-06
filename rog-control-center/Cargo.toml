@@ -9,8 +9,8 @@ edition = "2021"
 mocking = []
 
 [dependencies]
-egui = { git = "https://github.com/flukejones/egui" }
-eframe= { git = "https://github.com/flukejones/egui" }
+egui = { git = "https://github.com/flukejones/egui", branch = "wayland_dark_theme" }
+eframe= { git = "https://github.com/flukejones/egui", branch = "wayland_dark_theme" }
 #eframe= { git = "https://github.com/emilk/egui", default-features = false, features = ["dark-light", "default_fonts", "wgpu"] }
 
 libappindicator = "0.7" # Tray icon
@@ -43,9 +43,3 @@ nix = "^0.26.1"
 tempfile = "3.3.0"
 
 once_cell = "1.10.0"
-rust-i18n = "*"
-
-[package.metadata.i18n]
-available-locales = ["en"]
-default-locale = "en"
-load-path = "locales"

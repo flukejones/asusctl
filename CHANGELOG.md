@@ -5,12 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [v4.5.3]
 ### Changed
 - Adjust how fan graph in ROGCC works, deny incorrect graphs
 - Fix to apply the fan curve change in ROGCC to the correct profile
 - Support for G713RS LED modes (Author: Peter Ivanov)
 - Support for G713RM LED modes (Author: maxbachmann)
 - Fix VivoBook detection
+- Update dependencies to get latest winit crate (fixes various small issues)
 
 ## [v4.5.2]
 ### Changed
