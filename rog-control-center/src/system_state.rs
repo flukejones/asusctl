@@ -13,8 +13,9 @@ use supergfxctl::{
 };
 
 use crate::{error::Result, notify::EnabledNotifications, RogDbusClientBlocking};
+use log::error;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct BiosState {
     /// To be shared to a thread that checks notifications.
     /// It's a bit general in that it won't provide *what* was
@@ -51,7 +52,7 @@ impl BiosState {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct ProfilesState {
     pub list: Vec<Profile>,
     pub current: Profile,
@@ -76,7 +77,7 @@ impl ProfilesState {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct FanCurvesState {
     pub show_curve: Profile,
     pub show_graph: FanCurvePU,
@@ -135,7 +136,7 @@ impl FanCurvesState {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct AuraState {
     pub current_mode: AuraModeNum,
     pub modes: BTreeMap<AuraModeNum, AuraEffect>,
@@ -188,7 +189,7 @@ impl AuraState {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct AnimeState {
     pub bright: u8,
     pub boot: bool,
@@ -231,7 +232,16 @@ impl GfxState {
     }
 }
 
-#[derive(Clone, Debug)]
+impl Default for GfxState {
+    fn default() -> Self {
+        Self {
+            mode: GfxMode::None,
+            power_status: GfxPower::Unknown,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Default)]
 pub struct PowerState {
     pub charge_limit: u8,
     pub ac_power: bool,
@@ -276,19 +286,62 @@ impl SystemState {
         enabled_notifications: Arc<Mutex<EnabledNotifications>>,
         supported: &SupportedFunctions,
     ) -> Result<Self> {
-        let (asus_dbus, conn) = RogDbusClientBlocking::new().unwrap();
-        let gfx_dbus = GfxProxyBlocking::new(&conn).unwrap();
+        let (asus_dbus, conn) = RogDbusClientBlocking::new()?;
+        let mut error = None;
+        let gfx_dbus = GfxProxyBlocking::new(&conn).expect("Couldn't connect to supergfxd");
         Ok(Self {
             keyboard_layout,
             enabled_notifications,
-            power_state: PowerState::new(supported, &asus_dbus)?,
-            bios: BiosState::new(supported, &asus_dbus)?,
-            aura: AuraState::new(supported, &asus_dbus)?,
-            anime: AnimeState::new(supported, &asus_dbus)?,
-            profiles: ProfilesState::new(supported, &asus_dbus)?,
-            fan_curves: FanCurvesState::new(supported, &asus_dbus)?,
-            gfx_state: GfxState::new(supported, &gfx_dbus)?,
-            error: None,
+            power_state: PowerState::new(supported, &asus_dbus)
+                .map_err(|e| {
+                    let e = format!("Could not get PowerState state: {e}");
+                    error!("{e}");
+                    error = Some(e);
+                })
+                .unwrap_or_default(),
+            bios: BiosState::new(supported, &asus_dbus)
+                .map_err(|e| {
+                    let e = format!("Could not get BiosState state: {e}");
+                    error!("{e}");
+                    error = Some(e);
+                })
+                .unwrap_or_default(),
+            aura: AuraState::new(supported, &asus_dbus)
+                .map_err(|e| {
+                    let e = format!("Could not get AuraState state: {e}");
+                    error!("{e}");
+                    error = Some(e);
+                })
+                .unwrap_or_default(),
+            anime: AnimeState::new(supported, &asus_dbus)
+                .map_err(|e| {
+                    let e = format!("Could not get AanimeState state: {e}");
+                    error!("{e}");
+                    error = Some(e);
+                })
+                .unwrap_or_default(),
+            profiles: ProfilesState::new(supported, &asus_dbus)
+                .map_err(|e| {
+                    let e = format!("Could not get ProfilesState state: {e}");
+                    error!("{e}");
+                    error = Some(e);
+                })
+                .unwrap_or_default(),
+            fan_curves: FanCurvesState::new(supported, &asus_dbus)
+                .map_err(|e| {
+                    let e = format!("Could not get FanCurvesState state: {e}");
+                    error!("{e}");
+                    error = Some(e);
+                })
+                .unwrap_or_default(),
+            gfx_state: GfxState::new(supported, &gfx_dbus)
+                .map_err(|e| {
+                    let e = format!("Could not get supergfxd state: {e}");
+                    error!("{e}");
+                    error = Some(e);
+                })
+                .unwrap_or_default(),
+            error,
             tray_should_update: true,
             app_should_update: true,
             asus_dbus,
@@ -304,8 +357,8 @@ impl SystemState {
 
 impl Default for SystemState {
     fn default() -> Self {
-        let (asus_dbus, conn) = RogDbusClientBlocking::new().unwrap();
-        let gfx_dbus = GfxProxyBlocking::new(&conn).unwrap();
+        let (asus_dbus, conn) = RogDbusClientBlocking::new().expect("Couldn't connect to asusd");
+        let gfx_dbus = GfxProxyBlocking::new(&conn).expect("Couldn't connect to supergfxd");
 
         Self {
             keyboard_layout: KeyLayout::ga401_layout(),

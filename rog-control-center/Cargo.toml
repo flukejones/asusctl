@@ -41,3 +41,11 @@ png_pong.workspace = true
 
 nix = "^0.26.1"
 tempfile = "3.3.0"
+
+once_cell = "1.10.0"
+rust-i18n = "*"
+
+[package.metadata.i18n]
+available-locales = ["en"]
+default-locale = "en"
+load-path = "locales"

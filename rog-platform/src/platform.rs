@@ -65,12 +65,13 @@ impl AsusPlatform {
     attr_u8!("platform_profile", pp_path);
 }
 
-#[derive(Serialize, Deserialize, Type, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Serialize, Deserialize, Default, Type, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum GpuMode {
     Discrete,
     Optimus,
     Integrated,
     Egpu,
+    #[default]
     Error,
     NotSupported,
 }

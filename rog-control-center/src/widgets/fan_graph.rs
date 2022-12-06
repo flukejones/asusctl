@@ -2,10 +2,7 @@ use egui::{plot::Points, Ui};
 use rog_platform::supported::SupportedFunctions;
 use rog_profiles::{FanCurvePU, Profile};
 
-use crate::{
-    system_state::{FanCurvesState, ProfilesState},
-    RogDbusClientBlocking,
-};
+use crate::{system_state::FanCurvesState, RogDbusClientBlocking};
 
 pub fn fan_graphs(
     supported: &SupportedFunctions,
