@@ -1,4 +1,11 @@
 [[led_data]]
+prod_family = "ASUS TUF Gaming F15"
+board_names = ["FX506HC"]
+standard = ["Static", "Breathe", "Strobe", "Pulse"]
+multizone = []
+per_key = false
+
+[[led_data]]
 prod_family = "TUF"
 board_names = ["FA507"]
 standard = ["Static", "Breathe", "Strobe", "Pulse"]
