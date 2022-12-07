@@ -279,7 +279,7 @@ pub fn start_notifications(
 
     if let Ok(lock) = page_states.try_lock() {
         use supergfxctl::pci_device::Device;
-        let dev = Device::find().unwrap();
+        let dev = Device::find().unwrap_or_default();
         let mut found_dgpu = false; // just for logging
         for dev in dev {
             if dev.is_dgpu() {
