@@ -332,10 +332,12 @@ impl CtrlTask for CtrlPlatform {
         let platform1 = self.clone();
         let platform2 = self.clone();
         self.create_sys_event_tasks(
-            move || {},
+            move || async { {} },
             move || {
-                info!("CtrlRogBios reloading panel_od");
-                if let Some(lock) = platform1.config.try_lock() {
+                let platform1 = platform1.clone();
+                async move {
+                    info!("CtrlRogBios reloading panel_od");
+                    let lock = platform1.config.lock().await;
                     if platform1.platform.has_panel_od() {
                         platform1
                             .set_panel_overdrive(lock.panel_od)
@@ -347,10 +349,12 @@ impl CtrlTask for CtrlPlatform {
                     }
                 }
             },
-            move || {},
+            move || async { {} },
             move || {
-                info!("CtrlRogBios reloading panel_od");
-                if let Some(lock) = platform2.config.try_lock() {
+                let platform2 = platform2.clone();
+                async move {
+                    info!("CtrlRogBios reloading panel_od");
+                    let lock = platform2.config.lock().await;
                     if platform2.platform.has_panel_od() {
                         platform2
                             .set_panel_overdrive(lock.panel_od)

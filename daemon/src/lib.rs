@@ -21,9 +21,11 @@ pub mod ctrl_supported;
 
 pub mod error;
 
+use std::future::Future;
+
 use crate::error::RogError;
 use async_trait::async_trait;
-use log::warn;
+use log::{debug, warn};
 use logind_zbus::manager::ManagerProxy;
 use zbus::{export::futures_util::StreamExt, zvariant::ObjectPath, Connection, SignalContext};
 
@@ -134,13 +136,31 @@ pub trait CtrlTask {
     ///
     /// The closures can potentially block, so execution time should be the minimal possible
     /// such as save a variable.
-    async fn create_sys_event_tasks(
+    async fn create_sys_event_tasks<
+        Fut1,
+        Fut2,
+        Fut3,
+        Fut4,
+        F1: Send + 'static,
+        F2: Send + 'static,
+        F3: Send + 'static,
+        F4: Send + 'static,
+    >(
         &self,
-        mut on_sleep: impl FnMut() + Send + 'static,
-        mut on_wake: impl FnMut() + Send + 'static,
-        mut on_shutdown: impl FnMut() + Send + 'static,
-        mut on_boot: impl FnMut() + Send + 'static,
-    ) {
+        mut on_sleep: F1,
+        mut on_wake: F2,
+        mut on_shutdown: F3,
+        mut on_boot: F4,
+    ) where
+        F1: FnMut() -> Fut1,
+        F2: FnMut() -> Fut2,
+        F3: FnMut() -> Fut3,
+        F4: FnMut() -> Fut4,
+        Fut1: Future<Output = ()> + Send,
+        Fut2: Future<Output = ()> + Send,
+        Fut3: Future<Output = ()> + Send,
+        Fut4: Future<Output = ()> + Send,
+    {
         let connection = Connection::system()
             .await
             .expect("Controller could not create dbus connection");
@@ -154,9 +174,11 @@ pub trait CtrlTask {
                 while let Some(event) = notif.next().await {
                     if let Ok(args) = event.args() {
                         if args.start {
-                            on_sleep();
+                            debug!("Doing on_sleep()");
+                            on_sleep().await;
                         } else if !args.start() {
-                            on_wake();
+                            debug!("Doing on_wake()");
+                            on_wake().await;
                         }
                     }
                 }
@@ -172,9 +194,11 @@ pub trait CtrlTask {
                 while let Some(event) = notif.next().await {
                     if let Ok(args) = event.args() {
                         if args.start {
-                            on_shutdown();
+                            debug!("Doing on_shutdown()");
+                            on_shutdown().await;
                         } else if !args.start() {
-                            on_boot();
+                            debug!("Doing on_boot()");
+                            on_boot().await;
                         }
                     }
                 }

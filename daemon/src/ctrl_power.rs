@@ -155,10 +155,12 @@ impl CtrlTask for CtrlPower {
         let power1 = self.clone();
         let power2 = self.clone();
         self.create_sys_event_tasks(
-            move || {},
+            move || async {},
             move || {
-                info!("CtrlCharge reloading charge limit");
-                if let Some(lock) = power1.config.try_lock() {
+                let power1 = power1.clone();
+                async move {
+                    info!("CtrlCharge reloading charge limit");
+                    let lock = power1.config.lock().await;
                     power1
                         .set(lock.bat_charge_limit)
                         .map_err(|err| {
@@ -166,22 +168,25 @@ impl CtrlTask for CtrlPower {
                             err
                         })
                         .ok();
-                }
-                if let Ok(value) = power1.power.get_online() {
-                    let action = if value == 1 {
-                        SystemdUnitAction::Restart
-                    } else {
-                        SystemdUnitAction::Stop
-                    };
-                    if do_systemd_unit_action(action, NVIDIA_POWERD).is_ok() {
-                        info!("CtrlPower task: did {action:?} on {NVIDIA_POWERD}");
+
+                    if let Ok(value) = power1.power.get_online() {
+                        let action = if value == 1 {
+                            SystemdUnitAction::Restart
+                        } else {
+                            SystemdUnitAction::Stop
+                        };
+                        if do_systemd_unit_action(action, NVIDIA_POWERD).is_ok() {
+                            info!("CtrlPower task: did {action:?} on {NVIDIA_POWERD}");
+                        }
                     }
                 }
             },
-            move || {},
+            move || async {},
             move || {
-                info!("CtrlCharge reloading charge limit");
-                if let Some(lock) = power2.config.try_lock() {
+                let power2 = power2.clone();
+                async move {
+                    info!("CtrlCharge reloading charge limit");
+                    let lock = power2.config.lock().await;
                     power2
                         .set(lock.bat_charge_limit)
                         .map_err(|err| {
@@ -189,15 +194,16 @@ impl CtrlTask for CtrlPower {
                             err
                         })
                         .ok();
-                }
-                if let Ok(value) = power2.power.get_online() {
-                    let action = if value == 1 {
-                        SystemdUnitAction::Restart
-                    } else {
-                        SystemdUnitAction::Stop
-                    };
-                    if do_systemd_unit_action(action, NVIDIA_POWERD).is_ok() {
-                        info!("CtrlPower task: did {action:?} on {NVIDIA_POWERD}");
+
+                    if let Ok(value) = power2.power.get_online() {
+                        let action = if value == 1 {
+                            SystemdUnitAction::Restart
+                        } else {
+                            SystemdUnitAction::Stop
+                        };
+                        if do_systemd_unit_action(action, NVIDIA_POWERD).is_ok() {
+                            info!("CtrlPower task: did {action:?} on {NVIDIA_POWERD}");
+                        }
                     }
                 }
             },

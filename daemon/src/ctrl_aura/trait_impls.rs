@@ -262,28 +262,32 @@ impl CtrlTask for CtrlKbdLedZbus {
         self.create_sys_event_tasks(
             // Loop so that we do aquire the lock but also don't block other
             // threads (prevents potential deadlocks)
-            move || loop {
-                if let Some(lock) = inner1.try_lock() {
+            move || {
+                let inner1 = inner1.clone();
+                async move {
+                    let lock = inner1.lock().await;
                     load_save(true, lock);
-                    break;
                 }
             },
-            move || loop {
-                if let Some(lock) = inner2.try_lock() {
+            move || {
+                let inner2 = inner2.clone();
+                async move {
+                    let lock = inner2.lock().await;
                     load_save(false, lock);
-                    break;
                 }
             },
-            move || loop {
-                if let Some(lock) = inner3.try_lock() {
-                    load_save(true, lock);
-                    break;
-                }
-            },
-            move || loop {
-                if let Some(lock) = inner4.try_lock() {
+            move || {
+                let inner3 = inner3.clone();
+                async move {
+                    let lock = inner3.lock().await;
                     load_save(false, lock);
-                    break;
+                }
+            },
+            move || {
+                let inner4 = inner4.clone();
+                async move {
+                    let lock = inner4.lock().await;
+                    load_save(false, lock);
                 }
             },
         )

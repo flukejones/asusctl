@@ -166,28 +166,32 @@ impl crate::CtrlTask for CtrlAnimeZbus {
         self.create_sys_event_tasks(
             // Loop is required to try an attempt to get the mutex *without* blocking
             // other threads - it is possible to end up with deadlocks otherwise.
-            move || loop {
-                if let Some(lock) = inner1.try_lock() {
+            move || {
+                let inner1 = inner1.clone();
+                async move {
+                    let lock = inner1.lock().await;
                     run_action(true, lock, inner1.clone());
-                    break;
                 }
             },
-            move || loop {
-                if let Some(lock) = inner2.try_lock() {
-                    run_action(false, lock, inner2.clone());
-                    break;
+            move || {
+                let inner2 = inner2.clone();
+                async move {
+                    let lock = inner2.lock().await;
+                    run_action(true, lock, inner2.clone());
                 }
             },
-            move || loop {
-                if let Some(lock) = inner3.try_lock() {
+            move || {
+                let inner3 = inner3.clone();
+                async move {
+                    let lock = inner3.lock().await;
                     run_action(true, lock, inner3.clone());
-                    break;
                 }
             },
-            move || loop {
-                if let Some(lock) = inner4.try_lock() {
-                    run_action(false, lock, inner4.clone());
-                    break;
+            move || {
+                let inner4 = inner4.clone();
+                async move {
+                    let lock = inner4.lock().await;
+                    run_action(true, lock, inner4.clone());
                 }
             },
         )
