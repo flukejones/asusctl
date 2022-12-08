@@ -10,7 +10,7 @@ mocking = []
 
 [dependencies]
 egui = { git = "https://github.com/flukejones/egui", branch = "wayland_dark_theme" }
-eframe= { git = "https://github.com/flukejones/egui", branch = "wayland_dark_theme" }
+eframe = { git = "https://github.com/flukejones/egui", branch = "wayland_dark_theme" }
 
 libappindicator = "0.7" # Tray icon
 gtk = "0.15.5"
@@ -22,7 +22,6 @@ rog_aura = { path = "../rog-aura" }
 rog_profiles = { path = "../rog-profiles" }
 rog_platform = { path = "../rog-platform" }
 supergfxctl = { git = "https://gitlab.com/asus-linux/supergfxctl.git", default-features = false }
-#supergfxctl = { path = "../../supergfxctl", default-features = false }
 
 log.workspace = true
 env_logger.workspace = true

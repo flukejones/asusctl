@@ -72,6 +72,14 @@ impl Profile {
         file.write_all(<&str>::from(profile).as_bytes())?;
         Ok(())
     }
+
+    pub fn from_throttle_thermal_policy(num: u8) -> Self {
+        match num {
+            1 => Self::Performance,
+            2 => Self::Quiet,
+            _ => Self::Balanced,
+        }
+    }
 }
 
 impl Default for Profile {

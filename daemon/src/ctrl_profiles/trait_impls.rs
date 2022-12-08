@@ -200,8 +200,36 @@ impl CtrlTask for ProfileZbus {
     }
 
     async fn create_tasks(&self, signal_ctxt: SignalContext<'static>) -> Result<(), RogError> {
+        // let ctrl = self.0.clone();
+        // let mut watch = self.0.lock().await.platform.monitor_platform_profile()?;
+        // let sig_ctx = signal_ctxt.clone();
+        // tokio::spawn(async move {
+        //     let mut buffer = [0; 32];
+        //     watch
+        //         .event_stream(&mut buffer)
+        //         .unwrap()
+        //         .for_each(|_| async {
+        //             let mut lock = ctrl.lock().await;
+        //             let new_profile = Profile::get_active_profile().unwrap();
+        //             if new_profile != lock.config.active_profile {
+        //                 lock.config.active_profile = new_profile;
+        //                 lock.write_profile_curve_to_platform().unwrap();
+        //                 lock.save_config();
+        //             }
+        //             Self::notify_profile(&sig_ctx, lock.config.active_profile)
+        //                 .await
+        //                 .ok();
+        //         })
+        //         .await;
+        // });
+
         let ctrl = self.0.clone();
-        let mut watch = self.0.lock().await.platform.monitor_platform_profile()?;
+        let mut watch = self
+            .0
+            .lock()
+            .await
+            .platform
+            .monitor_throttle_thermal_policy()?;
 
         tokio::spawn(async move {
             let mut buffer = [0; 32];
@@ -210,13 +238,15 @@ impl CtrlTask for ProfileZbus {
                 .unwrap()
                 .for_each(|_| async {
                     let mut lock = ctrl.lock().await;
-                    let new_profile = Profile::get_active_profile().unwrap();
+                    let new_thermal = lock.platform.get_throttle_thermal_policy().unwrap();
+                    let new_profile = Profile::from_throttle_thermal_policy(new_thermal);
                     if new_profile != lock.config.active_profile {
                         lock.config.active_profile = new_profile;
                         lock.write_profile_curve_to_platform().unwrap();
                         lock.save_config();
+                        Profile::set_profile(lock.config.active_profile).unwrap();
                     }
-                    Self::notify_profile(&signal_ctxt.clone(), lock.config.active_profile)
+                    Self::notify_profile(&signal_ctxt, lock.config.active_profile)
                         .await
                         .ok();
                 })

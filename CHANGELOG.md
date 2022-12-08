@@ -5,10 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-## [v4.5.6-RC1]
+## [v4.5.6-RC2]
+### Changed
 - Fix tasks not always running correctly on boot/sleep/wake/shutdown by finishing the move to async
+- Change how the profile/fan change task monitors changes due to TUF laptops behaving slightly different
 
 ## [v4.5.5]
+### Changed
 - remove an unwrap() causing panic on main ROGCC thread
 
 ## [v4.5.4]
