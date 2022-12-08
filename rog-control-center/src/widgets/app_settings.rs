@@ -12,7 +12,8 @@ pub fn app_settings(config: &mut Config, states: &mut SystemState, ui: &mut Ui) 
         Default::default()
     };
 
-    if ui
+    ui.label("Application settings");
+    let app_changed = ui
         .checkbox(&mut config.run_in_background, "Run in Background")
         .clicked()
         || ui
@@ -23,11 +24,19 @@ pub fn app_settings(config: &mut Config, states: &mut SystemState, ui: &mut Ui) 
                 &mut enabled_notifications.all_enabled,
                 "Enable Notifications",
             )
-            .clicked()
+            .clicked();
+
+    ui.label("Notification settings");
+    let notif_changed = ui
+        .checkbox(
+            &mut enabled_notifications.receive_notify_gfx_status,
+            "Enable dGPU status notification",
+        )
+        .clicked()
         || ui
             .checkbox(
-                &mut enabled_notifications.receive_notify_gfx_status,
-                "Enable dGPU status notification",
+                &mut enabled_notifications.receive_notify_led,
+                "Enable LED mode change notification",
             )
             .clicked()
         || ui
@@ -71,8 +80,9 @@ pub fn app_settings(config: &mut Config, states: &mut SystemState, ui: &mut Ui) 
                 &mut enabled_notifications.receive_notify_post_boot_sound,
                 "Enable BIOS post sound notification",
             )
-            .clicked()
-    {
+            .clicked();
+
+    if app_changed || notif_changed {
         if let Ok(mut lock) = states.enabled_notifications.lock() {
             // Replace inner content before save
             *lock = enabled_notifications;

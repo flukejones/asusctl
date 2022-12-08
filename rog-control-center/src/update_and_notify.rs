@@ -54,7 +54,7 @@ impl Default for EnabledNotifications {
             receive_notify_charge_control_end_threshold: true,
             receive_notify_mains_online: false,
             receive_notify_profile: true,
-            receive_notify_led: false,
+            receive_notify_led: true,
             receive_power_states: false,
             receive_notify_gfx: false,
             receive_notify_gfx_status: false,

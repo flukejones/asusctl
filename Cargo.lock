@@ -2605,7 +2605,6 @@ dependencies = [
  "log",
  "nix 0.26.1",
  "notify-rust",
- "once_cell",
  "png_pong",
  "rog_anime",
  "rog_aura",
