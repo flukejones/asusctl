@@ -7,11 +7,12 @@ use std::path::PathBuf;
 pub static CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
 
 #[derive(Deserialize, Serialize, Default)]
-#[serde(default)]
 pub struct Config {
     /// Save charge limit for restoring on boot
     pub bat_charge_limit: u8,
     pub panel_od: bool,
+    pub ac_command: String,
+    pub bat_command: String,
 }
 
 impl Config {
@@ -19,6 +20,8 @@ impl Config {
         Config {
             bat_charge_limit: 100,
             panel_od: false,
+            ac_command: String::new(),
+            bat_command: String::new(),
         }
     }
 
@@ -37,6 +40,8 @@ impl Config {
                 config = Self::new();
             } else if let Ok(data) = serde_json::from_str(&buf) {
                 config = data;
+            } else if let Ok(data) = serde_json::from_str::<Config455>(&buf) {
+                config = data.into();
             } else {
                 warn!(
                     "Could not deserialise {}.\nWill rename to {}-old and recreate config",
@@ -79,5 +84,24 @@ impl Config {
         let json = serde_json::to_string_pretty(self).expect("Parse config to JSON failed");
         file.write_all(json.as_bytes())
             .unwrap_or_else(|err| error!("Could not write config: {}", err));
+    }
+}
+
+#[derive(Deserialize, Serialize, Default)]
+#[serde(default)]
+pub struct Config455 {
+    /// Save charge limit for restoring on boot
+    pub bat_charge_limit: u8,
+    pub panel_od: bool,
+}
+
+impl From<Config455> for Config {
+    fn from(c: Config455) -> Self {
+        Self {
+            bat_charge_limit: c.bat_charge_limit,
+            panel_od: c.panel_od,
+            ac_command: String::new(),
+            bat_command: String::new(),
+        }
     }
 }

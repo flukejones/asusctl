@@ -13,7 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ROGCC: Track if reboot required when not using supergfxd
 - Add env var for logging levels to daemon and gui (`RUST_LOG=<error|warn|info|debug|trace>`)
 - ROGCC: Very basic support for running a command on AC/Battery switching, this is in config at `~/.config/rog/rog-control-center.cfg`, and for now must be edited by hand and ROGCC restarted (run ROGCC in BG to use effectively)
-  
+  + Run ROGCC from terminal to see errors of the AC/Battery command
+  + Support for editing via ROGCC GUI will come in future
+  + This is ideal for userspace tasks
+- asusd: Very basic support for running a command on AC/Battery switching, this is in config at `/etc/asusd/asusd.conf`. A restart of asusd is not required if edited.
+  + This is ideal for tasks that require root access (BE SAFE!)
+- The above AC/Battery commands are probably best set to run a script for more complex tasks
+        
 ## [v4.5.5]
 ### Changed
 - remove an unwrap() causing panic on main ROGCC thread

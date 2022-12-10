@@ -2,9 +2,10 @@ use crate::systemd::{do_systemd_unit_action, SystemdUnitAction};
 use crate::{config::Config, error::RogError, GetSupported};
 use crate::{task_watch_item, CtrlTask};
 use async_trait::async_trait;
-use log::{info, warn};
+use log::{error, info, warn};
 use rog_platform::power::AsusPower;
 use rog_platform::supported::ChargeSupportedFunctions;
+use std::process::Command;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::sleep;
@@ -210,6 +211,7 @@ impl CtrlTask for CtrlPower {
         )
         .await;
 
+        let config = self.config.clone();
         self.watch_charge_control_end_threshold(signal_ctxt.clone())
             .await?;
 
@@ -232,6 +234,31 @@ impl CtrlTask for CtrlPower {
                         Self::notify_mains_online(&signal_ctxt, value == 1)
                             .await
                             .unwrap();
+
+                        let mut config = config.lock().await;
+                        config.read();
+                        let mut prog: Vec<&str> = Vec::new();
+                        if value == 1 {
+                            // AC ONLINE
+                            prog = config.ac_command.split_whitespace().collect();
+                        } else if value == 0 {
+                            // BATTERY
+                            prog = config.bat_command.split_whitespace().collect();
+                        }
+
+                        if prog.len() > 1 {
+                            let mut cmd = Command::new(prog[0]);
+                            for arg in prog.iter().skip(1) {
+                                cmd.arg(*arg);
+                            }
+                            if let Err(e) = cmd.spawn() {
+                                if value == 1 {
+                                    error!("AC power command error: {e}");
+                                } else {
+                                    error!("Battery power command error: {e}");
+                                }
+                            }
+                        }
                     }
                 }
                 // The inotify doesn't pick up events when the kernel changes internal value
