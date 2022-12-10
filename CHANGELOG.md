@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-## [v4.5.6-RC3]
+## [v4.5.6]
 ### Changed
 - Fix tasks not always running correctly on boot/sleep/wake/shutdown by finishing the move to async
 - Change how the profile/fan change task monitors changes due to TUF laptops behaving slightly different

@@ -149,7 +149,7 @@ checksum = "8da52d66c7071e2e3fa2a1e5c6d088fec47b593032b254f5e980de8ea54454d6"
 
 [[package]]
 name = "asusctl"
-version = "4.5.6-RC3"
+version = "4.5.6"
 dependencies = [
  "daemon",
  "gif",
@@ -727,7 +727,7 @@ checksum = "b365fabc795046672053e29c954733ec3b05e4be654ab130fe8f1f94d7051f35"
 
 [[package]]
 name = "daemon"
-version = "4.5.6-RC3"
+version = "4.5.6"
 dependencies = [
  "async-trait",
  "concat-idents",
@@ -750,7 +750,7 @@ dependencies = [
 
 [[package]]
 name = "daemon-user"
-version = "4.5.6-RC3"
+version = "4.5.6"
 dependencies = [
  "dirs",
  "rog_anime",
@@ -931,9 +931,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ecolor"
+version = "0.20.0"
+source = "git+https://github.com/flukejones/egui?branch=wayland_dark_theme#056fd4bd1ed8c48c035e6b75111cfa8087634934"
+dependencies = [
+ "bytemuck",
+]
+
+[[package]]
 name = "eframe"
-version = "0.19.0"
-source = "git+https://github.com/flukejones/egui?branch=wayland_dark_theme#bb2cb764e48829f865312c5934efdab2169737ae"
+version = "0.20.0"
+source = "git+https://github.com/flukejones/egui?branch=wayland_dark_theme#056fd4bd1ed8c48c035e6b75111cfa8087634934"
 dependencies = [
  "bytemuck",
  "egui",
@@ -953,8 +961,8 @@ dependencies = [
 
 [[package]]
 name = "egui"
-version = "0.19.0"
-source = "git+https://github.com/flukejones/egui?branch=wayland_dark_theme#bb2cb764e48829f865312c5934efdab2169737ae"
+version = "0.20.0"
+source = "git+https://github.com/flukejones/egui?branch=wayland_dark_theme#056fd4bd1ed8c48c035e6b75111cfa8087634934"
 dependencies = [
  "accesskit",
  "ahash",
@@ -965,8 +973,8 @@ dependencies = [
 
 [[package]]
 name = "egui-winit"
-version = "0.19.0"
-source = "git+https://github.com/flukejones/egui?branch=wayland_dark_theme#bb2cb764e48829f865312c5934efdab2169737ae"
+version = "0.20.0"
+source = "git+https://github.com/flukejones/egui?branch=wayland_dark_theme#056fd4bd1ed8c48c035e6b75111cfa8087634934"
 dependencies = [
  "accesskit_winit",
  "arboard",
@@ -980,8 +988,8 @@ dependencies = [
 
 [[package]]
 name = "egui_glow"
-version = "0.19.0"
-source = "git+https://github.com/flukejones/egui?branch=wayland_dark_theme#bb2cb764e48829f865312c5934efdab2169737ae"
+version = "0.20.0"
+source = "git+https://github.com/flukejones/egui?branch=wayland_dark_theme#056fd4bd1ed8c48c035e6b75111cfa8087634934"
 dependencies = [
  "bytemuck",
  "egui",
@@ -994,8 +1002,8 @@ dependencies = [
 
 [[package]]
 name = "emath"
-version = "0.19.0"
-source = "git+https://github.com/flukejones/egui?branch=wayland_dark_theme#bb2cb764e48829f865312c5934efdab2169737ae"
+version = "0.20.0"
+source = "git+https://github.com/flukejones/egui?branch=wayland_dark_theme#056fd4bd1ed8c48c035e6b75111cfa8087634934"
 dependencies = [
  "bytemuck",
 ]
@@ -1080,13 +1088,14 @@ dependencies = [
 
 [[package]]
 name = "epaint"
-version = "0.19.0"
-source = "git+https://github.com/flukejones/egui?branch=wayland_dark_theme#bb2cb764e48829f865312c5934efdab2169737ae"
+version = "0.20.0"
+source = "git+https://github.com/flukejones/egui?branch=wayland_dark_theme#056fd4bd1ed8c48c035e6b75111cfa8087634934"
 dependencies = [
  "ab_glyph",
  "ahash",
  "atomic_refcell",
  "bytemuck",
+ "ecolor",
  "emath",
  "nohash-hasher",
  "parking_lot",
@@ -1538,9 +1547,9 @@ dependencies = [
 
 [[package]]
 name = "glutin"
-version = "0.30.2"
+version = "0.30.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0282c380a3adb52ae095e5847cc575c6bf79d296dcbf333e00be4a3fca07235e"
+checksum = "524d807cd49a0c56a53ef9a6738cd15e7c8c4e9d37a3b7fdb3c250c1cd5bf7a3"
 dependencies = [
  "bitflags",
  "cfg_aliases",
@@ -1554,7 +1563,7 @@ dependencies = [
  "objc",
  "once_cell",
  "raw-window-handle 0.5.0",
- "wayland-sys 0.30.0",
+ "wayland-sys 0.30.1",
  "windows-sys 0.36.1",
  "x11-dl",
 ]
@@ -2593,7 +2602,7 @@ dependencies = [
 
 [[package]]
 name = "rog-control-center"
-version = "4.5.6-RC3"
+version = "4.5.6"
 dependencies = [
  "daemon",
  "dirs",
@@ -2623,7 +2632,7 @@ dependencies = [
 
 [[package]]
 name = "rog_anime"
-version = "4.5.6-RC3"
+version = "4.5.6"
 dependencies = [
  "gif",
  "glam",
@@ -2638,7 +2647,7 @@ dependencies = [
 
 [[package]]
 name = "rog_aura"
-version = "4.5.6-RC3"
+version = "4.5.6"
 dependencies = [
  "serde",
  "serde_derive",
@@ -2649,7 +2658,7 @@ dependencies = [
 
 [[package]]
 name = "rog_dbus"
-version = "4.5.6-RC3"
+version = "4.5.6"
 dependencies = [
  "rog_anime",
  "rog_aura",
@@ -2660,7 +2669,7 @@ dependencies = [
 
 [[package]]
 name = "rog_platform"
-version = "4.5.6-RC3"
+version = "4.5.6"
 dependencies = [
  "concat-idents",
  "inotify",
@@ -2676,7 +2685,7 @@ dependencies = [
 
 [[package]]
 name = "rog_profiles"
-version = "4.5.6-RC3"
+version = "4.5.6"
 dependencies = [
  "serde",
  "serde_derive",
@@ -2998,7 +3007,7 @@ dependencies = [
 [[package]]
 name = "supergfxctl"
 version = "5.0.2"
-source = "git+https://gitlab.com/asus-linux/supergfxctl.git#fa022efb54b752a3672a64c640bd7aebeb842e05"
+source = "git+https://gitlab.com/asus-linux/supergfxctl.git#387e115a0f338662be313627308201405039d116"
 dependencies = [
  "log",
  "logind-zbus",
@@ -3508,9 +3517,9 @@ dependencies = [
 
 [[package]]
 name = "wayland-sys"
-version = "0.30.0"
+version = "0.30.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8bcdbc325d8a78a9f49dcb77b39e92656e93b3f69eb4d60245f2116ec4bb0a97"
+checksum = "96b2a02ac608e07132978689a6f9bf4214949c85998c247abadd4f4129b1aa06"
 dependencies = [
  "dlib",
  "lazy_static",
@@ -3867,9 +3876,9 @@ checksum = "d2d7d3948613f75c98fd9328cfdcc45acc4d360655289d0a7d4ec931392200a3"
 
 [[package]]
 name = "zbus"
-version = "3.6.1"
+version = "3.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dbaaf011914a4f69a9ec6361225d8440be69673bda9c888275da99c6e8aad03f"
+checksum = "938ea6da98c75c2c37a86007bd17fd8e208cbec24e086108c87ece98e9edec0d"
 dependencies = [
  "async-broadcast",
  "async-channel",
@@ -3906,9 +3915,9 @@ dependencies = [
 
 [[package]]
 name = "zbus_macros"
-version = "3.6.1"
+version = "3.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a64de32c103d3a845f37adf0f46397d6346c8d48028e218db44dcde981733880"
+checksum = "45066039ebf3330820e495e854f8b312abb68f0a39e97972d092bd72e8bb3e8e"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
