@@ -310,10 +310,19 @@ pub fn start_notifications(
                 e
             })
             .unwrap();
+
+        let mut actual_mux_mode = GpuMode::Error;
+        if let Ok(mode) = proxy.gpu_mux_mode().await {
+            actual_mux_mode = mode;
+        }
+
         if let Ok(mut p) = proxy.receive_notify_gpu_mux_mode().await {
             info!("Started zbus signal thread: receive_power_states");
             while let Some(e) = p.next().await {
                 if let Ok(out) = e.args() {
+                    if out.mode == actual_mux_mode {
+                        continue;
+                    }
                     if let Ok(mut lock) = page_states1.lock() {
                         lock.bios.dedicated_gfx = out.mode;
                         lock.set_notified();
