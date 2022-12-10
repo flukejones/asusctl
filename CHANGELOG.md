@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - asusd: Very basic support for running a command on AC/Battery switching, this is in config at `/etc/asusd/asusd.conf`. A restart of asusd is not required if edited.
   + This is ideal for tasks that require root access (BE SAFE!)
 - The above AC/Battery commands are probably best set to run a script for more complex tasks
+- asusd: check if nvidia-powerd enabled before toggling
         
 ## [v4.5.5]
 ### Changed

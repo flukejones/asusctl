@@ -24,6 +24,9 @@ impl From<SystemdUnitAction> for &str {
 pub enum SystemdUnitState {
     Active,
     Inactive,
+    Masked,
+    Disabled,
+    Enabled,
 }
 
 impl From<SystemdUnitState> for &str {
@@ -31,6 +34,9 @@ impl From<SystemdUnitState> for &str {
         match s {
             SystemdUnitState::Active => "active",
             SystemdUnitState::Inactive => "inactive",
+            SystemdUnitState::Masked => "masked",
+            SystemdUnitState::Disabled => "disabled",
+            SystemdUnitState::Enabled => "enabled",
         }
     }
 }
@@ -55,6 +61,21 @@ pub fn do_systemd_unit_action(action: SystemdUnitAction, unit: &str) -> Result<(
 pub fn is_systemd_unit_state(state: SystemdUnitState, unit: &str) -> Result<bool, RogError> {
     let mut cmd = Command::new("systemctl");
     cmd.arg("is-active");
+    cmd.arg(unit);
+
+    let output = cmd
+        .output()
+        .map_err(|err| RogError::Command(format!("{:?}", cmd), err))?;
+    if output.stdout.starts_with(<&str>::from(state).as_bytes()) {
+        return Ok(true);
+    }
+    Ok(false)
+}
+
+/// Get systemd unit state. Blocks while command is run.
+pub fn is_systemd_unit_enabled(state: SystemdUnitState, unit: &str) -> Result<bool, RogError> {
+    let mut cmd = Command::new("systemctl");
+    cmd.arg("is-enabled");
     cmd.arg(unit);
 
     let output = cmd

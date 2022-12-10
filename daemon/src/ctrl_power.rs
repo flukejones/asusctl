@@ -1,4 +1,6 @@
-use crate::systemd::{do_systemd_unit_action, SystemdUnitAction};
+use crate::systemd::{
+    do_systemd_unit_action, is_systemd_unit_enabled, SystemdUnitAction, SystemdUnitState,
+};
 use crate::{config::Config, error::RogError, GetSupported};
 use crate::{task_watch_item, CtrlTask};
 use async_trait::async_trait;
@@ -171,14 +173,7 @@ impl CtrlTask for CtrlPower {
                         .ok();
 
                     if let Ok(value) = power1.power.get_online() {
-                        let action = if value == 1 {
-                            SystemdUnitAction::Restart
-                        } else {
-                            SystemdUnitAction::Stop
-                        };
-                        if do_systemd_unit_action(action, NVIDIA_POWERD).is_ok() {
-                            info!("CtrlPower task: did {action:?} on {NVIDIA_POWERD}");
-                        }
+                        do_nvidia_powerd_action(value == 1);
                     }
                 }
             },
@@ -197,14 +192,7 @@ impl CtrlTask for CtrlPower {
                         .ok();
 
                     if let Ok(value) = power2.power.get_online() {
-                        let action = if value == 1 {
-                            SystemdUnitAction::Restart
-                        } else {
-                            SystemdUnitAction::Stop
-                        };
-                        if do_systemd_unit_action(action, NVIDIA_POWERD).is_ok() {
-                            info!("CtrlPower task: did {action:?} on {NVIDIA_POWERD}");
-                        }
+                        do_nvidia_powerd_action(value == 1);
                     }
                 }
             },
@@ -222,14 +210,7 @@ impl CtrlTask for CtrlPower {
                 if let Ok(value) = ctrl.power.get_online() {
                     if online != value {
                         online = value;
-                        let action = if value == 1 {
-                            SystemdUnitAction::Restart
-                        } else {
-                            SystemdUnitAction::Stop
-                        };
-                        if do_systemd_unit_action(action, NVIDIA_POWERD).is_ok() {
-                            info!("CtrlPower task: did {action:?} on {NVIDIA_POWERD}");
-                        }
+                        do_nvidia_powerd_action(value == 1);
 
                         Self::notify_mains_online(&signal_ctxt, value == 1)
                             .await
@@ -268,5 +249,19 @@ impl CtrlTask for CtrlPower {
         });
 
         Ok(())
+    }
+}
+
+fn do_nvidia_powerd_action(ac_on: bool) {
+    let action = if ac_on {
+        SystemdUnitAction::Restart
+    } else {
+        SystemdUnitAction::Stop
+    };
+
+    if let Ok(res) = is_systemd_unit_enabled(SystemdUnitState::Enabled, NVIDIA_POWERD) {
+        if res && do_systemd_unit_action(action, NVIDIA_POWERD).is_ok() {
+            info!("CtrlPower task: did {action:?} on {NVIDIA_POWERD}");
+        }
     }
 }
