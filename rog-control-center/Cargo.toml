@@ -6,6 +6,7 @@ authors = ["Luke D. Jones <luke@ljones.dev>"]
 edition = "2021"
 
 [features]
+#default = ["mocking"]
 mocking = []
 
 [dependencies]
@@ -23,6 +24,7 @@ rog_profiles = { path = "../rog-profiles" }
 rog_platform = { path = "../rog-platform" }
 supergfxctl = { git = "https://gitlab.com/asus-linux/supergfxctl.git", default-features = false }
 
+gumdrop.workspace = true
 log.workspace = true
 env_logger.workspace = true
 

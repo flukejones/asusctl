@@ -1,18 +1,16 @@
-use std::{
-    f64::consts::PI,
-    sync::{
-        atomic::{AtomicBool, AtomicU8, Ordering},
-        Arc, Mutex,
-    },
-    time::{Duration, Instant},
-};
+use std::f64::consts::PI;
+use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 
 use egui::{Button, RichText};
+use rog_aura::layouts::KeyLayout;
 use rog_platform::supported::SupportedFunctions;
 
-use crate::{
-    config::Config, error::Result, system_state::SystemState, Page, RogDbusClientBlocking,
-};
+use crate::config::Config;
+use crate::error::Result;
+use crate::system_state::SystemState;
+use crate::{Page, RogDbusClientBlocking};
 
 pub struct RogApp {
     pub page: Page,
@@ -103,8 +101,9 @@ impl RogApp {
 }
 
 impl eframe::App for RogApp {
-    /// Called each time the UI needs repainting, which may be many times per second.
-    /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
+    /// Called each time the UI needs repainting, which may be many times per
+    /// second. Put your widgets into a `SidePanel`, `TopPanel`,
+    /// `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         let states = self.states.clone();
 
@@ -112,6 +111,21 @@ impl eframe::App for RogApp {
             if states.app_should_update {
                 states.app_should_update = false;
                 ctx.request_repaint();
+            }
+        }
+
+        // Shortcut typical display stuff
+        if let Ok(mut states) = states.try_lock() {
+            let layout_testing = states.aura_creation.layout_testing.clone();
+            if let Some(path) = &layout_testing {
+                let modified = path.metadata().unwrap().modified().unwrap();
+                if states.aura_creation.layout_last_modified < modified {
+                    states.aura_creation.layout_last_modified = modified;
+                    // time to reload the config
+                    states.aura_creation.keyboard_layout = KeyLayout::from_file(path).unwrap();
+                }
+                self.aura_page(&mut states, ctx);
+                return;
             }
         }
 
@@ -146,6 +160,7 @@ impl eframe::App for RogApp {
                     });
             }
         }
+
         if !was_error {
             if let Ok(mut states) = states.try_lock() {
                 if page == Page::System {

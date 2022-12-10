@@ -1,19 +1,18 @@
+use std::collections::BTreeMap;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use log::{error, info, warn};
-use rog_aura::{usb::AuraPowerDev, AuraEffect, AuraModeNum, LedBrightness, PerKeyRaw};
-use std::{collections::BTreeMap, sync::Arc};
-use zbus::{
-    dbus_interface,
-    export::futures_util::{
-        lock::{Mutex, MutexGuard},
-        StreamExt,
-    },
-    Connection, SignalContext,
-};
-
-use crate::{error::RogError, CtrlTask};
+use rog_aura::advanced::UsbPackets;
+use rog_aura::usb::AuraPowerDev;
+use rog_aura::{AuraEffect, AuraModeNum, LedBrightness};
+use zbus::export::futures_util::lock::{Mutex, MutexGuard};
+use zbus::export::futures_util::StreamExt;
+use zbus::{dbus_interface, Connection, SignalContext};
 
 use super::controller::CtrlKbdLed;
+use crate::error::RogError;
+use crate::CtrlTask;
 
 pub(super) const ZBUS_PATH: &str = "/org/asuslinux/Aura";
 
@@ -207,7 +206,10 @@ impl CtrlKbdLedZbus {
         ctrl.config.builtins.clone()
     }
 
-    async fn per_key_raw(&self, data: PerKeyRaw) -> zbus::fdo::Result<()> {
+    /// On machine that have some form of either per-key keyboard or per-zone
+    /// this can be used to write custom effects over dbus. The input is a
+    /// nested `Vec<Vec<8>>` where `Vec<u8>` is a raw USB packet
+    async fn direct_addressing_raw(&self, data: UsbPackets) -> zbus::fdo::Result<()> {
         let mut ctrl = self.0.lock().await;
         ctrl.write_effect_block(&data)?;
         Ok(())

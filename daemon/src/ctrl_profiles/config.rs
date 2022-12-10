@@ -1,8 +1,9 @@
+use std::fs::{File, OpenOptions};
+use std::io::{Read, Write};
+
 use log::{error, warn};
 use rog_profiles::{FanCurveProfiles, Profile};
 use serde_derive::{Deserialize, Serialize};
-use std::fs::{File, OpenOptions};
-use std::io::{Read, Write};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ProfileConfig {

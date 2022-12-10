@@ -6,25 +6,26 @@ use std::time::Duration;
 
 use ::zbus::export::futures_util::lock::Mutex;
 use ::zbus::Connection;
+use daemon::config::Config;
+use daemon::ctrl_anime::config::AnimeConfig;
+use daemon::ctrl_anime::trait_impls::CtrlAnimeZbus;
 use daemon::ctrl_anime::CtrlAnime;
-use log::{error, info, warn};
-use tokio::time::sleep;
-use zbus::SignalContext;
-
-use daemon::ctrl_anime::{config::AnimeConfig, trait_impls::CtrlAnimeZbus};
-use daemon::ctrl_aura::{config::AuraConfig, controller::CtrlKbdLed, trait_impls::CtrlKbdLedZbus};
+use daemon::ctrl_aura::config::AuraConfig;
+use daemon::ctrl_aura::controller::CtrlKbdLed;
+use daemon::ctrl_aura::trait_impls::CtrlKbdLedZbus;
 use daemon::ctrl_platform::CtrlPlatform;
 use daemon::ctrl_power::CtrlPower;
-use daemon::ctrl_profiles::{
-    config::ProfileConfig, controller::CtrlPlatformProfile, trait_impls::ProfileZbus,
-};
-use daemon::laptops::LaptopLedData;
-use daemon::{
-    config::Config, ctrl_supported::SupportedFunctions, laptops::print_board_info, GetSupported,
-};
-use daemon::{CtrlTask, Reloadable, ZbusRun};
+use daemon::ctrl_profiles::config::ProfileConfig;
+use daemon::ctrl_profiles::controller::CtrlPlatformProfile;
+use daemon::ctrl_profiles::trait_impls::ProfileZbus;
+use daemon::ctrl_supported::SupportedFunctions;
+use daemon::{print_board_info, CtrlTask, GetSupported, Reloadable, ZbusRun};
+use log::{error, info, warn};
+use rog_aura::aura_detection::LaptopLedData;
 use rog_dbus::DBUS_NAME;
 use rog_profiles::Profile;
+use tokio::time::sleep;
+use zbus::SignalContext;
 
 static PROFILE_CONFIG_PATH: &str = "/etc/asusd/profile.conf";
 
@@ -66,7 +67,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 async fn start_daemon() -> Result<(), Box<dyn Error>> {
     let supported = SupportedFunctions::get_supported();
     print_board_info();
-    println!("{}", serde_json::to_string_pretty(&supported)?);
+    println!("{}", supported.supported_functions());
 
     // Start zbus server
     let mut connection = Connection::system().await?;

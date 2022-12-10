@@ -2,11 +2,8 @@ use std::path::PathBuf;
 
 use log::{info, warn};
 
-use crate::{
-    attr_u8,
-    error::{PlatformError, Result},
-    has_attr, set_attr_u8_array, to_device,
-};
+use crate::error::{PlatformError, Result};
+use crate::{attr_u8, has_attr, set_attr_u8_array, to_device};
 
 #[derive(Debug, Default, PartialEq, Eq, PartialOrd, Clone)]
 pub struct KeyboardLed {
@@ -14,6 +11,24 @@ pub struct KeyboardLed {
 }
 
 impl KeyboardLed {
+    attr_u8!("brightness", path);
+
+    has_attr!("kbd_rgb_mode" path);
+
+    set_attr_u8_array!(
+        /// kbd_rgb_mode can only be set, not read back
+        "kbd_rgb_mode"
+        path
+    );
+
+    has_attr!("kbd_rgb_state" path);
+
+    set_attr_u8_array!(
+        /// kbd_rgb_state can only be set, not read back
+        "kbd_rgb_state"
+        path
+    );
+
     pub fn new() -> Result<Self> {
         let mut enumerator = udev::Enumerator::new().map_err(|err| {
             warn!("{}", err);
@@ -47,20 +62,4 @@ impl KeyboardLed {
             "asus::kbd_backlight not found".into(),
         ))
     }
-
-    attr_u8!("brightness", path);
-
-    has_attr!("kbd_rgb_mode" path);
-    set_attr_u8_array!(
-        /// kbd_rgb_mode can only be set, not read back
-        "kbd_rgb_mode"
-        path
-    );
-
-    has_attr!("kbd_rgb_state" path);
-    set_attr_u8_array!(
-        /// kbd_rgb_state can only be set, not read back
-        "kbd_rgb_state"
-        path
-    );
 }

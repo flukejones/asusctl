@@ -1,18 +1,19 @@
-use crate::{config::Config, error::RogError, GetSupported};
-use crate::{task_watch_item, CtrlTask};
+use std::process::Command;
+use std::sync::Arc;
+use std::time::Duration;
+
 use async_trait::async_trait;
 use log::{error, info, warn};
 use rog_platform::power::AsusPower;
 use rog_platform::supported::ChargeSupportedFunctions;
-use std::process::Command;
-use std::sync::Arc;
-use std::time::Duration;
 use systemd_zbus::{ManagerProxy as SystemdProxy, Mode, UnitFileState};
 use tokio::time::sleep;
-use zbus::dbus_interface;
 use zbus::export::futures_util::lock::Mutex;
-use zbus::Connection;
-use zbus::SignalContext;
+use zbus::{dbus_interface, Connection, SignalContext};
+
+use crate::config::Config;
+use crate::error::RogError;
+use crate::{task_watch_item, CtrlTask, GetSupported};
 
 const ZBUS_PATH: &str = "/org/asuslinux/Power";
 const NVIDIA_POWERD: &str = "nvidia-powerd.service";
@@ -118,6 +119,8 @@ impl crate::Reloadable for CtrlPower {
 }
 
 impl CtrlPower {
+    task_watch_item!(charge_control_end_threshold power);
+
     pub fn new(config: Arc<Mutex<Config>>) -> Result<Self, RogError> {
         Ok(CtrlPower {
             power: AsusPower::new()?,
@@ -142,8 +145,6 @@ impl CtrlPower {
 
         Ok(())
     }
-
-    task_watch_item!(charge_control_end_threshold power);
 }
 
 #[async_trait]

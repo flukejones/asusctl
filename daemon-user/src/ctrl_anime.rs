@@ -1,28 +1,24 @@
+use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
+use std::thread::sleep;
+use std::time::{Duration, Instant};
+
 use rog_anime::error::AnimeError;
 use rog_anime::{ActionData, ActionLoader, AnimTime, Fade, Sequences, Vec2};
 use rog_dbus::RogDbusClientBlocking;
 use serde_derive::{Deserialize, Serialize};
-use std::time::Duration;
-use std::{
-    path::Path,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Mutex,
-    },
-};
-use std::{sync::Arc, thread::sleep, time::Instant};
-use zbus::{
-    dbus_interface,
-    zvariant::{ObjectPath, Type},
-};
+use zbus::dbus_interface;
+use zbus::zvariant::{ObjectPath, Type};
 
-use crate::user_config::ConfigLoadSave;
-use crate::{error::Error, user_config::UserAnimeConfig};
+use crate::error::Error;
+use crate::user_config::{ConfigLoadSave, UserAnimeConfig};
 
 #[derive(Debug, Clone, Deserialize, Serialize, Type)]
 pub struct Timer {
     type_of: TimeType,
-    /// If time type is Timer then this is milliseonds, otherwise it is animation loop count
+    /// If time type is Timer then this is milliseonds, otherwise it is
+    /// animation loop count
     count: u64,
     /// Used only for `TimeType::Timer`, milliseonds to fade the image in for
     fade_in: Option<u64>,
@@ -64,8 +60,8 @@ pub enum TimeType {
     Infinite,
 }
 
-/// The inner object exists to allow the zbus proxy to share it with a runner thread
-/// and a zbus server behind `Arc<Mutex<T>>`
+/// The inner object exists to allow the zbus proxy to share it with a runner
+/// thread and a zbus server behind `Arc<Mutex<T>>`
 pub struct CtrlAnimeInner<'a> {
     sequences: Sequences,
     client: RogDbusClientBlocking<'a>,
@@ -84,7 +80,9 @@ impl<'a> CtrlAnimeInner<'static> {
             do_early_return,
         })
     }
-    /// To be called on each main loop iteration to pump out commands to the anime
+
+    /// To be called on each main loop iteration to pump out commands to the
+    /// anime
     pub fn run(&'a self) -> Result<(), Error> {
         if self.do_early_return.load(Ordering::SeqCst) {
             return Ok(());

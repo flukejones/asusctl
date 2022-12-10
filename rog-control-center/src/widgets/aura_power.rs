@@ -1,8 +1,6 @@
 use egui::{RichText, Ui};
-use rog_aura::{
-    usb::{AuraDev1866, AuraDev19b6, AuraDevTuf, AuraDevice, AuraPowerDev},
-    AuraZone,
-};
+use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraDevTuf, AuraDevice, AuraPowerDev};
+use rog_aura::AuraZone;
 use rog_platform::supported::SupportedFunctions;
 
 use crate::system_state::SystemState;
@@ -10,7 +8,7 @@ use crate::system_state::SystemState;
 pub fn aura_power_group(supported: &SupportedFunctions, states: &mut SystemState, ui: &mut Ui) {
     ui.heading("LED settings");
 
-    match supported.keyboard_led.prod_id {
+    match supported.keyboard_led.dev_id {
         AuraDevice::X1854 | AuraDevice::X1869 | AuraDevice::X1866 => {
             aura_power1(supported, states, ui);
         }
@@ -26,7 +24,7 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
     let mut sleep = enabled_states.x1866.contains(&AuraDev1866::Sleep);
     let mut keyboard = enabled_states.x1866.contains(&AuraDev1866::Keyboard);
     let mut lightbar = enabled_states.x1866.contains(&AuraDev1866::Lightbar);
-    if supported.keyboard_led.prod_id == AuraDevice::Tuf {
+    if supported.keyboard_led.dev_id == AuraDevice::Tuf {
         boot = enabled_states.tuf.contains(&AuraDevTuf::Boot);
         sleep = enabled_states.tuf.contains(&AuraDevTuf::Sleep);
         keyboard = enabled_states.tuf.contains(&AuraDevTuf::Awake);
@@ -63,7 +61,7 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
                 if ui.toggle_value(&mut keyboard, "Keyboard").changed() {
                     changed = true;
                 }
-                if !supported.keyboard_led.multizone_led_mode.is_empty()
+                if !supported.keyboard_led.basic_zones.is_empty()
                     && ui.toggle_value(&mut lightbar, "Lightbar").changed()
                 {
                     changed = true;
@@ -84,8 +82,8 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
             //         ))
             //         .changed()
             //     {
-            //         let bright = LedBrightness::from(states.aura.bright as u32);
-            //         dbus.proxies()
+            //         let bright = LedBrightness::from(states.aura.bright as
+            // u32);         dbus.proxies()
             //             .led()
             //             .set_brightness(bright)
             //             .map_err(|err| {
@@ -98,7 +96,7 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
     });
 
     if changed {
-        if supported.keyboard_led.prod_id == AuraDevice::Tuf {
+        if supported.keyboard_led.dev_id == AuraDevice::Tuf {
             let mut enabled = Vec::new();
             let mut disabled = Vec::new();
 
@@ -174,7 +172,7 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
             modify_x1866(boot, AuraDev1866::Boot);
             modify_x1866(sleep, AuraDev1866::Sleep);
             modify_x1866(keyboard, AuraDev1866::Keyboard);
-            if !supported.keyboard_led.multizone_led_mode.is_empty() {
+            if !supported.keyboard_led.basic_zones.is_empty() {
                 modify_x1866(lightbar, AuraDev1866::Lightbar);
             }
 
@@ -203,17 +201,14 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
 
 fn aura_power2(supported: &SupportedFunctions, states: &mut SystemState, ui: &mut Ui) {
     let enabled_states = &mut states.aura.enabled;
-    let has_logo = supported
-        .keyboard_led
-        .multizone_led_mode
-        .contains(&AuraZone::Logo);
+    let has_logo = supported.keyboard_led.basic_zones.contains(&AuraZone::Logo);
     let has_lightbar = supported
         .keyboard_led
-        .multizone_led_mode
+        .basic_zones
         .contains(&AuraZone::BarLeft)
         || supported
             .keyboard_led
-            .multizone_led_mode
+            .basic_zones
             .contains(&AuraZone::BarRight);
 
     let boot_bar = &mut enabled_states.x19b6.contains(&AuraDev19b6::AwakeBar);
@@ -294,18 +289,14 @@ fn aura_power2(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
         modify(*boot_keyb, AuraDev19b6::BootKeyb);
         modify(*sleep_keyb, AuraDev19b6::SleepKeyb);
         modify(*awake_keyb, AuraDev19b6::AwakeKeyb);
-        if supported
-            .keyboard_led
-            .multizone_led_mode
-            .contains(&AuraZone::Logo)
-        {
+        if supported.keyboard_led.basic_zones.contains(&AuraZone::Logo) {
             modify(*boot_logo, AuraDev19b6::BootLogo);
             modify(*sleep_logo, AuraDev19b6::SleepLogo);
             modify(*awake_logo, AuraDev19b6::AwakeLogo);
         }
         if supported
             .keyboard_led
-            .multizone_led_mode
+            .basic_zones
             .contains(&AuraZone::BarLeft)
         {
             modify(*boot_bar, AuraDev19b6::AwakeBar);

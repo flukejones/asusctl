@@ -1,6 +1,8 @@
-use rog_anime::{usb::get_anime_type, AnimeDataBuffer, AnimeGrid};
-use rog_dbus::RogDbusClientBlocking;
 use std::convert::TryFrom;
+
+use rog_anime::usb::get_anime_type;
+use rog_anime::{AnimeDataBuffer, AnimeGrid};
+use rog_dbus::RogDbusClientBlocking;
 
 // In usable data:
 // Top row start at 1, ends at 32

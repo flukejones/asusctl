@@ -1,13 +1,12 @@
-use std::{convert::TryFrom, path::Path};
+use std::convert::TryFrom;
+use std::path::Path;
 
 pub use glam::Vec2;
 use glam::{Mat3, Vec3};
 
-use crate::{
-    data::AnimeDataBuffer,
-    error::{AnimeError, Result},
-    AnimeType,
-};
+use crate::data::AnimeDataBuffer;
+use crate::error::{AnimeError, Result};
+use crate::AnimeType;
 
 /// A single greyscale + alpha pixel in the image
 #[derive(Copy, Clone, Debug)]
@@ -29,8 +28,8 @@ impl Default for Pixel {
 /// A single LED position and brightness. The intention of this struct
 /// is to be used to sample an image and set the LED brightness.
 ///
-/// The position of the Led in `LedPositions` determines the placement in the final
-/// data packets when written to the `AniMe`.
+/// The position of the Led in `LedPositions` determines the placement in the
+/// final data packets when written to the `AniMe`.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Led(f32, f32, u8);
 
@@ -73,8 +72,9 @@ pub struct AnimeImage {
     img_pixels: Vec<Pixel>,
     /// width of the image
     width: u32,
-    /// The type of the display. The GA401 and GA402 use the same controller and therefore same ID,
-    /// so the identifier must be by laptop model in `AnimeType`.
+    /// The type of the display. The GA401 and GA402 use the same controller and
+    /// therefore same ID, so the identifier must be by laptop model in
+    /// `AnimeType`.
     anime_type: AnimeType,
 }
 
@@ -108,9 +108,9 @@ impl AnimeImage {
 
     /// Scale ratio in CM
     ///
-    /// This is worked out by measuring the physical width of the display from pixel center to
-    /// center, then dividing by `<horizontal LED count> + 0.5`, where the LED count is
-    /// first/longest row.
+    /// This is worked out by measuring the physical width of the display from
+    /// pixel center to center, then dividing by `<horizontal LED count> +
+    /// 0.5`, where the LED count is first/longest row.
     ///
     /// For GA401 this is `26.8 / (33 + 0.5) = 0.8`
     /// For GA402 this is `27.4 / (35 + 0.5) = 0.77`
@@ -123,9 +123,9 @@ impl AnimeImage {
 
     /// Scale ratio in CM
     ///
-    /// This is worked out by measuring the physical height of the display from pixel center to
-    /// pixel center, then dividing by  `<vertical LED count> + 1.0`, where the LED count is
-    /// first/longest row.
+    /// This is worked out by measuring the physical height of the display from
+    /// pixel center to pixel center, then dividing by  `<vertical LED
+    /// count> + 1.0`, where the LED count is first/longest row.
     ///
     /// For GA401 this is `16.5 / (54.0 + 1.0) = 0.3`
     /// For GA402 this is `17.3 / (61.0)       = 0.283`
@@ -136,12 +136,12 @@ impl AnimeImage {
         }
     }
 
-    /// Get the starting X position for the data we actually require when writing
-    /// it out to LEDs.
+    /// Get the starting X position for the data we actually require when
+    /// writing it out to LEDs.
     ///
-    /// In relation to the display itself you should think of it as a full square grid, so `first_x`
-    /// is the x position on that grid where the LED is actually positioned in relation to the Y.
-    /// ```text
+    /// In relation to the display itself you should think of it as a full
+    /// square grid, so `first_x` is the x position on that grid where the
+    /// LED is actually positioned in relation to the Y. ```text
     /// +------------+
     /// |            |
     /// |            |
@@ -251,8 +251,8 @@ impl AnimeImage {
         &mut self.img_pixels
     }
 
-    /// Generate a list of LED positions. These are then used to sample the Image data,
-    /// and will contain their resulting brightness.
+    /// Generate a list of LED positions. These are then used to sample the
+    /// Image data, and will contain their resulting brightness.
     #[inline]
     pub fn generate_image_positioning(anime_type: AnimeType) -> Vec<Option<Led>> {
         (0..AnimeImage::height(anime_type))
@@ -274,8 +274,8 @@ impl AnimeImage {
     /// samples, the result can then been transformed to the appropriate data
     /// for displaying.
     ///
-    /// The internal for loop iterates over the LED positions, skipping the blank/dead
-    /// pixels if any.
+    /// The internal for loop iterates over the LED positions, skipping the
+    /// blank/dead pixels if any.
     #[inline]
     pub fn update(&mut self) {
         let width = self.width as i32;
@@ -343,7 +343,7 @@ impl AnimeImage {
                 }
                 last_was_led = true;
             } else if last_was_led {
-                //ends.push(idx);
+                // ends.push(idx);
                 last_was_led = false;
             }
         }
@@ -382,8 +382,9 @@ impl AnimeImage {
         led_from_px.inverse()
     }
 
-    /// Generate the base image from inputs. The result can be displayed as is or
-    /// updated via scale, position, or angle then displayed again after `update()`.
+    /// Generate the base image from inputs. The result can be displayed as is
+    /// or updated via scale, position, or angle then displayed again after
+    /// `update()`.
     #[inline]
     pub fn from_png(
         path: &Path,
@@ -491,8 +492,8 @@ impl AnimeImage {
 impl TryFrom<&AnimeImage> for AnimeDataBuffer {
     type Error = AnimeError;
 
-    /// Do conversion from the nested Vec in `AnimeDataBuffer` to the two required
-    /// packets suitable for sending over USB
+    /// Do conversion from the nested Vec in `AnimeDataBuffer` to the two
+    /// required packets suitable for sending over USB
     fn try_from(leds: &AnimeImage) -> Result<Self> {
         let mut l: Vec<u8> = leds
             .led_pos
@@ -511,9 +512,11 @@ impl TryFrom<&AnimeImage> for AnimeDataBuffer {
 
 #[cfg(test)]
 mod tests {
-    use std::{convert::TryFrom, path::PathBuf};
+    use std::convert::TryFrom;
+    use std::path::PathBuf;
 
-    use crate::{image::*, AnimTime, AnimeGif, AnimePacketType};
+    use crate::image::*;
+    use crate::{AnimTime, AnimeGif, AnimePacketType};
 
     #[test]
     fn led_positions() {

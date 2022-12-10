@@ -1,5 +1,7 @@
-use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
 use std::ops::{BitAnd, BitOr};
+
+use serde::{Deserialize, Serialize};
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
 
@@ -16,12 +18,12 @@ pub const LED_SET: [u8; 17] = [0x5d, 0xb5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 /// Writes out the correct byte string for brightness
 pub const fn aura_brightness_bytes(brightness: u8) -> [u8; 17] {
     [
-        0x5A, 0xBA, 0xC5, 0xC4, brightness, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0x5a, 0xba, 0xc5, 0xc4, brightness, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     ]
 }
 
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Serialize, Deserialize, Default)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Serialize, Deserialize, Default)]
 pub enum AuraDevice {
     Tuf,
     X1854,
@@ -41,6 +43,19 @@ impl From<&str> for AuraDevice {
             "1854" | "0x1854" => AuraDevice::X1854,
             "19b6" | "0x19b6" => AuraDevice::X19B6,
             _ => AuraDevice::Unknown,
+        }
+    }
+}
+
+impl Debug for AuraDevice {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Tuf => write!(f, "Tuf"),
+            Self::X1854 => write!(f, "0x1854"),
+            Self::X1869 => write!(f, "0x1869"),
+            Self::X1866 => write!(f, "0x1866"),
+            Self::X19B6 => write!(f, "0x19B6"),
+            Self::Unknown => write!(f, "Unknown"),
         }
     }
 }
@@ -73,7 +88,8 @@ impl AuraDevTuf {
 /// # Bits for older 0x1866 keyboard model
 ///
 /// Keybord and Lightbar require Awake, Boot and Sleep apply to both
-/// Keybord and Lightbar regardless of if either are enabled (or Awake is enabled)
+/// Keybord and Lightbar regardless of if either are enabled (or Awake is
+/// enabled)
 ///
 /// |   Byte 1   |   Byte 2   |   Byte 3   | function |   hex    |
 /// |------------|------------|------------|----------|----------|
@@ -83,7 +99,6 @@ impl AuraDevTuf {
 /// | 1100, 0011 | 0001, 0010 | 0000, 1001 | Boot/Sht | c3,12,09 |
 /// | 0011, 0000 | 0000, 1000 | 0000, 0100 | Sleep    | 30,08,04 |
 /// | 1111, 1111 | 0001, 1111 | 0000, 1111 | all on   |          |
-///
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
 #[repr(u32)]
@@ -161,7 +176,6 @@ impl BitAnd<AuraDev1866> for AuraDev1866 {
 /// | 0000 | 0100 | 04  | lightbar on          | bit 3 |
 /// | 0000 | 1000 | 08  | lightbar off sleep   | bit 4 |
 /// | 0001 | 0000 | 10  | lightbar shtdn off   | bit 5 |
-///
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
 #[repr(u32)]
@@ -226,9 +240,8 @@ impl BitAnd<AuraDev19b6> for AuraDev19b6 {
 
 #[cfg(test)]
 mod tests {
-    use crate::usb::AuraDev19b6;
-
     use super::AuraDev1866;
+    use crate::usb::AuraDev19b6;
 
     #[test]
     fn check_0x1866_control_bytes() {
@@ -370,7 +383,7 @@ mod tests {
         assert_eq!(bytes[2], 0x0f);
 
         let byte3 = [
-            //AuraDev19b6::AwakeLid,
+            // AuraDev19b6::AwakeLid,
             AuraDev19b6::BootLid,
             AuraDev19b6::SleepLid,
             AuraDev19b6::ShutdownLid,
@@ -393,7 +406,7 @@ mod tests {
             AuraDev19b6::AwakeLid,
             AuraDev19b6::BootLid,
             AuraDev19b6::SleepLid,
-            //AuraDev19b6::ShutdownLid,
+            // AuraDev19b6::ShutdownLid,
         ];
         let bytes = AuraDev19b6::to_bytes(&byte3);
         println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
@@ -401,9 +414,9 @@ mod tests {
 
         let byte3 = [
             AuraDev19b6::AwakeLid,
-            //AuraDev19b6::BootLid,
+            // AuraDev19b6::BootLid,
             AuraDev19b6::SleepLid,
-            //AuraDev19b6::ShutdownLid,
+            // AuraDev19b6::ShutdownLid,
         ];
         let bytes = AuraDev19b6::to_bytes(&byte3);
         println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);

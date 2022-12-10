@@ -118,13 +118,13 @@ mod tests {
 //             .parent_with_subsystem_devtype("usb", "usb_device")
 //             .map_err(|err| {
 //                 warn!("{}", err);
-//                 PlatformError::Udev("parent_with_subsystem_devtype failed".into(), err)
-//             })?
+//                 PlatformError::Udev("parent_with_subsystem_devtype
+// failed".into(), err)             })?
 //         {
 //             if parent
 //                 .attribute_value("idProduct")
-//                 .ok_or_else(|| PlatformError::NotFound("LED idProduct".into()))?
-//                 == id_product
+//                 .ok_or_else(|| PlatformError::NotFound("LED
+// idProduct".into()))?                 == id_product
 //             {
 //                 if let Some(dev_node) = device.devnode() {
 //                     info!("Using device at: {:?} for LED control", dev_node);

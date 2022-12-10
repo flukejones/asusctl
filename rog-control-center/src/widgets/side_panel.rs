@@ -28,7 +28,7 @@ impl RogApp {
                     }
                 }
 
-                if !self.supported.keyboard_led.stock_led_modes.is_empty() {
+                if !self.supported.keyboard_led.basic_modes.is_empty() {
                     ui.separator();
                     if ui
                         .selectable_value(page, Page::AuraEffects, "Keyboard Aura")

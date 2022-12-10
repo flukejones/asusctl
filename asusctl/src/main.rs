@@ -1,16 +1,15 @@
 use std::convert::TryFrom;
+use std::env::args;
+use std::path::Path;
 use std::process::Command;
 use std::thread::sleep;
-use std::{env::args, path::Path};
-
-use aura_cli::{LedPowerCommand1, LedPowerCommand2};
-use gumdrop::{Opt, Options};
 
 use anime_cli::{AnimeActions, AnimeCommand};
+use aura_cli::{LedPowerCommand1, LedPowerCommand2};
+use gumdrop::{Opt, Options};
 use profiles_cli::{FanCurveCommand, ProfileCommand};
 use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, Vec2};
-
 use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClientBlocking;
@@ -150,7 +149,7 @@ fn do_parsed(
                     let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
                     for command in commands.iter().filter(|command| {
                         if !matches!(
-                            supported.keyboard_led.prod_id,
+                            supported.keyboard_led.dev_id,
                             AuraDevice::X1854
                                 | AuraDevice::X1869
                                 | AuraDevice::X1866
@@ -159,7 +158,7 @@ fn do_parsed(
                         {
                             return false;
                         }
-                        if supported.keyboard_led.prod_id != AuraDevice::X19B6
+                        if supported.keyboard_led.dev_id != AuraDevice::X19B6
                             && command.trim().starts_with("led-pow-2")
                         {
                             return false;
@@ -212,7 +211,10 @@ fn do_parsed(
 }
 
 fn do_gfx() {
-    println!("Please use supergfxctl for graphics switching. supergfxctl is the result of making asusctl graphics switching generic so all laptops can use it");
+    println!(
+        "Please use supergfxctl for graphics switching. supergfxctl is the result of making \
+         asusctl graphics switching generic so all laptops can use it"
+    );
     println!("This command will be removed in future");
 }
 
@@ -391,7 +393,7 @@ fn handle_led_mode(
         if let Some(cmdlist) = LedModeCommand::command_list() {
             let commands: Vec<String> = cmdlist.lines().map(|s| s.to_string()).collect();
             for command in commands.iter().filter(|command| {
-                for mode in &supported.stock_led_modes {
+                for mode in &supported.basic_modes {
                     if command
                         .trim()
                         .starts_with(&<&str>::from(mode).to_lowercase())
@@ -399,7 +401,7 @@ fn handle_led_mode(
                         return true;
                     }
                 }
-                if !supported.multizone_led_mode.is_empty() && command.trim().starts_with("multi") {
+                if !supported.basic_zones.is_empty() && command.trim().starts_with("multi") {
                     return true;
                 }
                 false
@@ -452,14 +454,14 @@ fn handle_led_power1(
     }
 
     if matches!(
-        supported.prod_id,
+        supported.dev_id,
         AuraDevice::X1854 | AuraDevice::X1869 | AuraDevice::X1866
     ) {
         handle_led_power_1_do_1866(dbus, power)?;
         return Ok(());
     }
 
-    if matches!(supported.prod_id, AuraDevice::Tuf) {
+    if matches!(supported.dev_id, AuraDevice::Tuf) {
         handle_led_power_1_do_tuf(dbus, power)?;
         return Ok(());
     }
@@ -576,7 +578,7 @@ fn handle_led_power2(
             return Ok(());
         }
 
-        if supported.prod_id != AuraDevice::X19B6 {
+        if supported.dev_id != AuraDevice::X19B6 {
             println!("This option applies only to keyboards with product ID 0x19b6");
         }
 
@@ -786,7 +788,10 @@ fn handle_bios_option(
             dbus.proxies()
                 .rog_bios()
                 .set_gpu_mux_mode(GpuMode::from_mux(opt))?;
-            println!("The mode change is not active until you reboot, on boot the bios will make the required change");
+            println!(
+                "The mode change is not active until you reboot, on boot the bios will make the \
+                 required change"
+            );
         }
         if cmd.gpu_mux_mode_get {
             let res = dbus.proxies().rog_bios().gpu_mux_mode()?;

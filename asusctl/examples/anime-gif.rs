@@ -1,6 +1,9 @@
-use std::{env, path::Path, thread::sleep};
+use std::env;
+use std::path::Path;
+use std::thread::sleep;
 
-use rog_anime::{usb::get_anime_type, ActionData, ActionLoader, Sequences};
+use rog_anime::usb::get_anime_type;
+use rog_anime::{ActionData, ActionLoader, Sequences};
 use rog_dbus::RogDbusClientBlocking;
 
 fn main() {

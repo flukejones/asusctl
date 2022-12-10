@@ -1,7 +1,9 @@
-use crate::system_state::SystemState;
 use egui::Ui;
-use rog_platform::{platform::GpuMode, supported::SupportedFunctions};
+use rog_platform::platform::GpuMode;
+use rog_platform::supported::SupportedFunctions;
 use rog_profiles::Profile;
+
+use crate::system_state::SystemState;
 
 pub fn platform_profile(states: &mut SystemState, ui: &mut Ui) {
     ui.heading("Platform profile");

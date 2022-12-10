@@ -1,19 +1,17 @@
-use crate::{
-    error::RogError,
-    laptops::{LaptopLedData, ASUS_KEYBOARD_DEVICES},
-};
-use log::{info, warn};
-use rog_aura::{
-    usb::{AuraDevice, LED_APPLY, LED_SET},
-    AuraEffect, KeyColourArray, LedBrightness, PerKeyRaw, LED_MSG_LEN,
-};
-use rog_aura::{AuraZone, Direction, Speed, GRADIENT};
-use rog_platform::{hid_raw::HidRaw, keyboard_led::KeyboardLed, supported::LedSupportedFunctions};
 use std::collections::BTreeMap;
 
-use crate::GetSupported;
+use log::{info, warn};
+use rog_aura::advanced::{LedUsbPackets, UsbPackets};
+use rog_aura::aura_detection::{LaptopLedData, ASUS_KEYBOARD_DEVICES};
+use rog_aura::usb::{AuraDevice, LED_APPLY, LED_SET};
+use rog_aura::{AuraEffect, AuraZone, Direction, LedBrightness, Speed, GRADIENT, LED_MSG_LEN};
+use rog_platform::hid_raw::HidRaw;
+use rog_platform::keyboard_led::KeyboardLed;
+use rog_platform::supported::LedSupportedFunctions;
 
 use super::config::{AuraConfig, AuraPowerConfig};
+use crate::error::RogError;
+use crate::GetSupported;
 
 impl GetSupported for CtrlKbdLed {
     type A = LedSupportedFunctions;
@@ -21,9 +19,9 @@ impl GetSupported for CtrlKbdLed {
     fn get_supported() -> Self::A {
         // let mode = <&str>::from(&<AuraModes>::from(*mode));
         let laptop = LaptopLedData::get_data();
-        let stock_led_modes = laptop.standard;
-        let multizone_led_mode = laptop.multizone;
-        let per_key_led_mode = laptop.per_key;
+        let stock_led_modes = laptop.basic_modes;
+        let multizone_led_mode = laptop.basic_zones;
+        let advanced_type = laptop.advanced_type;
 
         let mut prod_id = AuraDevice::Unknown;
         for prod in &ASUS_KEYBOARD_DEVICES {
@@ -41,11 +39,11 @@ impl GetSupported for CtrlKbdLed {
         }
 
         LedSupportedFunctions {
-            prod_id,
-            brightness_set: rgb.is_ok(),
-            stock_led_modes,
-            multizone_led_mode,
-            per_key_led_mode,
+            dev_id: prod_id,
+            brightness: rgb.is_ok(),
+            basic_modes: stock_led_modes,
+            basic_zones: multizone_led_mode,
+            advanced_type: advanced_type.into(),
         }
     }
 }
@@ -152,7 +150,8 @@ impl CtrlKbdLed {
         self.set_brightness(self.config.brightness)
     }
 
-    /// Set combination state for boot animation/sleep animation/all leds/keys leds/side leds LED active
+    /// Set combination state for boot animation/sleep animation/all leds/keys
+    /// leds/side leds LED active
     pub(super) fn set_power_states(&mut self) -> Result<(), RogError> {
         if let LEDNode::KbdLed(platform) = &mut self.led_node {
             if let Some(pwr) = AuraPowerConfig::to_tuf_bool_array(&self.config.enabled) {
@@ -173,12 +172,12 @@ impl CtrlKbdLed {
 
     /// Set an Aura effect if the effect mode or zone is supported.
     ///
-    /// On success the aura config file is read to refresh cached values, then the effect is
-    /// stored and config written to disk.
+    /// On success the aura config file is read to refresh cached values, then
+    /// the effect is stored and config written to disk.
     pub(crate) fn set_effect(&mut self, effect: AuraEffect) -> Result<(), RogError> {
-        if !self.supported_modes.standard.contains(&effect.mode)
+        if !self.supported_modes.basic_modes.contains(&effect.mode)
             || effect.zone != AuraZone::None
-                && !self.supported_modes.multizone.contains(&effect.zone)
+                && !self.supported_modes.basic_zones.contains(&effect.zone)
         {
             return Err(RogError::AuraEffectNotSupported);
         }
@@ -193,7 +192,7 @@ impl CtrlKbdLed {
     /// Write an effect block. This is for per-key, but can be repurposed to
     /// write the raw factory mode packets - when doing this it is expected that
     /// only the first `Vec` (`effect[0]`) is valid.
-    pub fn write_effect_block(&mut self, effect: &PerKeyRaw) -> Result<(), RogError> {
+    pub fn write_effect_block(&mut self, effect: &UsbPackets) -> Result<(), RogError> {
         let pkt_type = effect[0][1];
         const PER_KEY_TYPE: u8 = 0xbc;
 
@@ -207,7 +206,7 @@ impl CtrlKbdLed {
         } else {
             if !self.per_key_mode_active {
                 if let LEDNode::Rog(hid_raw) = &self.led_node {
-                    let init = KeyColourArray::get_init_msg();
+                    let init = LedUsbPackets::get_init_msg();
                     hid_raw.write_bytes(&init)?;
                 }
                 self.per_key_mode_active = true;
@@ -233,7 +232,7 @@ impl CtrlKbdLed {
         let current = self.config.current_mode;
         if let Some(idx) = self
             .supported_modes
-            .standard
+            .basic_modes
             .iter()
             .position(|v| *v == current)
         {
@@ -241,17 +240,17 @@ impl CtrlKbdLed {
             // goes past end of array
             if reverse {
                 if idx == 0 {
-                    idx = self.supported_modes.standard.len() - 1;
+                    idx = self.supported_modes.basic_modes.len() - 1;
                 } else {
                     idx -= 1;
                 }
             } else {
                 idx += 1;
-                if idx == self.supported_modes.standard.len() {
+                if idx == self.supported_modes.basic_modes.len() {
                     idx = 0;
                 }
             }
-            let next = self.supported_modes.standard[idx];
+            let next = self.supported_modes.basic_modes[idx];
 
             self.config.read();
             // if self.config.builtins.contains_key(&next) {
@@ -324,10 +323,11 @@ impl CtrlKbdLed {
         Ok(())
     }
 
-    /// Create a default for the `current_mode` if multizone and no config exists.
+    /// Create a default for the `current_mode` if multizone and no config
+    /// exists.
     fn create_multizone_default(&mut self) -> Result<(), RogError> {
         let mut default = vec![];
-        for (i, tmp) in self.supported_modes.multizone.iter().enumerate() {
+        for (i, tmp) in self.supported_modes.basic_zones.iter().enumerate() {
             default.push(AuraEffect {
                 mode: self.config.current_mode,
                 zone: *tmp,
@@ -354,15 +354,13 @@ impl CtrlKbdLed {
 
 #[cfg(test)]
 mod tests {
+    use rog_aura::aura_detection::LaptopLedData;
     use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour};
     use rog_platform::keyboard_led::KeyboardLed;
 
-    use crate::{
-        ctrl_aura::{config::AuraConfig, controller::LEDNode},
-        laptops::LaptopLedData,
-    };
-
     use super::CtrlKbdLed;
+    use crate::ctrl_aura::config::AuraConfig;
+    use crate::ctrl_aura::controller::LEDNode;
 
     #[test]
     // #[ignore = "Must be manually run due to detection stage"]
@@ -370,11 +368,11 @@ mod tests {
         // Checking to ensure set_mode errors when unsupported modes are tried
         let config = AuraConfig::default();
         let supported_modes = LaptopLedData {
-            prod_family: String::new(),
-            board_names: vec![],
-            standard: vec![AuraModeNum::Static],
-            multizone: vec![],
-            per_key: false,
+            board_name: String::new(),
+            layout_name: "ga401".to_owned(),
+            basic_modes: vec![AuraModeNum::Static],
+            basic_zones: vec![],
+            advanced_type: rog_aura::AdvancedAuraType::None,
         };
         let mut controller = CtrlKbdLed {
             led_prod: None,
@@ -392,7 +390,8 @@ mod tests {
             ..Default::default()
         };
 
-        // This error comes from write_bytes because we don't have a keyboard node stored
+        // This error comes from write_bytes because we don't have a keyboard node
+        // stored
         assert_eq!(
             controller
                 .set_effect(effect.clone())
@@ -420,7 +419,7 @@ mod tests {
             "Aura effect not supported"
         );
 
-        controller.supported_modes.multizone.push(AuraZone::Key2);
+        controller.supported_modes.basic_zones.push(AuraZone::Key2);
         assert_eq!(
             controller.set_effect(effect).unwrap_err().to_string(),
             "No supported Aura keyboard"
@@ -432,11 +431,11 @@ mod tests {
         // Checking to ensure set_mode errors when unsupported modes are tried
         let config = AuraConfig::default();
         let supported_modes = LaptopLedData {
-            prod_family: String::new(),
-            board_names: vec![],
-            standard: vec![AuraModeNum::Static],
-            multizone: vec![],
-            per_key: false,
+            board_name: String::new(),
+            layout_name: "ga401".to_owned(),
+            basic_modes: vec![AuraModeNum::Static],
+            basic_zones: vec![],
+            advanced_type: rog_aura::AdvancedAuraType::None,
         };
         let mut controller = CtrlKbdLed {
             led_prod: None,
@@ -452,8 +451,8 @@ mod tests {
         assert!(controller.create_multizone_default().is_err());
         assert!(controller.config.multizone.is_none());
 
-        controller.supported_modes.multizone.push(AuraZone::Key1);
-        controller.supported_modes.multizone.push(AuraZone::Key2);
+        controller.supported_modes.basic_zones.push(AuraZone::Key1);
+        controller.supported_modes.basic_zones.push(AuraZone::Key2);
         assert!(controller.create_multizone_default().is_ok());
         assert!(controller.config.multizone.is_some());
 
@@ -470,11 +469,11 @@ mod tests {
         // Checking to ensure set_mode errors when unsupported modes are tried
         let config = AuraConfig::default();
         let supported_modes = LaptopLedData {
-            prod_family: String::new(),
-            board_names: vec![],
-            standard: vec![AuraModeNum::Static],
-            multizone: vec![AuraZone::Key1, AuraZone::Key2],
-            per_key: false,
+            board_name: String::new(),
+            layout_name: "ga401".to_owned(),
+            basic_modes: vec![AuraModeNum::Static],
+            basic_zones: vec![AuraZone::Key1, AuraZone::Key2],
+            advanced_type: rog_aura::AdvancedAuraType::None,
         };
         let mut controller = CtrlKbdLed {
             led_prod: None,

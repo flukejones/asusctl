@@ -1,10 +1,10 @@
 use serde_derive::{Deserialize, Serialize};
-
 use udev::Device;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
 
-use crate::{error::ProfileError, FanCurvePU};
+use crate::error::ProfileError;
+use crate::FanCurvePU;
 
 pub(crate) fn pwm_str(fan: char, index: usize) -> String {
     let mut buf = "pwm1_auto_point1_pwm".to_string();
@@ -62,12 +62,15 @@ impl From<&CurveData> for String {
 impl std::str::FromStr for CurveData {
     type Err = ProfileError;
 
-    /// Parse a string to the correct values that the fan curve kernel driver expects
+    /// Parse a string to the correct values that the fan curve kernel driver
+    /// expects
     ///
-    /// If the fan curve is given with percentage char '%' then the fan power values are converted
-    /// otherwise the expected fan power range is 0-255.
+    /// If the fan curve is given with percentage char '%' then the fan power
+    /// values are converted otherwise the expected fan power range is
+    /// 0-255.
     ///
-    /// Temperature range is 0-255 in degrees C. You don't want to be setting over 100.
+    /// Temperature range is 0-255 in degrees C. You don't want to be setting
+    /// over 100.
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let mut temp = [0u8; 8];
         let mut pwm = [0u8; 8];
@@ -313,6 +316,10 @@ mod tests {
     fn set_to_string() {
         let set = FanCurveSet::default();
         let string = String::from(&set);
-        assert_eq!(string.as_str(), "Enabled: false, CPU: 0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%, GPU: 0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%");
+        assert_eq!(
+            string.as_str(),
+            "Enabled: false, CPU: 0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%, GPU: \
+             0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%"
+        );
     }
 }

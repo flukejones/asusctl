@@ -15,7 +15,8 @@ trait Anime {
     /// Set whether the AniMe is displaying images/data
     fn set_on_off(&self, status: bool) -> zbus::Result<()>;
 
-    /// Writes a data stream of length. Will force system thread to exit until it is restarted
+    /// Writes a data stream of length. Will force system thread to exit until
+    /// it is restarted
     fn write(&self, input: AnimeDataBuffer) -> zbus::Result<()>;
 
     /// Get status of if the AniMe LEDs are on
@@ -26,7 +27,8 @@ trait Anime {
     #[dbus_proxy(property)]
     fn boot_enabled(&self) -> zbus::Result<bool>;
 
-    /// Notify listeners of the status of AniMe LED power and factory system-status animations
+    /// Notify listeners of the status of AniMe LED power and factory
+    /// system-status animations
     #[dbus_proxy(signal)]
     fn power_states(&self, data: AnimePowerStates) -> zbus::Result<()>;
 }

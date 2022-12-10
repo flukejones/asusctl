@@ -1,6 +1,8 @@
-use gumdrop::Options;
-use rog_aura::{error::Error, AuraEffect, AuraModeNum, AuraZone, Colour, Direction, Speed};
 use std::str::FromStr;
+
+use gumdrop::Options;
+use rog_aura::error::Error;
+use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour, Direction, Speed};
 
 #[derive(Options)]
 pub struct LedPowerCommand1 {
@@ -220,7 +222,6 @@ pub struct MultiColourSpeed {
 /// Byte value for setting the built-in mode.
 ///
 /// Enum corresponds to the required integer value
-///
 // NOTE: The option names here must match those in rog-aura crate
 #[derive(Options)]
 pub enum SetAuraBuiltin {

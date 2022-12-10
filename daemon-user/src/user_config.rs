@@ -1,11 +1,11 @@
-use std::{
-    fs::{create_dir, OpenOptions},
-    io::{Read, Write},
-    time::Duration,
-};
+use std::fs::{create_dir, OpenOptions};
+use std::io::{Read, Write};
+use std::time::Duration;
 
-use rog_anime::{ActionLoader, AnimTime, AnimeType, Fade, Sequences, Vec2};
-use rog_aura::{keys::Key, Breathe, Colour, Effect, Flicker, LedType, Speed, Static};
+use rog_anime::{ActionLoader, AnimTime, AnimeType, Fade, Sequences as AnimeSequences, Vec2};
+use rog_aura::advanced::LedCode;
+use rog_aura::effects::{AdvancedEffects as AuraSequences, Breathe, DoomFlicker, Effect, Static};
+use rog_aura::{Colour, Speed};
 use serde::de::DeserializeOwned;
 use serde_derive::{Deserialize, Serialize};
 
@@ -87,8 +87,8 @@ pub struct UserAnimeConfig {
 }
 
 impl UserAnimeConfig {
-    pub fn create(&self, anime_type: AnimeType) -> Result<Sequences, Error> {
-        let mut seq = Sequences::new(anime_type);
+    pub fn create(&self, anime_type: AnimeType) -> Result<AnimeSequences, Error> {
+        let mut seq = AnimeSequences::new(anime_type);
 
         for (idx, action) in self.anime.iter().enumerate() {
             seq.insert(idx, action)?;
@@ -175,7 +175,7 @@ impl Default for UserAnimeConfig {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UserAuraConfig {
     pub name: String,
-    pub aura: rog_aura::Sequences,
+    pub aura: AuraSequences,
 }
 
 impl ConfigLoadSave<UserAuraConfig> for UserAuraConfig {
@@ -193,43 +193,38 @@ impl ConfigLoadSave<UserAuraConfig> for UserAuraConfig {
 
 impl Default for UserAuraConfig {
     fn default() -> Self {
-        let mut seq = rog_aura::Sequences::new();
+        let mut seq = AuraSequences::new(false);
         let mut key = Effect::Breathe(Breathe::new(
-            LedType::Key(Key::W),
+            LedCode::W,
             Colour(255, 0, 20),
             Colour(20, 255, 0),
             Speed::Low,
         ));
 
         seq.push(key.clone());
-        key.set_led_type(LedType::Key(Key::A));
+        key.set_led(LedCode::A);
         seq.push(key.clone());
-        key.set_led_type(LedType::Key(Key::S));
+        key.set_led(LedCode::S);
         seq.push(key.clone());
-        key.set_led_type(LedType::Key(Key::D));
+        key.set_led(LedCode::D);
         seq.push(key);
 
         let key = Effect::Breathe(Breathe::new(
-            LedType::Key(Key::F),
+            LedCode::F,
             Colour(255, 0, 0),
             Colour(255, 0, 0),
             Speed::High,
         ));
         seq.push(key);
 
-        let mut key = Effect::Static(Static::new(LedType::Key(Key::RCtrl), Colour(0, 0, 255)));
+        let mut key = Effect::Static(Static::new(LedCode::RCtrl, Colour(0, 0, 255)));
         seq.push(key.clone());
-        key.set_led_type(LedType::Key(Key::LCtrl));
+        key.set_led(LedCode::LCtrl);
         seq.push(key.clone());
-        key.set_led_type(LedType::Key(Key::Esc));
+        key.set_led(LedCode::Esc);
         seq.push(key);
 
-        let key = Effect::Flicker(Flicker::new(
-            LedType::Key(Key::N9),
-            Colour(0, 0, 255),
-            80,
-            40,
-        ));
+        let key = Effect::DoomFlicker(DoomFlicker::new(LedCode::N9, Colour(0, 0, 255), 80, 40));
         seq.push(key);
 
         Self {

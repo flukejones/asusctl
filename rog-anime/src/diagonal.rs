@@ -1,12 +1,12 @@
-use std::{path::Path, time::Duration};
+use std::path::Path;
+use std::time::Duration;
 
-use crate::{
-    data::AnimeDataBuffer,
-    error::{AnimeError, Result},
-    AnimeType,
-};
+use crate::data::AnimeDataBuffer;
+use crate::error::{AnimeError, Result};
+use crate::AnimeType;
 
-/// Mostly intended to be used with ASUS gifs, but can be used for other purposes (like images)
+/// Mostly intended to be used with ASUS gifs, but can be used for other
+/// purposes (like images)
 #[derive(Debug, Clone)]
 pub struct AnimeDiagonal(AnimeType, Vec<Vec<u8>>, Option<Duration>);
 
@@ -25,7 +25,8 @@ impl AnimeDiagonal {
         &mut self.1
     }
 
-    /// Get a full diagonal row where `x` `y` is the starting point  and `len` is the length of data.
+    /// Get a full diagonal row where `x` `y` is the starting point  and `len`
+    /// is the length of data.
     fn get_row(&self, x: usize, y: usize, len: usize) -> Vec<u8> {
         let mut buf = Vec::with_capacity(len);
         for i in 0..len {
@@ -36,8 +37,9 @@ impl AnimeDiagonal {
         buf
     }
 
-    /// Generate the base image from inputs. The result can be displayed as is or
-    /// updated via scale, position, or angle then displayed again after `update()`.
+    /// Generate the base image from inputs. The result can be displayed as is
+    /// or updated via scale, position, or angle then displayed again after
+    /// `update()`.
     #[inline]
     pub fn from_png(
         path: &Path,
@@ -290,7 +292,8 @@ impl AnimeDiagonal {
 
 #[cfg(test)]
 mod tests {
-    use std::{convert::TryFrom, path::PathBuf};
+    use std::convert::TryFrom;
+    use std::path::PathBuf;
 
     use crate::{AnimeDiagonal, AnimePacketType, AnimeType};
 

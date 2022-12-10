@@ -1,6 +1,8 @@
-use std::{thread::sleep, time::Duration};
+use std::thread::sleep;
+use std::time::Duration;
 
-use rog_anime::{usb::get_anime_type, AnimeDiagonal, AnimeType};
+use rog_anime::usb::get_anime_type;
+use rog_anime::{AnimeDiagonal, AnimeType};
 use rog_dbus::RogDbusClientBlocking;
 
 // In usable data:

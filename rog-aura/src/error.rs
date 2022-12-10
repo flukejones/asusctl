@@ -1,5 +1,4 @@
-use std::error;
-use std::fmt;
+use std::{error, fmt};
 
 #[derive(Debug)]
 pub enum Error {
@@ -7,8 +6,9 @@ pub enum Error {
     ParseSpeed,
     ParseDirection,
     ParseBrightness,
-    Io(std::io::Error),
-    Toml(toml::de::Error),
+    IoPath(String, std::io::Error),
+    Ron(ron::Error),
+    RonParse(ron::error::SpannedError),
 }
 
 impl fmt::Display for Error {
@@ -19,22 +19,23 @@ impl fmt::Display for Error {
             Error::ParseSpeed => write!(f, "Could not parse speed"),
             Error::ParseDirection => write!(f, "Could not parse direction"),
             Error::ParseBrightness => write!(f, "Could not parse brightness"),
-            Error::Io(io) => write!(f, "IO Error: {io}"),
-            Error::Toml(e) => write!(f, "TOML Parse Error: {e}"),
+            Error::IoPath(path, io) => write!(f, "IO Error: {path}, {io}"),
+            Error::Ron(e) => write!(f, "RON Parse Error: {e}"),
+            Error::RonParse(e) => write!(f, "RON Parse Error: {e}"),
         }
     }
 }
 
 impl error::Error for Error {}
 
-impl From<std::io::Error> for Error {
-    fn from(e: std::io::Error) -> Self {
-        Self::Io(e)
+impl From<ron::Error> for Error {
+    fn from(e: ron::Error) -> Self {
+        Self::Ron(e)
     }
 }
 
-impl From<toml::de::Error> for Error {
-    fn from(e: toml::de::Error) -> Self {
-        Self::Toml(e)
+impl From<ron::error::SpannedError> for Error {
+    fn from(e: ron::error::SpannedError) -> Self {
+        Self::RonParse(e)
     }
 }

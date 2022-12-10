@@ -1,9 +1,8 @@
-use crate::{
-    anime_cli::AnimeCommand,
-    aura_cli::{LedBrightness, LedPowerCommand1, LedPowerCommand2, SetAuraBuiltin},
-    profiles_cli::{FanCurveCommand, ProfileCommand},
-};
 use gumdrop::Options;
+
+use crate::anime_cli::AnimeCommand;
+use crate::aura_cli::{LedBrightness, LedPowerCommand1, LedPowerCommand2, SetAuraBuiltin};
+use crate::profiles_cli::{FanCurveCommand, ProfileCommand};
 
 #[derive(Default, Options)]
 pub struct CliStart {

@@ -1,11 +1,10 @@
-use crate::{
-    system_state::{FanCurvesState, ProfilesState, SystemState},
-    widgets::fan_graphs,
-    RogApp, RogDbusClientBlocking,
-};
 use egui::Ui;
 use rog_platform::supported::SupportedFunctions;
 use rog_profiles::Profile;
+
+use crate::system_state::{FanCurvesState, ProfilesState, SystemState};
+use crate::widgets::fan_graphs;
+use crate::{RogApp, RogDbusClientBlocking};
 
 impl RogApp {
     pub fn fan_curve_page(&mut self, states: &mut SystemState, ctx: &egui::Context) {
@@ -13,16 +12,26 @@ impl RogApp {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Custom fan curves");
-            ui.label("A fan curve is only active when the related profile is active and the curve is enabled");
+            ui.label(
+                "A fan curve is only active when the related profile is active and the curve is \
+                 enabled",
+            );
             Self::fan_curve(
                 supported,
                 &mut states.profiles,
                 &mut states.fan_curves,
-                &states.asus_dbus, &mut states.error,
+                &states.asus_dbus,
+                &mut states.error,
                 ui,
             );
 
-            fan_graphs(supported, &mut states.fan_curves, &states.asus_dbus, &mut states.error, ui);
+            fan_graphs(
+                supported,
+                &mut states.fan_curves,
+                &states.asus_dbus,
+                &mut states.error,
+                ui,
+            );
         });
     }
 

@@ -1,22 +1,18 @@
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use log::info;
 use log::warn;
-use rog_profiles::fan_curve_set::CurveData;
-use rog_profiles::fan_curve_set::FanCurveSet;
-use rog_profiles::FanCurveProfiles;
-use rog_profiles::Profile;
+use rog_profiles::fan_curve_set::{CurveData, FanCurveSet};
+use rog_profiles::{FanCurveProfiles, Profile};
 use zbus::export::futures_util::lock::Mutex;
 use zbus::export::futures_util::StreamExt;
-use zbus::Connection;
-use zbus::SignalContext;
-
-use std::sync::Arc;
-use zbus::{dbus_interface, fdo::Error};
-
-use crate::error::RogError;
-use crate::CtrlTask;
+use zbus::fdo::Error;
+use zbus::{dbus_interface, Connection, SignalContext};
 
 use super::controller::CtrlPlatformProfile;
+use crate::error::RogError;
+use crate::CtrlTask;
 
 const ZBUS_PATH: &str = "/org/asuslinux/Profile";
 const UNSUPPORTED_MSG: &str =
@@ -91,8 +87,8 @@ impl ProfileZbus {
         Err(Error::Failed(UNSUPPORTED_MSG.to_owned()))
     }
 
-    /// Set a profile fan curve enabled status. Will also activate a fan curve if in the
-    /// same profile mode
+    /// Set a profile fan curve enabled status. Will also activate a fan curve
+    /// if in the same profile mode
     async fn set_fan_curve_enabled(
         &mut self,
         profile: Profile,
@@ -145,10 +141,11 @@ impl ProfileZbus {
         Ok(())
     }
 
-    /// Reset the stored (self) and device curve to the defaults of the platform.
+    /// Reset the stored (self) and device curve to the defaults of the
+    /// platform.
     ///
-    /// Each platform_profile has a different default and the defualt can be read
-    /// only for the currently active profile.
+    /// Each platform_profile has a different default and the defualt can be
+    /// read only for the currently active profile.
     async fn set_active_curve_to_defaults(&self) -> zbus::fdo::Result<()> {
         let mut ctrl = self.0.lock().await;
         ctrl.config.read();
@@ -159,10 +156,11 @@ impl ProfileZbus {
         Ok(())
     }
 
-    /// Reset the stored (self) and device curve to the defaults of the platform.
+    /// Reset the stored (self) and device curve to the defaults of the
+    /// platform.
     ///
-    /// Each platform_profile has a different default and the defualt can be read
-    /// only for the currently active profile.
+    /// Each platform_profile has a different default and the defualt can be
+    /// read only for the currently active profile.
     async fn reset_profile_curves(&self, profile: Profile) -> zbus::fdo::Result<()> {
         let mut ctrl = self.0.lock().await;
         ctrl.config.read();
@@ -244,8 +242,9 @@ impl crate::Reloadable for ProfileZbus {
         let active = ctrl.config.active_profile;
         if let Some(curves) = &mut ctrl.config.fan_curves {
             if let Ok(mut device) = FanCurveProfiles::get_device() {
-                // There is a possibility that the curve was default zeroed, so this call initialises
-                // the data from system read and we need to save it after
+                // There is a possibility that the curve was default zeroed, so this call
+                // initialises the data from system read and we need to save it
+                // after
                 curves.write_profile_curve_to_platform(active, &mut device)?;
                 ctrl.config.write();
             }

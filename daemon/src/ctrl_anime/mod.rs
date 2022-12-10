@@ -2,18 +2,24 @@ pub mod config;
 /// Implements `CtrlTask`, Reloadable, `ZbusRun`
 pub mod trait_impls;
 
-use self::config::{AnimeConfig, AnimeConfigCached};
-use crate::{error::RogError, GetSupported};
+use std::convert::TryFrom;
+use std::error::Error;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use std::thread::sleep;
+
 use ::zbus::export::futures_util::lock::Mutex;
 use log::{error, info, warn};
-use rog_anime::{
-    error::AnimeError,
-    usb::{get_anime_type, pkt_for_flush, pkts_for_init},
-    ActionData, AnimeDataBuffer, AnimePacketType, AnimeType,
-};
-use rog_platform::{hid_raw::HidRaw, supported::AnimeSupportedFunctions, usb_raw::USBRaw};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::{convert::TryFrom, error::Error, sync::Arc, thread::sleep};
+use rog_anime::error::AnimeError;
+use rog_anime::usb::{get_anime_type, pkt_for_flush, pkts_for_init};
+use rog_anime::{ActionData, AnimeDataBuffer, AnimePacketType, AnimeType};
+use rog_platform::hid_raw::HidRaw;
+use rog_platform::supported::AnimeSupportedFunctions;
+use rog_platform::usb_raw::USBRaw;
+
+use self::config::{AnimeConfig, AnimeConfigCached};
+use crate::error::RogError;
+use crate::GetSupported;
 
 impl GetSupported for CtrlAnime {
     type A = AnimeSupportedFunctions;
@@ -56,13 +62,14 @@ impl CtrlAnime {
 
         Ok(ctrl)
     }
+
     // let device = CtrlAnime::get_device(0x0b05, 0x193b)?;
 
-    /// Start an action thread. This is classed as a singleton and there should be only
-    /// one running - so the thread uses atomics to signal run/exit.
+    /// Start an action thread. This is classed as a singleton and there should
+    /// be only one running - so the thread uses atomics to signal run/exit.
     ///
-    /// Because this also writes to the usb device, other write tries (display only) *must*
-    /// get the mutex lock and set the `thread_exit` atomic.
+    /// Because this also writes to the usb device, other write tries (display
+    /// only) *must* get the mutex lock and set the `thread_exit` atomic.
     fn run_thread(inner: Arc<Mutex<CtrlAnime>>, actions: Vec<ActionData>, mut once: bool) {
         if actions.is_empty() {
             warn!("AniMe system actions was empty");
@@ -70,12 +77,15 @@ impl CtrlAnime {
         }
 
         // Loop rules:
-        // - Lock the mutex **only when required**. That is, the lock must be held for the shortest duration possible.
-        // - An AtomicBool used for thread exit should be checked in every loop, including nested
+        // - Lock the mutex **only when required**. That is, the lock must be held for
+        //   the shortest duration possible.
+        // - An AtomicBool used for thread exit should be checked in every loop,
+        //   including nested
 
-        // The only reason for this outer thread is to prevent blocking while waiting for the
-        // next spawned thread to exit
-        // TODO: turn this in to async task (maybe? COuld still risk blocking main thread)
+        // The only reason for this outer thread is to prevent blocking while waiting
+        // for the next spawned thread to exit
+        // TODO: turn this in to async task (maybe? COuld still risk blocking main
+        // thread)
         std::thread::Builder::new()
             .name("AniMe system thread start".into())
             .spawn(move || {

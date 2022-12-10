@@ -1,6 +1,8 @@
-use rog_aura::{usb::AuraDevice, AuraModeNum, AuraZone};
-use serde_derive::{Deserialize, Serialize};
 use std::fmt;
+
+use rog_aura::usb::AuraDevice;
+use rog_aura::{AdvancedAuraType, AuraModeNum, AuraZone};
+use serde_derive::{Deserialize, Serialize};
 use zbus::zvariant::Type;
 
 #[derive(Serialize, Deserialize, Type, Debug, Default, Clone)]
@@ -26,13 +28,31 @@ pub struct PlatformProfileFunctions {
     pub fan_curves: bool,
 }
 
+#[derive(Serialize, Deserialize, Default, Type, Debug, Clone)]
+pub enum AdvancedAura {
+    #[default]
+    None,
+    Zoned,
+    PerKey,
+}
+
+impl From<AdvancedAuraType> for AdvancedAura {
+    fn from(a: AdvancedAuraType) -> Self {
+        match a {
+            AdvancedAuraType::None => Self::None,
+            AdvancedAuraType::Zoned(_) => Self::Zoned,
+            AdvancedAuraType::PerKey => Self::PerKey,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Type, Debug, Default, Clone)]
 pub struct LedSupportedFunctions {
-    pub prod_id: AuraDevice,
-    pub brightness_set: bool,
-    pub stock_led_modes: Vec<AuraModeNum>,
-    pub multizone_led_mode: Vec<AuraZone>,
-    pub per_key_led_mode: bool,
+    pub dev_id: AuraDevice,
+    pub brightness: bool,
+    pub basic_modes: Vec<AuraModeNum>,
+    pub basic_zones: Vec<AuraZone>,
+    pub advanced_type: AdvancedAura,
 }
 
 #[derive(Serialize, Deserialize, Type, Debug, Default, Clone)]
@@ -46,7 +66,7 @@ pub struct RogBiosSupportedFunctions {
 
 impl fmt::Display for SupportedFunctions {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "{}", self.anime_ctrl)?;
+        writeln!(f, "\n{}", self.anime_ctrl)?;
         writeln!(f, "{}", self.charge_ctrl)?;
         writeln!(f, "{}", self.platform_profile)?;
         writeln!(f, "{}", self.keyboard_led)?;
@@ -80,10 +100,11 @@ impl fmt::Display for PlatformProfileFunctions {
 impl fmt::Display for LedSupportedFunctions {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "LED:")?;
-        writeln!(f, "\tBrightness control: {}", self.brightness_set)?;
-        writeln!(f, "\tStock LED modes: {:?}", self.stock_led_modes)?;
-        writeln!(f, "\tMultizone LED mode: {:?}", self.multizone_led_mode)?;
-        writeln!(f, "\tPer key LED mode: {}", self.per_key_led_mode)
+        writeln!(f, "\tDevice ID: {:?}", self.dev_id)?;
+        writeln!(f, "\tBrightness control: {}", self.brightness)?;
+        writeln!(f, "\tBasic modes: {:?}", self.basic_modes)?;
+        writeln!(f, "\tBasic zones: {:?}", self.basic_zones)?;
+        writeln!(f, "\tAdvanced modes: {:?}", self.advanced_type)
     }
 }
 impl fmt::Display for RogBiosSupportedFunctions {

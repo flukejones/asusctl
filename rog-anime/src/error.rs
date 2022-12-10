@@ -1,7 +1,8 @@
-use gif::DecodingError;
-use png_pong::decode::Error as PngError;
 use std::error::Error;
 use std::fmt;
+
+use gif::DecodingError;
+use png_pong::decode::Error as PngError;
 
 pub type Result<T> = std::result::Result<T, AnimeError>;
 
@@ -12,7 +13,8 @@ pub enum AnimeError {
     Png(PngError),
     Gif(DecodingError),
     Format,
-    /// The input was incorrect size, expected size is `IncorrectSize(width, height)`
+    /// The input was incorrect size, expected size is `IncorrectSize(width,
+    /// height)`
     IncorrectSize(u32, u32),
     Dbus(String),
     Udev(String, std::io::Error),

@@ -1,13 +1,15 @@
 //! Utils for writing to the `AniMe` USB device
 //!
 //! Use of the device requires a few steps:
-//! 1. Initialise the device by writing the two packets from `get_init_packets()`
-//! 2. Write data from `AnimePacketType`
-//! 3. Write the packet from `get_flush_packet()`, which tells the device to display the data from step 2
+//! 1. Initialise the device by writing the two packets from
+//! `get_init_packets()` 2. Write data from `AnimePacketType`
+//! 3. Write the packet from `get_flush_packet()`, which tells the device to
+//! display the data from step 2
 //!
 //! Step 1 need to applied only on fresh system boot.
 
-use crate::{error::AnimeError, AnimeType};
+use crate::error::AnimeError;
+use crate::AnimeType;
 
 const INIT_STR: [u8; 15] = [
     0x5e, b'A', b'S', b'U', b'S', b' ', b'T', b'e', b'c', b'h', b'.', b'I', b'n', b'c', b'.',
@@ -17,8 +19,9 @@ const DEV_PAGE: u8 = 0x5e;
 pub const VENDOR_ID: u16 = 0x0b05;
 pub const PROD_ID: u16 = 0x193b;
 
-/// `get_anime_type` is very broad, matching on part of the laptop board name only. For this
-/// reason `find_node()` must be used also to verify if the USB device is available.
+/// `get_anime_type` is very broad, matching on part of the laptop board name
+/// only. For this reason `find_node()` must be used also to verify if the USB
+/// device is available.
 ///
 /// The currently known USB device is `19b6`.
 #[inline]
@@ -34,8 +37,8 @@ pub fn get_anime_type() -> Result<AnimeType, AnimeError> {
     Err(AnimeError::UnsupportedDevice)
 }
 
-/// Get the two device initialization packets. These are required for device start
-/// after the laptop boots.
+/// Get the two device initialization packets. These are required for device
+/// start after the laptop boots.
 #[inline]
 pub const fn pkts_for_init() -> [[u8; PACKET_SIZE]; 2] {
     let mut packets = [[0; PACKET_SIZE]; 2];
@@ -74,8 +77,8 @@ pub const fn pkt_for_set_boot(status: bool) -> [u8; PACKET_SIZE] {
     pkt
 }
 
-/// Get the packet required for setting the device to on. Requires `pkt_for_apply()`
-/// to be written after.
+/// Get the packet required for setting the device to on. Requires
+/// `pkt_for_apply()` to be written after.
 #[inline]
 pub const fn pkt_for_set_on(on: bool) -> [u8; PACKET_SIZE] {
     let mut pkt = [0; PACKET_SIZE];

@@ -1,21 +1,26 @@
+use std::env::args;
+use std::fs::OpenOptions;
+use std::io::{Read, Write};
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
+
 use eframe::{IconData, NativeOptions};
-use log::{error, info};
+use gumdrop::Options;
+use log::{error, info, warn};
+use rog_aura::aura_detection::{LaptopLedData, LedSupportFile};
 use rog_aura::layouts::KeyLayout;
+use rog_control_center::cli_options::CliStart;
+use rog_control_center::config::Config;
+use rog_control_center::error::Result;
+use rog_control_center::startup_error::AppErrorShow;
+use rog_control_center::system_state::SystemState;
 use rog_control_center::tray::init_tray;
-use rog_control_center::update_and_notify::EnabledNotifications;
+use rog_control_center::update_and_notify::{start_notifications, EnabledNotifications};
 use rog_control_center::{
-    config::Config, error::Result, get_ipc_file, on_tmp_dir_exists, print_versions,
-    startup_error::AppErrorShow, system_state::SystemState, update_and_notify::start_notifications,
-    RogApp, RogDbusClientBlocking, SHOWING_GUI, SHOW_GUI,
+    get_ipc_file, on_tmp_dir_exists, print_versions, RogApp, RogDbusClientBlocking, SHOWING_GUI,
+    SHOW_GUI,
 };
 use rog_platform::supported::SupportedFunctions;
-use std::sync::Mutex;
-use std::{
-    fs::OpenOptions,
-    io::{Read, Write},
-    path::PathBuf,
-    sync::Arc,
-};
 use tokio::runtime::Runtime;
 
 #[cfg(not(feature = "mocking"))]
@@ -26,7 +31,19 @@ const BOARD_NAME: &str = "/sys/class/dmi/id/board_name";
 const APP_ICON_PATH: &str = "/usr/share/icons/hicolor/512x512/apps/rog-control-center.png";
 
 fn main() -> Result<()> {
-    print_versions();
+    let args: Vec<String> = args().skip(1).collect();
+
+    let parsed = match CliStart::parse_args_default(&args) {
+        Ok(p) => p,
+        Err(err) => {
+            panic!("source {}", err);
+        }
+    };
+
+    if do_cli_help(&parsed) {
+        return Ok(());
+    }
+
     let mut logger = env_logger::Builder::new();
     logger
         .parse_default_env()
@@ -43,8 +60,8 @@ fn main() -> Result<()> {
         vsync: true,
         decorated: true,
         transparent: false,
-        min_window_size: Some(egui::vec2(840.0, 600.0)),
-        max_window_size: Some(egui::vec2(840.0, 600.0)),
+        min_window_size: Some(egui::vec2(900.0, 600.0)),
+        max_window_size: Some(egui::vec2(900.0, 600.0)),
         run_and_return: true,
         icon_data: Some(load_icon()),
         ..Default::default()
@@ -88,25 +105,66 @@ fn main() -> Result<()> {
         .read(true)
         .open(PathBuf::from(BOARD_NAME))
         .map_err(|e| {
-            println!("{BOARD_NAME}, {e}");
+            println!("DOH! {BOARD_NAME}, {e}");
             e
         })?;
     let mut board_name = String::new();
     file.read_to_string(&mut board_name)?;
 
-    #[cfg(feature = "mocking")]
-    {
-        board_name = "gl504".to_string();
+    let mut led_support = LaptopLedData::get_data();
+
+    let mut path = PathBuf::from(DATA_DIR);
+    let mut layout_name = None;
+    let mut layouts = Vec::new();
+    if parsed.board_name.is_some() || parsed.layout_viewing {
         path.pop();
         path.push("rog-aura");
         path.push("data");
+        layouts = KeyLayout::layout_files(path.to_owned()).unwrap();
+
+        if let Some(name) = &parsed.board_name {
+            if let Some(modes) = LedSupportFile::load_from_config() {
+                if let Some(data) = modes.matcher(name) {
+                    led_support = data;
+                }
+            }
+            board_name = name.to_owned();
+            for layout in &layouts {
+                if layout
+                    .file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .contains(&led_support.layout_name.to_lowercase())
+                {
+                    layout_name = Some(layout.to_owned());
+                }
+            }
+        } else {
+            board_name = "GQ401QM".to_string()
+        };
+
+        if parsed.layout_viewing {
+            layout_name = Some(layouts[0].clone());
+            board_name = layouts[0]
+                .file_name()
+                .unwrap()
+                .to_string_lossy()
+                .split_once('_')
+                .unwrap()
+                .0
+                .to_owned();
+            led_support.layout_name = board_name.clone();
+        }
     }
 
-    let layout = KeyLayout::find_layout(board_name.as_str(), PathBuf::from(DATA_DIR))
+    let layout = KeyLayout::find_layout(led_support, path)
         .map_err(|e| {
-            println!("{BOARD_NAME}, {e}");
+            println!("DERP! , {e}");
         })
-        .unwrap_or_else(|_| KeyLayout::ga401_layout());
+        .unwrap_or_else(|_| {
+            warn!("Did not find a keyboard layout matching {board_name}");
+            KeyLayout::default_layout()
+        });
 
     // tmp-dir must live to the end of program life
     let _tmp_dir = match tempfile::Builder::new()
@@ -118,7 +176,14 @@ fn main() -> Result<()> {
         Err(_) => on_tmp_dir_exists().unwrap(),
     };
 
-    let states = setup_page_state_and_notifs(layout, enabled_notifications, &config, &supported)?;
+    let states = setup_page_state_and_notifs(
+        layout_name,
+        layout,
+        layouts,
+        enabled_notifications,
+        &config,
+        &supported,
+    )?;
 
     init_tray(supported, states.clone());
 
@@ -128,7 +193,7 @@ fn main() -> Result<()> {
         }
 
         let config = Config::load()?;
-        if !config.run_in_background {
+        if !config.run_in_background || parsed.board_name.is_some() || parsed.layout_viewing {
             break;
         }
 
@@ -151,13 +216,17 @@ fn main() -> Result<()> {
 }
 
 fn setup_page_state_and_notifs(
+    layout_testing: Option<PathBuf>,
     keyboard_layout: KeyLayout,
+    keyboard_layouts: Vec<PathBuf>,
     enabled_notifications: Arc<Mutex<EnabledNotifications>>,
     config: &Config,
     supported: &SupportedFunctions,
 ) -> Result<Arc<Mutex<SystemState>>> {
     let page_states = Arc::new(Mutex::new(SystemState::new(
+        layout_testing,
         keyboard_layout,
+        keyboard_layouts,
         enabled_notifications.clone(),
         supported,
     )?));
@@ -215,4 +284,32 @@ fn load_icon() -> IconData {
         width,
         rgba,
     }
+}
+
+fn do_cli_help(parsed: &CliStart) -> bool {
+    if parsed.help {
+        println!("{}", CliStart::usage());
+        println!();
+        if let Some(cmdlist) = CliStart::command_list() {
+            let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
+            for command in commands.iter() {
+                println!("{}", command);
+            }
+        }
+    }
+
+    if parsed.version {
+        print_versions();
+        println!();
+    }
+
+    parsed.help
+}
+
+pub fn get_layout_path(path: &Path, layout_name: &str) -> PathBuf {
+    let mut data_path = PathBuf::from(path);
+    let layout_file = format!("{}_US.ron", layout_name);
+    data_path.push("layouts");
+    data_path.push(layout_file);
+    data_path
 }

@@ -1,17 +1,15 @@
-use super::CtrlAnime;
-use crate::error::RogError;
+use std::sync::atomic::Ordering;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use log::{info, warn};
-use rog_anime::{
-    usb::{pkt_for_apply, pkt_for_set_boot, pkt_for_set_on},
-    AnimeDataBuffer, AnimePowerStates,
-};
-use std::sync::{atomic::Ordering, Arc};
-use zbus::{
-    dbus_interface,
-    export::futures_util::lock::{Mutex, MutexGuard},
-    Connection, SignalContext,
-};
+use rog_anime::usb::{pkt_for_apply, pkt_for_set_boot, pkt_for_set_on};
+use rog_anime::{AnimeDataBuffer, AnimePowerStates};
+use zbus::export::futures_util::lock::{Mutex, MutexGuard};
+use zbus::{dbus_interface, Connection, SignalContext};
+
+use super::CtrlAnime;
+use crate::error::RogError;
 
 pub(super) const ZBUS_PATH: &str = "/org/asuslinux/Anime";
 
@@ -27,11 +25,12 @@ impl crate::ZbusRun for CtrlAnimeZbus {
 }
 
 // None of these calls can be guarnateed to succeed unless we loop until okay
-// If the try_lock *does* succeed then any other thread trying to lock will not grab it
-// until we finish.
+// If the try_lock *does* succeed then any other thread trying to lock will not
+// grab it until we finish.
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl CtrlAnimeZbus {
-    /// Writes a data stream of length. Will force system thread to exit until it is restarted
+    /// Writes a data stream of length. Will force system thread to exit until
+    /// it is restarted
     async fn write(&self, input: AnimeDataBuffer) -> zbus::fdo::Result<()> {
         let lock = self.0.lock().await;
         lock.thread_exit.store(true, Ordering::SeqCst);
@@ -133,7 +132,8 @@ impl CtrlAnimeZbus {
         lock.config.boot_anim_enabled
     }
 
-    /// Notify listeners of the status of AniMe LED power and factory system-status animations
+    /// Notify listeners of the status of AniMe LED power and factory
+    /// system-status animations
     #[dbus_interface(signal)]
     async fn notify_power_states(
         ctxt: &SignalContext<'_>,

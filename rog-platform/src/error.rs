@@ -36,7 +36,12 @@ impl fmt::Display for PlatformError {
             PlatformError::AttrNotFound(deets) => write!(f, "Attribute not found: {}", deets),
             PlatformError::Io(deets) => write!(f, "std::io error: {}", deets),
             PlatformError::MissingFunction(deets) => write!(f, "Missing functionality: {}", deets),
-            PlatformError::MissingLedBrightNode(path, error) => write!(f, "Led node at {} is missing, please check you have the required patch or dkms module installed: {}", path, error),
+            PlatformError::MissingLedBrightNode(path, error) => write!(
+                f,
+                "Led node at {} is missing, please check you have the required patch or dkms \
+                 module installed: {}",
+                path, error
+            ),
             PlatformError::IoPath(path, detail) => write!(f, "{} {}", path, detail),
             PlatformError::NoAuraKeyboard => write!(f, "No supported Aura keyboard"),
             PlatformError::NoAuraNode => write!(f, "No Aura keyboard node found"),

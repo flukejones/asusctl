@@ -1,20 +1,17 @@
-use std::{
-    convert::TryFrom,
-    thread::sleep,
-    time::{Duration, Instant},
-};
+use std::convert::TryFrom;
+use std::thread::sleep;
+use std::time::{Duration, Instant};
 
 use log::info;
 use serde_derive::{Deserialize, Serialize};
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
 
-use crate::{
-    error::{AnimeError, Result},
-    AnimTime, AnimeGif,
-};
+use crate::error::{AnimeError, Result};
+use crate::{AnimTime, AnimeGif};
 
-/// The first 7 bytes of a USB packet are accounted for by `USB_PREFIX1` and `USB_PREFIX2`
+/// The first 7 bytes of a USB packet are accounted for by `USB_PREFIX1` and
+/// `USB_PREFIX2`
 const BLOCK_START: usize = 7;
 /// *Not* inclusive, the byte before this is the final for each "pane"
 const BLOCK_END: usize = 634;
@@ -143,9 +140,11 @@ impl TryFrom<AnimeDataBuffer> for AnimePacketType {
     }
 }
 
-/// This runs the animations as a blocking loop by using the `callback` to write data
+/// This runs the animations as a blocking loop by using the `callback` to write
+/// data
 ///
-/// If `callback` is `Ok(true)` then `run_animation` will exit the animation loop early.
+/// If `callback` is `Ok(true)` then `run_animation` will exit the animation
+/// loop early.
 pub fn run_animation(frames: &AnimeGif, callback: &dyn Fn(AnimeDataBuffer) -> Result<bool>) {
     let mut count = 0;
     let start = Instant::now();

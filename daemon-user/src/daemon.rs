@@ -1,17 +1,18 @@
+use std::fs::OpenOptions;
+use std::io::Read;
+use std::path::PathBuf;
+use std::sync::atomic::AtomicBool;
+use std::sync::{Arc, Mutex};
+
 use rog_anime::usb::get_anime_type;
+use rog_aura::aura_detection::LaptopLedData;
 use rog_aura::layouts::KeyLayout;
 use rog_dbus::RogDbusClientBlocking;
-use rog_user::{
-    ctrl_anime::{CtrlAnime, CtrlAnimeInner},
-    user_config::*,
-    DBUS_NAME,
-};
+use rog_user::ctrl_anime::{CtrlAnime, CtrlAnimeInner};
+use rog_user::user_config::*;
+use rog_user::DBUS_NAME;
 use smol::Executor;
-use std::sync::Mutex;
-use std::{fs::OpenOptions, io::Read, path::PathBuf, sync::Arc};
 use zbus::Connection;
-
-use std::sync::atomic::AtomicBool;
 
 #[cfg(not(feature = "local_data"))]
 const DATA_DIR: &str = "/usr/share/rog-gui/";
@@ -82,11 +83,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut board_name = String::new();
         file.read_to_string(&mut board_name)?;
 
-        let layout = KeyLayout::find_layout(board_name.as_str(), PathBuf::from(DATA_DIR))
+        let led_support = LaptopLedData::get_data();
+
+        let layout = KeyLayout::find_layout(led_support, PathBuf::from(DATA_DIR))
             .map_err(|e| {
                 println!("{BOARD_NAME}, {e}");
             })
-            .unwrap_or_else(|_| KeyLayout::ga401_layout());
+            .unwrap_or_else(|_| KeyLayout::default_layout());
 
         executor
             .spawn(async move {
@@ -99,7 +102,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     aura_config.aura.next_state(&layout);
                     let packets = aura_config.aura.create_packets();
 
-                    client.proxies().led().per_key_raw(packets).unwrap();
+                    client
+                        .proxies()
+                        .led()
+                        .direct_addressing_raw(packets)
+                        .unwrap();
                     std::thread::sleep(std::time::Duration::from_millis(33));
                 }
             })

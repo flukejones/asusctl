@@ -1,8 +1,9 @@
-use log::{error, warn};
-use serde_derive::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::PathBuf;
+
+use log::{error, warn};
+use serde_derive::{Deserialize, Serialize};
 
 pub static CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
 

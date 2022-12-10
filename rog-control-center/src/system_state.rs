@@ -1,19 +1,26 @@
-use std::{
-    collections::{BTreeMap, HashSet},
-    sync::{Arc, Mutex},
-};
+use std::collections::{BTreeMap, HashSet};
+use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
+use std::time::SystemTime;
 
 use egui::Vec2;
-use rog_aura::{layouts::KeyLayout, usb::AuraPowerDev, AuraEffect, AuraModeNum};
-use rog_platform::{platform::GpuMode, supported::SupportedFunctions};
-use rog_profiles::{fan_curve_set::FanCurveSet, FanCurvePU, Profile};
-use supergfxctl::{
-    pci_device::{GfxMode, GfxPower},
-    zbus_proxy::DaemonProxyBlocking as GfxProxyBlocking,
-};
-
-use crate::{error::Result, update_and_notify::EnabledNotifications, RogDbusClientBlocking};
 use log::error;
+use rog_aura::layouts::KeyLayout;
+use rog_aura::usb::AuraPowerDev;
+use rog_aura::{AuraEffect, AuraModeNum};
+use rog_platform::platform::GpuMode;
+use rog_platform::supported::SupportedFunctions;
+use rog_profiles::fan_curve_set::FanCurveSet;
+use rog_profiles::{FanCurvePU, Profile};
+use supergfxctl::pci_device::{GfxMode, GfxPower};
+#[cfg(not(feature = "mocking"))]
+use supergfxctl::zbus_proxy::DaemonProxyBlocking as GfxProxyBlocking;
+
+use crate::error::Result;
+#[cfg(feature = "mocking")]
+use crate::mocking::DaemonProxyBlocking as GfxProxyBlocking;
+use crate::update_and_notify::EnabledNotifications;
+use crate::RogDbusClientBlocking;
 
 #[derive(Clone, Debug, Default)]
 pub struct BiosState {
@@ -149,25 +156,21 @@ pub struct AuraState {
 }
 
 impl AuraState {
-    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
+    pub fn new(layout: &KeyLayout, dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
         Ok(Self {
-            current_mode: if !supported.keyboard_led.stock_led_modes.is_empty() {
+            current_mode: if !layout.basic_modes().is_empty() {
                 dbus.proxies().led().led_mode().unwrap_or_default()
             } else {
                 AuraModeNum::Static
             },
 
-            modes: if !supported.keyboard_led.stock_led_modes.is_empty() {
+            modes: if !layout.basic_modes().is_empty() {
                 dbus.proxies().led().led_modes().unwrap_or_default()
             } else {
                 BTreeMap::new()
             },
             enabled: dbus.proxies().led().leds_enabled().unwrap_or_default(),
-            bright: if !supported.keyboard_led.brightness_set {
-                dbus.proxies().led().led_brightness().unwrap_or_default()
-            } else {
-                2
-            },
+            bright: dbus.proxies().led().led_brightness().unwrap_or_default(),
             wave_red: [0u8; 22],
             wave_green: [0u8; 22],
             wave_blue: [0u8; 22],
@@ -259,13 +262,42 @@ impl PowerState {
     }
 }
 
-///  State stored from system daemons. This is shared with: tray, zbus notifications thread
-/// and the GUI app thread.
-pub struct SystemState {
+#[derive(Clone, Debug)]
+pub struct AuraCreation {
+    /// Specifically for testing the development of keyboard layouts (combined
+    /// with `--layout-name` CLI option)
+    pub layout_testing: Option<PathBuf>,
+    pub layout_last_modified: SystemTime,
     pub keyboard_layout: KeyLayout,
+    pub keyboard_layouts: Vec<PathBuf>,
+    /// current index in to `self.keyboard_layouts`
+    pub keyboard_layout_index: usize,
+}
+
+impl AuraCreation {
+    pub fn new(
+        layout_testing: Option<PathBuf>,
+        keyboard_layout: KeyLayout,
+        keyboard_layouts: Vec<PathBuf>,
+    ) -> Self {
+        Self {
+            layout_testing,
+            layout_last_modified: SystemTime::now(),
+            keyboard_layout,
+            keyboard_layouts,
+            keyboard_layout_index: 0,
+        }
+    }
+}
+
+///  State stored from system daemons. This is shared with: tray, zbus
+/// notifications thread and the GUI app thread.
+pub struct SystemState {
+    pub aura_creation: AuraCreation,
+    //--
     pub enabled_notifications: Arc<Mutex<EnabledNotifications>>,
-    /// Because much of the app state here is the same as `RogBiosSupportedFunctions`
-    /// we can re-use that structure.
+    /// Because much of the app state here is the same as
+    /// `RogBiosSupportedFunctions` we can re-use that structure.
     pub bios: BiosState,
     pub aura: AuraState,
     pub anime: AnimeState,
@@ -274,8 +306,8 @@ pub struct SystemState {
     pub gfx_state: GfxState,
     pub power_state: PowerState,
     pub error: Option<String>,
-    /// Specific field for the tray only so that we can know when it does need update.
-    /// The tray should set this to false when done.
+    /// Specific field for the tray only so that we can know when it does need
+    /// update. The tray should set this to false when done.
     pub tray_should_update: bool,
     pub app_should_update: bool,
     pub asus_dbus: RogDbusClientBlocking<'static>,
@@ -283,17 +315,28 @@ pub struct SystemState {
 }
 
 impl SystemState {
-    /// Creates self, including the relevant dbus connections and proixies for internal use
+    /// Creates self, including the relevant dbus connections and proixies for
+    /// internal use
     pub fn new(
+        layout_testing: Option<PathBuf>,
         keyboard_layout: KeyLayout,
+        keyboard_layouts: Vec<PathBuf>,
         enabled_notifications: Arc<Mutex<EnabledNotifications>>,
         supported: &SupportedFunctions,
     ) -> Result<Self> {
         let (asus_dbus, conn) = RogDbusClientBlocking::new()?;
         let mut error = None;
         let gfx_dbus = GfxProxyBlocking::new(&conn).expect("Couldn't connect to supergfxd");
+        let aura = AuraState::new(&keyboard_layout, &asus_dbus)
+            .map_err(|e| {
+                let e = format!("Could not get AuraState state: {e}");
+                error!("{e}");
+                error = Some(e);
+            })
+            .unwrap_or_default();
+
         Ok(Self {
-            keyboard_layout,
+            aura_creation: AuraCreation::new(layout_testing, keyboard_layout, keyboard_layouts),
             enabled_notifications,
             power_state: PowerState::new(supported, &asus_dbus)
                 .map_err(|e| {
@@ -309,13 +352,7 @@ impl SystemState {
                     error = Some(e);
                 })
                 .unwrap_or_default(),
-            aura: AuraState::new(supported, &asus_dbus)
-                .map_err(|e| {
-                    let e = format!("Could not get AuraState state: {e}");
-                    error!("{e}");
-                    error = Some(e);
-                })
-                .unwrap_or_default(),
+            aura,
             anime: AnimeState::new(supported, &asus_dbus)
                 .map_err(|e| {
                     let e = format!("Could not get AanimeState state: {e}");
@@ -364,7 +401,13 @@ impl Default for SystemState {
         let gfx_dbus = GfxProxyBlocking::new(&conn).expect("Couldn't connect to supergfxd");
 
         Self {
-            keyboard_layout: KeyLayout::ga401_layout(),
+            aura_creation: AuraCreation {
+                layout_testing: None,
+                layout_last_modified: SystemTime::now(),
+                keyboard_layout: KeyLayout::default_layout(),
+                keyboard_layouts: Default::default(),
+                keyboard_layout_index: 0,
+            },
             enabled_notifications: Default::default(),
             bios: BiosState {
                 post_sound: Default::default(),

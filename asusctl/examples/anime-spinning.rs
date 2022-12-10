@@ -1,12 +1,14 @@
 use std::convert::TryFrom;
-use std::{
-    env, error::Error, f32::consts::PI, path::Path, process::exit, thread::sleep, time::Duration,
-};
+use std::env;
+use std::error::Error;
+use std::f32::consts::PI;
+use std::path::Path;
+use std::process::exit;
+use std::thread::sleep;
+use std::time::Duration;
 
-use rog_anime::{
-    usb::get_anime_type,
-    AnimeDataBuffer, {AnimeImage, Vec2},
-};
+use rog_anime::usb::get_anime_type;
+use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2};
 use rog_dbus::RogDbusClientBlocking;
 
 fn main() -> Result<(), Box<dyn Error>> {

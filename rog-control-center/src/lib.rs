@@ -1,14 +1,13 @@
 pub mod app;
-use std::{
-    fs::{remove_dir_all, File, OpenOptions},
-    io::{Read, Write},
-    process::exit,
-    thread::sleep,
-    time::Duration,
-};
+use std::fs::{remove_dir_all, File, OpenOptions};
+use std::io::{Read, Write};
+use std::process::exit;
+use std::thread::sleep;
+use std::time::Duration;
 
 pub use app::RogApp;
 
+pub mod cli_options;
 pub mod config;
 pub mod error;
 #[cfg(feature = "mocking")]
@@ -22,12 +21,12 @@ pub mod widgets;
 
 #[cfg(feature = "mocking")]
 pub use mocking::RogDbusClientBlocking;
+use nix::sys::stat;
+use nix::unistd;
 #[cfg(not(feature = "mocking"))]
 pub use rog_dbus::RogDbusClientBlocking;
-
-use nix::{sys::stat, unistd};
 use tempfile::TempDir;
-//use log::{error, info, warn};
+// use log::{error, info, warn};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 

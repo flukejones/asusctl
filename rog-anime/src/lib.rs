@@ -11,8 +11,8 @@ pub use grid::*;
 mod image;
 pub use image::*;
 
-/// A grid of data that is intended to be read out and displayed on the `AniMe` as
-/// a diagonal
+/// A grid of data that is intended to be read out and displayed on the `AniMe`
+/// as a diagonal
 mod diagonal;
 pub use diagonal::*;
 
@@ -21,8 +21,8 @@ pub use diagonal::*;
 mod gif;
 pub use crate::gif::*;
 
-/// A container of images/grids/gifs/pauses which can be iterated over to generate
-/// cool effects
+/// A container of images/grids/gifs/pauses which can be iterated over to
+/// generate cool effects
 mod sequencer;
 pub use sequencer::*;
 

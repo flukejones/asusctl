@@ -1,15 +1,19 @@
+use std::convert::TryFrom;
+use std::fs::File;
+use std::path::Path;
+use std::time::Duration;
+
 use glam::Vec2;
 use serde_derive::{Deserialize, Serialize};
-use std::convert::TryFrom;
-use std::{fs::File, path::Path, time::Duration};
 
-use crate::error::AnimeError;
-use crate::{error::Result, AnimeDataBuffer, AnimeDiagonal, AnimeImage, AnimeType, Pixel};
+use crate::error::{AnimeError, Result};
+use crate::{AnimeDataBuffer, AnimeDiagonal, AnimeImage, AnimeType, Pixel};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AnimeFrame {
     /// Precomputed data for the frame. This can be transferred directly to the
-    /// the `asusd` daemon over dbus or converted to USB packet with `AnimePacketType::from(buffer)`
+    /// the `asusd` daemon over dbus or converted to USB packet with
+    /// `AnimePacketType::from(buffer)`
     data: AnimeDataBuffer,
     delay: Duration,
 }
@@ -33,7 +37,8 @@ impl AnimeFrame {
 pub enum AnimTime {
     /// Time in milliseconds for animation to run
     Time(Duration),
-    /// How many full animation loops to run or how many seconds if image is static
+    /// How many full animation loops to run or how many seconds if image is
+    /// static
     Count(u32),
     /// Run for infinite time
     Infinite,
@@ -169,8 +174,8 @@ impl AnimeGif {
         Ok(Self(frames, duration))
     }
 
-    /// Create an animation using a gif of any size. This method must precompute the
-    /// result.
+    /// Create an animation using a gif of any size. This method must precompute
+    /// the result.
     #[inline]
     pub fn from_gif(
         file_name: &Path,
@@ -243,9 +248,10 @@ impl AnimeGif {
         Ok(Self(frames, duration))
     }
 
-    /// Make a static gif out of a greyscale png. If no duration is specified then the default
-    /// will be 1 second long. If `AnimTime::Cycles` is specified for `duration` then this can
-    /// be considered how many seconds the image will show for.
+    /// Make a static gif out of a greyscale png. If no duration is specified
+    /// then the default will be 1 second long. If `AnimTime::Cycles` is
+    /// specified for `duration` then this can be considered how many
+    /// seconds the image will show for.
     #[inline]
     pub fn from_png(
         file_name: &Path,

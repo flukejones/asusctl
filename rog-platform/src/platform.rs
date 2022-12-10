@@ -1,14 +1,13 @@
-use std::{fmt::Display, path::PathBuf, str::FromStr};
+use std::fmt::Display;
+use std::path::PathBuf;
+use std::str::FromStr;
 
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
 use zbus::zvariant::Type;
 
-use crate::{
-    attr_bool, attr_u8,
-    error::{PlatformError, Result},
-    to_device,
-};
+use crate::error::{PlatformError, Result};
+use crate::{attr_bool, attr_u8, to_device};
 
 /// The "platform" device provides access to things like:
 /// - `dgpu_disable`
@@ -24,6 +23,21 @@ pub struct AsusPlatform {
 }
 
 impl AsusPlatform {
+    attr_bool!("dgpu_disable", path);
+
+    attr_bool!("egpu_enable", path);
+
+    attr_bool!("panel_od", path);
+
+    attr_bool!("gpu_mux_mode", path);
+
+    // This is technically the same as `platform_profile` since both are tied
+    // in-kernel
+    attr_u8!("throttle_thermal_policy", path);
+
+    // The acpi platform_profile support
+    attr_u8!("platform_profile", pp_path);
+
     pub fn new() -> Result<Self> {
         let mut enumerator = udev::Enumerator::new().map_err(|err| {
             warn!("{}", err);
@@ -54,15 +68,6 @@ impl AsusPlatform {
             "asus-nb-wmi not found".into(),
         ))
     }
-
-    attr_bool!("dgpu_disable", path);
-    attr_bool!("egpu_enable", path);
-    attr_bool!("panel_od", path);
-    attr_bool!("gpu_mux_mode", path);
-    // This is technically the same as `platform_profile` since both are tied in-kernel
-    attr_u8!("throttle_thermal_policy", path);
-    // The acpi platform_profile support
-    attr_u8!("platform_profile", pp_path);
 }
 
 #[derive(Serialize, Deserialize, Default, Type, Debug, PartialEq, Eq, Clone, Copy)]

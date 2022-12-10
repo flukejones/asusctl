@@ -1,11 +1,13 @@
-use crate::VERSION;
-use log::{error, info, warn};
-use rog_anime::{error::AnimeError, ActionData, ActionLoader, AnimTime, Vec2};
-use rog_anime::{AnimeType, Fade};
-use serde_derive::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::time::Duration;
+
+use log::{error, info, warn};
+use rog_anime::error::AnimeError;
+use rog_anime::{ActionData, ActionLoader, AnimTime, AnimeType, Fade, Vec2};
+use serde_derive::{Deserialize, Serialize};
+
+use crate::VERSION;
 
 pub static ANIME_CONFIG_PATH: &str = "/etc/asusd/anime.conf";
 pub static ANIME_CACHE_PATH: &str = "/etc/asusd/anime-cache.conf";

@@ -4,12 +4,15 @@ pub const LED_INIT3: [u8; 6] = [0x5d, 0x05, 0x20, 0x31, 0, 0x08];
 pub const LED_INIT4: &str = "^ASUS Tech.Inc."; // ^ == 0x5e
 pub const LED_INIT5: [u8; 6] = [0x5e, 0x05, 0x20, 0x31, 0, 0x08];
 
+use std::fmt::Display;
+use std::str::FromStr;
+
 use serde_derive::{Deserialize, Serialize};
-use std::{fmt::Display, str::FromStr};
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
 
-use crate::{error::Error, LED_MSG_LEN};
+use crate::error::Error;
+use crate::LED_MSG_LEN;
 
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -280,8 +283,8 @@ impl FromStr for AuraZone {
     }
 }
 
-/// Default factory modes structure. This easily converts to an USB HID packet with:
-/// ```rust
+/// Default factory modes structure. This easily converts to an USB HID packet
+/// with: ```rust
 /// // let bytes: [u8; LED_MSG_LEN] = mode.into();
 /// ```
 #[cfg_attr(feature = "dbus", derive(Type))]
@@ -366,8 +369,8 @@ impl AuraParameters {
 }
 
 impl AuraEffect {
-    /// A helper to provide detail on what effects have which parameters, e.g the static
-    /// factory mode accepts only one colour.
+    /// A helper to provide detail on what effects have which parameters, e.g
+    /// the static factory mode accepts only one colour.
     pub const fn allowed_parameters(mode: AuraModeNum) -> AuraParameters {
         match mode {
             AuraModeNum::Static

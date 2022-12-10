@@ -12,7 +12,6 @@ impl RogApp {
                     egui::warn_if_debug_build(ui);
                 });
 
-                /***********************************************************/
                 // Drag area
                 let text_color = ctx.style().visuals.text_color();
                 let mut titlebar_rect = ui.available_rect_before_wrap();
@@ -23,8 +22,9 @@ impl RogApp {
                 {
                     frame.drag_window();
                 }
-                /***********************************************************/
+
                 let height = titlebar_rect.height();
+
                 // Paint the title:
                 ui.painter().text(
                     titlebar_rect.right_top() + vec2(0.0, height / 2.0),
@@ -35,9 +35,10 @@ impl RogApp {
                 );
                 // // Add the close button:
                 // let close_response = ui.put(
-                //     Rect::from_min_size(titlebar_rect.right_top(), Vec2::splat(height)),
-                //     Button::new(RichText::new("❌").size(height - 4.0)).frame(false),
-                // );
+                //     Rect::from_min_size(titlebar_rect.right_top(),
+                // Vec2::splat(height)),
+                //     Button::new(RichText::new("❌").size(height -
+                // 4.0)).frame(false), );
                 // if close_response.clicked() {
                 //     frame.close();
                 // }

@@ -1,27 +1,22 @@
 use async_trait::async_trait;
 use serde_derive::{Deserialize, Serialize};
-use zbus::{dbus_interface, zvariant::Type, Connection};
+use zbus::zvariant::Type;
+use zbus::{dbus_interface, Connection};
 
-use crate::{
-    ctrl_anime::CtrlAnime, ctrl_aura::controller::CtrlKbdLed, ctrl_platform::CtrlPlatform,
-    ctrl_power::CtrlPower, ctrl_profiles::controller::CtrlPlatformProfile, GetSupported,
-};
+use crate::ctrl_anime::CtrlAnime;
+use crate::ctrl_aura::controller::CtrlKbdLed;
+use crate::ctrl_platform::CtrlPlatform;
+use crate::ctrl_power::CtrlPower;
+use crate::ctrl_profiles::controller::CtrlPlatformProfile;
+use crate::GetSupported;
 
-use rog_platform::supported::*;
-
-#[derive(Serialize, Deserialize, Type)]
-pub struct SupportedFunctions {
-    pub anime_ctrl: AnimeSupportedFunctions,
-    pub charge_ctrl: ChargeSupportedFunctions,
-    pub platform_profile: PlatformProfileFunctions,
-    pub keyboard_led: LedSupportedFunctions,
-    pub rog_bios_ctrl: RogBiosSupportedFunctions,
-}
+#[derive(Serialize, Deserialize, Debug, Type)]
+pub struct SupportedFunctions(rog_platform::supported::SupportedFunctions);
 
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl SupportedFunctions {
-    fn supported_functions(&self) -> &SupportedFunctions {
-        self
+    pub fn supported_functions(&self) -> &rog_platform::supported::SupportedFunctions {
+        &self.0
     }
 }
 
@@ -36,12 +31,12 @@ impl GetSupported for SupportedFunctions {
     type A = SupportedFunctions;
 
     fn get_supported() -> Self::A {
-        SupportedFunctions {
+        Self(rog_platform::supported::SupportedFunctions {
             anime_ctrl: CtrlAnime::get_supported(),
             keyboard_led: CtrlKbdLed::get_supported(),
             charge_ctrl: CtrlPower::get_supported(),
             platform_profile: CtrlPlatformProfile::get_supported(),
             rog_bios_ctrl: CtrlPlatform::get_supported(),
-        }
+        })
     }
 }

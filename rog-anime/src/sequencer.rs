@@ -1,14 +1,15 @@
+use std::convert::TryFrom;
+use std::path::PathBuf;
+use std::time::Duration;
+
 use glam::Vec2;
 use serde_derive::{Deserialize, Serialize};
-use std::convert::TryFrom;
-use std::{path::PathBuf, time::Duration};
 
-use crate::{
-    error::Result, AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType,
-};
+use crate::error::Result;
+use crate::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType};
 
-/// All the possible `AniMe` actions that can be used. This enum is intended to be
-/// a helper for loading up `ActionData`.
+/// All the possible `AniMe` actions that can be used. This enum is intended to
+/// be a helper for loading up `ActionData`.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum ActionLoader {
     /// Full gif sequence. Immutable.
@@ -23,7 +24,8 @@ pub enum ActionLoader {
         time: AnimTime,
         brightness: f32,
     },
-    /// Animated gif. If the file is a png a static gif is created using the `time` properties
+    /// Animated gif. If the file is a png a static gif is created using the
+    /// `time` properties
     ImageAnimation {
         file: PathBuf,
         scale: f32,
@@ -44,13 +46,14 @@ pub enum ActionLoader {
     Pause(Duration),
 }
 
-/// All the possible `AniMe` actions that can be used. The enum is intended to be
-/// used in a array allowing the user to cycle through a series of actions.
+/// All the possible `AniMe` actions that can be used. The enum is intended to
+/// be used in a array allowing the user to cycle through a series of actions.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum ActionData {
     /// Full gif sequence. Immutable.
     Animation(AnimeGif),
-    /// Basic image, can have properties changed and image updated via those properties
+    /// Basic image, can have properties changed and image updated via those
+    /// properties
     Image(Box<AnimeDataBuffer>),
     /// A pause to be used between sequences
     Pause(Duration),
@@ -174,8 +177,8 @@ impl Sequences {
         Self(Vec::new(), anime_type)
     }
 
-    /// Use a base `AnimeAction` to generate the precomputed data and insert in to
-    /// the run buffer
+    /// Use a base `AnimeAction` to generate the precomputed data and insert in
+    /// to the run buffer
     #[inline]
     pub fn insert(&mut self, index: usize, action: &ActionLoader) -> Result<()> {
         self.0
@@ -183,9 +186,9 @@ impl Sequences {
         Ok(())
     }
 
-    /// Remove an item at this position from the run buffer. If the `index` supplied
-    /// is not in range then `None` is returned, otherwise the `ActionData` at that location
-    /// is yeeted and returned.
+    /// Remove an item at this position from the run buffer. If the `index`
+    /// supplied is not in range then `None` is returned, otherwise the
+    /// `ActionData` at that location is yeeted and returned.
     #[inline]
     pub fn remove_item(&mut self, index: usize) -> Option<ActionData> {
         if index < self.0.len() {

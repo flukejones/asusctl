@@ -1,11 +1,11 @@
+use std::fs::{create_dir, OpenOptions};
+use std::io::{Read, Write};
+
 use log::{error, info, warn};
 use serde_derive::{Deserialize, Serialize};
-use std::{
-    fs::{create_dir, OpenOptions},
-    io::{Read, Write},
-};
 
-use crate::{error::Error, update_and_notify::EnabledNotifications};
+use crate::error::Error;
+use crate::update_and_notify::EnabledNotifications;
 
 const CFG_DIR: &str = "rog";
 const CFG_FILE_NAME: &str = "rog-control-center.cfg";

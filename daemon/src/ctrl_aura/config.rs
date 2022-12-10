@@ -1,13 +1,14 @@
-use crate::laptops::{LaptopLedData, ASUS_KEYBOARD_DEVICES};
+use std::collections::{BTreeMap, HashSet};
+use std::fs::{File, OpenOptions};
+use std::io::{Read, Write};
+
 use log::{error, warn};
+use rog_aura::aura_detection::{LaptopLedData, ASUS_KEYBOARD_DEVICES};
 use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Direction, LedBrightness, Speed, GRADIENT};
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::keyboard_led::KeyboardLed;
 use serde_derive::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashSet};
-use std::fs::{File, OpenOptions};
-use std::io::{Read, Write};
 
 pub static AURA_CONFIG_PATH: &str = "/etc/asusd/aura.conf";
 
@@ -70,6 +71,7 @@ impl AuraPowerConfig {
             }
         }
     }
+
     pub fn set_0x1866(&mut self, power: AuraDev1866, on: bool) {
         if let Self::AuraDev1866(p) = self {
             if on {
@@ -227,14 +229,14 @@ impl AuraConfig {
         // create a default config here
         let mut config = AuraConfig::default();
 
-        for n in &support_data.standard {
+        for n in &support_data.basic_modes {
             config
                 .builtins
                 .insert(*n, AuraEffect::default_with_mode(*n));
 
-            if !support_data.multizone.is_empty() {
+            if !support_data.basic_zones.is_empty() {
                 let mut default = vec![];
-                for (i, tmp) in support_data.multizone.iter().enumerate() {
+                for (i, tmp) in support_data.basic_zones.iter().enumerate() {
                     default.push(AuraEffect {
                         mode: *n,
                         zone: *tmp,
@@ -287,7 +289,8 @@ impl AuraConfig {
 
     /// Set the mode data, current mode, and if multizone enabled.
     ///
-    /// Multipurpose, will accept `AuraEffect` with zones and put in the correct store.
+    /// Multipurpose, will accept `AuraEffect` with zones and put in the correct
+    /// store.
     pub fn set_builtin(&mut self, effect: AuraEffect) {
         self.current_mode = effect.mode;
         if effect.zone() == AuraZone::None {
@@ -325,8 +328,9 @@ impl AuraConfig {
 
 #[cfg(test)]
 mod tests {
-    use super::AuraConfig;
     use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour};
+
+    use super::AuraConfig;
 
     #[test]
     fn set_multizone_4key_config() {

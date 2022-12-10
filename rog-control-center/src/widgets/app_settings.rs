@@ -1,6 +1,7 @@
 use egui::Ui;
 
-use crate::{config::Config, system_state::SystemState};
+use crate::config::Config;
+use crate::system_state::SystemState;
 
 pub fn app_settings(config: &mut Config, states: &mut SystemState, ui: &mut Ui) {
     ui.heading("ROG GUI Settings");

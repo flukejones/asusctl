@@ -15,7 +15,7 @@ BIN_ROG := rog-control-center
 BIN_C := asusctl
 BIN_D := asusd
 BIN_U := asusd-user
-LEDCFG := asusd-ledmodes.toml
+LEDCFG := aura_support.ron
 
 SRC := Cargo.toml Cargo.lock Makefile $(shell find -type f -wholename '**/src/*.rs')
 
@@ -42,14 +42,14 @@ install:
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_ROG)" "$(DESTDIR)$(bindir)/$(BIN_ROG)"
 	$(INSTALL_DATA) "./rog-control-center/data/$(BIN_ROG).desktop" "$(DESTDIR)$(datarootdir)/applications/$(BIN_ROG).desktop"
 	$(INSTALL_DATA) "./rog-control-center/data/$(BIN_ROG).png" "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/$(BIN_ROG).png"
-	cd rog-aura/data/layouts && find . -type f -name "*.toml" -exec $(INSTALL_DATA) "{}" "$(DESTDIR)$(datarootdir)/rog-gui/layouts/{}" \;
+	cd rog-aura/data/layouts && find . -type f -name "*.ron" -exec $(INSTALL_DATA) "{}" "$(DESTDIR)$(datarootdir)/rog-gui/layouts/{}" \;
 
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_C)" "$(DESTDIR)$(bindir)/$(BIN_C)"
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_D)" "$(DESTDIR)$(bindir)/$(BIN_D)"
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_U)" "$(DESTDIR)$(bindir)/$(BIN_U)"
 
 	$(INSTALL_DATA) "./data/$(BIN_D).rules" "$(DESTDIR)$(libdir)/udev/rules.d/99-$(BIN_D).rules"
-	$(INSTALL_DATA) "./data/$(LEDCFG)" "$(DESTDIR)/etc/asusd/$(LEDCFG)"
+	$(INSTALL_DATA) "./rog-aura/data/$(LEDCFG)" "$(DESTDIR)$(datarootdir)/asusd/$(LEDCFG)"
 	$(INSTALL_DATA) "./data/$(BIN_D).conf" "$(DESTDIR)$(datarootdir)/dbus-1/system.d/$(BIN_D).conf"
 
 	$(INSTALL_DATA) "./data/$(BIN_D).service" "$(DESTDIR)$(libdir)/systemd/system/$(BIN_D).service"

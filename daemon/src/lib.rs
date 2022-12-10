@@ -11,8 +11,6 @@ pub mod ctrl_platform;
 pub mod ctrl_power;
 /// Control platform profiles + fan-curves if available
 pub mod ctrl_profiles;
-/// Laptop matching to determine capabilities
-pub mod laptops;
 
 /// Fetch all supported functions for the laptop
 pub mod ctrl_supported;
@@ -21,21 +19,27 @@ pub mod error;
 
 use std::future::Future;
 
-use crate::error::RogError;
 use async_trait::async_trait;
-use log::{debug, warn};
+use log::{debug, info, warn};
 use logind_zbus::manager::ManagerProxy;
-use zbus::{export::futures_util::StreamExt, zvariant::ObjectPath, Connection, SignalContext};
+use zbus::export::futures_util::StreamExt;
+use zbus::zvariant::ObjectPath;
+use zbus::{Connection, SignalContext};
 
-/// This macro adds a function which spawns an `inotify` task on the passed in `Executor`.
+use crate::error::RogError;
+
+/// This macro adds a function which spawns an `inotify` task on the passed in
+/// `Executor`.
 ///
-/// The generated function is `watch_<name>()`. Self requires the following methods to be available:
-/// - `<name>() -> SomeValue`, functionally is a getter, but is allowed to have side effects.
+/// The generated function is `watch_<name>()`. Self requires the following
+/// methods to be available:
+/// - `<name>() -> SomeValue`, functionally is a getter, but is allowed to have
+///   side effects.
 /// - `notify_<name>(SignalContext, SomeValue)`
 ///
-/// In most cases if `SomeValue` is stored in a config then `<name>()` getter is expected to update it.
-/// The getter should *never* write back to the path or attribute that is being watched or an
-/// infinite loop will occur.
+/// In most cases if `SomeValue` is stored in a config then `<name>()` getter is
+/// expected to update it. The getter should *never* write back to the path or
+/// attribute that is being watched or an infinite loop will occur.
 ///
 /// # Example
 ///
@@ -80,6 +84,15 @@ macro_rules! task_watch_item {
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+pub fn print_board_info() {
+    let dmi = sysfs_class::DmiId::default();
+    let board_name = dmi.board_name().expect("Could not get board_name");
+    let prod_family = dmi.product_family().expect("Could not get product_family");
+
+    info!("Product family: {}", prod_family.trim());
+    info!("Board name: {}", board_name.trim());
+}
+
 #[async_trait]
 pub trait Reloadable {
     async fn reload(&mut self) -> Result<(), RogError>;
@@ -115,13 +128,14 @@ pub trait CtrlTask {
         SignalContext::new(connection, Self::zbus_path())
     }
 
-    /// Implement to set up various tasks that may be required, using the `Executor`.
-    /// No blocking loops are allowed, or they must be run on a separate thread.
+    /// Implement to set up various tasks that may be required, using the
+    /// `Executor`. No blocking loops are allowed, or they must be run on a
+    /// separate thread.
     async fn create_tasks(&self, signal: SignalContext<'static>) -> Result<(), RogError>;
 
     // /// Create a timed repeating task
-    // async fn repeating_task(&self, millis: u64, mut task: impl FnMut() + Send + 'static) {
-    //     use std::time::Duration;
+    // async fn repeating_task(&self, millis: u64, mut task: impl FnMut() + Send +
+    // 'static) {     use std::time::Duration;
     //     use tokio::time;
     //     let mut timer = time::interval(Duration::from_millis(millis));
     //     tokio::spawn(async move {
@@ -130,10 +144,11 @@ pub trait CtrlTask {
     //     });
     // }
 
-    /// Free helper method to create tasks to run on: sleep, wake, shutdown, boot
+    /// Free helper method to create tasks to run on: sleep, wake, shutdown,
+    /// boot
     ///
-    /// The closures can potentially block, so execution time should be the minimal possible
-    /// such as save a variable.
+    /// The closures can potentially block, so execution time should be the
+    /// minimal possible such as save a variable.
     async fn create_sys_event_tasks<
         Fut1,
         Fut2,

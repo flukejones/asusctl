@@ -1,28 +1,25 @@
 //! A seld-contained tray icon with menus. The control of app<->tray is done via
 //! commands over an MPSC channel.
 
-use std::{
-    io::Write,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        mpsc::{channel, Receiver},
-        Arc, Mutex,
-    },
-    time::Duration,
-};
+use std::io::Write;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc::{channel, Receiver};
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
-use gtk::{gio::Icon, prelude::*};
-use rog_dbus::zbus_platform::RogBiosProxyBlocking;
-use rog_platform::{platform::GpuMode, supported::SupportedFunctions};
-
-use crate::{error::Result, get_ipc_file, system_state::SystemState, SHOW_GUI};
+use gtk::gio::Icon;
+use gtk::prelude::*;
 use libappindicator::{AppIndicator, AppIndicatorStatus};
-use supergfxctl::{
-    pci_device::{GfxMode, GfxPower},
-    zbus_proxy::DaemonProxyBlocking as GfxProxyBlocking,
-};
-
 use log::{debug, error, info, trace, warn};
+use rog_dbus::zbus_platform::RogBiosProxyBlocking;
+use rog_platform::platform::GpuMode;
+use rog_platform::supported::SupportedFunctions;
+use supergfxctl::pci_device::{GfxMode, GfxPower};
+use supergfxctl::zbus_proxy::DaemonProxyBlocking as GfxProxyBlocking;
+
+use crate::error::Result;
+use crate::system_state::SystemState;
+use crate::{get_ipc_file, SHOW_GUI};
 
 const TRAY_APP_ICON: &str = "rog-control-center";
 const TRAY_LABEL: &str = "ROG Control Center";
@@ -433,7 +430,8 @@ impl ROGTray {
         debug!("ROGTray: cleared self");
     }
 
-    /// Reset GTK menu to internal state, this can be called after clearing and rebuilding the menu too.
+    /// Reset GTK menu to internal state, this can be called after clearing and
+    /// rebuilding the menu too.
     fn menu_update(&mut self) {
         self.tray.set_menu(&mut self.menu);
         self.set_icon(self.icon);

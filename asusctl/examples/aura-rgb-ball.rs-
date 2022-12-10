@@ -106,7 +106,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 c[2] = 255;
             };
         }
-        dbus.proxies().led().per_key_raw(colours.get())?;
+        dbus.proxies().led().direct_addressing_raw(colours.get())?;
 
         std::thread::sleep(std::time::Duration::from_millis(150));
     }

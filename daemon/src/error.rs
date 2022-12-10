@@ -1,8 +1,9 @@
+use std::convert::From;
+use std::fmt;
+
 use rog_anime::error::AnimeError;
 use rog_platform::error::PlatformError;
 use rog_profiles::error::ProfileError;
-use std::convert::From;
-use std::fmt;
 
 #[derive(Debug)]
 pub enum RogError {
@@ -50,14 +51,21 @@ impl fmt::Display for RogError {
             RogError::NotFound(deets) => write!(f, "Not found: {}", deets),
             RogError::DoTask(deets) => write!(f, "Task error: {}", deets),
             RogError::MissingFunction(deets) => write!(f, "Missing functionality: {}", deets),
-            RogError::MissingLedBrightNode(path, error) => write!(f, "Led node at {} is missing, please check you have the required patch or dkms module installed: {}", path, error),
+            RogError::MissingLedBrightNode(path, error) => write!(
+                f,
+                "Led node at {} is missing, please check you have the required patch or dkms \
+                 module installed: {}",
+                path, error
+            ),
             RogError::ReloadFail(deets) => write!(f, "Reload error: {}", deets),
             RogError::Profiles(deets) => write!(f, "Profile error: {}", deets),
             RogError::Initramfs(detail) => write!(f, "Initiramfs error: {}", detail),
             RogError::Modprobe(detail) => write!(f, "Modprobe error: {}", detail),
             RogError::Io(detail) => write!(f, "std::io error: {}", detail),
             RogError::Zbus(detail) => write!(f, "Zbus error: {}", detail),
-            RogError::ChargeLimit(value) => write!(f, "Invalid charging limit, not in range 20-100%: {}", value),
+            RogError::ChargeLimit(value) => {
+                write!(f, "Invalid charging limit, not in range 20-100%: {}", value)
+            }
             RogError::AuraEffectNotSupported => write!(f, "Aura effect not supported"),
             RogError::NoAuraKeyboard => write!(f, "No supported Aura keyboard"),
             RogError::NoAuraNode => write!(f, "No Aura keyboard node found"),

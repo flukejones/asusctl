@@ -13,14 +13,18 @@ edition = "2021"
 exclude = ["data"]
 
 [features]
-default = ["dbus", "toml"]
+default = ["dbus", "ron"]
 dbus = ["zbus"]
 
 [dependencies]
 serde.workspace = true
 serde_derive.workspace = true
-toml = { workspace = true, optional = true }
 zbus = { workspace = true, optional = true }
 
-[dev-dependencies]
-serde_json.workspace = true
+# cli and logging
+log.workspace = true
+
+# Device control
+sysfs-class.workspace = true # used for backlight control and baord ID
+
+ron = { version = "*", optional = true }

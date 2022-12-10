@@ -1,17 +1,19 @@
-use crate::{config::Config, error::RogError, GetSupported};
-use crate::{task_watch_item, CtrlTask};
-use async_trait::async_trait;
-use log::{info, warn};
-use rog_platform::platform::{AsusPlatform, GpuMode};
-use rog_platform::supported::RogBiosSupportedFunctions;
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::Path;
 use std::process::Command;
 use std::sync::Arc;
+
+use async_trait::async_trait;
+use log::{info, warn};
+use rog_platform::platform::{AsusPlatform, GpuMode};
+use rog_platform::supported::RogBiosSupportedFunctions;
 use zbus::export::futures_util::lock::Mutex;
-use zbus::Connection;
-use zbus::{dbus_interface, SignalContext};
+use zbus::{dbus_interface, Connection, SignalContext};
+
+use crate::config::Config;
+use crate::error::RogError;
+use crate::{task_watch_item, CtrlTask, GetSupported};
 
 const ZBUS_PATH: &str = "/org/asuslinux/Platform";
 const ASUS_POST_LOGO_SOUND: &str =
@@ -214,7 +216,8 @@ impl CtrlPlatform {
         };
     }
 
-    /// Get the `panel_od` value from platform. Updates the stored value in internal config also.
+    /// Get the `panel_od` value from platform. Updates the stored value in
+    /// internal config also.
     fn panel_od(&self) -> bool {
         let od = self
             .platform
@@ -317,10 +320,12 @@ impl crate::Reloadable for CtrlPlatform {
 
 impl CtrlPlatform {
     task_watch_item!(panel_od platform);
+
     task_watch_item!(dgpu_disable platform);
+
     task_watch_item!(egpu_enable platform);
     // NOTE: see note further below
-    //task_watch_item!(gpu_mux_mode platform);
+    // task_watch_item!(gpu_mux_mode platform);
 }
 
 #[async_trait]
@@ -373,9 +378,9 @@ impl CtrlTask for CtrlPlatform {
         self.watch_panel_od(signal_ctxt.clone()).await?;
         self.watch_dgpu_disable(signal_ctxt.clone()).await?;
         self.watch_egpu_enable(signal_ctxt.clone()).await?;
-        // NOTE: Can't have this as a watch because on a write to it, it reverts back to booted-with value
-        //  as it does not actually change until reboot.
-        //self.watch_gpu_mux_mode(signal_ctxt.clone()).await?;
+        // NOTE: Can't have this as a watch because on a write to it, it reverts back to
+        // booted-with value  as it does not actually change until reboot.
+        // self.watch_gpu_mux_mode(signal_ctxt.clone()).await?;
 
         Ok(())
     }

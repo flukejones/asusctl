@@ -1,5 +1,3 @@
-use crate::error::RogError;
-use crate::GetSupported;
 use log::{info, warn};
 use rog_platform::platform::AsusPlatform;
 use rog_platform::supported::PlatformProfileFunctions;
@@ -7,6 +5,8 @@ use rog_profiles::error::ProfileError;
 use rog_profiles::{FanCurveProfiles, Profile};
 
 use super::config::ProfileConfig;
+use crate::error::RogError;
+use crate::GetSupported;
 
 pub struct CtrlPlatformProfile {
     pub config: ProfileConfig,
@@ -18,7 +18,10 @@ impl GetSupported for CtrlPlatformProfile {
 
     fn get_supported() -> Self::A {
         if !Profile::is_platform_profile_supported() {
-            warn!("platform_profile kernel interface not found, your laptop does not support this, or the interface is missing.");
+            warn!(
+                "platform_profile kernel interface not found, your laptop does not support this, \
+                 or the interface is missing."
+            );
         }
 
         let res = FanCurveProfiles::is_supported();
@@ -28,7 +31,10 @@ impl GetSupported for CtrlPlatformProfile {
         };
 
         if !fan_curve_supported {
-            info!("fan curves kernel interface not found, your laptop does not support this, or the interface is missing.");
+            info!(
+                "fan curves kernel interface not found, your laptop does not support this, or the \
+                 interface is missing."
+            );
         }
 
         PlatformProfileFunctions {
@@ -74,7 +80,8 @@ impl CtrlPlatformProfile {
         self.config.write();
     }
 
-    /// Toggle to next profile in list. This will first read the config, switch, then write out
+    /// Toggle to next profile in list. This will first read the config, switch,
+    /// then write out
     pub(super) fn set_next_profile(&mut self) -> Result<(), RogError> {
         // Read first just incase the user has modified the config before calling this
         match self.config.active_profile {

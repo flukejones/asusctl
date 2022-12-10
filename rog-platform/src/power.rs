@@ -2,11 +2,8 @@ use std::path::PathBuf;
 
 use log::{info, warn};
 
-use crate::{
-    attr_u8,
-    error::{PlatformError, Result},
-    to_device,
-};
+use crate::error::{PlatformError, Result};
+use crate::{attr_u8, to_device};
 
 /// The "platform" device provides access to things like:
 /// - `dgpu_disable`
@@ -23,9 +20,14 @@ pub struct AsusPower {
 }
 
 impl AsusPower {
+    attr_u8!("charge_control_end_threshold", battery);
+
+    attr_u8!("online", mains);
+
     /// When checking for battery this will look in order:
     /// - if attr `manufacturer` contains `asus`
-    /// - if attr `charge_control_end_threshold` exists and `energy_full_design` >= 50 watt
+    /// - if attr `charge_control_end_threshold` exists and `energy_full_design`
+    ///   >= 50 watt
     /// - if syspath end conatins `BAT`
     /// - if attr `type` is `battery` (last resort)
     pub fn new() -> Result<Self> {
@@ -62,7 +64,11 @@ impl AsusPower {
                                 .attribute_value("charge_control_end_threshold")
                                 .is_some()
                             {
-                                info!("Found battery power at {:?}, matched charge_control_end_threshold", device.sysname());
+                                info!(
+                                    "Found battery power at {:?}, matched \
+                                     charge_control_end_threshold",
+                                    device.sysname()
+                                );
                                 battery = Some(device.syspath().to_path_buf());
                             } else if device.sysname().to_string_lossy().starts_with("BAT") {
                                 info!(
@@ -100,7 +106,4 @@ impl AsusPower {
             "Did not find a battery".to_owned(),
         ))
     }
-
-    attr_u8!("charge_control_end_threshold", battery);
-    attr_u8!("online", mains);
 }

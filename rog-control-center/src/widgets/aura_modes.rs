@@ -1,42 +1,41 @@
-use std::sync::{
-    atomic::{AtomicU8, Ordering},
-    Arc,
-};
+use std::sync::atomic::{AtomicU8, Ordering};
+use std::sync::Arc;
 
 use egui::{RichText, Ui};
+use rog_aura::layouts::KeyLayout;
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour, Speed};
-use rog_platform::supported::SupportedFunctions;
 
 use crate::system_state::{AuraState, SystemState};
 
-pub fn aura_modes_group(
-    supported: &SupportedFunctions,
-    states: &mut SystemState,
-    freq: &mut Arc<AtomicU8>,
-    ui: &mut Ui,
-) {
+pub fn aura_modes_group(states: &mut SystemState, freq: &mut Arc<AtomicU8>, ui: &mut Ui) {
     let mut changed = false;
     let mut selected = states.aura.current_mode;
     let allowed = AuraEffect::allowed_parameters(selected);
 
-    let has_keyzones = supported
-        .keyboard_led
-        .multizone_led_mode
+    let SystemState { aura_creation, .. } = states;
+
+    let has_keyzones = aura_creation
+        .keyboard_layout
+        .basic_zones()
         .contains(&AuraZone::Key2);
-    let has_logo = supported
-        .keyboard_led
-        .multizone_led_mode
+    let has_logo = aura_creation
+        .keyboard_layout
+        .basic_zones()
         .contains(&AuraZone::Logo);
-    let has_lightbar = supported
-        .keyboard_led
-        .multizone_led_mode
+    let has_lightbar = aura_creation
+        .keyboard_layout
+        .basic_zones()
         .contains(&AuraZone::BarLeft)
-        || supported
-            .keyboard_led
-            .multizone_led_mode
+        || aura_creation
+            .keyboard_layout
+            .basic_zones()
             .contains(&AuraZone::BarRight);
 
-    ui.heading("Aura modes");
+    if let Some(p) = aura_creation.layout_testing.as_ref() {
+        ui.heading(format!("{p:?}"));
+    } else {
+        ui.heading("Aura modes");
+    }
     let mut item = |a: AuraModeNum, ui: &mut Ui| {
         if ui
             .selectable_value(&mut selected, a, format!("{:?}", a))
@@ -168,7 +167,7 @@ pub fn aura_modes_group(
     ui.separator();
     ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
         if ui.add(egui::Button::new("Cancel")).clicked() {
-            match AuraState::new(supported, &states.asus_dbus) {
+            match AuraState::new(&aura_creation.keyboard_layout, &states.asus_dbus) {
                 Ok(a) => states.aura.modes = a.modes,
                 Err(e) => states.error = Some(e.to_string()),
             }
@@ -176,6 +175,32 @@ pub fn aura_modes_group(
 
         if ui.add(egui::Button::new("Apply")).clicked() {
             changed = true;
+        }
+
+        if aura_creation.layout_testing.is_some() {
+            if ui.add(egui::Button::new("Next layout")).clicked() {
+                if aura_creation.keyboard_layout_index < aura_creation.keyboard_layouts.len() - 1 {
+                    aura_creation.keyboard_layout_index += 1;
+                }
+                aura_creation.layout_testing = Some(
+                    aura_creation.keyboard_layouts[aura_creation.keyboard_layout_index].clone(),
+                );
+                aura_creation.keyboard_layout =
+                    KeyLayout::from_file(aura_creation.layout_testing.as_ref().unwrap().as_path())
+                        .unwrap();
+            }
+
+            if ui.add(egui::Button::new("Prev layout")).clicked() {
+                if aura_creation.keyboard_layout_index > 0 {
+                    aura_creation.keyboard_layout_index -= 1;
+                }
+                aura_creation.layout_testing = Some(
+                    aura_creation.keyboard_layouts[aura_creation.keyboard_layout_index].clone(),
+                );
+                aura_creation.keyboard_layout =
+                    KeyLayout::from_file(aura_creation.layout_testing.as_ref().unwrap().as_path())
+                        .unwrap();
+            }
         }
     });
 
@@ -185,8 +210,8 @@ pub fn aura_modes_group(
     //         ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
     //             if ui.add(egui::Button::new("Cancel")).clicked() {
     //                 let notif = states.aura.was_notified.clone();
-    //                 states.aura.modes = AuraState::new(notif, supported, dbus).modes;
-    //             }
+    //                 states.aura.modes = AuraState::new(notif, supported,
+    // dbus).modes;             }
 
     //             if ui.add(egui::Button::new("Apply")).clicked() {
     //                 changed = true;

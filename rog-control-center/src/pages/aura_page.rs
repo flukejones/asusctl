@@ -1,18 +1,16 @@
-use std::{sync::atomic::Ordering, time::Duration};
+use std::sync::atomic::Ordering;
+use std::time::Duration;
 
 use egui::Color32;
 use rog_aura::{AuraEffect, AuraModeNum};
 
-use crate::{
-    system_state::SystemState,
-    widgets::{aura_modes_group, keyboard},
-    RogApp,
-};
+use crate::system_state::SystemState;
+use crate::widgets::{aura_modes_group, keyboard};
+use crate::RogApp;
 
 impl RogApp {
     pub fn aura_page(&mut self, states: &mut SystemState, ctx: &egui::Context) {
         let Self {
-            supported,
             oscillator1,
             oscillator2,
             oscillator3,
@@ -70,9 +68,13 @@ impl RogApp {
 
         // TODO: animation of colour changes/periods/blending
         egui::CentralPanel::default().show(ctx, |ui| {
-            aura_modes_group(supported, states, oscillator_freq, ui);
-
-            keyboard(ui, &states.keyboard_layout, &mut states.aura, colour);
+            aura_modes_group(states, oscillator_freq, ui);
+            keyboard(
+                ui,
+                &states.aura_creation.keyboard_layout,
+                &mut states.aura,
+                colour,
+            );
         });
 
         // Only do repaint request if on this page

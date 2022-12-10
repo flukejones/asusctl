@@ -8,10 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Added option to set `disable_nvidia_powerd_on_battery`
 - Add short log entry to throttle_thermal_policy change detection
+- ROGCC: Don't notify user if changing to same mux mode
+- ROGCC: Add CLI opt for loading a keyboard layout for testing, with live-reload on file change
+- ROGCC: Add CLI opt for viewing all layout files + filenames to help find a layout matching your laptop
+  + Both of these options would hopefully be temporary and replaced with a "wizard" GUI helper
+### BREAKING
+- Rename aura dbus method from `per_key_raw` to `direct_addressing_raw` and add doc comment
+- Changes to aura.conf:
+- Changes to asusd-ledmodes.toml:
+  + Rename `standard` to `basic_modes`
+  + Rename `multizone` to `basic_zones`
+  + Raname `per_key` to `advanced` and change type from `bool` to `AdvancedAuraType`
+  + Removed `prod_family`
+  + Split all entries to `board_name` (separating `board_names`) (now a huge file)
+  + removed `asusd-ledmodes.toml` in favour of `aura_support.ron` due to an unsupported type in toml
+- Rename and adjust `LedSupportedFunctions` to closely match the above
 
 ## [v4.5.8]
 ### Changed
 - Fix incorrect stop/start order of nvidia-powerd on AC plug/unplug
+
+## [v4.5.7]
+### Changed
+- ROGCC: Don't notify user if changing to same mux mode
+- 
 
 ## [v4.5.7]
 ### Changed
@@ -576,6 +596,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix small deadlock with awaits
 
-## [1.0.0] - 2020-08-13
-
-- Major fork and refactor to use asus-hid patch for ASUS N-Key device
+## [1.0.0] 

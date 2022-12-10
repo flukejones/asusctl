@@ -1,10 +1,11 @@
 use std::convert::TryFrom;
-use std::{env, error::Error, path::Path, process::exit};
+use std::env;
+use std::error::Error;
+use std::path::Path;
+use std::process::exit;
 
-use rog_anime::{
-    usb::get_anime_type,
-    AnimeDataBuffer, {AnimeImage, Vec2},
-};
+use rog_anime::usb::get_anime_type;
+use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2};
 use rog_dbus::RogDbusClientBlocking;
 
 fn main() -> Result<(), Box<dyn Error>> {

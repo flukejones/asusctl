@@ -1,10 +1,8 @@
-use crate::{
-    system_state::SystemState,
-    widgets::{
-        anime_power_group, app_settings, aura_power_group, platform_profile, rog_bios_group,
-    },
-    RogApp,
+use crate::system_state::SystemState;
+use crate::widgets::{
+    anime_power_group, app_settings, aura_power_group, platform_profile, rog_bios_group,
 };
+use crate::RogApp;
 
 impl RogApp {
     pub fn system_page(&mut self, states: &mut SystemState, ctx: &egui::Context) {
@@ -21,7 +19,6 @@ impl RogApp {
                 egui::Grid::new("grid_of_bits")
                     .min_col_width(rect.width() / 2.0)
                     .show(ui, |ui| {
-                        /******************************************************/
                         ui.vertical(|ui| {
                             ui.separator();
                             if supported.platform_profile.platform_profile {
@@ -34,7 +31,6 @@ impl RogApp {
                         });
                         ui.end_row();
 
-                        /******************************************************/
                         ui.vertical(|ui| {
                             ui.separator();
                             app_settings(config, states, ui);
@@ -45,7 +41,6 @@ impl RogApp {
                         });
                         ui.end_row();
 
-                        /******************************************************/
                         ui.vertical(|ui| {
                             ui.separator();
                             if supported.anime_ctrl.0 {

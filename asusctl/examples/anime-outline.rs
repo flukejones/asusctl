@@ -1,4 +1,5 @@
-use rog_anime::{usb::get_anime_type, AnimeDataBuffer};
+use rog_anime::usb::get_anime_type;
+use rog_anime::AnimeDataBuffer;
 use rog_dbus::RogDbusClientBlocking;
 
 // In usable data:

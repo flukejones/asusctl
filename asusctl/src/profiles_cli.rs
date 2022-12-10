@@ -1,5 +1,6 @@
 use gumdrop::Options;
-use rog_profiles::{fan_curve_set::CurveData, FanCurvePU, Profile};
+use rog_profiles::fan_curve_set::CurveData;
+use rog_profiles::{FanCurvePU, Profile};
 
 #[derive(Debug, Clone, Options)]
 pub struct ProfileCommand {

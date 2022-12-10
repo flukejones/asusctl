@@ -1,26 +1,30 @@
-//! `update_and_notify` is responsible for both notifications *and* updating stored statuses
-//! about the system state. This is done through either direct, intoify, zbus notifications
-//! or similar methods.
+//! `update_and_notify` is responsible for both notifications *and* updating
+//! stored statuses about the system state. This is done through either direct,
+//! intoify, zbus notifications or similar methods.
 
-use crate::{config::Config, error::Result, system_state::SystemState};
+use std::fmt::Display;
+use std::process::Command;
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
+
 use log::{error, info, trace, warn};
 use notify_rust::{Hint, Notification, NotificationHandle, Urgency};
-use rog_dbus::{
-    zbus_anime::AnimeProxy, zbus_led::LedProxy, zbus_platform::RogBiosProxy,
-    zbus_power::PowerProxy, zbus_profile::ProfileProxy,
-};
+use rog_dbus::zbus_anime::AnimeProxy;
+use rog_dbus::zbus_led::LedProxy;
+use rog_dbus::zbus_platform::RogBiosProxy;
+use rog_dbus::zbus_power::PowerProxy;
+use rog_dbus::zbus_profile::ProfileProxy;
 use rog_platform::platform::GpuMode;
 use rog_profiles::Profile;
 use serde::{Deserialize, Serialize};
-use std::{
-    fmt::Display,
-    process::Command,
-    sync::{Arc, Mutex},
-    time::Duration,
-};
-use supergfxctl::{pci_device::GfxPower, zbus_proxy::DaemonProxy as SuperProxy};
+use supergfxctl::pci_device::GfxPower;
+use supergfxctl::zbus_proxy::DaemonProxy as SuperProxy;
 use tokio::time::sleep;
 use zbus::export::futures_util::{future, StreamExt};
+
+use crate::config::Config;
+use crate::error::Result;
+use crate::system_state::SystemState;
 
 const NOTIF_HEADER: &str = "ROG Control";
 
@@ -356,7 +360,8 @@ pub fn start_notifications(
                             if status != GfxPower::Unknown && status != last_status {
                                 if let Ok(config) = notifs_enabled1.lock() {
                                     if config.all_enabled && config.receive_notify_gfx_status {
-                                        // Required check because status cycles through active/unknown/suspended
+                                        // Required check because status cycles through
+                                        // active/unknown/suspended
                                         if let Ok(ref mut lock) = last_notif.lock() {
                                             notify!(
                                                 do_gpu_status_notif(

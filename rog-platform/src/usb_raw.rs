@@ -1,5 +1,6 @@
-use rusb::{Device, DeviceHandle};
 use std::time::Duration;
+
+use rusb::{Device, DeviceHandle};
 
 use crate::error::{PlatformError, Result};
 
