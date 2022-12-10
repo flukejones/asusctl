@@ -24,6 +24,9 @@ use zbus::export::futures_util::{future, StreamExt};
 
 const NOTIF_HEADER: &str = "ROG Control";
 
+static mut POWER_AC_CMD: Option<Command> = None;
+static mut POWER_BAT_CMD: Option<Command> = None;
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(default)]
 pub struct EnabledNotifications {
@@ -131,10 +134,35 @@ macro_rules! recv_notif {
 type SharedHandle = Arc<Mutex<Option<NotificationHandle>>>;
 
 pub fn start_notifications(
+    config: &Config,
     page_states: Arc<Mutex<SystemState>>,
     enabled_notifications: Arc<Mutex<EnabledNotifications>>,
 ) -> Result<()> {
     let last_notification: SharedHandle = Arc::new(Mutex::new(None));
+
+    // Setup the AC/BAT commands that will run on poweer status change
+    unsafe {
+        let prog: Vec<&str> = config.ac_command.split_whitespace().collect();
+        if prog.len() > 1 {
+            let mut cmd = Command::new(prog[0]);
+
+            for arg in prog.iter().skip(1) {
+                cmd.arg(*arg);
+            }
+            POWER_AC_CMD = Some(cmd);
+        }
+    }
+    unsafe {
+        let prog: Vec<&str> = config.bat_command.split_whitespace().collect();
+        if prog.len() > 1 {
+            let mut cmd = Command::new(prog[0]);
+
+            for arg in prog.iter().skip(1) {
+                cmd.arg(*arg);
+            }
+            POWER_BAT_CMD = Some(cmd);
+        }
+    }
 
     // BIOS notif
     recv_notif!(
@@ -426,8 +454,22 @@ where
 
 fn ac_power_notification(message: &str, on: &bool) -> Result<NotificationHandle> {
     let data = if *on {
+        unsafe {
+            if let Some(cmd) = POWER_AC_CMD.as_mut() {
+                if let Err(e) = cmd.spawn() {
+                    error!("AC power command error: {e}");
+                }
+            }
+        }
         "plugged".to_owned()
     } else {
+        unsafe {
+            if let Some(cmd) = POWER_BAT_CMD.as_mut() {
+                if let Err(e) = cmd.spawn() {
+                    error!("Battery power command error: {e}");
+                }
+            }
+        }
         "unplugged".to_owned()
     };
     Ok(base_notification(message, &data).show()?)

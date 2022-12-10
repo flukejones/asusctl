@@ -4,7 +4,6 @@ use std::{
     fs::{create_dir, OpenOptions},
     io::{Read, Write},
 };
-//use log::{error, info, warn};
 
 use crate::{error::Error, update_and_notify::EnabledNotifications};
 
@@ -12,11 +11,13 @@ const CFG_DIR: &str = "rog";
 const CFG_FILE_NAME: &str = "rog-control-center.cfg";
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(default)]
 pub struct Config {
     pub run_in_background: bool,
     pub startup_in_background: bool,
+    pub ac_command: String,
+    pub bat_command: String,
     pub enable_notifications: bool,
+    // This field must be last
     pub enabled_notifications: EnabledNotifications,
 }
 
@@ -27,6 +28,8 @@ impl Default for Config {
             startup_in_background: false,
             enable_notifications: true,
             enabled_notifications: EnabledNotifications::default(),
+            ac_command: String::new(),
+            bat_command: String::new(),
         }
     }
 }
@@ -67,6 +70,9 @@ impl Config {
             } else if let Ok(data) = toml::from_str::<Config>(&buf) {
                 info!("Loaded config file {path:?}");
                 return Ok(data);
+            } else if let Ok(data) = toml::from_str::<Config455>(&buf) {
+                info!("Loaded old v4.5.5 config file {path:?}");
+                return Ok(data.into());
             }
         }
         Err(Error::ConfigLoadFail)
@@ -98,5 +104,26 @@ impl Config {
         file.write_all(t.as_bytes())?;
         info!("Saved config file {path:?}");
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct Config455 {
+    pub run_in_background: bool,
+    pub startup_in_background: bool,
+    pub enable_notifications: bool,
+    pub enabled_notifications: EnabledNotifications,
+}
+
+impl From<Config455> for Config {
+    fn from(c: Config455) -> Self {
+        Self {
+            run_in_background: c.run_in_background,
+            startup_in_background: c.startup_in_background,
+            enable_notifications: c.enable_notifications,
+            enabled_notifications: c.enabled_notifications,
+            ac_command: String::new(),
+            bat_command: String::new(),
+        }
     }
 }

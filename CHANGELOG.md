@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ROGCC: Better handle the use of GPU MUX without supergfxd
 - ROGCC: Track if reboot required when not using supergfxd
 - Add env var for logging levels to daemon and gui (`RUST_LOG=<error|warn|info|debug|trace>`)
-
+- ROGCC: Very basic support for running a command on AC/Battery switching, this is in config at `~/.config/rog/rog-control-center.cfg`, and for now must be edited by hand and ROGCC restarted (run ROGCC in BG to use effectively)
+  
 ## [v4.5.5]
 ### Changed
 - remove an unwrap() causing panic on main ROGCC thread

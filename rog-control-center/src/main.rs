@@ -118,7 +118,7 @@ fn main() -> Result<()> {
         Err(_) => on_tmp_dir_exists().unwrap(),
     };
 
-    let states = setup_page_state_and_notifs(layout, enabled_notifications, &supported)?;
+    let states = setup_page_state_and_notifs(layout, enabled_notifications, &config, &supported)?;
 
     init_tray(supported, states.clone());
 
@@ -153,6 +153,7 @@ fn main() -> Result<()> {
 fn setup_page_state_and_notifs(
     keyboard_layout: KeyLayout,
     enabled_notifications: Arc<Mutex<EnabledNotifications>>,
+    config: &Config,
     supported: &SupportedFunctions,
 ) -> Result<Arc<Mutex<SystemState>>> {
     let page_states = Arc::new(Mutex::new(SystemState::new(
@@ -161,7 +162,7 @@ fn setup_page_state_and_notifs(
         supported,
     )?));
 
-    start_notifications(page_states.clone(), enabled_notifications)?;
+    start_notifications(config, page_states.clone(), enabled_notifications)?;
 
     Ok(page_states)
 }
