@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change how the profile/fan change task monitors changes due to TUF laptops behaving slightly different
 - ROGCC: Better handle the use of GPU MUX without supergfxd
 - ROGCC: Track if reboot required when not using supergfxd
-- Add env var for logging levels to daemon and gui (`RUST_LOG=<error|warn|info|debug|trace`)
+- Add env var for logging levels to daemon and gui (`RUST_LOG=<error|warn|info|debug|trace>`)
 
 ## [v4.5.5]
 ### Changed

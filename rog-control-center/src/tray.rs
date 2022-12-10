@@ -310,6 +310,8 @@ impl ROGTray {
                 set_mux_off1.store(true, Ordering::Relaxed);
             });
         }
+
+        let mut reboot_required = false;
         if supported.rog_bios_ctrl.gpu_mux {
             let gfx_dbus = self.bios_proxy.clone();
             gpu_menu.add("Ultimate (Reboot required)", move |_| {
@@ -341,14 +343,29 @@ impl ROGTray {
                     })
                     .ok();
             }
+
+            if let Ok(mode) = self.bios_proxy.gpu_mux_mode() {
+                let mode = match mode {
+                    GpuMode::Discrete => GfxMode::AsusMuxDiscreet,
+                    _ => GfxMode::Hybrid,
+                };
+                reboot_required = mode != current_mode;
+            }
         }
 
         let active = match current_mode {
             GfxMode::AsusMuxDiscreet => "Discreet".to_owned(),
             _ => current_mode.to_string(),
         };
+
+        let reboot_required = if reboot_required {
+            "(Reboot required)"
+        } else {
+            ""
+        };
+
         self.add_radio_sub_menu(
-            &format!("GPU Mode: {current_mode}"),
+            &format!("GPU Mode: {active} {reboot_required}"),
             active.as_str(),
             &gpu_menu,
         );
@@ -358,8 +375,8 @@ impl ROGTray {
 
     fn menu_add_mux(&mut self, current_mode: GfxMode) {
         let gfx_dbus = self.bios_proxy.clone();
-        let mut reboot_required = false;
 
+        let mut reboot_required = false;
         if let Ok(mode) = gfx_dbus.gpu_mux_mode() {
             let mode = match mode {
                 GpuMode::Discrete => GfxMode::AsusMuxDiscreet,
