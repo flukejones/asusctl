@@ -319,7 +319,8 @@ impl CtrlPlatform {
     task_watch_item!(panel_od platform);
     task_watch_item!(dgpu_disable platform);
     task_watch_item!(egpu_enable platform);
-    task_watch_item!(gpu_mux_mode platform);
+    // NOTE: see note further below
+    //task_watch_item!(gpu_mux_mode platform);
 }
 
 #[async_trait]
@@ -372,7 +373,9 @@ impl CtrlTask for CtrlPlatform {
         self.watch_panel_od(signal_ctxt.clone()).await?;
         self.watch_dgpu_disable(signal_ctxt.clone()).await?;
         self.watch_egpu_enable(signal_ctxt.clone()).await?;
-        self.watch_gpu_mux_mode(signal_ctxt.clone()).await?;
+        // NOTE: Can't have this as a watch because on a write to it, it reverts back to booted-with value
+        //  as it does not actually change until reboot.
+        //self.watch_gpu_mux_mode(signal_ctxt.clone()).await?;
 
         Ok(())
     }

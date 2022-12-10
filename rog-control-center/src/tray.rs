@@ -4,6 +4,7 @@
 use std::{
     io::Write,
     sync::{
+        atomic::{AtomicBool, Ordering},
         mpsc::{channel, Receiver},
         Arc, Mutex,
     },
@@ -21,7 +22,7 @@ use supergfxctl::{
     zbus_proxy::DaemonProxyBlocking as GfxProxyBlocking,
 };
 
-use log::{debug, error, info, trace};
+use log::{debug, error, info, trace, warn};
 
 const TRAY_APP_ICON: &str = "rog-control-center";
 const TRAY_LABEL: &str = "ROG Control Center";
@@ -241,7 +242,10 @@ impl ROGTray {
     }
 
     fn menu_add_gpu(&mut self, supported: &SupportedFunctions, current_mode: GfxMode) {
+        let set_mux_off = Arc::new(AtomicBool::new(false));
+
         let gfx_dbus = self.gfx_proxy.clone();
+        let set_mux_off1 = set_mux_off.clone();
         let mut gpu_menu = RadioGroup::new("Integrated", move |_| {
             let mode = gfx_dbus
                 .mode()
@@ -259,9 +263,11 @@ impl ROGTray {
                     })
                     .ok();
             }
+            set_mux_off1.store(true, Ordering::Relaxed);
         });
 
         let gfx_dbus = self.gfx_proxy.clone();
+        let set_mux_off1 = set_mux_off.clone();
         gpu_menu.add("Hybrid", move |_| {
             let mode = gfx_dbus
                 .mode()
@@ -279,7 +285,31 @@ impl ROGTray {
                     })
                     .ok();
             }
+            set_mux_off1.store(true, Ordering::Relaxed);
         });
+        if supported.rog_bios_ctrl.egpu_enable {
+            let set_mux_off1 = set_mux_off.clone();
+            let gfx_dbus = self.gfx_proxy.clone();
+            gpu_menu.add("eGPU", move |_| {
+                let mode = gfx_dbus
+                    .mode()
+                    .map_err(|e| {
+                        error!("ROGTray: mode: {e}");
+                        e
+                    })
+                    .unwrap_or(GfxMode::None);
+                if mode != GfxMode::Egpu {
+                    gfx_dbus
+                        .set_mode(&GfxMode::Egpu)
+                        .map_err(|e| {
+                            error!("ROGTray: set_mode: {e}");
+                            e
+                        })
+                        .ok();
+                }
+                set_mux_off1.store(true, Ordering::Relaxed);
+            });
+        }
         if supported.rog_bios_ctrl.gpu_mux {
             let gfx_dbus = self.bios_proxy.clone();
             gpu_menu.add("Ultimate (Reboot required)", move |_| {
@@ -300,27 +330,17 @@ impl ROGTray {
                         .ok();
                 }
             });
-        }
-        if supported.rog_bios_ctrl.egpu_enable {
-            let gfx_dbus = self.gfx_proxy.clone();
-            gpu_menu.add("eGPU", move |_| {
-                let mode = gfx_dbus
-                    .mode()
+
+            if set_mux_off.load(Ordering::Relaxed) {
+                warn!("Selected non-dgpu mode, must set MUX to optimus");
+                self.bios_proxy
+                    .set_gpu_mux_mode(GpuMode::Optimus)
                     .map_err(|e| {
-                        error!("ROGTray: mode: {e}");
+                        error!("ROGTray: set_mode: {e}");
                         e
                     })
-                    .unwrap_or(GfxMode::None);
-                if mode != GfxMode::Egpu {
-                    gfx_dbus
-                        .set_mode(&GfxMode::Egpu)
-                        .map_err(|e| {
-                            error!("ROGTray: set_mode: {e}");
-                            e
-                        })
-                        .ok();
-                }
-            });
+                    .ok();
+            }
         }
 
         let active = match current_mode {
@@ -329,6 +349,61 @@ impl ROGTray {
         };
         self.add_radio_sub_menu(
             &format!("GPU Mode: {current_mode}"),
+            active.as_str(),
+            &gpu_menu,
+        );
+
+        debug!("ROGTray: appended gpu menu");
+    }
+
+    fn menu_add_mux(&mut self, current_mode: GfxMode) {
+        let gfx_dbus = self.bios_proxy.clone();
+        let mut reboot_required = false;
+
+        if let Ok(mode) = gfx_dbus.gpu_mux_mode() {
+            let mode = match mode {
+                GpuMode::Discrete => GfxMode::AsusMuxDiscreet,
+                _ => GfxMode::Hybrid,
+            };
+            reboot_required = mode != current_mode;
+        }
+
+        let mut gpu_menu = RadioGroup::new("Optimus", move |_| {
+            gfx_dbus
+                .set_gpu_mux_mode(GpuMode::Optimus)
+                .map_err(|e| {
+                    error!("ROGTray: set_mode: {e}");
+                    e
+                })
+                .ok();
+            debug!("Setting GPU mode: {}", GpuMode::Optimus);
+        });
+
+        let gfx_dbus = self.bios_proxy.clone();
+        gpu_menu.add("Ultimate", move |_| {
+            gfx_dbus
+                .set_gpu_mux_mode(GpuMode::Discrete)
+                .map_err(|e| {
+                    error!("ROGTray: set_mode: {e}");
+                    e
+                })
+                .ok();
+            debug!("Setting GPU mode: {}", GpuMode::Discrete);
+        });
+
+        let active = match current_mode {
+            GfxMode::AsusMuxDiscreet => "Ultimate".to_owned(),
+            GfxMode::Hybrid => "Optimus".to_owned(),
+            _ => current_mode.to_string(),
+        };
+        debug!("Current active GPU mode: {}", active);
+        let reboot_required = if reboot_required {
+            "(Reboot required)"
+        } else {
+            ""
+        };
+        self.add_radio_sub_menu(
+            &format!("GPU Mode: {active} {reboot_required}"),
             active.as_str(),
             &gpu_menu,
         );
@@ -362,6 +437,8 @@ impl ROGTray {
         self.menu_add_panel_od(supported, panel_od);
         if has_supergfx {
             self.menu_add_gpu(supported, current_gfx_mode);
+        } else if supported.rog_bios_ctrl.gpu_mux {
+            self.menu_add_mux(current_gfx_mode);
         }
         self.menu_update();
     }
@@ -412,10 +489,19 @@ pub fn init_tray(
         loop {
             if let Ok(mut lock) = states.lock() {
                 if lock.tray_should_update {
+                    // Supergfx ends up adding some complexity to handle if it isn't available
+                    let current_gpu_mode = if lock.gfx_state.has_supergfx {
+                        lock.gfx_state.mode
+                    } else {
+                        match lock.bios.dedicated_gfx {
+                            GpuMode::Discrete => GfxMode::AsusMuxDiscreet,
+                            _ => GfxMode::Hybrid,
+                        }
+                    };
                     tray.rebuild_and_update(
                         &supported,
                         has_supergfx,
-                        lock.gfx_state.mode,
+                        current_gpu_mode,
                         lock.power_state.charge_limit,
                         lock.bios.panel_overdrive,
                     );

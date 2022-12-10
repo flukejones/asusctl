@@ -93,6 +93,13 @@ pub fn rog_bios_group(supported: &SupportedFunctions, states: &mut SystemState, 
 
     if supported.rog_bios_ctrl.gpu_mux {
         let mut changed = false;
+        let mut dedicated_gfx = states.bios.dedicated_gfx;
+
+        let mut reboot_required = false;
+        if let Ok(mode) = states.asus_dbus.proxies().rog_bios().gpu_mux_mode() {
+            reboot_required = mode != states.bios.dedicated_gfx;
+        }
+
         ui.group(|ui| {
             ui.vertical(|ui| {
                 ui.horizontal_wrapped(|ui| ui.label("GPU MUX mode"));
@@ -100,19 +107,23 @@ pub fn rog_bios_group(supported: &SupportedFunctions, states: &mut SystemState, 
                 ui.horizontal_wrapped(|ui| {
                     changed = ui
                         .selectable_value(
-                            &mut states.bios.dedicated_gfx,
+                            &mut dedicated_gfx,
                             GpuMode::Discrete,
                             "Dedicated (Ultimate)",
                         )
                         .clicked()
                         || ui
                             .selectable_value(
-                                &mut states.bios.dedicated_gfx,
+                                &mut dedicated_gfx,
                                 GpuMode::Optimus,
                                 "Optimus (Hybrid)",
                             )
                             .clicked();
                 });
+
+                if reboot_required {
+                    ui.horizontal_wrapped(|ui| ui.heading("REBOOT REQUIRED"));
+                }
             });
         });
 
@@ -121,7 +132,7 @@ pub fn rog_bios_group(supported: &SupportedFunctions, states: &mut SystemState, 
                 .asus_dbus
                 .proxies()
                 .rog_bios()
-                .set_gpu_mux_mode(states.bios.dedicated_gfx)
+                .set_gpu_mux_mode(dedicated_gfx)
                 .map_err(|err| {
                     states.error = Some(err.to_string());
                 })

@@ -185,18 +185,6 @@ pub fn start_notifications(
         do_notification
     );
 
-    recv_notif!(
-        RogBiosProxy,
-        receive_notify_gpu_mux_mode,
-        last_notification,
-        enabled_notifications,
-        page_states,
-        (bios.dedicated_gfx),
-        (mode),
-        "Reboot required. BIOS GPU MUX mode set to",
-        do_mux_notification
-    );
-
     // Charge notif
     recv_notif!(
         PowerProxy,
@@ -274,6 +262,43 @@ pub fn start_notifications(
                 future::ready(())
             })
             .await;
+        };
+    });
+
+    let page_states1 = page_states.clone();
+    let last_notification1 = last_notification.clone();
+    tokio::spawn(async move {
+        let conn = zbus::Connection::system()
+            .await
+            .map_err(|e| {
+                error!("zbus signal: receive_notify_gpu_mux_mode: {e}");
+                e
+            })
+            .unwrap();
+        let proxy = RogBiosProxy::new(&conn)
+            .await
+            .map_err(|e| {
+                error!("zbus signal: receive_notify_gpu_mux_mode: {e}");
+                e
+            })
+            .unwrap();
+        if let Ok(mut p) = proxy.receive_notify_gpu_mux_mode().await {
+            info!("Started zbus signal thread: receive_power_states");
+            while let Some(e) = p.next().await {
+                if let Ok(out) = e.args() {
+                    if let Ok(mut lock) = page_states1.lock() {
+                        lock.bios.dedicated_gfx = out.mode;
+                        lock.set_notified();
+                    }
+                    if let Ok(ref mut lock) = last_notification1.lock() {
+                        if let Some(notif) = lock.take() {
+                            notif.close();
+                        }
+                    }
+                    do_mux_notification("Reboot required. BIOS GPU MUX mode set to", &out.mode)
+                        .ok();
+                }
+            }
         };
     });
 
@@ -456,10 +481,24 @@ where
 }
 
 /// Actual `GpuMode` unused as data is never correct until switched by reboot
-fn do_mux_notification(message: &str, _: &GpuMode) -> Result<NotificationHandle> {
-    let mut notif = base_notification(message, &"");
+fn do_mux_notification(message: &str, m: &GpuMode) -> Result<()> {
+    let mut notif = base_notification(message, &m.to_string());
+    notif.action("gnome-session-quit", "Reboot");
     notif.urgency(Urgency::Critical);
     notif.icon("system-reboot-symbolic");
     notif.hint(Hint::Transient(true));
-    Ok(notif.show()?)
+    let handle = notif.show()?;
+
+    std::thread::spawn(|| {
+        handle.wait_for_action(|id| {
+            if id == "gnome-session-quit" {
+                let mut cmd = Command::new("gnome-session-quit");
+                cmd.arg("--reboot");
+                cmd.spawn().ok();
+            } else if id == "__closed" {
+                // TODO: cancel the switching
+            }
+        })
+    });
+    Ok(())
 }

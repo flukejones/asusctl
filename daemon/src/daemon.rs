@@ -7,7 +7,6 @@ use std::time::Duration;
 use ::zbus::export::futures_util::lock::Mutex;
 use ::zbus::Connection;
 use daemon::ctrl_anime::CtrlAnime;
-use log::LevelFilter;
 use log::{error, info, warn};
 use tokio::time::sleep;
 use zbus::SignalContext;
@@ -33,9 +32,9 @@ static PROFILE_CONFIG_PATH: &str = "/etc/asusd/profile.conf";
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut logger = env_logger::Builder::new();
     logger
+        .parse_default_env()
         .target(env_logger::Target::Stdout)
         .format(|buf, record| writeln!(buf, "{}: {}", record.level(), record.args()))
-        .filter(None, LevelFilter::Info)
         .init();
 
     let is_service = match env::var_os("IS_SERVICE") {

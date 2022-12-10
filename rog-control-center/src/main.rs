@@ -1,5 +1,5 @@
 use eframe::{IconData, NativeOptions};
-use log::{error, info, LevelFilter};
+use log::{error, info};
 use rog_aura::layouts::KeyLayout;
 use rog_control_center::tray::init_tray;
 use rog_control_center::update_and_notify::EnabledNotifications;
@@ -29,9 +29,9 @@ fn main() -> Result<()> {
     print_versions();
     let mut logger = env_logger::Builder::new();
     logger
+        .parse_default_env()
         .target(env_logger::Target::Stdout)
         .format(|buf, record| writeln!(buf, "{}: {}", record.level(), record.args()))
-        .filter(None, LevelFilter::Info)
         .init();
 
     // start tokio

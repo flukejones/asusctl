@@ -149,7 +149,7 @@ checksum = "8da52d66c7071e2e3fa2a1e5c6d088fec47b593032b254f5e980de8ea54454d6"
 
 [[package]]
 name = "asusctl"
-version = "4.5.6-RC1"
+version = "4.5.6-RC3"
 dependencies = [
  "daemon",
  "gif",
@@ -727,7 +727,7 @@ checksum = "b365fabc795046672053e29c954733ec3b05e4be654ab130fe8f1f94d7051f35"
 
 [[package]]
 name = "daemon"
-version = "4.5.6-RC1"
+version = "4.5.6-RC3"
 dependencies = [
  "async-trait",
  "concat-idents",
@@ -750,7 +750,7 @@ dependencies = [
 
 [[package]]
 name = "daemon-user"
-version = "4.5.6-RC1"
+version = "4.5.6-RC3"
 dependencies = [
  "dirs",
  "rog_anime",
@@ -931,19 +931,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "ecolor"
-version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b601108bca3af7650440ace4ca55b2daf52c36f2635be3587d77b16efd8d0691"
-dependencies = [
- "bytemuck",
-]
-
-[[package]]
 name = "eframe"
-version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8128828b785ecf1552917330354ab2eb9d2c48fbe2ad075fa75f93d4a099a9f1"
+version = "0.19.0"
+source = "git+https://github.com/flukejones/egui?branch=wayland_dark_theme#bb2cb764e48829f865312c5934efdab2169737ae"
 dependencies = [
  "bytemuck",
  "egui",
@@ -963,9 +953,8 @@ dependencies = [
 
 [[package]]
 name = "egui"
-version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a4daecd807bfd4e30ad92f049b03d92f506a3fddfad852babaa03cba180adfa"
+version = "0.19.0"
+source = "git+https://github.com/flukejones/egui?branch=wayland_dark_theme#bb2cb764e48829f865312c5934efdab2169737ae"
 dependencies = [
  "accesskit",
  "ahash",
@@ -976,9 +965,8 @@ dependencies = [
 
 [[package]]
 name = "egui-winit"
-version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2217c2c1e63b7b793753efd23dc68efb86bb09bd298e5de8010e9a82dc63f0a9"
+version = "0.19.0"
+source = "git+https://github.com/flukejones/egui?branch=wayland_dark_theme#bb2cb764e48829f865312c5934efdab2169737ae"
 dependencies = [
  "accesskit_winit",
  "arboard",
@@ -992,9 +980,8 @@ dependencies = [
 
 [[package]]
 name = "egui_glow"
-version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67655a7138ce9d9617811622a3d81577fb477f4447f1a330e89814f16ad35574"
+version = "0.19.0"
+source = "git+https://github.com/flukejones/egui?branch=wayland_dark_theme#bb2cb764e48829f865312c5934efdab2169737ae"
 dependencies = [
  "bytemuck",
  "egui",
@@ -1007,9 +994,8 @@ dependencies = [
 
 [[package]]
 name = "emath"
-version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5277249c8c3430e7127e4f2c40a77485e7baf11ae132ce9b3253a8ed710df0a0"
+version = "0.19.0"
+source = "git+https://github.com/flukejones/egui?branch=wayland_dark_theme#bb2cb764e48829f865312c5934efdab2169737ae"
 dependencies = [
  "bytemuck",
 ]
@@ -1094,15 +1080,13 @@ dependencies = [
 
 [[package]]
 name = "epaint"
-version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de14b65fe5e423e0058f77a8beb2c863b056d0566d6c4ce0d097aa5814cb705a"
+version = "0.19.0"
+source = "git+https://github.com/flukejones/egui?branch=wayland_dark_theme#bb2cb764e48829f865312c5934efdab2169737ae"
 dependencies = [
  "ab_glyph",
  "ahash",
  "atomic_refcell",
  "bytemuck",
- "ecolor",
  "emath",
  "nohash-hasher",
  "parking_lot",
@@ -2609,7 +2593,7 @@ dependencies = [
 
 [[package]]
 name = "rog-control-center"
-version = "4.5.6-RC1"
+version = "4.5.6-RC3"
 dependencies = [
  "daemon",
  "dirs",
@@ -2639,7 +2623,7 @@ dependencies = [
 
 [[package]]
 name = "rog_anime"
-version = "4.5.6-RC1"
+version = "4.5.6-RC3"
 dependencies = [
  "gif",
  "glam",
@@ -2654,7 +2638,7 @@ dependencies = [
 
 [[package]]
 name = "rog_aura"
-version = "4.5.6-RC1"
+version = "4.5.6-RC3"
 dependencies = [
  "serde",
  "serde_derive",
@@ -2665,7 +2649,7 @@ dependencies = [
 
 [[package]]
 name = "rog_dbus"
-version = "4.5.6-RC1"
+version = "4.5.6-RC3"
 dependencies = [
  "rog_anime",
  "rog_aura",
@@ -2676,7 +2660,7 @@ dependencies = [
 
 [[package]]
 name = "rog_platform"
-version = "4.5.6-RC1"
+version = "4.5.6-RC3"
 dependencies = [
  "concat-idents",
  "inotify",
@@ -2692,7 +2676,7 @@ dependencies = [
 
 [[package]]
 name = "rog_profiles"
-version = "4.5.6-RC1"
+version = "4.5.6-RC3"
 dependencies = [
  "serde",
  "serde_derive",

@@ -6,6 +6,7 @@ Before=multi-user.target
 
 [Service]
 Environment=IS_SERVICE=1
+Environment=RUST_LOG="info"
 ExecStartPre=/bin/sleep 2
 ExecStart=/usr/bin/asusd
 Restart=on-failure
