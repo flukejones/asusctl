@@ -71,7 +71,7 @@ pub struct BiosCommand {
         meta = "",
         short = "S",
         no_long,
-        help = "set bios POST sound: asusctl -p <true/false>"
+        help = "set bios POST sound: asusctl -S <true/false>"
     )]
     pub post_sound_set: Option<bool>,
     #[options(no_long, short = "s", help = "read bios POST sound")]
