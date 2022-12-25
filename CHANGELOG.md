@@ -5,8 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [v4.5.7]
 ### Changed
 - ROGCC: Don't notify user if changing to same mux mode
+- asusd: don't block on systemd-unit change: removes all shoddy external command calls in favour of async dbus calls
 
 ## [v4.5.6]
 ### Changed
@@ -23,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   + This is ideal for tasks that require root access (BE SAFE!)
 - The above AC/Battery commands are probably best set to run a script for more complex tasks
 - asusd: check if nvidia-powerd enabled before toggling
-        
+
 ## [v4.5.5]
 ### Changed
 - remove an unwrap() causing panic on main ROGCC thread

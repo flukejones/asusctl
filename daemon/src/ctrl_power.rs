@@ -1,6 +1,3 @@
-use crate::systemd::{
-    do_systemd_unit_action, is_systemd_unit_enabled, SystemdUnitAction, SystemdUnitState,
-};
 use crate::{config::Config, error::RogError, GetSupported};
 use crate::{task_watch_item, CtrlTask};
 use async_trait::async_trait;
@@ -10,6 +7,7 @@ use rog_platform::supported::ChargeSupportedFunctions;
 use std::process::Command;
 use std::sync::Arc;
 use std::time::Duration;
+use systemd_zbus::{ManagerProxy as SystemdProxy, Mode, UnitFileState};
 use tokio::time::sleep;
 use zbus::dbus_interface;
 use zbus::export::futures_util::lock::Mutex;
@@ -155,16 +153,22 @@ impl CtrlTask for CtrlPower {
     }
 
     async fn create_tasks(&self, signal_ctxt: SignalContext<'static>) -> Result<(), RogError> {
+        let conn = zbus::Connection::system().await?;
+        let sysd1 = SystemdProxy::new(&conn).await?;
+        let sysd2 = sysd1.clone();
+        let sysd3 = sysd1.clone();
+
         let power1 = self.clone();
         let power2 = self.clone();
         self.create_sys_event_tasks(
             move || async {},
             move || {
-                let power1 = power1.clone();
+                let power = power1.clone();
+                let sysd = sysd1.clone();
                 async move {
                     info!("CtrlCharge reloading charge limit");
-                    let lock = power1.config.lock().await;
-                    power1
+                    let lock = power.config.lock().await;
+                    power
                         .set(lock.bat_charge_limit)
                         .map_err(|err| {
                             warn!("CtrlCharge: set_limit {}", err);
@@ -172,18 +176,19 @@ impl CtrlTask for CtrlPower {
                         })
                         .ok();
 
-                    if let Ok(value) = power1.power.get_online() {
-                        do_nvidia_powerd_action(value == 1);
+                    if let Ok(value) = power.power.get_online() {
+                        do_nvidia_powerd_action(&sysd, value == 1).await;
                     }
                 }
             },
             move || async {},
             move || {
-                let power2 = power2.clone();
+                let power = power2.clone();
+                let sysd = sysd2.clone();
                 async move {
                     info!("CtrlCharge reloading charge limit");
-                    let lock = power2.config.lock().await;
-                    power2
+                    let lock = power.config.lock().await;
+                    power
                         .set(lock.bat_charge_limit)
                         .map_err(|err| {
                             warn!("CtrlCharge: set_limit {}", err);
@@ -191,8 +196,8 @@ impl CtrlTask for CtrlPower {
                         })
                         .ok();
 
-                    if let Ok(value) = power2.power.get_online() {
-                        do_nvidia_powerd_action(value == 1);
+                    if let Ok(value) = power.power.get_online() {
+                        do_nvidia_powerd_action(&sysd, value == 1).await;
                     }
                 }
             },
@@ -210,7 +215,7 @@ impl CtrlTask for CtrlPower {
                 if let Ok(value) = ctrl.power.get_online() {
                     if online != value {
                         online = value;
-                        do_nvidia_powerd_action(value == 1);
+                        do_nvidia_powerd_action(&sysd3, value == 1).await;
 
                         Self::notify_mains_online(&signal_ctxt, value == 1)
                             .await
@@ -252,16 +257,22 @@ impl CtrlTask for CtrlPower {
     }
 }
 
-fn do_nvidia_powerd_action(ac_on: bool) {
-    let action = if ac_on {
-        SystemdUnitAction::Restart
-    } else {
-        SystemdUnitAction::Stop
-    };
-
-    if let Ok(res) = is_systemd_unit_enabled(SystemdUnitState::Enabled, NVIDIA_POWERD) {
-        if res && do_systemd_unit_action(action, NVIDIA_POWERD).is_ok() {
-            info!("CtrlPower task: did {action:?} on {NVIDIA_POWERD}");
+async fn do_nvidia_powerd_action(proxy: &SystemdProxy<'_>, ac_on: bool) {
+    if let Ok(res) = proxy.get_unit_file_state(NVIDIA_POWERD).await {
+        if res == UnitFileState::Enabled {
+            if ac_on {
+                proxy
+                    .stop_unit(NVIDIA_POWERD, Mode::Replace)
+                    .await
+                    .map_err(|e| error!("Error stopping {NVIDIA_POWERD}, {e:?}"))
+                    .ok();
+            } else {
+                proxy
+                    .start_unit(NVIDIA_POWERD, Mode::Replace)
+                    .await
+                    .map_err(|e| error!("Error stopping {NVIDIA_POWERD}, {e:?}"))
+                    .ok();
+            }
         }
     }
 }
