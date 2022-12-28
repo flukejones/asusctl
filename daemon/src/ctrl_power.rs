@@ -262,13 +262,13 @@ async fn do_nvidia_powerd_action(proxy: &SystemdProxy<'_>, ac_on: bool) {
         if res == UnitFileState::Enabled {
             if ac_on {
                 proxy
-                    .stop_unit(NVIDIA_POWERD, Mode::Replace)
+                    .start_unit(NVIDIA_POWERD, Mode::Replace)
                     .await
                     .map_err(|e| error!("Error stopping {NVIDIA_POWERD}, {e:?}"))
                     .ok();
             } else {
                 proxy
-                    .start_unit(NVIDIA_POWERD, Mode::Replace)
+                    .stop_unit(NVIDIA_POWERD, Mode::Replace)
                     .await
                     .map_err(|e| error!("Error stopping {NVIDIA_POWERD}, {e:?}"))
                     .ok();
