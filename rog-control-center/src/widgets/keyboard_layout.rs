@@ -19,8 +19,6 @@ pub fn keyboard(
     states: &mut AuraState,
     colour: Color32,
 ) {
-    let mut key_colour = colour;
-    let mut input_colour = colour;
     let (keyboard_is_multizoned, keyboard_width, keyboard_is_per_key) =
         match keyboard_layout.advanced_type() {
             AdvancedAuraType::PerKey => (false, 0.0, true),
@@ -40,27 +38,39 @@ pub fn keyboard(
     let this_size = ui.available_size();
     let keys_width = keyboard_layout.max_width() * SCALE * y;
     let keys_height = keyboard_layout.max_height() * SCALE * y;
+    let keyboard_height = keyboard_layout.keyboard_height() * SCALE;
     let x_start = (this_size.x - keys_width) / SCALE;
     let y_start = (this_size.y - keys_height) / SCALE;
 
+    // Initial colour states
+    let mut input_colour = colour;
+    let mut key_colour = colour;
+    if states.current_mode == AuraModeNum::Rainbow && !keyboard_is_per_key {
+        key_colour = Color32::from_rgb(
+            (states.wave_red[0] as u32 * 255 / 100) as u8,
+            (states.wave_green[0] as u32 * 255 / 100) as u8,
+            (states.wave_blue[0] as u32 * 255 / 100) as u8,
+        );
+    }
+
     ui.spacing_mut().item_spacing = egui::vec2(0.0, 0.0);
     blank(ui, 0.0, y_start / y);
-    // Need to exclude the lightbar row if there is one
-    let mut keyboard_height = 0.0;
+
     for row in keyboard_layout.rows() {
         ui.horizontal_top(|ui| {
             blank(ui, x_start / y, 0.0);
             for (i, key) in row.row().enumerate() {
-                if !key.0.is_lightbar_zone() && i == 0 {
-                    keyboard_height += row.height() as f32 * SCALE;
-                }
-                if states.current_mode == AuraModeNum::Rainbow {
+                // For per-key rainbow which cascades across
+                if states.current_mode == AuraModeNum::Rainbow && keyboard_is_per_key
+                    || key.0.is_lightbar_zone()
+                {
                     key_colour = Color32::from_rgb(
                         (states.wave_red[i] as u32 * 255 / 100) as u8,
                         (states.wave_green[i] as u32 * 255 / 100) as u8,
                         (states.wave_blue[i] as u32 * 255 / 100) as u8,
                     );
                 }
+
                 if (keyboard_is_multizoned && !key.0.is_lightbar_zone())
                     && states.current_mode == AuraModeNum::Rainbow
                 {

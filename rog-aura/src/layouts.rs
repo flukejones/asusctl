@@ -253,6 +253,19 @@ impl KeyLayout {
         &self.advanced_type
     }
 
+    /// Find the total heighht of the keyboard, not including lightbar rows
+    pub fn keyboard_height(&self) -> f32 {
+        let mut height = 0.0;
+        for r in &self.key_rows {
+            if let Some(key) = r.row.first() {
+                if !key.0.is_lightbar_zone() {
+                    height += r.height();
+                }
+            }
+        }
+        height
+    }
+
     pub fn max_height(&self) -> f32 {
         let mut height = 0.0;
         for r in &self.key_rows {
