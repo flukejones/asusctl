@@ -1,8 +1,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use log::info;
-use log::warn;
+use log::{info, warn};
 use rog_profiles::fan_curve_set::{CurveData, FanCurveSet};
 use rog_profiles::{FanCurveProfiles, Profile};
 use zbus::export::futures_util::lock::Mutex;
