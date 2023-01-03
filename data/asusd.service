@@ -3,6 +3,8 @@ Description=ASUS Notebook Control
 StartLimitInterval=200
 StartLimitBurst=2
 Before=multi-user.target
+After=power-profiles-daemon.service
+After=nvidia-powerd.service
 
 [Service]
 Environment=IS_SERVICE=1
@@ -10,7 +12,6 @@ Environment=RUST_LOG="info"
 ExecStartPre=/bin/sleep 2
 ExecStart=/usr/bin/asusd
 Restart=on-failure
-Restart=always
 RestartSec=1
 Type=dbus
 BusName=org.asuslinux.Daemon
