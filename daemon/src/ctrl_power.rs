@@ -176,8 +176,10 @@ impl CtrlTask for CtrlPower {
                         })
                         .ok();
 
-                    if let Ok(value) = power.power.get_online() {
-                        do_nvidia_powerd_action(&sysd, value == 1).await;
+                    if lock.disable_nvidia_powerd_on_battery {
+                        if let Ok(value) = power.power.get_online() {
+                            do_nvidia_powerd_action(&sysd, value == 1).await;
+                        }
                     }
                 }
             },
@@ -196,8 +198,10 @@ impl CtrlTask for CtrlPower {
                         })
                         .ok();
 
-                    if let Ok(value) = power.power.get_online() {
-                        do_nvidia_powerd_action(&sysd, value == 1).await;
+                    if lock.disable_nvidia_powerd_on_battery {
+                        if let Ok(value) = power.power.get_online() {
+                            do_nvidia_powerd_action(&sysd, value == 1).await;
+                        }
                     }
                 }
             },
@@ -215,14 +219,17 @@ impl CtrlTask for CtrlPower {
                 if let Ok(value) = ctrl.power.get_online() {
                     if online != value {
                         online = value;
-                        do_nvidia_powerd_action(&sysd3, value == 1).await;
+                        let mut config = config.lock().await;
+                        config.read();
+
+                        if config.disable_nvidia_powerd_on_battery {
+                            do_nvidia_powerd_action(&sysd3, value == 1).await;
+                        }
 
                         Self::notify_mains_online(&signal_ctxt, value == 1)
                             .await
                             .unwrap();
 
-                        let mut config = config.lock().await;
-                        config.read();
                         let mut prog: Vec<&str> = Vec::new();
                         if value == 1 {
                             // AC ONLINE

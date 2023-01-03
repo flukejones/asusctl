@@ -11,6 +11,7 @@ pub struct Config {
     /// Save charge limit for restoring on boot
     pub bat_charge_limit: u8,
     pub panel_od: bool,
+    pub disable_nvidia_powerd_on_battery: bool,
     pub ac_command: String,
     pub bat_command: String,
 }
@@ -20,6 +21,7 @@ impl Config {
         Config {
             bat_charge_limit: 100,
             panel_od: false,
+            disable_nvidia_powerd_on_battery: true,
             ac_command: String::new(),
             bat_command: String::new(),
         }
@@ -41,6 +43,8 @@ impl Config {
             } else if let Ok(data) = serde_json::from_str(&buf) {
                 config = data;
             } else if let Ok(data) = serde_json::from_str::<Config455>(&buf) {
+                config = data.into();
+            } else if let Ok(data) = serde_json::from_str::<Config458>(&buf) {
                 config = data.into();
             } else {
                 warn!(
@@ -100,8 +104,30 @@ impl From<Config455> for Config {
         Self {
             bat_charge_limit: c.bat_charge_limit,
             panel_od: c.panel_od,
+            disable_nvidia_powerd_on_battery: true,
             ac_command: String::new(),
             bat_command: String::new(),
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Default)]
+pub struct Config458 {
+    /// Save charge limit for restoring on boot
+    pub bat_charge_limit: u8,
+    pub panel_od: bool,
+    pub ac_command: String,
+    pub bat_command: String,
+}
+
+impl From<Config458> for Config {
+    fn from(c: Config458) -> Self {
+        Self {
+            bat_charge_limit: c.bat_charge_limit,
+            panel_od: c.panel_od,
+            disable_nvidia_powerd_on_battery: true,
+            ac_command: c.ac_command,
+            bat_command: c.bat_command,
         }
     }
 }
