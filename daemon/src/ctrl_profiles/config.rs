@@ -1,14 +1,19 @@
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
+use std::path::PathBuf;
 
 use log::{error, warn};
 use rog_profiles::{FanCurveProfiles, Profile};
 use serde_derive::{Deserialize, Serialize};
 
+use crate::{config_file, config_file_open};
+
+static CONFIG_FILE: &str = "profile.conf";
+
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ProfileConfig {
     #[serde(skip)]
-    config_path: String,
+    config_path: PathBuf,
     /// For restore on boot
     pub active_profile: Profile,
     /// States to restore
@@ -16,7 +21,7 @@ pub struct ProfileConfig {
 }
 
 impl ProfileConfig {
-    fn new(config_path: String) -> Self {
+    fn new(config_path: PathBuf) -> Self {
         Self {
             config_path,
             active_profile: Profile::Balanced,
@@ -24,13 +29,9 @@ impl ProfileConfig {
         }
     }
 
-    pub fn load(config_path: String) -> Self {
-        let mut file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .open(&config_path)
-            .unwrap_or_else(|_| panic!("The directory /etc/asusd/ is missing")); // okay to cause panic here
+    pub fn load() -> Self {
+        let config_path = config_file(CONFIG_FILE);
+        let mut file = config_file_open(CONFIG_FILE);
         let mut buf = String::new();
         let mut config;
         if let Ok(read_len) = file.read_to_string(&mut buf) {
@@ -41,15 +42,15 @@ impl ProfileConfig {
                 config.config_path = config_path;
             } else {
                 warn!(
-                    "Could not deserialise {}.\nWill rename to {}-old and recreate config",
-                    config_path, config_path
+                    "Could not deserialise {config_path:?}.\nWill rename to {config_path:?}-old \
+                     and recreate config",
                 );
                 let mut cfg_old = config_path.clone();
-                cfg_old.push_str("-old");
+                cfg_old.push("-old");
                 std::fs::rename(config_path.clone(), cfg_old).unwrap_or_else(|err| {
                     panic!(
-                        "Could not rename. Please remove {} then restart service: Error {}",
-                        config_path, err
+                        "Could not rename. Please remove {config_path:?} then restart service: \
+                         Error {err}",
                     )
                 });
                 config = Self::new(config_path);
@@ -64,15 +65,15 @@ impl ProfileConfig {
         let mut file = OpenOptions::new()
             .read(true)
             .open(&self.config_path)
-            .unwrap_or_else(|err| panic!("Error reading {}: {}", self.config_path, err));
+            .unwrap_or_else(|err| panic!("Error reading {:?}: {}", self.config_path, err));
 
         let mut buf = String::new();
         if let Ok(l) = file.read_to_string(&mut buf) {
             if l == 0 {
-                warn!("File is empty {}", self.config_path);
+                warn!("File is empty {:?}", self.config_path);
             } else {
                 let mut data: ProfileConfig = toml::from_str(&buf)
-                    .unwrap_or_else(|_| panic!("Could not deserialise {}", self.config_path));
+                    .unwrap_or_else(|_| panic!("Could not deserialise {:?}", self.config_path));
                 // copy over serde skipped values
                 data.config_path = self.config_path.clone();
                 *self = data;

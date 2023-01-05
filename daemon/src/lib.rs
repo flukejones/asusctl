@@ -17,7 +17,9 @@ pub mod ctrl_supported;
 
 pub mod error;
 
+use std::fs::{create_dir, File, OpenOptions};
 use std::future::Future;
+use std::path::PathBuf;
 
 use async_trait::async_trait;
 use log::{debug, info, warn};
@@ -27,6 +29,30 @@ use zbus::zvariant::ObjectPath;
 use zbus::{Connection, SignalContext};
 
 use crate::error::RogError;
+
+static CONFIG_PATH_BASE: &str = "/etc/asusd/";
+
+/// Create a `PathBuf` for `file`. If the base config dir `CONFIG_PATH_BASE`
+/// does not exist it is created.
+fn config_file(file: &str) -> PathBuf {
+    let mut config = PathBuf::from(CONFIG_PATH_BASE);
+    if !config.exists() {
+        create_dir(config.as_path()).unwrap_or_else(|_| panic!("Could not create {config:?}"));
+    }
+    config.push(file);
+    config
+}
+
+/// Open a config file as read/write. If the file or dir does not exist then
+/// both are created.
+pub fn config_file_open(file: &str) -> File {
+    OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .open(config_file(file))
+        .unwrap_or_else(|_| panic!("The file {file} or directory {CONFIG_PATH_BASE} is missing"))
+}
 
 /// This macro adds a function which spawns an `inotify` task on the passed in
 /// `Executor`.

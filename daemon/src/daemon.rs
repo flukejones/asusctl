@@ -27,8 +27,6 @@ use rog_profiles::Profile;
 use tokio::time::sleep;
 use zbus::SignalContext;
 
-static PROFILE_CONFIG_PATH: &str = "/etc/asusd/profile.conf";
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut logger = env_logger::Builder::new();
@@ -98,7 +96,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     }
 
     if Profile::is_platform_profile_supported() {
-        let profile_config = ProfileConfig::load(PROFILE_CONFIG_PATH.into());
+        let profile_config = ProfileConfig::load();
         match CtrlPlatformProfile::new(profile_config) {
             Ok(ctrl) => {
                 let zbus = ProfileZbus(Arc::new(Mutex::new(ctrl)));

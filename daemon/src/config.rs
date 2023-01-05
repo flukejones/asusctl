@@ -1,11 +1,12 @@
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
-use std::path::PathBuf;
 
 use log::{error, warn};
 use serde_derive::{Deserialize, Serialize};
 
-pub static CONFIG_PATH: &str = "/etc/asusd/asusd.conf";
+use crate::config_file_open;
+
+pub static CONFIG_FILE: &str = "/etc/asusd/asusd.conf";
 
 #[derive(Deserialize, Serialize, Default)]
 pub struct Config {
@@ -30,12 +31,7 @@ impl Config {
 
     /// `load` will attempt to read the config, and panic if the dir is missing
     pub fn load() -> Self {
-        let mut file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .open(&PathBuf::from(CONFIG_PATH))
-            .unwrap_or_else(|e| panic!("Error opening {}, {}", CONFIG_PATH, e)); // okay to cause panic here
+        let mut file = config_file_open(CONFIG_FILE);
         let mut buf = String::new();
         let config;
         if let Ok(read_len) = file.read_to_string(&mut buf) {
@@ -50,13 +46,13 @@ impl Config {
             } else {
                 warn!(
                     "Could not deserialise {}.\nWill rename to {}-old and recreate config",
-                    CONFIG_PATH, CONFIG_PATH
+                    CONFIG_FILE, CONFIG_FILE
                 );
-                let cfg_old = CONFIG_PATH.to_owned() + "-old";
-                std::fs::rename(CONFIG_PATH, cfg_old).unwrap_or_else(|err| {
+                let cfg_old = CONFIG_FILE.to_owned() + "-old";
+                std::fs::rename(CONFIG_FILE, cfg_old).unwrap_or_else(|err| {
                     panic!(
                         "Could not rename. Please remove {} then restart service: Error {}",
-                        CONFIG_PATH, err
+                        CONFIG_FILE, err
                     )
                 });
                 config = Self::new();
@@ -71,21 +67,21 @@ impl Config {
     pub fn read(&mut self) {
         let mut file = OpenOptions::new()
             .read(true)
-            .open(CONFIG_PATH)
-            .unwrap_or_else(|err| panic!("Error reading {}: {}", CONFIG_PATH, err));
+            .open(CONFIG_FILE)
+            .unwrap_or_else(|err| panic!("Error reading {}: {}", CONFIG_FILE, err));
         let mut buf = String::new();
         if let Ok(l) = file.read_to_string(&mut buf) {
             if l == 0 {
-                warn!("File is empty {}", CONFIG_PATH);
+                warn!("File is empty {}", CONFIG_FILE);
             } else {
                 *self = serde_json::from_str(&buf)
-                    .unwrap_or_else(|_| panic!("Could not deserialise {}", CONFIG_PATH));
+                    .unwrap_or_else(|_| panic!("Could not deserialise {}", CONFIG_FILE));
             }
         }
     }
 
     pub fn write(&self) {
-        let mut file = File::create(CONFIG_PATH).expect("Couldn't overwrite config");
+        let mut file = File::create(CONFIG_FILE).expect("Couldn't overwrite config");
         let json = serde_json::to_string_pretty(self).expect("Parse config to JSON failed");
         file.write_all(json.as_bytes())
             .unwrap_or_else(|err| error!("Could not write config: {}", err));

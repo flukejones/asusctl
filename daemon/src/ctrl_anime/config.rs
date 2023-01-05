@@ -7,9 +7,9 @@ use rog_anime::error::AnimeError;
 use rog_anime::{ActionData, ActionLoader, AnimTime, AnimeType, Fade, Vec2};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::VERSION;
+use crate::{config_file_open, VERSION};
 
-pub static ANIME_CONFIG_PATH: &str = "/etc/asusd/anime.conf";
+pub static CONFIG_FILE: &str = "anime.conf";
 pub static ANIME_CACHE_PATH: &str = "/etc/asusd/anime-cache.conf";
 
 #[derive(Deserialize, Serialize)]
@@ -143,17 +143,7 @@ impl Default for AnimeConfig {
 impl AnimeConfig {
     /// `load` will attempt to read the config, and panic if the dir is missing
     pub fn load() -> Self {
-        let mut file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .open(ANIME_CONFIG_PATH)
-            .unwrap_or_else(|_| {
-                panic!(
-                    "The file {} or directory /etc/asusd/ is missing",
-                    ANIME_CONFIG_PATH
-                )
-            }); // okay to cause panic here
+        let mut file = config_file_open(CONFIG_FILE);
         let mut buf = String::new();
         if let Ok(read_len) = file.read_to_string(&mut buf) {
             if read_len == 0 {
@@ -177,13 +167,13 @@ impl AnimeConfig {
                 }
                 warn!(
                     "Could not deserialise {}.\nWill rename to {}-old and recreate config",
-                    ANIME_CONFIG_PATH, ANIME_CONFIG_PATH
+                    CONFIG_FILE, CONFIG_FILE
                 );
-                let cfg_old = ANIME_CONFIG_PATH.to_string() + "-old";
-                std::fs::rename(ANIME_CONFIG_PATH, cfg_old).unwrap_or_else(|err| {
+                let cfg_old = CONFIG_FILE.to_string() + "-old";
+                std::fs::rename(CONFIG_FILE, cfg_old).unwrap_or_else(|err| {
                     panic!(
                         "Could not rename. Please remove {} then restart service: Error {}",
-                        ANIME_CONFIG_PATH, err
+                        CONFIG_FILE, err
                     )
                 });
             }
@@ -244,29 +234,29 @@ impl AnimeConfig {
         // Should be okay to unwrap this as is since it is a Default
         let json = serde_json::to_string_pretty(&config).unwrap();
         file.write_all(json.as_bytes())
-            .unwrap_or_else(|_| panic!("Could not write {}", ANIME_CONFIG_PATH));
+            .unwrap_or_else(|_| panic!("Could not write {}", CONFIG_FILE));
         config
     }
 
     pub fn read(&mut self) {
         let mut file = OpenOptions::new()
             .read(true)
-            .open(ANIME_CONFIG_PATH)
-            .unwrap_or_else(|err| panic!("Error reading {}: {}", ANIME_CONFIG_PATH, err));
+            .open(CONFIG_FILE)
+            .unwrap_or_else(|err| panic!("Error reading {}: {}", CONFIG_FILE, err));
         let mut buf = String::new();
         if let Ok(l) = file.read_to_string(&mut buf) {
             if l == 0 {
-                warn!("File is empty {}", ANIME_CONFIG_PATH);
+                warn!("File is empty {}", CONFIG_FILE);
             } else {
                 let x: AnimeConfig = serde_json::from_str(&buf)
-                    .unwrap_or_else(|_| panic!("Could not deserialise {}", ANIME_CONFIG_PATH));
+                    .unwrap_or_else(|_| panic!("Could not deserialise {}", CONFIG_FILE));
                 *self = x;
             }
         }
     }
 
     pub fn write(&self) {
-        let mut file = File::create(ANIME_CONFIG_PATH).expect("Couldn't overwrite config");
+        let mut file = File::create(CONFIG_FILE).expect("Couldn't overwrite config");
         let json = serde_json::to_string_pretty(self).expect("Parse config to JSON failed");
         file.write_all(json.as_bytes())
             .unwrap_or_else(|err| error!("Could not write config: {}", err));

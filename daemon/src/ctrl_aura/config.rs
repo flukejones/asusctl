@@ -1,5 +1,5 @@
 use std::collections::{BTreeMap, HashSet};
-use std::fs::{File, OpenOptions};
+use std::fs::File;
 use std::io::{Read, Write};
 
 use log::{error, warn};
@@ -10,7 +10,9 @@ use rog_platform::hid_raw::HidRaw;
 use rog_platform::keyboard_led::KeyboardLed;
 use serde_derive::{Deserialize, Serialize};
 
-pub static AURA_CONFIG_PATH: &str = "/etc/asusd/aura.conf";
+use crate::config_file_open;
+
+static CONFIG_FILE: &str = "aura.conf";
 
 /// Enable/disable LED control in various states such as
 /// when the device is awake, suspended, shutting down or
@@ -190,17 +192,7 @@ impl Default for AuraConfig {
 impl AuraConfig {
     /// `load` will attempt to read the config, and panic if the dir is missing
     pub fn load(supported_led_modes: &LaptopLedData) -> Self {
-        let mut file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .open(AURA_CONFIG_PATH)
-            .unwrap_or_else(|_| {
-                panic!(
-                    "The file {} or directory /etc/asusd/ is missing",
-                    AURA_CONFIG_PATH
-                )
-            }); // okay to cause panic here
+        let mut file = config_file_open(CONFIG_FILE);
         let mut buf = String::new();
         if let Ok(read_len) = file.read_to_string(&mut buf) {
             if read_len == 0 {
@@ -211,13 +203,13 @@ impl AuraConfig {
                 }
                 warn!(
                     "Could not deserialise {}.\nWill rename to {}-old and recreate config",
-                    AURA_CONFIG_PATH, AURA_CONFIG_PATH
+                    CONFIG_FILE, CONFIG_FILE
                 );
-                let cfg_old = AURA_CONFIG_PATH.to_string() + "-old";
-                std::fs::rename(AURA_CONFIG_PATH, cfg_old).unwrap_or_else(|err| {
+                let cfg_old = CONFIG_FILE.to_string() + "-old";
+                std::fs::rename(CONFIG_FILE, cfg_old).unwrap_or_else(|err| {
                     panic!(
                         "Could not rename. Please remove {} then restart service: Error {}",
-                        AURA_CONFIG_PATH, err
+                        CONFIG_FILE, err
                     )
                 });
             }
@@ -259,29 +251,26 @@ impl AuraConfig {
         // Should be okay to unwrap this as is since it is a Default
         let json = serde_json::to_string(&config).unwrap();
         file.write_all(json.as_bytes())
-            .unwrap_or_else(|_| panic!("Could not write {}", AURA_CONFIG_PATH));
+            .unwrap_or_else(|_| panic!("Could not write {}", CONFIG_FILE));
         config
     }
 
     pub fn read(&mut self) {
-        let mut file = OpenOptions::new()
-            .read(true)
-            .open(AURA_CONFIG_PATH)
-            .unwrap_or_else(|err| panic!("Error reading {}: {}", AURA_CONFIG_PATH, err));
+        let mut file = config_file_open(CONFIG_FILE);
         let mut buf = String::new();
         if let Ok(l) = file.read_to_string(&mut buf) {
             if l == 0 {
-                warn!("File is empty {}", AURA_CONFIG_PATH);
+                warn!("File is empty {}", CONFIG_FILE);
             } else {
                 let x = serde_json::from_str(&buf)
-                    .unwrap_or_else(|_| panic!("Could not deserialise {}", AURA_CONFIG_PATH));
+                    .unwrap_or_else(|_| panic!("Could not deserialise {}", CONFIG_FILE));
                 *self = x;
             }
         }
     }
 
     pub fn write(&self) {
-        let mut file = File::create(AURA_CONFIG_PATH).expect("Couldn't overwrite config");
+        let mut file = File::create(CONFIG_FILE).expect("Couldn't overwrite config");
         let json = serde_json::to_string_pretty(self).expect("Parse config to JSON failed");
         file.write_all(json.as_bytes())
             .unwrap_or_else(|err| error!("Could not write config: {}", err));
