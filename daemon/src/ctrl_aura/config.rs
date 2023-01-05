@@ -1,8 +1,7 @@
 use std::collections::{BTreeMap, HashSet};
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::Write;
 
-use log::{error, warn};
 use rog_aura::aura_detection::{LaptopLedData, ASUS_KEYBOARD_DEVICES};
 use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Direction, LedBrightness, Speed, GRADIENT};
@@ -10,7 +9,7 @@ use rog_platform::hid_raw::HidRaw;
 use rog_platform::keyboard_led::KeyboardLed;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::config_file_open;
+use crate::config_traits::{StdConfig, StdConfigLoad1};
 
 static CONFIG_FILE: &str = "aura.conf";
 
@@ -189,34 +188,19 @@ impl Default for AuraConfig {
     }
 }
 
-impl AuraConfig {
-    /// `load` will attempt to read the config, and panic if the dir is missing
-    pub fn load(supported_led_modes: &LaptopLedData) -> Self {
-        let mut file = config_file_open(CONFIG_FILE);
-        let mut buf = String::new();
-        if let Ok(read_len) = file.read_to_string(&mut buf) {
-            if read_len == 0 {
-                return AuraConfig::create_default(&mut file, supported_led_modes);
-            } else {
-                if let Ok(data) = serde_json::from_str(&buf) {
-                    return data;
-                }
-                warn!(
-                    "Could not deserialise {}.\nWill rename to {}-old and recreate config",
-                    CONFIG_FILE, CONFIG_FILE
-                );
-                let cfg_old = CONFIG_FILE.to_string() + "-old";
-                std::fs::rename(CONFIG_FILE, cfg_old).unwrap_or_else(|err| {
-                    panic!(
-                        "Could not rename. Please remove {} then restart service: Error {}",
-                        CONFIG_FILE, err
-                    )
-                });
-            }
-        }
-        AuraConfig::create_default(&mut file, supported_led_modes)
+impl StdConfig for AuraConfig {
+    fn new() -> Self {
+        Self::create_default(&mut Self::file_open(), &LaptopLedData::get_data())
     }
 
+    fn file_name() -> &'static str {
+        CONFIG_FILE
+    }
+}
+
+impl StdConfigLoad1<AuraConfig> for AuraConfig {}
+
+impl AuraConfig {
     fn create_default(file: &mut File, support_data: &LaptopLedData) -> Self {
         // create a default config here
         let mut config = AuraConfig::default();
@@ -253,27 +237,6 @@ impl AuraConfig {
         file.write_all(json.as_bytes())
             .unwrap_or_else(|_| panic!("Could not write {}", CONFIG_FILE));
         config
-    }
-
-    pub fn read(&mut self) {
-        let mut file = config_file_open(CONFIG_FILE);
-        let mut buf = String::new();
-        if let Ok(l) = file.read_to_string(&mut buf) {
-            if l == 0 {
-                warn!("File is empty {}", CONFIG_FILE);
-            } else {
-                let x = serde_json::from_str(&buf)
-                    .unwrap_or_else(|_| panic!("Could not deserialise {}", CONFIG_FILE));
-                *self = x;
-            }
-        }
-    }
-
-    pub fn write(&self) {
-        let mut file = File::create(CONFIG_FILE).expect("Couldn't overwrite config");
-        let json = serde_json::to_string_pretty(self).expect("Parse config to JSON failed");
-        file.write_all(json.as_bytes())
-            .unwrap_or_else(|err| error!("Could not write config: {}", err));
     }
 
     /// Set the mode data, current mode, and if multizone enabled.

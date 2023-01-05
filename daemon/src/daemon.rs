@@ -7,6 +7,7 @@ use std::time::Duration;
 use ::zbus::export::futures_util::lock::Mutex;
 use ::zbus::Connection;
 use daemon::config::Config;
+use daemon::config_traits::{StdConfigLoad1, StdConfigLoad3};
 use daemon::ctrl_anime::config::AnimeConfig;
 use daemon::ctrl_anime::trait_impls::CtrlAnimeZbus;
 use daemon::ctrl_anime::CtrlAnime;
@@ -123,7 +124,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     }
 
     let laptop = LaptopLedData::get_data();
-    let aura_config = AuraConfig::load(&laptop);
+    let aura_config = AuraConfig::load();
     match CtrlKbdLed::new(laptop, aura_config) {
         Ok(ctrl) => {
             let zbus = CtrlKbdLedZbus(Arc::new(Mutex::new(ctrl)));

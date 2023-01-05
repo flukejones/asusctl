@@ -790,6 +790,7 @@ dependencies = [
  "rog_dbus",
  "rog_platform",
  "rog_profiles",
+ "ron",
  "serde",
  "serde_derive",
  "serde_json",

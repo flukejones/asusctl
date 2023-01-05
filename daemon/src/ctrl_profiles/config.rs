@@ -1,90 +1,42 @@
-use std::fs::{File, OpenOptions};
-use std::io::{Read, Write};
-use std::path::PathBuf;
-
-use log::{error, warn};
 use rog_profiles::{FanCurveProfiles, Profile};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{config_file, config_file_open};
+use crate::config_traits::{StdConfig, StdConfigLoad1};
 
-static CONFIG_FILE: &str = "profile.conf";
+const CONFIG_FILE: &str = "profile.conf";
+const CONFIG_FAN_FILE: &str = "fan_curves.conf";
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ProfileConfig {
-    #[serde(skip)]
-    config_path: PathBuf,
     /// For restore on boot
     pub active_profile: Profile,
     /// States to restore
     pub fan_curves: Option<FanCurveProfiles>,
 }
 
-impl ProfileConfig {
-    fn new(config_path: PathBuf) -> Self {
+impl StdConfig for ProfileConfig {
+    fn new() -> Self {
         Self {
-            config_path,
             active_profile: Profile::Balanced,
             fan_curves: None,
         }
     }
 
-    pub fn load() -> Self {
-        let config_path = config_file(CONFIG_FILE);
-        let mut file = config_file_open(CONFIG_FILE);
-        let mut buf = String::new();
-        let mut config;
-        if let Ok(read_len) = file.read_to_string(&mut buf) {
-            if read_len == 0 {
-                config = Self::new(config_path);
-            } else if let Ok(data) = toml::from_str(&buf) {
-                config = data;
-                config.config_path = config_path;
-            } else {
-                warn!(
-                    "Could not deserialise {config_path:?}.\nWill rename to {config_path:?}-old \
-                     and recreate config",
-                );
-                let mut cfg_old = config_path.clone();
-                cfg_old.push("-old");
-                std::fs::rename(config_path.clone(), cfg_old).unwrap_or_else(|err| {
-                    panic!(
-                        "Could not rename. Please remove {config_path:?} then restart service: \
-                         Error {err}",
-                    )
-                });
-                config = Self::new(config_path);
-            }
-        } else {
-            config = Self::new(config_path);
-        }
-        config
-    }
-
-    pub fn read(&mut self) {
-        let mut file = OpenOptions::new()
-            .read(true)
-            .open(&self.config_path)
-            .unwrap_or_else(|err| panic!("Error reading {:?}: {}", self.config_path, err));
-
-        let mut buf = String::new();
-        if let Ok(l) = file.read_to_string(&mut buf) {
-            if l == 0 {
-                warn!("File is empty {:?}", self.config_path);
-            } else {
-                let mut data: ProfileConfig = toml::from_str(&buf)
-                    .unwrap_or_else(|_| panic!("Could not deserialise {:?}", self.config_path));
-                // copy over serde skipped values
-                data.config_path = self.config_path.clone();
-                *self = data;
-            }
-        }
-    }
-
-    pub fn write(&self) {
-        let mut file = File::create(&self.config_path).expect("Couldn't overwrite config");
-        let data = toml::to_string(self).expect("Parse config to toml failed");
-        file.write_all(data.as_bytes())
-            .unwrap_or_else(|err| error!("Could not write config: {}", err));
+    fn file_name() -> &'static str {
+        CONFIG_FILE
     }
 }
+
+impl StdConfigLoad1<ProfileConfig> for ProfileConfig {}
+
+impl StdConfig for FanCurveProfiles {
+    fn new() -> Self {
+        Self::default()
+    }
+
+    fn file_name() -> &'static str {
+        CONFIG_FAN_FILE
+    }
+}
+
+impl StdConfigLoad1<ProfileConfig> for FanCurveProfiles {}

@@ -9,6 +9,7 @@ use zbus::export::futures_util::lock::{Mutex, MutexGuard};
 use zbus::{dbus_interface, Connection, SignalContext};
 
 use super::CtrlAnime;
+use crate::config_traits::StdConfig;
 use crate::error::RogError;
 
 pub(super) const ZBUS_PATH: &str = "/org/asuslinux/Anime";
