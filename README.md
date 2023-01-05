@@ -74,14 +74,14 @@ Requirements are rust >= 1.57 installed from rustup.io if the distro provided ve
 
 **Ubuntu (unsuported):**
 
-    apt install libclang-dev libudev-dev
+    apt install libgtk-3-dev libpango1.0-dev libgdk-pixbuf-2.0-dev libglib2.0-dev cmake libclang-dev libudev-dev libayatana-appindicator3-1
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     make
     sudo make install
 
 **fedora:**
 
-    dnf install cmake clang-devel systemd-devel gtk3-devel cargo
+    dnf install cmake clang-devel systemd-devel glib2-devel cairo-devel atkmm-devel pangomm-devel gdk-pixbuf-devel gtk3-devel libappindicator-gtk3
     make
     sudo make install
 
