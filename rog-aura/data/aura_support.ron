@@ -336,6 +336,13 @@
         advanced_type: None,
     ),
     (
+        board_name: "GL703G",
+        layout_name: "gl503",
+        basic_modes: [Static, Breathe, Strobe, Rainbow],
+        basic_zones: [],
+        advanced_type: None,
+    ),
+    (
         board_name: "GM501G",
         layout_name: "fa507",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],

@@ -33,14 +33,14 @@ const APP_ICON_PATH: &str = "/usr/share/icons/hicolor/512x512/apps/rog-control-c
 fn main() -> Result<()> {
     let args: Vec<String> = args().skip(1).collect();
 
-    let parsed = match CliStart::parse_args_default(&args) {
+    let cli_parsed = match CliStart::parse_args_default(&args) {
         Ok(p) => p,
         Err(err) => {
             panic!("source {}", err);
         }
     };
 
-    if do_cli_help(&parsed) {
+    if do_cli_help(&cli_parsed) {
         return Ok(());
     }
 
@@ -116,13 +116,15 @@ fn main() -> Result<()> {
     let mut path = PathBuf::from(DATA_DIR);
     let mut layout_name = None;
     let mut layouts = Vec::new();
-    if parsed.board_name.is_some() || parsed.layout_viewing {
-        path.pop();
-        path.push("rog-aura");
-        path.push("data");
+    if cli_parsed.board_name.is_some() || cli_parsed.layout_viewing {
+        if cfg!(feature = "mocking") {
+            path.pop();
+            path.push("rog-aura");
+            path.push("data");
+        }
         layouts = KeyLayout::layout_files(path.to_owned()).unwrap();
 
-        if let Some(name) = &parsed.board_name {
+        if let Some(name) = &cli_parsed.board_name {
             if let Some(modes) = LedSupportFile::load_from_config() {
                 if let Some(data) = modes.matcher(name) {
                     led_support = data;
@@ -143,7 +145,7 @@ fn main() -> Result<()> {
             board_name = "GQ401QM".to_string()
         };
 
-        if parsed.layout_viewing {
+        if cli_parsed.layout_viewing {
             layout_name = Some(layouts[0].clone());
             board_name = layouts[0]
                 .file_name()
@@ -193,7 +195,8 @@ fn main() -> Result<()> {
         }
 
         let config = Config::load()?;
-        if !config.run_in_background || parsed.board_name.is_some() || parsed.layout_viewing {
+        if !config.run_in_background || cli_parsed.board_name.is_some() || cli_parsed.layout_viewing
+        {
             break;
         }
 
