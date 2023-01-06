@@ -60,8 +60,8 @@ fn main() -> Result<()> {
         vsync: true,
         decorated: true,
         transparent: false,
-        min_window_size: Some(egui::vec2(900.0, 600.0)),
-        max_window_size: Some(egui::vec2(900.0, 600.0)),
+        min_window_size: Some(egui::vec2(960.0, 670.0)),
+        max_window_size: Some(egui::vec2(960.0, 670.0)),
         run_and_return: true,
         icon_data: Some(load_icon()),
         ..Default::default()

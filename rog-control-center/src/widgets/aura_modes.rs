@@ -35,6 +35,10 @@ pub fn aura_modes_group(states: &mut SystemState, freq: &mut Arc<AtomicU8>, ui: 
         ui.heading(format!("{p:?}"));
     } else {
         ui.heading("Aura modes");
+        ui.label(
+            "Please note that this section is incomplete and the displayed effects won't match \
+             actual effect",
+        );
     }
     let mut item = |a: AuraModeNum, ui: &mut Ui| {
         if ui
