@@ -2,7 +2,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::config_traits::{StdConfig, StdConfigLoad3};
 
-pub static CONFIG_FILE: &str = "asusd.conf";
+const CONFIG_FILE: &str = "asusd.conf";
 
 #[derive(Deserialize, Serialize, Default)]
 pub struct Config {

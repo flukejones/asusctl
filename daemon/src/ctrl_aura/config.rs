@@ -1,6 +1,4 @@
 use std::collections::{BTreeMap, HashSet};
-use std::fs::File;
-use std::io::Write;
 
 use rog_aura::aura_detection::{LaptopLedData, ASUS_KEYBOARD_DEVICES};
 use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraDevTuf, AuraDevice, AuraPowerDev};
@@ -11,7 +9,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::config_traits::{StdConfig, StdConfigLoad1};
 
-static CONFIG_FILE: &str = "aura.conf";
+const CONFIG_FILE: &str = "aura.conf";
 
 /// Enable/disable LED control in various states such as
 /// when the device is awake, suspended, shutting down or
@@ -190,7 +188,7 @@ impl Default for AuraConfig {
 
 impl StdConfig for AuraConfig {
     fn new() -> Self {
-        Self::create_default(&mut Self::file_open(), &LaptopLedData::get_data())
+        Self::create_default(&LaptopLedData::get_data())
     }
 
     fn file_name() -> &'static str {
@@ -201,7 +199,7 @@ impl StdConfig for AuraConfig {
 impl StdConfigLoad1<AuraConfig> for AuraConfig {}
 
 impl AuraConfig {
-    fn create_default(file: &mut File, support_data: &LaptopLedData) -> Self {
+    fn create_default(support_data: &LaptopLedData) -> Self {
         // create a default config here
         let mut config = AuraConfig::default();
 
@@ -231,11 +229,7 @@ impl AuraConfig {
                 }
             }
         }
-
-        // Should be okay to unwrap this as is since it is a Default
-        let json = serde_json::to_string(&config).unwrap();
-        file.write_all(json.as_bytes())
-            .unwrap_or_else(|_| panic!("Could not write {}", CONFIG_FILE));
+        config.write();
         config
     }
 

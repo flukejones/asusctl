@@ -1,5 +1,3 @@
-use std::fs::File;
-use std::io::Write;
 use std::time::Duration;
 
 use rog_anime::error::AnimeError;
@@ -8,8 +6,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::config_traits::{StdConfig, StdConfigLoad3};
 
-pub static CONFIG_FILE: &str = "anime.conf";
-pub static ANIME_CACHE_PATH: &str = "/etc/asusd/anime-cache.conf";
+const CONFIG_FILE: &str = "anime.conf";
 
 #[derive(Deserialize, Serialize)]
 pub struct AnimeConfigV341 {
@@ -141,7 +138,7 @@ impl Default for AnimeConfig {
 
 impl StdConfig for AnimeConfig {
     fn new() -> Self {
-        Self::create_default(&mut Self::file_open())
+        Self::create_default()
     }
 
     fn file_name() -> &'static str {
@@ -162,7 +159,7 @@ impl AnimeConfig {
     //     }
     // }
 
-    fn create_default(file: &mut File) -> Self {
+    fn create_default() -> Self {
         // create a default config here
         let config = AnimeConfig {
             system: vec![],
@@ -202,10 +199,7 @@ impl AnimeConfig {
             awake_enabled: true,
             boot_anim_enabled: true,
         };
-        // Should be okay to unwrap this as is since it is a Default
-        let json = serde_json::to_string_pretty(&config).unwrap();
-        file.write_all(json.as_bytes())
-            .unwrap_or_else(|_| panic!("Could not write {}", CONFIG_FILE));
+        config.write();
         config
     }
 }

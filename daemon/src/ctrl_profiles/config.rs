@@ -10,15 +10,12 @@ const CONFIG_FAN_FILE: &str = "fan_curves.conf";
 pub struct ProfileConfig {
     /// For restore on boot
     pub active_profile: Profile,
-    /// States to restore
-    pub fan_curves: Option<FanCurveProfiles>,
 }
 
 impl StdConfig for ProfileConfig {
     fn new() -> Self {
         Self {
             active_profile: Profile::Balanced,
-            fan_curves: None,
         }
     }
 

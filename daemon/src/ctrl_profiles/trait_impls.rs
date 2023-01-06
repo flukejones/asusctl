@@ -81,7 +81,7 @@ impl ProfileZbus {
     async fn enabled_fan_profiles(&mut self) -> zbus::fdo::Result<Vec<Profile>> {
         let mut ctrl = self.0.lock().await;
         ctrl.profile_config.read();
-        if let Some(curves) = &ctrl.profile_config.fan_curves {
+        if let Some(curves) = &ctrl.fan_config {
             return Ok(curves.get_enabled_curve_profiles());
         }
         Err(Error::Failed(UNSUPPORTED_MSG.to_owned()))
@@ -96,7 +96,7 @@ impl ProfileZbus {
     ) -> zbus::fdo::Result<()> {
         let mut ctrl = self.0.lock().await;
         ctrl.profile_config.read();
-        if let Some(curves) = &mut ctrl.profile_config.fan_curves {
+        if let Some(curves) = &mut ctrl.fan_config {
             curves.set_profile_curve_enabled(profile, enabled);
 
             ctrl.write_profile_curve_to_platform()
@@ -114,7 +114,7 @@ impl ProfileZbus {
     async fn fan_curve_data(&mut self, profile: Profile) -> zbus::fdo::Result<FanCurveSet> {
         let mut ctrl = self.0.lock().await;
         ctrl.profile_config.read();
-        if let Some(curves) = &ctrl.profile_config.fan_curves {
+        if let Some(curves) = &ctrl.fan_config {
             let curve = curves.get_fan_curves_for(profile);
             return Ok(curve.clone());
         }
@@ -126,7 +126,7 @@ impl ProfileZbus {
     async fn set_fan_curve(&self, profile: Profile, curve: CurveData) -> zbus::fdo::Result<()> {
         let mut ctrl = self.0.lock().await;
         ctrl.profile_config.read();
-        if let Some(curves) = &mut ctrl.profile_config.fan_curves {
+        if let Some(curves) = &mut ctrl.fan_config {
             curves
                 .save_fan_curve(curve, profile)
                 .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
@@ -240,7 +240,7 @@ impl crate::Reloadable for ProfileZbus {
     async fn reload(&mut self) -> Result<(), RogError> {
         let mut ctrl = self.0.lock().await;
         let active = ctrl.profile_config.active_profile;
-        if let Some(curves) = &mut ctrl.profile_config.fan_curves {
+        if let Some(curves) = &mut ctrl.fan_config {
             if let Ok(mut device) = FanCurveProfiles::get_device() {
                 // There is a possibility that the curve was default zeroed, so this call
                 // initialises the data from system read and we need to save it

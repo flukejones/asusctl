@@ -7,30 +7,10 @@ use ron::ser::PrettyConfig;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
-static CONFIG_PATH_BASE: &str = "/etc/asusd/";
+const CONFIG_PATH_BASE: &str = "/etc/asusd/";
 
-/// Create a `PathBuf` for `file`. If the base config dir `CONFIG_PATH_BASE`
-/// does not exist it is created.
-fn config_file(file: &str) -> PathBuf {
-    let mut config = PathBuf::from(CONFIG_PATH_BASE);
-    if !config.exists() {
-        create_dir(config.as_path()).unwrap_or_else(|_| panic!("Could not create {config:?}"));
-    }
-    config.push(file);
-    config
-}
-
-/// Open a config file as read/write. If the file or dir does not exist then
-/// both are created.
-fn config_file_open(file: PathBuf) -> File {
-    OpenOptions::new()
-        .read(true)
-        .write(true)
-        .create(true)
-        .open(file.clone())
-        .unwrap_or_else(|_| panic!("The file {file:?} or directory {CONFIG_PATH_BASE} is missing"))
-}
-
+/// Config file helper traits. Only `new()` and `file_name()` are required to be
+/// implemented, the rest are intended to be free methods.
 pub trait StdConfig
 where
     Self: Serialize + DeserializeOwned,
@@ -40,18 +20,32 @@ where
     fn file_name() -> &'static str;
 
     fn file_path() -> PathBuf {
-        config_file(Self::file_name())
+        let mut config = PathBuf::from(CONFIG_PATH_BASE);
+        if !config.exists() {
+            create_dir(config.as_path())
+                .unwrap_or_else(|e| panic!("Could not create {CONFIG_PATH_BASE} {e}"));
+        }
+        config.push(Self::file_name());
+        config
     }
 
     fn file_open() -> File {
-        config_file_open(Self::file_path())
+        OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .open(Self::file_path())
+            .unwrap_or_else(|e| panic!("Could not open {:?} {e}", Self::file_path()))
     }
 
     fn read(&mut self) {
-        let mut file = OpenOptions::new()
-            .read(true)
-            .open(Self::file_path())
-            .unwrap_or_else(|err| panic!("Error reading {:?}: {}", Self::file_path(), err));
+        let mut file = match OpenOptions::new().read(true).open(Self::file_path()) {
+            Ok(data) => data,
+            Err(err) => {
+                error!("Error reading {:?}: {}", Self::file_path(), err);
+                return;
+            }
+        };
         let mut buf = String::new();
         if let Ok(l) = file.read_to_string(&mut buf) {
             if l == 0 {
@@ -67,12 +61,23 @@ where
     }
 
     fn write(&self) {
-        let mut file = File::create(Self::file_path()).expect(&format!(
-            "Couldn't overwrite config {:?}",
-            Self::file_path()
-        ));
-        let ron = ron::ser::to_string_pretty(&self, PrettyConfig::new().depth_limit(4))
-            .expect("Parse config to RON failed");
+        let mut file = match File::create(Self::file_path()) {
+            Ok(data) => data,
+            Err(e) => {
+                error!(
+                    "Couldn't overwrite config {:?}, error: {e}",
+                    Self::file_path()
+                );
+                return;
+            }
+        };
+        let ron = match ron::ser::to_string_pretty(&self, PrettyConfig::new().depth_limit(4)) {
+            Ok(data) => data,
+            Err(e) => {
+                error!("Parse {:?} to RON failed, error: {e}", Self::file_path());
+                return;
+            }
+        };
         file.write_all(ron.as_bytes())
             .unwrap_or_else(|err| error!("Could not write config: {}", err));
     }
@@ -86,7 +91,7 @@ where
         );
         let cfg_old = Self::file_path().to_string_lossy().to_string() + "-old";
         std::fs::rename(Self::file_path(), cfg_old).unwrap_or_else(|err| {
-            panic!(
+            error!(
                 "Could not rename. Please remove {} then restart service: Error {}",
                 Self::file_name(),
                 err

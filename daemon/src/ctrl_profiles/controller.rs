@@ -11,6 +11,7 @@ use crate::GetSupported;
 
 pub struct CtrlPlatformProfile {
     pub profile_config: ProfileConfig,
+    pub fan_config: Option<FanCurveProfiles>,
     pub platform: AsusPlatform,
 }
 
@@ -51,21 +52,26 @@ impl CtrlPlatformProfile {
         if platform.has_platform_profile() || platform.has_throttle_thermal_policy() {
             info!("Device has profile control available");
 
-            let mut controller = CtrlPlatformProfile { profile_config: config, platform };
+            let mut controller = CtrlPlatformProfile {
+                profile_config: config,
+                fan_config: None,
+                platform,
+            };
             if FanCurveProfiles::get_device().is_ok() {
                 info!("Device has fan curves available");
-                if controller.profile_config.fan_curves.is_none() {
-                    controller.profile_config.fan_curves = Some(Default::default());
+                if controller.fan_config.is_none() {
+                    controller.fan_config = Some(Default::default());
                     for _ in [Profile::Balanced, Profile::Performance, Profile::Quiet] {
                         controller.set_next_profile()?;
                         controller.set_active_curve_to_defaults()?;
 
                         let active = Profile::get_active_profile().unwrap_or(Profile::Balanced);
-                        if let Some(curves) = controller.profile_config.fan_curves.as_ref() {
+                        if let Some(curves) = controller.fan_config.as_ref() {
                             info!(
                                 "{active:?}: {}",
                                 String::from(curves.get_fan_curves_for(active))
                             );
+                            curves.write();
                         }
                     }
                 }
@@ -79,6 +85,9 @@ impl CtrlPlatformProfile {
 
     pub fn save_config(&self) {
         self.profile_config.write();
+        if let Some(fans) = self.fan_config.as_ref() {
+            fans.write();
+        }
     }
 
     /// Toggle to next profile in list. This will first read the config, switch,
@@ -105,18 +114,24 @@ impl CtrlPlatformProfile {
 
     /// Set the curve for the active profile active
     pub(super) fn write_profile_curve_to_platform(&mut self) -> Result<(), RogError> {
-        if let Some(curves) = &mut self.profile_config.fan_curves {
+        if let Some(curves) = &mut self.fan_config {
             if let Ok(mut device) = FanCurveProfiles::get_device() {
-                curves.write_profile_curve_to_platform(self.profile_config.active_profile, &mut device)?;
+                curves.write_profile_curve_to_platform(
+                    self.profile_config.active_profile,
+                    &mut device,
+                )?;
             }
         }
         Ok(())
     }
 
     pub(super) fn set_active_curve_to_defaults(&mut self) -> Result<(), RogError> {
-        if let Some(curves) = self.profile_config.fan_curves.as_mut() {
+        if let Some(curves) = self.fan_config.as_mut() {
             if let Ok(mut device) = FanCurveProfiles::get_device() {
-                curves.set_active_curve_to_defaults(self.profile_config.active_profile, &mut device)?;
+                curves.set_active_curve_to_defaults(
+                    self.profile_config.active_profile,
+                    &mut device,
+                )?;
             }
         }
         Ok(())
