@@ -82,6 +82,21 @@ pub fn write_attr_u8_array(device: &mut Device, attr: &str, values: &[u8]) -> Re
         .map_err(|e| PlatformError::IoPath(attr.into(), e))
 }
 
+pub fn read_attr_string(device: &Device, attr_name: &str) -> Result<String> {
+    if let Some(value) = device.attribute_value(attr_name) {
+        let tmp = value.to_string_lossy().to_string();
+        return Ok(tmp);
+    }
+    Err(PlatformError::AttrNotFound(attr_name.to_owned()))
+}
+
+pub fn write_attr_string(device: &mut Device, attr: &str, value: &str) -> Result<()> {
+    let tmp = value.trim();
+    device
+        .set_attribute_value(attr, tmp)
+        .map_err(|e| PlatformError::IoPath(attr.into(), e))
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

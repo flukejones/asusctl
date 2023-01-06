@@ -141,3 +141,37 @@ macro_rules! attr_u8_array {
         $crate::watch_attr!($attr_name $item);
     };
 }
+
+#[macro_export]
+macro_rules! get_attr_string {
+    ($(#[$doc_comment:meta])? $attr_name:literal $item:ident) => {
+        concat_idents::concat_idents!(fn_name = get_, $attr_name {
+            $(#[$doc_comment])*
+            pub fn fn_name(&self) -> Result<String> {
+                $crate::read_attr_string(&to_device(&self.$item)?, $attr_name)
+            }
+        });
+    };
+}
+
+#[macro_export]
+macro_rules! set_attr_string {
+    ($(#[$doc_comment:meta])? $attr_name:literal $item:ident) => {
+        concat_idents::concat_idents!(fn_name = set_, $attr_name {
+            $(#[$doc_comment])*
+            pub fn fn_name(&self, values: &str) -> Result<()> {
+                $crate::write_attr_string(&mut to_device(&self.$item)?, $attr_name, values)
+            }
+        });
+    };
+}
+
+#[macro_export]
+macro_rules! attr_string {
+    ($attr_name:literal, $item:ident) => {
+        $crate::has_attr!($attr_name $item);
+        $crate::get_attr_string!($attr_name $item);
+        $crate::set_attr_string!($attr_name $item);
+        $crate::watch_attr!($attr_name $item);
+    };
+}

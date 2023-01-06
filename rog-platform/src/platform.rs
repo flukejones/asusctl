@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use zbus::zvariant::Type;
 
 use crate::error::{PlatformError, Result};
-use crate::{attr_bool, attr_u8, to_device};
+use crate::{attr_bool, attr_string, attr_u8, to_device};
 
 /// The "platform" device provides access to things like:
 /// - `dgpu_disable`
@@ -36,7 +36,7 @@ impl AsusPlatform {
     attr_u8!("throttle_thermal_policy", path);
 
     // The acpi platform_profile support
-    attr_u8!("platform_profile", pp_path);
+    attr_string!("platform_profile", pp_path);
 
     pub fn new() -> Result<Self> {
         let mut enumerator = udev::Enumerator::new().map_err(|err| {

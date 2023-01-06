@@ -1,7 +1,8 @@
+use std::str::FromStr;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use log::{info, warn};
+use log::{error, info, warn};
 use rog_profiles::fan_curve_set::{CurveData, FanCurveSet};
 use rog_profiles::{FanCurveProfiles, Profile};
 use zbus::export::futures_util::lock::Mutex;
@@ -200,6 +201,7 @@ impl CtrlTask for ProfileZbus {
 
     async fn create_tasks(&self, signal_ctxt: SignalContext<'static>) -> Result<(), RogError> {
         let ctrl = self.0.clone();
+        let sig_ctx = signal_ctxt.clone();
         let mut watch = self
             .0
             .lock()
@@ -209,25 +211,73 @@ impl CtrlTask for ProfileZbus {
 
         tokio::spawn(async move {
             let mut buffer = [0; 32];
-            watch
-                .event_stream(&mut buffer)
-                .unwrap()
-                .for_each(|_| async {
-                    let mut lock = ctrl.lock().await;
-                    let new_thermal = lock.platform.get_throttle_thermal_policy().unwrap();
-                    let new_profile = Profile::from_throttle_thermal_policy(new_thermal);
-                    if new_profile != lock.profile_config.active_profile {
-                        info!("throttle_thermal_policy changed to {new_profile}");
-                        lock.profile_config.active_profile = new_profile;
-                        lock.write_profile_curve_to_platform().unwrap();
-                        lock.save_config();
-                        Profile::set_profile(lock.profile_config.active_profile).unwrap();
-                    }
-                    Self::notify_profile(&signal_ctxt, lock.profile_config.active_profile)
-                        .await
-                        .ok();
-                })
-                .await;
+            if let Ok(stream) = watch.event_stream(&mut buffer) {
+                stream
+                    .for_each(|_| async {
+                        let mut lock = ctrl.lock().await;
+                        if let Ok(profile) =
+                            lock.platform.get_throttle_thermal_policy().map_err(|e| {
+                                error!("get_throttle_thermal_policy error: {e}");
+                            })
+                        {
+                            let new_profile = Profile::from_throttle_thermal_policy(profile);
+                            if new_profile != lock.profile_config.active_profile {
+                                info!("platform_profile changed to {new_profile}");
+                                lock.profile_config.active_profile = new_profile;
+                                lock.write_profile_curve_to_platform().unwrap();
+                                lock.save_config();
+                                Profile::set_profile(lock.profile_config.active_profile)
+                                    .map_err(|e| {
+                                        error!("Profile::set_profile() error: {e}");
+                                    })
+                                    .ok();
+                            }
+                            Self::notify_profile(&sig_ctx, lock.profile_config.active_profile)
+                                .await
+                                .ok();
+                        }
+                    })
+                    .await;
+            }
+        });
+
+        let ctrl = self.0.clone();
+        let mut watch = self.0.lock().await.platform.monitor_platform_profile()?;
+
+        tokio::spawn(async move {
+            let mut buffer = [0; 32];
+            if let Ok(stream) = watch.event_stream(&mut buffer) {
+                stream
+                    .for_each(|_| async {
+                        let mut lock = ctrl.lock().await;
+                        if let Ok(profile) = lock.platform.get_platform_profile().map_err(|e| {
+                            error!("get_platform_profile error: {e}");
+                        }) {
+                            if let Ok(new_profile) = Profile::from_str(&profile).map_err(|e| {
+                                error!("Profile::from_str(&profile) error: {e}");
+                            }) {
+                                if new_profile != lock.profile_config.active_profile {
+                                    info!("platform_profile changed to {new_profile}");
+                                    lock.profile_config.active_profile = new_profile;
+                                    lock.write_profile_curve_to_platform().unwrap();
+                                    lock.save_config();
+                                    Profile::set_profile(lock.profile_config.active_profile)
+                                        .map_err(|e| {
+                                            error!("Profile::set_profile() error: {e}");
+                                        })
+                                        .ok();
+                                }
+                                Self::notify_profile(
+                                    &signal_ctxt,
+                                    lock.profile_config.active_profile,
+                                )
+                                .await
+                                .ok();
+                            }
+                        }
+                    })
+                    .await;
+            }
         });
 
         Ok(())

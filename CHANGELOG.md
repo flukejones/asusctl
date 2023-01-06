@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ROGCC: Add CLI opt for loading a keyboard layout for testing, with live-reload on file change
 - ROGCC: Add CLI opt for viewing all layout files + filenames to help find a layout matching your laptop
   + Both of these options would hopefully be temporary and replaced with a "wizard" GUI helper
+- Fix profile controller not detecting if platform_profile is changed
 ### BREAKING
 - Rename aura dbus method from `per_key_raw` to `direct_addressing_raw` and add doc comment
 - Changes to aura.conf:
