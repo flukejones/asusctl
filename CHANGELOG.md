@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Better handling of `/etc/asusd` not existing
 - Better handling of non-existant config files
+- Move all config handling to generic traits for better consistency
+- Re-parse all configs to RON format
+- Move fan-curve config to own config file
 - Added option to set `disable_nvidia_powerd_on_battery`
 - Add short log entry to throttle_thermal_policy change detection
 - ROGCC: Don't notify user if changing to same mux mode

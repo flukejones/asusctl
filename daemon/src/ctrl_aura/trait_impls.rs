@@ -11,6 +11,7 @@ use zbus::export::futures_util::StreamExt;
 use zbus::{dbus_interface, Connection, SignalContext};
 
 use super::controller::CtrlKbdLed;
+use crate::config_traits::StdConfig;
 use crate::error::RogError;
 use crate::CtrlTask;
 

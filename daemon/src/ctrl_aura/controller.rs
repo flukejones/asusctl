@@ -10,6 +10,7 @@ use rog_platform::keyboard_led::KeyboardLed;
 use rog_platform::supported::LedSupportedFunctions;
 
 use super::config::{AuraConfig, AuraPowerConfig};
+use crate::config_traits::StdConfig;
 use crate::error::RogError;
 use crate::GetSupported;
 
