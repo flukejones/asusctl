@@ -3,6 +3,7 @@ use std::io::{Read, Write};
 use std::path::PathBuf;
 
 use log::{error, warn};
+pub use ron;
 use ron::ser::PrettyConfig;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -13,12 +14,16 @@ pub trait StdConfig
 where
     Self: Serialize + DeserializeOwned,
 {
+    /// Taking over the standard `new()` to ensure things can be generic
     fn new() -> Self;
 
+    /// Return the config files names, such as `wibble.cfg`
     fn file_name() -> &'static str;
 
+    /// Return the full path to the directory the config file resides in
     fn config_dir() -> PathBuf;
 
+    /// Return the full path to the config file
     fn file_path() -> PathBuf {
         let mut config = Self::config_dir();
         if !config.exists() {
@@ -29,6 +34,9 @@ where
         config
     }
 
+    /// Directly open the config file for read and write. If the config file
+    /// does not exist it is created, including the directories the file
+    /// resides in.
     fn file_open() -> File {
         OpenOptions::new()
             .read(true)
@@ -38,6 +46,7 @@ where
             .unwrap_or_else(|e| panic!("Could not open {:?} {e}", Self::file_path()))
     }
 
+    /// Open and parse the config file to self from ron format
     fn read(&mut self) {
         let mut file = match OpenOptions::new().read(true).open(Self::file_path()) {
             Ok(data) => data,
@@ -60,6 +69,7 @@ where
         }
     }
 
+    /// Write the config file data to pretty ron format
     fn write(&self) {
         let mut file = match File::create(Self::file_path()) {
             Ok(data) => data,
@@ -100,6 +110,13 @@ where
     }
 }
 
+/// Base trait for loading/parsing. This can be used to help update configs to
+/// new versions ```ignore
+/// impl StdConfigLoad1<FanCurveConfigV1> for FanCurveConfig {}
+/// ```
+///
+/// If all of the generics fails to parse, then the old config is renamed and a
+/// new one created
 pub trait StdConfigLoad1<T>
 where
     T: StdConfig + DeserializeOwned + Serialize,
@@ -127,6 +144,13 @@ where
     }
 }
 
+/// Base trait for loading/parsing. This is intended to be used to help update
+/// configs to new versions ```ignore
+/// impl StdConfigLoad2<FanCurveConfigV1, ProfileConfigV2> for FanCurveConfig {}
+/// ```
+///
+/// If all of the generics fails to parse, then the old config is renamed and a
+/// new one created
 pub trait StdConfigLoad2<T1, T2>
 where
     T1: StdConfig + DeserializeOwned + Serialize,
@@ -157,6 +181,13 @@ where
     }
 }
 
+/// Base trait for loading/parsing. This is intended to be used to help update
+/// configs to new versions ```ignore
+/// impl StdConfigLoad3<FanCurveConfigV1, ProfileConfigV2, ProfileConfigV3> for FanCurveConfig {}
+/// ```
+///
+/// If all of the generics fails to parse, then the old config is renamed and a
+/// new one created
 pub trait StdConfigLoad3<T1, T2, T3>
 where
     T1: StdConfig + DeserializeOwned + Serialize,

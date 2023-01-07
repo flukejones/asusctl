@@ -27,5 +27,6 @@ rog_anime = { path = "../rog-anime" }
 rog_aura = { path = "../rog-aura" }
 rog_dbus = { path = "../rog-dbus" }
 rog_platform = { path = "../rog-platform" }
+config-traits = { path = "../config-traits" }
 
 zbus.workspace = true

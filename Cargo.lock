@@ -802,10 +802,8 @@ dependencies = [
  "rog_dbus",
  "rog_platform",
  "rog_profiles",
- "ron",
  "serde",
  "serde_derive",
- "serde_json",
  "sysfs-class",
  "systemd-zbus",
  "tokio",
@@ -816,6 +814,7 @@ dependencies = [
 name = "daemon-user"
 version = "4.5.8"
 dependencies = [
+ "config-traits",
  "dirs",
  "rog_anime",
  "rog_aura",

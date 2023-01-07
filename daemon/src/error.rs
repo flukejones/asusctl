@@ -1,6 +1,7 @@
 use std::convert::From;
 use std::fmt;
 
+use config_traits::ron;
 use rog_anime::error::AnimeError;
 use rog_platform::error::PlatformError;
 use rog_profiles::error::ProfileError;

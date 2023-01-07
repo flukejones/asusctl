@@ -38,8 +38,6 @@ logind-zbus.workspace = true
 # serialisation
 serde.workspace = true
 serde_derive.workspace = true
-serde_json.workspace = true
-ron.workspace = true
 
 # Device control
 sysfs-class.workspace = true # used for backlight control and baord ID
