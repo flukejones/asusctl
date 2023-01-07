@@ -1,13 +1,12 @@
 use std::collections::{BTreeMap, HashSet};
 
+use config_traits::{StdConfig, StdConfigLoad1};
 use rog_aura::aura_detection::{LaptopLedData, ASUS_KEYBOARD_DEVICES};
 use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Direction, LedBrightness, Speed, GRADIENT};
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::keyboard_led::KeyboardLed;
 use serde_derive::{Deserialize, Serialize};
-
-use crate::config_traits::{StdConfig, StdConfigLoad1};
 
 const CONFIG_FILE: &str = "aura.conf";
 
@@ -189,6 +188,10 @@ impl Default for AuraConfig {
 impl StdConfig for AuraConfig {
     fn new() -> Self {
         Self::create_default(&LaptopLedData::get_data())
+    }
+
+    fn config_dir() -> std::path::PathBuf {
+        std::path::PathBuf::from(crate::CONFIG_PATH_BASE)
     }
 
     fn file_name() -> &'static str {

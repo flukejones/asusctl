@@ -1,17 +1,17 @@
+use config_traits::StdConfig;
 use log::{info, warn};
 use rog_platform::platform::AsusPlatform;
 use rog_platform::supported::PlatformProfileFunctions;
 use rog_profiles::error::ProfileError;
 use rog_profiles::{FanCurveProfiles, Profile};
 
-use super::config::ProfileConfig;
-use crate::config_traits::StdConfig;
+use super::config::{FanCurveConfig, ProfileConfig};
 use crate::error::RogError;
 use crate::GetSupported;
 
 pub struct CtrlPlatformProfile {
     pub profile_config: ProfileConfig,
-    pub fan_config: Option<FanCurveProfiles>,
+    pub fan_config: Option<FanCurveConfig>,
     pub platform: AsusPlatform,
 }
 
@@ -69,7 +69,7 @@ impl CtrlPlatformProfile {
                         if let Some(curves) = controller.fan_config.as_ref() {
                             info!(
                                 "{active:?}: {}",
-                                String::from(curves.get_fan_curves_for(active))
+                                String::from(curves.device().get_fan_curves_for(active))
                             );
                             curves.write();
                         }
@@ -83,9 +83,10 @@ impl CtrlPlatformProfile {
         Err(ProfileError::NotSupported.into())
     }
 
-    pub fn save_config(&self) {
+    pub fn save_config(&mut self) {
         self.profile_config.write();
-        if let Some(fans) = self.fan_config.as_ref() {
+        if let Some(fans) = self.fan_config.as_mut() {
+            fans.update_config();
             fans.write();
         }
     }
@@ -116,7 +117,7 @@ impl CtrlPlatformProfile {
     pub(super) fn write_profile_curve_to_platform(&mut self) -> Result<(), RogError> {
         if let Some(curves) = &mut self.fan_config {
             if let Ok(mut device) = FanCurveProfiles::get_device() {
-                curves.write_profile_curve_to_platform(
+                curves.device_mut().write_profile_curve_to_platform(
                     self.profile_config.active_profile,
                     &mut device,
                 )?;
@@ -128,10 +129,11 @@ impl CtrlPlatformProfile {
     pub(super) fn set_active_curve_to_defaults(&mut self) -> Result<(), RogError> {
         if let Some(curves) = self.fan_config.as_mut() {
             if let Ok(mut device) = FanCurveProfiles::get_device() {
-                curves.set_active_curve_to_defaults(
+                curves.device_mut().set_active_curve_to_defaults(
                     self.profile_config.active_profile,
                     &mut device,
                 )?;
+                curves.update_config();
             }
         }
         Ok(())

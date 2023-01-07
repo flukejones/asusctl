@@ -133,12 +133,12 @@ macro_rules! effect_state_impl {
         }
 
         fn get_led(&self) -> $crate::advanced::LedCode {
-            self.address.clone()
+            self.led.clone()
         }
 
         /// Change the led type
         fn set_led(&mut self, address: $crate::advanced::LedCode) {
-            self.address = address;
+            self.led = address;
         }
     };
 }

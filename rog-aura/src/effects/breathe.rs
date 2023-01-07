@@ -7,7 +7,7 @@ use crate::{effect_state_impl, Colour, Speed};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Breathe {
-    address: LedCode,
+    led: LedCode,
     /// The starting colour
     start_colour1: Colour,
     /// The secondary starting colour
@@ -26,7 +26,7 @@ pub struct Breathe {
 impl Breathe {
     pub fn new(address: LedCode, colour1: Colour, colour2: Colour, speed: Speed) -> Self {
         Self {
-            address,
+            led: address,
             start_colour1: colour1,
             start_colour2: colour2,
             speed,

@@ -3,7 +3,7 @@ use crate::advanced::LedCode;
 use crate::Colour;
 
 pub struct InputBased {
-    address: LedCode,
+    led: LedCode,
     colour: Colour,
     /// - audio
     /// - cpu freq
@@ -24,10 +24,10 @@ impl EffectState for InputBased {
     }
 
     fn get_led(&self) -> LedCode {
-        self.address
+        self.led
     }
 
     fn set_led(&mut self, address: LedCode) {
-        self.address = address
+        self.led = address
     }
 }

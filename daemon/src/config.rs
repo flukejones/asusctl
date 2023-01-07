@@ -1,6 +1,5 @@
+use config_traits::{StdConfig, StdConfigLoad3};
 use serde_derive::{Deserialize, Serialize};
-
-use crate::config_traits::{StdConfig, StdConfigLoad3};
 
 const CONFIG_FILE: &str = "asusd.conf";
 
@@ -23,6 +22,10 @@ impl StdConfig for Config {
             ac_command: String::new(),
             bat_command: String::new(),
         }
+    }
+
+    fn config_dir() -> std::path::PathBuf {
+        std::path::PathBuf::from(crate::CONFIG_PATH_BASE)
     }
 
     fn file_name() -> &'static str {

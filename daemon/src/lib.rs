@@ -1,8 +1,6 @@
 #![deny(unused_must_use)]
 /// Configuration loading, saving
 pub mod config;
-/// Base traits for configuration file loading
-pub mod config_traits;
 /// Control of anime matrix display
 pub mod ctrl_anime;
 /// Keyboard LED brightness control, RGB, and LED display modes
@@ -29,6 +27,8 @@ use zbus::zvariant::ObjectPath;
 use zbus::{Connection, SignalContext};
 
 use crate::error::RogError;
+
+const CONFIG_PATH_BASE: &str = "/etc/asusd/";
 
 /// This macro adds a function which spawns an `inotify` task on the passed in
 /// `Executor`.

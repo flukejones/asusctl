@@ -2,6 +2,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use config_traits::StdConfig;
 use log::{error, info, warn};
 use rog_profiles::fan_curve_set::{CurveData, FanCurveSet};
 use rog_profiles::{FanCurveProfiles, Profile};
@@ -11,7 +12,6 @@ use zbus::fdo::Error;
 use zbus::{dbus_interface, Connection, SignalContext};
 
 use super::controller::CtrlPlatformProfile;
-use crate::config_traits::StdConfig;
 use crate::error::RogError;
 use crate::CtrlTask;
 
@@ -82,8 +82,8 @@ impl ProfileZbus {
     async fn enabled_fan_profiles(&mut self) -> zbus::fdo::Result<Vec<Profile>> {
         let mut ctrl = self.0.lock().await;
         ctrl.profile_config.read();
-        if let Some(curves) = &ctrl.fan_config {
-            return Ok(curves.get_enabled_curve_profiles());
+        if let Some(curves) = &mut ctrl.fan_config {
+            return Ok(curves.device().get_enabled_curve_profiles());
         }
         Err(Error::Failed(UNSUPPORTED_MSG.to_owned()))
     }
@@ -98,7 +98,10 @@ impl ProfileZbus {
         let mut ctrl = self.0.lock().await;
         ctrl.profile_config.read();
         if let Some(curves) = &mut ctrl.fan_config {
-            curves.set_profile_curve_enabled(profile, enabled);
+            curves
+                .device_mut()
+                .set_profile_curve_enabled(profile, enabled);
+            curves.update_config();
 
             ctrl.write_profile_curve_to_platform()
                 .map_err(|e| warn!("write_profile_curve_to_platform, {}", e))
@@ -115,8 +118,8 @@ impl ProfileZbus {
     async fn fan_curve_data(&mut self, profile: Profile) -> zbus::fdo::Result<FanCurveSet> {
         let mut ctrl = self.0.lock().await;
         ctrl.profile_config.read();
-        if let Some(curves) = &ctrl.fan_config {
-            let curve = curves.get_fan_curves_for(profile);
+        if let Some(curves) = &mut ctrl.fan_config {
+            let curve = curves.device().get_fan_curves_for(profile);
             return Ok(curve.clone());
         }
         Err(Error::Failed(UNSUPPORTED_MSG.to_owned()))
@@ -129,8 +132,10 @@ impl ProfileZbus {
         ctrl.profile_config.read();
         if let Some(curves) = &mut ctrl.fan_config {
             curves
+                .device_mut()
                 .save_fan_curve(curve, profile)
                 .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
+            curves.update_config();
         } else {
             return Err(Error::Failed(UNSUPPORTED_MSG.to_owned()));
         }
@@ -295,7 +300,10 @@ impl crate::Reloadable for ProfileZbus {
                 // There is a possibility that the curve was default zeroed, so this call
                 // initialises the data from system read and we need to save it
                 // after
-                curves.write_profile_curve_to_platform(active, &mut device)?;
+                curves
+                    .device_mut()
+                    .write_profile_curve_to_platform(active, &mut device)?;
+                curves.update_config();
                 ctrl.profile_config.write();
             }
         }

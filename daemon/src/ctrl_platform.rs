@@ -5,6 +5,7 @@ use std::process::Command;
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use config_traits::StdConfig;
 use log::{info, warn};
 use rog_platform::platform::{AsusPlatform, GpuMode};
 use rog_platform::supported::RogBiosSupportedFunctions;
@@ -12,7 +13,6 @@ use zbus::export::futures_util::lock::Mutex;
 use zbus::{dbus_interface, Connection, SignalContext};
 
 use crate::config::Config;
-use crate::config_traits::StdConfig;
 use crate::error::RogError;
 use crate::{task_watch_item, CtrlTask, GetSupported};
 

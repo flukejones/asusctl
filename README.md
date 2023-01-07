@@ -13,6 +13,8 @@ Now includes a GUI, `rog-control-center`.
 
 **The minimum supported kernel version is 5.17**
 
+**For TUF laptops, the minimum supported kernel version is 6.1**
+
 ## Goals
 
 1. To provide an interface for rootless control of some system functions most users wish to control such as fan speeds, keyboard LEDs, graphics modes.
@@ -42,8 +44,6 @@ Bus 001 Device 002: ID 0b05:1866 ASUSTek Computer, Inc. N-KEY Device
 
 then it may work without tweaks. Technically all other functions except the LED
 and AniMe parts should work regardless of your latop make.
-
-**TUF Laptops**: now supported provided the kernel is patched. These patches are submitted upstream and will be in version 6.1.x of the kernel (or thereabouts). See the blog on asus-linux.org for more info.
 
 ## Implemented
 

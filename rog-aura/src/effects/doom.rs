@@ -7,7 +7,7 @@ use crate::{effect_state_impl, Colour};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DoomFlicker {
-    address: LedCode,
+    led: LedCode,
     start_colour: Colour,
     max_percentage: u8,
     min_percentage: u8,
@@ -20,7 +20,7 @@ pub struct DoomFlicker {
 impl DoomFlicker {
     pub fn new(address: LedCode, colour: Colour, max_percentage: u8, min_percentage: u8) -> Self {
         Self {
-            address,
+            led: address,
             colour,
             count: 4,
             max_percentage,
@@ -94,7 +94,7 @@ pub struct LightFlash {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DoomLightFlash {
-    address: LedCode,
+    led: LedCode,
     start_colour: Colour,
     max_percentage: u8,
     min_percentage: u8,
@@ -111,7 +111,7 @@ pub struct DoomLightFlash {
 impl DoomLightFlash {
     pub fn new(address: LedCode, colour: Colour, max_percentage: u8, min_percentage: u8) -> Self {
         Self {
-            address,
+            led: address,
             colour,
             count: 4,
             max_percentage,

@@ -7,8 +7,6 @@ use ron::ser::PrettyConfig;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
-const CONFIG_PATH_BASE: &str = "/etc/asusd/";
-
 /// Config file helper traits. Only `new()` and `file_name()` are required to be
 /// implemented, the rest are intended to be free methods.
 pub trait StdConfig
@@ -19,11 +17,13 @@ where
 
     fn file_name() -> &'static str;
 
+    fn config_dir() -> PathBuf;
+
     fn file_path() -> PathBuf {
-        let mut config = PathBuf::from(CONFIG_PATH_BASE);
+        let mut config = Self::config_dir();
         if !config.exists() {
             create_dir(config.as_path())
-                .unwrap_or_else(|e| panic!("Could not create {CONFIG_PATH_BASE} {e}"));
+                .unwrap_or_else(|e| panic!("Could not create {:?} {e}", Self::config_dir()));
         }
         config.push(Self::file_name());
         config

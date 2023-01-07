@@ -3,6 +3,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
+use config_traits::StdConfig;
 use log::{error, info, warn};
 use rog_platform::power::AsusPower;
 use rog_platform::supported::ChargeSupportedFunctions;
@@ -12,7 +13,6 @@ use zbus::export::futures_util::lock::Mutex;
 use zbus::{dbus_interface, Connection, SignalContext};
 
 use crate::config::Config;
-use crate::config_traits::StdConfig;
 use crate::error::RogError;
 use crate::{task_watch_item, CtrlTask, GetSupported};
 

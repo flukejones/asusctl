@@ -47,35 +47,7 @@ The LED controller (e.g, aura) enables setting many of the factory modes availab
 
 #### Supported laptops
 
-Models GA401, GA502, GU502 support LED brightness change only (no RGB). However the GA401Q model can actually use three modes; static, breathe, and pulse, plus also use red to control the LED brightness intensity.
-
-All models that have any form of LED mode control need to be enabled via the config file at `/etc/asusd/asusd-ledmodes.toml`. Unfortunately ASUS doesn't provide any easy way to find all the supported modes for all laptops (not even through Armory Crate and its various files, that progrma downloads only the required settings for the laptop it runs on) so each model must be added as needed.
-
-#### Config options
-
-The defaults are located at `/etc/asusd/asusd-ledmodes.toml`, and on `asusd` start it creates `/etc/asusd/aura.conf` whcih stores the per-mode settings. If you edit the defaults file you must remove `/etc/asusd/aura.conf` and restart `asusd.service` with `systemctl restart asusd`.
-
-##### /etc/asusd/asusd-ledmodes.toml
-
-Example:
-```toml
-[[led_data]]
-prod_family = "Strix"
-board_names = ["GL504G"]
-standard = ["Static", "Breathe", "Strobe", "Rainbow", "Pulse"]
-multizone = ["Key1", "Key2", "Key3", "Key4", "Logo", "BarLeft", "BarRight"]
-per_key = false
-```
-
-1. `prod_family`: you can find this in `journalctl -b -u asusd`, or `cat /sys/class/dmi/id/product_name`. It should be copied as written. There can be multiple `led-data` groups of the same `prod_family` with differing `board_names`.
-2. `board_names`: is an array of board names in this product family. Find this in the journal as above or by `cat /sys/class/dmi/id/board_name`.
-3. `standard` are the factory preset modes, the names should corrospond to Armory Crate names
-4. `multizone`: some models have 4 to 7 zones of LED control as shown in the example. If the laptop has no zones then an empty array will suffice.
-5. `per_key`: enable per-key RGB effects. The keyboard must support this or it has no effect.
-
-##### /etc/asusd/aura.conf
-
-This file can be manually edited if desired, but the `asusctl` CLI tool, or dbus methods are the preferred method. Any manual changes to this file mean that the `asusd.service` will need to be restarted, or you need to cycle between modes to force a reload.
+There are over 60 supported laptops as of 01-01-2023. Please see [the rog-aura crate readme for further details](/rog-aura/README.md).
 
 ### Charge control
 
@@ -199,32 +171,19 @@ An Aura config itself is a file with contents:
 
 If your laptop supports multizone, `"led_type"` can also be `"Zone": <one of the following>`
 - `"None"`
-- `"KeyboardLeft"`
-- `"KeyboardCenterLeft"`
-- `"KeyboardCenterRight"`
-- `"KeyboardRight"`
-- `"LightbarRight"`
-- `"LightbarRightCorner"`
-- `"LightbarRightBottom"`
-- `"LightbarLeftBottom"`
-- `"LightbarLeftCorner"`
-- `"LightbarLeft"`
+- `ZonedKbLeft` // keyboard left
+- `ZonedKbLeftMid` // keyboard left-middle
+- `ZonedKbRightMid` // etc
+- `ZonedKbRight`
+- `LightbarRight`
+- `LightbarRightCorner`
+- `LightbarRightBottom`
+- `LightbarLeftBottom`
+- `LightbarLeftCorner`
+- `LightbarLeft`
 
 At the moment there are only three effects available as shown in the example. More will come in the future
 but this may take me some time.
-
-**Aura layouts**: `asusd-user` does its best to find a suitable layout to use based on `/sys/class/dmi/id/board_name`.
-It looks at each of the files in `/usr/share/rog-gui/layouts/` and matches against the toml block looking like:
-```toml
-matches = [
-    'GX502',
-    'GU502',
-]
-```
-
-My laptop is a `GX502GW`, so `GX502` is a match. Note that these layouts are the physical representation of
-the keyboard and are used in the GUI also. The config that tells if per-key is supported is located in
-`/etc/asusd/asusd-ledmodes.toml`
 
 #### Config options: AniMe
 

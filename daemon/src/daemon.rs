@@ -6,8 +6,8 @@ use std::time::Duration;
 
 use ::zbus::export::futures_util::lock::Mutex;
 use ::zbus::Connection;
+use config_traits::{StdConfigLoad1, StdConfigLoad3};
 use daemon::config::Config;
-use daemon::config_traits::{StdConfigLoad1, StdConfigLoad3};
 use daemon::ctrl_anime::config::AnimeConfig;
 use daemon::ctrl_anime::trait_impls::CtrlAnimeZbus;
 use daemon::ctrl_anime::CtrlAnime;

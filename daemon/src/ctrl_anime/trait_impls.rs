@@ -2,6 +2,7 @@ use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use config_traits::StdConfig;
 use log::{info, warn};
 use rog_anime::usb::{pkt_for_apply, pkt_for_set_boot, pkt_for_set_on};
 use rog_anime::{AnimeDataBuffer, AnimePowerStates};
@@ -9,7 +10,6 @@ use zbus::export::futures_util::lock::{Mutex, MutexGuard};
 use zbus::{dbus_interface, Connection, SignalContext};
 
 use super::CtrlAnime;
-use crate::config_traits::StdConfig;
 use crate::error::RogError;
 
 pub(super) const ZBUS_PATH: &str = "/org/asuslinux/Anime";

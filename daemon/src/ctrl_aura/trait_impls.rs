@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use async_trait::async_trait;
+use config_traits::StdConfig;
 use log::{error, info, warn};
 use rog_aura::advanced::UsbPackets;
 use rog_aura::usb::AuraPowerDev;
@@ -11,7 +12,6 @@ use zbus::export::futures_util::StreamExt;
 use zbus::{dbus_interface, Connection, SignalContext};
 
 use super::controller::CtrlKbdLed;
-use crate::config_traits::StdConfig;
 use crate::error::RogError;
 use crate::CtrlTask;
 

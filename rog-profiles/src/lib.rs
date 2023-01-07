@@ -162,9 +162,9 @@ impl Default for FanCurvePU {
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Deserialize, Serialize, Debug, Default)]
 pub struct FanCurveProfiles {
-    balanced: FanCurveSet,
-    performance: FanCurveSet,
-    quiet: FanCurveSet,
+    pub balanced: FanCurveSet,
+    pub performance: FanCurveSet,
+    pub quiet: FanCurveSet,
 }
 
 impl FanCurveProfiles {

@@ -1,10 +1,9 @@
 use std::time::Duration;
 
+use config_traits::{StdConfig, StdConfigLoad3};
 use rog_anime::error::AnimeError;
 use rog_anime::{ActionData, ActionLoader, AnimTime, AnimeType, Fade, Vec2};
 use serde_derive::{Deserialize, Serialize};
-
-use crate::config_traits::{StdConfig, StdConfigLoad3};
 
 const CONFIG_FILE: &str = "anime.conf";
 
@@ -139,6 +138,10 @@ impl Default for AnimeConfig {
 impl StdConfig for AnimeConfig {
     fn new() -> Self {
         Self::create_default()
+    }
+
+    fn config_dir() -> std::path::PathBuf {
+        std::path::PathBuf::from(crate::CONFIG_PATH_BASE)
     }
 
     fn file_name() -> &'static str {

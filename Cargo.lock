@@ -658,6 +658,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "config-traits"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "ron",
+ "serde",
+ "serde_derive",
+ "serde_json",
+]
+
+[[package]]
 name = "core-foundation"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -782,6 +793,7 @@ version = "4.5.8"
 dependencies = [
  "async-trait",
  "concat-idents",
+ "config-traits",
  "env_logger",
  "log",
  "logind-zbus",
@@ -797,7 +809,6 @@ dependencies = [
  "sysfs-class",
  "systemd-zbus",
  "tokio",
- "toml",
  "zbus",
 ]
 
