@@ -117,60 +117,67 @@ I'm unsure of how many laptops this works on, so please try it.
 
 An Aura config itself is a file with contents:
 
-```json
-{
-  "name": "aura-default",
-  "aura": [
-    {
-      "Breathe": {
-        "led_type": {
-          "Key": "W"
-        },
-        "start_colour1": [
-          255,
-          0,
-          20
+```ron
+(
+    name: "aura-default",
+    aura: (
+        effects: [
+            Breathe((
+                led: W,
+                start_colour1: (255, 0, 20),
+                start_colour2: (20, 255, 0),
+                speed: Low,
+            )),
+            Breathe((
+                led: A,
+                start_colour1: (255, 0, 20),
+                start_colour2: (20, 255, 0),
+                speed: Low,
+            )),
+            Breathe((
+                led: S,
+                start_colour1: (255, 0, 20),
+                start_colour2: (20, 255, 0),
+                speed: Low,
+            )),
+            Breathe((
+                led: D,
+                start_colour1: (255, 0, 20),
+                start_colour2: (20, 255, 0),
+                speed: Low,
+            )),
+            Breathe((
+                led: F,
+                start_colour1: (255, 0, 0),
+                start_colour2: (255, 0, 0),
+                speed: High,
+            )),
+            Static((
+                led: RCtrl,
+                colour: (0, 0, 255),
+            )),
+            Static((
+                led: LCtrl,
+                colour: (0, 0, 255),
+            )),
+            Static((
+                led: Esc,
+                colour: (0, 0, 255),
+            )),
+            DoomFlicker((
+                led: N9,
+                start_colour: (0, 0, 255),
+                max_percentage: 80,
+                min_percentage: 40,
+            )),
         ],
-        "start_colour2": [
-          20,
-          255,
-          0
-        ],
-        "speed": "Low"
-      }
-    },
-    {
-      "Static": {
-        "led_type": {
-          "Key": "Esc"
-        },
-        "colour": [
-          0,
-          0,
-          255
-        ]
-      }
-    },
-    {
-      "Flicker": {
-        "led_type": {
-          "Key": "N9"
-        },
-        "start_colour": [
-          0,
-          0,
-          255
-        ],
-        "max_percentage": 80,
-        "min_percentage": 40
-      }
-    }
-  ]
-}
+        zoned: false,
+    ),
+)
 ```
 
-If your laptop supports multizone, `"led_type"` can also be `"Zone": <one of the following>`
-- `"None"`
+If your laptop supports multizone, `"led"` can also be `"Zone": <one of the following>`
+- `SingleZone` // Keyboards with only one zone
 - `ZonedKbLeft` // keyboard left
 - `ZonedKbLeftMid` // keyboard left-middle
 - `ZonedKbRightMid` // etc
@@ -181,6 +188,25 @@ If your laptop supports multizone, `"led_type"` can also be `"Zone": <one of the
 - `LightbarLeftBottom`
 - `LightbarLeftCorner`
 - `LightbarLeft`
+
+Single zone example:
+
+```ron
+(
+    name: "aura-default",
+    aura: (
+        effects: [
+            DoomFlicker((
+                led: SingleZone,
+                start_colour: (200, 40, 5),
+                max_percentage: 80,
+                min_percentage: 40,
+            )),
+        ],
+        zoned: true,
+    ),
+)
+```
 
 At the moment there are only three effects available as shown in the example. More will come in the future
 but this may take me some time.

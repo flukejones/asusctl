@@ -5,7 +5,7 @@ use rog_anime::error::AnimeError;
 use rog_anime::{ActionData, ActionLoader, AnimTime, AnimeType, Fade, Vec2};
 use serde_derive::{Deserialize, Serialize};
 
-const CONFIG_FILE: &str = "anime.conf";
+const CONFIG_FILE: &str = "anime.ron";
 
 #[derive(Deserialize, Serialize)]
 pub struct AnimeConfigV341 {

@@ -1,7 +1,7 @@
 use config_traits::{StdConfig, StdConfigLoad3};
 use serde_derive::{Deserialize, Serialize};
 
-const CONFIG_FILE: &str = "asusd.conf";
+const CONFIG_FILE: &str = "asusd.ron";
 
 #[derive(Deserialize, Serialize, Default)]
 pub struct Config {

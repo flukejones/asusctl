@@ -108,7 +108,7 @@ impl StdConfig for ConfigAnime {
     }
 
     fn file_name(&self) -> String {
-        format!("{}.cfg", self.name)
+        format!("{}.ron", self.name)
     }
 
     fn config_dir() -> std::path::PathBuf {
@@ -180,7 +180,7 @@ impl StdConfig for ConfigAura {
     }
 
     fn file_name(&self) -> String {
-        format!("{}.cfg", self.name)
+        format!("{}.ron", self.name)
     }
 
     fn config_dir() -> std::path::PathBuf {
@@ -208,7 +208,7 @@ impl StdConfig for ConfigBase {
     }
 
     fn file_name(&self) -> String {
-        "rog-user.cfg".to_owned()
+        "rog-user.ron".to_owned()
     }
 
     fn config_dir() -> std::path::PathBuf {
