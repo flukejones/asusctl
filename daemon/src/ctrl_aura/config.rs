@@ -194,12 +194,12 @@ impl StdConfig for AuraConfig {
         std::path::PathBuf::from(crate::CONFIG_PATH_BASE)
     }
 
-    fn file_name() -> &'static str {
-        CONFIG_FILE
+    fn file_name(&self) -> String {
+        CONFIG_FILE.to_string()
     }
 }
 
-impl StdConfigLoad1<AuraConfig> for AuraConfig {}
+impl StdConfigLoad1 for AuraConfig {}
 
 impl AuraConfig {
     fn create_default(support_data: &LaptopLedData) -> Self {

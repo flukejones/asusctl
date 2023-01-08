@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use ::zbus::export::futures_util::lock::Mutex;
 use ::zbus::Connection;
-use config_traits::{StdConfigLoad1, StdConfigLoad3};
+use config_traits::{StdConfig, StdConfigLoad1, StdConfigLoad3};
 use daemon::config::Config;
 use daemon::ctrl_anime::config::AnimeConfig;
 use daemon::ctrl_anime::trait_impls::CtrlAnimeZbus;
@@ -71,7 +71,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     // Start zbus server
     let mut connection = Connection::system().await?;
 
-    let config = Config::load();
+    let config = Config::new().load();
     let config = Arc::new(Mutex::new(config));
 
     supported.add_to_server(&mut connection).await;
@@ -97,7 +97,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     }
 
     if Profile::is_platform_profile_supported() {
-        let profile_config = ProfileConfig::load();
+        let profile_config = ProfileConfig::new().load();
         match CtrlPlatformProfile::new(profile_config) {
             Ok(ctrl) => {
                 let zbus = ProfileZbus(Arc::new(Mutex::new(ctrl)));
@@ -112,7 +112,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
         warn!("platform_profile support not found");
     }
 
-    match CtrlAnime::new(AnimeConfig::load()) {
+    match CtrlAnime::new(AnimeConfig::new().load()) {
         Ok(ctrl) => {
             let zbus = CtrlAnimeZbus(Arc::new(Mutex::new(ctrl)));
             let sig_ctx = CtrlAnimeZbus::signal_context(&connection)?;
@@ -124,7 +124,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     }
 
     let laptop = LaptopLedData::get_data();
-    let aura_config = AuraConfig::load();
+    let aura_config = AuraConfig::new().load();
     match CtrlKbdLed::new(laptop, aura_config) {
         Ok(ctrl) => {
             let zbus = CtrlKbdLedZbus(Arc::new(Mutex::new(ctrl)));

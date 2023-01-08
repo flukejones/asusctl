@@ -27,12 +27,12 @@ impl StdConfig for ProfileConfig {
         PathBuf::from(CONFIG_PATH_BASE)
     }
 
-    fn file_name() -> &'static str {
-        CONFIG_FILE
+    fn file_name(&self) -> String {
+        CONFIG_FILE.to_string()
     }
 }
 
-impl StdConfigLoad1<ProfileConfig> for ProfileConfig {}
+impl StdConfigLoad1 for ProfileConfig {}
 
 #[derive(Deserialize, Serialize, Debug, Default)]
 pub struct FanCurveConfig {
@@ -76,9 +76,9 @@ impl StdConfig for FanCurveConfig {
         PathBuf::from(CONFIG_PATH_BASE)
     }
 
-    fn file_name() -> &'static str {
-        CONFIG_FAN_FILE
+    fn file_name(&self) -> String {
+        CONFIG_FAN_FILE.to_string()
     }
 }
 
-impl StdConfigLoad1<ProfileConfig> for FanCurveConfig {}
+impl StdConfigLoad1 for FanCurveConfig {}

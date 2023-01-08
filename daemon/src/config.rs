@@ -28,12 +28,12 @@ impl StdConfig for Config {
         std::path::PathBuf::from(crate::CONFIG_PATH_BASE)
     }
 
-    fn file_name() -> &'static str {
-        CONFIG_FILE
+    fn file_name(&self) -> String {
+        CONFIG_FILE.to_string()
     }
 }
 
-impl StdConfigLoad3<Config, Config455, Config458> for Config {}
+impl StdConfigLoad3<Config455, Config458> for Config {}
 
 #[derive(Deserialize, Serialize, Default)]
 #[serde(default)]

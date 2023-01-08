@@ -144,12 +144,12 @@ impl StdConfig for AnimeConfig {
         std::path::PathBuf::from(crate::CONFIG_PATH_BASE)
     }
 
-    fn file_name() -> &'static str {
-        CONFIG_FILE
+    fn file_name(&self) -> String {
+        CONFIG_FILE.to_string()
     }
 }
 
-impl StdConfigLoad3<AnimeConfig, AnimeConfigV341, AnimeConfigV352> for AnimeConfig {}
+impl StdConfigLoad3<AnimeConfigV341, AnimeConfigV352> for AnimeConfig {}
 
 impl AnimeConfig {
     // fn clamp_config_brightness(mut config: &mut AnimeConfig) {

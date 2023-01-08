@@ -18,65 +18,63 @@ where
     fn new() -> Self;
 
     /// Return the config files names, such as `wibble.cfg`
-    fn file_name() -> &'static str;
+    fn file_name(&self) -> String;
 
     /// Return the full path to the directory the config file resides in
     fn config_dir() -> PathBuf;
 
     /// Return the full path to the config file
-    fn file_path() -> PathBuf {
+    fn file_path(&self) -> PathBuf {
         let mut config = Self::config_dir();
         if !config.exists() {
             create_dir(config.as_path())
                 .unwrap_or_else(|e| panic!("Could not create {:?} {e}", Self::config_dir()));
         }
-        config.push(Self::file_name());
+        config.push(self.file_name());
         config
     }
 
     /// Directly open the config file for read and write. If the config file
     /// does not exist it is created, including the directories the file
     /// resides in.
-    fn file_open() -> File {
+    fn file_open(&self) -> File {
         OpenOptions::new()
             .read(true)
             .write(true)
             .create(true)
-            .open(Self::file_path())
-            .unwrap_or_else(|e| panic!("Could not open {:?} {e}", Self::file_path()))
+            .open(self.file_path())
+            .unwrap_or_else(|e| panic!("Could not open {:?} {e}", self.file_path()))
     }
 
     /// Open and parse the config file to self from ron format
     fn read(&mut self) {
-        let mut file = match OpenOptions::new().read(true).open(Self::file_path()) {
+        let mut file = match OpenOptions::new().read(true).open(self.file_path()) {
             Ok(data) => data,
             Err(err) => {
-                error!("Error reading {:?}: {}", Self::file_path(), err);
+                error!("Error reading {:?}: {}", self.file_path(), err);
                 return;
             }
         };
         let mut buf = String::new();
         if let Ok(l) = file.read_to_string(&mut buf) {
             if l == 0 {
-                warn!("File is empty {:?}", Self::file_path());
+                warn!("File is empty {:?}", self.file_path());
             } else if let Ok(data) = ron::from_str(&buf) {
                 *self = data;
-            } else if let Ok(data) = serde_json::from_str(&buf) {
-                *self = data;
             } else {
-                warn!("Could not deserialise {:?}", Self::file_path());
+                warn!("Could not deserialise {:?}", self.file_path());
             }
         }
     }
 
     /// Write the config file data to pretty ron format
     fn write(&self) {
-        let mut file = match File::create(Self::file_path()) {
+        let mut file = match File::create(self.file_path()) {
             Ok(data) => data,
             Err(e) => {
                 error!(
                     "Couldn't overwrite config {:?}, error: {e}",
-                    Self::file_path()
+                    self.file_path()
                 );
                 return;
             }
@@ -84,7 +82,7 @@ where
         let ron = match ron::ser::to_string_pretty(&self, PrettyConfig::new().depth_limit(4)) {
             Ok(data) => data,
             Err(e) => {
-                error!("Parse {:?} to RON failed, error: {e}", Self::file_path());
+                error!("Parse {:?} to RON failed, error: {e}", self.file_path());
                 return;
             }
         };
@@ -93,17 +91,17 @@ where
     }
 
     /// Renames the existing file to `<file>-old`
-    fn rename_file_old() {
+    fn rename_file_old(&self) {
         warn!(
             "Renaming {} to {}-old and recreating config",
-            Self::file_name(),
-            Self::file_name()
+            self.file_name(),
+            self.file_name()
         );
-        let cfg_old = Self::file_path().to_string_lossy().to_string() + "-old";
-        std::fs::rename(Self::file_path(), cfg_old).unwrap_or_else(|err| {
+        let cfg_old = self.file_path().to_string_lossy().to_string() + "-old";
+        std::fs::rename(self.file_path(), cfg_old).unwrap_or_else(|err| {
             error!(
                 "Could not rename. Please remove {} then restart service: Error {}",
-                Self::file_name(),
+                self.file_name(),
                 err
             )
         });
@@ -111,112 +109,184 @@ where
 }
 
 /// Base trait for loading/parsing. This can be used to help update configs to
-/// new versions ```ignore
-/// impl StdConfigLoad1<FanCurveConfigV1> for FanCurveConfig {}
+/// new versions
+///
+/// # Example
+/// ```rust
+/// use std::path::PathBuf;
+/// use serde::{Deserialize, Serialize};
+/// use config_traits::{StdConfig, StdConfigLoad1};
+///
+/// #[derive(Deserialize, Serialize)]
+/// struct FanCurveConfig {}
+///
+/// impl StdConfig for FanCurveConfig {
+///     fn new() -> Self { Self {} }
+///
+///     fn file_name(&self) -> std::string::String { "test_name.conf".to_owned() }
+///
+///     fn config_dir() -> PathBuf { PathBuf::from("/tmp") }
+/// }
+///
+/// impl StdConfigLoad1 for FanCurveConfig {}
 /// ```
 ///
 /// If all of the generics fails to parse, then the old config is renamed and a
 /// new one created
-pub trait StdConfigLoad1<T>
+pub trait StdConfigLoad1
 where
-    T: StdConfig + DeserializeOwned + Serialize,
+    Self: StdConfig + DeserializeOwned + Serialize,
 {
-    fn load() -> T {
-        let mut file = T::file_open();
+    fn load(mut self) -> Self {
+        let mut file = self.file_open();
         let mut buf = String::new();
-        let config: T;
         if let Ok(read_len) = file.read_to_string(&mut buf) {
-            if read_len == 0 {
-                config = T::new();
-            } else if let Ok(data) = ron::from_str(&buf) {
-                config = data;
-            } else if let Ok(data) = serde_json::from_str(&buf) {
-                config = data;
+            if read_len != 0 {
+                if let Ok(data) = ron::from_str(&buf) {
+                    self = data;
+                } else if let Ok(data) = serde_json::from_str(&buf) {
+                    self = data;
+                } else {
+                    self.rename_file_old();
+                    self = Self::new();
+                }
             } else {
-                T::rename_file_old();
-                config = T::new();
+                error!("Config file {} zero read length", self.file_name());
             }
-        } else {
-            config = T::new();
         }
-        config.write();
-        config
+        self.write();
+        self
     }
 }
 
 /// Base trait for loading/parsing. This is intended to be used to help update
-/// configs to new versions ```ignore
-/// impl StdConfigLoad2<FanCurveConfigV1, ProfileConfigV2> for FanCurveConfig {}
+/// configs to new versions
+///
+/// # Example
+/// ```rust
+/// use std::path::PathBuf;
+/// use serde::{Deserialize, Serialize};
+/// use config_traits::{StdConfig, StdConfigLoad2};
+///
+/// #[derive(Deserialize, Serialize)]
+/// struct FanCurveConfigOld {}
+///
+/// #[derive(Deserialize, Serialize)]
+/// struct FanCurveConfig {}
+///
+/// impl From<FanCurveConfigOld> for FanCurveConfig {
+///     fn from(_: FanCurveConfigOld) -> Self { Self {} }
+/// }
+///
+/// impl StdConfig for FanCurveConfig {
+///     fn new() -> Self { Self {} }
+///
+///     fn file_name(&self) -> std::string::String { "test_name.conf".to_owned() }
+///
+///     fn config_dir() -> PathBuf { PathBuf::from("/tmp") }
+/// }
+///
+/// impl StdConfigLoad2<FanCurveConfigOld> for FanCurveConfig {}
 /// ```
 ///
 /// If all of the generics fails to parse, then the old config is renamed and a
 /// new one created
-pub trait StdConfigLoad2<T1, T2>
+pub trait StdConfigLoad2<OldConfig>
 where
-    T1: StdConfig + DeserializeOwned + Serialize,
-    T2: DeserializeOwned + Into<T1>,
+    Self: StdConfig + DeserializeOwned + Serialize,
+    OldConfig: DeserializeOwned + Into<Self>,
 {
-    fn load() -> T1 {
-        let mut file = T1::file_open();
+    fn load(mut self) -> Self {
+        let mut file = self.file_open();
         let mut buf = String::new();
-        let config: T1;
         if let Ok(read_len) = file.read_to_string(&mut buf) {
-            if read_len == 0 {
-                config = T1::new();
-            } else if let Ok(data) = ron::from_str(&buf) {
-                config = data;
-            } else if let Ok(data) = serde_json::from_str(&buf) {
-                config = data;
-            } else if let Ok(data) = serde_json::from_str::<T2>(&buf) {
-                config = data.into();
+            if read_len != 0 {
+                if let Ok(data) = ron::from_str(&buf) {
+                    self = data;
+                } else if let Ok(data) = serde_json::from_str(&buf) {
+                    self = data;
+                } else if let Ok(data) = serde_json::from_str::<OldConfig>(&buf) {
+                    self = data.into();
+                } else {
+                    self.rename_file_old();
+                    self = Self::new();
+                }
             } else {
-                T1::rename_file_old();
-                config = T1::new();
+                error!("Config file {} zero read length", self.file_name());
             }
-        } else {
-            config = T1::new();
         }
-        config.write();
-        config
+        self.write();
+        self
     }
 }
 
 /// Base trait for loading/parsing. This is intended to be used to help update
-/// configs to new versions ```ignore
-/// impl StdConfigLoad3<FanCurveConfigV1, ProfileConfigV2, ProfileConfigV3> for FanCurveConfig {}
+/// configs to new versions
+///
+/// # Example
+/// ```rust
+/// use std::path::PathBuf;
+/// use serde::{Deserialize, Serialize};
+/// use config_traits::{StdConfig, StdConfigLoad3};
+///
+/// #[derive(Deserialize, Serialize)]
+/// struct FanCurveConfigOld {}
+///
+/// #[derive(Deserialize, Serialize)]
+/// struct FanCurveConfigOlder {}
+///
+/// #[derive(Deserialize, Serialize)]
+/// struct FanCurveConfig {}
+///
+/// impl From<FanCurveConfigOld> for FanCurveConfig {
+///     fn from(_: FanCurveConfigOld) -> Self { Self {} }
+/// }
+///
+/// impl From<FanCurveConfigOlder> for FanCurveConfig {
+///     fn from(_: FanCurveConfigOlder) -> Self { Self {} }
+/// }
+///
+/// impl StdConfig for FanCurveConfig {
+///     fn new() -> Self { Self {} }
+///
+///     fn file_name(&self) -> std::string::String { "test_name.conf".to_owned() }
+///
+///     fn config_dir() -> PathBuf { PathBuf::from("/tmp") }
+/// }
+///
+/// impl StdConfigLoad3<FanCurveConfigOld, FanCurveConfigOlder> for FanCurveConfig {}
 /// ```
 ///
 /// If all of the generics fails to parse, then the old config is renamed and a
 /// new one created
-pub trait StdConfigLoad3<T1, T2, T3>
+pub trait StdConfigLoad3<OldConfig, OldConfig2>: StdConfig
 where
-    T1: StdConfig + DeserializeOwned + Serialize,
-    T2: DeserializeOwned + Into<T1>,
-    T3: DeserializeOwned + Into<T1>,
+    Self: StdConfig + DeserializeOwned + Serialize,
+    OldConfig: DeserializeOwned + Into<Self>,
+    OldConfig2: DeserializeOwned + Into<Self>,
 {
-    fn load() -> T1 {
-        let mut file = T1::file_open();
+    fn load(mut self) -> Self {
+        let mut file = self.file_open();
         let mut buf = String::new();
-        let config: T1;
         if let Ok(read_len) = file.read_to_string(&mut buf) {
-            if read_len == 0 {
-                config = T1::new();
-            } else if let Ok(data) = ron::from_str(&buf) {
-                config = data;
-            } else if let Ok(data) = serde_json::from_str(&buf) {
-                config = data;
-            } else if let Ok(data) = serde_json::from_str::<T2>(&buf) {
-                config = data.into();
-            } else if let Ok(data) = serde_json::from_str::<T3>(&buf) {
-                config = data.into();
+            if read_len != 0 {
+                if let Ok(data) = ron::from_str(&buf) {
+                    self = data;
+                } else if let Ok(data) = serde_json::from_str(&buf) {
+                    self = data;
+                } else if let Ok(data) = serde_json::from_str::<OldConfig>(&buf) {
+                    self = data.into();
+                } else if let Ok(data) = serde_json::from_str::<OldConfig2>(&buf) {
+                    self = data.into();
+                } else {
+                    self.rename_file_old();
+                    self = Self::new();
+                }
             } else {
-                T1::rename_file_old();
-                config = T1::new();
+                error!("Config file {} zero read length", self.file_name());
             }
-        } else {
-            config = T1::new();
         }
-        config.write();
-        config
+        self.write();
+        self
     }
 }
