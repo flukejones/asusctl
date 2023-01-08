@@ -1,92 +1,30 @@
-use std::fs::{create_dir, OpenOptions};
-use std::io::{Read, Write};
+use std::path::PathBuf;
 use std::time::Duration;
 
+use config_traits::{StdConfig, StdConfigLoad1};
 use rog_anime::{ActionLoader, AnimTime, AnimeType, Fade, Sequences as AnimeSequences, Vec2};
 use rog_aura::advanced::LedCode;
 use rog_aura::effects::{AdvancedEffects as AuraSequences, Breathe, DoomFlicker, Effect, Static};
 use rog_aura::{Colour, Speed};
-use serde::de::DeserializeOwned;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::error::Error;
 
-pub trait ConfigLoadSave<T: DeserializeOwned + serde::Serialize> {
-    fn name(&self) -> String;
+const ROOT_CONF_DIR: &str = "rog";
 
-    fn default_with_name(name: String) -> T;
-
-    fn write(&self) -> Result<(), Error>
-    where
-        Self: serde::Serialize,
-    {
-        let mut path = if let Some(dir) = dirs::config_dir() {
-            dir
-        } else {
-            return Err(Error::XdgVars);
-        };
-
-        path.push("rog");
-        if !path.exists() {
-            create_dir(path.clone())?;
-        }
-        let name = self.name();
-        path.push(name + ".cfg");
-
-        let mut file = OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(&path)?;
-
-        let json = serde_json::to_string_pretty(&self).unwrap();
-        file.write_all(json.as_bytes())?;
-        Ok(())
-    }
-
-    fn load(name: String) -> Result<T, Error> {
-        let mut path = if let Some(dir) = dirs::config_dir() {
-            dir
-        } else {
-            return Err(Error::XdgVars);
-        };
-
-        path.push("rog");
-        if !path.exists() {
-            create_dir(path.clone())?;
-        }
-
-        path.push(name.clone() + ".cfg");
-
-        let mut file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .open(&path)?;
-
-        let mut buf = String::new();
-
-        if let Ok(read_len) = file.read_to_string(&mut buf) {
-            if read_len == 0 {
-                let default = Self::default_with_name(name);
-                let json = serde_json::to_string_pretty(&default).unwrap();
-                file.write_all(json.as_bytes())?;
-                return Ok(default);
-            } else if let Ok(data) = serde_json::from_str::<T>(&buf) {
-                return Ok(data);
-            }
-        }
-        Err(Error::ConfigLoadFail)
-    }
+fn root_conf_dir() -> PathBuf {
+    let mut dir = dirs::config_dir().unwrap_or_else(|| PathBuf::from("/tmp"));
+    dir.push(ROOT_CONF_DIR);
+    dir
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct UserAnimeConfig {
+pub struct ConfigAnime {
     pub name: String,
     pub anime: Vec<ActionLoader>,
 }
 
-impl UserAnimeConfig {
+impl ConfigAnime {
     pub fn create(&self, anime_type: AnimeType) -> Result<AnimeSequences, Error> {
         let mut seq = AnimeSequences::new(anime_type);
 
@@ -96,25 +34,17 @@ impl UserAnimeConfig {
 
         Ok(seq)
     }
-}
 
-impl ConfigLoadSave<UserAnimeConfig> for UserAnimeConfig {
-    fn name(&self) -> String {
-        self.name.clone()
-    }
-
-    fn default_with_name(name: String) -> Self {
-        UserAnimeConfig {
-            name,
-            ..Default::default()
-        }
+    pub fn set_name(mut self, name: String) -> Self {
+        self.name = name;
+        self
     }
 }
 
-impl Default for UserAnimeConfig {
+impl Default for ConfigAnime {
     fn default() -> Self {
         Self {
-            name: "default".to_owned(),
+            name: "anime-default".to_owned(),
             anime: vec![
                 ActionLoader::AsusImage {
                     file: "/usr/share/asusd/anime/custom/diagonal-template.png".into(),
@@ -172,26 +102,36 @@ impl Default for UserAnimeConfig {
     }
 }
 
+impl StdConfig for ConfigAnime {
+    fn new() -> Self {
+        Self::default()
+    }
+
+    fn file_name(&self) -> String {
+        format!("{}.cfg", self.name)
+    }
+
+    fn config_dir() -> std::path::PathBuf {
+        root_conf_dir()
+    }
+}
+
+impl StdConfigLoad1 for ConfigAnime {}
+
 #[derive(Debug, Deserialize, Serialize)]
-pub struct UserAuraConfig {
+pub struct ConfigAura {
     pub name: String,
     pub aura: AuraSequences,
 }
 
-impl ConfigLoadSave<UserAuraConfig> for UserAuraConfig {
-    fn name(&self) -> String {
-        self.name.clone()
-    }
-
-    fn default_with_name(name: String) -> Self {
-        UserAuraConfig {
-            name,
-            ..Default::default()
-        }
+impl ConfigAura {
+    pub fn set_name(mut self, name: String) -> Self {
+        self.name = name;
+        self
     }
 }
 
-impl Default for UserAuraConfig {
+impl Default for ConfigAura {
     fn default() -> Self {
         let mut seq = AuraSequences::new(false);
         let mut key = Effect::Breathe(Breathe::new(
@@ -228,86 +168,52 @@ impl Default for UserAuraConfig {
         seq.push(key);
 
         Self {
-            name: "default".to_owned(),
+            name: "aura-default".to_owned(),
             aura: seq,
         }
     }
 }
 
+impl StdConfig for ConfigAura {
+    fn new() -> Self {
+        Self::default()
+    }
+
+    fn file_name(&self) -> String {
+        format!("{}.cfg", self.name)
+    }
+
+    fn config_dir() -> std::path::PathBuf {
+        root_conf_dir()
+    }
+}
+
+impl StdConfigLoad1 for ConfigAura {}
+
 #[derive(Debug, Default, Deserialize, Serialize)]
 #[serde(default)]
-pub struct UserConfig {
+pub struct ConfigBase {
     /// Name of active anime config file in the user config directory
     pub active_anime: Option<String>,
     /// Name of active aura config file in the user config directory
     pub active_aura: Option<String>,
 }
 
-impl UserConfig {
-    pub fn new() -> Self {
+impl StdConfig for ConfigBase {
+    fn new() -> Self {
         Self {
             active_anime: Some("anime-default".to_owned()),
             active_aura: Some("aura-default".to_owned()),
         }
     }
 
-    pub fn load(&mut self) -> Result<(), Error> {
-        let mut path = if let Some(dir) = dirs::config_dir() {
-            dir
-        } else {
-            return Err(Error::XdgVars);
-        };
-
-        path.push("rog");
-        if !path.exists() {
-            create_dir(path.clone())?;
-        }
-
-        path.push("rog-user.cfg");
-
-        let mut file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .open(&path)?;
-
-        let mut buf = String::new();
-
-        if let Ok(read_len) = file.read_to_string(&mut buf) {
-            if read_len == 0 {
-                let json = serde_json::to_string_pretty(&self).unwrap();
-                file.write_all(json.as_bytes())?;
-            } else if let Ok(data) = serde_json::from_str::<UserConfig>(&buf) {
-                self.active_anime = data.active_anime;
-                self.active_aura = data.active_aura;
-                return Ok(());
-            }
-        }
-        Ok(())
+    fn file_name(&self) -> String {
+        "rog-user.cfg".to_owned()
     }
 
-    pub fn write(&self) -> Result<(), Error> {
-        let mut path = if let Some(dir) = dirs::config_dir() {
-            dir
-        } else {
-            return Err(Error::XdgVars);
-        };
-
-        path.push("rog");
-        if !path.exists() {
-            create_dir(path.clone())?;
-        }
-
-        path.push("rog-user.cfg");
-
-        let mut file = OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(&path)?;
-
-        let json = serde_json::to_string_pretty(&self).unwrap();
-        file.write_all(json.as_bytes())?;
-        Ok(())
+    fn config_dir() -> std::path::PathBuf {
+        root_conf_dir()
     }
 }
+
+impl StdConfigLoad1 for ConfigBase {}

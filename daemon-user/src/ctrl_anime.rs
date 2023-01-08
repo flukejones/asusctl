@@ -4,6 +4,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 
+use config_traits::StdConfig;
 use rog_anime::error::AnimeError;
 use rog_anime::{ActionData, ActionLoader, AnimTime, Fade, Sequences, Vec2};
 use rog_dbus::RogDbusClientBlocking;
@@ -11,8 +12,8 @@ use serde_derive::{Deserialize, Serialize};
 use zbus::dbus_interface;
 use zbus::zvariant::{ObjectPath, Type};
 
+use crate::config::ConfigAnime;
 use crate::error::Error;
-use crate::user_config::{ConfigLoadSave, UserAnimeConfig};
 
 #[derive(Debug, Clone, Deserialize, Serialize, Type)]
 pub struct Timer {
@@ -134,7 +135,7 @@ impl<'a> CtrlAnimeInner<'static> {
 }
 
 pub struct CtrlAnime<'a> {
-    config: Arc<Mutex<UserAnimeConfig>>,
+    config: Arc<Mutex<ConfigAnime>>,
     client: RogDbusClientBlocking<'a>,
     inner: Arc<Mutex<CtrlAnimeInner<'a>>>,
     /// Must be the same Atomic as in CtrlAnimeInner
@@ -143,7 +144,7 @@ pub struct CtrlAnime<'a> {
 
 impl CtrlAnime<'static> {
     pub fn new(
-        config: Arc<Mutex<UserAnimeConfig>>,
+        config: Arc<Mutex<ConfigAnime>>,
         inner: Arc<Mutex<CtrlAnimeInner<'static>>>,
         client: RogDbusClientBlocking<'static>,
         inner_early_return: Arc<AtomicBool>,
@@ -206,7 +207,7 @@ impl CtrlAnime<'static> {
                     .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
             }
             config.anime.push(action);
-            config.write()?;
+            config.write();
 
             let json = serde_json::to_string_pretty(&*config).expect("Parse config to JSON failed");
 
@@ -251,7 +252,7 @@ impl CtrlAnime<'static> {
                     .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
             }
             config.anime.push(action);
-            config.write()?;
+            config.write();
 
             let json =
                 serde_json::to_string_pretty(&*config.anime).expect("Parse config to JSON failed");
@@ -296,7 +297,7 @@ impl CtrlAnime<'static> {
                     .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
             }
             config.anime.push(action);
-            config.write()?;
+            config.write();
 
             let json =
                 serde_json::to_string_pretty(&*config.anime).expect("Parse config to JSON failed");
@@ -321,7 +322,7 @@ impl CtrlAnime<'static> {
                     .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
             }
             config.anime.push(action);
-            config.write()?;
+            config.write();
 
             let json =
                 serde_json::to_string_pretty(&*config.anime).expect("Parse config to JSON failed");
@@ -344,7 +345,7 @@ impl CtrlAnime<'static> {
             if (index as usize) < config.anime.len() {
                 config.anime.remove(index as usize);
             }
-            config.write()?;
+            config.write();
 
             let json =
                 serde_json::to_string_pretty(&*config.anime).expect("Parse config to JSON failed");

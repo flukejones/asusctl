@@ -146,6 +146,8 @@ where
                     self = data;
                 } else if let Ok(data) = serde_json::from_str(&buf) {
                     self = data;
+                } else if let Ok(data) = toml::from_str(&buf) {
+                    self = data;
                 } else {
                     self.rename_file_old();
                     self = Self::new();
@@ -205,7 +207,11 @@ where
                     self = data;
                 } else if let Ok(data) = serde_json::from_str(&buf) {
                     self = data;
+                } else if let Ok(data) = toml::from_str(&buf) {
+                    self = data;
                 } else if let Ok(data) = serde_json::from_str::<OldConfig>(&buf) {
+                    self = data.into();
+                } else if let Ok(data) = toml::from_str::<OldConfig>(&buf) {
                     self = data.into();
                 } else {
                     self.rename_file_old();
@@ -274,9 +280,15 @@ where
                     self = data;
                 } else if let Ok(data) = serde_json::from_str(&buf) {
                     self = data;
+                } else if let Ok(data) = toml::from_str(&buf) {
+                    self = data;
                 } else if let Ok(data) = serde_json::from_str::<OldConfig>(&buf) {
                     self = data.into();
+                } else if let Ok(data) = toml::from_str::<OldConfig>(&buf) {
+                    self = data.into();
                 } else if let Ok(data) = serde_json::from_str::<OldConfig2>(&buf) {
+                    self = data.into();
+                } else if let Ok(data) = toml::from_str::<OldConfig2>(&buf) {
                     self = data.into();
                 } else {
                     self.rename_file_old();

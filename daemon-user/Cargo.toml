@@ -30,3 +30,7 @@ rog_platform = { path = "../rog-platform" }
 config-traits = { path = "../config-traits" }
 
 zbus.workspace = true
+
+# cli and logging
+log.workspace = true
+env_logger.workspace = true
