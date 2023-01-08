@@ -1,15 +1,16 @@
 use std::fs::OpenOptions;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 
+use config_traits::{StdConfig, StdConfigLoad1};
 use rog_anime::usb::get_anime_type;
 use rog_aura::aura_detection::LaptopLedData;
 use rog_aura::layouts::KeyLayout;
 use rog_dbus::RogDbusClientBlocking;
+use rog_user::config::*;
 use rog_user::ctrl_anime::{CtrlAnime, CtrlAnimeInner};
-use rog_user::user_config::*;
 use rog_user::DBUS_NAME;
 use smol::Executor;
 use zbus::Connection;
@@ -21,6 +22,13 @@ const DATA_DIR: &str = env!("CARGO_MANIFEST_DIR");
 const BOARD_NAME: &str = "/sys/class/dmi/id/board_name";
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut logger = env_logger::Builder::new();
+    logger
+        .parse_default_env()
+        .target(env_logger::Target::Stdout)
+        .format(|buf, record| writeln!(buf, "{}: {}", record.level(), record.args()))
+        .init();
+
     println!("  user daemon v{}", rog_user::VERSION);
     println!("    rog-anime v{}", rog_anime::VERSION);
     println!("     rog-dbus v{}", rog_dbus::VERSION);
@@ -29,8 +37,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (client, _) = RogDbusClientBlocking::new()?;
     let supported = client.proxies().supported().supported_functions()?;
 
-    let mut config = UserConfig::new();
-    config.load()?;
+    let config = ConfigBase::new().load();
 
     let executor = Executor::new();
 
@@ -39,7 +46,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if supported.anime_ctrl.0 {
         if let Some(cfg) = config.active_anime {
             let anime_type = get_anime_type()?;
-            let anime_config = UserAnimeConfig::load(cfg)?;
+            let anime_config = ConfigAnime::new().set_name(cfg).load();
             let anime = anime_config.create(anime_type)?;
             let anime_config = Arc::new(Mutex::new(anime_config));
 
@@ -70,7 +77,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // if supported.keyboard_led.per_key_led_mode {
     if let Some(cfg) = config.active_aura {
-        let mut aura_config = UserAuraConfig::load(cfg)?;
+        let mut aura_config = ConfigAura::new().set_name(cfg).load();
 
         // Find and load a matching layout for laptop
         let mut file = OpenOptions::new()

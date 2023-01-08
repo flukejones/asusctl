@@ -666,6 +666,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
+ "toml",
 ]
 
 [[package]]
@@ -816,6 +817,8 @@ version = "4.5.8"
 dependencies = [
  "config-traits",
  "dirs",
+ "env_logger",
+ "log",
  "rog_anime",
  "rog_aura",
  "rog_dbus",

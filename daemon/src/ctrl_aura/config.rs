@@ -8,7 +8,7 @@ use rog_platform::hid_raw::HidRaw;
 use rog_platform::keyboard_led::KeyboardLed;
 use serde_derive::{Deserialize, Serialize};
 
-const CONFIG_FILE: &str = "aura.conf";
+const CONFIG_FILE: &str = "aura.ron";
 
 /// Enable/disable LED control in various states such as
 /// when the device is awake, suspended, shutting down or

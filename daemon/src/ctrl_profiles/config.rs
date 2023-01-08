@@ -7,8 +7,8 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::CONFIG_PATH_BASE;
 
-const CONFIG_FILE: &str = "profile.conf";
-const CONFIG_FAN_FILE: &str = "fan_curves.conf";
+const CONFIG_FILE: &str = "profile.ron";
+const CONFIG_FAN_FILE: &str = "fan_curves.ron";
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ProfileConfig {
