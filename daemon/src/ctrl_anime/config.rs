@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use config_traits::{StdConfig, StdConfigLoad3};
+use config_traits::{StdConfig, StdConfigLoad2};
 use rog_anime::error::AnimeError;
 use rog_anime::{ActionData, ActionLoader, AnimTime, AnimeType, Fade, Vec2};
 use serde_derive::{Deserialize, Serialize};
@@ -149,7 +149,7 @@ impl StdConfig for AnimeConfig {
     }
 }
 
-impl StdConfigLoad3<AnimeConfigV341, AnimeConfigV352> for AnimeConfig {}
+impl StdConfigLoad2<AnimeConfigV341, AnimeConfigV352> for AnimeConfig {}
 
 impl AnimeConfig {
     // fn clamp_config_brightness(mut config: &mut AnimeConfig) {

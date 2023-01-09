@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use config_traits::{StdConfig, StdConfigLoad1};
+use config_traits::{StdConfig, StdConfigLoad};
 use rog_profiles::fan_curve_set::FanCurveSet;
 use rog_profiles::{FanCurveProfiles, Profile};
 use serde_derive::{Deserialize, Serialize};
@@ -32,7 +32,7 @@ impl StdConfig for ProfileConfig {
     }
 }
 
-impl StdConfigLoad1 for ProfileConfig {}
+impl StdConfigLoad for ProfileConfig {}
 
 #[derive(Deserialize, Serialize, Debug, Default)]
 pub struct FanCurveConfig {
@@ -81,4 +81,4 @@ impl StdConfig for FanCurveConfig {
     }
 }
 
-impl StdConfigLoad1 for FanCurveConfig {}
+impl StdConfigLoad for FanCurveConfig {}

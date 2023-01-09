@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 
-use config_traits::{StdConfig, StdConfigLoad1};
+use config_traits::{StdConfig, StdConfigLoad};
 use rog_anime::usb::get_anime_type;
 use rog_aura::aura_detection::LaptopLedData;
 use rog_aura::layouts::KeyLayout;

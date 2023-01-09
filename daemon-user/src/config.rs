@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::time::Duration;
 
-use config_traits::{StdConfig, StdConfigLoad1};
+use config_traits::{StdConfig, StdConfigLoad};
 use rog_anime::{ActionLoader, AnimTime, AnimeType, Fade, Sequences as AnimeSequences, Vec2};
 use rog_aura::advanced::LedCode;
 use rog_aura::effects::{AdvancedEffects as AuraSequences, Breathe, DoomFlicker, Effect, Static};
@@ -116,7 +116,7 @@ impl StdConfig for ConfigAnime {
     }
 }
 
-impl StdConfigLoad1 for ConfigAnime {}
+impl StdConfigLoad for ConfigAnime {}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ConfigAura {
@@ -188,7 +188,7 @@ impl StdConfig for ConfigAura {
     }
 }
 
-impl StdConfigLoad1 for ConfigAura {}
+impl StdConfigLoad for ConfigAura {}
 
 #[derive(Debug, Default, Deserialize, Serialize)]
 #[serde(default)]
@@ -216,4 +216,4 @@ impl StdConfig for ConfigBase {
     }
 }
 
-impl StdConfigLoad1 for ConfigBase {}
+impl StdConfigLoad for ConfigBase {}

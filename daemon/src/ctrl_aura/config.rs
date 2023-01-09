@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, HashSet};
 
-use config_traits::{StdConfig, StdConfigLoad1};
+use config_traits::{StdConfig, StdConfigLoad};
 use rog_aura::aura_detection::{LaptopLedData, ASUS_KEYBOARD_DEVICES};
 use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Direction, LedBrightness, Speed, GRADIENT};
@@ -199,7 +199,7 @@ impl StdConfig for AuraConfig {
     }
 }
 
-impl StdConfigLoad1 for AuraConfig {}
+impl StdConfigLoad for AuraConfig {}
 
 impl AuraConfig {
     fn create_default(support_data: &LaptopLedData) -> Self {

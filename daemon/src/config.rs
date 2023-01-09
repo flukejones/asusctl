@@ -1,4 +1,4 @@
-use config_traits::{StdConfig, StdConfigLoad3};
+use config_traits::{StdConfig, StdConfigLoad2};
 use serde_derive::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "asusd.ron";
@@ -33,7 +33,7 @@ impl StdConfig for Config {
     }
 }
 
-impl StdConfigLoad3<Config455, Config458> for Config {}
+impl StdConfigLoad2<Config455, Config458> for Config {}
 
 #[derive(Deserialize, Serialize, Default)]
 #[serde(default)]
