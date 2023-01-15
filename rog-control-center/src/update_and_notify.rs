@@ -374,11 +374,13 @@ pub fn start_notifications(
                                     }
                                 }
                                 if let Ok(mut lock) = page_states1.lock() {
-                                    lock.gfx_state.power_status = status;
                                     lock.set_notified();
                                 }
-                                last_status = status;
                             }
+                            if let Ok(mut lock) = page_states1.lock() {
+                                lock.gfx_state.power_status = status;
+                            }
+                            last_status = status;
                         }
                         sleep(Duration::from_millis(500)).await;
                     }
