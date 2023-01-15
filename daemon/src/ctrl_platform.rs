@@ -92,15 +92,8 @@ impl CtrlPlatform {
     }
 
     pub fn get_boot_sound() -> Result<i8, RogError> {
-        let path = ASUS_POST_LOGO_SOUND;
-        let mut file = OpenOptions::new()
-            .read(true)
-            .open(path)
-            .map_err(|err| RogError::Path(path.into(), err))?;
-
-        let mut data = Vec::new();
-        file.read_to_end(&mut data)
-            .map_err(|err| RogError::Read(path.into(), err))?;
+        let data = std::fs::read(ASUS_POST_LOGO_SOUND)
+            .map_err(|err| RogError::Read(ASUS_POST_LOGO_SOUND.into(), err))?;
 
         let idx = data.len() - 1;
         Ok(data[idx] as i8)
@@ -115,6 +108,7 @@ impl CtrlPlatform {
             .map_err(|err| RogError::Path(path.into(), err))?;
 
         let mut data = Vec::new();
+        #[allow(clippy::verbose_file_reads)]
         file.read_to_end(&mut data)
             .map_err(|err| RogError::Read(path.into(), err))?;
 

@@ -1,4 +1,14 @@
-use std::fs::{create_dir, File, OpenOptions};
+//! `config_traits` is a crate that broke out from the requirement to manage
+//! various different config files, including parsing from different formats and
+//! updating them from previous versions where fields or names are changed in
+//! some way.
+//!
+//! The end canonical file format is `.ron` as this supports rust types well,
+//! and includes the ability to add commenting, and is less verbose than `json`.
+//! Currently the crate will also try to parse from `json` and `toml` if the
+//! `ron` parsing fails, then update to `ron` format.
+
+use std::fs::{self, create_dir, File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::PathBuf;
 
@@ -49,7 +59,7 @@ where
                     "Could not rename. Please remove {} then restart service: Error {}",
                     self.file_name(),
                     err
-                )
+                );
             });
             do_rename = false;
         }
@@ -68,7 +78,7 @@ where
                     "Could not rename. Please remove {} then restart service: Error {}",
                     self.file_name(),
                     err
-                )
+                );
             });
         }
         config
@@ -88,18 +98,10 @@ where
 
     /// Open and parse the config file to self from ron format
     fn read(&mut self) {
-        let mut file = match OpenOptions::new().read(true).open(self.file_path()) {
-            Ok(data) => data,
-            Err(err) => {
-                error!("Error reading {:?}: {}", self.file_path(), err);
-                return;
-            }
-        };
-        let mut buf = String::new();
-        if let Ok(l) = file.read_to_string(&mut buf) {
-            if l == 0 {
+        if let Ok(data) = fs::read_to_string(self.file_path()) {
+            if data.is_empty() {
                 warn!("File is empty {:?}", self.file_path());
-            } else if let Ok(data) = ron::from_str(&buf) {
+            } else if let Ok(data) = ron::from_str(&data) {
                 *self = data;
             } else {
                 warn!("Could not deserialise {:?}", self.file_path());
@@ -137,13 +139,14 @@ where
             self.file_name(),
             self.file_name()
         );
-        let cfg_old = self.file_path().to_string_lossy().to_string() + "-old";
+        let mut cfg_old = self.file_path().to_string_lossy().to_string();
+        cfg_old.push_str("-old");
         std::fs::rename(self.file_path(), cfg_old).unwrap_or_else(|err| {
             error!(
                 "Could not rename. Please remove {} then restart service: Error {}",
                 self.file_name(),
                 err
-            )
+            );
         });
     }
 }
@@ -206,7 +209,9 @@ macro_rules! std_config_load {
                             self = data;
                         } else if let Ok(data) = toml::from_str(&buf) {
                             self = data;
-                        } $(else if let Ok(data) = serde_json::from_str::<$generic>(&buf) {
+                        } $(else if let Ok(data) = ron::from_str::<$generic>(&buf) {
+                            self = data.into();
+                        } else if let Ok(data) = serde_json::from_str::<$generic>(&buf) {
                             self = data.into();
                         } else if let Ok(data) = toml::from_str::<$generic>(&buf) {
                             self = data.into();

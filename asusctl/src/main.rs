@@ -36,15 +36,14 @@ fn main() {
             ..Default::default()
         },
         Err(err) => {
-            eprintln!("source {}", err);
-            std::process::exit(2);
+            panic!("source {}", err);
         }
     };
 
     let (dbus, _) = RogDbusClientBlocking::new()
         .map_err(|e| {
             print_error_help(&e, None);
-            std::process::exit(3);
+            panic!("Could not start dbus client");
         })
         .unwrap();
 
@@ -54,7 +53,7 @@ fn main() {
         .supported_functions()
         .map_err(|e| {
             print_error_help(&e, None);
-            std::process::exit(4);
+            panic!("Could not start dbus proxy");
         })
         .unwrap();
 
@@ -260,7 +259,7 @@ fn handle_anime(
                     if let Some(lst) = image.self_command_list() {
                         println!("\n{}", lst);
                     }
-                    std::process::exit(1);
+                    return Ok(());
                 }
                 verify_brightness(image.bright);
 
@@ -283,7 +282,7 @@ fn handle_anime(
                     if let Some(lst) = image.self_command_list() {
                         println!("\n{}", lst);
                     }
-                    std::process::exit(1);
+                    return Ok(());
                 }
                 verify_brightness(image.bright);
 
@@ -304,7 +303,7 @@ fn handle_anime(
                     if let Some(lst) = gif.self_command_list() {
                         println!("\n{}", lst);
                     }
-                    std::process::exit(1);
+                    return Ok(());
                 }
                 verify_brightness(gif.bright);
 
@@ -338,7 +337,7 @@ fn handle_anime(
                     if let Some(lst) = gif.self_command_list() {
                         println!("\n{}", lst);
                     }
-                    std::process::exit(1);
+                    return Ok(());
                 }
                 verify_brightness(gif.bright);
 
@@ -374,7 +373,6 @@ fn verify_brightness(brightness: f32) {
             "Image and global brightness must be between 0.0 and 1.0 (inclusive), was {}",
             brightness
         );
-        std::process::exit(1);
     }
 }
 
@@ -391,7 +389,7 @@ fn handle_led_mode(
         println!("Commands available");
 
         if let Some(cmdlist) = LedModeCommand::command_list() {
-            let commands: Vec<String> = cmdlist.lines().map(|s| s.to_string()).collect();
+            let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
             for command in commands.iter().filter(|command| {
                 for mode in &supported.basic_modes {
                     if command
@@ -662,7 +660,7 @@ fn handle_profile(
         if let Some(lst) = cmd.self_command_list() {
             println!("\n{}", lst);
         }
-        std::process::exit(1);
+        return Ok(());
     }
 
     if cmd.next {
@@ -706,14 +704,14 @@ fn handle_fan_curve(
         if let Some(lst) = cmd.self_command_list() {
             println!("\n{}", lst);
         }
-        std::process::exit(1);
+        return Ok(());
     }
 
     if (cmd.enabled.is_some() || cmd.fan.is_some() || cmd.data.is_some())
         && cmd.mod_profile.is_none()
     {
         println!("--enabled, --fan, and --data options require --mod-profile");
-        std::process::exit(666);
+        return Ok(());
     }
 
     if cmd.get_enabled {

@@ -139,8 +139,8 @@ type SharedHandle = Arc<Mutex<Option<NotificationHandle>>>;
 
 pub fn start_notifications(
     config: &Config,
-    page_states: Arc<Mutex<SystemState>>,
-    enabled_notifications: Arc<Mutex<EnabledNotifications>>,
+    page_states: &Arc<Mutex<SystemState>>,
+    enabled_notifications: &Arc<Mutex<EnabledNotifications>>,
 ) -> Result<()> {
     let last_notification: SharedHandle = Arc::new(Mutex::new(None));
 
@@ -556,7 +556,7 @@ fn do_mux_notification(message: &str, m: &GpuMode) -> Result<()> {
             } else if id == "__closed" {
                 // TODO: cancel the switching
             }
-        })
+        });
     });
     Ok(())
 }

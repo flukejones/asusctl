@@ -1,5 +1,4 @@
 use std::env::args;
-use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
@@ -101,15 +100,10 @@ fn main() -> Result<()> {
     let enabled_notifications = EnabledNotifications::tokio_mutex(&config);
 
     // Find and load a matching layout for laptop
-    let mut file = OpenOptions::new()
-        .read(true)
-        .open(PathBuf::from(BOARD_NAME))
-        .map_err(|e| {
-            println!("DOH! {BOARD_NAME}, {e}");
-            e
-        })?;
-    let mut board_name = String::new();
-    file.read_to_string(&mut board_name)?;
+    let mut board_name = std::fs::read_to_string(BOARD_NAME).map_err(|e| {
+        println!("DOH! {BOARD_NAME}, {e}");
+        e
+    })?;
 
     let mut led_support = LaptopLedData::get_data();
 
@@ -122,7 +116,7 @@ fn main() -> Result<()> {
             path.push("rog-aura");
             path.push("data");
         }
-        layouts = KeyLayout::layout_files(path.to_owned()).unwrap();
+        layouts = KeyLayout::layout_files(path.clone()).unwrap();
 
         if let Some(name) = &cli_parsed.board_name {
             if let Some(modes) = LedSupportFile::load_from_config() {
@@ -130,7 +124,7 @@ fn main() -> Result<()> {
                     led_support = data;
                 }
             }
-            board_name = name.to_owned();
+            board_name = name.clone();
             for layout in &layouts {
                 if layout
                     .file_name()
@@ -138,11 +132,11 @@ fn main() -> Result<()> {
                     .to_string_lossy()
                     .contains(&led_support.layout_name.to_lowercase())
                 {
-                    layout_name = Some(layout.to_owned());
+                    layout_name = Some(layout.clone());
                 }
             }
         } else {
-            board_name = "GQ401QM".to_string()
+            board_name = "GQ401QM".to_owned();
         };
 
         if cli_parsed.layout_viewing {
@@ -182,7 +176,7 @@ fn main() -> Result<()> {
         layout_name,
         layout,
         layouts,
-        enabled_notifications,
+        &enabled_notifications,
         &config,
         &supported,
     )?;
@@ -222,7 +216,7 @@ fn setup_page_state_and_notifs(
     layout_testing: Option<PathBuf>,
     keyboard_layout: KeyLayout,
     keyboard_layouts: Vec<PathBuf>,
-    enabled_notifications: Arc<Mutex<EnabledNotifications>>,
+    enabled_notifications: &Arc<Mutex<EnabledNotifications>>,
     config: &Config,
     supported: &SupportedFunctions,
 ) -> Result<Arc<Mutex<SystemState>>> {
@@ -234,7 +228,7 @@ fn setup_page_state_and_notifs(
         supported,
     )?));
 
-    start_notifications(config, page_states.clone(), enabled_notifications)?;
+    start_notifications(config, &page_states, enabled_notifications)?;
 
     Ok(page_states)
 }
@@ -253,21 +247,15 @@ fn start_app(states: Arc<Mutex<SystemState>>, native_options: NativeOptions) -> 
 /// Bah.. the icon dosn't work on wayland anyway, but we'll leave it in for now.
 fn load_icon() -> IconData {
     let path = PathBuf::from(APP_ICON_PATH);
-    let mut buf = Vec::new();
     let mut rgba = Vec::new();
     let mut height = 512;
     let mut width = 512;
     if path.exists() {
-        if let Ok(mut file) = OpenOptions::new()
-            .read(true)
-            .open(path)
+        if let Ok(data) = std::fs::read(path)
+            .map_err(|e| error!("Error reading app icon: {e:?}"))
             .map_err(|e| error!("Error opening app icon: {e:?}"))
         {
-            file.read_to_end(&mut buf)
-                .map_err(|e| error!("Error reading app icon: {e:?}"))
-                .ok();
-
-            let data = std::io::Cursor::new(buf);
+            let data = std::io::Cursor::new(data);
             let decoder = png_pong::Decoder::new(data).unwrap().into_steps();
             let png_pong::Step { raster, delay: _ } = decoder.last().unwrap().unwrap();
 
@@ -295,7 +283,7 @@ fn do_cli_help(parsed: &CliStart) -> bool {
         println!();
         if let Some(cmdlist) = CliStart::command_list() {
             let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
-            for command in commands.iter() {
+            for command in &commands {
                 println!("{}", command);
             }
         }

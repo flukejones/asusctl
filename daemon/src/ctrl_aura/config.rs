@@ -195,7 +195,7 @@ impl StdConfig for AuraConfig {
     }
 
     fn file_name(&self) -> String {
-        CONFIG_FILE.to_string()
+        CONFIG_FILE.to_owned()
     }
 }
 

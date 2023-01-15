@@ -22,3 +22,5 @@ gif.workspace = true
 tinybmp.workspace = true
 glam.workspace = true
 rog_dbus = { path = "../rog-dbus" }
+
+cargo-husky.workspace = true

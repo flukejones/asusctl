@@ -28,3 +28,6 @@ log.workspace = true
 sysfs-class.workspace = true # used for backlight control and baord ID
 
 ron = { version = "*", optional = true }
+
+[dev-dependencies]
+cargo-husky.workspace = true

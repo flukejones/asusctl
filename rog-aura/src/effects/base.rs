@@ -28,6 +28,6 @@ impl EffectState for InputBased {
     }
 
     fn set_led(&mut self, address: LedCode) {
-        self.led = address
+        self.led = address;
     }
 }

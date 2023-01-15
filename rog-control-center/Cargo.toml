@@ -41,3 +41,6 @@ png_pong.workspace = true
 
 nix = "^0.26.1"
 tempfile = "3.3.0"
+
+[dev-dependencies]
+cargo-husky.workspace = true

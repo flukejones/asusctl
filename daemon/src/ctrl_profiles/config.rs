@@ -28,7 +28,7 @@ impl StdConfig for ProfileConfig {
     }
 
     fn file_name(&self) -> String {
-        CONFIG_FILE.to_string()
+        CONFIG_FILE.to_owned()
     }
 }
 
@@ -77,7 +77,7 @@ impl StdConfig for FanCurveConfig {
     }
 
     fn file_name(&self) -> String {
-        CONFIG_FAN_FILE.to_string()
+        CONFIG_FAN_FILE.to_owned()
     }
 }
 

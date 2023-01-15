@@ -2,8 +2,8 @@ pub mod error;
 pub mod fan_curve_set;
 
 use std::fmt::Display;
-use std::fs::OpenOptions;
-use std::io::{Read, Write};
+use std::fs::{self, OpenOptions};
+use std::io::Write;
 use std::path::Path;
 
 use error::ProfileError;
@@ -49,18 +49,12 @@ impl Profile {
     }
 
     pub fn get_active_profile() -> Result<Profile, ProfileError> {
-        let mut file = OpenOptions::new().read(true).open(PLATFORM_PROFILE)?;
-
-        let mut buf = String::new();
-        file.read_to_string(&mut buf)?;
+        let buf = fs::read_to_string(PLATFORM_PROFILE)?;
         Ok(buf.as_str().into())
     }
 
     pub fn get_profile_names() -> Result<Vec<Profile>, ProfileError> {
-        let mut file = OpenOptions::new().read(true).open(PLATFORM_PROFILES)?;
-
-        let mut buf = String::new();
-        file.read_to_string(&mut buf)?;
+        let buf = fs::read_to_string(PLATFORM_PROFILES)?;
         Ok(buf.rsplit(' ').map(|p| p.into()).collect())
     }
 

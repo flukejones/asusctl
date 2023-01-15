@@ -151,6 +151,7 @@ checksum = "8da52d66c7071e2e3fa2a1e5c6d088fec47b593032b254f5e980de8ea54454d6"
 name = "asusctl"
 version = "4.6.0-rc1"
 dependencies = [
+ "cargo-husky",
  "daemon",
  "gif",
  "glam",
@@ -505,6 +506,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "cargo-husky"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b02b629252fe8ef6460461409564e2c21d0c8e77e0944f3d189ff06c4e932ad"
+
+[[package]]
 name = "cc"
 version = "1.0.78"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -659,8 +666,9 @@ dependencies = [
 
 [[package]]
 name = "config-traits"
-version = "0.1.0"
+version = "4.6.0-rc1"
 dependencies = [
+ "cargo-husky",
  "log",
  "ron",
  "serde",
@@ -793,6 +801,7 @@ name = "daemon"
 version = "4.6.0-rc1"
 dependencies = [
  "async-trait",
+ "cargo-husky",
  "concat-idents",
  "config-traits",
  "env_logger",
@@ -815,6 +824,7 @@ dependencies = [
 name = "daemon-user"
 version = "4.6.0-rc1"
 dependencies = [
+ "cargo-husky",
  "config-traits",
  "dirs",
  "env_logger",
@@ -2709,6 +2719,7 @@ dependencies = [
 name = "rog-control-center"
 version = "4.6.0-rc1"
 dependencies = [
+ "cargo-husky",
  "daemon",
  "dirs",
  "eframe",
@@ -2740,6 +2751,7 @@ dependencies = [
 name = "rog_anime"
 version = "4.6.0-rc1"
 dependencies = [
+ "cargo-husky",
  "gif",
  "glam",
  "log",
@@ -2756,6 +2768,7 @@ dependencies = [
 name = "rog_aura"
 version = "4.6.0-rc1"
 dependencies = [
+ "cargo-husky",
  "log",
  "ron",
  "serde",
@@ -2768,6 +2781,7 @@ dependencies = [
 name = "rog_dbus"
 version = "4.6.0-rc1"
 dependencies = [
+ "cargo-husky",
  "rog_anime",
  "rog_aura",
  "rog_platform",
@@ -2779,6 +2793,7 @@ dependencies = [
 name = "rog_platform"
 version = "4.6.0-rc1"
 dependencies = [
+ "cargo-husky",
  "concat-idents",
  "inotify",
  "log",
@@ -2795,6 +2810,7 @@ dependencies = [
 name = "rog_profiles"
 version = "4.6.0-rc1"
 dependencies = [
+ "cargo-husky",
  "serde",
  "serde_derive",
  "udev 0.7.0",

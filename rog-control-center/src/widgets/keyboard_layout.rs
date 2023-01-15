@@ -25,7 +25,7 @@ pub fn keyboard(
             AdvancedAuraType::None => (false, keyboard_layout.max_width(), false),
             AdvancedAuraType::Zoned(zones) => {
                 let width = if let Some(row) = keyboard_layout.rows_ref().get(2) {
-                    row.width() as f32
+                    row.width()
                 } else {
                     0.0
                 };

@@ -141,7 +141,9 @@ impl AnimeImage {
     ///
     /// In relation to the display itself you should think of it as a full
     /// square grid, so `first_x` is the x position on that grid where the
-    /// LED is actually positioned in relation to the Y. ```text
+    /// LED is actually positioned in relation to the Y.
+    ///
+    /// ```text
     /// +------------+
     /// |            |
     /// |            |

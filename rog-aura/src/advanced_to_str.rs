@@ -8,6 +8,7 @@ impl From<LedCode> for &str {
 
 impl From<&LedCode> for &str {
     fn from(k: &LedCode) -> Self {
+        #[allow(clippy::match_same_arms)]
         match k {
             LedCode::VolUp => "Volume Up",
             LedCode::VolDown => "Volume Down",

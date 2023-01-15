@@ -303,6 +303,7 @@ impl LedUsbPackets {
     fn rgb_for_led_code(&mut self, led_code: LedCode) -> Option<&mut [u8]> {
         let zoned = self.zoned;
         // Tuples are indexes in to array
+        #[allow(clippy::match_same_arms)]
         let (row, col) = match led_code {
             LedCode::VolDown => (0, 15),
             LedCode::VolUp => (0, 18),

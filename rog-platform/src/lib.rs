@@ -51,7 +51,7 @@ pub fn write_attr_bool(device: &mut Device, attr: &str, value: bool) -> Result<(
 pub fn read_attr_u8(device: &Device, attr_name: &str) -> Result<u8> {
     if let Some(value) = device.attribute_value(attr_name) {
         let tmp = value.to_string_lossy();
-        return tmp.parse::<u8>().map_err(|_| PlatformError::ParseNum);
+        return tmp.parse::<u8>().map_err(|_e| PlatformError::ParseNum);
     }
     Err(PlatformError::AttrNotFound(attr_name.to_owned()))
 }
@@ -114,41 +114,3 @@ mod tests {
         assert_eq!(tmp, &[1, 2, 3, 4, 5]);
     }
 }
-
-// pub fn find_led_node(id_product: &str) -> Result<Device, PlatformError> {
-//     let mut enumerator = udev::Enumerator::new().map_err(|err| {
-//         warn!("{}", err);
-//         PlatformError::Udev("enumerator failed".into(), err)
-//     })?;
-//     enumerator.match_subsystem("hidraw").map_err(|err| {
-//         warn!("{}", err);
-//         PlatformError::Udev("match_subsystem failed".into(), err)
-//     })?;
-
-//     for device in enumerator.scan_devices().map_err(|err| {
-//         warn!("{}", err);
-//         PlatformError::Udev("scan_devices failed".into(), err)
-//     })? {
-//         if let Some(parent) = device
-//             .parent_with_subsystem_devtype("usb", "usb_device")
-//             .map_err(|err| {
-//                 warn!("{}", err);
-//                 PlatformError::Udev("parent_with_subsystem_devtype
-// failed".into(), err)             })?
-//         {
-//             if parent
-//                 .attribute_value("idProduct")
-//                 .ok_or_else(|| PlatformError::NotFound("LED
-// idProduct".into()))?                 == id_product
-//             {
-//                 if let Some(dev_node) = device.devnode() {
-//                     info!("Using device at: {:?} for LED control", dev_node);
-//                     return Ok(device);
-//                 }
-//             }
-//         }
-//     }
-//     Err(PlatformError::MissingFunction(
-//         "ASUS LED device node not found".into(),
-//     ))
-// }

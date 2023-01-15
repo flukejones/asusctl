@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+echo '+cargo +nightly fmt --all -- --check'
+cargo +nightly fmt --all -- --check
+echo '+cargo clippy --all -- -D warnings'
+cargo clippy --all -- -D warnings
+echo '+cargo test --all'
+cargo test --all
+echo '+cargo cranky'
+cargo cranky

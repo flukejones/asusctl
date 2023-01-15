@@ -34,3 +34,6 @@ zbus.workspace = true
 # cli and logging
 log.workspace = true
 env_logger.workspace = true
+
+[dev-dependencies]
+cargo-husky.workspace = true

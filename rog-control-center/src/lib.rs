@@ -81,6 +81,8 @@ pub fn on_tmp_dir_exists() -> Result<TempDir, std::io::Error> {
     // First entry is the actual state
     if buf[0] == SHOWING_GUI {
         ipc_file.write_all(&[SHOWING_GUI])?; // Store state again as we drained the fifo
+                                             // Early exit is not an error and we don't want to pass back a dir
+        #[allow(clippy::exit)]
         exit(0);
     } else if buf[0] == SHOW_GUI {
         remove_dir_all(&path)?;
@@ -89,7 +91,7 @@ pub fn on_tmp_dir_exists() -> Result<TempDir, std::io::Error> {
             .rand_bytes(0)
             .tempdir();
     }
-    exit(-1);
+    panic!("Invalid exit or app state");
 }
 
 pub fn get_ipc_file() -> Result<File, crate::error::Error> {

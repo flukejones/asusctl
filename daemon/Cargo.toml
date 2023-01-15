@@ -45,3 +45,6 @@ sysfs-class.workspace = true # used for backlight control and baord ID
 concat-idents.workspace = true
 
 systemd-zbus = "*"
+
+[dev-dependencies]
+cargo-husky.workspace = true

@@ -7,7 +7,7 @@ use crate::error::ProfileError;
 use crate::FanCurvePU;
 
 pub(crate) fn pwm_str(fan: char, index: usize) -> String {
-    let mut buf = "pwm1_auto_point1_pwm".to_string();
+    let mut buf = "pwm1_auto_point1_pwm".to_owned();
     unsafe {
         let tmp = buf.as_bytes_mut();
         tmp[3] = fan as u8;
@@ -17,7 +17,7 @@ pub(crate) fn pwm_str(fan: char, index: usize) -> String {
 }
 
 pub(crate) fn temp_str(fan: char, index: usize) -> String {
-    let mut buf = "pwm1_auto_point1_temp".to_string();
+    let mut buf = "pwm1_auto_point1_temp".to_owned();
     unsafe {
         let tmp = buf.as_bytes_mut();
         tmp[3] = fan as u8;
@@ -146,10 +146,10 @@ impl CurveData {
         for attr in device.attributes() {
             let tmp = attr.name().to_string_lossy();
             if tmp.starts_with("pwm1") && tmp.ends_with("_temp") {
-                Self::set_val_from_attr(tmp.as_ref(), device, &mut self.temp)
+                Self::set_val_from_attr(tmp.as_ref(), device, &mut self.temp);
             }
             if tmp.starts_with("pwm1") && tmp.ends_with("_pwm") {
-                Self::set_val_from_attr(tmp.as_ref(), device, &mut self.pwm)
+                Self::set_val_from_attr(tmp.as_ref(), device, &mut self.pwm);
             }
         }
     }

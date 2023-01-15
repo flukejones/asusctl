@@ -284,7 +284,8 @@ impl FromStr for AuraZone {
 }
 
 /// Default factory modes structure. This easily converts to an USB HID packet
-/// with: ```rust
+/// with:
+/// ```rust
 /// // let bytes: [u8; LED_MSG_LEN] = mode.into();
 /// ```
 #[cfg_attr(feature = "dbus", derive(Type))]
@@ -350,6 +351,7 @@ pub struct AuraParameters {
     pub direction: bool,
 }
 
+#[allow(clippy::fn_params_excessive_bools)]
 impl AuraParameters {
     pub const fn new(
         zone: bool,

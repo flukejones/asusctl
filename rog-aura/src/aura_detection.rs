@@ -1,6 +1,3 @@
-use std::fs::OpenOptions;
-use std::io::Read;
-
 use log::{error, info, warn};
 use serde_derive::{Deserialize, Serialize};
 
@@ -76,39 +73,33 @@ impl LedSupportFile {
         let mut loaded = false;
         let mut data = LedSupportFile::default();
         // Load user configs first so they are first to be checked
-        if let Ok(mut file) = OpenOptions::new().read(true).open(ASUS_LED_MODE_USER_CONF) {
-            let mut buf = String::new();
-            if let Ok(l) = file.read_to_string(&mut buf) {
-                if l == 0 {
-                    warn!("{} is empty", ASUS_LED_MODE_USER_CONF);
-                } else {
-                    if let Ok(mut tmp) = ron::from_str::<LedSupportFile>(&buf) {
-                        data.0.append(&mut tmp.0);
-                    }
-                    info!(
-                        "Loaded user-defined LED support data from {}",
-                        ASUS_LED_MODE_USER_CONF
-                    );
+        if let Ok(file) = std::fs::read_to_string(ASUS_LED_MODE_USER_CONF) {
+            if file.is_empty() {
+                warn!("{} is empty", ASUS_LED_MODE_USER_CONF);
+            } else {
+                if let Ok(mut tmp) = ron::from_str::<LedSupportFile>(&file) {
+                    data.0.append(&mut tmp.0);
                 }
+                info!(
+                    "Loaded user-defined LED support data from {}",
+                    ASUS_LED_MODE_USER_CONF
+                );
             }
         }
         // Load and append the default LED support data
-        if let Ok(mut file) = OpenOptions::new().read(true).open(ASUS_LED_MODE_CONF) {
-            let mut buf = String::new();
-            if let Ok(l) = file.read_to_string(&mut buf) {
-                if l == 0 {
-                    warn!("{} is empty", ASUS_LED_MODE_CONF);
-                } else {
-                    let mut tmp: LedSupportFile = ron::from_str(&buf)
-                        .map_err(|e| error!("{e}"))
-                        .unwrap_or_else(|_| panic!("Could not deserialise {}", ASUS_LED_MODE_CONF));
-                    data.0.append(&mut tmp.0);
-                    loaded = true;
-                    info!(
-                        "Loaded default LED support data from {}",
-                        ASUS_LED_MODE_CONF
-                    );
-                }
+        if let Ok(file) = std::fs::read_to_string(ASUS_LED_MODE_CONF) {
+            if file.is_empty() {
+                warn!("{} is empty", ASUS_LED_MODE_CONF);
+            } else {
+                let mut tmp: LedSupportFile = ron::from_str(&file)
+                    .map_err(|e| error!("{e}"))
+                    .unwrap_or_else(|_| panic!("Could not deserialise {}", ASUS_LED_MODE_CONF));
+                data.0.append(&mut tmp.0);
+                loaded = true;
+                info!(
+                    "Loaded default LED support data from {}",
+                    ASUS_LED_MODE_CONF
+                );
             }
         }
         data.0.sort_by(|a, b| a.board_name.cmp(&b.board_name));
@@ -125,7 +116,7 @@ impl LedSupportFile {
 #[cfg(test)]
 mod tests {
     use std::fs::OpenOptions;
-    use std::io::{Read, Write};
+    use std::io::Write;
     use std::path::PathBuf;
 
     use ron::ser::PrettyConfig;
@@ -155,9 +146,7 @@ mod tests {
         let mut data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         data.push("data/aura_support.ron");
 
-        let mut file = OpenOptions::new().read(true).open(&data).unwrap();
-        let mut buf = String::new();
-        file.read_to_string(&mut buf).unwrap();
+        let buf = std::fs::read_to_string(&data).unwrap();
 
         let tmp = ron::from_str::<LedSupportFile>(&buf).unwrap();
 

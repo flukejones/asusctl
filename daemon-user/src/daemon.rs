@@ -1,5 +1,4 @@
-use std::fs::OpenOptions;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
@@ -78,17 +77,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // if supported.keyboard_led.per_key_led_mode {
     if let Some(cfg) = config.active_aura {
         let mut aura_config = ConfigAura::new().set_name(cfg).load();
-
-        // Find and load a matching layout for laptop
-        let mut file = OpenOptions::new()
-            .read(true)
-            .open(PathBuf::from(BOARD_NAME))
-            .map_err(|e| {
-                println!("{BOARD_NAME}, {e}");
-                e
-            })?;
-        let mut board_name = String::new();
-        file.read_to_string(&mut board_name)?;
+        // let baord_name = std::fs::read_to_string(BOARD_NAME)?;
 
         let led_support = LaptopLedData::get_data();
 

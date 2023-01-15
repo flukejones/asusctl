@@ -1,7 +1,7 @@
 # https://github.com/ericseppanen/cargo-cranky
 # cargo install cargo-cranky && cargo cranky
 
-warn = [
+error = [
   "clippy::all",
   "clippy::await_holding_lock",
   "clippy::bool_to_int_with_if",

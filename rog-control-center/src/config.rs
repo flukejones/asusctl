@@ -60,6 +60,8 @@ impl Config {
 
         let mut buf = String::new();
 
+        // Lint to allow, because we want the above file behaviour
+        #[allow(clippy::verbose_file_reads)]
         if let Ok(read_len) = file.read_to_string(&mut buf) {
             if read_len == 0 {
                 warn!("Zero len read of Config file");

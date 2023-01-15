@@ -2,8 +2,6 @@
 //! editable config.
 
 use std::collections::{HashMap, HashSet};
-use std::fs::{self, OpenOptions};
-use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::slice::Iter;
 
@@ -88,8 +86,8 @@ impl KeyShape {
 /// The first `Key` will determine the row height.
 ///
 /// Every row is considered to start a x=0, with the first row being y=0,
-/// and following rows starting after the previous row_y+pad_top and
-/// row_x+pad_left
+/// and following rows starting after the previous `row_y + pad_top` and
+/// `row_x + pad_left`
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct KeyRow {
     pad_left: f32,
@@ -138,7 +136,7 @@ impl KeyRow {
             };
 
             if h < height {
-                h = height
+                h = height;
             }
         }
         h
@@ -192,15 +190,9 @@ pub struct KeyLayout {
 
 impl KeyLayout {
     pub fn from_file(path: &Path) -> Result<Self, Error> {
-        let mut file = OpenOptions::new()
-            .read(true)
-            .open(path)
+        let buf: String = std::fs::read_to_string(path)
             .map_err(|e| Error::IoPath(path.to_string_lossy().to_string(), e))?;
-        let mut buf = String::new();
-        let read_len = file
-            .read_to_string(&mut buf)
-            .map_err(|e| Error::IoPath(path.to_string_lossy().to_string(), e))?;
-        if read_len == 0 {
+        if buf.is_empty() {
             Err(Error::IoPath(
                 path.to_string_lossy().to_string(),
                 std::io::ErrorKind::InvalidData.into(),
@@ -233,7 +225,7 @@ impl KeyLayout {
         }
     }
 
-    pub fn rows(&self) -> Iter<KeyRow> {
+    pub fn rows(&self) -> Iter<'_, KeyRow> {
         self.key_rows.iter()
     }
 
@@ -279,7 +271,7 @@ impl KeyLayout {
         for r in &self.key_rows {
             let tmp = r.width();
             if width < tmp {
-                width = tmp
+                width = tmp;
             }
         }
         width
@@ -305,7 +297,7 @@ impl KeyLayout {
         data_path.push("layouts");
         let path = data_path.as_path();
         let mut files = Vec::new();
-        fs::read_dir(path)
+        std::fs::read_dir(path)
             .map_err(|e| {
                 println!("{:?}, {e}", path);
                 e
@@ -471,7 +463,6 @@ mod tests {
         data_path.push("data");
         data_path.push("layouts");
         let path = data_path.as_path();
-        let mut buf = String::new();
         for p in fs::read_dir(path)
             .map_err(|e| {
                 println!("{:?}, {e}", path);
@@ -479,9 +470,7 @@ mod tests {
             })
             .unwrap()
         {
-            let path = p.unwrap().path();
-            let mut file = OpenOptions::new().read(true).open(&path).unwrap();
-            file.read_to_string(&mut buf).unwrap();
+            let mut buf = std::fs::read_to_string(p.unwrap().path()).unwrap();
 
             let data: KeyLayout = ron::from_str(&buf).unwrap();
 
@@ -501,9 +490,10 @@ mod tests {
                 }
             }
 
-            if !unused.is_empty() {
-                panic!("The layout {path:?} had unused shapes {unused:?}",);
-            }
+            assert!(
+                unused.is_empty(),
+                "The layout {path:?} had unused shapes {unused:?}",
+            );
             buf.clear();
         }
 
@@ -527,9 +517,7 @@ mod tests {
         data_path.push("data");
         data_path.push("aura_support.ron");
 
-        let mut buf = String::new();
-        let mut file = OpenOptions::new().read(true).open(&data_path).unwrap();
-        file.read_to_string(&mut buf).unwrap();
+        let mut buf = std::fs::read_to_string(&data_path).unwrap();
         let data: LedSupportFile = ron::from_str(&buf).unwrap();
 
         data_path.pop();
@@ -553,6 +541,7 @@ mod tests {
                     )
                 })
                 .unwrap();
+            #[allow(clippy::verbose_file_reads)]
             if let Err(e) = file.read_to_string(&mut buf) {
                 panic!(
                     "Error checking {data_path:?} for {} : {e:?}",

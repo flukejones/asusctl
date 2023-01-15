@@ -126,6 +126,10 @@ You may also need to activate the service for debian install. If running Pop!_OS
 
 Run `sudo make uninstall` in the source repo, and remove `/etc/asusd/`.
 
+# Contributing
+
+See `CONTRIBUTING.md`. Additionally, also do `cargo clean` and `cargo test` on first checkout to ensure the commit hooks are used (via `cargo-husky`).
+
 # OTHER
 
 ## Supporting more laptops

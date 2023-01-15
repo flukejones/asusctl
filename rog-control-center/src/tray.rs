@@ -473,13 +473,11 @@ pub fn init_tray(
     };
 
     std::thread::spawn(move || {
-        if gtk::init()
-            .map_err(|e| {
-                error!("ROGTray: gtk init {e}");
-                e
-            })
-            .is_err()
-        {
+        let gtk_init = gtk::init().map_err(|e| {
+            error!("ROGTray: gtk init {e}");
+            e
+        });
+        if gtk_init.is_err() {
             return;
         } // Make this the main thread for gtk
         debug!("init_tray gtk");

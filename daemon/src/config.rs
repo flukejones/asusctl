@@ -29,7 +29,7 @@ impl StdConfig for Config {
     }
 
     fn file_name(&self) -> String {
-        CONFIG_FILE.to_string()
+        CONFIG_FILE.to_owned()
     }
 }
 
