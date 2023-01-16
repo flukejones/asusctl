@@ -1,7 +1,7 @@
 image: rust:latest
 
 cache: &rust_cache
-  key: $CI_COMMIT_REF_SLUG
+  # key: $CI_COMMIT_REF_SLUG
   paths:
       # Don't include `incremental` to save space
       # Debug
@@ -23,21 +23,23 @@ stages:
     - check
     - test
     - release
-    - pages
+    - deploy
 
 format:
-  <<: *rust_cache
   except:
     - tags
+  cache:
+    <<: *rust_cache
   script:
     - echo "nightly" > rust-toolchain
     - rustup component add rustfmt
     - cargo fmt --check
 
 check:
-  <<: *rust_cache
   except:
     - tags
+  cache:
+    <<: *rust_cache
   script:
     - rustup component add clippy
     - cargo check
@@ -46,15 +48,18 @@ check:
     - cargo install cargo-cranky && cargo cranky
 
 test:
-  <<: *rust_cache
   except:
     - tags
+  cache:
+    <<: *rust_cache
   script:
     - cargo test
 
 release:
   only:
     - tags
+  cache:
+    <<: *rust_cache
   script:
     - make && make vendor
   artifacts:
@@ -63,10 +68,11 @@ release:
     - cargo-config
 
 pages:
-  <<: *rust_cache
   stage: deploy
   only:
     - tags
+  cache:
+    <<: *rust_cache
   script:
     - cargo doc --document-private-items --no-deps --workspace
     - rm -rf public
