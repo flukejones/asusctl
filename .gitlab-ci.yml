@@ -1,7 +1,7 @@
 image: rust:latest
 
-cache:
-  key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
+cache: &rust_cache
+  key: $CI_COMMIT_REF_SLUG
   paths:
       # Don't include `incremental` to save space
       # Debug
@@ -9,7 +9,6 @@ cache:
       - target/debug/deps/
       - target/debug/.fingerprint/
       - target/debug/.cargo-lock
-      - target/debug/df_storyteller
       # Release
       - target/release/build/
       - target/release/deps/
@@ -24,8 +23,10 @@ stages:
     - check
     - test
     - release
+    - pages
 
 format:
+  <<: *rust_cache
   except:
     - tags
   script:
@@ -34,6 +35,7 @@ format:
     - cargo fmt --check
 
 check:
+  <<: *rust_cache
   except:
     - tags
   script:
@@ -44,6 +46,7 @@ check:
     - cargo install cargo-cranky && cargo cranky
 
 test:
+  <<: *rust_cache
   except:
     - tags
   script:
@@ -59,5 +62,20 @@ release:
     - vendor_asusctl_*.tar.xz
     - cargo-config
 
+pages:
+  <<: *rust_cache
+  stage: deploy
+  only:
+    - tags
+  script:
+    - cargo doc --document-private-items --no-deps --workspace
+    - rm -rf public
+    - mkdir public
+    - cp -R target/doc/* public
+    - cp misc/index.html public
+  artifacts:
+    paths:
+      - public
+      
 variables:
   GIT_SUBMODULE_STRATEGY: normal
