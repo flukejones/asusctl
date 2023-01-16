@@ -1,19 +1,20 @@
 image: rust:latest
 
-cache: &rust_cache
-  # key: $CI_COMMIT_REF_SLUG
-  paths:
-      # Don't include `incremental` to save space
-      # Debug
-      - target/debug/build/
-      - target/debug/deps/
-      - target/debug/.fingerprint/
-      - target/debug/.cargo-lock
-      # Release
-      - target/release/build/
-      - target/release/deps/
-      - target/release/.fingerprint/
-      - target/release/.cargo-lock
+.rust_cache: &rust_cache
+  cache: &rust_cache
+    # key: $CI_COMMIT_REF_SLUG
+    paths:
+        # Don't include `incremental` to save space
+        # Debug
+        - target/debug/build/
+        - target/debug/deps/
+        - target/debug/.fingerprint/
+        - target/debug/.cargo-lock
+        # Release
+        - target/release/build/
+        - target/release/deps/
+        - target/release/.fingerprint/
+        - target/release/.cargo-lock
 
 before_script:
   - apt-get update -qq && apt-get install -y -qq libudev-dev libgtk-3-dev grep llvm clang libclang-dev
@@ -28,8 +29,7 @@ stages:
 format:
   except:
     - tags
-  cache:
-    <<: *rust_cache
+  <<: *rust_cache
   script:
     - echo "nightly" > rust-toolchain
     - rustup component add rustfmt
@@ -38,8 +38,7 @@ format:
 check:
   except:
     - tags
-  cache:
-    <<: *rust_cache
+  <<: *rust_cache
   script:
     - rustup component add clippy
     - cargo check
@@ -50,16 +49,14 @@ check:
 test:
   except:
     - tags
-  cache:
-    <<: *rust_cache
+  <<: *rust_cache
   script:
     - cargo test
 
 release:
   only:
     - tags
-  cache:
-    <<: *rust_cache
+  <<: *rust_cache
   script:
     - make && make vendor
   artifacts:
@@ -71,8 +68,7 @@ pages:
   stage: deploy
   only:
     - tags
-  cache:
-    <<: *rust_cache
+  <<: *rust_cache
   script:
     - cargo doc --document-private-items --no-deps --workspace
     - rm -rf public
