@@ -51,6 +51,7 @@ test:
     - tags
   <<: *rust_cache
   script:
+    - mkdir -p .git/hooks > /dev/null
     - cargo test
 
 release:
