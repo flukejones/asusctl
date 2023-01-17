@@ -100,7 +100,7 @@ Requirements are rust >= 1.57 installed from rustup.io if the distro provided ve
 Works with KDE Plasma (without GTK packages)
 
     zypper in -t pattern devel_basis
-    zypper in rustup cmake clang-devel systemd-devel glib2-devel cairo-devel atkmm-devel pangomm-devel gdk-pixbuf-devel gtk3-devel
+    zypper in rustup make cmake systemd-devel clang-devel llvm-devel gdk-pixbuf-devel cairo-devel pango-devel freetype-devel gtk3-devel libexpat-devel libayatana-indicator3-7
     make
     sudo make install
 
