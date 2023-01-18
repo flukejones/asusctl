@@ -91,7 +91,7 @@ Requirements are rust >= 1.57 installed from rustup.io if the distro provided ve
 
 **fedora:**
 
-    dnf install cmake clang-devel systemd-devel glib2-devel cairo-devel atkmm-devel pangomm-devel gdk-pixbuf-devel gtk3-devel libappindicator-gtk3
+    dnf install cmake clang-devel systemd-devel glib2-devel cairo-devel atkmm-devel pangomm-devel gdk-pixbuf2-devel gtk3-devel libappindicator-gtk3
     make
     sudo make install
 
