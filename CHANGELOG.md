@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ROGCC: Add CLI opt for viewing all layout files + filenames to help find a layout matching your laptop
   + Both of these options would hopefully be temporary and replaced with a "wizard" GUI helper
 - Fix profile controller not detecting if platform_profile is changed
+- Fix remove the leftover initial config writes on `new()` for some controllers to prevent resetting settings on startup
+  + refactor the loading of systemd curve defaults and config file
 ### BREAKING
 - Rename aura dbus method from `per_key_raw` to `direct_addressing_raw` and add doc comment
 - Changes to aura.conf:

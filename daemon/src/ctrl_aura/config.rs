@@ -113,7 +113,7 @@ impl From<&AuraPowerConfig> for AuraPowerDev {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 // #[serde(default)]
 pub struct AuraConfig {
     pub brightness: LedBrightness,
@@ -232,7 +232,6 @@ impl AuraConfig {
                 }
             }
         }
-        config.write();
         config
     }
 

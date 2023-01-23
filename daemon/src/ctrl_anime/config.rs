@@ -110,7 +110,7 @@ impl AnimeConfigCached {
 }
 
 /// Config for base system actions for the anime display
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct AnimeConfig {
     pub system: Vec<ActionLoader>,
     pub boot: Vec<ActionLoader>,
@@ -164,7 +164,7 @@ impl AnimeConfig {
 
     fn create_default() -> Self {
         // create a default config here
-        let config = AnimeConfig {
+        AnimeConfig {
             system: vec![],
             boot: vec![ActionLoader::ImageAnimation {
                 file: "/usr/share/asusd/anime/custom/sonic-run.gif".into(),
@@ -201,8 +201,6 @@ impl AnimeConfig {
             brightness: 1.0,
             awake_enabled: true,
             boot_anim_enabled: true,
-        };
-        config.write();
-        config
+        }
     }
 }

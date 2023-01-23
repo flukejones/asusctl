@@ -163,13 +163,13 @@ macro_rules! std_config_load {
         /// use serde::{Deserialize, Serialize};
         /// use config_traits::{StdConfig, StdConfigLoad2};
         ///
-        /// #[derive(Deserialize, Serialize)]
+        /// #[derive(Deserialize, Serialize, Debug)]
         /// struct FanCurveConfigOld {}
         ///
-        /// #[derive(Deserialize, Serialize)]
+        /// #[derive(Deserialize, Serialize, Debug)]
         /// struct FanCurveConfigOlder {}
         ///
-        /// #[derive(Deserialize, Serialize)]
+        /// #[derive(Deserialize, Serialize, Debug)]
         /// struct FanCurveConfig {}
         ///
         /// impl From<FanCurveConfigOld> for FanCurveConfig {
@@ -195,7 +195,7 @@ macro_rules! std_config_load {
         /// new one created
         pub trait $trait_name<$($generic),*>
         where
-            Self: $crate::StdConfig + DeserializeOwned + Serialize,
+            Self: $crate::StdConfig +std::fmt::Debug + DeserializeOwned + Serialize,
             $($generic: DeserializeOwned + Into<Self>),*
         {
             fn load(mut self) -> Self {
@@ -205,16 +205,22 @@ macro_rules! std_config_load {
                     if read_len != 0 {
                         if let Ok(data) = ron::from_str(&buf) {
                             self = data;
+                            log::info!("Parsed RON for {:?}", std::any::type_name::<Self>());
                         } else if let Ok(data) = serde_json::from_str(&buf) {
                             self = data;
+                            log::info!("Parsed JSON for {:?}", std::any::type_name::<Self>());
                         } else if let Ok(data) = toml::from_str(&buf) {
                             self = data;
+                            log::info!("Parsed TOML for {:?}", std::any::type_name::<Self>());
                         } $(else if let Ok(data) = ron::from_str::<$generic>(&buf) {
                             self = data.into();
+                            log::info!("New version failed, trying previous: Parsed RON for {:?}", std::any::type_name::<$generic>());
                         } else if let Ok(data) = serde_json::from_str::<$generic>(&buf) {
                             self = data.into();
+                            log::info!("New version failed, trying previous: Parsed JSON for {:?}", std::any::type_name::<$generic>());
                         } else if let Ok(data) = toml::from_str::<$generic>(&buf) {
                             self = data.into();
+                            log::info!("Newvious version failed, trying previous: Parsed TOML for {:?}", std::any::type_name::<$generic>());
                         })* else {
                             self.rename_file_old();
                             self = Self::new();
@@ -242,10 +248,10 @@ mod tests {
 
     #[test]
     fn check_macro_from_1() {
-        #[derive(serde::Deserialize, serde::Serialize)]
+        #[derive(serde::Deserialize, serde::Serialize, Debug)]
         struct Test {}
 
-        #[derive(serde::Deserialize, serde::Serialize)]
+        #[derive(serde::Deserialize, serde::Serialize, Debug)]
         struct Old1 {}
 
         impl crate::StdConfig for Test {
@@ -273,16 +279,16 @@ mod tests {
 
     #[test]
     fn check_macro_from_3() {
-        #[derive(serde::Deserialize, serde::Serialize)]
+        #[derive(serde::Deserialize, serde::Serialize, Debug)]
         struct Test {}
 
-        #[derive(serde::Deserialize, serde::Serialize)]
+        #[derive(serde::Deserialize, serde::Serialize, Debug)]
         struct Old1 {}
 
-        #[derive(serde::Deserialize, serde::Serialize)]
+        #[derive(serde::Deserialize, serde::Serialize, Debug)]
         struct Old2 {}
 
-        #[derive(serde::Deserialize, serde::Serialize)]
+        #[derive(serde::Deserialize, serde::Serialize, Debug)]
         struct Old3 {}
 
         impl crate::StdConfig for Test {

@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use config_traits::{StdConfig, StdConfigLoad};
 use rog_profiles::fan_curve_set::FanCurveSet;
-use rog_profiles::{FanCurveProfiles, Profile};
+use rog_profiles::Profile;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::CONFIG_PATH_BASE;
@@ -36,40 +36,16 @@ impl StdConfigLoad for ProfileConfig {}
 
 #[derive(Deserialize, Serialize, Debug, Default)]
 pub struct FanCurveConfig {
-    balanced: FanCurveSet,
-    performance: FanCurveSet,
-    quiet: FanCurveSet,
-    #[serde(skip)]
-    device: FanCurveProfiles,
-}
-
-impl FanCurveConfig {
-    pub fn update_device_config(&mut self) {
-        self.balanced = self.device.balanced.clone();
-        self.performance = self.device.performance.clone();
-        self.quiet = self.device.quiet.clone();
-    }
-
-    pub fn update_config(&mut self) {
-        self.balanced = self.device.balanced.clone();
-        self.performance = self.device.performance.clone();
-        self.quiet = self.device.quiet.clone();
-    }
-
-    pub fn device(&self) -> &FanCurveProfiles {
-        &self.device
-    }
-
-    pub fn device_mut(&mut self) -> &mut FanCurveProfiles {
-        &mut self.device
-    }
+    pub balanced: FanCurveSet,
+    pub performance: FanCurveSet,
+    pub quiet: FanCurveSet,
 }
 
 impl StdConfig for FanCurveConfig {
+    /// Create a new config. The defaults are zeroed so the device must be read
+    /// to get the actual device defaults.
     fn new() -> Self {
-        let mut tmp = Self::default();
-        tmp.update_device_config();
-        tmp
+        Self::default()
     }
 
     fn config_dir() -> std::path::PathBuf {

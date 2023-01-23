@@ -15,6 +15,8 @@ use super::controller::CtrlPlatformProfile;
 use crate::error::RogError;
 use crate::CtrlTask;
 
+const MOD_NAME: &str = "ProfileZbus";
+
 const ZBUS_PATH: &str = "/org/asuslinux/Profile";
 const UNSUPPORTED_MSG: &str =
     "Fan curves are not supported on this laptop or you require a patched kernel";
@@ -39,7 +41,7 @@ impl ProfileZbus {
     async fn next_profile(&mut self, #[zbus(signal_context)] ctxt: SignalContext<'_>) {
         let mut ctrl = self.0.lock().await;
         ctrl.set_next_profile()
-            .unwrap_or_else(|err| warn!("{}", err));
+            .unwrap_or_else(|err| warn!("{MOD_NAME}: {}", err));
         ctrl.save_config();
 
         Self::notify_profile(&ctxt, ctrl.profile_config.active_profile)
@@ -64,11 +66,11 @@ impl ProfileZbus {
         // Read first just incase the user has modified the config before calling this
         ctrl.profile_config.read();
         Profile::set_profile(profile)
-            .map_err(|e| warn!("set_profile, {}", e))
+            .map_err(|e| warn!("{MOD_NAME}: set_profile, {}", e))
             .ok();
         ctrl.profile_config.active_profile = profile;
         ctrl.write_profile_curve_to_platform()
-            .map_err(|e| warn!("write_profile_curve_to_platform, {}", e))
+            .map_err(|e| warn!("{MOD_NAME}: write_profile_curve_to_platform, {}", e))
             .ok();
 
         ctrl.save_config();
@@ -82,8 +84,8 @@ impl ProfileZbus {
     async fn enabled_fan_profiles(&mut self) -> zbus::fdo::Result<Vec<Profile>> {
         let mut ctrl = self.0.lock().await;
         ctrl.profile_config.read();
-        if let Some(curves) = &mut ctrl.fan_config {
-            return Ok(curves.device().get_enabled_curve_profiles());
+        if let Some(curves) = &mut ctrl.fan_curves {
+            return Ok(curves.profiles().get_enabled_curve_profiles());
         }
         Err(Error::Failed(UNSUPPORTED_MSG.to_owned()))
     }
@@ -97,14 +99,13 @@ impl ProfileZbus {
     ) -> zbus::fdo::Result<()> {
         let mut ctrl = self.0.lock().await;
         ctrl.profile_config.read();
-        if let Some(curves) = &mut ctrl.fan_config {
+        if let Some(curves) = &mut ctrl.fan_curves {
             curves
-                .device_mut()
+                .profiles_mut()
                 .set_profile_curve_enabled(profile, enabled);
-            curves.update_config();
 
             ctrl.write_profile_curve_to_platform()
-                .map_err(|e| warn!("write_profile_curve_to_platform, {}", e))
+                .map_err(|e| warn!("{MOD_NAME}: write_profile_curve_to_platform, {}", e))
                 .ok();
 
             ctrl.save_config();
@@ -118,8 +119,8 @@ impl ProfileZbus {
     async fn fan_curve_data(&mut self, profile: Profile) -> zbus::fdo::Result<FanCurveSet> {
         let mut ctrl = self.0.lock().await;
         ctrl.profile_config.read();
-        if let Some(curves) = &mut ctrl.fan_config {
-            let curve = curves.device().get_fan_curves_for(profile);
+        if let Some(curves) = &mut ctrl.fan_curves {
+            let curve = curves.profiles().get_fan_curves_for(profile);
             return Ok(curve.clone());
         }
         Err(Error::Failed(UNSUPPORTED_MSG.to_owned()))
@@ -130,17 +131,16 @@ impl ProfileZbus {
     async fn set_fan_curve(&self, profile: Profile, curve: CurveData) -> zbus::fdo::Result<()> {
         let mut ctrl = self.0.lock().await;
         ctrl.profile_config.read();
-        if let Some(curves) = &mut ctrl.fan_config {
+        if let Some(curves) = &mut ctrl.fan_curves {
             curves
-                .device_mut()
+                .profiles_mut()
                 .save_fan_curve(curve, profile)
                 .map_err(|err| zbus::fdo::Error::Failed(err.to_string()))?;
-            curves.update_config();
         } else {
             return Err(Error::Failed(UNSUPPORTED_MSG.to_owned()));
         }
         ctrl.write_profile_curve_to_platform()
-            .map_err(|e| warn!("Profile::set_profile, {}", e))
+            .map_err(|e| warn!("{MOD_NAME}: Profile::set_profile, {}", e))
             .ok();
         ctrl.save_config();
 
@@ -156,7 +156,7 @@ impl ProfileZbus {
         let mut ctrl = self.0.lock().await;
         ctrl.profile_config.read();
         ctrl.set_active_curve_to_defaults()
-            .map_err(|e| warn!("Profile::set_active_curve_to_defaults, {}", e))
+            .map_err(|e| warn!("{MOD_NAME}: Profile::set_active_curve_to_defaults, {}", e))
             .ok();
         ctrl.save_config();
         Ok(())
@@ -173,14 +173,14 @@ impl ProfileZbus {
         let active = Profile::get_active_profile().unwrap_or(Profile::Balanced);
 
         Profile::set_profile(profile)
-            .map_err(|e| warn!("set_profile, {}", e))
+            .map_err(|e| warn!("{MOD_NAME}: set_profile, {}", e))
             .ok();
         ctrl.set_active_curve_to_defaults()
-            .map_err(|e| warn!("Profile::set_active_curve_to_defaults, {}", e))
+            .map_err(|e| warn!("{MOD_NAME}: Profile::set_active_curve_to_defaults, {}", e))
             .ok();
 
         Profile::set_profile(active)
-            .map_err(|e| warn!("set_profile, {}", e))
+            .map_err(|e| warn!("{MOD_NAME}: set_profile, {}", e))
             .ok();
         ctrl.save_config();
         Ok(())
@@ -222,12 +222,12 @@ impl CtrlTask for ProfileZbus {
                         let mut lock = ctrl.lock().await;
                         if let Ok(profile) =
                             lock.platform.get_throttle_thermal_policy().map_err(|e| {
-                                error!("get_throttle_thermal_policy error: {e}");
+                                error!("{MOD_NAME}: get_throttle_thermal_policy error: {e}");
                             })
                         {
                             let new_profile = Profile::from_throttle_thermal_policy(profile);
                             if new_profile != lock.profile_config.active_profile {
-                                info!("platform_profile changed to {new_profile}");
+                                info!("{MOD_NAME}: platform_profile changed to {new_profile}");
                                 lock.profile_config.active_profile = new_profile;
                                 lock.write_profile_curve_to_platform().unwrap();
                                 lock.save_config();
@@ -262,7 +262,7 @@ impl CtrlTask for ProfileZbus {
                                 error!("Profile::from_str(&profile) error: {e}");
                             }) {
                                 if new_profile != lock.profile_config.active_profile {
-                                    info!("platform_profile changed to {new_profile}");
+                                    info!("{MOD_NAME}: platform_profile changed to {new_profile}");
                                     lock.profile_config.active_profile = new_profile;
                                     lock.write_profile_curve_to_platform().unwrap();
                                     lock.save_config();
@@ -295,15 +295,14 @@ impl crate::Reloadable for ProfileZbus {
     async fn reload(&mut self) -> Result<(), RogError> {
         let mut ctrl = self.0.lock().await;
         let active = ctrl.profile_config.active_profile;
-        if let Some(curves) = &mut ctrl.fan_config {
+        if let Some(curves) = &mut ctrl.fan_curves {
             if let Ok(mut device) = FanCurveProfiles::get_device() {
                 // There is a possibility that the curve was default zeroed, so this call
                 // initialises the data from system read and we need to save it
                 // after
                 curves
-                    .device_mut()
+                    .profiles_mut()
                     .write_profile_curve_to_platform(active, &mut device)?;
-                curves.update_config();
                 ctrl.profile_config.write();
             }
         }

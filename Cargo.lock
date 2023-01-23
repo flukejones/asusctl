@@ -149,7 +149,7 @@ checksum = "8da52d66c7071e2e3fa2a1e5c6d088fec47b593032b254f5e980de8ea54454d6"
 
 [[package]]
 name = "asusctl"
-version = "4.6.0-rc1"
+version = "4.6.0-rc2"
 dependencies = [
  "cargo-husky",
  "daemon",
@@ -666,7 +666,7 @@ dependencies = [
 
 [[package]]
 name = "config-traits"
-version = "4.6.0-rc1"
+version = "4.6.0-rc2"
 dependencies = [
  "cargo-husky",
  "log",
@@ -798,7 +798,7 @@ checksum = "b365fabc795046672053e29c954733ec3b05e4be654ab130fe8f1f94d7051f35"
 
 [[package]]
 name = "daemon"
-version = "4.6.0-rc1"
+version = "4.6.0-rc2"
 dependencies = [
  "async-trait",
  "cargo-husky",
@@ -822,7 +822,7 @@ dependencies = [
 
 [[package]]
 name = "daemon-user"
-version = "4.6.0-rc1"
+version = "4.6.0-rc2"
 dependencies = [
  "cargo-husky",
  "config-traits",
@@ -2717,7 +2717,7 @@ dependencies = [
 
 [[package]]
 name = "rog-control-center"
-version = "4.6.0-rc1"
+version = "4.6.0-rc2"
 dependencies = [
  "cargo-husky",
  "daemon",
@@ -2749,7 +2749,7 @@ dependencies = [
 
 [[package]]
 name = "rog_anime"
-version = "4.6.0-rc1"
+version = "4.6.0-rc2"
 dependencies = [
  "cargo-husky",
  "gif",
@@ -2766,7 +2766,7 @@ dependencies = [
 
 [[package]]
 name = "rog_aura"
-version = "4.6.0-rc1"
+version = "4.6.0-rc2"
 dependencies = [
  "cargo-husky",
  "log",
@@ -2779,7 +2779,7 @@ dependencies = [
 
 [[package]]
 name = "rog_dbus"
-version = "4.6.0-rc1"
+version = "4.6.0-rc2"
 dependencies = [
  "cargo-husky",
  "rog_anime",
@@ -2791,7 +2791,7 @@ dependencies = [
 
 [[package]]
 name = "rog_platform"
-version = "4.6.0-rc1"
+version = "4.6.0-rc2"
 dependencies = [
  "cargo-husky",
  "concat-idents",
@@ -2808,7 +2808,7 @@ dependencies = [
 
 [[package]]
 name = "rog_profiles"
-version = "4.6.0-rc1"
+version = "4.6.0-rc2"
 dependencies = [
  "cargo-husky",
  "serde",

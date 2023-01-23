@@ -3,7 +3,7 @@ use serde_derive::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "asusd.ron";
 
-#[derive(Deserialize, Serialize, Default)]
+#[derive(Deserialize, Serialize, Default, Debug)]
 pub struct Config {
     /// Save charge limit for restoring on boot
     pub bat_charge_limit: u8,
