@@ -182,6 +182,13 @@
         advanced_type: PerKey,
     ),
     (
+        board_name: "G533Z",
+        layout_name: "g533q-per-key",
+        basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
+        basic_zones: [],
+        advanced_type: PerKey,
+    ),
+    (
         board_name: "G712LI",
         layout_name: "gl503",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
@@ -285,6 +292,13 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+    ),
+    (
+        board_name: "GA401Q",
+        layout_name: "ga401q",
+        basic_modes: [Static, Breathe, Pulse],
+        basic_zones: [],
+        advanced_type: None,
     ),
     (
         board_name: "GA402R",
@@ -444,13 +458,6 @@
         board_name: "GX703H",
         layout_name: "gx531-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
-        basic_zones: [],
-        advanced_type: None,
-    ),
-    (
-        board_name: "ga401qQ",
-        layout_name: "ga401q",
-        basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],
         advanced_type: None,
     ),

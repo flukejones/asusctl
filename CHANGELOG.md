@@ -5,8 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v4.6.0]
 ### Added
 - Support for GL703GE keyboard layout
+- Support for G533Z modes and keyboard layout
 ### Changed
 - Better handling of `/etc/asusd` not existing
 - Better handling of non-existant config files

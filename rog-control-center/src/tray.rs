@@ -342,6 +342,7 @@ impl ROGTray {
             }
 
             if let Ok(mode) = self.bios_proxy.gpu_mux_mode() {
+                // TODO: this is not taking in to account supergfxctl
                 let mode = match mode {
                     GpuMode::Discrete => GfxMode::AsusMuxDiscreet,
                     _ => GfxMode::Hybrid,
