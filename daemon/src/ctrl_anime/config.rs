@@ -38,7 +38,7 @@ impl From<AnimeConfigV341> for AnimeConfig {
             } else {
                 vec![]
             },
-            sleep: if let Some(ani) = c.shutdown {
+            sleep: if let Some(ani) = c.shutdown.clone() {
                 vec![ani]
             } else {
                 vec![]
@@ -79,6 +79,7 @@ pub struct AnimeConfigV460 {
     pub system: Vec<ActionLoader>,
     pub boot: Vec<ActionLoader>,
     pub wake: Vec<ActionLoader>,
+    pub sleep: Vec<ActionLoader>,
     pub shutdown: Vec<ActionLoader>,
     pub brightness: f32,
 }
@@ -89,7 +90,7 @@ impl From<AnimeConfigV460> for AnimeConfig {
             system: c.system,
             boot: c.boot,
             wake: c.wake,
-            sleep: c.shutdown.clone(),
+            sleep: c.sleep,
             shutdown: c.shutdown,
             brightness: 1.0,
             awake_enabled: true,
@@ -130,6 +131,12 @@ impl AnimeConfigCached {
             wake.push(ActionData::from_anime_action(anime_type, ani)?);
         }
         self.wake = wake;
+
+        let mut sleep = Vec::with_capacity(config.sleep.len());
+        for ani in &config.sleep {
+            sleep.push(ActionData::from_anime_action(anime_type, ani)?);
+        }
+        self.sleep = sleep;
 
         let mut shutdown = Vec::with_capacity(config.shutdown.len());
         for ani in &config.shutdown {
