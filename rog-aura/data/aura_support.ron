@@ -35,6 +35,13 @@
         advanced_type: None,
     ),
     (
+        board_name: "FX506LH",
+        layout_name: "fa506i",
+        basic_modes: [Static, Breathe, Strobe, Pulse],
+        basic_zones: [],
+        advanced_type: None,
+    ),
+    (
         board_name: "G512",
         layout_name: "g512",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
