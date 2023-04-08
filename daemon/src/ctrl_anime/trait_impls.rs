@@ -3,10 +3,10 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use config_traits::StdConfig;
-use log::{info, warn};
+use log::warn;
 use rog_anime::usb::{pkt_for_apply, pkt_for_set_boot, pkt_for_set_on};
 use rog_anime::{AnimeDataBuffer, AnimePowerStates};
-use zbus::export::futures_util::lock::{Mutex, MutexGuard};
+use zbus::export::futures_util::lock::Mutex;
 use zbus::{dbus_interface, Connection, SignalContext};
 
 use super::CtrlAnime;
@@ -149,50 +149,41 @@ impl crate::CtrlTask for CtrlAnimeZbus {
     }
 
     async fn create_tasks(&self, _: SignalContext<'static>) -> Result<(), RogError> {
-        let run_action =
-            |start: bool, lock: MutexGuard<'_, CtrlAnime>, inner: Arc<Mutex<CtrlAnime>>| {
-                if start {
-                    info!("CtrlAnimeTask running sleep animation");
-                    CtrlAnime::run_thread(inner, lock.cache.shutdown.clone(), true);
-                } else {
-                    info!("CtrlAnimeTask running wake animation");
-                    CtrlAnime::run_thread(inner, lock.cache.wake.clone(), true);
-                }
-            };
-
         let inner1 = self.0.clone();
         let inner2 = self.0.clone();
         let inner3 = self.0.clone();
         let inner4 = self.0.clone();
         self.create_sys_event_tasks(
-            // Loop is required to try an attempt to get the mutex *without* blocking
-            // other threads - it is possible to end up with deadlocks otherwise.
             move || {
+                // on_sleep
                 let inner1 = inner1.clone();
                 async move {
                     let lock = inner1.lock().await;
-                    run_action(true, lock, inner1.clone());
+                    CtrlAnime::run_thread(inner1.clone(), lock.cache.sleep.clone(), true);
                 }
             },
             move || {
+                // on_wake
                 let inner2 = inner2.clone();
                 async move {
                     let lock = inner2.lock().await;
-                    run_action(true, lock, inner2.clone());
+                    CtrlAnime::run_thread(inner2.clone(), lock.cache.wake.clone(), true);
                 }
             },
             move || {
+                // on_shutdown
                 let inner3 = inner3.clone();
                 async move {
                     let lock = inner3.lock().await;
-                    run_action(true, lock, inner3.clone());
+                    CtrlAnime::run_thread(inner3.clone(), lock.cache.shutdown.clone(), true);
                 }
             },
             move || {
+                // on_boot
                 let inner4 = inner4.clone();
                 async move {
                     let lock = inner4.lock().await;
-                    run_action(true, lock, inner4.clone());
+                    CtrlAnime::run_thread(inner4.clone(), lock.cache.boot.clone(), true);
                 }
             },
         )

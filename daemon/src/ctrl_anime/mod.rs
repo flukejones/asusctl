@@ -113,9 +113,8 @@ impl CtrlAnime {
 
                 info!("AniMe no previous system thread running (now)");
                 thread_exit.store(false, Ordering::SeqCst);
-
+                thread_running.store(true, Ordering::SeqCst);
                 'main: loop {
-                    thread_running.store(true, Ordering::SeqCst);
                     for action in &actions {
                         if thread_exit.load(Ordering::SeqCst) {
                             break 'main;
@@ -124,7 +123,7 @@ impl CtrlAnime {
                             ActionData::Animation(frames) => {
                                 rog_anime::run_animation(frames, &|frame| {
                                     if thread_exit.load(Ordering::Acquire) {
-                                        info!("rog-anime: frame-loop was asked to exit");
+                                        info!("rog-anime: animation sub-loop was asked to exit");
                                         return Ok(true); // Do safe exit
                                     }
                                     inner
@@ -148,6 +147,10 @@ impl CtrlAnime {
                                             Ok,
                                         )
                                 });
+                                if thread_exit.load(Ordering::Acquire) {
+                                    info!("rog-anime: sub-loop exited and main loop exiting now");
+                                    break 'main;
+                                }
                             }
                             ActionData::Image(image) => {
                                 once = false;

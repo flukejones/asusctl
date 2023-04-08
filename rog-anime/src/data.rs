@@ -212,7 +212,7 @@ pub fn run_animation(frames: &AnimeGif, callback: &dyn Fn(AnimeDataBuffer) -> Re
 
             // TODO: Log this error
             if matches!(callback(output), Ok(true)) {
-                info!("rog-anime: frame-loop callback asked to exit early");
+                info!("rog-anime: animation frame-loop callback asked to exit early");
                 return;
             }
 

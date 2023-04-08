@@ -33,7 +33,12 @@ impl From<AnimeConfigV341> for AnimeConfig {
             } else {
                 vec![]
             },
-            shutdown: if let Some(ani) = c.shutdown {
+            shutdown: if let Some(ani) = c.shutdown.clone() {
+                vec![ani]
+            } else {
+                vec![]
+            },
+            sleep: if let Some(ani) = c.shutdown.clone() {
                 vec![ani]
             } else {
                 vec![]
@@ -60,6 +65,32 @@ impl From<AnimeConfigV352> for AnimeConfig {
             system: c.system,
             boot: c.boot,
             wake: c.wake,
+            sleep: c.shutdown.clone(),
+            shutdown: c.shutdown,
+            brightness: 1.0,
+            awake_enabled: true,
+            boot_anim_enabled: true,
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct AnimeConfigV460 {
+    pub system: Vec<ActionLoader>,
+    pub boot: Vec<ActionLoader>,
+    pub wake: Vec<ActionLoader>,
+    pub sleep: Vec<ActionLoader>,
+    pub shutdown: Vec<ActionLoader>,
+    pub brightness: f32,
+}
+
+impl From<AnimeConfigV460> for AnimeConfig {
+    fn from(c: AnimeConfigV460) -> AnimeConfig {
+        AnimeConfig {
+            system: c.system,
+            boot: c.boot,
+            wake: c.wake,
+            sleep: c.sleep,
             shutdown: c.shutdown,
             brightness: 1.0,
             awake_enabled: true,
@@ -73,6 +104,7 @@ pub struct AnimeConfigCached {
     pub system: Vec<ActionData>,
     pub boot: Vec<ActionData>,
     pub wake: Vec<ActionData>,
+    pub sleep: Vec<ActionData>,
     pub shutdown: Vec<ActionData>,
 }
 
@@ -100,6 +132,12 @@ impl AnimeConfigCached {
         }
         self.wake = wake;
 
+        let mut sleep = Vec::with_capacity(config.sleep.len());
+        for ani in &config.sleep {
+            sleep.push(ActionData::from_anime_action(anime_type, ani)?);
+        }
+        self.sleep = sleep;
+
         let mut shutdown = Vec::with_capacity(config.shutdown.len());
         for ani in &config.shutdown {
             shutdown.push(ActionData::from_anime_action(anime_type, ani)?);
@@ -115,6 +153,7 @@ pub struct AnimeConfig {
     pub system: Vec<ActionLoader>,
     pub boot: Vec<ActionLoader>,
     pub wake: Vec<ActionLoader>,
+    pub sleep: Vec<ActionLoader>,
     pub shutdown: Vec<ActionLoader>,
     pub brightness: f32,
     pub awake_enabled: bool,
@@ -127,6 +166,7 @@ impl Default for AnimeConfig {
             system: Vec::new(),
             boot: Vec::new(),
             wake: Vec::new(),
+            sleep: Vec::new(),
             shutdown: Vec::new(),
             brightness: 1.0,
             awake_enabled: true,
@@ -189,6 +229,14 @@ impl AnimeConfig {
                     Some(Duration::from_secs(2)),
                     Duration::from_secs(2),
                 )),
+            }],
+            sleep: vec![ActionLoader::ImageAnimation {
+                file: "/usr/share/asusd/anime/custom/sonic-wait.gif".into(),
+                scale: 0.9,
+                angle: 0.0,
+                translation: Vec2::new(3.0, 2.0),
+                brightness: 1.0,
+                time: AnimTime::Infinite,
             }],
             shutdown: vec![ActionLoader::ImageAnimation {
                 file: "/usr/share/asusd/anime/custom/sonic-wait.gif".into(),
