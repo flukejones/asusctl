@@ -9,7 +9,7 @@ pub fn aura_power_group(supported: &SupportedFunctions, states: &mut SystemState
     ui.heading("LED settings");
 
     match supported.keyboard_led.dev_id {
-        AuraDevice::X1854 | AuraDevice::X1869 | AuraDevice::X1866 => {
+        AuraDevice::X1854 | AuraDevice::X1869 | AuraDevice::X1866 | AuraDevice::X18c6 => {
             aura_power1(supported, states, ui);
         }
         AuraDevice::X19B6 => aura_power2(supported, states, ui),
