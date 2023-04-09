@@ -38,15 +38,17 @@ clean:
 distclean:
 	rm -rf .cargo vendor vendor.tar.xz
 
-install:
+install-program:
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_ROG)" "$(DESTDIR)$(bindir)/$(BIN_ROG)"
-	$(INSTALL_DATA) "./rog-control-center/data/$(BIN_ROG).desktop" "$(DESTDIR)$(datarootdir)/applications/$(BIN_ROG).desktop"
-	$(INSTALL_DATA) "./rog-control-center/data/$(BIN_ROG).png" "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/$(BIN_ROG).png"
-	cd rog-aura/data/layouts && find . -type f -name "*.ron" -exec $(INSTALL_DATA) "{}" "$(DESTDIR)$(datarootdir)/rog-gui/layouts/{}" \;
 
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_C)" "$(DESTDIR)$(bindir)/$(BIN_C)"
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_D)" "$(DESTDIR)$(bindir)/$(BIN_D)"
 	$(INSTALL_PROGRAM) "./target/release/$(BIN_U)" "$(DESTDIR)$(bindir)/$(BIN_U)"
+
+install-data:
+	$(INSTALL_DATA) "./rog-control-center/data/$(BIN_ROG).desktop" "$(DESTDIR)$(datarootdir)/applications/$(BIN_ROG).desktop"
+	$(INSTALL_DATA) "./rog-control-center/data/$(BIN_ROG).png" "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/$(BIN_ROG).png"
+	cd rog-aura/data/layouts && find . -type f -name "*.ron" -exec $(INSTALL_DATA) "{}" "$(DESTDIR)$(datarootdir)/rog-gui/layouts/{}" \;
 
 	$(INSTALL_DATA) "./data/$(BIN_D).rules" "$(DESTDIR)$(libdir)/udev/rules.d/99-$(BIN_D).rules"
 	$(INSTALL_DATA) "./rog-aura/data/$(LEDCFG)" "$(DESTDIR)$(datarootdir)/asusd/$(LEDCFG)"
@@ -70,6 +72,8 @@ install:
 	$(INSTALL_DATA) "./data/icons/scalable/notification-reboot.svg" "$(DESTDIR)$(datarootdir)/icons/hicolor/scalable/status/notification-reboot.svg"
 
 	cd rog-anime/data && find "./anime" -type f -exec $(INSTALL_DATA) "{}" "$(DESTDIR)$(datarootdir)/asusd/{}" \;
+
+install: install-program install-data
 
 uninstall:
 	rm -f "$(DESTDIR)$(bindir)/$(BIN_ROG)"
