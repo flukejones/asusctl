@@ -295,9 +295,9 @@ impl ROGTray {
                         e
                     })
                     .unwrap_or(GfxMode::None);
-                if mode != GfxMode::Egpu {
+                if mode != GfxMode::AsusEgpu {
                     gfx_dbus
-                        .set_mode(&GfxMode::Egpu)
+                        .set_mode(&GfxMode::AsusEgpu)
                         .map_err(|e| {
                             error!("ROGTray: set_mode: {e}");
                             e
@@ -344,7 +344,7 @@ impl ROGTray {
             if let Ok(mode) = self.bios_proxy.gpu_mux_mode() {
                 // TODO: this is not taking in to account supergfxctl
                 let mode = match mode {
-                    GpuMode::Discrete => GfxMode::AsusMuxDiscreet,
+                    GpuMode::Discrete => GfxMode::AsusMuxDgpu,
                     _ => GfxMode::Hybrid,
                 };
                 reboot_required = mode != current_mode;
@@ -352,7 +352,7 @@ impl ROGTray {
         }
 
         let active = match current_mode {
-            GfxMode::AsusMuxDiscreet => "Discreet".to_owned(),
+            GfxMode::AsusMuxDgpu => "Discreet".to_owned(),
             _ => current_mode.to_string(),
         };
 
@@ -377,7 +377,7 @@ impl ROGTray {
         let mut reboot_required = false;
         if let Ok(mode) = gfx_dbus.gpu_mux_mode() {
             let mode = match mode {
-                GpuMode::Discrete => GfxMode::AsusMuxDiscreet,
+                GpuMode::Discrete => GfxMode::AsusMuxDgpu,
                 _ => GfxMode::Hybrid,
             };
             reboot_required = mode != current_mode;
@@ -407,7 +407,7 @@ impl ROGTray {
         });
 
         let active = match current_mode {
-            GfxMode::AsusMuxDiscreet => "Ultimate".to_owned(),
+            GfxMode::AsusMuxDgpu => "Ultimate".to_owned(),
             GfxMode::Hybrid => "Optimus".to_owned(),
             _ => current_mode.to_string(),
         };
@@ -508,7 +508,7 @@ pub fn init_tray(
                         lock.gfx_state.mode
                     } else {
                         match lock.bios.dedicated_gfx {
-                            GpuMode::Discrete => GfxMode::AsusMuxDiscreet,
+                            GpuMode::Discrete => GfxMode::AsusMuxDgpu,
                             _ => GfxMode::Hybrid,
                         }
                     };

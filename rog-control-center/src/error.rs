@@ -11,6 +11,7 @@ pub enum Error {
     XdgVars,
     Zbus(zbus::Error),
     Notification(notify_rust::error::Error),
+    Eframe(eframe::Error),
 }
 
 impl fmt::Display for Error {
@@ -24,6 +25,7 @@ impl fmt::Display for Error {
             Error::XdgVars => write!(f, "XDG environment vars appear unset"),
             Error::Zbus(err) => write!(f, "Error: {}", err),
             Error::Notification(err) => write!(f, "Notification Error: {}", err),
+            Error::Eframe(err) => write!(f, "Eframe Error: {}", err),
         }
     }
 }
@@ -51,5 +53,11 @@ impl From<zbus::Error> for Error {
 impl From<notify_rust::error::Error> for Error {
     fn from(err: notify_rust::error::Error) -> Self {
         Error::Notification(err)
+    }
+}
+
+impl From<eframe::Error> for Error {
+    fn from(err: eframe::Error) -> Self {
+        Error::Eframe(err)
     }
 }

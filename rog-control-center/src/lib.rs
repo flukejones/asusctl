@@ -105,6 +105,6 @@ pub fn get_ipc_file() -> Result<File, crate::error::Error> {
     Ok(OpenOptions::new()
         .read(true)
         .write(true)
-        .truncate(true)
+        // .truncate(true)
         .open(&fifo_path)?)
 }

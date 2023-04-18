@@ -301,6 +301,13 @@
         advanced_type: PerKey,
     ),
     (
+        board_name: "G733Z",
+        layout_name: "g513i-per-key",
+        basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
+        basic_zones: [],
+        advanced_type: PerKey,
+    ),
+    (
         board_name: "GA401Q",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse],

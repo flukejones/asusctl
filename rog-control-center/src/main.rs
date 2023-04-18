@@ -1,7 +1,10 @@
 use std::env::args;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Duration;
 
 use eframe::{IconData, NativeOptions};
 use gumdrop::Options;
@@ -72,7 +75,9 @@ fn main() -> Result<()> {
                 "ROG Control Center",
                 native_options.clone(),
                 Box::new(move |_| Box::new(AppErrorShow::new(e.to_string()))),
-            );
+            )
+            .map_err(|e| error!("{e}"))
+            .ok();
         })
         .unwrap();
 
@@ -83,14 +88,16 @@ fn main() -> Result<()> {
                 "ROG Control Center",
                 native_options.clone(),
                 Box::new(move |_| Box::new(AppErrorShow::new(e.to_string()))),
-            );
+            )
+            .map_err(|e| error!("{e}"))
+            .ok();
             SupportedFunctions::default()
         }
     };
 
     // Startup
     let mut config = Config::load()?;
-    let mut start_closed = config.startup_in_background;
+    let running_in_bg = Arc::new(AtomicBool::new(config.startup_in_background));
 
     if config.startup_in_background {
         config.run_in_background = true;
@@ -184,7 +191,8 @@ fn main() -> Result<()> {
     init_tray(supported, states.clone());
 
     loop {
-        if !start_closed {
+        if !running_in_bg.load(Ordering::Acquire) {
+            // blocks until window is closed
             start_app(states.clone(), native_options.clone())?;
         }
 
@@ -194,15 +202,21 @@ fn main() -> Result<()> {
             break;
         }
 
-        if config.run_in_background {
-            let mut buf = [0u8; 4];
-            // blocks until it is read, typically the read will happen after a second
-            // process writes to the IPC (so there is data to actually read)
-            if get_ipc_file()?.read(&mut buf).is_ok() && buf[0] == SHOW_GUI {
-                start_closed = false;
-                continue;
-            }
+        if config.run_in_background && !running_in_bg.load(Ordering::Acquire) {
+            running_in_bg.store(true, Ordering::SeqCst);
+
+            let running_in_bg = running_in_bg.clone();
+            thread::spawn(move || {
+                let mut buf = [0u8; 4];
+                // blocks until it is read, typically the read will happen after a second
+                // process writes to the IPC (so there is data to actually read)
+                if get_ipc_file().unwrap().read(&mut buf).is_ok() && buf[0] == SHOW_GUI {
+                    running_in_bg.store(false, Ordering::SeqCst);
+                }
+            });
         }
+        // Prevent hogging CPU
+        thread::sleep(Duration::from_millis(500));
     }
 
     // loop {
@@ -240,7 +254,7 @@ fn start_app(states: Arc<Mutex<SystemState>>, native_options: NativeOptions) -> 
         "ROG Control Center",
         native_options,
         Box::new(move |cc| Box::new(RogApp::new(Config::load().unwrap(), states, cc).unwrap())),
-    );
+    )?;
     Ok(())
 }
 
