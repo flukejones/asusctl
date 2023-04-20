@@ -420,6 +420,13 @@
         advanced_type: Zoned([SingleZone]),
     ),
     (
+        board_name: "GU604V",
+        layout_name: "ga401q",
+        basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
+        basic_zones: [],
+        advanced_type: Zoned([SingleZone]),
+    ),
+    (
         board_name: "GV301Q",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse],
