@@ -469,6 +469,13 @@
         advanced_type: PerKey,
     ),
     (
+        board_name: "GX650P",
+        layout_name: "gx531-per-key",
+        basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
+        basic_zones: [],
+        advanced_type: PerKey,
+    ),
+    (
         board_name: "GX701",
         layout_name: "gx531-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Support for G733Z LED modes
 - Support for GU604V LED modes
+- Support for GX650P LED modes
 ### Changed
 - Adjustments to Anime system events thread
 - Add "sleep" animetion config options to anime config
