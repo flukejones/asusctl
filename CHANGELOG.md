@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Adjustments to Anime system events thread
 - Add "sleep" animetion config options to anime config
+- rog-control-center dark/light mode persisency
 
 ## [v4.6.0]
 ### Added
@@ -51,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v4.5.7]
 ### Changed
 - ROGCC: Don't notify user if changing to same mux mode
-- 
+-
 
 ## [v4.5.7]
 ### Changed
@@ -616,4 +617,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix small deadlock with awaits
 
-## [1.0.0] 
+## [1.0.0]
