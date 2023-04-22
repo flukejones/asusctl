@@ -17,6 +17,7 @@ pub struct Config {
     pub ac_command: String,
     pub bat_command: String,
     pub enable_notifications: bool,
+    pub dark_mode: bool,
     // This field must be last
     pub enabled_notifications: EnabledNotifications,
 }
@@ -27,6 +28,7 @@ impl Default for Config {
             run_in_background: true,
             startup_in_background: false,
             enable_notifications: true,
+            dark_mode: true,
             enabled_notifications: EnabledNotifications::default(),
             ac_command: String::new(),
             bat_command: String::new(),
@@ -72,6 +74,9 @@ impl Config {
             } else if let Ok(data) = toml::from_str::<Config>(&buf) {
                 info!("Loaded config file {path:?}");
                 return Ok(data);
+            } else if let Ok(data) = toml::from_str::<Config460>(&buf) {
+                info!("Loaded old v4.6.0 config file {path:?}");
+                return Ok(data.into());
             } else if let Ok(data) = toml::from_str::<Config455>(&buf) {
                 info!("Loaded old v4.5.5 config file {path:?}");
                 return Ok(data.into());
@@ -124,8 +129,33 @@ impl From<Config455> for Config {
             startup_in_background: c.startup_in_background,
             enable_notifications: c.enable_notifications,
             enabled_notifications: c.enabled_notifications,
+            dark_mode: true,
             ac_command: String::new(),
             bat_command: String::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct Config460 {
+    pub run_in_background: bool,
+    pub startup_in_background: bool,
+    pub ac_command: String,
+    pub bat_command: String,
+    pub enable_notifications: bool,
+    pub enabled_notifications: EnabledNotifications,
+}
+
+impl From<Config460> for Config {
+    fn from(c: Config460) -> Self {
+        Self {
+            run_in_background: c.run_in_background,
+            startup_in_background: c.startup_in_background,
+            ac_command: c.ac_command,
+            bat_command: c.bat_command,
+            dark_mode: true,
+            enable_notifications: c.enable_notifications,
+            enabled_notifications: c.enabled_notifications,
         }
     }
 }
