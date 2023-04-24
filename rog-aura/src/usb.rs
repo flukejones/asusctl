@@ -29,6 +29,7 @@ pub enum AuraDevice {
     X1854,
     X1869,
     X1866,
+    X18c6,
     #[default]
     X19B6,
     Unknown,
@@ -39,6 +40,7 @@ impl From<&str> for AuraDevice {
         match s.to_lowercase().as_str() {
             "tuf" => AuraDevice::Tuf,
             "1866" | "0x1866" => AuraDevice::X1866,
+            "18c6" | "0x18c6" => AuraDevice::X18c6,
             "1869" | "0x1869" => AuraDevice::X1869,
             "1854" | "0x1854" => AuraDevice::X1854,
             "19b6" | "0x19b6" => AuraDevice::X19B6,
@@ -54,6 +56,7 @@ impl Debug for AuraDevice {
             Self::X1854 => write!(f, "0x1854"),
             Self::X1869 => write!(f, "0x1869"),
             Self::X1866 => write!(f, "0x1866"),
+            Self::X18c6 => write!(f, "0x18c6"),
             Self::X19B6 => write!(f, "0x19B6"),
             Self::Unknown => write!(f, "Unknown"),
         }
