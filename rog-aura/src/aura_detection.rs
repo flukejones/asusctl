@@ -5,7 +5,7 @@ use crate::{AdvancedAuraType, AuraModeNum, AuraZone};
 
 pub const ASUS_LED_MODE_CONF: &str = "/usr/share/asusd/aura_support.ron";
 pub const ASUS_LED_MODE_USER_CONF: &str = "/etc/asusd/asusd_user_ledmodes.ron";
-pub const ASUS_KEYBOARD_DEVICES: [&str; 5] = ["1866", "18c6", "1869", "1854", "19b6"];
+pub const ASUS_KEYBOARD_DEVICES: [&str; 6] = ["1866", "18c6", "1869", "1854", "19b6", "1a30"];
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct LedSupportFile(Vec<LaptopLedData>);

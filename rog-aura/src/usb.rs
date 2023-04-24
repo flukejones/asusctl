@@ -32,6 +32,7 @@ pub enum AuraDevice {
     X18c6,
     #[default]
     X19B6,
+    X1a30,
     Unknown,
 }
 
@@ -44,6 +45,7 @@ impl From<&str> for AuraDevice {
             "1869" | "0x1869" => AuraDevice::X1869,
             "1854" | "0x1854" => AuraDevice::X1854,
             "19b6" | "0x19b6" => AuraDevice::X19B6,
+            "1a30" | "0x1a30" => AuraDevice::X1a30,
             _ => AuraDevice::Unknown,
         }
     }
@@ -58,6 +60,7 @@ impl Debug for AuraDevice {
             Self::X1866 => write!(f, "0x1866"),
             Self::X18c6 => write!(f, "0x18c6"),
             Self::X19B6 => write!(f, "0x19B6"),
+            Self::X1a30 => write!(f, "0x1A30"),
             Self::Unknown => write!(f, "Unknown"),
         }
     }
