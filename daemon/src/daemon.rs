@@ -11,7 +11,6 @@ use daemon::config::Config;
 use daemon::ctrl_anime::config::AnimeConfig;
 use daemon::ctrl_anime::trait_impls::CtrlAnimeZbus;
 use daemon::ctrl_anime::CtrlAnime;
-use daemon::ctrl_aura::config::AuraConfig;
 use daemon::ctrl_aura::controller::CtrlKbdLed;
 use daemon::ctrl_aura::trait_impls::CtrlKbdLedZbus;
 use daemon::ctrl_platform::CtrlPlatform;
@@ -124,8 +123,9 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     }
 
     let laptop = LaptopLedData::get_data();
-    let aura_config = AuraConfig::new().load();
-    match CtrlKbdLed::new(laptop, aura_config) {
+    // CtrlKbdLed deviates from the config pattern above due to requiring a keyboard
+    // detection first
+    match CtrlKbdLed::new(laptop) {
         Ok(ctrl) => {
             let zbus = CtrlKbdLedZbus(Arc::new(Mutex::new(ctrl)));
             let sig_ctx = CtrlKbdLedZbus::signal_context(&connection)?;

@@ -10,7 +10,7 @@ use gumdrop::{Opt, Options};
 use profiles_cli::{FanCurveCommand, ProfileCommand};
 use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, Vec2};
-use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraDevTuf, AuraDevice, AuraPowerDev};
+use rog_aura::usb::{AuraDevRog1, AuraDevRog2, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClientBlocking;
 use rog_platform::platform::GpuMode;
@@ -157,7 +157,7 @@ fn do_parsed(
                         {
                             return false;
                         }
-                        if supported.keyboard_led.dev_id != AuraDevice::X19B6
+                        if supported.keyboard_led.dev_id != AuraDevice::X19b6
                             && command.trim().starts_with("led-pow-2")
                         {
                             return false;
@@ -472,10 +472,10 @@ fn handle_led_power_1_do_1866(
     dbus: &RogDbusClientBlocking<'_>,
     power: &LedPowerCommand1,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let mut enabled: Vec<AuraDev1866> = Vec::new();
-    let mut disabled: Vec<AuraDev1866> = Vec::new();
+    let mut enabled: Vec<AuraDevRog1> = Vec::new();
+    let mut disabled: Vec<AuraDevRog1> = Vec::new();
 
-    let mut check = |e: Option<bool>, a: AuraDev1866| {
+    let mut check = |e: Option<bool>, a: AuraDevRog1| {
         if let Some(arg) = e {
             if arg {
                 enabled.push(a);
@@ -485,11 +485,11 @@ fn handle_led_power_1_do_1866(
         }
     };
 
-    check(power.awake, AuraDev1866::Awake);
-    check(power.boot, AuraDev1866::Boot);
-    check(power.sleep, AuraDev1866::Sleep);
-    check(power.keyboard, AuraDev1866::Keyboard);
-    check(power.lightbar, AuraDev1866::Lightbar);
+    check(power.awake, AuraDevRog1::Awake);
+    check(power.boot, AuraDevRog1::Boot);
+    check(power.sleep, AuraDevRog1::Sleep);
+    check(power.keyboard, AuraDevRog1::Keyboard);
+    check(power.lightbar, AuraDevRog1::Lightbar);
 
     let data = AuraPowerDev {
         x1866: enabled,
@@ -576,13 +576,13 @@ fn handle_led_power2(
             return Ok(());
         }
 
-        if supported.dev_id != AuraDevice::X19B6 {
+        if supported.dev_id != AuraDevice::X19b6 {
             println!("This option applies only to keyboards with product ID 0x19b6");
         }
 
-        let mut enabled: Vec<AuraDev19b6> = Vec::new();
-        let mut disabled: Vec<AuraDev19b6> = Vec::new();
-        let mut check = |e: Option<bool>, a: AuraDev19b6| {
+        let mut enabled: Vec<AuraDevRog2> = Vec::new();
+        let mut disabled: Vec<AuraDevRog2> = Vec::new();
+        let mut check = |e: Option<bool>, a: AuraDevRog2| {
             if let Some(arg) = e {
                 if arg {
                     enabled.push(a);
@@ -594,28 +594,28 @@ fn handle_led_power2(
 
         match pow {
             aura_cli::SetAuraEnabled::Boot(arg) => {
-                check(arg.keyboard, AuraDev19b6::BootKeyb);
-                check(arg.logo, AuraDev19b6::BootLogo);
-                check(arg.lightbar, AuraDev19b6::BootBar);
-                check(arg.lid, AuraDev19b6::AwakeLid);
+                check(arg.keyboard, AuraDevRog2::BootKeyb);
+                check(arg.logo, AuraDevRog2::BootLogo);
+                check(arg.lightbar, AuraDevRog2::BootBar);
+                check(arg.lid, AuraDevRog2::AwakeLid);
             }
             aura_cli::SetAuraEnabled::Sleep(arg) => {
-                check(arg.keyboard, AuraDev19b6::SleepKeyb);
-                check(arg.logo, AuraDev19b6::SleepLogo);
-                check(arg.lightbar, AuraDev19b6::SleepBar);
-                check(arg.lid, AuraDev19b6::SleepLid);
+                check(arg.keyboard, AuraDevRog2::SleepKeyb);
+                check(arg.logo, AuraDevRog2::SleepLogo);
+                check(arg.lightbar, AuraDevRog2::SleepBar);
+                check(arg.lid, AuraDevRog2::SleepLid);
             }
             aura_cli::SetAuraEnabled::Awake(arg) => {
-                check(arg.keyboard, AuraDev19b6::AwakeKeyb);
-                check(arg.logo, AuraDev19b6::AwakeLogo);
-                check(arg.lightbar, AuraDev19b6::AwakeBar);
-                check(arg.lid, AuraDev19b6::AwakeLid);
+                check(arg.keyboard, AuraDevRog2::AwakeKeyb);
+                check(arg.logo, AuraDevRog2::AwakeLogo);
+                check(arg.lightbar, AuraDevRog2::AwakeBar);
+                check(arg.lid, AuraDevRog2::AwakeLid);
             }
             aura_cli::SetAuraEnabled::Shutdown(arg) => {
-                check(arg.keyboard, AuraDev19b6::ShutdownKeyb);
-                check(arg.logo, AuraDev19b6::ShutdownLogo);
-                check(arg.lightbar, AuraDev19b6::ShutdownBar);
-                check(arg.lid, AuraDev19b6::ShutdownBar);
+                check(arg.keyboard, AuraDevRog2::ShutdownKeyb);
+                check(arg.logo, AuraDevRog2::ShutdownLogo);
+                check(arg.lightbar, AuraDevRog2::ShutdownBar);
+                check(arg.lid, AuraDevRog2::ShutdownBar);
             }
         }
 

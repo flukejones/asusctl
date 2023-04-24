@@ -1,5 +1,5 @@
 use egui::{RichText, Ui};
-use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraDevTuf, AuraDevice, AuraPowerDev};
+use rog_aura::usb::{AuraDevRog1, AuraDevRog2, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_aura::AuraZone;
 use rog_platform::supported::SupportedFunctions;
 
@@ -9,10 +9,12 @@ pub fn aura_power_group(supported: &SupportedFunctions, states: &mut SystemState
     ui.heading("LED settings");
 
     match supported.keyboard_led.dev_id {
-        AuraDevice::X1854 | AuraDevice::X1869 | AuraDevice::X1866 | AuraDevice::X18c6 => {
+        AuraDevice::X1854 | AuraDevice::X1869 | AuraDevice::X1866 => {
             aura_power1(supported, states, ui);
         }
-        AuraDevice::X19B6 => aura_power2(supported, states, ui),
+        AuraDevice::X19b6 | AuraDevice::X18c6 | AuraDevice::X1a30 => {
+            aura_power2(supported, states, ui)
+        }
         AuraDevice::Tuf => aura_power1(supported, states, ui),
         AuraDevice::Unknown => {}
     }
@@ -20,10 +22,10 @@ pub fn aura_power_group(supported: &SupportedFunctions, states: &mut SystemState
 
 fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mut Ui) {
     let enabled_states = &mut states.aura.enabled;
-    let mut boot = enabled_states.x1866.contains(&AuraDev1866::Boot);
-    let mut sleep = enabled_states.x1866.contains(&AuraDev1866::Sleep);
-    let mut keyboard = enabled_states.x1866.contains(&AuraDev1866::Keyboard);
-    let mut lightbar = enabled_states.x1866.contains(&AuraDev1866::Lightbar);
+    let mut boot = enabled_states.x1866.contains(&AuraDevRog1::Boot);
+    let mut sleep = enabled_states.x1866.contains(&AuraDevRog1::Sleep);
+    let mut keyboard = enabled_states.x1866.contains(&AuraDevRog1::Keyboard);
+    let mut lightbar = enabled_states.x1866.contains(&AuraDevRog1::Lightbar);
     if supported.keyboard_led.dev_id == AuraDevice::Tuf {
         boot = enabled_states.tuf.contains(&AuraDevTuf::Boot);
         sleep = enabled_states.tuf.contains(&AuraDevTuf::Sleep);
@@ -148,7 +150,7 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
             let mut enabled = Vec::new();
             let mut disabled = Vec::new();
 
-            let mut modify_x1866 = |b: bool, a: AuraDev1866| {
+            let mut modify_x1866 = |b: bool, a: AuraDevRog1| {
                 if b {
                     enabled.push(a);
                     if !enabled_states.x1866.contains(&a) {
@@ -169,14 +171,14 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
                     }
                 }
             };
-            modify_x1866(boot, AuraDev1866::Boot);
-            modify_x1866(sleep, AuraDev1866::Sleep);
-            modify_x1866(keyboard, AuraDev1866::Keyboard);
+            modify_x1866(boot, AuraDevRog1::Boot);
+            modify_x1866(sleep, AuraDevRog1::Sleep);
+            modify_x1866(keyboard, AuraDevRog1::Keyboard);
             if !supported.keyboard_led.basic_zones.is_empty() {
-                modify_x1866(lightbar, AuraDev1866::Lightbar);
+                modify_x1866(lightbar, AuraDevRog1::Lightbar);
             }
 
-            let mut send = |enable: bool, data: Vec<AuraDev1866>| {
+            let mut send = |enable: bool, data: Vec<AuraDevRog1>| {
                 let options = AuraPowerDev {
                     tuf: vec![],
                     x1866: data,
@@ -211,17 +213,17 @@ fn aura_power2(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
             .basic_zones
             .contains(&AuraZone::BarRight);
 
-    let boot_bar = &mut enabled_states.x19b6.contains(&AuraDev19b6::AwakeBar);
-    let boot_logo = &mut enabled_states.x19b6.contains(&AuraDev19b6::BootLogo);
-    let boot_keyb = &mut enabled_states.x19b6.contains(&AuraDev19b6::BootKeyb);
+    let boot_bar = &mut enabled_states.x19b6.contains(&AuraDevRog2::AwakeBar);
+    let boot_logo = &mut enabled_states.x19b6.contains(&AuraDevRog2::BootLogo);
+    let boot_keyb = &mut enabled_states.x19b6.contains(&AuraDevRog2::BootKeyb);
 
-    let awake_bar = &mut enabled_states.x19b6.contains(&AuraDev19b6::BootBar);
-    let awake_logo = &mut enabled_states.x19b6.contains(&AuraDev19b6::AwakeLogo);
-    let awake_keyb = &mut enabled_states.x19b6.contains(&AuraDev19b6::AwakeKeyb);
+    let awake_bar = &mut enabled_states.x19b6.contains(&AuraDevRog2::BootBar);
+    let awake_logo = &mut enabled_states.x19b6.contains(&AuraDevRog2::AwakeLogo);
+    let awake_keyb = &mut enabled_states.x19b6.contains(&AuraDevRog2::AwakeKeyb);
 
-    let sleep_bar = &mut enabled_states.x19b6.contains(&AuraDev19b6::SleepBar);
-    let sleep_logo = &mut enabled_states.x19b6.contains(&AuraDev19b6::SleepLogo);
-    let sleep_keyb = &mut enabled_states.x19b6.contains(&AuraDev19b6::SleepKeyb);
+    let sleep_bar = &mut enabled_states.x19b6.contains(&AuraDevRog2::SleepBar);
+    let sleep_logo = &mut enabled_states.x19b6.contains(&AuraDevRog2::SleepLogo);
+    let sleep_keyb = &mut enabled_states.x19b6.contains(&AuraDevRog2::SleepKeyb);
 
     let mut changed = false;
 
@@ -265,7 +267,7 @@ fn aura_power2(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
         let mut enabled = Vec::new();
         let mut disabled = Vec::new();
 
-        let mut modify = |b: bool, a: AuraDev19b6| {
+        let mut modify = |b: bool, a: AuraDevRog2| {
             if b {
                 enabled.push(a);
                 if !enabled_states.x19b6.contains(&a) {
@@ -286,25 +288,25 @@ fn aura_power2(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
                 }
             }
         };
-        modify(*boot_keyb, AuraDev19b6::BootKeyb);
-        modify(*sleep_keyb, AuraDev19b6::SleepKeyb);
-        modify(*awake_keyb, AuraDev19b6::AwakeKeyb);
+        modify(*boot_keyb, AuraDevRog2::BootKeyb);
+        modify(*sleep_keyb, AuraDevRog2::SleepKeyb);
+        modify(*awake_keyb, AuraDevRog2::AwakeKeyb);
         if supported.keyboard_led.basic_zones.contains(&AuraZone::Logo) {
-            modify(*boot_logo, AuraDev19b6::BootLogo);
-            modify(*sleep_logo, AuraDev19b6::SleepLogo);
-            modify(*awake_logo, AuraDev19b6::AwakeLogo);
+            modify(*boot_logo, AuraDevRog2::BootLogo);
+            modify(*sleep_logo, AuraDevRog2::SleepLogo);
+            modify(*awake_logo, AuraDevRog2::AwakeLogo);
         }
         if supported
             .keyboard_led
             .basic_zones
             .contains(&AuraZone::BarLeft)
         {
-            modify(*boot_bar, AuraDev19b6::AwakeBar);
-            modify(*sleep_bar, AuraDev19b6::SleepBar);
-            modify(*awake_bar, AuraDev19b6::BootBar);
+            modify(*boot_bar, AuraDevRog2::AwakeBar);
+            modify(*sleep_bar, AuraDevRog2::SleepBar);
+            modify(*awake_bar, AuraDevRog2::BootBar);
         }
 
-        let mut send = |enable: bool, data: Vec<AuraDev19b6>| {
+        let mut send = |enable: bool, data: Vec<AuraDevRog2>| {
             let options = AuraPowerDev {
                 tuf: vec![],
                 x1866: vec![],

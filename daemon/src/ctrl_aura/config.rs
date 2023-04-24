@@ -1,11 +1,9 @@
 use std::collections::{BTreeMap, HashSet};
 
 use config_traits::{StdConfig, StdConfigLoad};
-use rog_aura::aura_detection::{LaptopLedData, ASUS_KEYBOARD_DEVICES};
-use rog_aura::usb::{AuraDev1866, AuraDev19b6, AuraDevTuf, AuraDevice, AuraPowerDev};
+use rog_aura::aura_detection::LaptopLedData;
+use rog_aura::usb::{AuraDevRog1, AuraDevRog2, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Direction, LedBrightness, Speed, GRADIENT};
-use rog_platform::hid_raw::HidRaw;
-use rog_platform::keyboard_led::KeyboardLed;
 use serde_derive::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "aura.ron";
@@ -16,8 +14,8 @@ const CONFIG_FILE: &str = "aura.ron";
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AuraPowerConfig {
     AuraDevTuf(HashSet<AuraDevTuf>),
-    AuraDev1866(HashSet<AuraDev1866>),
-    AuraDev19b6(HashSet<AuraDev19b6>),
+    AuraDevRog1(HashSet<AuraDevRog1>),
+    AuraDevRog2(HashSet<AuraDevRog2>),
 }
 
 impl AuraPowerConfig {
@@ -25,13 +23,13 @@ impl AuraPowerConfig {
     pub fn to_bytes(control: &Self) -> [u8; 3] {
         match control {
             AuraPowerConfig::AuraDevTuf(_) => [0, 0, 0],
-            AuraPowerConfig::AuraDev1866(c) => {
-                let c: Vec<AuraDev1866> = c.iter().copied().collect();
-                AuraDev1866::to_bytes(&c)
+            AuraPowerConfig::AuraDevRog1(c) => {
+                let c: Vec<AuraDevRog1> = c.iter().copied().collect();
+                AuraDevRog1::to_bytes(&c)
             }
-            AuraPowerConfig::AuraDev19b6(c) => {
-                let c: Vec<AuraDev19b6> = c.iter().copied().collect();
-                AuraDev19b6::to_bytes(&c)
+            AuraPowerConfig::AuraDevRog2(c) => {
+                let c: Vec<AuraDevRog2> = c.iter().copied().collect();
+                AuraDevRog2::to_bytes(&c)
             }
         }
     }
@@ -47,13 +45,13 @@ impl AuraPowerConfig {
             ]);
         }
 
-        if let Self::AuraDev1866(c) = control {
+        if let Self::AuraDevRog1(c) = control {
             return Some([
                 true,
-                c.contains(&AuraDev1866::Boot),
-                c.contains(&AuraDev1866::Awake),
-                c.contains(&AuraDev1866::Sleep),
-                c.contains(&AuraDev1866::Keyboard),
+                c.contains(&AuraDevRog1::Boot),
+                c.contains(&AuraDevRog1::Awake),
+                c.contains(&AuraDevRog1::Sleep),
+                c.contains(&AuraDevRog1::Keyboard),
             ]);
         }
 
@@ -70,8 +68,8 @@ impl AuraPowerConfig {
         }
     }
 
-    pub fn set_0x1866(&mut self, power: AuraDev1866, on: bool) {
-        if let Self::AuraDev1866(p) = self {
+    pub fn set_0x1866(&mut self, power: AuraDevRog1, on: bool) {
+        if let Self::AuraDevRog1(p) = self {
             if on {
                 p.insert(power);
             } else {
@@ -80,8 +78,8 @@ impl AuraPowerConfig {
         }
     }
 
-    pub fn set_0x19b6(&mut self, power: AuraDev19b6, on: bool) {
-        if let Self::AuraDev19b6(p) = self {
+    pub fn set_0x19b6(&mut self, power: AuraDevRog2, on: bool) {
+        if let Self::AuraDevRog2(p) = self {
             if on {
                 p.insert(power);
             } else {
@@ -99,12 +97,12 @@ impl From<&AuraPowerConfig> for AuraPowerDev {
                 x1866: vec![],
                 x19b6: vec![],
             },
-            AuraPowerConfig::AuraDev1866(d) => AuraPowerDev {
+            AuraPowerConfig::AuraDevRog1(d) => AuraPowerDev {
                 tuf: vec![],
                 x1866: d.iter().copied().collect(),
                 x19b6: vec![],
             },
-            AuraPowerConfig::AuraDev19b6(d) => AuraPowerDev {
+            AuraPowerConfig::AuraDevRog2(d) => AuraPowerDev {
                 tuf: vec![],
                 x1866: vec![],
                 x19b6: d.iter().copied().collect(),
@@ -124,70 +122,9 @@ pub struct AuraConfig {
     pub enabled: AuraPowerConfig,
 }
 
-impl Default for AuraConfig {
-    fn default() -> Self {
-        let mut prod_id = AuraDevice::Unknown;
-        for prod in &ASUS_KEYBOARD_DEVICES {
-            if HidRaw::new(prod).is_ok() {
-                prod_id = AuraDevice::from(*prod);
-                break;
-            }
-        }
-
-        if prod_id == AuraDevice::Unknown {
-            if let Ok(p) = KeyboardLed::new() {
-                if p.has_kbd_rgb_mode() {
-                    prod_id = AuraDevice::Tuf;
-                }
-            }
-        }
-
-        let enabled = if prod_id == AuraDevice::X19B6 {
-            AuraPowerConfig::AuraDev19b6(HashSet::from([
-                AuraDev19b6::BootLogo,
-                AuraDev19b6::BootKeyb,
-                AuraDev19b6::SleepLogo,
-                AuraDev19b6::SleepKeyb,
-                AuraDev19b6::AwakeLogo,
-                AuraDev19b6::AwakeKeyb,
-                AuraDev19b6::ShutdownLogo,
-                AuraDev19b6::ShutdownKeyb,
-                AuraDev19b6::BootBar,
-                AuraDev19b6::AwakeBar,
-                AuraDev19b6::SleepBar,
-                AuraDev19b6::ShutdownBar,
-            ]))
-        } else if prod_id == AuraDevice::Tuf {
-            AuraPowerConfig::AuraDevTuf(HashSet::from([
-                AuraDevTuf::Awake,
-                AuraDevTuf::Boot,
-                AuraDevTuf::Sleep,
-                AuraDevTuf::Keyboard,
-            ]))
-        } else {
-            AuraPowerConfig::AuraDev1866(HashSet::from([
-                AuraDev1866::Awake,
-                AuraDev1866::Boot,
-                AuraDev1866::Sleep,
-                AuraDev1866::Keyboard,
-                AuraDev1866::Lightbar,
-            ]))
-        };
-
-        AuraConfig {
-            brightness: LedBrightness::Med,
-            current_mode: AuraModeNum::Static,
-            builtins: BTreeMap::new(),
-            multizone: None,
-            multizone_on: false,
-            enabled,
-        }
-    }
-}
-
 impl StdConfig for AuraConfig {
     fn new() -> Self {
-        Self::create_default(&LaptopLedData::get_data())
+        Self::create_default(AuraDevice::X19b6, &LaptopLedData::get_data())
     }
 
     fn config_dir() -> std::path::PathBuf {
@@ -202,9 +139,47 @@ impl StdConfig for AuraConfig {
 impl StdConfigLoad for AuraConfig {}
 
 impl AuraConfig {
-    fn create_default(support_data: &LaptopLedData) -> Self {
+    pub fn create_default(prod_id: AuraDevice, support_data: &LaptopLedData) -> Self {
         // create a default config here
-        let mut config = AuraConfig::default();
+        let enabled = if prod_id == AuraDevice::X19b6 {
+            AuraPowerConfig::AuraDevRog2(HashSet::from([
+                AuraDevRog2::BootLogo,
+                AuraDevRog2::BootKeyb,
+                AuraDevRog2::SleepLogo,
+                AuraDevRog2::SleepKeyb,
+                AuraDevRog2::AwakeLogo,
+                AuraDevRog2::AwakeKeyb,
+                AuraDevRog2::ShutdownLogo,
+                AuraDevRog2::ShutdownKeyb,
+                AuraDevRog2::BootBar,
+                AuraDevRog2::AwakeBar,
+                AuraDevRog2::SleepBar,
+                AuraDevRog2::ShutdownBar,
+            ]))
+        } else if prod_id == AuraDevice::Tuf {
+            AuraPowerConfig::AuraDevTuf(HashSet::from([
+                AuraDevTuf::Awake,
+                AuraDevTuf::Boot,
+                AuraDevTuf::Sleep,
+                AuraDevTuf::Keyboard,
+            ]))
+        } else {
+            AuraPowerConfig::AuraDevRog1(HashSet::from([
+                AuraDevRog1::Awake,
+                AuraDevRog1::Boot,
+                AuraDevRog1::Sleep,
+                AuraDevRog1::Keyboard,
+                AuraDevRog1::Lightbar,
+            ]))
+        };
+        let mut config = AuraConfig {
+            brightness: LedBrightness::Med,
+            current_mode: AuraModeNum::Static,
+            builtins: BTreeMap::new(),
+            multizone: None,
+            multizone_on: false,
+            enabled,
+        };
 
         for n in &support_data.basic_modes {
             config
@@ -276,13 +251,15 @@ impl AuraConfig {
 
 #[cfg(test)]
 mod tests {
+    use rog_aura::aura_detection::LaptopLedData;
+    use rog_aura::usb::AuraDevice;
     use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour};
 
     use super::AuraConfig;
 
     #[test]
     fn set_multizone_4key_config() {
-        let mut config = AuraConfig::default();
+        let mut config = AuraConfig::create_default(AuraDevice::X19b6, &LaptopLedData::default());
 
         let effect = AuraEffect {
             colour1: Colour(0xff, 0x00, 0xff),
@@ -328,7 +305,7 @@ mod tests {
 
     #[test]
     fn set_multizone_multimode_config() {
-        let mut config = AuraConfig::default();
+        let mut config = AuraConfig::create_default(AuraDevice::X19b6, &LaptopLedData::default());
 
         let effect = AuraEffect {
             zone: AuraZone::Key1,

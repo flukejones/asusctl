@@ -9,10 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for G733Z LED modes
 - Support for GU604V LED modes
 - Support for GX650P LED modes
+- Add device code for the Z13 ACRNM keyboard
+- Add device code for the plain Z13 keyboard
 ### Changed
 - Adjustments to Anime system events thread
 - Add "sleep" animetion config options to anime config
-- rog-control-center dark/light mode persisency
+- rog-control-center dark/light mode persistency
+- Adjustments to keyboard detection
 
 ## [v4.6.0]
 ### Added
