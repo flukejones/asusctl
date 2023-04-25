@@ -35,6 +35,8 @@ pix = "^0.13"
 tinybmp = "^0.4.0"
 gif = "^0.12.0"
 
+versions = "4.1"
+
 notify-rust = { git = "https://github.com/flukejones/notify-rust.git", default-features = false, features = ["z"] }
 
 [profile.release]

@@ -114,7 +114,15 @@ impl CtrlKbdLed {
             LEDNode::None
         };
 
-        let config = AuraConfig::create_default(led_prod, &supported_modes).load();
+        let config_init = AuraConfig::create_default(led_prod, &supported_modes);
+        let mut config = config_init.clone().load();
+        // Do updates of supported modes if required
+        for mode in &config_init.builtins {
+            if !config.builtins.contains_key(mode.0) {
+                config.builtins.insert(*mode.0, mode.1.clone());
+            }
+        }
+
         let ctrl = CtrlKbdLed {
             led_prod,
             led_node,               // on TUF this is the same as rgb_led / kd_brightness

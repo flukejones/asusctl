@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use eframe::{IconData, NativeOptions};
 use gumdrop::Options;
-use log::{error, info, warn};
+use log::{error, info, warn, LevelFilter};
 use rog_aura::aura_detection::{LaptopLedData, LedSupportFile};
 use rog_aura::layouts::KeyLayout;
 use rog_control_center::cli_options::CliStart;
@@ -48,6 +48,7 @@ fn main() -> Result<()> {
 
     let mut logger = env_logger::Builder::new();
     logger
+        .filter_level(LevelFilter::Warn)
         .parse_default_env()
         .target(env_logger::Target::Stdout)
         .format(|buf, record| writeln!(buf, "{}: {}", record.level(), record.args()))

@@ -9,12 +9,14 @@ use std::time::Duration;
 use gtk::gio::Icon;
 use gtk::prelude::*;
 use libappindicator::{AppIndicator, AppIndicatorStatus};
-use log::{debug, error, info, trace};
+use log::{debug, error, info, trace, warn};
 use rog_dbus::zbus_platform::RogBiosProxyBlocking;
 use rog_platform::platform::GpuMode;
 use rog_platform::supported::SupportedFunctions;
+use supergfxctl::actions::UserActionRequired as GfxUserActionRequired;
 use supergfxctl::pci_device::{GfxMode, GfxPower};
 use supergfxctl::zbus_proxy::DaemonProxyBlocking as GfxProxyBlocking;
+use versions::Versioning;
 
 use crate::error::Result;
 use crate::system_state::SystemState;
@@ -79,6 +81,7 @@ pub struct ROGTray {
     icon: &'static str,
     bios_proxy: RogBiosProxyBlocking<'static>,
     gfx_proxy_is_active: bool,
+    gfx_action: Arc<Mutex<GfxUserActionRequired>>,
     gfx_proxy: GfxProxyBlocking<'static>,
 }
 
@@ -103,6 +106,7 @@ impl ROGTray {
                 e
             })?,
             gfx_proxy_is_active: gfx_proxy.mode().is_ok(),
+            gfx_action: Arc::new(Mutex::new(GfxUserActionRequired::Nothing)),
             gfx_proxy,
         };
         Ok(rog_tray)
@@ -249,30 +253,33 @@ impl ROGTray {
         }
 
         let gfx_dbus = self.gfx_proxy.clone();
-
+        let gfx_action = self.gfx_action.clone();
         let mut gpu_menu = RadioGroup::new("Integrated", move |_| {
             if current_mode != GfxMode::Integrated {
-                gfx_dbus
-                    .set_mode(&GfxMode::Integrated)
-                    .map_err(|e| {
-                        error!("ROGTray: srt_mode: {e}");
-                        e
-                    })
-                    .ok();
+                if let Ok(res) = gfx_dbus.set_mode(&GfxMode::Integrated).map_err(|e| {
+                    error!("ROGTray: srt_mode: {e}");
+                    e
+                }) {
+                    if let Ok(mut lock) = gfx_action.lock() {
+                        *lock = res;
+                    }
+                }
             }
         });
 
         let mut func = |menu_mode: GfxMode| {
             let gfx_dbus = self.gfx_proxy.clone();
+            let gfx_action = self.gfx_action.clone();
             gpu_menu.add(&format!("{menu_mode}"), move |_| {
                 if current_mode != menu_mode {
-                    gfx_dbus
-                        .set_mode(&menu_mode)
-                        .map_err(|e| {
-                            error!("ROGTray: set_mode: {e}");
-                            e
-                        })
-                        .ok();
+                    if let Ok(res) = gfx_dbus.set_mode(&menu_mode).map_err(|e| {
+                        error!("ROGTray: set_mode: {e}");
+                        e
+                    }) {
+                        if let Ok(mut lock) = gfx_action.lock() {
+                            *lock = res;
+                        }
+                    }
                 }
             });
         };
@@ -284,16 +291,18 @@ impl ROGTray {
             func(*item);
         }
 
-        let mut _reboot_required = false;
-
-        let reboot_required = if _reboot_required {
-            "(Reboot required)"
+        let action_required = if let Ok(lock) = self.gfx_action.lock() {
+            if matches!(*lock, GfxUserActionRequired::Nothing) {
+                ""
+            } else {
+                <&str>::from(*lock)
+            }
         } else {
             ""
         };
 
         self.add_radio_sub_menu(
-            &format!("GPU Mode: {current_mode} {reboot_required}"),
+            &format!("GPU Mode: {current_mode} {action_required}"),
             &current_mode.to_string(),
             &gpu_menu,
         );
@@ -423,7 +432,22 @@ pub fn init_tray(
         };
 
         let supported_gfx = if tray.gfx_proxy_is_active {
-            tray.gfx_proxy.supported().unwrap()
+            if let Ok(version) = tray.gfx_proxy.version() {
+                if let Some(version) = Versioning::new(&version) {
+                    let curr_gfx = Versioning::new("5.0.3-RC4").unwrap();
+                    warn!("supergfxd version = {version}");
+                    if version < curr_gfx {
+                        // Don't allow mode changing if too old a version
+                        warn!("supergfxd found but is too old to use");
+                        tray.gfx_proxy_is_active = false;
+                    }
+                }
+            }
+            if tray.gfx_proxy_is_active {
+                tray.gfx_proxy.supported().unwrap()
+            } else {
+                Default::default()
+            }
         } else {
             Default::default()
         };

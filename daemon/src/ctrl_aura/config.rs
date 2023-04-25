@@ -111,7 +111,7 @@ impl From<&AuraPowerConfig> for AuraPowerDev {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 // #[serde(default)]
 pub struct AuraConfig {
     pub brightness: LedBrightness,
@@ -124,7 +124,8 @@ pub struct AuraConfig {
 
 impl StdConfig for AuraConfig {
     fn new() -> Self {
-        Self::create_default(AuraDevice::X19b6, &LaptopLedData::get_data())
+        // Self::create_default(AuraDevice::X19b6, &LaptopLedData::get_data())
+        panic!("AuraConfig::new() should not be used, use AuraConfig::create_default() instead");
     }
 
     fn config_dir() -> std::path::PathBuf {

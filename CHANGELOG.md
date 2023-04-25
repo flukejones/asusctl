@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - rog-control-center dark/light mode persistency
 - Adjustments to keyboard detection
 - Better support of using supergfxctl when available (tray icon and menu)
+- Check supergfx version before enabling use in tray
+- Update allowed Aura modes on asusd restart if changed
 
 ## [v4.6.0]
 ### Added
