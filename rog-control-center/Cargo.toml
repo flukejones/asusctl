@@ -10,8 +10,8 @@ edition = "2021"
 mocking = []
 
 [dependencies]
-egui = { git = "https://github.com/emilk/egui", rev = "d486c76a9f146c12321b2a3fd0cedfe732e5783d"}
-eframe = { git = "https://github.com/emilk/egui", rev = "d486c76a9f146c12321b2a3fd0cedfe732e5783d"}
+egui = { git = "https://github.com/emilk/egui", rev = "b8e798777de519de3a1878798097ab2ab0bd4def"}
+eframe = { git = "https://github.com/emilk/egui", rev = "b8e798777de519de3a1878798097ab2ab0bd4def"}
 
 libappindicator = "0.7" # Tray icon
 gtk = "0.15.5"
