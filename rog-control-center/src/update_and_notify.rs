@@ -17,7 +17,8 @@ use rog_dbus::zbus_profile::ProfileProxy;
 use rog_platform::platform::GpuMode;
 use rog_profiles::Profile;
 use serde::{Deserialize, Serialize};
-use supergfxctl::pci_device::GfxPower;
+use supergfxctl::actions::UserActionRequired as GfxUserAction;
+use supergfxctl::pci_device::{GfxMode, GfxPower};
 use supergfxctl::zbus_proxy::DaemonProxy as SuperProxy;
 use tokio::time::sleep;
 use zbus::export::futures_util::{future, StreamExt};
@@ -406,6 +407,7 @@ pub fn start_notifications(
                 do_notification
             );
 
+            let page_states1 = page_states.clone();
             tokio::spawn(async move {
                 let conn = zbus::Connection::system()
                     .await
@@ -426,15 +428,25 @@ pub fn start_notifications(
                     while let Some(e) = p.next().await {
                         if let Ok(out) = e.args() {
                             let action = out.action();
-                            do_gfx_action_notif(
-                                "Gfx mode change requires",
-                                &format!("{action:?}",),
-                            )
+                            let mode = if let Ok(lock) = page_states1.lock() {
+                                convert_gfx_mode(lock.gfx_state.mode)
+                            } else {
+                                GpuMode::Error
+                            };
+                            match action {
+                                supergfxctl::actions::UserActionRequired::Reboot => {
+                                    do_mux_notification(
+                                        "Graphics mode change requires reboot",
+                                        &mode,
+                                    )
+                                }
+                                _ => do_gfx_action_notif(<&str>::from(action), *action),
+                            }
                             .map_err(|e| {
                                 error!("zbus signal: do_gfx_action_notif: {e}");
                                 e
                             })
-                            .unwrap();
+                            .ok();
                         }
                     }
                 };
@@ -443,6 +455,18 @@ pub fn start_notifications(
     }
 
     Ok(())
+}
+
+fn convert_gfx_mode(gfx: GfxMode) -> GpuMode {
+    match gfx {
+        GfxMode::Hybrid => GpuMode::Optimus,
+        GfxMode::Integrated => GpuMode::Integrated,
+        GfxMode::NvidiaNoModeset => GpuMode::Discrete,
+        GfxMode::Vfio => GpuMode::Vfio,
+        GfxMode::AsusEgpu => GpuMode::Egpu,
+        GfxMode::AsusMuxDgpu => GpuMode::Ultimate,
+        GfxMode::None => GpuMode::Error,
+    }
 }
 
 fn base_notification<T>(message: &str, data: &T) -> Notification
@@ -516,47 +540,84 @@ fn do_gpu_status_notif(message: &str, data: &GfxPower) -> Result<NotificationHan
     Ok(Notification::show(&notif)?)
 }
 
-fn do_gfx_action_notif<T>(message: &str, data: &T) -> Result<()>
-where
-    T: Display,
-{
-    let mut notif = base_notification(message, data);
-    notif.action("gnome-session-quit", "Logout");
-    notif.urgency(Urgency::Critical);
-    notif.timeout(3000);
-    notif.icon("dialog-warning");
-    notif.hint(Hint::Transient(true));
+fn do_gfx_action_notif(message: &str, data: GfxUserAction) -> Result<()> {
+    let mut notif = Notification::new();
+
+    notif
+        .summary(NOTIF_HEADER)
+        .body(message)
+        .timeout(2000)
+        //.hint(Hint::Resident(true))
+        .hint(Hint::Category("device".into()))
+        .urgency(Urgency::Critical)
+        .timeout(3000)
+        .icon("dialog-warning")
+        .hint(Hint::Transient(true))
+        .action("gfx-mode-session-action", "Logout");
     let handle = notif.show()?;
-    handle.wait_for_action(|id| {
-        if id == "gnome-session-quit" {
-            let mut cmd = Command::new("gnome-session-quit");
-            cmd.spawn().ok();
-        } else if id == "__closed" {
-            // TODO: cancel the switching
+
+    if matches!(data, GfxUserAction::Logout) {
+        if let Ok(desktop) = std::env::var("XDG_CURRENT_DESKTOP") {
+            if desktop.to_lowercase() == "gnome" {
+                handle.wait_for_action(|id| {
+                    if id == "gfx-mode-session-action" {
+                        let mut cmd = Command::new("gnome-session-quit");
+                        cmd.spawn().ok();
+                    } else if id == "__closed" {
+                        // TODO: cancel the switching
+                    }
+                });
+            } else if desktop.to_lowercase() == "kde" {
+                handle.wait_for_action(|id| {
+                    if id == "gfx-mode-session-action" {
+                        let mut cmd = Command::new("qdbus");
+                        cmd.args(["org.kde.ksmserver", "/KSMServer", "logout", "1", "0", "0"]);
+                        cmd.spawn().ok();
+                    } else if id == "__closed" {
+                        // TODO: cancel the switching
+                    }
+                });
+            } else {
+                // todo: handle alternatives
+            }
         }
-    });
+    }
     Ok(())
 }
 
 /// Actual `GpuMode` unused as data is never correct until switched by reboot
 fn do_mux_notification(message: &str, m: &GpuMode) -> Result<()> {
     let mut notif = base_notification(message, &m.to_string());
-    notif.action("gnome-session-quit", "Reboot");
+    notif.action("gfx-mode-session-action", "Reboot");
     notif.urgency(Urgency::Critical);
     notif.icon("system-reboot-symbolic");
     notif.hint(Hint::Transient(true));
     let handle = notif.show()?;
 
     std::thread::spawn(|| {
-        handle.wait_for_action(|id| {
-            if id == "gnome-session-quit" {
-                let mut cmd = Command::new("gnome-session-quit");
-                cmd.arg("--reboot");
-                cmd.spawn().ok();
-            } else if id == "__closed" {
-                // TODO: cancel the switching
+        if let Ok(desktop) = std::env::var("XDG_CURRENT_DESKTOP") {
+            if desktop.to_lowercase() == "gnome" {
+                handle.wait_for_action(|id| {
+                    if id == "gfx-mode-session-action" {
+                        let mut cmd = Command::new("gnome-session-quit");
+                        cmd.arg("--reboot");
+                        cmd.spawn().ok();
+                    } else if id == "__closed" {
+                        // TODO: cancel the switching
+                    }
+                });
+            } else if desktop.to_lowercase() == "kde" {
+                handle.wait_for_action(|id| {
+                    if id == "gfx-mode-session-action" {
+                        let mut cmd = Command::new("qdbus");
+                        cmd.args(["org.kde.ksmserver", "/KSMServer", "logout", "1", "1", "0"]);
+                        cmd.spawn().ok();
+                    } else if id == "__closed" {
+                        // TODO: cancel the switching
+                    }
+                });
             }
-        });
+        }
     });
     Ok(())
 }

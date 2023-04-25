@@ -480,7 +480,13 @@ pub fn init_tray(
 
                     match lock.gfx_state.power_status {
                         GfxPower::Suspended => tray.set_icon("asus_notif_blue"),
-                        GfxPower::Off => tray.set_icon("asus_notif_green"),
+                        GfxPower::Off => {
+                            if lock.gfx_state.mode == GfxMode::Vfio {
+                                tray.set_icon("asus_notif_red")
+                            } else {
+                                tray.set_icon("asus_notif_green")
+                            }
+                        }
                         GfxPower::AsusDisabled => tray.set_icon("asus_notif_white"),
                         GfxPower::AsusMuxDiscreet | GfxPower::Active => {
                             tray.set_icon("asus_notif_red");

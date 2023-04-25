@@ -76,6 +76,8 @@ pub enum GpuMode {
     Optimus,
     Integrated,
     Egpu,
+    Vfio,
+    Ultimate,
     #[default]
     Error,
     NotSupported,
@@ -135,6 +137,8 @@ impl Display for GpuMode {
             GpuMode::Optimus => write!(f, "Optimus"),
             GpuMode::Integrated => write!(f, "Integrated"),
             GpuMode::Egpu => write!(f, "eGPU"),
+            GpuMode::Vfio => write!(f, "VFIO"),
+            GpuMode::Ultimate => write!(f, "Ultimate"),
             GpuMode::Error => write!(f, "Error"),
             GpuMode::NotSupported => write!(f, "Not Supported"),
         }

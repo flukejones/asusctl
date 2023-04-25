@@ -639,6 +639,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "cocoa"
+version = "0.24.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f425db7937052c684daec3bd6375c8abe2d146dca4b8b143d6db777c39138f3a"
+dependencies = [
+ "bitflags",
+ "block",
+ "cocoa-foundation",
+ "core-foundation",
+ "core-graphics",
+ "foreign-types",
+ "libc",
+ "objc",
+]
+
+[[package]]
+name = "cocoa-foundation"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "931d3837c286f56e3c58423ce4eba12d08db2374461a785c86f672b08b5650d6"
+dependencies = [
+ "bitflags",
+ "block",
+ "core-foundation",
+ "core-graphics-types",
+ "foreign-types",
+ "libc",
+ "objc",
+]
+
+[[package]]
 name = "color_quant"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -894,7 +925,6 @@ checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 [[package]]
 name = "ecolor"
 version = "0.21.0"
-source = "git+https://github.com/emilk/egui?rev=b8e798777de519de3a1878798097ab2ab0bd4def#b8e798777de519de3a1878798097ab2ab0bd4def"
 dependencies = [
  "bytemuck",
 ]
@@ -902,30 +932,32 @@ dependencies = [
 [[package]]
 name = "eframe"
 version = "0.21.3"
-source = "git+https://github.com/emilk/egui?rev=b8e798777de519de3a1878798097ab2ab0bd4def#b8e798777de519de3a1878798097ab2ab0bd4def"
 dependencies = [
  "bytemuck",
+ "cocoa",
  "egui",
  "egui-winit",
  "egui_glow",
  "glow",
  "glutin",
  "glutin-winit",
+ "image",
  "js-sys",
  "log",
+ "objc",
  "percent-encoding",
  "raw-window-handle",
  "thiserror",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
+ "winapi",
  "winit",
 ]
 
 [[package]]
 name = "egui"
 version = "0.21.0"
-source = "git+https://github.com/emilk/egui?rev=b8e798777de519de3a1878798097ab2ab0bd4def#b8e798777de519de3a1878798097ab2ab0bd4def"
 dependencies = [
  "accesskit",
  "ahash",
@@ -937,13 +969,13 @@ dependencies = [
 [[package]]
 name = "egui-winit"
 version = "0.21.1"
-source = "git+https://github.com/emilk/egui?rev=b8e798777de519de3a1878798097ab2ab0bd4def#b8e798777de519de3a1878798097ab2ab0bd4def"
 dependencies = [
  "accesskit_winit",
  "arboard",
  "egui",
  "instant",
  "log",
+ "raw-window-handle",
  "smithay-clipboard",
  "webbrowser",
  "winit",
@@ -952,7 +984,6 @@ dependencies = [
 [[package]]
 name = "egui_glow"
 version = "0.21.0"
-source = "git+https://github.com/emilk/egui?rev=b8e798777de519de3a1878798097ab2ab0bd4def#b8e798777de519de3a1878798097ab2ab0bd4def"
 dependencies = [
  "bytemuck",
  "egui",
@@ -972,7 +1003,6 @@ checksum = "7fcaabb2fef8c910e7f4c7ce9f67a1283a1715879a7c230ca9d6d1ae31f16d91"
 [[package]]
 name = "emath"
 version = "0.21.0"
-source = "git+https://github.com/emilk/egui?rev=b8e798777de519de3a1878798097ab2ab0bd4def#b8e798777de519de3a1878798097ab2ab0bd4def"
 dependencies = [
  "bytemuck",
 ]
@@ -1057,7 +1087,6 @@ dependencies = [
 [[package]]
 name = "epaint"
 version = "0.21.0"
-source = "git+https://github.com/emilk/egui?rev=b8e798777de519de3a1878798097ab2ab0bd4def#b8e798777de519de3a1878798097ab2ab0bd4def"
 dependencies = [
  "ab_glyph",
  "ahash",
@@ -1675,6 +1704,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "image"
+version = "0.24.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "527909aa81e20ac3a44803521443a765550f09b5130c2c2fa1ea59c2f8f50a3a"
+dependencies = [
+ "bytemuck",
+ "byteorder",
+ "color_quant",
+ "num-rational",
+ "num-traits",
+ "png",
+]
+
+[[package]]
 name = "indexmap"
 version = "1.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2121,6 +2164,27 @@ dependencies = [
  "serde",
  "tauri-winrt-notification",
  "zbus",
+]
+
+[[package]]
+name = "num-integer"
+version = "0.1.45"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "225d3389fb3509a24c93f5c29eb6bde2586b98d9f016636dff58d7c6f7569cd9"
+dependencies = [
+ "autocfg",
+ "num-traits",
+]
+
+[[package]]
+name = "num-rational"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0638a1c9d0a3c0914158145bc76cff373a75a627e6ecbfb71cbe6f453a5a19b0"
+dependencies = [
+ "autocfg",
+ "num-integer",
+ "num-traits",
 ]
 
 [[package]]

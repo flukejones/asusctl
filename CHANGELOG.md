@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better support of using supergfxctl when available (tray icon and menu)
 - Check supergfx version before enabling use in tray
 - Update allowed Aura modes on asusd restart if changed
+- Set tray icon for dgpu to "On" if in Vfio mode to prevent confusion
+- Add support for Logout/Reboot in notification for KDE
 
 ## [v4.6.0]
 ### Added
