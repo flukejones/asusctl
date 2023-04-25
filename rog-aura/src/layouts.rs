@@ -280,7 +280,13 @@ impl KeyLayout {
     /// Find a layout matching the name in `LaptopLedData` in the provided dir
     pub fn find_layout(led_data: LaptopLedData, mut data_path: PathBuf) -> Result<Self, Error> {
         // TODO: locales
-        let layout_file = format!("{}_US.ron", led_data.layout_name);
+        let layout_name = if led_data.layout_name.is_empty() {
+            "ga401q".to_owned() // Need some sort of default here due to ROGCC
+                                // expecting it
+        } else {
+            led_data.layout_name
+        };
+        let layout_file = format!("{layout_name}_US.ron");
         data_path.push("layouts");
         data_path.push(layout_file);
         let path = data_path.as_path();
