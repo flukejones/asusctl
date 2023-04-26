@@ -114,13 +114,34 @@ impl CtrlKbdLed {
             LEDNode::None
         };
 
-        let config_init = AuraConfig::create_default(led_prod, &supported_modes);
-        let mut config = config_init.clone().load();
-        // Do updates of supported modes if required
-        for mode in &config_init.builtins {
-            if !config.builtins.contains_key(mode.0) {
-                config.builtins.insert(*mode.0, mode.1.clone());
+        let mut config_init = AuraConfig::create_default(led_prod, &supported_modes);
+        let mut config_loaded = config_init.clone().load();
+
+        for mode in &mut config_init.builtins {
+            // update init values from loaded values if they exist
+            if let Some(loaded) = config_loaded.builtins.get(mode.0) {
+                *mode.1 = loaded.clone();
             }
+        }
+        config_loaded.builtins = config_init.builtins;
+
+        if let (Some(mut multizone_init), Some(multizone_loaded)) =
+            (config_init.multizone, config_loaded.multizone.as_mut())
+        {
+            for mode in multizone_init.iter_mut() {
+                // update init values from loaded values if they exist
+                if let Some(loaded) = multizone_loaded.get(mode.0) {
+                    let mut new_set = Vec::new();
+                    // only reuse a zone mode if the mode is supported
+                    for mode in loaded {
+                        if supported_modes.basic_modes.contains(&mode.mode) {
+                            new_set.push(mode.clone());
+                        }
+                    }
+                    *mode.1 = new_set;
+                }
+            }
+            *multizone_loaded = multizone_init;
         }
 
         let ctrl = CtrlKbdLed {
@@ -130,7 +151,7 @@ impl CtrlKbdLed {
             supported_modes,
             flip_effect_write: false,
             per_key_mode_active: false,
-            config,
+            config: config_loaded,
         };
         Ok(ctrl)
     }
