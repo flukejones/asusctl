@@ -32,7 +32,7 @@ zbus = { workspace = true, optional = true }
 
 sysfs-class = { workspace = true, optional = true }
 
-uhid-virt = "^0.0.5"
+uhid-virt = "^0.0.6"
 
 [dev-dependencies]
 cargo-husky.workspace = true

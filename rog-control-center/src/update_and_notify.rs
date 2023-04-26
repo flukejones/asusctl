@@ -549,7 +549,7 @@ fn do_gfx_action_notif(message: &str, action: GfxUserAction, mode: GpuMode) -> R
     let mut notif = Notification::new();
     notif
         .summary(NOTIF_HEADER)
-        .body(message)
+        .body(&format!("Changing to {mode}. {message}"))
         .timeout(2000)
         //.hint(Hint::Resident(true))
         .hint(Hint::Category("device".into()))

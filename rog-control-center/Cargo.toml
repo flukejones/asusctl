@@ -15,8 +15,8 @@ eframe = { git = "https://github.com/emilk/egui", rev = "b8e798777de519de3a18787
 # egui = { path = "../../egui/crates/egui" }
 # eframe = { path = "../../egui/crates/eframe" }
 
-libappindicator = "0.7" # Tray icon
-gtk = "0.15.5"
+libappindicator = "0.8" # Tray icon
+gtk = "0.16"
 
 daemon = { path = "../daemon" }
 rog_anime = { path = "../rog-anime" }
