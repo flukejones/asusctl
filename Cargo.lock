@@ -2960,7 +2960,7 @@ dependencies = [
 [[package]]
 name = "supergfxctl"
 version = "5.1.1-RC1"
-source = "git+https://gitlab.com/asus-linux/supergfxctl.git#6a6c3a5575173aa2b9e0f1b9e805e64f08bb0cff"
+source = "git+https://gitlab.com/asus-linux/supergfxctl.git#293a0d6f037d8d98353660a1b196a5b46ba33962"
 dependencies = [
  "log",
  "logind-zbus",
