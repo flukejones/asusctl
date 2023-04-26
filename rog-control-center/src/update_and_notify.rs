@@ -440,7 +440,7 @@ pub fn start_notifications(
                                         &mode,
                                     )
                                 }
-                                _ => do_gfx_action_notif(<&str>::from(action), *action),
+                                _ => do_gfx_action_notif(<&str>::from(action), *action, mode),
                             }
                             .map_err(|e| {
                                 error!("zbus signal: do_gfx_action_notif: {e}");
@@ -540,9 +540,13 @@ fn do_gpu_status_notif(message: &str, data: &GfxPower) -> Result<NotificationHan
     Ok(Notification::show(&notif)?)
 }
 
-fn do_gfx_action_notif(message: &str, data: GfxUserAction) -> Result<()> {
-    let mut notif = Notification::new();
+fn do_gfx_action_notif(message: &str, action: GfxUserAction, mode: GpuMode) -> Result<()> {
+    if matches!(action, GfxUserAction::Reboot) {
+        do_mux_notification("Graphics mode change requires reboot", &mode).ok();
+        return Ok(());
+    }
 
+    let mut notif = Notification::new();
     notif
         .summary(NOTIF_HEADER)
         .body(message)
@@ -552,11 +556,11 @@ fn do_gfx_action_notif(message: &str, data: GfxUserAction) -> Result<()> {
         .urgency(Urgency::Critical)
         .timeout(3000)
         .icon("dialog-warning")
-        .hint(Hint::Transient(true))
-        .action("gfx-mode-session-action", "Logout");
-    let handle = notif.show()?;
+        .hint(Hint::Transient(true));
 
-    if matches!(data, GfxUserAction::Logout) {
+    if matches!(action, GfxUserAction::Logout) {
+        notif.action("gfx-mode-session-action", "Logout");
+        let handle = notif.show()?;
         if let Ok(desktop) = std::env::var("XDG_CURRENT_DESKTOP") {
             if desktop.to_lowercase() == "gnome" {
                 handle.wait_for_action(|id| {
@@ -581,6 +585,8 @@ fn do_gfx_action_notif(message: &str, data: GfxUserAction) -> Result<()> {
                 // todo: handle alternatives
             }
         }
+    } else {
+        notif.show()?;
     }
     Ok(())
 }
@@ -588,10 +594,11 @@ fn do_gfx_action_notif(message: &str, data: GfxUserAction) -> Result<()> {
 /// Actual `GpuMode` unused as data is never correct until switched by reboot
 fn do_mux_notification(message: &str, m: &GpuMode) -> Result<()> {
     let mut notif = base_notification(message, &m.to_string());
-    notif.action("gfx-mode-session-action", "Reboot");
-    notif.urgency(Urgency::Critical);
-    notif.icon("system-reboot-symbolic");
-    notif.hint(Hint::Transient(true));
+    notif
+        .action("gfx-mode-session-action", "Reboot")
+        .urgency(Urgency::Critical)
+        .icon("system-reboot-symbolic")
+        .hint(Hint::Transient(true));
     let handle = notif.show()?;
 
     std::thread::spawn(|| {
