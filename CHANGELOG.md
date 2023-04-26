@@ -10,15 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for GU604V LED modes
 - Support for GX650P LED modes
 - Support for GV604I LED modes
-- Add device code for the Z13 ACRNM keyboard
-- Add device code for the plain Z13 keyboard
+- Support for FX516P LED modes (this laptop still has further issues, will require a patched kernel when patch is ready)
+- Add device code for the Z13 ACRNM keyboard (requires kernel patch, in progress)
+- Support for GV301VIC LED modes
+- Add device code for the plain Z13 keyboard (requires kernel patch, in progress)
+- Support for GV301V LED modes
 ### Changed
 - Adjustments to Anime system events thread
 - Add "sleep" animetion config options to anime config
 - rog-control-center dark/light mode persistency
 - Adjustments to keyboard detection
 - Better support of using supergfxctl when available (tray icon and menu)
-- Check supergfx version before enabling use in tray
+- Check supergfx version before enabling use in tray (require 5.1.0+)
 - Update allowed Aura modes on asusd restart if changed
 - Set tray icon for dgpu to "On" if in Vfio mode to prevent confusion
 - Add support for Logout/Reboot in notification for KDE
