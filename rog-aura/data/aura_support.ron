@@ -28,14 +28,14 @@
         advanced_type: None,
     ),
     (
-        board_name: "FX506HC",
+        board_name: "FX506H",
         layout_name: "fa506i",
         basic_modes: [Static, Breathe, Strobe, Pulse],
         basic_zones: [],
         advanced_type: None,
     ),
     (
-        board_name: "FX506LH",
+        board_name: "FX506L",
         layout_name: "fa506i",
         basic_modes: [Static, Breathe, Strobe, Pulse],
         basic_zones: [],
