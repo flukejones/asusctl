@@ -216,6 +216,7 @@ impl ROGTray {
             if let Ok(mut ipc) = get_ipc_file().map_err(|e| {
                 error!("ROGTray: get_ipc_file: {}", e);
             }) {
+                debug!("Tray told app to show self");
                 ipc.write_all(&[SHOW_GUI]).ok();
             }
         });

@@ -6,9 +6,9 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-use eframe::{IconData, NativeOptions};
+use eframe::IconData;
 use gumdrop::Options;
-use log::{error, info, warn, LevelFilter};
+use log::{debug, error, info, warn, LevelFilter};
 use rog_aura::aura_detection::{LaptopLedData, LedSupportFile};
 use rog_aura::layouts::KeyLayout;
 use rog_control_center::cli_options::CliStart;
@@ -191,30 +191,45 @@ fn main() -> Result<()> {
 
     init_tray(supported, states.clone());
 
+    let mut bg_check_spawned = false;
     loop {
-        if !running_in_bg.load(Ordering::Acquire) {
+        if !running_in_bg.load(Ordering::Relaxed) {
             // blocks until window is closed
-            start_app(states.clone(), native_options.clone())?;
+            let states = states.clone();
+            let mut ipc_file = get_ipc_file()?;
+            ipc_file.write_all(&[SHOWING_GUI])?;
+            eframe::run_native(
+                "ROG Control Center",
+                native_options.clone(),
+                Box::new(move |cc| {
+                    Box::new(RogApp::new(Config::load().unwrap(), states, cc).unwrap())
+                }),
+            )?;
+
+            running_in_bg.store(true, Ordering::SeqCst);
+            bg_check_spawned = false;
         }
 
-        let config = Config::load()?;
         if !config.run_in_background || cli_parsed.board_name.is_some() || cli_parsed.layout_viewing
         {
             break;
         }
 
-        if config.run_in_background && !running_in_bg.load(Ordering::Acquire) {
-            running_in_bg.store(true, Ordering::SeqCst);
-
+        if config.run_in_background && running_in_bg.load(Ordering::Acquire) && !bg_check_spawned {
             let running_in_bg = running_in_bg.clone();
             thread::spawn(move || {
                 let mut buf = [0u8; 4];
                 // blocks until it is read, typically the read will happen after a second
                 // process writes to the IPC (so there is data to actually read)
-                if get_ipc_file().unwrap().read(&mut buf).is_ok() && buf[0] == SHOW_GUI {
-                    running_in_bg.store(false, Ordering::SeqCst);
+                loop {
+                    if get_ipc_file().unwrap().read(&mut buf).is_ok() && buf[0] == SHOW_GUI {
+                        running_in_bg.store(false, Ordering::Release);
+                        debug!("Wait thread got from tray {buf:#?}");
+                        break;
+                    }
                 }
             });
+            bg_check_spawned = true;
         }
         // Prevent hogging CPU
         thread::sleep(Duration::from_millis(500));
@@ -246,17 +261,6 @@ fn setup_page_state_and_notifs(
     start_notifications(config, &page_states, enabled_notifications)?;
 
     Ok(page_states)
-}
-
-fn start_app(states: Arc<Mutex<SystemState>>, native_options: NativeOptions) -> Result<()> {
-    let mut ipc_file = get_ipc_file()?;
-    ipc_file.write_all(&[SHOWING_GUI])?;
-    eframe::run_native(
-        "ROG Control Center",
-        native_options,
-        Box::new(move |cc| Box::new(RogApp::new(Config::load().unwrap(), states, cc).unwrap())),
-    )?;
-    Ok(())
 }
 
 /// Bah.. the icon dosn't work on wayland anyway, but we'll leave it in for now.
