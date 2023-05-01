@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Support for FX507Z LED modes
+- Support for GL503V LED modes
 ### Changed
 - Move FX506HC to FX506H in arua DB to catch full series of this range
 - Move FX506LH to FX506L in arua DB to catch full series of this range
@@ -12,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [v4.6.2]
-- Fix rog-control-center not reopening if `startup_in_background` is set 
+- Fix rog-control-center not reopening if `startup_in_background` is set
 
 ## [v4.6.1]
 ### Added

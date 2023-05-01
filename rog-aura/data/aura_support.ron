@@ -42,6 +42,13 @@
         advanced_type: None,
     ),
     (
+        board_name: "FX507Z",
+        layout_name: "fa506i",
+        basic_modes: [Static, Breathe, Strobe, Pulse],
+        basic_zones: [],
+        advanced_type: None,
+    ),
+    (
         board_name: "FX516P",
         layout_name: "fa506i",
         basic_modes: [Static, Breathe, Strobe],
@@ -347,6 +354,13 @@
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse, Rainbow, Strobe],
         basic_zones: [],
+        advanced_type: None,
+    ),
+    (
+        board_name: "GL503V",
+        layout_name: "gl503",
+        basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
+        basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
     ),
     (
