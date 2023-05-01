@@ -34,9 +34,18 @@ impl HidRaw {
                 if let Some(parent) = parent.attribute_value("idProduct") {
                     if parent == id_product {
                         if let Some(dev_node) = device.devnode() {
-                            info!("Using device at: {:?} for LED control", dev_node);
+                            info!("Using device at: {:?} for hidraw control", dev_node);
                             return Ok(Self(dev_node.to_owned()));
                         }
+                    }
+                }
+            } else {
+                // Try to see if there is a virtual device created with uhid for testing
+                let dev_path = device.devpath().to_string_lossy();
+                if dev_path.contains("virtual") && dev_path.contains(&id_product.to_uppercase()) {
+                    if let Some(dev_node) = device.devnode() {
+                        info!("Using device at: {:?} for asdfgsadfgh control", dev_node);
+                        return Ok(Self(dev_node.to_owned()));
                     }
                 }
             }

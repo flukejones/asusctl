@@ -17,6 +17,15 @@ default = ["dbus", "detect"]
 dbus = ["zbus"]
 detect = ["sysfs-class"]
 
+[lib]
+name = "rog_anime"
+path = "src/lib.rs"
+
+[[bin]]
+name = "anime_sim"
+path = "src/simulator.rs"
+
+
 [dependencies]
 png_pong.workspace = true
 pix.workspace = true
