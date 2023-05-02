@@ -21,11 +21,6 @@ detect = ["sysfs-class"]
 name = "rog_anime"
 path = "src/lib.rs"
 
-[[bin]]
-name = "anime_sim"
-path = "src/simulator.rs"
-
-
 [dependencies]
 png_pong.workspace = true
 pix.workspace = true
@@ -40,8 +35,6 @@ glam.workspace = true
 zbus = { workspace = true, optional = true }
 
 sysfs-class = { workspace = true, optional = true }
-
-uhid-virt = "^0.0.6"
 
 [dev-dependencies]
 cargo-husky.workspace = true
