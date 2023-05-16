@@ -531,4 +531,11 @@
         basic_zones: [],
         advanced_type: None,
     ),
+    ( 
+        board_name: "GV601VI",
+        layout_name: "ga401q",
+        basic_modes: [Static, Breathe, Pulse, Strobe],
+        basic_zones: [],
+        advanced_type: None,
+    ),
 ])
