@@ -77,17 +77,6 @@ impl EnabledNotifications {
     }
 }
 
-macro_rules! notify {
-    ($notifier:expr, $last_notif:ident) => {
-        if let Some(notif) = $last_notif.take() {
-            notif.close();
-        }
-        if let Ok(x) = $notifier {
-            $last_notif.replace(x);
-        }
-    };
-}
-
 // TODO: drop the macro and use generics plus closure
 macro_rules! recv_notif {
     ($proxy:ident,
@@ -100,7 +89,6 @@ macro_rules! recv_notif {
         $msg:literal,
         $notifier:ident) => {
 
-        let last_notif = $last_notif.clone();
         let notifs_enabled1 = $notif_enabled.clone();
         let page_states1 = $page_states.clone();
 
@@ -119,10 +107,8 @@ macro_rules! recv_notif {
                         if let Ok(out) = e.args() {
                             if let Ok(config) = notifs_enabled1.lock() {
                                 if config.all_enabled && config.$signal {
-                                    if let Ok(ref mut lock) = last_notif.lock() {
-                                        trace!("zbus signal {} locked last_notif", stringify!($signal));
-                                        notify!($notifier($msg, &out.$($out_arg)+()), lock);
-                                    }
+                                    trace!("zbus signal {}", stringify!($signal));
+                                    $notifier($msg, &out.$($out_arg)+()).ok();
                                 }
                             }
                             if let Ok(mut lock) = page_states1.lock() {
@@ -130,21 +116,18 @@ macro_rules! recv_notif {
                                 lock.set_notified();
                             }
                         }
+                        sleep(Duration::from_millis(500)).await;
                     }
                 };
             });
     };
 }
 
-type SharedHandle = Arc<Mutex<Option<NotificationHandle>>>;
-
 pub fn start_notifications(
     config: &Config,
     page_states: &Arc<Mutex<SystemState>>,
     enabled_notifications: &Arc<Mutex<EnabledNotifications>>,
 ) -> Result<()> {
-    let last_notification: SharedHandle = Arc::new(Mutex::new(None));
-
     // Setup the AC/BAT commands that will run on poweer status change
     unsafe {
         let prog: Vec<&str> = config.ac_command.split_whitespace().collect();
@@ -299,7 +282,6 @@ pub fn start_notifications(
     });
 
     let page_states1 = page_states.clone();
-    let last_notification1 = last_notification.clone();
     tokio::spawn(async move {
         let conn = zbus::Connection::system()
             .await
@@ -332,11 +314,6 @@ pub fn start_notifications(
                         lock.bios.dedicated_gfx = out.mode;
                         lock.set_notified();
                     }
-                    if let Ok(ref mut lock) = last_notification1.lock() {
-                        if let Some(notif) = lock.take() {
-                            notif.close();
-                        }
-                    }
                     do_mux_notification("Reboot required. BIOS GPU MUX mode set to", &out.mode)
                         .ok();
                 }
@@ -351,7 +328,6 @@ pub fn start_notifications(
         for dev in dev {
             if dev.is_dgpu() {
                 let notifs_enabled1 = enabled_notifications.clone();
-                let last_notif = last_notification.clone();
                 let page_states1 = page_states.clone();
                 // Plain old thread is perfectly fine since most of this is potentially blocking
                 tokio::spawn(async move {
@@ -363,15 +339,7 @@ pub fn start_notifications(
                                     if config.all_enabled && config.receive_notify_gfx_status {
                                         // Required check because status cycles through
                                         // active/unknown/suspended
-                                        if let Ok(ref mut lock) = last_notif.lock() {
-                                            notify!(
-                                                do_gpu_status_notif(
-                                                    "dGPU status changed:",
-                                                    &status
-                                                ),
-                                                lock
-                                            );
-                                        }
+                                        do_gpu_status_notif("dGPU status changed:", &status).ok();
                                     }
                                 }
                                 if let Ok(mut lock) = page_states1.lock() {
@@ -478,7 +446,7 @@ where
     notif
         .summary(NOTIF_HEADER)
         .body(&format!("{message} {data}"))
-        .timeout(2000)
+        .timeout(-1)
         //.hint(Hint::Resident(true))
         .hint(Hint::Category("device".into()));
 
@@ -554,7 +522,7 @@ fn do_gfx_action_notif(message: &str, action: GfxUserAction, mode: GpuMode) -> R
         //.hint(Hint::Resident(true))
         .hint(Hint::Category("device".into()))
         .urgency(Urgency::Critical)
-        .timeout(3000)
+        .timeout(-1)
         .icon("dialog-warning")
         .hint(Hint::Transient(true));
 

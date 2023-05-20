@@ -225,7 +225,11 @@ impl CtrlKbdLed {
         self.write_mode(&effect)?;
         self.config.read(); // refresh config if successful
         self.config.set_builtin(effect);
+        if self.config.brightness == LedBrightness::Off {
+            self.config.brightness = LedBrightness::Med;
+        }
         self.config.write();
+        self.set_brightness(self.config.brightness)?;
         Ok(())
     }
 
@@ -233,6 +237,11 @@ impl CtrlKbdLed {
     /// write the raw factory mode packets - when doing this it is expected that
     /// only the first `Vec` (`effect[0]`) is valid.
     pub fn write_effect_block(&mut self, effect: &UsbPackets) -> Result<(), RogError> {
+        if self.config.brightness == LedBrightness::Off {
+            self.config.brightness = LedBrightness::Med;
+            self.config.write();
+        }
+
         let pkt_type = effect[0][1];
         const PER_KEY_TYPE: u8 = 0xbc;
 

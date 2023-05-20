@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Move FX506HC to FX506H in arua DB to catch full series of this range
 - Move FX506LH to FX506L in arua DB to catch full series of this range
 - Support for GV601VI LED modes
-
+- Rmeove notification handle tracking limit, fixes KDE issue with profile notif
 
 ## [v4.6.2]
 - Fix rog-control-center not reopening if `startup_in_background` is set
