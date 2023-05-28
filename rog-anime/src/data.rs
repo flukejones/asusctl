@@ -38,6 +38,7 @@ pub struct AnimePowerStates {
 pub enum AnimeType {
     GA401,
     GA402,
+    Unknown,
 }
 
 impl AnimeType {
@@ -45,6 +46,7 @@ impl AnimeType {
     pub fn width(&self) -> usize {
         match self {
             AnimeType::GA401 | AnimeType::GA402 => 74,
+            AnimeType::Unknown => 0,
         }
     }
 
@@ -53,6 +55,7 @@ impl AnimeType {
         match self {
             AnimeType::GA401 => 36,
             AnimeType::GA402 => 39,
+            AnimeType::Unknown => 0,
         }
     }
 
@@ -61,6 +64,7 @@ impl AnimeType {
         match self {
             AnimeType::GA401 => PANE_LEN * 2,
             AnimeType::GA402 => PANE_LEN * 3,
+            AnimeType::Unknown => 0,
         }
     }
 }
@@ -125,6 +129,7 @@ impl TryFrom<AnimeDataBuffer> for AnimePacketType {
         let mut buffers = match anime.anime {
             AnimeType::GA401 => vec![[0; 640]; 2],
             AnimeType::GA402 => vec![[0; 640]; 3],
+            AnimeType::Unknown => vec![[0; 640]; 1],
         };
 
         for (idx, chunk) in anime.data.as_slice().chunks(PANE_LEN).enumerate() {

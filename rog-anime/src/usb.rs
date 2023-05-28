@@ -34,7 +34,8 @@ pub fn get_anime_type() -> Result<AnimeType, AnimeError> {
     } else if board_name.contains("GA402R") {
         return Ok(AnimeType::GA402);
     }
-    Err(AnimeError::UnsupportedDevice)
+    log::warn!("AniMe Matrix device found but not yet supported");
+    Ok(AnimeType::Unknown)
 }
 
 /// Get the two device initialization packets. These are required for device

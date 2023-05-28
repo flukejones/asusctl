@@ -139,6 +139,7 @@ impl AnimeDiagonal {
         match anime_type {
             AnimeType::GA401 => self.to_ga401_packets(),
             AnimeType::GA402 => self.to_ga402_packets(),
+            AnimeType::Unknown => self.to_unknown_packets(),
         }
     }
 
@@ -287,6 +288,11 @@ impl AnimeDiagonal {
         copy_slice(b, a, 55, 0, &mut start_index, 9);
 
         AnimeDataBuffer::from_vec(crate::AnimeType::GA402, buf)
+    }
+
+    fn to_unknown_packets(&self) -> Result<AnimeDataBuffer> {
+        let buf = vec![0u8; AnimeType::Unknown.data_length()];
+        AnimeDataBuffer::from_vec(crate::AnimeType::Unknown, buf)
     }
 }
 
