@@ -207,7 +207,7 @@ impl CtrlTask for ProfileZbus {
     async fn create_tasks(&self, signal_ctxt: SignalContext<'static>) -> Result<(), RogError> {
         let ctrl = self.0.clone();
         let sig_ctx = signal_ctxt.clone();
-        let mut watch = self
+        let watch = self
             .0
             .lock()
             .await
@@ -216,7 +216,7 @@ impl CtrlTask for ProfileZbus {
 
         tokio::spawn(async move {
             let mut buffer = [0; 32];
-            if let Ok(stream) = watch.event_stream(&mut buffer) {
+            if let Ok(stream) = watch.into_event_stream(&mut buffer) {
                 stream
                     .for_each(|_| async {
                         let mut lock = ctrl.lock().await;
@@ -247,11 +247,11 @@ impl CtrlTask for ProfileZbus {
         });
 
         let ctrl = self.0.clone();
-        let mut watch = self.0.lock().await.platform.monitor_platform_profile()?;
+        let watch = self.0.lock().await.platform.monitor_platform_profile()?;
 
         tokio::spawn(async move {
             let mut buffer = [0; 32];
-            if let Ok(stream) = watch.event_stream(&mut buffer) {
+            if let Ok(stream) = watch.into_event_stream(&mut buffer) {
                 stream
                     .for_each(|_| async {
                         let mut lock = ctrl.lock().await;

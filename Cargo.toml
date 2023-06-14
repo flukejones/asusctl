@@ -11,7 +11,7 @@ concat-idents = "^1.1"
 dirs = "^4.0"
 smol = "^1.3"
 
-zbus = "^3.6"
+zbus = "~3.13.1"
 logind-zbus = { version = "^3.1.0" } #, default-features = false, features = ["non_blocking"] }
 
 serde = "^1.0"

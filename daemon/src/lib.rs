@@ -64,10 +64,10 @@ macro_rules! task_watch_item {
             let ctrl = self.clone();
             concat_idents::concat_idents!(watch_fn = monitor_, $name {
                 match self.$self_inner.watch_fn() {
-                    Ok(mut watch) => {
+                    Ok(watch) => {
                         tokio::spawn(async move {
                             let mut buffer = [0; 32];
-                            watch.event_stream(&mut buffer).unwrap().for_each(|_| async {
+                            watch.into_event_stream(&mut buffer).unwrap().for_each(|_| async {
                                 let value = ctrl.$name();
                                 concat_idents::concat_idents!(notif_fn = notify_, $name {
                                     Self::notif_fn(&signal_ctxt, value).await.ok();

@@ -298,11 +298,11 @@ impl CtrlTask for CtrlKbdLedZbus {
 
         let ctrl2 = self.0.clone();
         let ctrl = self.0.lock().await;
-        let mut watch = ctrl.kd_brightness.monitor_brightness()?;
+        let watch = ctrl.kd_brightness.monitor_brightness()?;
         tokio::spawn(async move {
             let mut buffer = [0; 32];
             watch
-                .event_stream(&mut buffer)
+                .into_event_stream(&mut buffer)
                 .unwrap()
                 .for_each(|_| async {
                     if let Some(lock) = ctrl2.try_lock() {
