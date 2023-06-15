@@ -15,6 +15,7 @@ use rog_anime::usb::{get_anime_type, pkt_for_flush, pkts_for_init};
 use rog_anime::{ActionData, AnimeDataBuffer, AnimePacketType, AnimeType};
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::supported::AnimeSupportedFunctions;
+use rog_platform::usb_raw::USBRaw;
 
 use self::config::{AnimeConfig, AnimeConfigCached};
 use crate::error::RogError;
@@ -29,7 +30,8 @@ impl GetSupported for CtrlAnime {
 }
 
 pub struct CtrlAnime {
-    node: HidRaw,
+    // node: HidRaw,
+    node: USBRaw,
     anime_type: AnimeType,
     cache: AnimeConfigCached,
     config: AnimeConfig,
@@ -42,10 +44,11 @@ pub struct CtrlAnime {
 impl CtrlAnime {
     #[inline]
     pub fn new(config: AnimeConfig) -> Result<CtrlAnime, Box<dyn Error>> {
-        let node = HidRaw::new("193b")?;
+        // let node = HidRaw::new("193b")?;
+        let node = USBRaw::new(0x193b)?;
         let anime_type = get_anime_type().unwrap_or(AnimeType::GA401);
 
-        info!("Device has an AniMe Matrix display");
+        info!("Device has an AniMe Matrix display: {anime_type:?}");
         let mut cache = AnimeConfigCached::default();
         cache.init_from_config(&config, anime_type)?;
 

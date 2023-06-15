@@ -225,7 +225,8 @@ fn handle_anime(
     if (cmd.command.is_none()
         && cmd.enable.is_none()
         && cmd.boot_enable.is_none()
-        && cmd.brightness.is_none())
+        && cmd.brightness.is_none()
+        && !cmd.clear)
         || cmd.help
     {
         println!("Missing arg or command\n\n{}", cmd.self_usage());
@@ -234,14 +235,14 @@ fn handle_anime(
         }
     }
     if let Some(anime_turn) = cmd.enable {
-        dbus.proxies().anime().set_on_off(anime_turn)?;
+        dbus.proxies().anime().set_awake_enabled(anime_turn)?;
     }
     if let Some(anime_boot) = cmd.boot_enable {
-        dbus.proxies().anime().set_boot_on_off(anime_boot)?;
+        dbus.proxies().anime().set_animation_enabled(anime_boot)?;
     }
     if let Some(bright) = cmd.brightness {
         verify_brightness(bright);
-        dbus.proxies().anime().set_brightness(bright)?;
+        dbus.proxies().anime().set_image_brightness(bright)?;
     }
     if cmd.clear {
         let anime_type = get_anime_type()?;

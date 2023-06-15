@@ -139,6 +139,7 @@ impl AnimeDiagonal {
         match anime_type {
             AnimeType::GA401 => self.to_ga401_packets(),
             AnimeType::GA402 => self.to_ga402_packets(),
+            AnimeType::GU604 => self.to_ga402_packets(),
             AnimeType::Unknown => self.to_unknown_packets(),
         }
     }

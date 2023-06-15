@@ -11,9 +11,6 @@
 use crate::error::AnimeError;
 use crate::AnimeType;
 
-const INIT_STR: [u8; 15] = [
-    0x5e, b'A', b'S', b'U', b'S', b' ', b'T', b'e', b'c', b'h', b'.', b'I', b'n', b'c', b'.',
-];
 const PACKET_SIZE: usize = 640;
 const DEV_PAGE: u8 = 0x5e;
 pub const VENDOR_ID: u16 = 0x0b05;
@@ -33,6 +30,8 @@ pub fn get_anime_type() -> Result<AnimeType, AnimeError> {
         return Ok(AnimeType::GA401);
     } else if board_name.contains("GA402R") {
         return Ok(AnimeType::GA402);
+    } else if board_name.contains("GU604V") {
+        return Ok(AnimeType::GU604);
     }
     log::warn!("AniMe Matrix device found but not yet supported");
     Ok(AnimeType::Unknown)
@@ -45,12 +44,14 @@ pub const fn pkts_for_init() -> [[u8; PACKET_SIZE]; 2] {
     let mut packets = [[0; PACKET_SIZE]; 2];
     packets[0][0] = DEV_PAGE; // This is the USB page we're using throughout
     let mut count = 0;
-    while count < INIT_STR.len() {
-        packets[0][count] = INIT_STR[count];
+    // TODO: memcpy or slice copy
+    let bytes = "ASUS Tech.Inc.".as_bytes();
+    while count < bytes.len() {
+        packets[0][count + 1] = bytes[count];
         count += 1;
     }
     //
-    packets[1][0] = DEV_PAGE; // write it to be sure?
+    packets[1][0] = DEV_PAGE;
     packets[1][1] = 0xc2;
     packets
 }
@@ -80,8 +81,9 @@ pub const fn pkt_for_set_boot(status: bool) -> [u8; PACKET_SIZE] {
 
 /// Get the packet required for setting the device to on. Requires
 /// `pkt_for_apply()` to be written after.
+// TODO: change the users of this method
 #[inline]
-pub const fn pkt_for_set_on(on: bool) -> [u8; PACKET_SIZE] {
+pub const fn pkt_for_set_brightness(on: bool) -> [u8; PACKET_SIZE] {
     let mut pkt = [0; PACKET_SIZE];
     pkt[0] = DEV_PAGE;
     pkt[1] = 0xc0;
@@ -90,9 +92,19 @@ pub const fn pkt_for_set_on(on: bool) -> [u8; PACKET_SIZE] {
     pkt
 }
 
+#[inline]
+pub const fn pkt_for_set_awake_enabled(enable: bool) -> [u8; PACKET_SIZE] {
+    let mut pkt = [0; PACKET_SIZE];
+    pkt[0] = DEV_PAGE;
+    pkt[1] = 0xc3;
+    pkt[2] = 0x01;
+    pkt[3] = if enable { 0x80 } else { 0x00 };
+    pkt
+}
+
 /// Packet required to apply a device setting
 #[inline]
-pub const fn pkt_for_apply() -> [u8; PACKET_SIZE] {
+pub const fn pkt_for_enable_animation() -> [u8; PACKET_SIZE] {
     let mut pkt = [0; PACKET_SIZE];
     pkt[0] = DEV_PAGE;
     pkt[1] = 0xc4;

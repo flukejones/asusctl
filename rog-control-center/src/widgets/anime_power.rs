@@ -42,7 +42,7 @@ pub fn anime_power_group(_supported: &SupportedFunctions, states: &mut SystemSta
                         .asus_dbus
                         .proxies()
                         .anime()
-                        .set_boot_on_off(states.anime.boot)
+                        .set_animation_enabled(states.anime.boot)
                         .map_err(|err| {
                             states.error = Some(err.to_string());
                         })
@@ -55,7 +55,7 @@ pub fn anime_power_group(_supported: &SupportedFunctions, states: &mut SystemSta
                         .asus_dbus
                         .proxies()
                         .anime()
-                        .set_on_off(states.anime.awake)
+                        .set_awake_enabled(states.anime.awake)
                         .map_err(|err| {
                             states.error = Some(err.to_string());
                         })

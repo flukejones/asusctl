@@ -204,7 +204,7 @@ impl AnimeState {
     pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
         Ok(Self {
             boot: if supported.anime_ctrl.0 {
-                dbus.proxies().anime().boot_enabled()?
+                dbus.proxies().anime().animation_enabled()?
             } else {
                 false
             },

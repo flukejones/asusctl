@@ -118,6 +118,7 @@ impl AnimeImage {
         match anime_type {
             AnimeType::GA401 => 0.8,
             AnimeType::GA402 => 0.77,
+            AnimeType::GU604 => 0.77,
             AnimeType::Unknown => 0.0,
         }
     }
@@ -134,6 +135,7 @@ impl AnimeImage {
         match anime_type {
             AnimeType::GA401 => 0.3,
             AnimeType::GA402 => 0.283,
+            AnimeType::GU604 => 0.283,
             AnimeType::Unknown => 0.0,
         }
     }
@@ -175,6 +177,14 @@ impl AnimeImage {
                 // and then their offset grows by one every two rows
                 (y + 1) / 2 - 5
             }
+            AnimeType::GU604 => {
+                // first 11 rows start at zero
+                if y <= 9 {
+                    return 0;
+                }
+                // and then their offset grows by one every two rows
+                (y + 1) / 2 - 5
+            }
             AnimeType::Unknown => 0,
         }
     }
@@ -209,6 +219,12 @@ impl AnimeImage {
                 }
                 39 - y / 2
             }
+            AnimeType::GU604 => {
+                if y <= 9 {
+                    return 39;
+                }
+                44 - y / 2
+            }
             AnimeType::Unknown => 0,
         }
     }
@@ -219,6 +235,7 @@ impl AnimeImage {
             // 33.0 = Longest row LED count (physical) plus half-pixel offset
             AnimeType::GA401 => (33.0 + 0.5) * Self::scale_x(anime_type),
             AnimeType::GA402 => (35.0 + 0.5) * Self::scale_x(anime_type),
+            AnimeType::GU604 => (35.0 + 0.5) * Self::scale_x(anime_type),
             AnimeType::Unknown => 0.0,
         }
     }
@@ -228,6 +245,7 @@ impl AnimeImage {
         match anime_type {
             AnimeType::GA401 => 55,
             AnimeType::GA402 => 61,
+            AnimeType::GU604 => 61,
             AnimeType::Unknown => 0,
         }
     }
@@ -239,6 +257,7 @@ impl AnimeImage {
             AnimeType::GA401 => (54.0 + 1.0) * Self::scale_y(anime_type),
             // GA402 may not have dead pixels and require only the physical LED count
             AnimeType::GA402 => 61.0 * Self::scale_y(anime_type),
+            AnimeType::GU604 => 61.0 * Self::scale_y(anime_type),
             AnimeType::Unknown => 0.0,
         }
     }
@@ -253,6 +272,7 @@ impl AnimeImage {
             },
             // GA402 does not have padding, equivalent to width
             AnimeType::GA402 => AnimeImage::width(anime_type, y),
+            AnimeType::GU604 => AnimeImage::width(anime_type, y),
             AnimeType::Unknown => 0,
         }
     }

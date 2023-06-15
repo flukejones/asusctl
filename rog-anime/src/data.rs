@@ -38,6 +38,7 @@ pub struct AnimePowerStates {
 pub enum AnimeType {
     GA401,
     GA402,
+    GU604,
     Unknown,
 }
 
@@ -46,6 +47,7 @@ impl AnimeType {
     pub fn width(&self) -> usize {
         match self {
             AnimeType::GA401 | AnimeType::GA402 => 74,
+            AnimeType::GU604 => 74,
             AnimeType::Unknown => 0,
         }
     }
@@ -55,6 +57,7 @@ impl AnimeType {
         match self {
             AnimeType::GA401 => 36,
             AnimeType::GA402 => 39,
+            AnimeType::GU604 => 39,
             AnimeType::Unknown => 0,
         }
     }
@@ -64,6 +67,7 @@ impl AnimeType {
         match self {
             AnimeType::GA401 => PANE_LEN * 2,
             AnimeType::GA402 => PANE_LEN * 3,
+            AnimeType::GU604 => PANE_LEN * 3,
             AnimeType::Unknown => 0,
         }
     }
@@ -115,7 +119,7 @@ impl AnimeDataBuffer {
     }
 }
 
-/// The two packets to be written to USB
+/// The packets to be written to USB
 pub type AnimePacketType = Vec<[u8; 640]>;
 
 impl TryFrom<AnimeDataBuffer> for AnimePacketType {
@@ -128,8 +132,7 @@ impl TryFrom<AnimeDataBuffer> for AnimePacketType {
 
         let mut buffers = match anime.anime {
             AnimeType::GA401 => vec![[0; 640]; 2],
-            AnimeType::GA402 => vec![[0; 640]; 3],
-            AnimeType::Unknown => vec![[0; 640]; 1],
+            AnimeType::GA402 | AnimeType::GU604 | AnimeType::Unknown => vec![[0; 640]; 3],
         };
 
         for (idx, chunk) in anime.data.as_slice().chunks(PANE_LEN).enumerate() {
@@ -138,7 +141,10 @@ impl TryFrom<AnimeDataBuffer> for AnimePacketType {
         buffers[0][..7].copy_from_slice(&USB_PREFIX1);
         buffers[1][..7].copy_from_slice(&USB_PREFIX2);
 
-        if matches!(anime.anime, AnimeType::GA402) {
+        if matches!(
+            anime.anime,
+            AnimeType::GA402 | AnimeType::GU604 | AnimeType::Unknown
+        ) {
             buffers[2][..7].copy_from_slice(&USB_PREFIX3);
         }
         Ok(buffers)

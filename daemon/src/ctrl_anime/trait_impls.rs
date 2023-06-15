@@ -4,7 +4,9 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use config_traits::StdConfig;
 use log::warn;
-use rog_anime::usb::{pkt_for_apply, pkt_for_set_boot, pkt_for_set_on};
+use rog_anime::usb::{
+    pkt_for_enable_animation, pkt_for_set_awake_enabled, pkt_for_set_boot, pkt_for_set_brightness,
+};
 use rog_anime::{AnimeDataBuffer, AnimePowerStates};
 use zbus::export::futures_util::lock::Mutex;
 use zbus::{dbus_interface, Connection, SignalContext};
@@ -43,7 +45,7 @@ impl CtrlAnimeZbus {
     }
 
     /// Set the global AniMe brightness
-    async fn set_brightness(&self, bright: f32) {
+    async fn set_image_brightness(&self, bright: f32) {
         let mut lock = self.0.lock().await;
         let mut bright = bright;
         if bright < 0.0 {
@@ -55,11 +57,40 @@ impl CtrlAnimeZbus {
         lock.config.write();
     }
 
-    /// Set whether the AniMe is displaying images/data
-    async fn set_on_off(&self, #[zbus(signal_context)] ctxt: SignalContext<'_>, status: bool) {
+    /// Set base brightness level
+    // TODO: enum for brightness
+    async fn set_brightness(&self, #[zbus(signal_context)] ctxt: SignalContext<'_>, status: bool) {
         let mut lock = self.0.lock().await;
         lock.node
-            .write_bytes(&pkt_for_set_on(status))
+            .write_bytes(&pkt_for_set_brightness(status))
+            .map_err(|err| {
+                warn!("rog_anime::run_animation:callback {}", err);
+            })
+            .ok();
+        lock.config.awake_enabled = status;
+        lock.config.write();
+
+        Self::notify_power_states(
+            &ctxt,
+            AnimePowerStates {
+                brightness: lock.config.brightness.floor() as u8,
+                enabled: lock.config.awake_enabled,
+                boot_anim_enabled: lock.config.boot_anim_enabled,
+            },
+        )
+        .await
+        .ok();
+    }
+
+    /// Set whether the AniMe is displaying images/data
+    async fn set_awake_enabled(
+        &self,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+        status: bool,
+    ) {
+        let mut lock = self.0.lock().await;
+        lock.node
+            .write_bytes(&pkt_for_set_awake_enabled(status))
             .map_err(|err| {
                 warn!("rog_anime::run_animation:callback {}", err);
             })
@@ -80,7 +111,11 @@ impl CtrlAnimeZbus {
     }
 
     /// Set whether the AniMe will show boot, suspend, or off animations
-    async fn set_boot_on_off(&self, #[zbus(signal_context)] ctxt: SignalContext<'_>, on: bool) {
+    async fn set_animation_enabled(
+        &self,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+        on: bool,
+    ) {
         let mut lock = self.0.lock().await;
         lock.node
             .write_bytes(&pkt_for_set_boot(on))
@@ -89,7 +124,7 @@ impl CtrlAnimeZbus {
             })
             .ok();
         lock.node
-            .write_bytes(&pkt_for_apply())
+            .write_bytes(&pkt_for_enable_animation())
             .map_err(|err| {
                 warn!("rog_anime::run_animation:callback {}", err);
             })
@@ -128,7 +163,7 @@ impl CtrlAnimeZbus {
 
     /// Get the status of if factory system-status animations are enabled
     #[dbus_interface(property)]
-    async fn boot_enabled(&self) -> bool {
+    async fn animation_enabled(&self) -> bool {
         let lock = self.0.lock().await;
         lock.config.boot_anim_enabled
     }
@@ -198,11 +233,9 @@ impl crate::Reloadable for CtrlAnimeZbus {
     async fn reload(&mut self) -> Result<(), RogError> {
         if let Some(lock) = self.0.try_lock() {
             lock.node
-                .write_bytes(&pkt_for_set_on(lock.config.awake_enabled))?;
-            lock.node.write_bytes(&pkt_for_apply())?;
+                .write_bytes(&pkt_for_set_brightness(lock.config.awake_enabled))?;
             lock.node
                 .write_bytes(&pkt_for_set_boot(lock.config.boot_anim_enabled))?;
-            lock.node.write_bytes(&pkt_for_apply())?;
 
             let action = lock.cache.boot.clone();
             CtrlAnime::run_thread(self.0.clone(), action, true);
