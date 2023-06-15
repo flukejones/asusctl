@@ -98,7 +98,7 @@ pub const fn pkt_for_set_awake_enabled(enable: bool) -> [u8; PACKET_SIZE] {
     pkt[0] = DEV_PAGE;
     pkt[1] = 0xc3;
     pkt[2] = 0x01;
-    pkt[3] = if enable { 0x80 } else { 0x00 };
+    pkt[3] = if !enable { 0x80 } else { 0x00 };
     pkt
 }
 

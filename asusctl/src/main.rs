@@ -246,7 +246,7 @@ fn handle_anime(
     }
     if cmd.clear {
         let anime_type = get_anime_type()?;
-        let data = vec![0u8; anime_type.data_length()];
+        let data = vec![255u8; anime_type.data_length()];
         let tmp = AnimeDataBuffer::from_vec(anime_type, data)?;
         dbus.proxies().anime().write(tmp)?;
     }
