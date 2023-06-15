@@ -8,6 +8,12 @@
 //!
 //! Step 1 need to applied only on fresh system boot.
 
+use std::str::FromStr;
+
+use serde_derive::{Deserialize, Serialize};
+#[cfg(feature = "dbus")]
+use zbus::zvariant::Type;
+
 use crate::error::AnimeError;
 use crate::AnimeType;
 
@@ -15,6 +21,30 @@ const PACKET_SIZE: usize = 640;
 const DEV_PAGE: u8 = 0x5e;
 pub const VENDOR_ID: u16 = 0x0b05;
 pub const PROD_ID: u16 = 0x193b;
+
+#[cfg_attr(feature = "dbus", derive(Type))]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
+/// Base LED brightness of the display
+pub enum Brightness {
+    Off,
+    Low,
+    Med,
+    High,
+}
+
+impl FromStr for Brightness {
+    type Err = AnimeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "Off" | "off" => Brightness::Off,
+            "Low" | "low" => Brightness::Low,
+            "Med" | "med" => Brightness::Med,
+            "High" | "high" => Brightness::High,
+            _ => Brightness::Med,
+        })
+    }
+}
 
 /// `get_anime_type` is very broad, matching on part of the laptop board name
 /// only. For this reason `find_node()` must be used also to verify if the USB
@@ -83,12 +113,12 @@ pub const fn pkt_for_set_boot(status: bool) -> [u8; PACKET_SIZE] {
 /// `pkt_for_apply()` to be written after.
 // TODO: change the users of this method
 #[inline]
-pub const fn pkt_for_set_brightness(on: bool) -> [u8; PACKET_SIZE] {
+pub const fn pkt_for_set_brightness(brightness: Brightness) -> [u8; PACKET_SIZE] {
     let mut pkt = [0; PACKET_SIZE];
     pkt[0] = DEV_PAGE;
     pkt[1] = 0xc0;
     pkt[2] = 0x04;
-    pkt[3] = if on { 0x03 } else { 0x00 };
+    pkt[3] = brightness as u8;
     pkt
 }
 

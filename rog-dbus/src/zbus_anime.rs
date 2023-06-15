@@ -1,3 +1,4 @@
+use rog_anime::usb::Brightness;
 use rog_anime::{AnimeDataBuffer, AnimePowerStates};
 use zbus::dbus_proxy;
 
@@ -9,7 +10,10 @@ trait Anime {
     /// Set whether the AniMe will show boot, suspend, or off animations
     fn set_animation_enabled(&self, status: bool) -> zbus::Result<()>;
 
-    /// Set the global AniMe brightness
+    /// Set the global base brightness
+    fn set_brightness(&self, bright: Brightness) -> zbus::Result<()>;
+
+    /// Set the global (image) brightness
     fn set_image_brightness(&self, bright: f32) -> zbus::Result<()>;
 
     /// Set whether the AniMe is displaying images/data

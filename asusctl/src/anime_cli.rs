@@ -1,4 +1,5 @@
 use gumdrop::Options;
+use rog_anime::usb::Brightness;
 
 #[derive(Options)]
 pub struct AnimeCommand {
@@ -14,8 +15,13 @@ pub struct AnimeCommand {
         help = "enable/disable system animations (boot/sleep/shutdown)"
     )]
     pub boot_enable: Option<bool>,
-    #[options(meta = "", help = "set global AniMe brightness value")]
-    pub brightness: Option<f32>,
+    #[options(
+        meta = "",
+        help = "set global base brightness value <Off, Low, Med, High>"
+    )]
+    pub brightness: Option<Brightness>,
+    #[options(meta = "", help = "set global (image) brightness value")]
+    pub image_brightness: Option<f32>,
     #[options(help = "clear the display")]
     pub clear: bool,
     #[options(command)]

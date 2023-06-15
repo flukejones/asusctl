@@ -226,6 +226,7 @@ fn handle_anime(
         && cmd.enable.is_none()
         && cmd.boot_enable.is_none()
         && cmd.brightness.is_none()
+        && cmd.image_brightness.is_none()
         && !cmd.clear)
         || cmd.help
     {
@@ -241,6 +242,9 @@ fn handle_anime(
         dbus.proxies().anime().set_animation_enabled(anime_boot)?;
     }
     if let Some(bright) = cmd.brightness {
+        dbus.proxies().anime().set_brightness(bright)?;
+    }
+    if let Some(bright) = cmd.image_brightness {
         verify_brightness(bright);
         dbus.proxies().anime().set_image_brightness(bright)?;
     }

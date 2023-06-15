@@ -6,6 +6,7 @@ use config_traits::StdConfig;
 use log::warn;
 use rog_anime::usb::{
     pkt_for_enable_animation, pkt_for_set_awake_enabled, pkt_for_set_boot, pkt_for_set_brightness,
+    Brightness,
 };
 use rog_anime::{AnimeDataBuffer, AnimePowerStates};
 use zbus::export::futures_util::lock::Mutex;
@@ -59,16 +60,19 @@ impl CtrlAnimeZbus {
 
     /// Set base brightness level
     // TODO: enum for brightness
-    async fn set_brightness(&self, #[zbus(signal_context)] ctxt: SignalContext<'_>, status: bool) {
-        let mut lock = self.0.lock().await;
+    async fn set_brightness(
+        &self,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+        brightness: Brightness,
+    ) {
+        let lock = self.0.lock().await;
         lock.node
-            .write_bytes(&pkt_for_set_brightness(status))
+            .write_bytes(&pkt_for_set_brightness(brightness))
             .map_err(|err| {
                 warn!("rog_anime::run_animation:callback {}", err);
             })
             .ok();
-        lock.config.awake_enabled = status;
-        lock.config.write();
+        // lock.config.write();
 
         Self::notify_power_states(
             &ctxt,
@@ -232,8 +236,9 @@ impl crate::CtrlTask for CtrlAnimeZbus {
 impl crate::Reloadable for CtrlAnimeZbus {
     async fn reload(&mut self) -> Result<(), RogError> {
         if let Some(lock) = self.0.try_lock() {
-            lock.node
-                .write_bytes(&pkt_for_set_brightness(lock.config.awake_enabled))?;
+            // TODO: restore new settings
+            // lock.node
+            //     .write_bytes(&pkt_for_set_brightness(lock.config.awake_enabled))?;
             lock.node
                 .write_bytes(&pkt_for_set_boot(lock.config.boot_anim_enabled))?;
 
