@@ -31,13 +31,19 @@ pub struct LedPowerCommand2 {
 #[derive(Options)]
 pub enum SetAuraEnabled {
     /// Applies to both old and new models
-    #[options(help = "set <keyboard, logo, lightbar> to enabled while device is awake")]
+    #[options(help = "set <keyboard, logo, lightbar, rearglow> to enabled while device is awake")]
     Awake(AuraEnabled),
-    #[options(help = "set <keyboard, logo, lightbar> to enabled while the device is booting")]
+    #[options(
+        help = "set <keyboard, logo, lightbar, rearglow> to enabled while the device is booting"
+    )]
     Boot(AuraEnabled),
-    #[options(help = "set <keyboard, logo, lightbar> to animate while the device is suspended")]
+    #[options(
+        help = "set <keyboard, logo, lightbar, rearglow> to animate while the device is suspended"
+    )]
     Sleep(AuraEnabled),
-    #[options(help = "set <keyboard, logo, lightbar> to animate while the device is shutdown")]
+    #[options(
+        help = "set <keyboard, logo, lightbar, rearglow> to animate while the device is shutdown"
+    )]
     Shutdown(AuraEnabled),
 }
 
@@ -50,7 +56,9 @@ pub struct AuraEnabled {
     #[options(meta = "", help = "<true/false>")]
     pub logo: Option<bool>,
     #[options(meta = "", help = "<true/false>")]
-    pub lightbar: Option<bool>,
+    pub frontglow: Option<bool>,
+    #[options(meta = "", help = "<true/false>")]
+    pub rearglow: Option<bool>,
     #[options(meta = "", help = "<true/false>")]
     pub lid: Option<bool>,
 }

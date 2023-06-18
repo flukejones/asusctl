@@ -78,6 +78,10 @@ impl CtrlKbdLedZbus {
     ///     BootBar,
     ///     SleepBar,
     ///     ShutdownBar,
+    ///     BootRearBar,
+    ///     AwakeRearBar,
+    ///     SleepRearBar,
+    ///     ShutdownRearBar,
     /// }
     /// ```
     async fn set_leds_power(

@@ -112,14 +112,17 @@ impl AuraDevTuf {
 /// Keybord and Lightbar regardless of if either are enabled (or Awake is
 /// enabled)
 ///
-/// |   Byte 1   |   Byte 2   |   Byte 3   | function |   hex    |
-/// |------------|------------|------------|----------|----------|
-/// | 0000, 0000 | 0000, 0000 | 0000, 0010 | Awake    | 00,00,02 |
-/// | 0000, 1000 | 0000, 0000 | 0000, 0000 | Keyboard | 08,00,00 |
-/// | 0000, 0100 | 0000, 0101 | 0000, 0000 | Lightbar | 04,05,00 |
-/// | 1100, 0011 | 0001, 0010 | 0000, 1001 | Boot/Sht | c3,12,09 |
-/// | 0011, 0000 | 0000, 1000 | 0000, 0100 | Sleep    | 30,08,04 |
-/// | 1111, 1111 | 0001, 1111 | 0000, 1111 | all on   |          |
+/// |   Byte 1   |   Byte 2   |   Byte 3   |   Byte 4   | function  |   hex
+/// |
+/// |------------|------------|------------|------------|-----------|-------------|
+/// | 0000, 0000 | 0000, 0000 | 0000, 0010 | 0000, 0000 | Awake     |
+/// 00,00,02,00 | | 0000, 1000 | 0000, 0000 | 0000, 0000 | 0000, 0000 | Keyboard
+/// | 08,00,00,00 | | 0000, 0100 | 0000, 0101 | 0000, 0000 | 0000, 0000 |
+/// Lightbar  | 04,05,00,00 | | 1100, 0011 | 0001, 0010 | 0000, 1001 | 0000,
+/// 0000 | Boot/Sht  | c3,12,09,00 | | 0011, 0000 | 0000, 1000 | 0000, 0100 |
+/// 0000, 0000 | Sleep     | 30,08,04,00 | | 1111, 1111 | 0001, 1111 | 0000,
+/// 1111 | 0000, 0000 | all on    |             | | 0000, 0000 | 0000, 0000 |
+/// 0000, 0000 | 0000, 0010 | Rear Glow | 00,00,00,02 |
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
 #[repr(u32)]
@@ -138,7 +141,7 @@ impl From<AuraDevRog1> for u32 {
 }
 
 impl AuraDevRog1 {
-    pub fn to_bytes(control: &[Self]) -> [u8; 3] {
+    pub fn to_bytes(control: &[Self]) -> [u8; 4] {
         let mut a: u32 = 0;
         for n in control {
             a |= *n as u32;
@@ -147,6 +150,7 @@ impl AuraDevRog1 {
             ((a & 0xff0000) >> 16) as u8,
             ((a & 0xff00) >> 8) as u8,
             (a & 0xff) as u8,
+            0x00,
         ]
     }
 
@@ -217,6 +221,10 @@ pub enum AuraDevRog2 {
     AwakeLid = 1 << (15 + 2),
     SleepLid = 1 << (15 + 3),
     ShutdownLid = 1 << (15 + 4),
+    BootRearGlow = 1 << (23 + 1),
+    AwakeRearGlow = 1 << (23 + 2),
+    SleepRearGlow = 1 << (23 + 3),
+    ShutdownRearGlow = 1 << (23 + 4),
 }
 
 impl From<AuraDevRog2> for u32 {
@@ -226,7 +234,7 @@ impl From<AuraDevRog2> for u32 {
 }
 
 impl AuraDevRog2 {
-    pub fn to_bytes(control: &[Self]) -> [u8; 3] {
+    pub fn to_bytes(control: &[Self]) -> [u8; 4] {
         let mut a: u32 = 0;
         for n in control {
             a |= *n as u32;
@@ -235,6 +243,7 @@ impl AuraDevRog2 {
             (a & 0xff) as u8,
             ((a & 0xff00) >> 8) as u8,
             ((a & 0xff0000) >> 16) as u8,
+            ((a & 0xff000000) >> 24) as u8,
         ]
     }
 
@@ -269,22 +278,22 @@ mod tests {
         let bytes = [AuraDevRog1::Keyboard, AuraDevRog1::Awake];
         let bytes = AuraDevRog1::to_bytes(&bytes);
         println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes, [0x08, 0x00, 0x02]);
+        assert_eq!(bytes, [0x08, 0x00, 0x02, 0x00]);
 
         let bytes = [AuraDevRog1::Lightbar, AuraDevRog1::Awake];
         let bytes = AuraDevRog1::to_bytes(&bytes);
         println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes, [0x04, 0x05, 0x02]);
+        assert_eq!(bytes, [0x04, 0x05, 0x02, 0x00]);
 
         let bytes = [AuraDevRog1::Sleep];
         let bytes = AuraDevRog1::to_bytes(&bytes);
         println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes, [0x30, 0x08, 0x04]);
+        assert_eq!(bytes, [0x30, 0x08, 0x04, 0x00]);
 
         let bytes = [AuraDevRog1::Boot];
         let bytes = AuraDevRog1::to_bytes(&bytes);
         println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes, [0xc3, 0x12, 0x09]);
+        assert_eq!(bytes, [0xc3, 0x12, 0x09, 0x00]);
 
         let bytes = [
             AuraDevRog1::Keyboard,
@@ -296,7 +305,7 @@ mod tests {
 
         let bytes = AuraDevRog1::to_bytes(&bytes);
         println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes, [0xff, 0x1f, 0x000f]);
+        assert_eq!(bytes, [0xff, 0x1f, 0x000f, 0x00]);
     }
 
     #[test]
@@ -442,5 +451,70 @@ mod tests {
         let bytes = AuraDevRog2::to_bytes(&byte3);
         println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
         assert_eq!(bytes[2], 0x06);
+
+        let byte4 = [
+            // AuraDev19b6::AwakeRearBar,
+            AuraDevRog2::BootRearGlow,
+            AuraDevRog2::SleepRearGlow,
+            AuraDevRog2::ShutdownRearGlow,
+        ];
+        let bytes = AuraDevRog2::to_bytes(&byte4);
+        println!(
+            "{:08b}, {:08b}, {:08b}, {:08b}",
+            bytes[0], bytes[1], bytes[2], bytes[3]
+        );
+        assert_eq!(bytes[3], 0x0d);
+
+        let byte4 = [
+            AuraDevRog2::AwakeRearGlow,
+            AuraDevRog2::BootRearGlow,
+            // AuraDevRog2::SleepRearBar,
+            AuraDevRog2::ShutdownRearGlow,
+        ];
+        let bytes = AuraDevRog2::to_bytes(&byte4);
+        println!(
+            "{:08b}, {:08b}, {:08b}, {:08b}",
+            bytes[0], bytes[1], bytes[2], bytes[3]
+        );
+        assert_eq!(bytes[3], 0x0b);
+
+        let byte4 = [
+            AuraDevRog2::AwakeRearGlow,
+            AuraDevRog2::BootRearGlow,
+            AuraDevRog2::SleepRearGlow,
+            // AuraDevRog2::ShutdownRearBar,
+        ];
+        let bytes = AuraDevRog2::to_bytes(&byte4);
+        println!(
+            "{:08b}, {:08b}, {:08b}, {:08b}",
+            bytes[0], bytes[1], bytes[2], bytes[3]
+        );
+        assert_eq!(bytes[3], 0x07);
+
+        let byte4 = [
+            AuraDevRog2::AwakeRearGlow,
+            // AuraDevRog2::BootRearBar,
+            AuraDevRog2::SleepRearGlow,
+            // AuraDevRog2::ShutdownRearBar,
+        ];
+        let bytes = AuraDevRog2::to_bytes(&byte4);
+        println!(
+            "{:08b}, {:08b}, {:08b}, {:08b}",
+            bytes[0], bytes[1], bytes[2], bytes[3]
+        );
+        assert_eq!(bytes[3], 0x06);
+
+        let byte4 = [
+            AuraDevRog2::AwakeRearGlow,
+            // AuraDevRog2::BootRearBar,
+            // AuraDevRog2::SleepRearBar,
+            // AuraDevRog2::ShutdownRearBar,
+        ];
+        let bytes = AuraDevRog2::to_bytes(&byte4);
+        println!(
+            "{:08b}, {:08b}, {:08b}, {:08b}",
+            bytes[0], bytes[1], bytes[2], bytes[3]
+        );
+        assert_eq!(bytes[3], 0x02);
     }
 }

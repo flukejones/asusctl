@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Support for FX507Z LED modes
 - Support for GL503V LED modes
+- Support the Rear Glow on some laptops
 ### Changed
 - Move FX506HC to FX506H in arua DB to catch full series of this range
 - Move FX506LH to FX506L in arua DB to catch full series of this range

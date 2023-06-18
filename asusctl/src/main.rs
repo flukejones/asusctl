@@ -601,26 +601,30 @@ fn handle_led_power2(
             aura_cli::SetAuraEnabled::Boot(arg) => {
                 check(arg.keyboard, AuraDevRog2::BootKeyb);
                 check(arg.logo, AuraDevRog2::BootLogo);
-                check(arg.lightbar, AuraDevRog2::BootBar);
+                check(arg.frontglow, AuraDevRog2::BootBar);
+                check(arg.rearglow, AuraDevRog2::BootRearGlow);
                 check(arg.lid, AuraDevRog2::AwakeLid);
             }
             aura_cli::SetAuraEnabled::Sleep(arg) => {
                 check(arg.keyboard, AuraDevRog2::SleepKeyb);
                 check(arg.logo, AuraDevRog2::SleepLogo);
-                check(arg.lightbar, AuraDevRog2::SleepBar);
+                check(arg.frontglow, AuraDevRog2::SleepBar);
+                check(arg.rearglow, AuraDevRog2::SleepRearGlow);
                 check(arg.lid, AuraDevRog2::SleepLid);
             }
             aura_cli::SetAuraEnabled::Awake(arg) => {
                 check(arg.keyboard, AuraDevRog2::AwakeKeyb);
                 check(arg.logo, AuraDevRog2::AwakeLogo);
-                check(arg.lightbar, AuraDevRog2::AwakeBar);
+                check(arg.frontglow, AuraDevRog2::AwakeBar);
+                check(arg.rearglow, AuraDevRog2::AwakeRearGlow);
                 check(arg.lid, AuraDevRog2::AwakeLid);
             }
             aura_cli::SetAuraEnabled::Shutdown(arg) => {
                 check(arg.keyboard, AuraDevRog2::ShutdownKeyb);
                 check(arg.logo, AuraDevRog2::ShutdownLogo);
-                check(arg.lightbar, AuraDevRog2::ShutdownBar);
-                check(arg.lid, AuraDevRog2::ShutdownBar);
+                check(arg.frontglow, AuraDevRog2::ShutdownBar);
+                check(arg.rearglow, AuraDevRog2::ShutdownRearGlow);
+                check(arg.lid, AuraDevRog2::ShutdownLid);
             }
         }
 

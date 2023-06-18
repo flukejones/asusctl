@@ -200,7 +200,7 @@ impl CtrlKbdLed {
             }
         } else if let LEDNode::Rog(hid_raw) = &self.led_node {
             let bytes = AuraPowerConfig::to_bytes(&self.config.enabled);
-            let message = [0x5d, 0xbd, 0x01, bytes[0], bytes[1], bytes[2]];
+            let message = [0x5d, 0xbd, 0x01, bytes[0], bytes[1], bytes[2], bytes[3]];
 
             hid_raw.write_bytes(&message)?;
             hid_raw.write_bytes(&LED_SET)?;

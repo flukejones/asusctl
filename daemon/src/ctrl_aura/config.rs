@@ -20,9 +20,9 @@ pub enum AuraPowerConfig {
 
 impl AuraPowerConfig {
     /// Invalid for TUF laptops
-    pub fn to_bytes(control: &Self) -> [u8; 3] {
+    pub fn to_bytes(control: &Self) -> [u8; 4] {
         match control {
-            AuraPowerConfig::AuraDevTuf(_) => [0, 0, 0],
+            AuraPowerConfig::AuraDevTuf(_) => [0, 0, 0, 0],
             AuraPowerConfig::AuraDevRog1(c) => {
                 let c: Vec<AuraDevRog1> = c.iter().copied().collect();
                 AuraDevRog1::to_bytes(&c)
@@ -156,6 +156,10 @@ impl AuraConfig {
                 AuraDevRog2::AwakeBar,
                 AuraDevRog2::SleepBar,
                 AuraDevRog2::ShutdownBar,
+                AuraDevRog2::BootRearGlow,
+                AuraDevRog2::AwakeRearGlow,
+                AuraDevRog2::SleepRearGlow,
+                AuraDevRog2::ShutdownRearGlow,
             ]))
         } else if prod_id == AuraDevice::Tuf {
             AuraPowerConfig::AuraDevTuf(HashSet::from([
