@@ -110,13 +110,12 @@ impl AnimeGif {
         let file = File::open(file_name)?;
         let mut decoder = decoder.read_info(file)?;
 
-        let mut frames = Vec::with_capacity(decoder.buffer_size());
-
+        let mut frames = Vec::default();
         while let Some(frame) = decoder.read_next_frame()? {
             let wait = frame.delay * 10;
-            if matches!(frame.dispose, gif::DisposalMethod::Background) {
-                frames = Vec::new();
-            }
+            // if matches!(frame.dispose, gif::DisposalMethod::Background) {
+            //     frames = Vec::new();
+            // }
             for (y, row) in frame.buffer.chunks(frame.width as usize * 4).enumerate() {
                 for (x, px) in row.chunks(4).enumerate() {
                     if px[3] != 255 {
