@@ -2,77 +2,11 @@ use std::time::Duration;
 
 use config_traits::{StdConfig, StdConfigLoad2};
 use rog_anime::error::AnimeError;
-use rog_anime::{ActionData, ActionLoader, AnimTime, AnimeType, Fade, Vec2};
+use rog_anime::usb::Brightness;
+use rog_anime::{ActionData, ActionLoader, AnimTime, Animations, AnimeType, Fade, Vec2};
 use serde_derive::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "anime.ron";
-
-#[derive(Deserialize, Serialize)]
-pub struct AnimeConfigV341 {
-    pub system: Option<ActionLoader>,
-    pub boot: Option<ActionLoader>,
-    pub suspend: Option<ActionLoader>,
-    pub shutdown: Option<ActionLoader>,
-}
-
-impl From<AnimeConfigV341> for AnimeConfig {
-    fn from(c: AnimeConfigV341) -> AnimeConfig {
-        AnimeConfig {
-            system: if let Some(ani) = c.system {
-                vec![ani]
-            } else {
-                vec![]
-            },
-            boot: if let Some(ani) = c.boot {
-                vec![ani]
-            } else {
-                vec![]
-            },
-            wake: if let Some(ani) = c.suspend {
-                vec![ani]
-            } else {
-                vec![]
-            },
-            shutdown: if let Some(ani) = c.shutdown.clone() {
-                vec![ani]
-            } else {
-                vec![]
-            },
-            sleep: if let Some(ani) = c.shutdown.clone() {
-                vec![ani]
-            } else {
-                vec![]
-            },
-            brightness: 1.0,
-            awake_enabled: true,
-            boot_anim_enabled: true,
-        }
-    }
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct AnimeConfigV352 {
-    pub system: Vec<ActionLoader>,
-    pub boot: Vec<ActionLoader>,
-    pub wake: Vec<ActionLoader>,
-    pub shutdown: Vec<ActionLoader>,
-    pub brightness: f32,
-}
-
-impl From<AnimeConfigV352> for AnimeConfig {
-    fn from(c: AnimeConfigV352) -> AnimeConfig {
-        AnimeConfig {
-            system: c.system,
-            boot: c.boot,
-            wake: c.wake,
-            sleep: c.shutdown.clone(),
-            shutdown: c.shutdown,
-            brightness: 1.0,
-            awake_enabled: true,
-            boot_anim_enabled: true,
-        }
-    }
-}
 
 #[derive(Deserialize, Serialize)]
 pub struct AnimeConfigV460 {
@@ -92,9 +26,32 @@ impl From<AnimeConfigV460> for AnimeConfig {
             wake: c.wake,
             sleep: c.sleep,
             shutdown: c.shutdown,
-            brightness: 1.0,
-            awake_enabled: true,
-            boot_anim_enabled: true,
+            ..Default::default()
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct AnimeConfigV5 {
+    pub system: Vec<ActionLoader>,
+    pub boot: Vec<ActionLoader>,
+    pub wake: Vec<ActionLoader>,
+    pub sleep: Vec<ActionLoader>,
+    pub shutdown: Vec<ActionLoader>,
+    pub brightness: f32,
+    pub awake_enabled: bool,
+    pub boot_anim_enabled: bool,
+}
+
+impl From<AnimeConfigV5> for AnimeConfig {
+    fn from(c: AnimeConfigV5) -> AnimeConfig {
+        AnimeConfig {
+            system: c.system,
+            boot: c.boot,
+            wake: c.wake,
+            sleep: c.sleep,
+            shutdown: c.shutdown,
+            ..Default::default()
         }
     }
 }
@@ -156,8 +113,10 @@ pub struct AnimeConfig {
     pub sleep: Vec<ActionLoader>,
     pub shutdown: Vec<ActionLoader>,
     pub brightness: f32,
-    pub awake_enabled: bool,
-    pub boot_anim_enabled: bool,
+    pub display_enabled: bool,
+    pub display_brightness: Brightness,
+    pub builtin_anims_enabled: bool,
+    pub builtin_anims: Animations,
 }
 
 impl Default for AnimeConfig {
@@ -169,8 +128,10 @@ impl Default for AnimeConfig {
             sleep: Vec::new(),
             shutdown: Vec::new(),
             brightness: 1.0,
-            awake_enabled: true,
-            boot_anim_enabled: true,
+            display_enabled: true,
+            display_brightness: Brightness::Med,
+            builtin_anims_enabled: true,
+            builtin_anims: Animations::default(),
         }
     }
 }
@@ -189,7 +150,7 @@ impl StdConfig for AnimeConfig {
     }
 }
 
-impl StdConfigLoad2<AnimeConfigV341, AnimeConfigV352> for AnimeConfig {}
+impl StdConfigLoad2<AnimeConfigV460, AnimeConfigV5> for AnimeConfig {}
 
 impl AnimeConfig {
     // fn clamp_config_brightness(mut config: &mut AnimeConfig) {
@@ -247,8 +208,7 @@ impl AnimeConfig {
                 time: AnimTime::Infinite,
             }],
             brightness: 1.0,
-            awake_enabled: true,
-            boot_anim_enabled: true,
+            ..Default::default()
         }
     }
 }

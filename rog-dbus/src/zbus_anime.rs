@@ -1,5 +1,5 @@
-use rog_anime::usb::Brightness;
-use rog_anime::{AnimeDataBuffer, AnimePowerStates};
+use rog_anime::usb::{AnimAwake, AnimBooting, AnimShutdown, AnimSleeping, Brightness};
+use rog_anime::{AnimeDataBuffer, DeviceState as AnimeDeviceState};
 use zbus::dbus_proxy;
 
 #[dbus_proxy(
@@ -7,32 +7,36 @@ use zbus::dbus_proxy;
     default_path = "/org/asuslinux/Anime"
 )]
 trait Anime {
-    /// Set whether the AniMe will show boot, suspend, or off animations
-    fn set_animation_enabled(&self, status: bool) -> zbus::Result<()>;
+    /// Set the global (image) brightness
+    fn set_image_brightness(&self, bright: f32) -> zbus::Result<()>;
 
     /// Set the global base brightness
     fn set_brightness(&self, bright: Brightness) -> zbus::Result<()>;
 
-    /// Set the global (image) brightness
-    fn set_image_brightness(&self, bright: f32) -> zbus::Result<()>;
+    /// Set whether the AniMe will show boot, suspend, or off animations
+    fn set_builtins_enabled(&self, enabled: bool) -> zbus::Result<()>;
+
+    /// Set which builtin animation is used for each stage
+    fn set_builtin_animations(
+        &self,
+        boot: AnimBooting,
+        awake: AnimAwake,
+        sleep: AnimSleeping,
+        shutdown: AnimShutdown,
+    ) -> zbus::Result<()>;
 
     /// Set whether the AniMe is displaying images/data
-    fn set_awake_enabled(&self, status: bool) -> zbus::Result<()>;
+    fn set_enable_display(&self, status: bool) -> zbus::Result<()>;
 
     /// Writes a data stream of length. Will force system thread to exit until
     /// it is restarted
     fn write(&self, input: AnimeDataBuffer) -> zbus::Result<()>;
 
-    /// Get status of if the AniMe LEDs are on
-    #[dbus_proxy(property)]
-    fn awake_enabled(&self) -> zbus::Result<bool>;
-
-    /// Get the status of if factory system-status animations are enabled
-    #[dbus_proxy(property)]
-    fn animation_enabled(&self) -> zbus::Result<bool>;
+    // #[dbus_proxy(property)]
+    fn device_state(&self) -> zbus::Result<AnimeDeviceState>;
 
     /// Notify listeners of the status of AniMe LED power and factory
     /// system-status animations
     #[dbus_proxy(signal)]
-    fn power_states(&self, data: AnimePowerStates) -> zbus::Result<()>;
+    fn device_state(&self, data: AnimeDeviceState) -> zbus::Result<()>;
 }

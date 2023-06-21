@@ -223,8 +223,8 @@ fn handle_anime(
     cmd: &AnimeCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if (cmd.command.is_none()
-        && cmd.enable.is_none()
-        && cmd.boot_enable.is_none()
+        && cmd.enable_display.is_none()
+        && cmd.enable_powersave_anim.is_none()
         && cmd.brightness.is_none()
         && cmd.image_brightness.is_none()
         && !cmd.clear)
@@ -235,11 +235,11 @@ fn handle_anime(
             println!("\n{}", lst);
         }
     }
-    if let Some(anime_turn) = cmd.enable {
-        dbus.proxies().anime().set_awake_enabled(anime_turn)?;
+    if let Some(enable) = cmd.enable_display {
+        dbus.proxies().anime().set_enable_display(enable)?;
     }
-    if let Some(anime_boot) = cmd.boot_enable {
-        dbus.proxies().anime().set_animation_enabled(anime_boot)?;
+    if let Some(enable) = cmd.enable_powersave_anim {
+        dbus.proxies().anime().set_builtins_enabled(enable)?;
     }
     if let Some(bright) = cmd.brightness {
         dbus.proxies().anime().set_brightness(bright)?;
@@ -366,6 +366,23 @@ fn handle_anime(
                         break;
                     }
                 }
+            }
+            AnimeActions::SetBuiltins(builtins) => {
+                if builtins.help_requested() || builtins.set.is_none() {
+                    println!("\nAny unspecified args will be set to default (first shown var)\n");
+                    println!("\n{}", builtins.self_usage());
+                    if let Some(lst) = builtins.self_command_list() {
+                        println!("\n{}", lst);
+                    }
+                    return Ok(());
+                }
+
+                dbus.proxies().anime().set_builtin_animations(
+                    builtins.boot,
+                    builtins.awake,
+                    builtins.sleep,
+                    builtins.shutdown,
+                )?;
             }
         }
     }

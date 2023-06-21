@@ -1,20 +1,14 @@
 use gumdrop::Options;
-use rog_anime::usb::Brightness;
+use rog_anime::usb::{AnimAwake, AnimBooting, AnimShutdown, AnimSleeping, Brightness};
 
 #[derive(Options)]
 pub struct AnimeCommand {
     #[options(help = "print help message")]
     pub help: bool,
-    #[options(
-        meta = "",
-        help = "enable/disable the panel LEDs (does not erase last image)"
-    )]
-    pub enable: Option<bool>,
-    #[options(
-        meta = "",
-        help = "enable/disable system animations (boot/sleep/shutdown)"
-    )]
-    pub boot_enable: Option<bool>,
+    #[options(meta = "", help = "enable/disable the display")]
+    pub enable_display: Option<bool>,
+    #[options(meta = "", help = "enable/disable the builtin run/powersave animation")]
+    pub enable_powersave_anim: Option<bool>,
     #[options(
         meta = "",
         help = "set global base brightness value <Off, Low, Med, High>"
@@ -38,6 +32,24 @@ pub enum AnimeActions {
     Gif(AnimeGif),
     #[options(help = "display an animated diagonal/pixel-perfect GIF")]
     PixelGif(AnimeGifDiagonal),
+    #[options(help = "change which builtin animations are shown")]
+    SetBuiltins(Builtins),
+}
+
+#[derive(Options)]
+pub struct Builtins {
+    #[options(help = "print help message")]
+    pub help: bool,
+    #[options(meta = "", help = " <GlitchConstruction, StaticEmergence>")]
+    pub boot: AnimBooting,
+    #[options(meta = "", help = "<BinaryBannerScroll, RogLogoGlitch>")]
+    pub awake: AnimAwake,
+    #[options(meta = "", help = "<BannerSwipe, Starfield>")]
+    pub sleep: AnimSleeping,
+    #[options(meta = "", help = "<GlitchOut, SeeYa>")]
+    pub shutdown: AnimShutdown,
+    #[options(meta = "", help = "set/apply the animations")]
+    pub set: Option<bool>,
 }
 
 #[derive(Options)]

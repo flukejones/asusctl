@@ -11,7 +11,7 @@ use std::thread::sleep;
 use ::zbus::export::futures_util::lock::Mutex;
 use log::{error, info, warn};
 use rog_anime::error::AnimeError;
-use rog_anime::usb::{get_anime_type, pkt_for_flush, pkts_for_init};
+use rog_anime::usb::{get_anime_type, pkt_flush, pkt_set_enable_powersave_anim, pkts_for_init};
 use rog_anime::{ActionData, AnimeDataBuffer, AnimePacketType, AnimeType};
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::supported::AnimeSupportedFunctions;
@@ -72,10 +72,19 @@ impl CtrlAnime {
     ///
     /// Because this also writes to the usb device, other write tries (display
     /// only) *must* get the mutex lock and set the `thread_exit` atomic.
-    fn run_thread(inner: Arc<Mutex<CtrlAnime>>, actions: Vec<ActionData>, mut once: bool) {
+    async fn run_thread(inner: Arc<Mutex<CtrlAnime>>, actions: Vec<ActionData>, mut once: bool) {
         if actions.is_empty() {
             warn!("AniMe system actions was empty");
             return;
+        }
+
+        if let Some(lock) = inner.try_lock() {
+            lock.node
+                .write_bytes(&pkt_set_enable_powersave_anim(false))
+                .map_err(|err| {
+                    warn!("rog_anime::run_animation:callback {}", err);
+                })
+                .ok();
         }
 
         // Loop rules:
@@ -211,7 +220,7 @@ impl CtrlAnime {
         for row in &data {
             self.node.write_bytes(row)?;
         }
-        self.node.write_bytes(&pkt_for_flush())?;
+        self.node.write_bytes(&pkt_flush())?;
         Ok(())
     }
 

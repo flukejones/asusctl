@@ -10,7 +10,7 @@ description = "dbus interface methods for asusctl"
 edition = "2021"
 
 [dependencies]
-rog_anime = { path = "../rog-anime" }
+rog_anime = { path = "../rog-anime", features = ["dbus"] }
 rog_aura = { path = "../rog-aura" }
 rog_profiles = { path = "../rog-profiles" }
 rog_platform = { path = "../rog-platform" }

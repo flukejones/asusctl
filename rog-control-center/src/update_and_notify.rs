@@ -269,7 +269,7 @@ pub fn start_notifications(
                 e
             })
             .unwrap();
-        if let Ok(p) = proxy.receive_power_states().await {
+        if let Ok(p) = proxy.receive_device_state().await {
             info!("Started zbus signal thread: receive_power_states");
             p.for_each(|_| {
                 if let Ok(_lock) = page_states1.lock() {

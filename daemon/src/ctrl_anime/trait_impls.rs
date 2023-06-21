@@ -5,10 +5,10 @@ use async_trait::async_trait;
 use config_traits::StdConfig;
 use log::warn;
 use rog_anime::usb::{
-    pkt_for_enable_animation, pkt_for_set_awake_enabled, pkt_for_set_boot, pkt_for_set_brightness,
-    Brightness,
+    pkt_set_brightness, pkt_set_builtin_animations, pkt_set_enable_display,
+    pkt_set_enable_powersave_anim, AnimAwake, AnimBooting, AnimShutdown, AnimSleeping, Brightness,
 };
-use rog_anime::{AnimeDataBuffer, AnimePowerStates};
+use rog_anime::{AnimeDataBuffer, DeviceState};
 use zbus::export::futures_util::lock::Mutex;
 use zbus::{dbus_interface, Connection, SignalContext};
 
@@ -65,83 +65,125 @@ impl CtrlAnimeZbus {
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
         brightness: Brightness,
     ) {
-        let lock = self.0.lock().await;
+        let mut lock = self.0.lock().await;
         lock.node
-            .write_bytes(&pkt_for_set_brightness(brightness))
+            .write_bytes(&pkt_set_brightness(brightness))
             .map_err(|err| {
                 warn!("rog_anime::run_animation:callback {}", err);
             })
             .ok();
-        // lock.config.write();
+        lock.config.display_brightness = brightness;
+        lock.config.write();
 
-        Self::notify_power_states(
+        Self::notify_device_state(
             &ctxt,
-            AnimePowerStates {
-                brightness: lock.config.brightness.floor() as u8,
-                enabled: lock.config.awake_enabled,
-                boot_anim_enabled: lock.config.boot_anim_enabled,
+            DeviceState {
+                display_enabled: lock.config.display_enabled,
+                display_brightness: lock.config.display_brightness,
+                builtin_anims_enabled: lock.config.builtin_anims_enabled,
+                builtin_anims: lock.config.builtin_anims,
             },
         )
         .await
         .ok();
     }
 
-    /// Set whether the AniMe is displaying images/data
-    async fn set_awake_enabled(
+    /// Enable the builtin animations or not
+    async fn set_builtins_enabled(
         &self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
-        status: bool,
+        enabled: bool,
     ) {
         let mut lock = self.0.lock().await;
         lock.node
-            .write_bytes(&pkt_for_set_awake_enabled(status))
+            .write_bytes(&pkt_set_enable_powersave_anim(enabled))
             .map_err(|err| {
                 warn!("rog_anime::run_animation:callback {}", err);
             })
             .ok();
-        lock.config.awake_enabled = status;
+        lock.config.builtin_anims_enabled = enabled;
         lock.config.write();
+        if enabled {
+            lock.thread_exit.store(true, Ordering::Release);
+        }
 
-        Self::notify_power_states(
+        Self::notify_device_state(
             &ctxt,
-            AnimePowerStates {
-                brightness: lock.config.brightness.floor() as u8,
-                enabled: lock.config.awake_enabled,
-                boot_anim_enabled: lock.config.boot_anim_enabled,
+            DeviceState {
+                display_enabled: lock.config.display_enabled,
+                display_brightness: lock.config.display_brightness,
+                builtin_anims_enabled: lock.config.builtin_anims_enabled,
+                builtin_anims: lock.config.builtin_anims,
             },
         )
         .await
         .ok();
     }
 
-    /// Set whether the AniMe will show boot, suspend, or off animations
-    async fn set_animation_enabled(
+    /// Set which builtin animation is used for each stage
+    async fn set_builtin_animations(
         &self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
-        on: bool,
+        boot: AnimBooting,
+        awake: AnimAwake,
+        sleep: AnimSleeping,
+        shutdown: AnimShutdown,
     ) {
         let mut lock = self.0.lock().await;
         lock.node
-            .write_bytes(&pkt_for_set_boot(on))
+            .write_bytes(&pkt_set_enable_powersave_anim(true))
             .map_err(|err| {
                 warn!("rog_anime::run_animation:callback {}", err);
             })
             .ok();
         lock.node
-            .write_bytes(&pkt_for_enable_animation())
+            .write_bytes(&pkt_set_builtin_animations(boot, awake, sleep, shutdown))
             .map_err(|err| {
                 warn!("rog_anime::run_animation:callback {}", err);
             })
             .ok();
-        lock.config.boot_anim_enabled = on;
+        lock.config.builtin_anims.boot = boot;
+        lock.config.builtin_anims.sleep = sleep;
+        lock.config.builtin_anims.awake = awake;
+        lock.config.builtin_anims.shutdown = shutdown;
         lock.config.write();
 
-        Self::notify_power_states(
+        Self::notify_device_state(
             &ctxt,
-            AnimePowerStates {
-                brightness: lock.config.brightness.floor() as u8,
-                enabled: lock.config.awake_enabled,
-                boot_anim_enabled: lock.config.boot_anim_enabled,
+            DeviceState {
+                display_enabled: lock.config.display_enabled,
+                display_brightness: lock.config.display_brightness,
+                builtin_anims_enabled: lock.config.builtin_anims_enabled,
+                builtin_anims: lock.config.builtin_anims,
+            },
+        )
+        .await
+        .ok();
+    }
+
+    /// Set whether the AniMe is enabled at all
+    async fn set_enable_display(
+        &self,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+        enabled: bool,
+    ) {
+        let mut lock = self.0.lock().await;
+        lock.node
+            .write_bytes(&pkt_set_enable_display(enabled))
+            .map_err(|err| {
+                warn!("rog_anime::run_animation:callback {}", err);
+            })
+            .ok();
+        lock.config.display_enabled = enabled;
+        lock.config.write();
+
+        Self::notify_device_state(
+            &ctxt,
+            DeviceState {
+                display_enabled: lock.config.display_enabled,
+                display_brightness: lock.config.display_brightness,
+                builtin_anims_enabled: lock.config.builtin_anims_enabled,
+                builtin_anims: lock.config.builtin_anims,
             },
         )
         .await
@@ -154,31 +196,26 @@ impl CtrlAnimeZbus {
         if start {
             let lock = self.0.lock().await;
             lock.thread_exit.store(true, Ordering::SeqCst);
-            CtrlAnime::run_thread(self.0.clone(), lock.cache.system.clone(), false);
+            CtrlAnime::run_thread(self.0.clone(), lock.cache.system.clone(), false).await;
         }
     }
 
-    /// Get status of if the AniMe LEDs are on/displaying while system is awake
-    #[dbus_interface(property)]
-    async fn awake_enabled(&self) -> bool {
+    /// Get the device state as stored by asusd
+    // #[dbus_interface(property)]
+    async fn device_state(&self) -> DeviceState {
         let lock = self.0.lock().await;
-        lock.config.awake_enabled
-    }
-
-    /// Get the status of if factory system-status animations are enabled
-    #[dbus_interface(property)]
-    async fn animation_enabled(&self) -> bool {
-        let lock = self.0.lock().await;
-        lock.config.boot_anim_enabled
+        DeviceState {
+            display_enabled: lock.config.display_enabled,
+            display_brightness: lock.config.display_brightness,
+            builtin_anims_enabled: lock.config.builtin_anims_enabled,
+            builtin_anims: lock.config.builtin_anims,
+        }
     }
 
     /// Notify listeners of the status of AniMe LED power and factory
     /// system-status animations
     #[dbus_interface(signal)]
-    async fn notify_power_states(
-        ctxt: &SignalContext<'_>,
-        data: AnimePowerStates,
-    ) -> zbus::Result<()>;
+    async fn notify_device_state(ctxt: &SignalContext<'_>, data: DeviceState) -> zbus::Result<()>;
 }
 
 #[async_trait]
@@ -198,7 +235,7 @@ impl crate::CtrlTask for CtrlAnimeZbus {
                 let inner1 = inner1.clone();
                 async move {
                     let lock = inner1.lock().await;
-                    CtrlAnime::run_thread(inner1.clone(), lock.cache.sleep.clone(), true);
+                    CtrlAnime::run_thread(inner1.clone(), lock.cache.sleep.clone(), true).await;
                 }
             },
             move || {
@@ -206,7 +243,7 @@ impl crate::CtrlTask for CtrlAnimeZbus {
                 let inner2 = inner2.clone();
                 async move {
                     let lock = inner2.lock().await;
-                    CtrlAnime::run_thread(inner2.clone(), lock.cache.wake.clone(), true);
+                    CtrlAnime::run_thread(inner2.clone(), lock.cache.wake.clone(), true).await;
                 }
             },
             move || {
@@ -214,7 +251,7 @@ impl crate::CtrlTask for CtrlAnimeZbus {
                 let inner3 = inner3.clone();
                 async move {
                     let lock = inner3.lock().await;
-                    CtrlAnime::run_thread(inner3.clone(), lock.cache.shutdown.clone(), true);
+                    CtrlAnime::run_thread(inner3.clone(), lock.cache.shutdown.clone(), true).await;
                 }
             },
             move || {
@@ -222,7 +259,7 @@ impl crate::CtrlTask for CtrlAnimeZbus {
                 let inner4 = inner4.clone();
                 async move {
                     let lock = inner4.lock().await;
-                    CtrlAnime::run_thread(inner4.clone(), lock.cache.boot.clone(), true);
+                    CtrlAnime::run_thread(inner4.clone(), lock.cache.boot.clone(), true).await;
                 }
             },
         )
@@ -236,14 +273,26 @@ impl crate::CtrlTask for CtrlAnimeZbus {
 impl crate::Reloadable for CtrlAnimeZbus {
     async fn reload(&mut self) -> Result<(), RogError> {
         if let Some(lock) = self.0.try_lock() {
-            // TODO: restore new settings
-            // lock.node
-            //     .write_bytes(&pkt_for_set_brightness(lock.config.awake_enabled))?;
+            let anim = &lock.config.builtin_anims;
             lock.node
-                .write_bytes(&pkt_for_set_boot(lock.config.boot_anim_enabled))?;
+                .write_bytes(&pkt_set_enable_display(lock.config.display_enabled))?;
+            lock.node.write_bytes(&pkt_set_enable_powersave_anim(
+                lock.config.builtin_anims_enabled,
+            ))?;
+            lock.node.write_bytes(&pkt_set_builtin_animations(
+                anim.boot,
+                anim.awake,
+                anim.sleep,
+                anim.shutdown,
+            ))?;
 
+            if lock.config.builtin_anims_enabled && !lock.cache.boot.is_empty() {
+                lock.node
+                    .write_bytes(&pkt_set_enable_powersave_anim(false))
+                    .ok();
+            }
             let action = lock.cache.boot.clone();
-            CtrlAnime::run_thread(self.0.clone(), action, true);
+            CtrlAnime::run_thread(self.0.clone(), action, true).await;
         }
         Ok(())
     }

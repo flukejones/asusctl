@@ -5,6 +5,8 @@ use std::time::SystemTime;
 
 use egui::Vec2;
 use log::error;
+use rog_anime::usb::Brightness;
+use rog_anime::Animations;
 use rog_aura::layouts::KeyLayout;
 use rog_aura::usb::AuraPowerDev;
 use rog_aura::{AuraEffect, AuraModeNum};
@@ -194,29 +196,25 @@ impl AuraState {
 
 #[derive(Clone, Debug, Default)]
 pub struct AnimeState {
-    pub bright: u8,
-    pub boot: bool,
-    pub awake: bool,
-    pub sleep: bool,
+    pub display_enabled: bool,
+    pub display_brightness: Brightness,
+    pub builtin_anims_enabled: bool,
+    pub builtin_anims: Animations,
 }
 
 impl AnimeState {
     pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
-        Ok(Self {
-            boot: if supported.anime_ctrl.0 {
-                dbus.proxies().anime().animation_enabled()?
-            } else {
-                false
-            },
-            awake: if supported.anime_ctrl.0 {
-                dbus.proxies().anime().awake_enabled()?
-            } else {
-                false
-            },
-            // TODO:
-            sleep: false,
-            bright: 200,
-        })
+        if supported.anime_ctrl.0 {
+            let device_state = dbus.proxies().anime().device_state()?;
+            Ok(Self {
+                display_enabled: device_state.display_enabled,
+                display_brightness: device_state.display_brightness,
+                builtin_anims_enabled: device_state.builtin_anims_enabled,
+                builtin_anims: device_state.builtin_anims,
+            })
+        } else {
+            Ok(Default::default())
+        }
     }
 }
 
@@ -429,12 +427,7 @@ impl Default for SystemState {
                 wave_green: Default::default(),
                 wave_blue: Default::default(),
             },
-            anime: AnimeState {
-                bright: Default::default(),
-                boot: Default::default(),
-                awake: Default::default(),
-                sleep: Default::default(),
-            },
+            anime: AnimeState::default(),
             profiles: ProfilesState {
                 list: Default::default(),
                 current: Default::default(),

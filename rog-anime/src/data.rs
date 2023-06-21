@@ -8,6 +8,7 @@ use serde_derive::{Deserialize, Serialize};
 use zbus::zvariant::Type;
 
 use crate::error::{AnimeError, Result};
+use crate::usb::{AnimAwake, AnimBooting, AnimShutdown, AnimSleeping, Brightness};
 use crate::{AnimTime, AnimeGif};
 
 /// The first 7 bytes of a USB packet are accounted for by `USB_PREFIX1` and
@@ -26,11 +27,21 @@ pub const USB_PREFIX2: [u8; 7] = [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x02];
 pub const USB_PREFIX3: [u8; 7] = [0x5e, 0xc0, 0x02, 0xe7, 0x04, 0x73, 0x02];
 
 #[cfg_attr(feature = "dbus", derive(Type))]
+#[derive(Default, Deserialize, PartialEq, Eq, Clone, Copy, Serialize, Debug)]
+pub struct Animations {
+    pub boot: AnimBooting,
+    pub awake: AnimAwake,
+    pub sleep: AnimSleeping,
+    pub shutdown: AnimShutdown,
+}
+
+#[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
-pub struct AnimePowerStates {
-    pub brightness: u8,
-    pub enabled: bool,
-    pub boot_anim_enabled: bool,
+pub struct DeviceState {
+    pub display_enabled: bool,
+    pub display_brightness: Brightness,
+    pub builtin_anims_enabled: bool,
+    pub builtin_anims: Animations,
 }
 
 #[cfg_attr(feature = "dbus", derive(Type))]

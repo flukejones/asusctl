@@ -23,11 +23,12 @@ pub const VENDOR_ID: u16 = 0x0b05;
 pub const PROD_ID: u16 = 0x193b;
 
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Debug, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
+#[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 /// Base LED brightness of the display
 pub enum Brightness {
     Off,
     Low,
+    #[default]
     Med,
     High,
 }
@@ -43,6 +44,97 @@ impl FromStr for Brightness {
             "High" | "high" => Brightness::High,
             _ => Brightness::Med,
         })
+    }
+}
+
+impl From<u8> for Brightness {
+    fn from(v: u8) -> Brightness {
+        match v {
+            0 => Brightness::Off,
+            2 => Brightness::Low,
+            3 => Brightness::High,
+            _ => Brightness::Med,
+        }
+    }
+}
+
+#[cfg_attr(feature = "dbus", derive(Type))]
+#[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
+pub enum AnimBooting {
+    #[default]
+    GlitchConstruction,
+    StaticEmergence,
+}
+
+impl FromStr for AnimBooting {
+    type Err = AnimeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "GlitchConstruction" => Ok(Self::GlitchConstruction),
+            "StaticEmergence" => Ok(Self::StaticEmergence),
+            _ => Err(AnimeError::ParseError(s.to_owned())),
+        }
+    }
+}
+
+#[cfg_attr(feature = "dbus", derive(Type))]
+#[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
+pub enum AnimAwake {
+    #[default]
+    BinaryBannerScroll,
+    RogLogoGlitch,
+}
+
+impl FromStr for AnimAwake {
+    type Err = AnimeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "BinaryBannerScroll" => Ok(Self::BinaryBannerScroll),
+            "RogLogoGlitch" => Ok(Self::RogLogoGlitch),
+            _ => Err(AnimeError::ParseError(s.to_owned())),
+        }
+    }
+}
+
+#[cfg_attr(feature = "dbus", derive(Type))]
+#[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
+pub enum AnimSleeping {
+    #[default]
+    BannerSwipe,
+    Starfield,
+}
+
+impl FromStr for AnimSleeping {
+    type Err = AnimeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "BannerSwipe" => Ok(Self::BannerSwipe),
+            "Starfield" => Ok(Self::Starfield),
+            _ => Err(AnimeError::ParseError(s.to_owned())),
+        }
+    }
+}
+
+#[cfg_attr(feature = "dbus", derive(Type))]
+#[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
+pub enum AnimShutdown {
+    #[default]
+    GlitchOut,
+    SeeYa,
+}
+
+impl FromStr for AnimShutdown {
+    type Err = AnimeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "GlitchOut" => Ok(Self::GlitchOut),
+            "SeeYa" => Ok(Self::SeeYa),
+            _ => Err(AnimeError::ParseError(s.to_owned())),
+        }
     }
 }
 
@@ -89,7 +181,7 @@ pub const fn pkts_for_init() -> [[u8; PACKET_SIZE]; 2] {
 /// Should be written to the device after writing the two main data packets that
 /// make up the display data packet
 #[inline]
-pub const fn pkt_for_flush() -> [u8; PACKET_SIZE] {
+pub const fn pkt_flush() -> [u8; PACKET_SIZE] {
     let mut pkt = [0; PACKET_SIZE];
     pkt[0] = DEV_PAGE;
     pkt[1] = 0xc0;
@@ -97,23 +189,10 @@ pub const fn pkt_for_flush() -> [u8; PACKET_SIZE] {
     pkt
 }
 
-/// Get the packet required for setting the device to on, on boot. Requires
+/// Packet for setting the brightness (0-3). Requires
 /// `pkt_for_apply()` to be written after.
 #[inline]
-pub const fn pkt_for_set_boot(status: bool) -> [u8; PACKET_SIZE] {
-    let mut pkt = [0; PACKET_SIZE];
-    pkt[0] = DEV_PAGE;
-    pkt[1] = 0xc3;
-    pkt[2] = 0x01;
-    pkt[3] = if status { 0x00 } else { 0x80 };
-    pkt
-}
-
-/// Get the packet required for setting the device to on. Requires
-/// `pkt_for_apply()` to be written after.
-// TODO: change the users of this method
-#[inline]
-pub const fn pkt_for_set_brightness(brightness: Brightness) -> [u8; PACKET_SIZE] {
+pub const fn pkt_set_brightness(brightness: Brightness) -> [u8; PACKET_SIZE] {
     let mut pkt = [0; PACKET_SIZE];
     pkt[0] = DEV_PAGE;
     pkt[1] = 0xc0;
@@ -122,23 +201,42 @@ pub const fn pkt_for_set_brightness(brightness: Brightness) -> [u8; PACKET_SIZE]
     pkt
 }
 
+/// Enable the display?
 #[inline]
-pub const fn pkt_for_set_awake_enabled(enable: bool) -> [u8; PACKET_SIZE] {
+pub const fn pkt_set_enable_display(status: bool) -> [u8; PACKET_SIZE] {
     let mut pkt = [0; PACKET_SIZE];
     pkt[0] = DEV_PAGE;
     pkt[1] = 0xc3;
     pkt[2] = 0x01;
-    pkt[3] = if !enable { 0x80 } else { 0x00 };
+    pkt[3] = if status { 0x00 } else { 0x80 };
     pkt
 }
 
-/// Packet required to apply a device setting
+/// Enable builtin animations?
 #[inline]
-pub const fn pkt_for_enable_animation() -> [u8; PACKET_SIZE] {
+pub const fn pkt_set_enable_powersave_anim(status: bool) -> [u8; PACKET_SIZE] {
     let mut pkt = [0; PACKET_SIZE];
     pkt[0] = DEV_PAGE;
     pkt[1] = 0xc4;
     pkt[2] = 0x01;
-    pkt[3] = 0x80;
+    pkt[3] = if status { 0x00 } else { 0x80 };
+    pkt
+}
+
+/// Set which animations are shown for each stage
+#[inline]
+pub const fn pkt_set_builtin_animations(
+    boot: AnimBooting,
+    awake: AnimAwake,
+    sleep: AnimSleeping,
+    shutdown: AnimShutdown,
+) -> [u8; PACKET_SIZE] {
+    let mut pkt = [0; PACKET_SIZE];
+    pkt[0] = DEV_PAGE;
+    pkt[1] = 0xc5;
+    pkt[2] = (awake as u8)
+        | ((sleep as u8) << 0x01)
+        | ((shutdown as u8) << 0x02)
+        | ((boot as u8) << 0x03);
     pkt
 }

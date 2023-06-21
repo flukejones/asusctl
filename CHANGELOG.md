@@ -10,11 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for GL503V LED modes
 - Support the Rear Glow on some laptops
 - Support for GV601VI LED modes
-- Support most of M16 AniMe Matrix
+- Support M16 matrix display
+  - Custom images
+  - Pixel gifs
+  - Power options
+  - Builtin animations
 ### Changed
 - Move FX506HC to FX506H in arua DB to catch full series of this range
 - Move FX506LH to FX506L in arua DB to catch full series of this range
 - Rmeove notification handle tracking limit, fixes KDE issue with profile notif
+### BREAKING
+- All Anime related DBUS methods/notifs are changed
 
 ## [v4.6.2]
 - Fix rog-control-center not reopening if `startup_in_background` is set
