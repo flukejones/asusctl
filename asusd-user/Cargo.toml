@@ -1,0 +1,35 @@
+[package]
+name = "asusd-user"
+license = "MPL-2.0"
+version.workspace = true
+authors = ["Luke D Jones <luke@ljones.dev>"]
+edition = "2021"
+description = "Usermode daemon for user settings, anime, per-key lighting"
+
+[[bin]]
+name = "asusd-user"
+path = "src/daemon.rs"
+
+[dependencies]
+dirs.workspace = true
+smol.workspace = true
+
+# serialisation
+serde.workspace = true
+serde_json.workspace = true
+serde_derive.workspace = true
+
+rog_anime = { path = "../rog-anime" }
+rog_aura = { path = "../rog-aura" }
+rog_dbus = { path = "../rog-dbus" }
+rog_platform = { path = "../rog-platform" }
+config-traits = { path = "../config-traits" }
+
+zbus.workspace = true
+
+# cli and logging
+log.workspace = true
+env_logger.workspace = true
+
+[dev-dependencies]
+cargo-husky.workspace = true
