@@ -84,14 +84,6 @@ impl EffectState for DoomFlicker {
     }
 }
 
-pub struct LightFlash {
-    pub count: i32,
-    pub max_light: i32,
-    pub min_light: i32,
-    pub max_time: i32,
-    pub min_time: i32,
-}
-
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DoomLightFlash {
     led: LedCode,

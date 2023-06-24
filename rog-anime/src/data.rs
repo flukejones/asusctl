@@ -57,9 +57,8 @@ impl AnimeType {
     /// The width of diagonal images
     pub fn width(&self) -> usize {
         match self {
-            AnimeType::GA401 | AnimeType::GA402 => 74,
             AnimeType::GU604 => 70,
-            AnimeType::Unknown => 0,
+            _ => 74,
         }
     }
 
@@ -67,9 +66,8 @@ impl AnimeType {
     pub fn height(&self) -> usize {
         match self {
             AnimeType::GA401 => 36,
-            AnimeType::GA402 => 39,
             AnimeType::GU604 => 43,
-            AnimeType::Unknown => 0,
+            _ => 39,
         }
     }
 
@@ -77,9 +75,8 @@ impl AnimeType {
     pub fn data_length(&self) -> usize {
         match self {
             AnimeType::GA401 => PANE_LEN * 2,
-            AnimeType::GA402 => PANE_LEN * 3,
             AnimeType::GU604 => PANE_LEN * 3,
-            AnimeType::Unknown => 0,
+            _ => PANE_LEN * 3,
         }
     }
 }

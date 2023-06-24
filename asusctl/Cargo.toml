@@ -11,7 +11,7 @@ rog_aura = { path = "../rog-aura" }
 rog_dbus = { path = "../rog-dbus" }
 rog_profiles = { path = "../rog-profiles" }
 rog_platform = { path = "../rog-platform" }
-daemon = { path = "../daemon" }
+asusd = { path = "../asusd" }
 
 gumdrop.workspace = true
 toml.workspace = true

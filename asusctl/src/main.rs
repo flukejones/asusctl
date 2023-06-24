@@ -83,7 +83,7 @@ fn print_error_help(err: &dyn std::error::Error, supported: Option<&SupportedFun
 fn print_versions() {
     println!("App and daemon versions:");
     println!("      asusctl v{}", env!("CARGO_PKG_VERSION"));
-    println!("        asusd v{}", daemon::VERSION);
+    println!("        asusd v{}", asusd::VERSION);
     println!("\nComponent crate versions:");
     println!("    rog-anime v{}", rog_anime::VERSION);
     println!("     rog-aura v{}", rog_aura::VERSION);

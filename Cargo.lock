@@ -177,8 +177,8 @@ checksum = "8868f09ff8cea88b079da74ae569d9b8c62a23c68c746240b704ee6f7525c89c"
 name = "asusctl"
 version = "4.6.2"
 dependencies = [
+ "asusd",
  "cargo-husky",
- "daemon",
  "gif",
  "glam",
  "gumdrop",
@@ -190,6 +190,50 @@ dependencies = [
  "sysfs-class",
  "tinybmp",
  "toml 0.5.11",
+]
+
+[[package]]
+name = "asusd"
+version = "4.6.2"
+dependencies = [
+ "async-trait",
+ "cargo-husky",
+ "concat-idents",
+ "config-traits",
+ "env_logger",
+ "log",
+ "logind-zbus",
+ "rog_anime",
+ "rog_aura",
+ "rog_dbus",
+ "rog_platform",
+ "rog_profiles",
+ "serde",
+ "serde_derive",
+ "sysfs-class",
+ "systemd-zbus",
+ "tokio",
+ "zbus",
+]
+
+[[package]]
+name = "asusd-user"
+version = "4.6.2"
+dependencies = [
+ "cargo-husky",
+ "config-traits",
+ "dirs",
+ "env_logger",
+ "log",
+ "rog_anime",
+ "rog_aura",
+ "rog_dbus",
+ "rog_platform",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "smol",
+ "zbus",
 ]
 
 [[package]]
@@ -771,50 +815,6 @@ checksum = "1bfb12502f3fc46cca1bb51ac28df9d618d813cdc3d2f25b9fe775a34af26bb3"
 dependencies = [
  "generic-array",
  "typenum",
-]
-
-[[package]]
-name = "daemon"
-version = "4.6.2"
-dependencies = [
- "async-trait",
- "cargo-husky",
- "concat-idents",
- "config-traits",
- "env_logger",
- "log",
- "logind-zbus",
- "rog_anime",
- "rog_aura",
- "rog_dbus",
- "rog_platform",
- "rog_profiles",
- "serde",
- "serde_derive",
- "sysfs-class",
- "systemd-zbus",
- "tokio",
- "zbus",
-]
-
-[[package]]
-name = "daemon-user"
-version = "4.6.2"
-dependencies = [
- "cargo-husky",
- "config-traits",
- "dirs",
- "env_logger",
- "log",
- "rog_anime",
- "rog_aura",
- "rog_dbus",
- "rog_platform",
- "serde",
- "serde_derive",
- "serde_json",
- "smol",
- "zbus",
 ]
 
 [[package]]
@@ -2560,8 +2560,8 @@ checksum = "436b050e76ed2903236f032a59761c1eb99e1b0aead2c257922771dab1fc8c78"
 name = "rog-control-center"
 version = "4.6.2"
 dependencies = [
+ "asusd",
  "cargo-husky",
- "daemon",
  "dirs",
  "eframe",
  "egui",

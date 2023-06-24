@@ -52,7 +52,7 @@ test:
   <<: *rust_cache
   script:
     - mkdir -p .git/hooks > /dev/null
-    - cargo test
+    - cargo test --all
 
 release:
   only:
@@ -79,6 +79,6 @@ pages:
   artifacts:
     paths:
       - public
-      
+
 variables:
   GIT_SUBMODULE_STRATEGY: normal

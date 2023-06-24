@@ -10,23 +10,22 @@ use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use uhid_virt::{Bus, CreateParams, UHIDDevice};
 
+mod animatrix;
+use animatrix::*;
+
 pub struct VirtAnimeMatrix {
     device: UHIDDevice<std::fs::File>,
     buffer: [u8; 640],
     time: Instant,
-}
-
-impl Default for VirtAnimeMatrix {
-    fn default() -> Self {
-        Self::new()
-    }
+    animatrix: AniMatrix,
 }
 
 impl VirtAnimeMatrix {
-    pub fn new() -> Self {
+    pub fn new(model: Model) -> Self {
         VirtAnimeMatrix {
             time: Instant::now(),
             buffer: [0; 640],
+            animatrix: AniMatrix::new(model),
             device: UHIDDevice::create(CreateParams {
                 name: String::from("ROG_Virtual Anime Matrix"),
                 phys: String::from(""),
@@ -146,33 +145,35 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut canvas = window.into_canvas().build().unwrap();
 
-    let mut dev = VirtAnimeMatrix::new();
+    let mut dev = VirtAnimeMatrix::new(Model::GA402);
 
+    canvas.set_draw_color(Color::RGB(0, 0, 0));
+    canvas.clear();
     let mut event_pump = sdl_context.event_pump().unwrap();
     'running: loop {
-        canvas.set_draw_color(Color::RGB(0, 0, 0));
-        canvas.clear();
-
         dev.read(); // it's blocking, and damned hard to sync with arc/mutex
-        let one = dev.buffer[0..7] != USB_PREFIX2;
+                    // let one = dev.buffer[0..7] != USB_PREFIX2;
+        let index = dev.buffer[3];
+        println!("{:02x}", index);
 
-        for (mut i, b) in dev.buffer.iter().skip(7).enumerate() {
-            if !one {
-                i += 640;
-            };
-            if *b == 0 {
-                continue;
+        let w = dev.animatrix.led_shape().horizontal * 6;
+        let h = dev.animatrix.led_shape().vertical * 6;
+        for (y_count, row) in dev.animatrix.rows().iter().enumerate() {
+            if row.0 == index {
+                let start = row.1;
+                let end = start + row.2;
+                for (x_count, b) in dev.buffer[start..end].iter().enumerate() {
+                    print!("{b},");
+                    canvas.set_draw_color(Color::RGB(*b as u8, *b as u8, *b as u8));
+
+                    let x = x_count as i32 * w - if y_count % 2 == 0 { 0 } else { w / 2 };
+                    let y = y_count as i32 * h;
+                    canvas
+                        .fill_rect(Rect::new(x, y, w as u32, h as u32))
+                        .unwrap();
+                }
+                println!();
             }
-            canvas.set_draw_color(Color::RGB(*b as u8, *b as u8, *b as u8));
-            let y = (i / 33) % 55;
-            let x = (i % 33) as i32 * 20;
-            // if i % 2 == 0 {
-            //     x /= 2;
-            // }
-            dbg!(i, i / 33);
-            canvas
-                .fill_rect(Rect::new(x, y as i32 * 20, 20, 20))
-                .unwrap();
         }
 
         for event in event_pump.poll_iter() {

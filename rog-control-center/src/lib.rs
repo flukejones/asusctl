@@ -33,7 +33,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub fn print_versions() {
     println!("App and daemon versions:");
     println!("      rog-gui v{}", VERSION);
-    println!("        asusd v{}", daemon::VERSION);
+    println!("        asusd v{}", asusd::VERSION);
     println!("\nComponent crate versions:");
     println!("    rog-anime v{}", rog_anime::VERSION);
     println!("     rog-aura v{}", rog_aura::VERSION);

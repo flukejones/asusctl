@@ -1,5 +1,6 @@
 [workspace]
-members = ["asusctl", "config-traits", "daemon", "daemon-user", "rog-platform", "rog-dbus", "rog-anime", "rog-aura", "rog-profiles", "rog-control-center", "simulators"]
+members = ["asusctl", "asusd", "asusd-user", "config-traits", "rog-platform", "rog-dbus", "rog-anime", "rog-aura", "rog-profiles", "rog-control-center", "simulators"]
+default-members = ["asusctl", "asusd", "asusd-user", "rog-control-center"]
 
 [workspace.package]
 version = "4.6.2"

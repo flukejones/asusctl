@@ -18,7 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Move FX506HC to FX506H in arua DB to catch full series of this range
 - Move FX506LH to FX506L in arua DB to catch full series of this range
-- Rmeove notification handle tracking limit, fixes KDE issue with profile notif
+- Remove notification handle tracking limit, fixes KDE issue with profile notif
+- Rename daemon and daemon-user crates to asusd and asusd-user to not be confusing in workspace naming
 ### BREAKING
 - All Anime related DBUS methods/notifs are changed
 
