@@ -138,7 +138,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let video_subsystem = sdl_context.video().unwrap();
 
     let window = video_subsystem
-        .window("rust-sdl2 demo", 1000, 800)
+        .window("rust-sdl2 demo", 1040, 680)
         .position_centered()
         .build()
         .unwrap();
@@ -158,22 +158,35 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         let w = dev.animatrix.led_shape().horizontal * 6;
         let h = dev.animatrix.led_shape().vertical * 6;
+        let mut y_offset = 0;
         for (y_count, row) in dev.animatrix.rows().iter().enumerate() {
             if row.0 == index {
                 let start = row.1;
                 let end = start + row.2;
+                if row.2 < 8 {
+                    if index == 0x74 {
+                        y_offset = 1;
+                    } else if index == 0xe7 {
+                        y_offset = 2;
+                    }
+                }
                 for (x_count, b) in dev.buffer[start..=end].iter().enumerate() {
-                    print!("{b},");
+                    // print!("{b},");
                     canvas.set_draw_color(Color::RGB(*b as u8, *b as u8, *b as u8));
 
-                    let x =
-                        x_count as i32 * w - if y_count % 2 == 0 { 0 } else { w / 2 } + row.3 * w;
-                    let y = y_count as i32 * h;
+                    let x: i32 = w + x_count as i32 * w
+                        - if (y_count + y_offset as usize) % 2 != 0 {
+                            0
+                        } else {
+                            w / 2
+                        }
+                        + row.3 * w;
+                    let y = y_count as i32 * h - y_offset * h;
                     canvas
                         .fill_rect(Rect::new(x, y, w as u32, h as u32))
                         .unwrap();
                 }
-                println!();
+                // println!();
             }
         }
 
