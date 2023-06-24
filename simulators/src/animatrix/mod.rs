@@ -23,6 +23,8 @@ pub struct Row(
     pub usize,
     /// The length to read inclusive
     pub usize,
+    /// Offset to the right by how many LEDs
+    pub i32,
 );
 
 #[derive(Clone, Copy)]
@@ -47,7 +49,7 @@ impl AniMatrix {
             },
             Model::GA402 => LedShape {
                 vertical: 2,
-                horizontal: 3,
+                horizontal: 5,
             },
             Model::GU604 => LedShape {
                 vertical: 2,

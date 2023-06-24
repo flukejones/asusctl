@@ -138,7 +138,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let video_subsystem = sdl_context.video().unwrap();
 
     let window = video_subsystem
-        .window("rust-sdl2 demo", 800, 600)
+        .window("rust-sdl2 demo", 1000, 800)
         .position_centered()
         .build()
         .unwrap();
@@ -162,11 +162,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             if row.0 == index {
                 let start = row.1;
                 let end = start + row.2;
-                for (x_count, b) in dev.buffer[start..end].iter().enumerate() {
+                for (x_count, b) in dev.buffer[start..=end].iter().enumerate() {
                     print!("{b},");
                     canvas.set_draw_color(Color::RGB(*b as u8, *b as u8, *b as u8));
 
-                    let x = x_count as i32 * w - if y_count % 2 == 0 { 0 } else { w / 2 };
+                    let x =
+                        x_count as i32 * w - if y_count % 2 == 0 { 0 } else { w / 2 } + row.3 * w;
                     let y = y_count as i32 * h;
                     canvas
                         .fill_rect(Rect::new(x, y, w as u32, h as u32))
