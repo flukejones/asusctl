@@ -145,7 +145,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut canvas = window.into_canvas().build().unwrap();
 
-    let mut dev = VirtAnimeMatrix::new(Model::GA402);
+    let mut dev = VirtAnimeMatrix::new(Model::GU604);
 
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
