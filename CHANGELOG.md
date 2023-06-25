@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Pixel gifs
   - Power options
   - Builtin animations
+- In-progress simulators for GA402, GU604 animatrix
+- Add `model_override` option to anime config, this is handy for forcing a model for "Unknown" anime, and for simulators
 ### Changed
 - Move FX506HC to FX506H in arua DB to catch full series of this range
 - Move FX506LH to FX506L in arua DB to catch full series of this range

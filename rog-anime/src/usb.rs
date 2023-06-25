@@ -155,8 +155,8 @@ pub fn get_anime_type() -> Result<AnimeType, AnimeError> {
     } else if board_name.contains("GU604V") {
         return Ok(AnimeType::GU604);
     }
-    log::warn!("AniMe Matrix device found but not yet supported");
-    Ok(AnimeType::Unknown)
+    log::warn!("AniMe Matrix device found but not yet supported, will default to a GA402 layout");
+    Ok(AnimeType::GA402)
 }
 
 /// Get the two device initialization packets. These are required for device

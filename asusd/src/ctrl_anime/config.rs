@@ -107,6 +107,7 @@ impl AnimeConfigCached {
 /// Config for base system actions for the anime display
 #[derive(Deserialize, Serialize, Debug)]
 pub struct AnimeConfig {
+    pub model_override: Option<AnimeType>,
     pub system: Vec<ActionLoader>,
     pub boot: Vec<ActionLoader>,
     pub wake: Vec<ActionLoader>,
@@ -122,6 +123,7 @@ pub struct AnimeConfig {
 impl Default for AnimeConfig {
     fn default() -> Self {
         AnimeConfig {
+            model_override: None,
             system: Vec::new(),
             boot: Vec::new(),
             wake: Vec::new(),

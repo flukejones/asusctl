@@ -45,7 +45,7 @@ impl AniMatrix {
         let led_shape = match model {
             Model::GA401 => LedShape {
                 vertical: 2,
-                horizontal: 3,
+                horizontal: 5,
             },
             Model::GA402 => LedShape {
                 vertical: 2,
@@ -53,7 +53,7 @@ impl AniMatrix {
             },
             Model::GU604 => LedShape {
                 vertical: 2,
-                horizontal: 3,
+                horizontal: 5,
             },
         };
 

@@ -1,5 +1,4 @@
 use std::error::Error;
-use std::time::Instant;
 
 use log::error;
 use rog_anime::usb::{PROD_ID, VENDOR_ID};
@@ -16,14 +15,12 @@ use animatrix::*;
 pub struct VirtAnimeMatrix {
     device: UHIDDevice<std::fs::File>,
     buffer: [u8; 640],
-    time: Instant,
     animatrix: AniMatrix,
 }
 
 impl VirtAnimeMatrix {
     pub fn new(model: Model) -> Self {
         VirtAnimeMatrix {
-            time: Instant::now(),
             buffer: [0; 640],
             animatrix: AniMatrix::new(model),
             device: UHIDDevice::create(CreateParams {
@@ -101,33 +98,12 @@ impl VirtAnimeMatrix {
     // }
 
     pub fn read(&mut self) {
-        if let Ok(event) = self.device.read() {
-            match event {
-                // uhid_virt::OutputEvent::Start { dev_flags } => todo!(),
-                // uhid_virt::OutputEvent::Stop => todo!(),
-                // uhid_virt::OutputEvent::Open => todo!(),
-                // uhid_virt::OutputEvent::Close => todo!(),
-                uhid_virt::OutputEvent::Output { data } => {
-                    for (i, b) in self.buffer.iter_mut().enumerate() {
-                        *b = 0;
-                        if let Some(n) = data.get(i) {
-                            *b = *n;
-                        }
-                    }
-                    let now = Instant::now();
-                    dbg!(now - self.time);
-                    self.time = Instant::now();
+        if let Ok(uhid_virt::OutputEvent::Output { data }) = self.device.read() {
+            for (i, b) in self.buffer.iter_mut().enumerate() {
+                *b = 0;
+                if let Some(n) = data.get(i) {
+                    *b = *n;
                 }
-                uhid_virt::OutputEvent::GetReport {
-                    id,
-                    report_number,
-                    report_type,
-                } => {
-                    dbg!(id, report_number, report_type);
-                }
-                // uhid_virt::OutputEvent::SetReport { id, report_number, report_type, data } =>
-                // todo!(),
-                _ => {}
             }
         }
     }
@@ -138,7 +114,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let video_subsystem = sdl_context.video().unwrap();
 
     let window = video_subsystem
-        .window("rust-sdl2 demo", 1040, 680)
+        .window("rust-sdl2 demo", 1260, 760)
         .position_centered()
         .build()
         .unwrap();
@@ -163,7 +139,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             if row.0 == index {
                 let start = row.1;
                 let end = start + row.2;
-                if row.2 < 8 {
+                if row.1 < 10 && row.2 < 15 {
                     if index == 0x74 {
                         y_offset = 1;
                     } else if index == 0xe7 {

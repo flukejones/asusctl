@@ -74,7 +74,12 @@ impl CtrlAnime {
             return Err(RogError::Anime(AnimeError::NoDevice));
         };
 
-        let anime_type = get_anime_type().unwrap_or(AnimeType::GA402);
+        let mut anime_type = get_anime_type()?;
+        if let AnimeType::Unknown = anime_type {
+            if let Some(model) = config.model_override {
+                anime_type = model;
+            }
+        }
 
         info!("Device has an AniMe Matrix display: {anime_type:?}");
         let mut cache = AnimeConfigCached::default();
