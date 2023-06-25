@@ -8,8 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Support for FX507Z LED modes
 - Support for GL503V LED modes
-- Support the Rear Glow on some laptops
+- Support for G733C LED modes
 - Support for GV601VI LED modes
+- Support the Rear Glow on some laptops
 - Support M16 matrix display
   - Custom images
   - Pixel gifs

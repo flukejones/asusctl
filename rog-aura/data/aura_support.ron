@@ -120,7 +120,7 @@
     ),
     (
         board_name: "G513QY",
-         layout_name: "g513i-per-key",
+        layout_name: "g513i-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: PerKey,
@@ -306,6 +306,13 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
+    ),
+    (
+        board_name: "G733C",
+        layout_name: "g513i-per-key",
+        basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
+        basic_zones: [Logo, BarLeft, BarRight],
+        advanced_type: PerKey,
     ),
     (
         board_name: "G733Q",
