@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Move FX506HC to FX506H in arua DB to catch full series of this range
 - Move FX506LH to FX506L in arua DB to catch full series of this range
+- Move G513I* to G513I in arua DB to catch full series of this range
 - Remove notification handle tracking limit, fixes KDE issue with profile notif
 - Rename daemon and daemon-user crates to asusd and asusd-user to not be confusing in workspace naming
 - Prevent the multiple notifications from a profile change from occuring (too many functions with side effects!)

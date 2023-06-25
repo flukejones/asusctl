@@ -70,25 +70,11 @@
         advanced_type: None,
     ),
     (
-        board_name: "G513IC",
-        layout_name: "g513i",
-        basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
-        basic_zones: [],
-        advanced_type: Zoned([ZonedKbLeft, ZonedKbLeftMid, ZonedKbRightMid, ZonedKbRight, LightbarRight, LightbarRightCorner, LightbarRightBottom, LightbarLeftBottom, LightbarLeftCorner, LightbarLeft]),
-    ),
-    (
-        board_name: "G513IH",
+        board_name: "G513I",
         layout_name: "g513i",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
-        advanced_type: None,
-    ),
-    (
-        board_name: "G513IM",
-        layout_name: "g513i-per-key",
-        basic_modes: [Flash, Static, Breathe, Strobe, Rainbow],
-        basic_zones: [],
-        advanced_type: PerKey,
+        advanced_type: Zoned([ZonedKbLeft, ZonedKbLeftMid, ZonedKbRightMid, ZonedKbRight, LightbarRight, LightbarRightCorner, LightbarRightBottom, LightbarLeftBottom, LightbarLeftCorner, LightbarLeft]),
     ),
     (
         board_name: "G513QE",
