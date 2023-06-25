@@ -101,7 +101,13 @@ impl CtrlPlatformProfile {
                         // For each profile we need to switch to it before we
                         // can read the existing values from hardware. The ACPI method used
                         // for this is what limits us.
-                        controller.set_next_profile()?;
+                        let next =
+                            Profile::get_next_profile(controller.profile_config.active_profile);
+                        Profile::set_profile(next)
+                            .map_err(|e| warn!("{MOD_NAME}: set_profile, {}", e))
+                            .ok();
+                        controller.profile_config.active_profile = next;
+
                         // Make sure to set the baseline to default
                         controller.set_active_curve_to_defaults()?;
                         let active = Profile::get_active_profile().unwrap_or(Profile::Balanced);
@@ -139,28 +145,6 @@ impl CtrlPlatformProfile {
             fans.update_config_from_profiles();
             fans.config_file.write(); // config write
         }
-    }
-
-    /// Toggle to next profile in list. This will first read the config, switch,
-    /// then write out
-    pub(super) fn set_next_profile(&mut self) -> Result<(), RogError> {
-        // Read first just incase the user has modified the config before calling this
-        match self.profile_config.active_profile {
-            Profile::Balanced => {
-                Profile::set_profile(Profile::Performance)?;
-                self.profile_config.active_profile = Profile::Performance;
-            }
-            Profile::Performance => {
-                Profile::set_profile(Profile::Quiet)?;
-                self.profile_config.active_profile = Profile::Quiet;
-            }
-            Profile::Quiet => {
-                Profile::set_profile(Profile::Balanced)?;
-                self.profile_config.active_profile = Profile::Balanced;
-            }
-        }
-        self.write_profile_curve_to_platform()?;
-        Ok(())
     }
 
     /// Set the curve for the active profile active

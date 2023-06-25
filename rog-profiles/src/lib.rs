@@ -71,6 +71,15 @@ impl Profile {
             _ => Self::Balanced,
         }
     }
+
+    pub fn get_next_profile(current: Profile) -> Profile {
+        // Read first just incase the user has modified the config before calling this
+        match current {
+            Profile::Balanced => Profile::Performance,
+            Profile::Performance => Profile::Quiet,
+            Profile::Quiet => Profile::Balanced,
+        }
+    }
 }
 
 impl Default for Profile {

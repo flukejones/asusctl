@@ -40,8 +40,11 @@ impl ProfileZbus {
     /// If fan-curves are supported will also activate a fan curve for profile.
     async fn next_profile(&mut self, #[zbus(signal_context)] ctxt: SignalContext<'_>) {
         let mut ctrl = self.0.lock().await;
-        ctrl.set_next_profile()
-            .unwrap_or_else(|err| warn!("{MOD_NAME}: {}", err));
+        let next = Profile::get_next_profile(ctrl.profile_config.active_profile);
+        Profile::set_profile(next)
+            .map_err(|e| warn!("{MOD_NAME}: set_profile, {}", e))
+            .ok();
+        ctrl.profile_config.active_profile = next;
         ctrl.save_config();
 
         Self::notify_profile(&ctxt, ctrl.profile_config.active_profile)
@@ -236,10 +239,11 @@ impl CtrlTask for ProfileZbus {
                                         error!("Profile::set_profile() error: {e}");
                                     })
                                     .ok();
+
+                                Self::notify_profile(&sig_ctx, lock.profile_config.active_profile)
+                                    .await
+                                    .ok();
                             }
-                            Self::notify_profile(&sig_ctx, lock.profile_config.active_profile)
-                                .await
-                                .ok();
                         }
                     })
                     .await;
@@ -271,13 +275,14 @@ impl CtrlTask for ProfileZbus {
                                             error!("Profile::set_profile() error: {e}");
                                         })
                                         .ok();
+
+                                    Self::notify_profile(
+                                        &signal_ctxt,
+                                        lock.profile_config.active_profile,
+                                    )
+                                    .await
+                                    .ok();
                                 }
-                                Self::notify_profile(
-                                    &signal_ctxt,
-                                    lock.profile_config.active_profile,
-                                )
-                                .await
-                                .ok();
                             }
                         }
                     })
