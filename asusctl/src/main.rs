@@ -36,69 +36,52 @@ fn main() {
             ..Default::default()
         },
         Err(err) => {
-            panic!("source {}", err);
+            println!("Error: {}", err);
+            return;
         }
     };
 
-    let (dbus, _) = RogDbusClientBlocking::new()
-        .map_err(|e| {
-            print_error_help(&e, None);
-            panic!("Could not start dbus client");
-        })
-        .unwrap();
+    if let Ok((dbus, _)) = RogDbusClientBlocking::new().map_err(|e| {
+        print_error_help(&e, None);
+    }) {
+        if let Ok(supported) = dbus
+            .proxies()
+            .supported()
+            .supported_functions()
+            .map_err(|e| {
+                print_error_help(&e, None);
+            })
+        {
+            if parsed.version {
+                println!("asusctl v{}", env!("CARGO_PKG_VERSION"));
+                println!();
+                print_info();
+            }
 
-    let supported = dbus
-        .proxies()
-        .supported()
-        .supported_functions()
-        .map_err(|e| {
-            print_error_help(&e, None);
-            panic!("Could not start dbus proxy");
-        })
-        .unwrap();
-
-    if parsed.version {
-        print_versions();
-        println!();
-        print_laptop_info();
-    }
-
-    if let Err(err) = do_parsed(&parsed, &supported, &dbus) {
-        print_error_help(&*err, Some(&supported));
+            if let Err(err) = do_parsed(&parsed, &supported, &dbus) {
+                print_error_help(&*err, Some(&supported));
+            }
+        }
     }
 }
 
 fn print_error_help(err: &dyn std::error::Error, supported: Option<&SupportedFunctions>) {
     check_service("asusd");
     println!("\nError: {}\n", err);
-    print_versions();
-    println!();
-    print_laptop_info();
+    print_info();
     if let Some(supported) = supported {
         println!();
         println!("Supported laptop functions:\n\n{}", supported);
     }
 }
 
-fn print_versions() {
-    println!("App and daemon versions:");
-    println!("      asusctl v{}", env!("CARGO_PKG_VERSION"));
-    println!("        asusd v{}", asusd::VERSION);
-    println!("\nComponent crate versions:");
-    println!("    rog-anime v{}", rog_anime::VERSION);
-    println!("     rog-aura v{}", rog_aura::VERSION);
-    println!("     rog-dbus v{}", rog_dbus::VERSION);
-    println!(" rog-profiles v{}", rog_profiles::VERSION);
-    println!("rog-platform v{}", rog_platform::VERSION);
-}
-
-fn print_laptop_info() {
+fn print_info() {
     let dmi = sysfs_class::DmiId::default();
     let board_name = dmi.board_name().expect("Could not get board_name");
     let prod_family = dmi.product_family().expect("Could not get product_family");
-
-    println!("Product family: {}", prod_family.trim());
-    println!("Board name: {}", board_name.trim());
+    println!("asusctl version: {}", env!("CARGO_PKG_VERSION"));
+    println!(" Product family: {}", prod_family.trim());
+    println!("     Board name: {}", board_name.trim());
 }
 
 fn check_service(name: &str) -> bool {
