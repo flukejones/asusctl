@@ -1,4 +1,5 @@
 use std::convert::TryFrom;
+use std::str::FromStr;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 
@@ -51,6 +52,19 @@ pub enum AnimeType {
     GA402,
     GU604,
     Unknown,
+}
+
+impl FromStr for AnimeType {
+    type Err = AnimeError;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        Ok(match s {
+            "ga401" | "GA401" => Self::GA401,
+            "ga402" | "GA402" => Self::GA402,
+            "gu604" | "GU604" => Self::GU604,
+            _ => Self::Unknown,
+        })
+    }
 }
 
 impl AnimeType {

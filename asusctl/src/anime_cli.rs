@@ -1,10 +1,13 @@
 use gumdrop::Options;
 use rog_anime::usb::{AnimAwake, AnimBooting, AnimShutdown, AnimSleeping, Brightness};
+use rog_anime::AnimeType;
 
 #[derive(Options)]
 pub struct AnimeCommand {
     #[options(help = "print help message")]
     pub help: bool,
+    #[options(meta = "", help = "override the display type")]
+    pub override_type: Option<AnimeType>,
     #[options(meta = "", help = "enable/disable the display")]
     pub enable_display: Option<bool>,
     #[options(meta = "", help = "enable/disable the builtin run/powersave animation")]

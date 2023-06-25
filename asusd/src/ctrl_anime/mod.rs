@@ -77,6 +77,7 @@ impl CtrlAnime {
         let mut anime_type = get_anime_type()?;
         if let AnimeType::Unknown = anime_type {
             if let Some(model) = config.model_override {
+                warn!("Overriding the Animatrix type as {model:?}");
                 anime_type = model;
             }
         }

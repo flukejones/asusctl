@@ -156,7 +156,7 @@ pub fn get_anime_type() -> Result<AnimeType, AnimeError> {
         return Ok(AnimeType::GU604);
     }
     log::warn!("AniMe Matrix device found but not yet supported, will default to a GA402 layout");
-    Ok(AnimeType::GA402)
+    Ok(AnimeType::Unknown)
 }
 
 /// Get the two device initialization packets. These are required for device

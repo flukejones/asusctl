@@ -9,7 +9,7 @@ use aura_cli::{LedPowerCommand1, LedPowerCommand2};
 use gumdrop::{Opt, Options};
 use profiles_cli::{FanCurveCommand, ProfileCommand};
 use rog_anime::usb::get_anime_type;
-use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, Vec2};
+use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType, Vec2};
 use rog_aura::usb::{AuraDevRog1, AuraDevRog2, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClientBlocking;
@@ -248,15 +248,21 @@ fn handle_anime(
         verify_brightness(bright);
         dbus.proxies().anime().set_image_brightness(bright)?;
     }
+
+    let mut anime_type = get_anime_type()?;
+    if let AnimeType::Unknown = anime_type {
+        if let Some(model) = cmd.override_type {
+            anime_type = model;
+        }
+    }
+
     if cmd.clear {
-        let anime_type = get_anime_type()?;
         let data = vec![255u8; anime_type.data_length()];
         let tmp = AnimeDataBuffer::from_vec(anime_type, data)?;
         dbus.proxies().anime().write(tmp)?;
     }
 
     if let Some(action) = cmd.command.as_ref() {
-        let anime_type = get_anime_type()?;
         match action {
             AnimeActions::Image(image) => {
                 if image.help_requested() || image.path.is_empty() {

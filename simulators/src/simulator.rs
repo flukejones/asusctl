@@ -1,8 +1,10 @@
+use std::env;
 use std::error::Error;
+use std::str::FromStr;
 
 use log::error;
 use rog_anime::usb::{PROD_ID, VENDOR_ID};
-use rog_anime::USB_PREFIX2;
+use rog_anime::{AnimeType, USB_PREFIX2};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -19,7 +21,7 @@ pub struct VirtAnimeMatrix {
 }
 
 impl VirtAnimeMatrix {
-    pub fn new(model: Model) -> Self {
+    pub fn new(model: AnimeType) -> Self {
         VirtAnimeMatrix {
             buffer: [0; 640],
             animatrix: AniMatrix::new(model),
@@ -110,6 +112,13 @@ impl VirtAnimeMatrix {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    let args: Vec<String> = env::args().collect();
+    if args.len() <= 1 {
+        println!("Must supply arg, one of <GA401, GA402, GU604>");
+        return Ok(());
+    }
+    let anime_type = AnimeType::from_str(&args[1])?;
+
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
 
@@ -121,7 +130,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut canvas = window.into_canvas().build().unwrap();
 
-    let mut dev = VirtAnimeMatrix::new(Model::GU604);
+    let mut dev = VirtAnimeMatrix::new(anime_type);
 
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
@@ -130,7 +139,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         dev.read(); // it's blocking, and damned hard to sync with arc/mutex
                     // let one = dev.buffer[0..7] != USB_PREFIX2;
         let index = dev.buffer[3];
-        println!("{:02x}", index);
 
         let w = dev.animatrix.led_shape().horizontal * 6;
         let h = dev.animatrix.led_shape().vertical * 6;
@@ -147,7 +155,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                     }
                 }
                 for (x_count, b) in dev.buffer[start..=end].iter().enumerate() {
-                    // print!("{b},");
                     canvas.set_draw_color(Color::RGB(*b as u8, *b as u8, *b as u8));
 
                     let x: i32 = w + x_count as i32 * w
@@ -162,7 +169,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                         .fill_rect(Rect::new(x, y, w as u32, h as u32))
                         .unwrap();
                 }
-                // println!();
             }
         }
 

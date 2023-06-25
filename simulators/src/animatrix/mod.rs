@@ -1,3 +1,5 @@
+use rog_anime::AnimeType;
+
 use self::map_ga401::GA401;
 use self::map_ga402::GA402;
 use self::map_gu604::GU604;
@@ -5,12 +7,6 @@ use self::map_gu604::GU604;
 mod map_ga401;
 mod map_ga402;
 mod map_gu604;
-
-pub enum Model {
-    GA401,
-    GA402,
-    GU604,
-}
 
 #[derive(Clone, Copy)]
 pub struct Row(
@@ -41,17 +37,17 @@ pub struct AniMatrix {
 }
 
 impl AniMatrix {
-    pub fn new(model: Model) -> Self {
+    pub fn new(model: AnimeType) -> Self {
         let led_shape = match model {
-            Model::GA401 => LedShape {
+            AnimeType::GA401 => LedShape {
                 vertical: 2,
                 horizontal: 5,
             },
-            Model::GA402 => LedShape {
+            AnimeType::GA402 | AnimeType::Unknown => LedShape {
                 vertical: 2,
                 horizontal: 5,
             },
-            Model::GU604 => LedShape {
+            AnimeType::GU604 => LedShape {
                 vertical: 2,
                 horizontal: 5,
             },
@@ -59,9 +55,9 @@ impl AniMatrix {
 
         // Do a hard mapping of each (derived from wireshardk captures)
         let rows = match model {
-            Model::GA401 => GA401.to_vec(),
-            Model::GA402 => GA402.to_vec(),
-            Model::GU604 => GU604.to_vec(),
+            AnimeType::GA401 => GA401.to_vec(),
+            AnimeType::GA402 | AnimeType::Unknown => GA402.to_vec(),
+            AnimeType::GU604 => GU604.to_vec(),
         };
 
         Self { rows, led_shape }
