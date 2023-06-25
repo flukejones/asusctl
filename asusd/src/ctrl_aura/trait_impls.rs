@@ -126,6 +126,11 @@ impl CtrlKbdLedZbus {
             e
         })?;
 
+        ctrl.set_brightness(ctrl.config.brightness).map_err(|e| {
+            warn!("{}", e);
+            e
+        })?;
+
         if let Some(mode) = ctrl.config.builtins.get(&ctrl.config.current_mode) {
             Self::notify_led(&ctxt, mode.clone())
                 .await
