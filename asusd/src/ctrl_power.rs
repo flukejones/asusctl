@@ -14,7 +14,7 @@ use zbus::{dbus_interface, Connection, SignalContext};
 
 use crate::config::Config;
 use crate::error::RogError;
-use crate::{task_watch_item, CtrlTask, GetSupported};
+use crate::{CtrlTask, GetSupported};
 
 const ZBUS_PATH: &str = "/org/asuslinux/Power";
 const NVIDIA_POWERD: &str = "nvidia-powerd.service";
@@ -120,7 +120,7 @@ impl crate::Reloadable for CtrlPower {
 }
 
 impl CtrlPower {
-    task_watch_item!(charge_control_end_threshold power);
+    // task_watch_item!(charge_control_end_threshold power);
 
     pub fn new(config: Arc<Mutex<Config>>) -> Result<Self, RogError> {
         Ok(CtrlPower {
@@ -211,8 +211,8 @@ impl CtrlTask for CtrlPower {
         .await;
 
         let config = self.config.clone();
-        self.watch_charge_control_end_threshold(signal_ctxt.clone())
-            .await?;
+        // self.watch_charge_control_end_threshold(signal_ctxt.clone())
+        //     .await?;
 
         let ctrl = self.clone();
         tokio::spawn(async move {

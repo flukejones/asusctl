@@ -343,7 +343,7 @@ impl CtrlTask for CtrlPlatform {
                         platform1
                             .set_panel_overdrive(lock.panel_od)
                             .map_err(|err| {
-                                warn!("CtrlCharge: set_limit {}", err);
+                                warn!("CtrlCharge: panel_od {}", err);
                                 err
                             })
                             .ok();
@@ -360,7 +360,7 @@ impl CtrlTask for CtrlPlatform {
                         platform2
                             .set_panel_overdrive(lock.panel_od)
                             .map_err(|err| {
-                                warn!("CtrlCharge: set_limit {}", err);
+                                warn!("CtrlCharge: panel_od {}", err);
                                 err
                             })
                             .ok();

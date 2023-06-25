@@ -51,6 +51,7 @@ const CONFIG_PATH_BASE: &str = "/etc/asusd/";
 ///     task_watch_item!(gpu_mux_mode platform);
 /// }
 /// ```
+/// // TODO: this is kind of useless if it can't trigger some action
 #[macro_export]
 macro_rules! task_watch_item {
     ($name:ident $self_inner:ident) => {
