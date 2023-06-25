@@ -29,6 +29,8 @@ impl AsusPlatform {
 
     attr_bool!("panel_od", path);
 
+    attr_bool!("mini_led_mode", path);
+
     attr_bool!("gpu_mux_mode", path);
 
     // This is technically the same as `platform_profile` since both are tied

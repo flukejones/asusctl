@@ -32,6 +32,7 @@ pub struct BiosState {
     pub post_sound: bool,
     pub dedicated_gfx: GpuMode,
     pub panel_overdrive: bool,
+    pub mini_led_mode: bool,
     pub dgpu_disable: bool,
     pub egpu_enable: bool,
 }
@@ -51,6 +52,11 @@ impl BiosState {
             },
             panel_overdrive: if supported.rog_bios_ctrl.panel_overdrive {
                 dbus.proxies().rog_bios().panel_od()?
+            } else {
+                false
+            },
+            mini_led_mode: if supported.rog_bios_ctrl.mini_led_mode {
+                dbus.proxies().rog_bios().mini_led_mode()?
             } else {
                 false
             },
@@ -410,9 +416,7 @@ impl Default for SystemState {
             bios: BiosState {
                 post_sound: Default::default(),
                 dedicated_gfx: GpuMode::NotSupported,
-                panel_overdrive: Default::default(),
-                dgpu_disable: Default::default(),
-                egpu_enable: Default::default(),
+                ..Default::default()
             },
             aura: AuraState {
                 current_mode: AuraModeNum::Static,
@@ -422,22 +426,14 @@ impl Default for SystemState {
                     x1866: vec![],
                     x19b6: vec![],
                 },
-                bright: Default::default(),
-                wave_red: Default::default(),
-                wave_green: Default::default(),
-                wave_blue: Default::default(),
+                ..Default::default()
             },
             anime: AnimeState::default(),
             profiles: ProfilesState {
-                list: Default::default(),
-                current: Default::default(),
+                ..Default::default()
             },
             fan_curves: FanCurvesState {
-                show_curve: Default::default(),
-                show_graph: Default::default(),
-                enabled: Default::default(),
-                curves: Default::default(),
-                drag_delta: Default::default(),
+                ..Default::default()
             },
             gfx_state: GfxState {
                 has_supergfx: false,

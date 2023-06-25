@@ -74,7 +74,7 @@ pub fn rog_bios_group(supported: &SupportedFunctions, states: &mut SystemState, 
             .ok();
     }
 
-    if supported.rog_bios_ctrl.post_sound
+    if supported.rog_bios_ctrl.panel_overdrive
         && ui
             .add(egui::Checkbox::new(
                 &mut states.bios.panel_overdrive,
@@ -87,6 +87,25 @@ pub fn rog_bios_group(supported: &SupportedFunctions, states: &mut SystemState, 
             .proxies()
             .rog_bios()
             .set_panel_od(states.bios.panel_overdrive)
+            .map_err(|err| {
+                states.error = Some(err.to_string());
+            })
+            .ok();
+    }
+
+    if supported.rog_bios_ctrl.mini_led_mode
+        && ui
+            .add(egui::Checkbox::new(
+                &mut states.bios.mini_led_mode,
+                "MiniLED backlight",
+            ))
+            .changed()
+    {
+        states
+            .asus_dbus
+            .proxies()
+            .rog_bios()
+            .set_mini_led_mode(states.bios.mini_led_mode)
             .map_err(|err| {
                 states.error = Some(err.to_string());
             })

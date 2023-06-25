@@ -62,6 +62,7 @@ pub struct RogBiosSupportedFunctions {
     pub panel_overdrive: bool,
     pub dgpu_disable: bool,
     pub egpu_enable: bool,
+    pub mini_led_mode: bool,
 }
 
 impl fmt::Display for SupportedFunctions {
@@ -112,6 +113,7 @@ impl fmt::Display for RogBiosSupportedFunctions {
         writeln!(f, "ROG BIOS:")?;
         writeln!(f, "\tPOST sound switch: {}", self.post_sound)?;
         writeln!(f, "\tPanel Overdrive: {}", self.panel_overdrive)?;
+        writeln!(f, "\tMiniLED backlight: {}", self.mini_led_mode)?;
         writeln!(f, "\tdGPU disable switch: {}", self.dgpu_disable)?;
         writeln!(f, "\teGPU enable switch: {}", self.egpu_enable)?;
         writeln!(f, "\tGPU MUX control: {}", self.gpu_mux)?;

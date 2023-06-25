@@ -1,6 +1,8 @@
 //! `update_and_notify` is responsible for both notifications *and* updating
 //! stored statuses about the system state. This is done through either direct,
 //! intoify, zbus notifications or similar methods.
+//!
+//! This module very much functions like a stand-alone app on its own thread.
 
 use std::fmt::Display;
 use std::process::Command;
@@ -37,6 +39,7 @@ static mut POWER_BAT_CMD: Option<Command> = None;
 pub struct EnabledNotifications {
     pub receive_notify_post_boot_sound: bool,
     pub receive_notify_panel_od: bool,
+    pub receive_notify_mini_led_mode: bool,
     pub receive_notify_dgpu_disable: bool,
     pub receive_notify_egpu_enable: bool,
     pub receive_notify_gpu_mux_mode: bool,
@@ -56,6 +59,7 @@ impl Default for EnabledNotifications {
         Self {
             receive_notify_post_boot_sound: false,
             receive_notify_panel_od: true,
+            receive_notify_mini_led_mode: true,
             receive_notify_dgpu_disable: true,
             receive_notify_egpu_enable: true,
             receive_notify_gpu_mux_mode: true,
@@ -174,6 +178,18 @@ pub fn start_notifications(
         (bios.panel_overdrive),
         (overdrive),
         "Panel Overdrive enabled:",
+        do_notification
+    );
+
+    recv_notif!(
+        RogBiosProxy,
+        receive_notify_mini_led_mode,
+        last_notification,
+        enabled_notifications,
+        page_states,
+        (bios.mini_led_mode),
+        (on),
+        "MiniLED mode enabled:",
         do_notification
     );
 

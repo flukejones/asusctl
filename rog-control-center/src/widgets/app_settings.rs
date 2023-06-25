@@ -78,6 +78,12 @@ pub fn app_settings(config: &mut Config, states: &mut SystemState, ui: &mut Ui) 
             .clicked()
         || ui
             .checkbox(
+                &mut enabled_notifications.receive_notify_mini_led_mode,
+                "Enable MiniLED mode notification",
+            )
+            .clicked()
+        || ui
+            .checkbox(
                 &mut enabled_notifications.receive_notify_post_boot_sound,
                 "Enable BIOS post sound notification",
             )

@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Builtin animations
 - In-progress simulators for GA402, GU604 animatrix, optional build and takes a single arg
 - Add `model_override` option to anime config, this is handy for forcing a model for "Unknown" anime, and for simulators
+- Add `mini_led_mode` support to asusd and zbus crates (requires kernel patch https://lkml.org/lkml/2023/6/19/1264)
+- Add `mini_led_mode` toggle to rog-control-center GUI, tray, notifications
 ### Changed
 - Move FX506HC to FX506H in arua DB to catch full series of this range
 - Move FX506LH to FX506L in arua DB to catch full series of this range

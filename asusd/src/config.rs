@@ -8,6 +8,7 @@ pub struct Config {
     /// Save charge limit for restoring on boot
     pub bat_charge_limit: u8,
     pub panel_od: bool,
+    pub mini_led_mode: bool,
     pub disable_nvidia_powerd_on_battery: bool,
     pub ac_command: String,
     pub bat_command: String,
@@ -18,6 +19,7 @@ impl StdConfig for Config {
         Config {
             bat_charge_limit: 100,
             panel_od: false,
+            mini_led_mode: false,
             disable_nvidia_powerd_on_battery: true,
             ac_command: String::new(),
             bat_command: String::new(),
@@ -33,21 +35,24 @@ impl StdConfig for Config {
     }
 }
 
-impl StdConfigLoad2<Config455, Config458> for Config {}
+impl StdConfigLoad2<Config458, Config462> for Config {}
 
-#[derive(Deserialize, Serialize, Default)]
-#[serde(default)]
-pub struct Config455 {
+#[derive(Deserialize, Serialize)]
+pub struct Config462 {
     /// Save charge limit for restoring on boot
     pub bat_charge_limit: u8,
     pub panel_od: bool,
+    pub disable_nvidia_powerd_on_battery: bool,
+    pub ac_command: String,
+    pub bat_command: String,
 }
 
-impl From<Config455> for Config {
-    fn from(c: Config455) -> Self {
+impl From<Config462> for Config {
+    fn from(c: Config462) -> Self {
         Self {
             bat_charge_limit: c.bat_charge_limit,
             panel_od: c.panel_od,
+            mini_led_mode: false,
             disable_nvidia_powerd_on_battery: true,
             ac_command: String::new(),
             bat_command: String::new(),
@@ -55,7 +60,7 @@ impl From<Config455> for Config {
     }
 }
 
-#[derive(Deserialize, Serialize, Default)]
+#[derive(Deserialize, Serialize)]
 pub struct Config458 {
     /// Save charge limit for restoring on boot
     pub bat_charge_limit: u8,
@@ -69,6 +74,7 @@ impl From<Config458> for Config {
         Self {
             bat_charge_limit: c.bat_charge_limit,
             panel_od: c.panel_od,
+            mini_led_mode: false,
             disable_nvidia_powerd_on_battery: true,
             ac_command: c.ac_command,
             bat_command: c.bat_command,

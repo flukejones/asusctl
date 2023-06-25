@@ -247,6 +247,21 @@ impl ROGTray {
         }
     }
 
+    fn menu_add_mini_led_mode(&mut self, supported: &SupportedFunctions, on: bool) {
+        if supported.rog_bios_ctrl.mini_led_mode {
+            let bios = self.bios_proxy.clone();
+            self.add_check_menu_item("MiniLED mode", on, move |this| {
+                bios.set_mini_led_mode(this.is_active())
+                    .map_err(|e| {
+                        error!("ROGTray: set_mini_led_mode: {e}");
+                        e
+                    })
+                    .ok();
+            });
+            debug!("ROGTray: appended miniLED mode menu");
+        }
+    }
+
     fn menu_add_supergfx(&mut self, supported_gfx: &[GfxMode], current_mode: GfxMode) {
         if !self.gfx_proxy_is_active {
             trace!("menu_add_supergfx: gfx_proxy_is_active is false");
@@ -386,11 +401,13 @@ impl ROGTray {
         current_gfx_mode: GfxMode,
         charge_limit: u8,
         panel_od: bool,
+        mini_led: bool,
     ) {
         self.menu_clear();
         self.menu_add_base();
         self.menu_add_charge_limit(supported, charge_limit);
         self.menu_add_panel_od(supported, panel_od);
+        self.menu_add_mini_led_mode(supported, mini_led);
         if self.gfx_proxy_is_active {
             // Add a supergfxctl specific menu
             self.menu_add_supergfx(supported_gfx, current_gfx_mode);
@@ -453,7 +470,14 @@ pub fn init_tray(
             Default::default()
         };
 
-        tray.rebuild_and_update(&supported, &supported_gfx, GfxMode::Hybrid, 100, false);
+        tray.rebuild_and_update(
+            &supported,
+            &supported_gfx,
+            GfxMode::Hybrid,
+            100,
+            false,
+            false,
+        );
         tray.set_icon(TRAY_APP_ICON);
         info!("Started ROGTray");
 
@@ -475,6 +499,7 @@ pub fn init_tray(
                         current_gpu_mode,
                         lock.power_state.charge_limit,
                         lock.bios.panel_overdrive,
+                        lock.bios.mini_led_mode,
                     );
                     lock.tray_should_update = false;
                     debug!("ROGTray: rebuilt menus due to state change");

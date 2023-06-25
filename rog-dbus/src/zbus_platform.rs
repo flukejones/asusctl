@@ -40,6 +40,9 @@ trait RogBios {
     /// PanelOd method
     fn panel_od(&self) -> zbus::Result<bool>;
 
+    /// MiniLedMode method
+    fn mini_led_mode(&self) -> zbus::Result<bool>;
+
     /// PostBootSound method
     fn post_boot_sound(&self) -> zbus::Result<i16>;
 
@@ -54,6 +57,9 @@ trait RogBios {
 
     /// SetPanelOd method
     fn set_panel_od(&self, overdrive: bool) -> zbus::Result<()>;
+
+    /// SetminiLedMode
+    fn set_mini_led_mode(&self, on: bool) -> zbus::Result<()>;
 
     /// SetPostBootSound method
     fn set_post_boot_sound(&self, on: bool) -> zbus::Result<()>;
@@ -73,6 +79,10 @@ trait RogBios {
     /// NotifyPanelOd signal
     #[dbus_proxy(signal)]
     fn notify_panel_od(&self, overdrive: bool) -> zbus::Result<()>;
+
+    /// NotifyMiniLedMode signal
+    #[dbus_proxy(signal)]
+    fn notify_mini_led_mode(&self, on: bool) -> zbus::Result<()>;
 
     /// NotifyPostBootSound signal
     #[inline]

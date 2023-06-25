@@ -31,12 +31,14 @@ impl GetSupported for CtrlPlatform {
 
     fn get_supported() -> Self::A {
         let mut panel_overdrive = false;
+        let mut mini_led_mode = false;
         let mut dgpu_disable = false;
         let mut egpu_enable = false;
         let mut gpu_mux = false;
 
         if let Ok(platform) = AsusPlatform::new() {
             panel_overdrive = platform.has_panel_od();
+            mini_led_mode = platform.has_mini_led_mode();
             dgpu_disable = platform.has_dgpu_disable();
             egpu_enable = platform.has_egpu_enable();
             gpu_mux = platform.has_gpu_mux_mode();
@@ -46,6 +48,7 @@ impl GetSupported for CtrlPlatform {
             post_sound: Path::new(ASUS_POST_LOGO_SOUND).exists(),
             gpu_mux,
             panel_overdrive,
+            mini_led_mode,
             dgpu_disable,
             egpu_enable,
         }
@@ -214,24 +217,50 @@ impl CtrlPlatform {
     /// Get the `panel_od` value from platform. Updates the stored value in
     /// internal config also.
     fn panel_od(&self) -> bool {
-        let od = self
-            .platform
+        self.platform
             .get_panel_od()
             .map_err(|err| {
                 warn!("CtrlRogBios: get_panel_od {}", err);
                 err
             })
-            .unwrap_or(false);
-        if let Some(mut lock) = self.config.try_lock() {
-            lock.panel_od = od;
-            lock.write();
-        }
-        od
+            .unwrap_or(false)
     }
 
     #[dbus_interface(signal)]
     async fn notify_panel_od(signal_ctxt: &SignalContext<'_>, overdrive: bool) -> zbus::Result<()> {
     }
+
+    async fn set_mini_led_mode(
+        &mut self,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+        on: bool,
+    ) {
+        match self.platform.set_mini_led_mode(on) {
+            Ok(_) => {
+                if let Some(mut lock) = self.config.try_lock() {
+                    lock.mini_led_mode = on;
+                    lock.write();
+                }
+                Self::notify_mini_led_mode(&ctxt, on).await.ok();
+            }
+            Err(err) => warn!("CtrlRogBios: set_mini_led_mode {}", err),
+        };
+    }
+
+    /// Get the `panel_od` value from platform. Updates the stored value in
+    /// internal config also.
+    fn mini_led_mode(&self) -> bool {
+        self.platform
+            .get_mini_led_mode()
+            .map_err(|err| {
+                warn!("CtrlRogBios: get_mini_led_mode {}", err);
+                err
+            })
+            .unwrap_or(false)
+    }
+
+    #[dbus_interface(signal)]
+    async fn notify_mini_led_mode(signal_ctxt: &SignalContext<'_>, on: bool) -> zbus::Result<()> {}
 
     async fn set_dgpu_disable(
         &mut self,
