@@ -31,7 +31,7 @@ a system-level daemon should.
 
 ## Discord
 
-[Discord server link](https://discord.gg/4ZKGd7Un5t)
+[Discord server link](https://discord.gg/WTHnqabm)
 
 ## SUPPORTED LAPTOPS
 
@@ -81,13 +81,13 @@ Requirements are rust >= 1.57 installed from rustup.io if the distro provided ve
     sudo make install
 
 **popos (unsuported):**
-    
+
     sudo apt install cmake libclang-dev libudev-dev libgtk-3-dev libclang-dev libglib2.0-dev libatkmm-1.6-dev libpangomm-1.4-dev librust-gdk-pixbuf-dev
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     source "$HOME/.cargo/env"
     make
     sudo make install
-    
+
 
 **fedora:**
 
