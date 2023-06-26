@@ -189,6 +189,13 @@
         advanced_type: PerKey,
     ),
     (
+        board_name: "G634J",
+        layout_name: "g634j-per-key",
+        basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
+        basic_zones: [],
+        advanced_type: PerKey,
+    ),
+    (
         board_name: "G712LI",
         layout_name: "gl503",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
