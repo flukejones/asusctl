@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [v4.7.0-RC1]
 ### Added
 - Support for FX507Z LED modes
 - Support for GL503V LED modes
@@ -28,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove notification handle tracking limit, fixes KDE issue with profile notif
 - Rename daemon and daemon-user crates to asusd and asusd-user to not be confusing in workspace naming
 - Prevent the multiple notifications from a profile change from occuring (too many functions with side effects!)
+- Apply keyboard brightness when setting a mode
 - Update GL503 led config
 ### BREAKING
 - All Anime related DBUS methods/notifs are changed

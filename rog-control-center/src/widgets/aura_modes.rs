@@ -5,7 +5,7 @@ use egui::{RichText, Ui};
 use rog_aura::layouts::KeyLayout;
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour, Speed};
 
-use crate::system_state::{AuraState, SystemState};
+use crate::system_state::SystemState;
 
 pub fn aura_modes_group(states: &mut SystemState, freq: &mut Arc<AtomicU8>, ui: &mut Ui) {
     let mut changed = false;
@@ -59,7 +59,7 @@ pub fn aura_modes_group(states: &mut SystemState, freq: &mut Arc<AtomicU8>, ui: 
         let mut zone_button = |a: AuraZone, ui: &mut Ui| {
             ui.selectable_value(&mut effect.zone, a, format!("{:?}", a));
         };
-        let mut speed_button = |a: Speed, ui: &mut Ui| {
+        let mut speed_button = |a: Speed, ui: &mut Ui| -> bool {
             if ui
                 .selectable_value(&mut effect.speed, a, format!("{:?}", a))
                 .clicked()
@@ -70,10 +70,13 @@ pub fn aura_modes_group(states: &mut SystemState, freq: &mut Arc<AtomicU8>, ui: 
                     Speed::High => 10,
                 };
                 freq.store(val, Ordering::SeqCst);
+                return true;
             }
+            false
         };
-        let mut dir_button = |a: rog_aura::Direction, ui: &mut Ui| {
-            ui.selectable_value(&mut effect.direction, a, format!("{:?}", a));
+        let mut dir_button = |a: rog_aura::Direction, ui: &mut Ui| -> bool {
+            ui.selectable_value(&mut effect.direction, a, format!("{:?}", a))
+                .clicked()
         };
 
         let mut c1: [u8; 3] = effect.colour1.into();
@@ -139,26 +142,37 @@ pub fn aura_modes_group(states: &mut SystemState, freq: &mut Arc<AtomicU8>, ui: 
                 });
 
                 ui.add_enabled_ui(allowed.colour1, |ui| {
-                    egui::color_picker::color_edit_button_srgb(ui, &mut c1)
+                    if egui::color_picker::color_edit_button_srgb(ui, &mut c1).changed() {
+                        changed = true;
+                    }
                 });
+
                 ui.add_enabled_ui(allowed.colour2, |ui| {
-                    egui::color_picker::color_edit_button_srgb(ui, &mut c2)
+                    if egui::color_picker::color_edit_button_srgb(ui, &mut c2).changed() {
+                        changed = true;
+                    }
                 });
 
                 ui.add_enabled_ui(allowed.speed, |ui| {
                     ui.horizontal_wrapped(|ui| {
-                        speed_button(Speed::Low, ui);
-                        speed_button(Speed::Med, ui);
-                        speed_button(Speed::High, ui);
+                        if speed_button(Speed::Low, ui)
+                            || speed_button(Speed::Med, ui)
+                            || speed_button(Speed::High, ui)
+                        {
+                            changed = true;
+                        }
                     });
                 });
 
                 ui.add_enabled_ui(allowed.direction, |ui| {
                     ui.horizontal_wrapped(|ui| {
-                        dir_button(rog_aura::Direction::Left, ui);
-                        dir_button(rog_aura::Direction::Down, ui);
-                        dir_button(rog_aura::Direction::Right, ui);
-                        dir_button(rog_aura::Direction::Up, ui);
+                        if dir_button(rog_aura::Direction::Left, ui)
+                            || dir_button(rog_aura::Direction::Down, ui)
+                            || dir_button(rog_aura::Direction::Right, ui)
+                            || dir_button(rog_aura::Direction::Up, ui)
+                        {
+                            changed = true;
+                        }
                     });
                 });
             });
@@ -170,16 +184,16 @@ pub fn aura_modes_group(states: &mut SystemState, freq: &mut Arc<AtomicU8>, ui: 
 
     ui.separator();
     ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
-        if ui.add(egui::Button::new("Cancel")).clicked() {
-            match AuraState::new(&aura_creation.keyboard_layout, &states.asus_dbus) {
-                Ok(a) => states.aura.modes = a.modes,
-                Err(e) => states.error = Some(e.to_string()),
-            }
-        }
+        // if ui.add(egui::Button::new("Cancel")).clicked() {
+        //     match AuraState::new(&aura_creation.keyboard_layout, &states.asus_dbus) {
+        //         Ok(a) => states.aura.modes = a.modes,
+        //         Err(e) => states.error = Some(e.to_string()),
+        //     }
+        // }
 
-        if ui.add(egui::Button::new("Apply")).clicked() {
-            changed = true;
-        }
+        // if ui.add(egui::Button::new("Apply")).clicked() {
+        //     changed = true;
+        // }
 
         if aura_creation.layout_testing.is_some() {
             if ui.add(egui::Button::new("Next layout")).clicked() {
@@ -207,21 +221,6 @@ pub fn aura_modes_group(states: &mut SystemState, freq: &mut Arc<AtomicU8>, ui: 
             }
         }
     });
-
-    // egui::TopBottomPanel::bottom("error_bar")
-    //     .default_height(26.0)
-    //     .show(ctx, |ui| {
-    //         ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
-    //             if ui.add(egui::Button::new("Cancel")).clicked() {
-    //                 let notif = states.aura.was_notified.clone();
-    //                 states.aura.modes = AuraState::new(notif, supported,
-    // dbus).modes;             }
-
-    //             if ui.add(egui::Button::new("Apply")).clicked() {
-    //                 changed = true;
-    //             }
-    //         });
-    //     });
 
     if changed {
         states.aura.current_mode = selected;

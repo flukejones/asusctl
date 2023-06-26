@@ -175,7 +175,7 @@ checksum = "8868f09ff8cea88b079da74ae569d9b8c62a23c68c746240b704ee6f7525c89c"
 
 [[package]]
 name = "asusctl"
-version = "4.6.2"
+version = "4.7.0-RC1"
 dependencies = [
  "asusd",
  "cargo-husky",
@@ -194,7 +194,7 @@ dependencies = [
 
 [[package]]
 name = "asusd"
-version = "4.6.2"
+version = "4.7.0-RC1"
 dependencies = [
  "async-trait",
  "cargo-husky",
@@ -218,7 +218,7 @@ dependencies = [
 
 [[package]]
 name = "asusd-user"
-version = "4.6.2"
+version = "4.7.0-RC1"
 dependencies = [
  "cargo-husky",
  "config-traits",
@@ -728,7 +728,7 @@ dependencies = [
 
 [[package]]
 name = "config-traits"
-version = "4.6.2"
+version = "4.7.0-RC1"
 dependencies = [
  "cargo-husky",
  "log",
@@ -2558,7 +2558,7 @@ checksum = "436b050e76ed2903236f032a59761c1eb99e1b0aead2c257922771dab1fc8c78"
 
 [[package]]
 name = "rog-control-center"
-version = "4.6.2"
+version = "4.7.0-RC1"
 dependencies = [
  "asusd",
  "cargo-husky",
@@ -2591,7 +2591,7 @@ dependencies = [
 
 [[package]]
 name = "rog_anime"
-version = "4.6.2"
+version = "4.7.0-RC1"
 dependencies = [
  "cargo-husky",
  "gif",
@@ -2607,7 +2607,7 @@ dependencies = [
 
 [[package]]
 name = "rog_aura"
-version = "4.6.2"
+version = "4.7.0-RC1"
 dependencies = [
  "cargo-husky",
  "log",
@@ -2620,7 +2620,7 @@ dependencies = [
 
 [[package]]
 name = "rog_dbus"
-version = "4.6.2"
+version = "4.7.0-RC1"
 dependencies = [
  "cargo-husky",
  "rog_anime",
@@ -2632,7 +2632,7 @@ dependencies = [
 
 [[package]]
 name = "rog_platform"
-version = "4.6.2"
+version = "4.7.0-RC1"
 dependencies = [
  "cargo-husky",
  "concat-idents",
@@ -2649,7 +2649,7 @@ dependencies = [
 
 [[package]]
 name = "rog_profiles"
-version = "4.6.2"
+version = "4.7.0-RC1"
 dependencies = [
  "cargo-husky",
  "serde",
@@ -2660,7 +2660,7 @@ dependencies = [
 
 [[package]]
 name = "rog_simulators"
-version = "4.6.2"
+version = "4.7.0-RC1"
 dependencies = [
  "glam",
  "log",

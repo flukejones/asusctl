@@ -3,7 +3,7 @@ members = ["asusctl", "asusd", "asusd-user", "config-traits", "rog-platform", "r
 default-members = ["asusctl", "asusd", "asusd-user", "rog-control-center"]
 
 [workspace.package]
-version = "4.6.2"
+version = "4.7.0-RC1"
 
 [workspace.dependencies]
 async-trait = "^0.1"
