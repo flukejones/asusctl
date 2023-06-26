@@ -62,7 +62,7 @@ release:
     - make && make vendor
   artifacts:
     paths:
-    - vendor_asusctl_*.tar.xz
+    - vendor_asusctl*.tar.xz
     - cargo-config
 
 pages:
@@ -75,7 +75,7 @@ pages:
     - rm -rf public
     - mkdir public
     - cp -R target/doc/* public
-    - cp misc/index.html public
+    - cp extra/index.html public
   artifacts:
     paths:
       - public
