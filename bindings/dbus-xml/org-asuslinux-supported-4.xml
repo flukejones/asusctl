@@ -1,8 +1,13 @@
-method return time=1687857321.244505 sender=:1.373 -> destination=:1.438 serial=2263 reply_serial=2
+method return time=1687861003.331930 sender=:1.463 -> destination=:1.474 serial=13 reply_serial=2
    string "
 <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
  "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
+  <interface name="org.asuslinux.Daemon">
+    <method name="SupportedFunctions">
+      <arg type="(b(b)(bb)(sbasasu)(bbbbbb))" direction="out"/>
+    </method>
+  </interface>
   <interface name="org.freedesktop.DBus.Peer">
     <method name="Ping">
     </method>
@@ -38,11 +43,6 @@ method return time=1687857321.244505 sender=:1.373 -> destination=:1.438 serial=
       <arg name="changed_properties" type="a{sv}"/>
       <arg name="invalidated_properties" type="as"/>
     </signal>
-  </interface>
-  <interface name="org.asuslinux.Daemon">
-    <method name="SupportedFunctions">
-      <arg type="(b(b)(bb)(sbasasu)(bbbbbb))" direction="out"/>
-    </method>
   </interface>
 </node>
 "

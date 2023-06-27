@@ -1,13 +1,8 @@
-method return time=1687857321.234264 sender=:1.373 -> destination=:1.433 serial=2258 reply_serial=2
+method return time=1687861003.313639 sender=:1.463 -> destination=:1.469 serial=8 reply_serial=2
    string "
 <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
  "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
-  <interface name="org.freedesktop.DBus.Introspectable">
-    <method name="Introspect">
-      <arg type="s" direction="out"/>
-    </method>
-  </interface>
   <interface name="org.freedesktop.DBus.Properties">
     <method name="Get">
       <arg name="interface_name" type="s" direction="in"/>
@@ -31,13 +26,6 @@ method return time=1687857321.234264 sender=:1.373 -> destination=:1.433 serial=
       <arg name="changed_properties" type="a{sv}"/>
       <arg name="invalidated_properties" type="as"/>
     </signal>
-  </interface>
-  <interface name="org.freedesktop.DBus.Peer">
-    <method name="Ping">
-    </method>
-    <method name="GetMachineId">
-      <arg type="s" direction="out"/>
-    </method>
   </interface>
   <interface name="org.asuslinux.Daemon">
     <!--
@@ -141,6 +129,18 @@ method return time=1687857321.234264 sender=:1.373 -> destination=:1.433 serial=
      Return the current LED brightness
      -->
     <property name="LedBrightness" type="n" access="read"/>
+  </interface>
+  <interface name="org.freedesktop.DBus.Peer">
+    <method name="Ping">
+    </method>
+    <method name="GetMachineId">
+      <arg type="s" direction="out"/>
+    </method>
+  </interface>
+  <interface name="org.freedesktop.DBus.Introspectable">
+    <method name="Introspect">
+      <arg type="s" direction="out"/>
+    </method>
   </interface>
 </node>
 "

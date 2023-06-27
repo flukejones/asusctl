@@ -130,6 +130,10 @@ Run `sudo make uninstall` in the source repo, and remove `/etc/asusd/`.
 
 See `CONTRIBUTING.md`. Additionally, also do `cargo clean` and `cargo test` on first checkout to ensure the commit hooks are used (via `cargo-husky`).
 
+Generation of the bindings with `make bindings` requires `typeshare` to be installed.
+
+Dbus introsepction XML requires with `make introspection` requires `anime_sim` to be running before starting `asusd`.
+
 # OTHER
 
 ## Supporting more laptops

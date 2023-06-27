@@ -1,39 +1,8 @@
-method return time=1687857321.236676 sender=:1.373 -> destination=:1.434 serial=2259 reply_serial=2
+method return time=1687861003.317863 sender=:1.463 -> destination=:1.470 serial=9 reply_serial=2
    string "
 <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
  "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
-  <interface name="org.freedesktop.DBus.Properties">
-    <method name="Get">
-      <arg name="interface_name" type="s" direction="in"/>
-      <arg name="property_name" type="s" direction="in"/>
-      <arg type="v" direction="out"/>
-    </method>
-    <method name="Set">
-      <arg name="interface_name" type="s" direction="in"/>
-      <arg name="property_name" type="s" direction="in"/>
-      <arg name="value" type="v" direction="in"/>
-    </method>
-    <method name="GetAll">
-      <arg name="interface_name" type="s" direction="in"/>
-      <arg type="a{sv}" direction="out"/>
-    </method>
-    <!--
-     Emits the `org.freedesktop.DBus.Properties.PropertiesChanged` signal.
-     -->
-    <signal name="PropertiesChanged">
-      <arg name="interface_name" type="s"/>
-      <arg name="changed_properties" type="a{sv}"/>
-      <arg name="invalidated_properties" type="as"/>
-    </signal>
-  </interface>
-  <interface name="org.freedesktop.DBus.Peer">
-    <method name="Ping">
-    </method>
-    <method name="GetMachineId">
-      <arg type="s" direction="out"/>
-    </method>
-  </interface>
   <interface name="org.freedesktop.DBus.Introspectable">
     <method name="Introspect">
       <arg type="s" direction="out"/>
@@ -100,6 +69,37 @@ method return time=1687857321.236676 sender=:1.373 -> destination=:1.434 serial=
     <signal name="NotifyDeviceState">
       <arg name="data" type="(bsb(ssss))"/>
     </signal>
+  </interface>
+  <interface name="org.freedesktop.DBus.Properties">
+    <method name="Get">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg name="property_name" type="s" direction="in"/>
+      <arg type="v" direction="out"/>
+    </method>
+    <method name="Set">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg name="property_name" type="s" direction="in"/>
+      <arg name="value" type="v" direction="in"/>
+    </method>
+    <method name="GetAll">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg type="a{sv}" direction="out"/>
+    </method>
+    <!--
+     Emits the `org.freedesktop.DBus.Properties.PropertiesChanged` signal.
+     -->
+    <signal name="PropertiesChanged">
+      <arg name="interface_name" type="s"/>
+      <arg name="changed_properties" type="a{sv}"/>
+      <arg name="invalidated_properties" type="as"/>
+    </signal>
+  </interface>
+  <interface name="org.freedesktop.DBus.Peer">
+    <method name="Ping">
+    </method>
+    <method name="GetMachineId">
+      <arg type="s" direction="out"/>
+    </method>
   </interface>
 </node>
 "
