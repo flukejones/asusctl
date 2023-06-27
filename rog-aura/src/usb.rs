@@ -110,23 +110,20 @@ impl AuraDevTuf {
     }
 }
 
-/// # Bits for older 0x1866, 0x1869, 0x1854 keyboard models
+/// # Bits for older 0x1866 keyboard model
 ///
 /// Keybord and Lightbar require Awake, Boot and Sleep apply to both
 /// Keybord and Lightbar regardless of if either are enabled (or Awake is
 /// enabled)
 ///
-/// |   Byte 1   |   Byte 2   |   Byte 3   |   Byte 4   | function  |   hex
-/// |
-/// |------------|------------|------------|------------|-----------|-------------|
-/// | 0000, 0000 | 0000, 0000 | 0000, 0010 | 0000, 0000 | Awake     |
-/// 00,00,02,00 | | 0000, 1000 | 0000, 0000 | 0000, 0000 | 0000, 0000 | Keyboard
-/// | 08,00,00,00 | | 0000, 0100 | 0000, 0101 | 0000, 0000 | 0000, 0000 |
-/// Lightbar  | 04,05,00,00 | | 1100, 0011 | 0001, 0010 | 0000, 1001 | 0000,
-/// 0000 | Boot/Sht  | c3,12,09,00 | | 0011, 0000 | 0000, 1000 | 0000, 0100 |
-/// 0000, 0000 | Sleep     | 30,08,04,00 | | 1111, 1111 | 0001, 1111 | 0000,
-/// 1111 | 0000, 0000 | all on    |             | | 0000, 0000 | 0000, 0000 |
-/// 0000, 0000 | 0000, 0010 | Rear Glow | 00,00,00,02 |
+/// |   Byte 1   |   Byte 2   |   Byte 3   | function |   hex    |
+/// |------------|------------|------------|----------|----------|
+/// | 0000, 0000 | 0000, 0000 | 0000, 0010 | Awake    | 00,00,02 |
+/// | 0000, 1000 | 0000, 0000 | 0000, 0000 | Keyboard | 08,00,00 |
+/// | 0000, 0100 | 0000, 0101 | 0000, 0000 | Lightbar | 04,05,00 |
+/// | 1100, 0011 | 0001, 0010 | 0000, 1001 | Boot/Sht | c3,12,09 |
+/// | 0011, 0000 | 0000, 1000 | 0000, 0100 | Sleep    | 30,08,04 |
+/// | 1111, 1111 | 0001, 1111 | 0000, 1111 | all on   |          |
 #[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -182,30 +179,28 @@ impl BitAnd<AuraDevRog1> for AuraDevRog1 {
 
 /// # Bits for newer 0x18c6, 0x19B6, 0x1a30, keyboard models
 ///
-/// byte 4 in the USB packet is for keyboard + logo power states
-/// default is on, `ff`
-/// Keyboard and logo use the full range of bits (almost)
-///
-/// | n1   | n2   | hex | action                | bit   |
-/// |------|------|-----|-----------------------|-------|
-/// | 0000 | 0000 | 00  | all off               |       |
-/// | 0000 | 0001 | 01  | logo boot             | bit 1 |
-/// | 0000 | 0010 | 02  | keyboard boot         | bit 2 |
-/// | 0000 | 0100 | 04  | logo awake            | bit 3 |
-/// | 0000 | 1000 | 08  | keyboard awake        | bit 4 |
-/// | 0001 | 0000 | 10  | logo sleep off        | bit 5 |
-/// | 0010 | 0000 | 20  | keyboard sleep        | bit 6 |
-/// | 0100 | 0000 | 40  | logo shutdown off     | bit 7 |
-/// | 1000 | 0000 | 80  | keyboard shutdown off | bit 8 |
-///
-/// byte 5 = lightbar
-///
-/// |  1   |  2   | hex | action               | bit   |
-/// |------|------|-----|----------------------|-------|
-/// | 0000 | 0010 | 02  | lightbar off boot    | bit 2 |
-/// | 0000 | 0100 | 04  | lightbar on          | bit 3 |
-/// | 0000 | 1000 | 08  | lightbar off sleep   | bit 4 |
-/// | 0001 | 0000 | 10  | lightbar shtdn off   | bit 5 |
+/// | Byte 1 | Byte 2  | Byte 3  | Byte 4  | Label    |
+/// |--------|---------|---------|---------|----------|
+/// |00000001| 00000000| 00000000| 00000000|boot_logo_|
+/// |00000010| 00000000| 00000000| 00000000|boot_keyb_|
+/// |00000100| 00000000| 00000000| 00000000|awake_logo|
+/// |00001000| 00000000| 00000000| 00000000|awake_keyb|
+/// |00010000| 00000000| 00000000| 00000000|sleep_logo|
+/// |00100000| 00000000| 00000000| 00000000|sleep_keyb|
+/// |01000000| 00000000| 00000000| 00000000|shut_logo_|
+/// |10000000| 00000000| 00000000| 00000000|shut_keyb_|
+/// |00000000| 00000010| 00000000| 00000000|boot_bar__|
+/// |00000000| 00000100| 00000000| 00000000|awake_bar_|
+/// |00000000| 00001000| 00000000| 00000000|sleep_bar_|
+/// |00000000| 00010000| 00000000| 00000000|shut_bar__|
+/// |00000000| 00000000| 00000001| 00000000|boot_lid__|
+/// |00000000| 00000000| 00000010| 00000000|awkae_lid_|
+/// |00000000| 00000000| 00000100| 00000000|sleep_lid_|
+/// |00000000| 00000000| 00001000| 00000000|shut_lid__|
+/// |00000000| 00000000| 00000000| 00000001|boot_rear_|
+/// |00000000| 00000000| 00000000| 00000010|awake_rear|
+/// |00000000| 00000000| 00000000| 00000100|sleep_rear|
+/// |00000000| 00000000| 00000000| 00001000|shut_rear_|
 #[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -315,7 +310,60 @@ mod tests {
     }
 
     #[test]
-    fn check_0x19b6_control_bytes() {
+    fn check_0x19b6_control_bytes_binary_rep() {
+        fn to_binary_string(bytes: &[AuraDevRog2]) -> String {
+            let bytes = AuraDevRog2::to_bytes(bytes);
+            format!(
+                "{:08b}, {:08b}, {:08b}, {:08b}",
+                bytes[0], bytes[1], bytes[2], bytes[3]
+            )
+        }
+
+        let boot_logo_ = to_binary_string(&[AuraDevRog2::BootLogo]);
+        let boot_keyb_ = to_binary_string(&[AuraDevRog2::BootKeyb]);
+        let sleep_logo = to_binary_string(&[AuraDevRog2::SleepLogo]);
+        let sleep_keyb = to_binary_string(&[AuraDevRog2::SleepKeyb]);
+        let awake_logo = to_binary_string(&[AuraDevRog2::AwakeLogo]);
+        let awake_keyb = to_binary_string(&[AuraDevRog2::AwakeKeyb]);
+        let shut_logo_ = to_binary_string(&[AuraDevRog2::ShutdownLogo]);
+        let shut_keyb_ = to_binary_string(&[AuraDevRog2::ShutdownKeyb]);
+        let boot_bar__ = to_binary_string(&[AuraDevRog2::BootBar]);
+        let awake_bar_ = to_binary_string(&[AuraDevRog2::AwakeBar]);
+        let sleep_bar_ = to_binary_string(&[AuraDevRog2::SleepBar]);
+        let shut_bar__ = to_binary_string(&[AuraDevRog2::ShutdownBar]);
+        let boot_lid__ = to_binary_string(&[AuraDevRog2::BootLid]);
+        let awkae_lid_ = to_binary_string(&[AuraDevRog2::AwakeLid]);
+        let sleep_lid_ = to_binary_string(&[AuraDevRog2::SleepLid]);
+        let shut_lid__ = to_binary_string(&[AuraDevRog2::ShutdownLid]);
+        let boot_rear_ = to_binary_string(&[AuraDevRog2::BootRearGlow]);
+        let awake_rear = to_binary_string(&[AuraDevRog2::AwakeRearGlow]);
+        let sleep_rear = to_binary_string(&[AuraDevRog2::SleepRearGlow]);
+        let shut_rear_ = to_binary_string(&[AuraDevRog2::ShutdownRearGlow]);
+
+        assert_eq!(boot_logo_, "00000001, 00000000, 00000000, 00000000");
+        assert_eq!(boot_keyb_, "00000010, 00000000, 00000000, 00000000");
+        assert_eq!(awake_logo, "00000100, 00000000, 00000000, 00000000");
+        assert_eq!(awake_keyb, "00001000, 00000000, 00000000, 00000000");
+        assert_eq!(sleep_logo, "00010000, 00000000, 00000000, 00000000");
+        assert_eq!(sleep_keyb, "00100000, 00000000, 00000000, 00000000");
+        assert_eq!(shut_logo_, "01000000, 00000000, 00000000, 00000000");
+        assert_eq!(shut_keyb_, "10000000, 00000000, 00000000, 00000000");
+        //
+        assert_eq!(boot_bar__, "00000000, 00000010, 00000000, 00000000");
+        assert_eq!(awake_bar_, "00000000, 00000100, 00000000, 00000000");
+        assert_eq!(sleep_bar_, "00000000, 00001000, 00000000, 00000000");
+        assert_eq!(shut_bar__, "00000000, 00010000, 00000000, 00000000");
+        //
+        assert_eq!(boot_lid__, "00000000, 00000000, 00000001, 00000000");
+        assert_eq!(awkae_lid_, "00000000, 00000000, 00000010, 00000000");
+        assert_eq!(sleep_lid_, "00000000, 00000000, 00000100, 00000000");
+        assert_eq!(shut_lid__, "00000000, 00000000, 00001000, 00000000");
+        //
+        assert_eq!(boot_rear_, "00000000, 00000000, 00000000, 00000001");
+        assert_eq!(awake_rear, "00000000, 00000000, 00000000, 00000010");
+        assert_eq!(sleep_rear, "00000000, 00000000, 00000000, 00000100");
+        assert_eq!(shut_rear_, "00000000, 00000000, 00000000, 00001000");
+
         // All on
         let byte1 = [
             AuraDevRog2::BootLogo,
@@ -326,201 +374,20 @@ mod tests {
             AuraDevRog2::AwakeKeyb,
             AuraDevRog2::ShutdownLogo,
             AuraDevRog2::ShutdownKeyb,
-        ];
-        let bytes = AuraDevRog2::to_bytes(&byte1);
-        println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes[0], 0xff);
-
-        //
-        let byte1 = [
-            // AuraControl::BootLogo,
-            AuraDevRog2::BootKeyb,
-            AuraDevRog2::SleepLogo,
-            AuraDevRog2::SleepKeyb,
-            AuraDevRog2::AwakeLogo,
-            AuraDevRog2::AwakeKeyb,
-            AuraDevRog2::ShutdownLogo,
-            AuraDevRog2::ShutdownKeyb,
-        ];
-        let bytes = AuraDevRog2::to_bytes(&byte1);
-        println!("{:08b}", bytes[0]);
-        assert_eq!(bytes[0], 0xfe);
-
-        let byte1 = [
-            AuraDevRog2::BootLogo,
-            // AuraControl::BootKeyb,
-            AuraDevRog2::SleepLogo,
-            AuraDevRog2::SleepKeyb,
-            AuraDevRog2::AwakeLogo,
-            AuraDevRog2::AwakeKeyb,
-            AuraDevRog2::ShutdownLogo,
-            AuraDevRog2::ShutdownKeyb,
-        ];
-        let bytes = AuraDevRog2::to_bytes(&byte1);
-        println!("{:08b}", bytes[0]);
-        assert_eq!(bytes[0], 0xfd);
-
-        let byte1 = [
-            AuraDevRog2::BootLogo,
-            AuraDevRog2::BootKeyb,
-            // AuraControl::SleepLogo,
-            AuraDevRog2::SleepKeyb,
-            AuraDevRog2::AwakeLogo,
-            AuraDevRog2::AwakeKeyb,
-            AuraDevRog2::ShutdownLogo,
-            AuraDevRog2::ShutdownKeyb,
-        ];
-        let bytes = AuraDevRog2::to_bytes(&byte1);
-        println!("{:08b}", bytes[0]);
-        assert_eq!(bytes[0], 0xef);
-
-        let byte1 = [
-            AuraDevRog2::BootLogo,
-            AuraDevRog2::BootKeyb,
-            AuraDevRog2::SleepLogo,
-            // AuraControl::SleepKeyb,
-            AuraDevRog2::AwakeLogo,
-            AuraDevRog2::AwakeKeyb,
-            AuraDevRog2::ShutdownLogo,
-            AuraDevRog2::ShutdownKeyb,
-        ];
-        let bytes = AuraDevRog2::to_bytes(&byte1);
-        println!("{:08b}", bytes[0]);
-        assert_eq!(bytes[0], 0xdf);
-
-        let byte2 = [
             AuraDevRog2::BootBar,
             AuraDevRog2::AwakeBar,
             AuraDevRog2::SleepBar,
             AuraDevRog2::ShutdownBar,
-        ];
-        let bytes = AuraDevRog2::to_bytes(&byte2);
-        println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes[1], 0x1e);
-
-        let byte2 = [
-            AuraDevRog2::BootBar,
-            AuraDevRog2::AwakeBar,
-            // AuraControl::SleepBar,
-            AuraDevRog2::ShutdownBar,
-        ];
-        let bytes = AuraDevRog2::to_bytes(&byte2);
-        println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes[1], 0x16);
-
-        let byte3 = [
             AuraDevRog2::AwakeLid,
             AuraDevRog2::BootLid,
             AuraDevRog2::SleepLid,
             AuraDevRog2::ShutdownLid,
-        ];
-        let bytes = AuraDevRog2::to_bytes(&byte3);
-        println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes[2], 0x0f);
-
-        let byte3 = [
-            // AuraDev19b6::AwakeLid,
-            AuraDevRog2::BootLid,
-            AuraDevRog2::SleepLid,
-            AuraDevRog2::ShutdownLid,
-        ];
-        let bytes = AuraDevRog2::to_bytes(&byte3);
-        println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes[2], 0x0d);
-
-        let byte3 = [
-            AuraDevRog2::AwakeLid,
-            AuraDevRog2::BootLid,
-            // AuraControl::SleepLid,
-            AuraDevRog2::ShutdownLid,
-        ];
-        let bytes = AuraDevRog2::to_bytes(&byte3);
-        println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes[2], 0x0b);
-
-        let byte3 = [
-            AuraDevRog2::AwakeLid,
-            AuraDevRog2::BootLid,
-            AuraDevRog2::SleepLid,
-            // AuraDev19b6::ShutdownLid,
-        ];
-        let bytes = AuraDevRog2::to_bytes(&byte3);
-        println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes[2], 0x07);
-
-        let byte3 = [
-            AuraDevRog2::AwakeLid,
-            // AuraDev19b6::BootLid,
-            AuraDevRog2::SleepLid,
-            // AuraDev19b6::ShutdownLid,
-        ];
-        let bytes = AuraDevRog2::to_bytes(&byte3);
-        println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes[2], 0x06);
-
-        let byte4 = [
-            // AuraDev19b6::AwakeRearBar,
+            AuraDevRog2::AwakeRearGlow,
             AuraDevRog2::BootRearGlow,
             AuraDevRog2::SleepRearGlow,
             AuraDevRog2::ShutdownRearGlow,
         ];
-        let bytes = AuraDevRog2::to_bytes(&byte4);
-        println!(
-            "{:08b}, {:08b}, {:08b}, {:08b}",
-            bytes[0], bytes[1], bytes[2], bytes[3]
-        );
-        assert_eq!(bytes[3], 0x0d);
-
-        let byte4 = [
-            AuraDevRog2::AwakeRearGlow,
-            AuraDevRog2::BootRearGlow,
-            // AuraDevRog2::SleepRearBar,
-            AuraDevRog2::ShutdownRearGlow,
-        ];
-        let bytes = AuraDevRog2::to_bytes(&byte4);
-        println!(
-            "{:08b}, {:08b}, {:08b}, {:08b}",
-            bytes[0], bytes[1], bytes[2], bytes[3]
-        );
-        assert_eq!(bytes[3], 0x0b);
-
-        let byte4 = [
-            AuraDevRog2::AwakeRearGlow,
-            AuraDevRog2::BootRearGlow,
-            AuraDevRog2::SleepRearGlow,
-            // AuraDevRog2::ShutdownRearBar,
-        ];
-        let bytes = AuraDevRog2::to_bytes(&byte4);
-        println!(
-            "{:08b}, {:08b}, {:08b}, {:08b}",
-            bytes[0], bytes[1], bytes[2], bytes[3]
-        );
-        assert_eq!(bytes[3], 0x07);
-
-        let byte4 = [
-            AuraDevRog2::AwakeRearGlow,
-            // AuraDevRog2::BootRearBar,
-            AuraDevRog2::SleepRearGlow,
-            // AuraDevRog2::ShutdownRearBar,
-        ];
-        let bytes = AuraDevRog2::to_bytes(&byte4);
-        println!(
-            "{:08b}, {:08b}, {:08b}, {:08b}",
-            bytes[0], bytes[1], bytes[2], bytes[3]
-        );
-        assert_eq!(bytes[3], 0x06);
-
-        let byte4 = [
-            AuraDevRog2::AwakeRearGlow,
-            // AuraDevRog2::BootRearBar,
-            // AuraDevRog2::SleepRearBar,
-            // AuraDevRog2::ShutdownRearBar,
-        ];
-        let bytes = AuraDevRog2::to_bytes(&byte4);
-        println!(
-            "{:08b}, {:08b}, {:08b}, {:08b}",
-            bytes[0], bytes[1], bytes[2], bytes[3]
-        );
-        assert_eq!(bytes[3], 0x02);
+        let out = to_binary_string(&byte1);
+        assert_eq!(out, "11111111, 00011110, 00001111, 00001111");
     }
 }
