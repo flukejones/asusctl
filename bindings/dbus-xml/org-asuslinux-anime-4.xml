@@ -1,0 +1,105 @@
+method return time=1687857321.236676 sender=:1.373 -> destination=:1.434 serial=2259 reply_serial=2
+   string "
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="org.freedesktop.DBus.Properties">
+    <method name="Get">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg name="property_name" type="s" direction="in"/>
+      <arg type="v" direction="out"/>
+    </method>
+    <method name="Set">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg name="property_name" type="s" direction="in"/>
+      <arg name="value" type="v" direction="in"/>
+    </method>
+    <method name="GetAll">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg type="a{sv}" direction="out"/>
+    </method>
+    <!--
+     Emits the `org.freedesktop.DBus.Properties.PropertiesChanged` signal.
+     -->
+    <signal name="PropertiesChanged">
+      <arg name="interface_name" type="s"/>
+      <arg name="changed_properties" type="a{sv}"/>
+      <arg name="invalidated_properties" type="as"/>
+    </signal>
+  </interface>
+  <interface name="org.freedesktop.DBus.Peer">
+    <method name="Ping">
+    </method>
+    <method name="GetMachineId">
+      <arg type="s" direction="out"/>
+    </method>
+  </interface>
+  <interface name="org.freedesktop.DBus.Introspectable">
+    <method name="Introspect">
+      <arg type="s" direction="out"/>
+    </method>
+  </interface>
+  <interface name="org.asuslinux.Daemon">
+    <!--
+     Writes a data stream of length. Will force system thread to exit until
+     it is restarted
+     -->
+    <method name="Write">
+      <arg name="input" type="(ays)" direction="in"/>
+    </method>
+    <!--
+     Set the global AniMe brightness
+     -->
+    <method name="SetImageBrightness">
+      <arg name="bright" type="d" direction="in"/>
+    </method>
+    <!--
+     Set base brightness level
+     -->
+    <method name="SetBrightness">
+      <arg name="brightness" type="s" direction="in"/>
+    </method>
+    <!--
+     Enable the builtin animations or not
+     -->
+    <method name="SetBuiltinsEnabled">
+      <arg name="enabled" type="b" direction="in"/>
+    </method>
+    <!--
+     Set which builtin animation is used for each stage
+     -->
+    <method name="SetBuiltinAnimations">
+      <arg name="boot" type="s" direction="in"/>
+      <arg name="awake" type="s" direction="in"/>
+      <arg name="sleep" type="s" direction="in"/>
+      <arg name="shutdown" type="s" direction="in"/>
+    </method>
+    <!--
+     Set whether the AniMe is enabled at all
+     -->
+    <method name="SetEnableDisplay">
+      <arg name="enabled" type="b" direction="in"/>
+    </method>
+    <!--
+     The main loop is the base system set action if the user isn't running
+     the user daemon
+     -->
+    <method name="RunMainLoop">
+      <arg name="start" type="b" direction="in"/>
+    </method>
+    <!--
+     Get the device state as stored by asusd
+     -->
+    <method name="DeviceState">
+      <arg type="(bsb(ssss))" direction="out"/>
+    </method>
+    <!--
+     Notify listeners of the status of AniMe LED power and factory
+     system-status animations
+     -->
+    <signal name="NotifyDeviceState">
+      <arg name="data" type="(bsb(ssss))"/>
+    </signal>
+  </interface>
+</node>
+"

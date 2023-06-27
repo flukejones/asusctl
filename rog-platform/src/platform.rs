@@ -4,6 +4,7 @@ use std::str::FromStr;
 
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
+use typeshare::typeshare;
 use zbus::zvariant::Type;
 
 use crate::error::{PlatformError, Result};
@@ -72,6 +73,7 @@ impl AsusPlatform {
     }
 }
 
+#[typeshare]
 #[derive(Serialize, Deserialize, Default, Type, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum GpuMode {
     Discrete,

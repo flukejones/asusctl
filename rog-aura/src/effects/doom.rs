@@ -51,17 +51,17 @@ impl EffectState for DoomFlicker {
         }
 
         // TODO: make a "percentage" method on Colour.
-        let max_light = Colour(
-            (start_colour.0 as f32 / 100.0 * *max_percentage as f32) as u8,
-            (start_colour.1 as f32 / 100.0 * *max_percentage as f32) as u8,
-            (start_colour.2 as f32 / 100.0 * *max_percentage as f32) as u8,
-        );
+        let max_light = Colour {
+            r: (start_colour.r as f32 / 100.0 * *max_percentage as f32) as u8,
+            g: (start_colour.g as f32 / 100.0 * *max_percentage as f32) as u8,
+            b: (start_colour.b as f32 / 100.0 * *max_percentage as f32) as u8,
+        };
         // min light is a percentage of the set colour
-        let min_light = Colour(
-            (start_colour.0 as f32 / 100.0 * *min_percentage as f32) as u8,
-            (start_colour.1 as f32 / 100.0 * *min_percentage as f32) as u8,
-            (start_colour.2 as f32 / 100.0 * *min_percentage as f32) as u8,
-        );
+        let min_light = Colour {
+            r: (start_colour.r as f32 / 100.0 * *min_percentage as f32) as u8,
+            g: (start_colour.g as f32 / 100.0 * *min_percentage as f32) as u8,
+            b: (start_colour.b as f32 / 100.0 * *min_percentage as f32) as u8,
+        };
 
         // Convert the 255 to percentage
         let amount = (p_random() & 7) as f32 * 8.0;
@@ -76,9 +76,9 @@ impl EffectState for DoomFlicker {
                 *colour = (max - max_amount) as u8;
             }
         };
-        set_colour(&mut colour.0, max_light.0 as f32, min_light.0 as f32);
-        set_colour(&mut colour.1, max_light.1 as f32, min_light.1 as f32);
-        set_colour(&mut colour.2, max_light.2 as f32, min_light.2 as f32);
+        set_colour(&mut colour.r, max_light.r as f32, min_light.r as f32);
+        set_colour(&mut colour.g, max_light.g as f32, min_light.g as f32);
+        set_colour(&mut colour.b, max_light.b as f32, min_light.b as f32);
 
         self.count = 4;
     }
@@ -133,17 +133,17 @@ impl EffectState for DoomLightFlash {
         }
 
         // TODO: make a "percentage" method on Colour.
-        let max_light = Colour(
-            (start_colour.0 as f32 / 100.0 * *max_percentage as f32) as u8,
-            (start_colour.1 as f32 / 100.0 * *max_percentage as f32) as u8,
-            (start_colour.2 as f32 / 100.0 * *max_percentage as f32) as u8,
-        );
+        let max_light = Colour {
+            r: (start_colour.r as f32 / 100.0 * *max_percentage as f32) as u8,
+            g: (start_colour.g as f32 / 100.0 * *max_percentage as f32) as u8,
+            b: (start_colour.b as f32 / 100.0 * *max_percentage as f32) as u8,
+        };
         // min light is a percentage of the set colour
-        let min_light = Colour(
-            (start_colour.0 as f32 / 100.0 * *min_percentage as f32) as u8,
-            (start_colour.1 as f32 / 100.0 * *min_percentage as f32) as u8,
-            (start_colour.2 as f32 / 100.0 * *min_percentage as f32) as u8,
-        );
+        let min_light = Colour {
+            r: (start_colour.r as f32 / 100.0 * *min_percentage as f32) as u8,
+            g: (start_colour.g as f32 / 100.0 * *min_percentage as f32) as u8,
+            b: (start_colour.b as f32 / 100.0 * *min_percentage as f32) as u8,
+        };
 
         if *colour == max_light {
             *colour = min_light;

@@ -32,7 +32,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let zone = Effect::DoomFlicker(rog_aura::effects::DoomFlicker::new(
         LedCode::SingleZone,
-        Colour(200, 110, 0),
+        Colour {
+            r: 200,
+            g: 110,
+            b: 0,
+        },
         100,
         10,
     ));

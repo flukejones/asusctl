@@ -9,6 +9,7 @@ use std::path::Path;
 use error::ProfileError;
 use fan_curve_set::{CurveData, FanCurveSet};
 use serde_derive::{Deserialize, Serialize};
+use typeshare::typeshare;
 use udev::Device;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
@@ -35,7 +36,8 @@ pub fn find_fan_curve_node() -> Result<Option<Device>, ProfileError> {
     Err(ProfileError::NotSupported)
 }
 
-#[cfg_attr(feature = "dbus", derive(Type))]
+#[typeshare]
+#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
 #[derive(Deserialize, Serialize, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
 pub enum Profile {
     Balanced,
@@ -127,7 +129,8 @@ impl Display for Profile {
     }
 }
 
-#[cfg_attr(feature = "dbus", derive(Type))]
+#[typeshare]
+#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
 #[derive(Deserialize, Serialize, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum FanCurvePU {
     CPU,
@@ -162,6 +165,7 @@ impl Default for FanCurvePU {
 }
 
 /// Main purpose of `FanCurves` is to enable restoring state on system boot
+#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Deserialize, Serialize, Debug, Default)]
 pub struct FanCurveProfiles {

@@ -13,6 +13,7 @@ dbus = ["zbus"]
 udev.workspace = true
 serde.workspace = true
 serde_derive.workspace = true
+typeshare.workspace = true
 
 zbus = { workspace = true, optional = true }
 

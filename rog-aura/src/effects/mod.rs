@@ -118,7 +118,7 @@ impl AdvancedEffects {
 
         for effect in &self.effects {
             let c = effect.colour();
-            usb_packets.set(effect.led(), c.0, c.1, c.2);
+            usb_packets.set(effect.led(), c.r, c.g, c.b);
         }
         usb_packets.into()
     }
@@ -209,8 +209,14 @@ mod tests {
     fn single_key_next_state_then_create() {
         let layout = KeyLayout::default_layout();
         let mut seq = AdvancedEffects::new(false);
-        seq.effects
-            .push(Effect::Static(Static::new(LedCode::F, Colour(255, 127, 0))));
+        seq.effects.push(Effect::Static(Static::new(
+            LedCode::F,
+            Colour {
+                r: 255,
+                g: 127,
+                b: 0,
+            },
+        )));
 
         seq.next_state(&layout);
         let packets = seq.create_packets();
@@ -227,8 +233,16 @@ mod tests {
         let mut seq = AdvancedEffects::new(false);
         seq.effects.push(Effect::Breathe(Breathe::new(
             LedCode::F,
-            Colour(255, 127, 0),
-            Colour(127, 0, 255),
+            Colour {
+                r: 255,
+                g: 127,
+                b: 0,
+            },
+            Colour {
+                r: 127,
+                g: 0,
+                b: 255,
+            },
             Speed::Med,
         )));
 
@@ -261,7 +275,11 @@ mod tests {
         let mut seq = AdvancedEffects::new(false);
         seq.effects.push(Effect::DoomFlicker(DoomFlicker::new(
             LedCode::F,
-            Colour(255, 127, 80),
+            Colour {
+                r: 255,
+                g: 127,
+                b: 80,
+            },
             100,
             10,
         )));

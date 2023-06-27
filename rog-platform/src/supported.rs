@@ -3,8 +3,10 @@ use std::fmt;
 use rog_aura::usb::AuraDevice;
 use rog_aura::{AdvancedAuraType, AuraModeNum, AuraZone};
 use serde_derive::{Deserialize, Serialize};
+use typeshare::typeshare;
 use zbus::zvariant::Type;
 
+#[typeshare]
 #[derive(Serialize, Deserialize, Type, Debug, Default, Clone)]
 pub struct SupportedFunctions {
     pub anime_ctrl: AnimeSupportedFunctions,
@@ -14,20 +16,24 @@ pub struct SupportedFunctions {
     pub rog_bios_ctrl: RogBiosSupportedFunctions,
 }
 
+#[typeshare]
 #[derive(Serialize, Deserialize, Type, Debug, Default, Clone)]
 pub struct AnimeSupportedFunctions(pub bool);
 
+#[typeshare]
 #[derive(Serialize, Deserialize, Type, Debug, Default, Clone)]
 pub struct ChargeSupportedFunctions {
     pub charge_level_set: bool,
 }
 
+#[typeshare]
 #[derive(Serialize, Deserialize, Type, Debug, Default, Clone)]
 pub struct PlatformProfileFunctions {
     pub platform_profile: bool,
     pub fan_curves: bool,
 }
 
+#[typeshare]
 #[derive(Serialize, Deserialize, Default, Type, Debug, Clone)]
 pub enum AdvancedAura {
     #[default]
@@ -46,6 +52,7 @@ impl From<AdvancedAuraType> for AdvancedAura {
     }
 }
 
+#[typeshare]
 #[derive(Serialize, Deserialize, Type, Debug, Default, Clone)]
 pub struct LedSupportedFunctions {
     pub dev_id: AuraDevice,
@@ -55,6 +62,7 @@ pub struct LedSupportedFunctions {
     pub advanced_type: AdvancedAura,
 }
 
+#[typeshare]
 #[derive(Serialize, Deserialize, Type, Debug, Default, Clone)]
 pub struct RogBiosSupportedFunctions {
     pub post_sound: bool,

@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update GL503 led config
 ### BREAKING
 - All Anime related DBUS methods/notifs are changed
+- All dbus interfaces that handled an enum have now been forced to use the enum as String type, not uint or similar, this unfortunately breaks a heap of stuff but has the benefit of allowing asusctl to use crates to generate a typescript (or other) binding to the types being used by zbus for the proxies. The implication here is that there will be an eventual tighter integration with the gnome extension and maybe KDE also.
 
 ## [v4.6.2]
 - Fix rog-control-center not reopening if `startup_in_background` is set

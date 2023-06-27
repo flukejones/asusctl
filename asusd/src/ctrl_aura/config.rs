@@ -267,7 +267,11 @@ mod tests {
         let mut config = AuraConfig::create_default(AuraDevice::X19b6, &LaptopLedData::default());
 
         let effect = AuraEffect {
-            colour1: Colour(0xff, 0x00, 0xff),
+            colour1: Colour {
+                r: 0xff,
+                g: 0x00,
+                b: 0xff,
+            },
             zone: AuraZone::Key1,
             ..Default::default()
         };
@@ -276,21 +280,33 @@ mod tests {
         assert!(config.multizone.is_some());
 
         let effect = AuraEffect {
-            colour1: Colour(0x00, 0xff, 0xff),
+            colour1: Colour {
+                r: 0x00,
+                g: 0xff,
+                b: 0xff,
+            },
             zone: AuraZone::Key2,
             ..Default::default()
         };
         config.set_builtin(effect);
 
         let effect = AuraEffect {
-            colour1: Colour(0xff, 0xff, 0x00),
+            colour1: Colour {
+                r: 0xff,
+                g: 0xff,
+                b: 0x00,
+            },
             zone: AuraZone::Key3,
             ..Default::default()
         };
         config.set_builtin(effect);
 
         let effect = AuraEffect {
-            colour1: Colour(0x00, 0xff, 0x00),
+            colour1: Colour {
+                r: 0x00,
+                g: 0xff,
+                b: 0x00,
+            },
             zone: AuraZone::Key4,
             ..Default::default()
         };
@@ -302,10 +318,38 @@ mod tests {
         let res = config.multizone.unwrap();
         let sta = res.get(&AuraModeNum::Static).unwrap();
         assert_eq!(sta.len(), 4);
-        assert_eq!(sta[0].colour1, Colour(0xff, 0x00, 0xff));
-        assert_eq!(sta[1].colour1, Colour(0x00, 0xff, 0xff));
-        assert_eq!(sta[2].colour1, Colour(0xff, 0xff, 0x00));
-        assert_eq!(sta[3].colour1, Colour(0x00, 0xff, 0x00));
+        assert_eq!(
+            sta[0].colour1,
+            Colour {
+                r: 0xff,
+                g: 0x00,
+                b: 0xff
+            }
+        );
+        assert_eq!(
+            sta[1].colour1,
+            Colour {
+                r: 0x00,
+                g: 0xff,
+                b: 0xff
+            }
+        );
+        assert_eq!(
+            sta[2].colour1,
+            Colour {
+                r: 0xff,
+                g: 0xff,
+                b: 0x00
+            }
+        );
+        assert_eq!(
+            sta[3].colour1,
+            Colour {
+                r: 0x00,
+                g: 0xff,
+                b: 0x00
+            }
+        );
     }
 
     #[test]

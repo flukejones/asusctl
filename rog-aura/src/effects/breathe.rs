@@ -53,30 +53,33 @@ impl EffectState for Breathe {
 
         let speed = 4 - <u8>::from(*speed);
 
-        if *colour_actual == Colour(0, 0, 0) {
+        if *colour_actual == (Colour { r: 0, g: 0, b: 0 }) {
             *use_colour1 = !*use_colour1;
         }
 
         let colour = if !*use_colour1 { colour2 } else { colour1 };
 
-        let r1_scale = colour.0 / speed / 2;
-        let g1_scale = colour.1 / speed / 2;
-        let b1_scale = colour.2 / speed / 2;
+        let r1_scale = colour.r / speed / 2;
+        let g1_scale = colour.g / speed / 2;
+        let b1_scale = colour.b / speed / 2;
 
-        if *colour_actual == Colour(0, 0, 0) {
+        if *colour_actual == (Colour { r: 0, g: 0, b: 0 }) {
             *flipped = true;
-        } else if colour_actual >= colour {
+        } else if colour_actual.r >= colour.r
+            && colour_actual.g >= colour.g
+            && colour_actual.b >= colour.b
+        {
             *flipped = false;
         }
 
         if !*flipped {
-            colour_actual.0 = colour_actual.0.saturating_sub(r1_scale);
-            colour_actual.1 = colour_actual.1.saturating_sub(g1_scale);
-            colour_actual.2 = colour_actual.2.saturating_sub(b1_scale);
+            colour_actual.r = colour_actual.r.saturating_sub(r1_scale);
+            colour_actual.g = colour_actual.g.saturating_sub(g1_scale);
+            colour_actual.b = colour_actual.b.saturating_sub(b1_scale);
         } else {
-            colour_actual.0 = colour_actual.0.saturating_add(r1_scale);
-            colour_actual.1 = colour_actual.1.saturating_add(g1_scale);
-            colour_actual.2 = colour_actual.2.saturating_add(b1_scale);
+            colour_actual.r = colour_actual.r.saturating_add(r1_scale);
+            colour_actual.g = colour_actual.g.saturating_add(g1_scale);
+            colour_actual.b = colour_actual.b.saturating_add(b1_scale);
         }
     }
 }

@@ -5,6 +5,7 @@ use std::time::{Duration, Instant};
 
 use log::info;
 use serde_derive::{Deserialize, Serialize};
+use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
 
@@ -27,7 +28,9 @@ pub const USB_PREFIX2: [u8; 7] = [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x02];
 /// Third packet is for GA402 matrix
 pub const USB_PREFIX3: [u8; 7] = [0x5e, 0xc0, 0x02, 0xe7, 0x04, 0x73, 0x02];
 
+#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type))]
+#[typeshare]
 #[derive(Default, Deserialize, PartialEq, Eq, Clone, Copy, Serialize, Debug)]
 pub struct Animations {
     pub boot: AnimBooting,
@@ -36,7 +39,9 @@ pub struct Animations {
     pub shutdown: AnimShutdown,
 }
 
+#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type))]
+#[typeshare]
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub struct DeviceState {
     pub display_enabled: bool,
@@ -45,8 +50,9 @@ pub struct DeviceState {
     pub builtin_anims: Animations,
 }
 
-#[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[typeshare]
+#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum AnimeType {
     GA401,
     GA402,

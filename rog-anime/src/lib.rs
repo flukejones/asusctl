@@ -33,3 +33,27 @@ pub mod error;
 pub mod usb;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+// #[cfg(feature = "typescript")]
+// #[cfg(test)]
+// mod tests {
+//     use crate::usb::{AnimShutdown, Brightness, AnimSleeping, AnimAwake,
+// AnimBooting};     use crate::{AnimeType, Animations, DeviceState};
+//     use ts_rs::SingleFileExporter;
+//     #[test]
+//     fn test_singlefile() {
+//         let out = SingleFileExporter::new(false)
+//             .and::<AnimeType>()
+//             .and::<Animations>()
+//             .and::<DeviceState>()
+//             .and::<Brightness>()
+//             .and::<AnimShutdown>()
+//             .and::<AnimSleeping>()
+//             .and::<AnimAwake>()
+//             .and::<AnimBooting>()
+//             .finish()
+//             .unwrap();
+//         println!("{out}");
+//         assert_eq!(out, "");
+//     }
+// }

@@ -115,6 +115,20 @@ vendor:
 	tar pcfJ vendor_asusctl_$(VERSION).tar.xz vendor
 	rm -rf vendor
 
+bindings:
+	typeshare ./rog-anime/src/ --lang=typescript --output-file=bindings/ts/anime.ts
+	typeshare ./rog-aura/src/ --lang=typescript --output-file=bindings/ts/aura.ts
+	typeshare ./rog-profiles/src/ --lang=typescript --output-file=bindings/ts/profiles.ts
+	typeshare ./rog-platform/src/ --lang=typescript --output-file=bindings/ts/platform.ts
+
+introspect:
+	dbus-send --system --type=method_call --print-reply --dest=org.asuslinux.Daemon /org/asuslinux/Aura org.freedesktop.DBus.Introspectable.Introspect > bindings/dbus-xml/org-asuslinux-aura-4.xml
+	dbus-send --system --type=method_call --print-reply --dest=org.asuslinux.Daemon /org/asuslinux/Anime org.freedesktop.DBus.Introspectable.Introspect > bindings/dbus-xml/org-asuslinux-anime-4.xml
+	dbus-send --system --type=method_call --print-reply --dest=org.asuslinux.Daemon /org/asuslinux/Platform org.freedesktop.DBus.Introspectable.Introspect > bindings/dbus-xml/org-asuslinux-platform-4.xml
+	dbus-send --system --type=method_call --print-reply --dest=org.asuslinux.Daemon /org/asuslinux/Power org.freedesktop.DBus.Introspectable.Introspect > bindings/dbus-xml/org-asuslinux-power-4.xml
+	dbus-send --system --type=method_call --print-reply --dest=org.asuslinux.Daemon /org/asuslinux/Profile org.freedesktop.DBus.Introspectable.Introspect > bindings/dbus-xml/org-asuslinux-profile-4.xml
+	dbus-send --system --type=method_call --print-reply --dest=org.asuslinux.Daemon /org/asuslinux/Supported org.freedesktop.DBus.Introspectable.Introspect > bindings/dbus-xml/org-asuslinux-supported-4.xml
+
 build:
 ifeq ($(VENDORED),1)
 	@echo "version = $(VERSION)"
@@ -129,4 +143,4 @@ ifneq ($(STRIP_BINARIES),0)
 endif
 
 
-.PHONY: all clean distclean install uninstall update build
+.PHONY: all clean distclean install uninstall update build bindings

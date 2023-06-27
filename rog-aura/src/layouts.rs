@@ -522,6 +522,7 @@ mod tests {
         let mut data_path = PathBuf::from(DATA_DIR);
         data_path.push("data");
         data_path.push("aura_support.ron");
+        dbg!(&data_path);
 
         let mut buf = std::fs::read_to_string(&data_path).unwrap();
         let data: LedSupportFile = ron::from_str(&buf).unwrap();

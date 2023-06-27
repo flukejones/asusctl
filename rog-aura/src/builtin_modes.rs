@@ -8,13 +8,15 @@ use std::fmt::Display;
 use std::str::FromStr;
 
 use serde_derive::{Deserialize, Serialize};
+use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
 
 use crate::error::Error;
 use crate::LED_MSG_LEN;
 
-#[cfg_attr(feature = "dbus", derive(Type))]
+#[typeshare]
+#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum LedBrightness {
     Off,
@@ -34,13 +36,18 @@ impl From<u32> for LedBrightness {
     }
 }
 
+#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Copy, Deserialize, Serialize)]
-pub struct Colour(pub u8, pub u8, pub u8);
+#[derive(Debug, Clone, PartialEq, Eq, Copy, Deserialize, Serialize)]
+pub struct Colour {
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
+}
 
 impl Default for Colour {
     fn default() -> Self {
-        Colour(166, 0, 0)
+        Colour { r: 166, g: 0, b: 0 }
     }
 }
 
@@ -54,39 +61,44 @@ impl FromStr for Colour {
         let r = u8::from_str_radix(&s[0..2], 16).or(Err(Error::ParseColour))?;
         let g = u8::from_str_radix(&s[2..4], 16).or(Err(Error::ParseColour))?;
         let b = u8::from_str_radix(&s[4..6], 16).or(Err(Error::ParseColour))?;
-        Ok(Colour(r, g, b))
+        Ok(Colour { r, g, b })
     }
 }
 
 impl From<&[f32; 3]> for Colour {
     fn from(c: &[f32; 3]) -> Self {
-        Self(
-            (255.0 * c[0]) as u8,
-            (255.0 * c[1]) as u8,
-            (255.0 * c[2]) as u8,
-        )
+        Self {
+            r: (255.0 * c[0]) as u8,
+            g: (255.0 * c[1]) as u8,
+            b: (255.0 * c[2]) as u8,
+        }
     }
 }
 
 impl From<Colour> for [f32; 3] {
     fn from(c: Colour) -> Self {
-        [c.0 as f32 / 255.0, c.1 as f32 / 255.0, c.2 as f32 / 255.0]
+        [c.r as f32 / 255.0, c.g as f32 / 255.0, c.b as f32 / 255.0]
     }
 }
 
 impl From<&[u8; 3]> for Colour {
     fn from(c: &[u8; 3]) -> Self {
-        Self(c[0], c[1], c[2])
+        Self {
+            r: c[0],
+            g: c[1],
+            b: c[2],
+        }
     }
 }
 
 impl From<Colour> for [u8; 3] {
     fn from(c: Colour) -> Self {
-        [c.0, c.1, c.2]
+        [c.r, c.g, c.b]
     }
 }
 
-#[cfg_attr(feature = "dbus", derive(Type))]
+#[typeshare]
+#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum Speed {
     Low = 0xe1,
@@ -124,7 +136,8 @@ impl From<Speed> for u8 {
 /// Used for Rainbow mode.
 ///
 /// Enum corresponds to the required integer value
-#[cfg_attr(feature = "dbus", derive(Type))]
+#[typeshare]
+#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum Direction {
     Right,
@@ -153,9 +166,10 @@ impl FromStr for Direction {
 }
 
 /// Enum of modes that convert to the actual number required by a USB HID packet
-#[cfg_attr(feature = "dbus", derive(Type))]
+#[typeshare]
+#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
 #[derive(
-    Debug, Default, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Copy, Deserialize, Serialize,
+    Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy, Deserialize, Serialize,
 )]
 pub enum AuraModeNum {
     #[default]
@@ -242,7 +256,8 @@ impl From<u8> for AuraModeNum {
 }
 
 /// Base effects have no zoning, while multizone is 1-4
-#[cfg_attr(feature = "dbus", derive(Type))]
+#[typeshare]
+#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum AuraZone {
     /// Used if keyboard has no zones, or if setting all
@@ -288,6 +303,7 @@ impl FromStr for AuraZone {
 /// ```rust
 /// // let bytes: [u8; LED_MSG_LEN] = mode.into();
 /// ```
+#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AuraEffect {
@@ -335,8 +351,8 @@ impl Default for AuraEffect {
         Self {
             mode: AuraModeNum::Static,
             zone: AuraZone::None,
-            colour1: Colour(166, 0, 0),
-            colour2: Colour(0, 0, 0),
+            colour1: Colour { r: 166, g: 0, b: 0 },
+            colour2: Colour { r: 0, g: 0, b: 0 },
             speed: Speed::Med,
             direction: Direction::Right,
         }
@@ -408,14 +424,14 @@ impl From<&AuraEffect> for [u8; LED_MSG_LEN] {
         msg[1] = 0xb3;
         msg[2] = aura.zone as u8;
         msg[3] = aura.mode as u8;
-        msg[4] = aura.colour1.0;
-        msg[5] = aura.colour1.1;
-        msg[6] = aura.colour1.2;
+        msg[4] = aura.colour1.r;
+        msg[5] = aura.colour1.g;
+        msg[6] = aura.colour1.b;
         msg[7] = aura.speed as u8;
         msg[8] = aura.direction as u8;
-        msg[10] = aura.colour2.0;
-        msg[11] = aura.colour2.1;
-        msg[12] = aura.colour2.2;
+        msg[10] = aura.colour2.r;
+        msg[11] = aura.colour2.g;
+        msg[12] = aura.colour2.b;
         msg
     }
 }
@@ -427,14 +443,14 @@ impl From<&AuraEffect> for Vec<u8> {
         msg[1] = 0xb3;
         msg[2] = aura.zone as u8;
         msg[3] = aura.mode as u8;
-        msg[4] = aura.colour1.0;
-        msg[5] = aura.colour1.1;
-        msg[6] = aura.colour1.2;
+        msg[4] = aura.colour1.r;
+        msg[5] = aura.colour1.g;
+        msg[6] = aura.colour1.b;
         msg[7] = aura.speed as u8;
         msg[8] = aura.direction as u8;
-        msg[10] = aura.colour2.0;
-        msg[11] = aura.colour2.1;
-        msg[12] = aura.colour2.2;
+        msg[10] = aura.colour2.r;
+        msg[11] = aura.colour2.g;
+        msg[12] = aura.colour2.b;
         msg
     }
 }
@@ -448,7 +464,11 @@ mod tests {
         let st = AuraEffect {
             mode: AuraModeNum::Static,
             zone: AuraZone::None,
-            colour1: Colour(0xff, 0x11, 0xdd),
+            colour1: Colour {
+                r: 0xff,
+                g: 0x11,
+                b: 0xdd,
+            },
             colour2: Colour::default(),
             speed: Speed::Med,
             direction: Direction::Right,
@@ -468,8 +488,12 @@ mod tests {
         let mut st = AuraEffect {
             mode: AuraModeNum::Static,
             zone: AuraZone::Key1,
-            colour1: Colour(0xff, 0, 0),
-            colour2: Colour(0, 0, 0),
+            colour1: Colour {
+                r: 0xff,
+                g: 0,
+                b: 0,
+            },
+            colour2: Colour { r: 0, g: 0, b: 0 },
             speed: Speed::Low,
             direction: Direction::Left,
         };
@@ -480,7 +504,11 @@ mod tests {
         assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
 
         st.zone = AuraZone::Key2;
-        st.colour1 = Colour(0xff, 0xff, 0);
+        st.colour1 = Colour {
+            r: 0xff,
+            g: 0xff,
+            b: 0,
+        };
         let capture = [
             0x5d, 0xb3, 0x02, 0x00, 0xff, 0xff, 0x00, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
@@ -488,7 +516,11 @@ mod tests {
         assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
 
         st.zone = AuraZone::Key3;
-        st.colour1 = Colour(0, 0xff, 0xff);
+        st.colour1 = Colour {
+            r: 0,
+            g: 0xff,
+            b: 0xff,
+        };
         let capture = [
             0x5d, 0xb3, 0x03, 0x00, 0x00, 0xff, 0xff, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
@@ -496,7 +528,11 @@ mod tests {
         assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
 
         st.zone = AuraZone::Key4;
-        st.colour1 = Colour(0xff, 0x00, 0xff);
+        st.colour1 = Colour {
+            r: 0xff,
+            g: 0x00,
+            b: 0xff,
+        };
         let capture = [
             0x5d, 0xb3, 0x04, 0x00, 0xff, 0x00, 0xff, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
@@ -504,7 +540,11 @@ mod tests {
         assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
 
         st.zone = AuraZone::Logo;
-        st.colour1 = Colour(0x2c, 0xff, 0x00);
+        st.colour1 = Colour {
+            r: 0x2c,
+            g: 0xff,
+            b: 0x00,
+        };
         let capture = [
             0x5d, 0xb3, 0x05, 0x00, 0x2c, 0xff, 0x00, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
@@ -512,7 +552,11 @@ mod tests {
         assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
 
         st.zone = AuraZone::BarLeft;
-        st.colour1 = Colour(0xff, 0x00, 0x00);
+        st.colour1 = Colour {
+            r: 0xff,
+            g: 0x00,
+            b: 0x00,
+        };
         let capture = [
             0x5d, 0xb3, 0x06, 0x00, 0xff, 0x00, 0x00, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
@@ -520,7 +564,11 @@ mod tests {
         assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
 
         st.zone = AuraZone::BarRight;
-        st.colour1 = Colour(0xff, 0x00, 0xcd);
+        st.colour1 = Colour {
+            r: 0xff,
+            g: 0x00,
+            b: 0xcd,
+        };
         let capture = [
             0x5d, 0xb3, 0x07, 0x00, 0xff, 0x00, 0xcd, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,

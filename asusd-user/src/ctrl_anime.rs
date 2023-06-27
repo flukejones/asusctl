@@ -22,22 +22,18 @@ pub struct Timer {
     /// animation loop count
     count: u64,
     /// Used only for `TimeType::Timer`, milliseonds to fade the image in for
-    fade_in: Option<u64>,
+    fade_in: u64,
     /// Used only for `TimeType::Timer`, milliseonds to fade the image out for
-    fade_out: Option<u64>,
+    fade_out: u64,
 }
 
 impl From<Timer> for AnimTime {
     fn from(time: Timer) -> Self {
         match time.type_of {
             TimeType::Timer => {
-                if time.fade_in.is_some() || time.fade_out.is_some() {
-                    let fade_in = time
-                        .fade_in
-                        .map_or(Duration::from_secs(0), Duration::from_millis);
-                    let fade_out = time
-                        .fade_out
-                        .map_or(Duration::from_secs(0), Duration::from_millis);
+                if time.fade_in != 0 && time.fade_out != 0 {
+                    let fade_in = Duration::from_millis(time.fade_in);
+                    let fade_out = Duration::from_millis(time.fade_out);
                     let show_for = if time.count != 0 {
                         Some(Duration::from_millis(time.count))
                     } else {

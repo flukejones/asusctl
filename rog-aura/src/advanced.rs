@@ -1,5 +1,6 @@
 use log::warn;
 use serde::{Deserialize, Serialize};
+use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
 
@@ -190,6 +191,7 @@ impl LedCode {
 }
 
 /// Represents the per-key raw USB packets
+#[typeshare]
 pub type UsbPackets = Vec<Vec<u8>>;
 
 /// A `UsbPackets` contains all data to change the full set of keyboard
@@ -199,6 +201,7 @@ pub type UsbPackets = Vec<Vec<u8>>;
 /// to the keyboard EC. One row controls one group of keys, these keys are not
 /// necessarily all on the same row of the keyboard, with some splitting between
 /// two rows.
+#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct LedUsbPackets {

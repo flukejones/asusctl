@@ -55,33 +55,44 @@ impl CtrlKbdLedZbus {
     ///
     /// ```text
     /// pub struct AuraPowerDev {
-    ///     pub x1866: Vec<AuraDev1866>,
-    ///     pub x19b6: Vec<AuraDev19b6>,
+    ///     tuf: Vec<AuraDevTuf>,
+    ///     x1866: Vec<AuraDevRog1>,
+    ///     x19b6: Vec<AuraDevRog2>,
     /// }
-    /// pub enum AuraDev1866 {
-    ///     Awake,
-    ///     Keyboard,
-    ///     Lightbar,
+    /// pub enum AuraDevTuf {
     ///     Boot,
+    ///     Awake,
     ///     Sleep,
+    ///     Keyboard,
     /// }
-    /// enum AuraDev19b6 {
-    ///     BootLogo,
-    ///     BootKeyb,
-    ///     AwakeLogo,
-    ///     AwakeKeyb,
-    ///     SleepLogo,
-    ///     SleepKeyb,
-    ///     ShutdownLogo,
-    ///     ShutdownKeyb,
-    ///     AwakeBar,
-    ///     BootBar,
-    ///     SleepBar,
-    ///     ShutdownBar,
-    ///     BootRearBar,
-    ///     AwakeRearBar,
-    ///     SleepRearBar,
-    ///     ShutdownRearBar,
+    /// pub enum AuraDevRog1 {
+    ///     Awake = 0x000002,
+    ///     Keyboard = 0x080000,
+    ///     Lightbar = 0x040500,
+    ///     Boot = 0xc31209,
+    ///     Sleep = 0x300804,
+    /// }
+    /// pub enum AuraDevRog2 {
+    ///     BootLogo = 1,
+    ///     BootKeyb = 1 << 1,
+    ///     AwakeLogo = 1 << 2,
+    ///     AwakeKeyb = 1 << 3,
+    ///     SleepLogo = 1 << 4,
+    ///     SleepKeyb = 1 << 5,
+    ///     ShutdownLogo = 1 << 6,
+    ///     ShutdownKeyb = 1 << 7,
+    ///     BootBar = 1 << (7 + 2),
+    ///     AwakeBar = 1 << (7 + 3),
+    ///     SleepBar = 1 << (7 + 4),
+    ///     ShutdownBar = 1 << (7 + 5),
+    ///     BootLid = 1 << (15 + 1),
+    ///     AwakeLid = 1 << (15 + 2),
+    ///     SleepLid = 1 << (15 + 3),
+    ///     ShutdownLid = 1 << (15 + 4),
+    ///     BootRearGlow = 1 << (23 + 1),
+    ///     AwakeRearGlow = 1 << (23 + 2),
+    ///     SleepRearGlow = 1 << (23 + 3),
+    ///     ShutdownRearGlow = 1 << (23 + 4),
     /// }
     /// ```
     async fn set_leds_power(
@@ -260,7 +271,6 @@ impl CtrlTask for CtrlKbdLedZbus {
                     .map_err(|e| error!("CtrlKbdLedTask: {e}"))
                     .ok();
             } else if start {
-                info!("CtrlKbdLedTask saving last brightness");
                 Self::update_config(&mut lock)
                     .map_err(|e| error!("CtrlKbdLedTask: {e}"))
                     .ok();

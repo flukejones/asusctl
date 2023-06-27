@@ -1,0 +1,107 @@
+method return time=1687857321.238947 sender=:1.373 -> destination=:1.435 serial=2260 reply_serial=2
+   string "
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="org.freedesktop.DBus.Peer">
+    <method name="Ping">
+    </method>
+    <method name="GetMachineId">
+      <arg type="s" direction="out"/>
+    </method>
+  </interface>
+  <interface name="org.freedesktop.DBus.Properties">
+    <method name="Get">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg name="property_name" type="s" direction="in"/>
+      <arg type="v" direction="out"/>
+    </method>
+    <method name="Set">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg name="property_name" type="s" direction="in"/>
+      <arg name="value" type="v" direction="in"/>
+    </method>
+    <method name="GetAll">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg type="a{sv}" direction="out"/>
+    </method>
+    <!--
+     Emits the `org.freedesktop.DBus.Properties.PropertiesChanged` signal.
+     -->
+    <signal name="PropertiesChanged">
+      <arg name="interface_name" type="s"/>
+      <arg name="changed_properties" type="a{sv}"/>
+      <arg name="invalidated_properties" type="as"/>
+    </signal>
+  </interface>
+  <interface name="org.freedesktop.DBus.Introspectable">
+    <method name="Introspect">
+      <arg type="s" direction="out"/>
+    </method>
+  </interface>
+  <interface name="org.asuslinux.Daemon">
+    <method name="SetGpuMuxMode">
+      <arg name="mode" type="u" direction="in"/>
+    </method>
+    <method name="GpuMuxMode">
+      <arg type="u" direction="out"/>
+    </method>
+    <signal name="NotifyGpuMuxMode">
+      <arg name="mode" type="u"/>
+    </signal>
+    <method name="SetPostBootSound">
+      <arg name="on" type="b" direction="in"/>
+    </method>
+    <method name="PostBootSound">
+      <arg type="n" direction="out"/>
+    </method>
+    <signal name="NotifyPostBootSound">
+      <arg name="on" type="b"/>
+    </signal>
+    <method name="SetPanelOd">
+      <arg name="overdrive" type="b" direction="in"/>
+    </method>
+    <!--
+     Get the `panel_od` value from platform. Updates the stored value in
+     internal config also.
+     -->
+    <method name="PanelOd">
+      <arg type="b" direction="out"/>
+    </method>
+    <signal name="NotifyPanelOd">
+      <arg name="overdrive" type="b"/>
+    </signal>
+    <method name="SetMiniLedMode">
+      <arg name="on" type="b" direction="in"/>
+    </method>
+    <!--
+     Get the `panel_od` value from platform. Updates the stored value in
+     internal config also.
+     -->
+    <method name="MiniLedMode">
+      <arg type="b" direction="out"/>
+    </method>
+    <signal name="NotifyMiniLedMode">
+      <arg name="on" type="b"/>
+    </signal>
+    <method name="SetDgpuDisable">
+      <arg name="disable" type="b" direction="in"/>
+    </method>
+    <method name="DgpuDisable">
+      <arg type="b" direction="out"/>
+    </method>
+    <signal name="NotifyDgpuDisable">
+      <arg name="disable" type="b"/>
+    </signal>
+    <method name="SetEgpuEnable">
+      <arg name="enable" type="b" direction="in"/>
+    </method>
+    <method name="EgpuEnable">
+      <arg type="b" direction="out"/>
+    </method>
+    <signal name="NotifyEgpuEnable">
+      <arg name="enable" type="b"/>
+    </signal>
+  </interface>
+</node>
+"

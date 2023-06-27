@@ -136,8 +136,16 @@ impl Default for ConfigAura {
         let mut seq = AuraSequences::new(false);
         let mut key = Effect::Breathe(Breathe::new(
             LedCode::W,
-            Colour(255, 0, 20),
-            Colour(20, 255, 0),
+            Colour {
+                r: 255,
+                g: 0,
+                b: 20,
+            },
+            Colour {
+                r: 20,
+                g: 255,
+                b: 0,
+            },
             Speed::Low,
         ));
 
@@ -151,20 +159,25 @@ impl Default for ConfigAura {
 
         let key = Effect::Breathe(Breathe::new(
             LedCode::F,
-            Colour(255, 0, 0),
-            Colour(255, 0, 0),
+            Colour { r: 255, g: 0, b: 0 },
+            Colour { r: 255, g: 0, b: 0 },
             Speed::High,
         ));
         seq.push(key);
 
-        let mut key = Effect::Static(Static::new(LedCode::RCtrl, Colour(0, 0, 255)));
+        let mut key = Effect::Static(Static::new(LedCode::RCtrl, Colour { r: 0, g: 0, b: 255 }));
         seq.push(key.clone());
         key.set_led(LedCode::LCtrl);
         seq.push(key.clone());
         key.set_led(LedCode::Esc);
         seq.push(key);
 
-        let key = Effect::DoomFlicker(DoomFlicker::new(LedCode::N9, Colour(0, 0, 255), 80, 40));
+        let key = Effect::DoomFlicker(DoomFlicker::new(
+            LedCode::N9,
+            Colour { r: 0, g: 0, b: 255 },
+            80,
+            40,
+        ));
         seq.push(key);
 
         Self {

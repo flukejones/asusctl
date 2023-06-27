@@ -1,4 +1,5 @@
 use serde_derive::{Deserialize, Serialize};
+use typeshare::typeshare;
 use udev::Device;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
@@ -26,6 +27,7 @@ pub(crate) fn temp_str(fan: char, index: usize) -> String {
     buf
 }
 
+#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Deserialize, Serialize, Default, Debug, Clone)]
 pub struct CurveData {
@@ -195,6 +197,7 @@ impl CurveData {
 }
 
 /// A `FanCurveSet` contains both CPU and GPU fan curve data
+#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct FanCurveSet {

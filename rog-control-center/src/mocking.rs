@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use rog_aura::usb::{AuraDev19b6, AuraDevice, AuraPowerDev};
+use rog_aura::usb::{AuraDevRog2, AuraDevice, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone};
 use rog_platform::platform::GpuMode;
 use rog_platform::supported::{
@@ -192,10 +192,10 @@ impl Led {
             tuf: vec![],
             x1866: vec![],
             x19b6: vec![
-                AuraDev19b6::BootKeyb,
-                AuraDev19b6::AwakeKeyb,
-                AuraDev19b6::SleepLogo,
-                AuraDev19b6::AwakeLogo,
+                AuraDevRog2::BootKeyb,
+                AuraDevRog2::AwakeKeyb,
+                AuraDevRog2::SleepLogo,
+                AuraDevRog2::AwakeLogo,
             ],
         })
     }
@@ -241,7 +241,7 @@ impl Supported {
                 fan_curves: true,
             },
             keyboard_led: LedSupportedFunctions {
-                dev_id: AuraDevice::X19B6,
+                dev_id: AuraDevice::X19b6,
                 brightness: true,
                 basic_modes: vec![
                     AuraModeNum::Rain,
@@ -266,6 +266,7 @@ impl Supported {
                 gpu_mux: true,
                 panel_overdrive: true,
                 dgpu_disable: true,
+                mini_led_mode: true,
                 egpu_enable: true,
             },
         })

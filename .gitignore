@@ -8,4 +8,4 @@ vendor_*
 .vscode-ctags
 .vscode
 .~lock.*
-*.ods# 
+*.ods#

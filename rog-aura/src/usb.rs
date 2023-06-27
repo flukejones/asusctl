@@ -2,6 +2,7 @@ use std::fmt::Debug;
 use std::ops::{BitAnd, BitOr};
 
 use serde::{Deserialize, Serialize};
+use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
 
@@ -22,8 +23,9 @@ pub const fn aura_brightness_bytes(brightness: u8) -> [u8; 17] {
     ]
 }
 
-#[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Serialize, Deserialize, Default)]
+#[typeshare]
+#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum AuraDevice {
     Tuf,
     X1854,
@@ -82,6 +84,7 @@ impl Debug for AuraDevice {
 }
 
 /// This struct is intended as a helper to pass args to generic dbus interface
+#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct AuraPowerDev {
@@ -90,8 +93,9 @@ pub struct AuraPowerDev {
     pub x19b6: Vec<AuraDevRog2>,
 }
 
-#[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
+#[typeshare]
+#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(u32)]
 pub enum AuraDevTuf {
     Boot,
@@ -123,8 +127,9 @@ impl AuraDevTuf {
 /// 0000, 0000 | Sleep     | 30,08,04,00 | | 1111, 1111 | 0001, 1111 | 0000,
 /// 1111 | 0000, 0000 | all on    |             | | 0000, 0000 | 0000, 0000 |
 /// 0000, 0000 | 0000, 0010 | Rear Glow | 00,00,00,02 |
-#[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
+#[typeshare]
+#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(u32)]
 pub enum AuraDevRog1 {
     Awake = 0x000002,
@@ -201,8 +206,9 @@ impl BitAnd<AuraDevRog1> for AuraDevRog1 {
 /// | 0000 | 0100 | 04  | lightbar on          | bit 3 |
 /// | 0000 | 1000 | 08  | lightbar off sleep   | bit 4 |
 /// | 0001 | 0000 | 10  | lightbar shtdn off   | bit 5 |
-#[cfg_attr(feature = "dbus", derive(Type))]
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Eq, Ord, Hash, Serialize, Deserialize)]
+#[typeshare]
+#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(u32)]
 pub enum AuraDevRog2 {
     BootLogo = 1,

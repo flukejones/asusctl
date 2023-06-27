@@ -49,7 +49,7 @@ impl GetSupported for CtrlKbdLed {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum LEDNode {
     KbdLed(KeyboardLed),
     Rog(HidRaw),
@@ -317,9 +317,9 @@ impl CtrlKbdLed {
             let buf = [
                 1,
                 mode.mode as u8,
-                mode.colour1.0,
-                mode.colour1.1,
-                mode.colour1.2,
+                mode.colour1.r,
+                mode.colour1.g,
+                mode.colour1.b,
                 mode.speed as u8,
             ];
             platform.set_kbd_rgb_mode(&buf)?;
@@ -435,7 +435,11 @@ mod tests {
         };
 
         let mut effect = AuraEffect {
-            colour1: Colour(0xff, 0x00, 0xff),
+            colour1: Colour {
+                r: 0xff,
+                g: 0x00,
+                b: 0xff,
+            },
             zone: AuraZone::None,
             ..Default::default()
         };

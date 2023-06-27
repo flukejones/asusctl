@@ -11,6 +11,7 @@
 use std::str::FromStr;
 
 use serde_derive::{Deserialize, Serialize};
+use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
 
@@ -22,7 +23,8 @@ const DEV_PAGE: u8 = 0x5e;
 pub const VENDOR_ID: u16 = 0x0b05;
 pub const PROD_ID: u16 = 0x193b;
 
-#[cfg_attr(feature = "dbus", derive(Type))]
+#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[typeshare]
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 /// Base LED brightness of the display
 pub enum Brightness {
@@ -58,7 +60,8 @@ impl From<u8> for Brightness {
     }
 }
 
-#[cfg_attr(feature = "dbus", derive(Type))]
+#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[typeshare]
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub enum AnimBooting {
     #[default]
@@ -78,7 +81,8 @@ impl FromStr for AnimBooting {
     }
 }
 
-#[cfg_attr(feature = "dbus", derive(Type))]
+#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[typeshare]
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub enum AnimAwake {
     #[default]
@@ -98,7 +102,8 @@ impl FromStr for AnimAwake {
     }
 }
 
-#[cfg_attr(feature = "dbus", derive(Type))]
+#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[typeshare]
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub enum AnimSleeping {
     #[default]
@@ -118,7 +123,8 @@ impl FromStr for AnimSleeping {
     }
 }
 
-#[cfg_attr(feature = "dbus", derive(Type))]
+#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[typeshare]
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub enum AnimShutdown {
     #[default]
