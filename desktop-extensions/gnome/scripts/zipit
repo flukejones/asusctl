@@ -1,0 +1,7 @@
+#!/bin/sh
+UUID=`grep -E '^[ ]*"uuid":' metadata.json | sed 's@^[ ]*"uuid":[ ]*"\(.\+\)",[ ]*@\1@'`
+VSTRING=`grep -E '^[ ]*"version":' metadata.json | sed 's@^[ ]*"version":[ ]*"\(.\+\)",[ ]*@\1@'`
+rm *.zip
+cd _build && zip -qr "../$UUID.zip" .
+
+exit 0;

@@ -1,0 +1,8 @@
+#!/bin/sh
+UUID=`grep -E '^[ ]*"uuid":' metadata.json | sed 's@^[ ]*"uuid":[ ]*"\(.\+\)",[ ]*@\1@'`
+INSTALLBASE=~/.local/share/gnome-shell/extensions
+
+gnome-extensions disable "$UUID"
+rm -rf "$INSTALLBASE/$UUID"
+
+exit 0;

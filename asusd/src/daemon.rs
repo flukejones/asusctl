@@ -65,7 +65,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 async fn start_daemon() -> Result<(), Box<dyn Error>> {
     let supported = SupportedFunctions::get_supported();
     print_board_info();
-    println!("{}", supported.supported_functions());
+    println!("{:?}", supported.supported_functions());
 
     // Start zbus server
     let mut connection = Connection::system().await?;

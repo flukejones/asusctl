@@ -18,6 +18,11 @@ impl SupportedFunctions {
     pub fn supported_functions(&self) -> &rog_platform::supported::SupportedFunctions {
         &self.0
     }
+
+    #[dbus_interface(out_args("answer", "question"))]
+    fn meaning_of_life(&self) -> zbus::fdo::Result<(i32, String)> {
+        Ok((42, String::from("Meaning of life")))
+    }
 }
 
 #[async_trait]

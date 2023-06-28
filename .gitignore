@@ -9,3 +9,12 @@ vendor_*
 .vscode
 .~lock.*
 *.ods#
+
+# gnome extension
+node-modules
+bindings/ts/*.d.ts
+bindings/ts/*.js.map
+desktop-extensions/gnome/_build
+desktop-extensions/gnome/target
+desktop-extensions/gnome/node_modules
+desktop-extensions/gnome/schemas/gschemas.compiled

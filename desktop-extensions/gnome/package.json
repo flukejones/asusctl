@@ -1,0 +1,46 @@
+{
+  "name": "asusctl-gex",
+  "version": "4.7.0",
+  "description": "asusctl-gex is a frontend for some functionalities of asusctl and supergfxctl that were born inside the asus-linux.org community.\n\nasusctl is required.\n\nTo learn more about it, please have a look at:\nhttps://gitlab.com/asus-linux/asusctl\nhttps://gitlab.com/asus-linux/asusctl-gex\n\nhttps://asus-linux.org/",
+  "dependencies": {
+    "npm-run-all": "^4.1.5",
+    "typescript": "^4.3.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "build:clean": "rm -rf _build _target schemas/gschemas.compiled target",
+    "build:compile": "scripts/compile",
+    "build:convert": "scripts/convert",
+    "build:schemas": "glib-compile-schemas schemas",
+    "build:transpile": "npx tsc",
+    "build": "run-p build:clean && run-p build:transpile && run-p build:schemas && run-p build:convert && run-p build:compile",
+    "debug:nested_shell": "run-p build && run-p install-dev && scripts/nested_shell",
+    "debug": "run-p debug:nested_shell",
+    "disable": "gnome-extensions disable \"asusctl-gex@asus-linux.org\"",
+    "enable": "gnome-extensions enable \"asusctl-gex@asus-linux.org\"",
+    "install-user": "scripts/install",
+    "install-dev": "scripts/install dev",
+    "uninstall-local": "scripts/uninstall",
+    "zip": "scripts/zipit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/asus-linux/asusctl-gex.git"
+  },
+  "keywords": [
+    "gnome-shell",
+    "extension",
+    "asusctl",
+    "asus",
+    "rog",
+    "gnome",
+    "gjs",
+    "typescript"
+  ],
+  "author": "Armas Spann, Marco Laux, Luke Jones",
+  "license": "MPL-2",
+  "bugs": {
+    "url": "https://gitlab.com/asus-linux/asusctl/issues"
+  },
+  "homepage": "https://gitlab.com/asus-linux/asusctl/desktop-extensions/gnome#readme"
+}

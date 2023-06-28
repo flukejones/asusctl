@@ -35,6 +35,7 @@ pub struct PlatformProfileFunctions {
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Default, Type, Debug, Clone)]
+#[zvariant(signature = "s")]
 pub enum AdvancedAura {
     #[default]
     None,
