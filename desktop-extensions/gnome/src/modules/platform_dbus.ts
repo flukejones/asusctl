@@ -3,43 +3,35 @@ declare var asusctlGexInstance: any;
 //@ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import * as Resources from './resources';
+import * as Bios from '../bindings/platform';
+import * as Dbus from './dbus';
 
-const { Gio } = imports.gi;
-
-export class Platform {
-    asusLinuxProxy: any = null; // type: Gio.DbusProxy
-    connected: boolean = false;
-    lastStatePostBootSound: boolean = false;
-    lastStateOverdrive: boolean = false;
-    lastStateMUX: boolean = false;
+export class Platform extends Dbus.DbusClass {
+    bios: Bios.RogBiosSupportedFunctions = asusctlGexInstance.supported.connector.supported;
 
     constructor() {
-        // nothing for now
+        super('org-asuslinus-platform-4', '/org/asuslinux/Platform');
     }
 
     public getPostBootSound() {
         if (this.isRunning()) {
             try {
                 let currentState = this.asusLinuxProxy.PostBootSoundSync();
-
                 return parseInt(currentState) == 1 ? true : false;
             } catch (e) {
                 //@ts-ignore
                 log(`Failed to get POST Boot Sound state!`, e);
             }
         }
-
-        return this.lastStatePostBootSound;
+        return this.bios.post_sound;
     }
 
     public setPostBootSound(state: boolean) {
         if (this.isRunning()) {
             try {
-                if (state !== this.lastStatePostBootSound) {
-                    this.lastStatePostBootSound = state;
+                if (state !== this.bios.post_sound) {
+                    this.bios.post_sound = state;
                 }
-
                 return this.asusLinuxProxy.SetPostBootSoundSync(state);
             } catch (e) {
                 //@ts-ignore
@@ -52,24 +44,21 @@ export class Platform {
         if (this.isRunning()) {
             try {
                 let currentState = this.asusLinuxProxy.GpuMuxModeSync();
-
                 return parseInt(currentState) == 0 ? true : false;
             } catch (e) {
                 //@ts-ignore
                 log(`Failed to get MUX state!`, e);
             }
         }
-
-        return this.lastStatePostBootSound;
+        return this.bios.post_sound;
     }
 
     public setMUX(state: boolean) {
         if (this.isRunning()) {
             try {
-                if (!state !== this.lastStateMUX) {
-                    this.lastStateMUX = !state;
+                if (!state !== this.bios.gpu_mux) {
+                    this.bios.gpu_mux = !state;
                 }
-
                 return this.asusLinuxProxy.SetGpuMuxModeSync(!state);
             } catch (e) {
                 //@ts-ignore
@@ -82,24 +71,21 @@ export class Platform {
         if (this.isRunning()) {
             try {
                 let currentState = this.asusLinuxProxy.PanelOverdriveSync();
-
                 return parseInt(currentState) == 1 ? true : false;
             } catch (e) {
                 //@ts-ignore
                 log(`Failed to get Overdrive state!`, e);
             }
         }
-
-        return this.lastStateOverdrive;
+        return this.bios.panel_overdrive;
     }
 
     public setOverdrive(state: boolean) {
         if (this.isRunning()) {
             try {
-                if (state !== this.lastStateOverdrive) {
-                    this.lastStateOverdrive = state;
+                if (state !== this.bios.panel_overdrive) {
+                    this.bios.panel_overdrive = state;
                 }
-
                 return this.asusLinuxProxy.SetPanelOverdriveSync(state);
             } catch (e) {
                 //@ts-ignore
@@ -113,56 +99,46 @@ export class Platform {
     }
 
     async start() {
-        //@ts-ignore
-        log(`Starting Platform DBus module...`);
-
         try {
-            let xml = Resources.File.DBus('org-asuslinus-platform-4')
-            this.asusLinuxProxy = new Gio.DBusProxy.makeProxyWrapper(xml)(
-                Gio.DBus.system,
-                'org.asuslinux.Daemon',
-                '/org/asuslinux/Platform'
-            );
-
-            this.connected = true;
+            super.start();
 
             if (asusctlGexInstance.supported.connector.supportedAttributes.bios_toggleSound) {
-                this.lastStatePostBootSound = this.getPostBootSound();
+                this.bios.post_sound = this.getPostBootSound();
                 this.asusLinuxProxy.connectSignal(
                     "NotifyPostBootSound",
                     (proxy: any = null, _name: string, data: boolean) => {
                         if (proxy) {
                             //@ts-ignore
                             log(`PostBootSound changed to ${data}`);
-                            asusctlGexInstance.Platform.switchPostBootSound.setToggleState(this.lastStatePostBootSound);
+                            asusctlGexInstance.Platform.switchPostBootSound.setToggleState(this.bios.post_sound);
                         }
                     }
                 );
             }
 
             if (asusctlGexInstance.supported.connector.supportedAttributes.bios_overdrive) {
-                this.lastStateOverdrive = this.getOverdrive();
+                this.bios.panel_overdrive = this.getOverdrive();
                 this.asusLinuxProxy.connectSignal(
                     "NotifyPanelOverdrive",
                     (proxy: any = null, _name: string, data: boolean) => {
                         if (proxy) {
                             //@ts-ignore
                             log(`Overdrive has changed to ${data}.`);
-                            asusctlGexInstance.Platform.overdriveSwitch.setToggleState(this.lastStateOverdrive);
+                            asusctlGexInstance.Platform.overdriveSwitch.setToggleState(this.bios.panel_overdrive);
                         }
                     }
                 );
             }
 
             if (asusctlGexInstance.supported.connector.supportedAttributes.bios_toggleMUX) {
-                this.lastStateMUX = this.getMUX();
+                this.bios.gpu_mux = this.getMUX();
                 this.asusLinuxProxy.connectSignal(
                     "NotifyGpuMuxMode",
                     (proxy: any = null, _name: string, data: boolean) => {
                         if (proxy) {
                             //@ts-ignore
                             log(`MUX has changed to ${data}.`);
-                            asusctlGexInstance.Platform.switchMUX.setToggleState(this.lastStateMUX);
+                            asusctlGexInstance.Platform.switchMUX.setToggleState(this.bios.gpu_mux);
 
                             // Panel.Actions.notify(
                             //     'ASUS Notebook Control',
@@ -180,15 +156,9 @@ export class Platform {
         }
     }
 
-    stop() {
-        //@ts-ignore
-        log(`Stopping Overdrive DBus module...`);
-
-        if (this.isRunning()) {
-            this.connected = false;
-            this.asusLinuxProxy = null;
-            this.lastStatePostBootSound = false;
-            this.lastStateOverdrive = false;
-        }
+    async stop() {
+        super.stop();
+        this.bios.post_sound = false;
+        this.bios.panel_overdrive = false;
     }
 }

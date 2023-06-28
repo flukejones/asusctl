@@ -34,7 +34,7 @@ export class Supported {
   //   2),
   // (False, True, True, True, False, True)
 
-  supportedAttributes: Platform.SupportedFunctions = {
+  supported: Platform.SupportedFunctions = {
     anime_ctrl: false,
     charge_ctrl: {
       charge_level_set: false
@@ -77,41 +77,41 @@ export class Supported {
 
             switch (parseInt(_key)) {
               case 0:
-                this.supportedAttributes.anime_ctrl = (valueString == 'true' ? true : false);
+                this.supported.anime_ctrl = (valueString == 'true' ? true : false);
                 break;
 
               case 1:
-                this.supportedAttributes.charge_ctrl.charge_level_set = (valueString == 'true' ? true : false);
+                this.supported.charge_ctrl.charge_level_set = (valueString == 'true' ? true : false);
                 break;
 
               case 2:
                 let platformArray = valueString.split(',');
-                this.supportedAttributes.platform_profile.fan_curves = (platformArray[0] == 'true' ? true : false);
-                this.supportedAttributes.platform_profile.platform_profile = (platformArray[1] == 'true' ? true : false);
+                this.supported.platform_profile.fan_curves = (platformArray[0] == 'true' ? true : false);
+                this.supported.platform_profile.platform_profile = (platformArray[1] == 'true' ? true : false);
                 break;
 
               case 3:
                 let ledArray = valueString.split(',');
                 // let t: keyof typeof AuraDevice = ledArray[0]; // can't conevert
-                this.supportedAttributes.keyboard_led.dev_id = Aura.AuraDevice[ledArray[0] as Aura.AuraDevice];
-                this.supportedAttributes.keyboard_led.brightness = (ledArray[1] == 'true' ? true : false);
-                this.supportedAttributes.keyboard_led.basic_modes = ledArray[2].split(',').map(function (value) {
+                this.supported.keyboard_led.dev_id = Aura.AuraDevice[ledArray[0] as Aura.AuraDevice];
+                this.supported.keyboard_led.brightness = (ledArray[1] == 'true' ? true : false);
+                this.supported.keyboard_led.basic_modes = ledArray[2].split(',').map(function (value) {
                   return Aura.AuraModeNum[value as Aura.AuraModeNum]
                 });
-                this.supportedAttributes.keyboard_led.basic_zones = ledArray[3].split(',').map(function (value) {
+                this.supported.keyboard_led.basic_zones = ledArray[3].split(',').map(function (value) {
                   return Aura.AuraZone[value as Aura.AuraZone]
                 });
-                this.supportedAttributes.keyboard_led.advanced_type = Platform.AdvancedAura[ledArray[4] as Platform.AdvancedAura];
+                this.supported.keyboard_led.advanced_type = Platform.AdvancedAura[ledArray[4] as Platform.AdvancedAura];
                 break;
 
               case 4:
                 let biosArray = valueString.split(',');
-                this.supportedAttributes.rog_bios_ctrl.post_sound = (biosArray[0] == 'true' ? true : false);
-                this.supportedAttributes.rog_bios_ctrl.gpu_mux = (biosArray[1] == 'true' ? true : false);
-                this.supportedAttributes.rog_bios_ctrl.panel_overdrive = (biosArray[2] == 'true' ? true : false);
-                this.supportedAttributes.rog_bios_ctrl.dgpu_disable = (biosArray[3] == 'true' ? true : false);
-                this.supportedAttributes.rog_bios_ctrl.egpu_enable = (biosArray[4] == 'true' ? true : false);
-                this.supportedAttributes.rog_bios_ctrl.mini_led_mode = (biosArray[5] == 'true' ? true : false);
+                this.supported.rog_bios_ctrl.post_sound = (biosArray[0] == 'true' ? true : false);
+                this.supported.rog_bios_ctrl.gpu_mux = (biosArray[1] == 'true' ? true : false);
+                this.supported.rog_bios_ctrl.panel_overdrive = (biosArray[2] == 'true' ? true : false);
+                this.supported.rog_bios_ctrl.dgpu_disable = (biosArray[3] == 'true' ? true : false);
+                this.supported.rog_bios_ctrl.egpu_enable = (biosArray[4] == 'true' ? true : false);
+                this.supported.rog_bios_ctrl.mini_led_mode = (biosArray[5] == 'true' ? true : false);
                 break;
 
               default:
