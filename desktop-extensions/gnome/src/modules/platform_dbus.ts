@@ -8,7 +8,14 @@ import { DbusBase } from '../modules/dbus';
 
 // TODO: add callbacks for notifications
 export class Platform extends DbusBase {
-    bios: bios.RogBiosSupportedFunctions = asusctlGexInstance.supported.connector.supported;
+    bios: bios.RogBiosSupportedFunctions = {
+        post_sound: false,
+        gpu_mux: false,
+        panel_overdrive: false,
+        dgpu_disable: false,
+        egpu_enable: false,
+        mini_led_mode: false
+    }
 
     constructor() {
         super('org-asuslinux-platform-4', '/org/asuslinux/Platform');
@@ -98,13 +105,14 @@ export class Platform extends DbusBase {
     public getMiniLedMode() {
         if (this.isRunning()) {
             try {
-                let currentState = this.dbus_proxy.MiniLedModeSync();
-                this.bios.mini_led_mode = parseInt(currentState) == 1 ? true : false;
+                this.bios.mini_led_mode = this.dbus_proxy.MiniLedModeSync();
             } catch (e) {
                 //@ts-ignore
                 log(`Failed to get Overdrive state!`, e);
             }
         }
+        //@ts-ignore
+        log(`MINI LED MODE: !`, this.bios.mini_led_mode);
         return this.bios.mini_led_mode;
     }
 
@@ -117,7 +125,7 @@ export class Platform extends DbusBase {
                 return this.dbus_proxy.SetMiniLedModeSync(state);
             } catch (e) {
                 //@ts-ignore
-                log(`Overdrive DBus set overdrive state failed!`, e);
+                log(`setMiniLedMode failed!`, e);
             }
         }
     }
@@ -148,7 +156,7 @@ export class Platform extends DbusBase {
                 }
             );
 
-            this.bios.panel_overdrive = this.getMiniLedMode();
+            this.bios.mini_led_mode = this.getMiniLedMode();
             this.dbus_proxy.connectSignal(
                 "NotifyMiniLedMode",
                 (proxy: any = null, _name: string, data: boolean) => {
