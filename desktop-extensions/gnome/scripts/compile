@@ -2,9 +2,11 @@
 rm -rf _build
 mkdir -p _build/modules
 mkdir -p _build/bindings
+mkdir -p _build/resources
 cp -r target/modules/*js _build/modules/
 cp -r target/bindings/*.js _build/bindings/
 cp -r metadata.json schemas target/*.js _build
+cp -r ../../bindings/dbus-xml _build/resources/dbus
 # cp -r icons resources *.css _build
 # cp src/prefs.ui _build/
 

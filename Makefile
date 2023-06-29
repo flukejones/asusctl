@@ -122,12 +122,15 @@ bindings:
 	typeshare ./rog-platform/src/ --lang=typescript --output-file=bindings/ts/platform.ts
 
 introspect:
-	dbus-send --system --type=method_call --print-reply --dest=org.asuslinux.Daemon /org/asuslinux/Aura org.freedesktop.DBus.Introspectable.Introspect > bindings/dbus-xml/org-asuslinux-aura-4.xml
-	dbus-send --system --type=method_call --print-reply --dest=org.asuslinux.Daemon /org/asuslinux/Anime org.freedesktop.DBus.Introspectable.Introspect > bindings/dbus-xml/org-asuslinux-anime-4.xml
-	dbus-send --system --type=method_call --print-reply --dest=org.asuslinux.Daemon /org/asuslinux/Platform org.freedesktop.DBus.Introspectable.Introspect > bindings/dbus-xml/org-asuslinux-platform-4.xml
-	dbus-send --system --type=method_call --print-reply --dest=org.asuslinux.Daemon /org/asuslinux/Power org.freedesktop.DBus.Introspectable.Introspect > bindings/dbus-xml/org-asuslinux-power-4.xml
-	dbus-send --system --type=method_call --print-reply --dest=org.asuslinux.Daemon /org/asuslinux/Profile org.freedesktop.DBus.Introspectable.Introspect > bindings/dbus-xml/org-asuslinux-profile-4.xml
-	dbus-send --system --type=method_call --print-reply --dest=org.asuslinux.Daemon /org/asuslinux/Supported org.freedesktop.DBus.Introspectable.Introspect > bindings/dbus-xml/org-asuslinux-supported-4.xml
+	gdbus introspect --system -d org.asuslinux.Daemon -o /org/asuslinux/Aura -x > bindings/dbus-xml/org-asuslinux-aura-4.xml
+	gdbus introspect --system -d org.asuslinux.Daemon -o /org/asuslinux/Anime -x > bindings/dbus-xml/org-asuslinux-anime-4.xml
+	gdbus introspect --system -d org.asuslinux.Daemon -o /org/asuslinux/Platform -x > bindings/dbus-xml/org-asuslinux-platform-4.xml
+	gdbus introspect --system -d org.asuslinux.Daemon -o /org/asuslinux/Power -x > bindings/dbus-xml/org-asuslinux-power-4.xml
+	gdbus introspect --system -d org.asuslinux.Daemon -o /org/asuslinux/Profile -x > bindings/dbus-xml/org-asuslinux-profile-4.xml
+	gdbus introspect --system -d org.asuslinux.Daemon -o /org/asuslinux/Supported -x > bindings/dbus-xml/org-asuslinux-supported-4.xml
+	xmlstarlet ed -L -O -d '//interface[@name="org.freedesktop.DBus.Introspectable"]' bindings/dbus-xml/org-asuslinux-*
+	xmlstarlet ed -L -O -d '//interface[@name="org.freedesktop.DBus.Properties"]' bindings/dbus-xml/org-asuslinux-*
+	xmlstarlet ed -L -O -d '//interface[@name="org.freedesktop.DBus.Peer"]' bindings/dbus-xml/org-asuslinux-*
 
 build:
 ifeq ($(VENDORED),1)

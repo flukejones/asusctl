@@ -15,8 +15,10 @@ pub struct SupportedFunctions(rog_platform::supported::SupportedFunctions);
 
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl SupportedFunctions {
-    pub fn supported_functions(&self) -> &rog_platform::supported::SupportedFunctions {
-        &self.0
+    pub fn supported_functions(
+        &self,
+    ) -> zbus::fdo::Result<&rog_platform::supported::SupportedFunctions> {
+        Ok(&self.0)
     }
 
     #[dbus_interface(out_args("answer", "question"))]

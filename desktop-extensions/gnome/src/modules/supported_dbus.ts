@@ -2,17 +2,11 @@ declare const global: any, imports: any;
 //@ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import * as Resources from './resources';
+import { SupportedFunctions, AdvancedAura } from '../bindings/platform';
+import { AuraDevice, AuraModeNum, AuraZone } from '../bindings/aura';
+import { DbusBase } from '../modules/dbus';
 
-import * as Platform from '../bindings/platform';
-import * as Aura from '../bindings/aura';
-
-const { Gio } = imports.gi;
-
-export class Supported {
-  supportedProxy: any = null; // type: Gio.DbusProxy (donno how to add)
-  connectedSupported: boolean = false;
-
+export class Supported extends DbusBase {
   // False,
   // (True,),
   // (True, True),
@@ -34,7 +28,7 @@ export class Supported {
   //   2),
   // (False, True, True, True, False, True)
 
-  supported: Platform.SupportedFunctions = {
+  supported: SupportedFunctions = {
     anime_ctrl: false,
     charge_ctrl: {
       charge_level_set: false
@@ -44,11 +38,11 @@ export class Supported {
       fan_curves: false
     },
     keyboard_led: {
-      dev_id: Aura.AuraDevice.Unknown,
+      dev_id: AuraDevice.Unknown,
       brightness: false,
       basic_modes: [],
       basic_zones: [],
-      advanced_type: Platform.AdvancedAura.None
+      advanced_type: AdvancedAura.None
     },
     rog_bios_ctrl: {
       post_sound: false,
@@ -61,13 +55,13 @@ export class Supported {
   };
 
   constructor() {
-    // nothing for now
+    super('org-asuslinux-supported-4', '/org/asuslinux/Supported');
   }
 
   public getSupported() {
     if (this.isRunning()) {
       try {
-        let _supportedAttributes = this.supportedProxy.SupportedFunctionsSync();
+        let _supportedAttributes = this.dbus_proxy.SupportedFunctionsSync();
         if (_supportedAttributes.length > 0) {
           let valueString: string = '';
 
@@ -93,15 +87,15 @@ export class Supported {
               case 3:
                 let ledArray = valueString.split(',');
                 // let t: keyof typeof AuraDevice = ledArray[0]; // can't conevert
-                this.supported.keyboard_led.dev_id = Aura.AuraDevice[ledArray[0] as Aura.AuraDevice];
+                this.supported.keyboard_led.dev_id = AuraDevice[ledArray[0] as AuraDevice];
                 this.supported.keyboard_led.brightness = (ledArray[1] == 'true' ? true : false);
                 this.supported.keyboard_led.basic_modes = ledArray[2].split(',').map(function (value) {
-                  return Aura.AuraModeNum[value as Aura.AuraModeNum]
+                  return AuraModeNum[value as AuraModeNum]
                 });
                 this.supported.keyboard_led.basic_zones = ledArray[3].split(',').map(function (value) {
-                  return Aura.AuraZone[value as Aura.AuraZone]
+                  return AuraZone[value as AuraZone]
                 });
-                this.supported.keyboard_led.advanced_type = Platform.AdvancedAura[ledArray[4] as Platform.AdvancedAura];
+                this.supported.keyboard_led.advanced_type = AdvancedAura[ledArray[4] as AdvancedAura];
                 break;
 
               case 4:
@@ -126,38 +120,17 @@ export class Supported {
     }
   }
 
-  isRunning(): boolean {
-    return this.connectedSupported;
-  }
-
   async start() {
     try {
-      // creating the proxy
-      let xml = Resources.File.DBus('org-asuslinux-supported-4');
-      this.supportedProxy = new Gio.DBusProxy.makeProxyWrapper(xml)(
-        Gio.DBus.system,
-        'org.asuslinux.Daemon',
-        '/org/asuslinux/Supported'
-      );
-
-      this.connectedSupported = true;
-
+      await super.start();
       this.getSupported();
-      //@ts-ignore
-      log(`Supported Daemon client started successfully.`);
     } catch (e) {
       //@ts-ignore
       log(`Supported DBus initialization failed!`, e);
     }
   }
 
-  stop() {
-    //@ts-ignore
-    log(`Stopping Supported DBus client...`);
-
-    if (this.isRunning()) {
-      this.connectedSupported = false;
-      this.supportedProxy = null;
-    }
+  async stop() {
+    await super.stop()
   }
 }
