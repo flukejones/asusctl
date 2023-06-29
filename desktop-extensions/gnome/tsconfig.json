@@ -1,26 +1,18 @@
 {
-    "compileOnSave": true,
-    "compilerOptions": {
-        "target": "es2019",
-        // "module": "ES2015",
-        "moduleResolution": "node",
-        // "rootDir": "./",
-        "strict": true,
-        "outDir": "./target",
-        "forceConsistentCasingInFileNames": true,
-        "downlevelIteration": true,
-        "lib": [ "es2019" ],
-        "pretty": true,
-        "sourceMap": true,
-        "declaration": true,
-        "removeComments": true,
-        "incremental": true,
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "allowJs": true
-    },
-    "include": [
-        "src/*.ts",
-        "src/**/*.ts"
-    ]
+  "compilerOptions": {
+    "lib": ["es2019"],
+    "types": [],
+    "target": "es2019",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "declaration": true,
+    "removeComments": true,
+    "strict": true,
+    "allowJs": true
+  },
+  "include": [],
+  "files": [
+    "src/*.ts",
+    "src/**/*.ts"
+  ]
 }

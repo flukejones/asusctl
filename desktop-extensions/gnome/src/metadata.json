@@ -1,7 +1,7 @@
 {
   "name": "asusctl-gex",
   "description": "asusctl-gex is a frontend for some functionalities of asusctl and supergfxctl that were born inside the asus-linux.org community.\n\nasusctl is required.\n\nTo learn more about it, please have a look at:\nhttps://gitlab.com/asus-linux/asusctl\nhttps://gitlab.com/asus-linux/asusctl-gex\n\nhttps://asus-linux.org/",
-  "uuid": "asusctl-gex@asus-linux.org",
+  "uuid": "asusctl-gex-dev@asus-linux.org",
   "uuid-dev": "asusctl-gex-dev@asus-linux.org",
   "settings-schema": "org.gnome.shell.extensions.asusctl-gex",
   "version": "4.3.2",
