@@ -18,12 +18,12 @@ import { Platform } from './modules/dbus/platform';
 
 const QuickMiniLed = GObject.registerClass(
     class QuickMiniLed extends QuickToggle {
-        _init() {
-            super._init({
+        constructor() {
+            super({
                 title: 'MiniLED',
                 iconName: 'selection-mode-symbolic',
                 toggleMode: true,
-                checked:  extensionInstance.dbus_platform.bios.mini_led_mode,
+                checked: extensionInstance.dbus_platform.bios.mini_led_mode,
             });
 
             this.label = 'MiniLED';
@@ -58,8 +58,8 @@ const QuickMiniLed = GObject.registerClass(
 
 const IndicateMiniLed = GObject.registerClass(
     class IndicateMiniLed extends SystemIndicator {
-        _init() {
-            super._init();
+        constructor() {
+            super();
 
             // Create the icon for the indicator
             this._indicator = this._addIndicator();
@@ -88,8 +88,8 @@ const IndicateMiniLed = GObject.registerClass(
 
 const QuickPanelOd = GObject.registerClass(
     class QuickPanelOd extends QuickToggle {
-        _init() {
-            super._init({
+        constructor() {
+            super({
                 title: 'Panel Overdrive',
                 iconName: 'selection-mode-symbolic',
                 toggleMode: true,
@@ -118,8 +118,8 @@ const QuickPanelOd = GObject.registerClass(
 
 const IndicatePanelOd = GObject.registerClass(
     class IndicatePanelOd extends SystemIndicator {
-        _init() {
-            super._init();
+        constructor() {
+            super();
 
             this.quickSettingsItems.push(new QuickPanelOd());
             // this.connect('destroy', () => {
@@ -134,36 +134,44 @@ class Extension {
     private _indicateMiniLed: typeof IndicateMiniLed;
     private _indicatePanelOd: typeof IndicatePanelOd;
     private _dbus_power!: Power;
-    dbus_platform!: Platform;
     private _dbus_anime!: AnimeDbus;
-    dbus_supported!: Supported;
+
+    public dbus_platform!: Platform;
+    public dbus_supported!: Supported;
 
     constructor() {
         this._indicateMiniLed = null;
         this._indicatePanelOd = null;
 
         this.dbus_supported = new Supported();
-        this.dbus_platform = new Platform();
-        this._dbus_power = new Power();
-        this._dbus_anime = new AnimeDbus();
-
         this.dbus_supported.start();
+
+        this.dbus_platform = new Platform();
         this.dbus_platform.start();
+
+        this._dbus_power = new Power();
         this._dbus_power.start();
+
+        this._dbus_anime = new AnimeDbus();
         this._dbus_anime.start();
     }
 
     enable() {
-        this._indicateMiniLed = new IndicateMiniLed();
-        this._indicateMiniLed.checked = this.dbus_platform.bios.mini_led_mode;
-        this._indicatePanelOd = new IndicatePanelOd();
+        if (this.dbus_supported.supported.rog_bios_ctrl.mini_led_mode)
+            this._indicateMiniLed = new IndicateMiniLed();
+        if (this.dbus_supported.supported.rog_bios_ctrl.panel_overdrive)
+            this._indicatePanelOd = new IndicatePanelOd();
     }
 
     disable() {
-        this._indicateMiniLed.destroy();
-        this._indicateMiniLed = null;
-        this._indicatePanelOd.destroy();
-        this._indicatePanelOd = null;
+        if (this.dbus_supported.supported.rog_bios_ctrl.mini_led_mode) {
+            this._indicateMiniLed.destroy();
+            this._indicateMiniLed = null;
+        }
+        if (this.dbus_supported.supported.rog_bios_ctrl.panel_overdrive) {
+            this._indicatePanelOd.destroy();
+            this._indicatePanelOd = null;
+        }
 
         this._dbus_power.stop();
         this.dbus_platform.stop();
