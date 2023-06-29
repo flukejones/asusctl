@@ -52,14 +52,14 @@
      Get the device state as stored by asusd
      -->
     <method name="DeviceState">
-      <arg type="(bsb(ssss))" direction="out"/>
+      <arg type="bsb(ssss)" direction="out"/>
     </method>
     <!--
      Notify listeners of the status of AniMe LED power and factory
      system-status animations
      -->
     <signal name="NotifyDeviceState">
-      <arg name="data" type="(bsb(ssss))"/>
+      <arg name="data" type="bsb(ssss)"/>
     </signal>
   </interface>
 </node>

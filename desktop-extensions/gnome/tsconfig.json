@@ -3,7 +3,7 @@
     "compilerOptions": {
         "target": "es2019",
         // "module": "ES2015",
-        // "moduleResolution": "node",
+        "moduleResolution": "node",
         // "rootDir": "./",
         "strict": true,
         "outDir": "./target",

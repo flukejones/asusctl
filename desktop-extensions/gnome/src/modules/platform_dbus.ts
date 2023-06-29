@@ -6,6 +6,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 import * as bios from '../bindings/platform';
 import { DbusBase } from '../modules/dbus';
 
+// TODO: add callbacks for notifications
 export class Platform extends DbusBase {
     bios: bios.RogBiosSupportedFunctions = asusctlGexInstance.supported.connector.supported;
 
@@ -17,7 +18,7 @@ export class Platform extends DbusBase {
         if (this.isRunning()) {
             try {
                 let currentState = this.dbus_proxy.PostBootSoundSync();
-                return parseInt(currentState) == 1 ? true : false;
+                this.bios.post_sound = parseInt(currentState) == 1 ? true : false;
             } catch (e) {
                 //@ts-ignore
                 log(`Failed to get POST Boot Sound state!`, e);
@@ -40,20 +41,20 @@ export class Platform extends DbusBase {
         }
     }
 
-    public getMUX() {
+    public getGpuMuxMode() {
         if (this.isRunning()) {
             try {
                 let currentState = this.dbus_proxy.GpuMuxModeSync();
-                return parseInt(currentState) == 0 ? true : false;
+                this.bios.gpu_mux = parseInt(currentState) == 0 ? true : false;
             } catch (e) {
                 //@ts-ignore
                 log(`Failed to get MUX state!`, e);
             }
         }
-        return this.bios.post_sound;
+        return this.bios.gpu_mux;
     }
 
-    public setMUX(state: boolean) {
+    public setGpuMuxMode(state: boolean) {
         if (this.isRunning()) {
             try {
                 if (!state !== this.bios.gpu_mux) {
@@ -67,11 +68,11 @@ export class Platform extends DbusBase {
         }
     }
 
-    public getOverdrive() {
+    public getPanelOd() {
         if (this.isRunning()) {
             try {
-                let currentState = this.dbus_proxy.PanelOverdriveSync();
-                return parseInt(currentState) == 1 ? true : false;
+                let currentState = this.dbus_proxy.PanelOdSync();
+                this.bios.panel_overdrive = parseInt(currentState) == 1 ? true : false;
             } catch (e) {
                 //@ts-ignore
                 log(`Failed to get Overdrive state!`, e);
@@ -80,13 +81,40 @@ export class Platform extends DbusBase {
         return this.bios.panel_overdrive;
     }
 
-    public setOverdrive(state: boolean) {
+    public setPanelOd(state: boolean) {
         if (this.isRunning()) {
             try {
                 if (state !== this.bios.panel_overdrive) {
                     this.bios.panel_overdrive = state;
                 }
-                return this.dbus_proxy.SetPanelOverdriveSync(state);
+                return this.dbus_proxy.SetPanelOdSync(state);
+            } catch (e) {
+                //@ts-ignore
+                log(`Overdrive DBus set overdrive state failed!`, e);
+            }
+        }
+    }
+
+    public getMiniLedMode() {
+        if (this.isRunning()) {
+            try {
+                let currentState = this.dbus_proxy.MiniLedModeSync();
+                this.bios.mini_led_mode = parseInt(currentState) == 1 ? true : false;
+            } catch (e) {
+                //@ts-ignore
+                log(`Failed to get Overdrive state!`, e);
+            }
+        }
+        return this.bios.mini_led_mode;
+    }
+
+    public setMiniLedMode(state: boolean) {
+        if (this.isRunning()) {
+            try {
+                if (state !== this.bios.mini_led_mode) {
+                    this.bios.mini_led_mode = state;
+                }
+                return this.dbus_proxy.SetMiniLedModeSync(state);
             } catch (e) {
                 //@ts-ignore
                 log(`Overdrive DBus set overdrive state failed!`, e);
@@ -98,57 +126,53 @@ export class Platform extends DbusBase {
         try {
             await super.start();
 
-            if (asusctlGexInstance.supported.connector.supportedAttributes.bios_toggleSound) {
-                this.bios.post_sound = this.getPostBootSound();
-                this.dbus_proxy.connectSignal(
-                    "NotifyPostBootSound",
-                    (proxy: any = null, _name: string, data: boolean) => {
-                        if (proxy) {
-                            //@ts-ignore
-                            log(`PostBootSound changed to ${data}`);
-                            asusctlGexInstance.Platform.switchPostBootSound.setToggleState(this.bios.post_sound);
-                        }
+            this.bios.post_sound = this.getPostBootSound();
+            this.dbus_proxy.connectSignal(
+                "NotifyPostBootSound",
+                (proxy: any = null, _name: string, data: boolean) => {
+                    if (proxy) {
+                        //@ts-ignore
+                        log(`PostBootSound changed to ${data}`);
                     }
-                );
-            }
+                }
+            );
 
-            if (asusctlGexInstance.supported.connector.supportedAttributes.bios_overdrive) {
-                this.bios.panel_overdrive = this.getOverdrive();
-                this.dbus_proxy.connectSignal(
-                    "NotifyPanelOverdrive",
-                    (proxy: any = null, _name: string, data: boolean) => {
-                        if (proxy) {
-                            //@ts-ignore
-                            log(`Overdrive has changed to ${data}.`);
-                            asusctlGexInstance.Platform.overdriveSwitch.setToggleState(this.bios.panel_overdrive);
-                        }
+            this.bios.panel_overdrive = this.getPanelOd();
+            this.dbus_proxy.connectSignal(
+                "NotifyPanelOd",
+                (proxy: any = null, _name: string, data: boolean) => {
+                    if (proxy) {
+                        //@ts-ignore
+                        log(`NotifyPanelOd has changed to ${data}.`);
                     }
-                );
-            }
+                }
+            );
 
-            if (asusctlGexInstance.supported.connector.supportedAttributes.bios_toggleMUX) {
-                this.bios.gpu_mux = this.getMUX();
-                this.dbus_proxy.connectSignal(
-                    "NotifyGpuMuxMode",
-                    (proxy: any = null, _name: string, data: boolean) => {
-                        if (proxy) {
-                            //@ts-ignore
-                            log(`MUX has changed to ${data}.`);
-                            asusctlGexInstance.Platform.switchMUX.setToggleState(this.bios.gpu_mux);
-
-                            // Panel.Actions.notify(
-                            //     'ASUS Notebook Control',
-                            //     `MUX Mode has chnged. Please reboot to apply the changes.`,
-                            //     'scalable/reboot.svg',
-                            //     'reboot'
-                            // );
-                        }
+            this.bios.panel_overdrive = this.getMiniLedMode();
+            this.dbus_proxy.connectSignal(
+                "NotifyMiniLedMode",
+                (proxy: any = null, _name: string, data: boolean) => {
+                    if (proxy) {
+                        //@ts-ignore
+                        log(`MiniLedMode has changed to ${data}.`);
                     }
-                );
-            }
+                }
+            );
+
+            this.bios.gpu_mux = this.getGpuMuxMode();
+            this.dbus_proxy.connectSignal(
+                "NotifyGpuMuxMode",
+                (proxy: any = null, _name: string, data: boolean) => {
+                    if (proxy) {
+                        //@ts-ignore
+                        log(`MUX has changed to ${data}.`);
+                    }
+                }
+            );
+
         } catch (e) {
             //@ts-ignore
-            log(`Overdrive DBus init failed!`, e);
+            log(`Platform DBus init failed!`, e);
         }
     }
 
@@ -156,5 +180,7 @@ export class Platform extends DbusBase {
         await super.stop();
         this.bios.post_sound = false;
         this.bios.panel_overdrive = false;
+        this.bios.mini_led_mode = false;
+        this.bios.gpu_mux = false;
     }
 }

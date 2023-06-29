@@ -18,7 +18,8 @@ const ThisModule = imports.misc.extensionUtils.getCurrentExtension();
 // const TestProxy = Gio.DBusProxy.makeProxyWrapper(interfaceXml);
 
 import * as Platform from './bindings/platform';
-import { ChargingLimit } from './modules/charge_dbus';
+import { AnimeDbus } from './modules/anime_dbus';
+import { Power } from './modules/power_dbus';
 import { Supported } from './modules/supported_dbus';
 
 const QuickMiniLed = GObject.registerClass(
@@ -135,7 +136,8 @@ class Extension {
     private _naff: Platform.GpuMode;
     private _indicateMiniLed: typeof IndicateMiniLed;
     private _indicatePanelOd: typeof IndicatePanelOd;
-    private _dbus_charge!: ChargingLimit;
+    private _dbus_charge!: Power;
+    private _dbus_anime!: AnimeDbus;
     private _dbus_supported!: Supported;
 
     constructor() {
@@ -147,15 +149,20 @@ class Extension {
     enable() {
         this._indicateMiniLed = new IndicateMiniLed();
         this._indicatePanelOd = new IndicatePanelOd();
-        this._dbus_charge = new ChargingLimit();
+        this._dbus_charge = new Power();
         this._dbus_charge.start().then(() => {
             //@ts-ignore
-            log(`DOOOOOM!, charge limit =`, this._dbus_charge.lastState);
+            log(`DOOOOOM!, charge limit =`, this._dbus_charge.chargeLimit);
         });
         this._dbus_supported = new Supported();
         this._dbus_supported.start().then(() => {
             //@ts-ignore
             log(`DOOOOOM!, supported =`, this._dbus_supported.supported);
+        });
+        this._dbus_anime = new AnimeDbus();
+        this._dbus_anime.start().then(() => {
+            //@ts-ignore
+            log(`DOOOOOM!, anime =`, this._dbus_anime.deviceState.display_enabled);
         });
     }
 

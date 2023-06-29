@@ -19,8 +19,9 @@ import { DbusBase } from '../modules/dbus';
 //     return result;
 //   }
 
-export class ChargingLimit extends DbusBase {
-    lastState: number = 100;
+export class Power extends DbusBase {
+    chargeLimit: number = 100;
+    mainsOnline = false;
 
     constructor() {
         super('org-asuslinux-power-4', '/org/asuslinux/Power');
@@ -29,21 +30,21 @@ export class ChargingLimit extends DbusBase {
     public getChargingLimit() {
         if (this.isRunning()) {
             try {
-                this.lastState = this.dbus_proxy.ChargeControlEndThresholdSync();
+                this.chargeLimit = this.dbus_proxy.ChargeControlEndThresholdSync();
             } catch (e) {
                 //@ts-ignore
                 log(`Failed to fetch Charging Limit!`, e);
             }
         }
-        return this.lastState;
+        return this.chargeLimit;
     }
 
     public setChargingLimit(limit: number) {
         if (this.isRunning()) {
             try {
-                if (limit > 0 && this.lastState !== limit) {
+                if (limit > 0 && this.chargeLimit !== limit) {
                     // update state
-                    this.lastState = limit;
+                    this.chargeLimit = limit;
                 }
                 return this.dbus_proxy.SetChargeControlEndThresholdSync(limit);
             } catch (e) {
@@ -51,6 +52,18 @@ export class ChargingLimit extends DbusBase {
                 log(`Profile DBus set power profile failed!`, e);
             }
         }
+    }
+
+    public getMainsOnline() {
+        if (this.isRunning()) {
+            try {
+                this.mainsOnline = this.dbus_proxy.MainsOnlineSync();
+            } catch (e) {
+                //@ts-ignore
+                log(`Failed to fetch MainsLonline!`, e);
+            }
+        }
+        return this.mainsOnline;
     }
 
     async start() {
@@ -64,7 +77,18 @@ export class ChargingLimit extends DbusBase {
                     if (proxy) {
                         //@ts-ignore
                         log(`Charging Limit has changed to ${data}% (${name}).`);
-                        this.lastState = parseInt(data);
+                        this.chargeLimit = parseInt(data);
+                    }
+                }
+            );
+
+            this.dbus_proxy.connectSignal(
+                "NotifyMainsOnline",
+                (proxy: any = null, name: string, data: string) => {
+                    if (proxy) {
+                        //@ts-ignore
+                        log(`NotifyMainsOnline has changed to ${data}% (${name}).`);
+                        this.mainsOnline = parseInt(data) == 1 ? true : false;
                     }
                 }
             );
