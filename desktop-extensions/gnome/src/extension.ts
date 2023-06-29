@@ -23,6 +23,7 @@ const QuickMiniLed = GObject.registerClass(
                 title: 'MiniLED',
                 iconName: 'selection-mode-symbolic',
                 toggleMode: true,
+                checked: asusctlGexInstance.dbus_platform.bios.mini_led_mode,
             });
 
             this.label = 'MiniLED';
@@ -35,6 +36,10 @@ const QuickMiniLed = GObject.registerClass(
                 'clicked', () => this._toggleMode(),
                 this);
 
+            this._settings.bind('mini-led-enabled',
+                this, 'checked',
+                Gio.SettingsBindFlags.DEFAULT);
+
             this._sync();
         }
 
@@ -44,14 +49,10 @@ const QuickMiniLed = GObject.registerClass(
         }
 
         _sync() {
-            const checked = asusctlGexInstance.dbus_platform.bios.mini_led_mode;
+            const checked = asusctlGexInstance.dbus_platform.getMiniLedMode();
             if (this.checked !== checked)
-                this.set(checked);
-
-            //@ts-ignore
-            log(`QuickMiniLed !`, this.checked);
-            //@ts-ignore
-            log(`asusctlGexInstance.dbus_platform.bios.mini_led_mode !`, asusctlGexInstance.dbus_platform.bios.mini_led_mode);
+                this.set({ checked });
+            // this.set_property('checked', checked);
         }
     });
 
@@ -66,7 +67,6 @@ const IndicateMiniLed = GObject.registerClass(
 
             // Showing the indicator when the feature is enabled
             this._settings = ExtensionUtils.getSettings();
-
             this._settings.bind('mini-led-enabled',
                 this._indicator, 'visible',
                 Gio.SettingsBindFlags.DEFAULT);
@@ -105,11 +105,14 @@ const QuickPanelOd = GObject.registerClass(
         }
 
         _toggleMode() {
-            asusctlGexInstance.dbus_platform.setPanelOd(!asusctlGexInstance.dbus_platform.bios.panel_overdrive);
+            asusctlGexInstance.dbus_platform.setPanelOd(this.checked);
+            this._sync();
         }
 
         _sync() {
-            this.set(asusctlGexInstance.dbus_platform.bios.panel_overdrive);
+            const checked = asusctlGexInstance.dbus_platform.getPanelOd();
+            if (this.checked !== checked)
+                this.set({ checked });
         }
     });
 
@@ -144,29 +147,15 @@ class Extension {
         this._dbus_power = new Power();
         this._dbus_anime = new AnimeDbus();
 
-        this.dbus_supported.start().then(() => {
-            //@ts-ignore
-            log(`DOOOOOM!, supported =`, this.dbus_supported.supported);
-        });
-
-        this.dbus_platform.start().then(() => {
-            //@ts-ignore
-            log(`DOOOOOM!, mini_led_mode =`, this.dbus_platform.bios.mini_led_mode);
-        });
-
-        this._dbus_power.start().then(() => {
-            //@ts-ignore
-            log(`DOOOOOM!, charge limit =`, this._dbus_power.chargeLimit);
-        });
-
-        this._dbus_anime.start().then(() => {
-            //@ts-ignore
-            log(`DOOOOOM!, anime =`, this._dbus_anime.deviceState.display_enabled);
-        });
+        this.dbus_supported.start();
+        this.dbus_platform.start();
+        this._dbus_power.start();
+        this._dbus_anime.start();
     }
 
     enable() {
         this._indicateMiniLed = new IndicateMiniLed();
+        this._indicateMiniLed.checked = this.dbus_platform.bios.mini_led_mode;
         this._indicatePanelOd = new IndicatePanelOd();
     }
 

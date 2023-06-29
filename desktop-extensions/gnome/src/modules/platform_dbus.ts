@@ -24,8 +24,7 @@ export class Platform extends DbusBase {
     public getPostBootSound() {
         if (this.isRunning()) {
             try {
-                let currentState = this.dbus_proxy.PostBootSoundSync();
-                this.bios.post_sound = parseInt(currentState) == 1 ? true : false;
+                this.bios.post_sound = this.dbus_proxy.PostBootSoundSync() == 'true' ? true : false;
             } catch (e) {
                 //@ts-ignore
                 log(`Failed to get POST Boot Sound state!`, e);
@@ -51,8 +50,7 @@ export class Platform extends DbusBase {
     public getGpuMuxMode() {
         if (this.isRunning()) {
             try {
-                let currentState = this.dbus_proxy.GpuMuxModeSync();
-                this.bios.gpu_mux = parseInt(currentState) == 0 ? true : false;
+                this.bios.gpu_mux = this.dbus_proxy.GpuMuxModeSync() == 'true' ? true : false;
             } catch (e) {
                 //@ts-ignore
                 log(`Failed to get MUX state!`, e);
@@ -78,8 +76,7 @@ export class Platform extends DbusBase {
     public getPanelOd() {
         if (this.isRunning()) {
             try {
-                let currentState = this.dbus_proxy.PanelOdSync();
-                this.bios.panel_overdrive = parseInt(currentState) == 1 ? true : false;
+                this.bios.panel_overdrive = this.dbus_proxy.PanelOdSync() == 'true' ? true : false;
             } catch (e) {
                 //@ts-ignore
                 log(`Failed to get Overdrive state!`, e);
@@ -105,14 +102,12 @@ export class Platform extends DbusBase {
     public getMiniLedMode() {
         if (this.isRunning()) {
             try {
-                this.bios.mini_led_mode = this.dbus_proxy.MiniLedModeSync();
+                this.bios.mini_led_mode = this.dbus_proxy.MiniLedModeSync() == 'true' ? true : false;
             } catch (e) {
                 //@ts-ignore
                 log(`Failed to get Overdrive state!`, e);
             }
         }
-        //@ts-ignore
-        log(`MINI LED MODE: !`, this.bios.mini_led_mode);
         return this.bios.mini_led_mode;
     }
 
@@ -134,7 +129,7 @@ export class Platform extends DbusBase {
         try {
             await super.start();
 
-            this.bios.post_sound = this.getPostBootSound();
+            this.getPostBootSound();
             this.dbus_proxy.connectSignal(
                 "NotifyPostBootSound",
                 (proxy: any = null, _name: string, data: boolean) => {
@@ -145,7 +140,7 @@ export class Platform extends DbusBase {
                 }
             );
 
-            this.bios.panel_overdrive = this.getPanelOd();
+            this.getPanelOd();
             this.dbus_proxy.connectSignal(
                 "NotifyPanelOd",
                 (proxy: any = null, _name: string, data: boolean) => {
@@ -156,7 +151,7 @@ export class Platform extends DbusBase {
                 }
             );
 
-            this.bios.mini_led_mode = this.getMiniLedMode();
+            this.getMiniLedMode();
             this.dbus_proxy.connectSignal(
                 "NotifyMiniLedMode",
                 (proxy: any = null, _name: string, data: boolean) => {
@@ -167,7 +162,7 @@ export class Platform extends DbusBase {
                 }
             );
 
-            this.bios.gpu_mux = this.getGpuMuxMode();
+            this.getGpuMuxMode();
             this.dbus_proxy.connectSignal(
                 "NotifyGpuMuxMode",
                 (proxy: any = null, _name: string, data: boolean) => {

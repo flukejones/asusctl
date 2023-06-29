@@ -2,9 +2,7 @@
 <schemalist>
   <schema id="org.gnome.shell.extensions.asusctl-gex" path="/org/gnome/shell/extensions/asusctl-gex/" >
     <key type="b" name="mini-led-enabled">
-      <default>true</default>
-      <summary>enable / disable notifications</summary>
-      <description>If enabled, notifications will show up on in various scenarios (when the GPU mode, power profile or charging limit is changed. Those notifications are not only triggered by the extension itself but react on DBUS signals from asusd, supergfxd and power-profiles-daemon.</description>
+      <default>false</default>
     </key>
     <key type="b" name="panel-od-enabled">
       <default>false</default>
