@@ -1,7 +1,7 @@
 declare const imports: any;
-var asusctlGexInstance: any;
+var extensionInstance: any;
 //@ts-ignore
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+// const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 // REF: https://gjs.guide/extensions/development/creating.html
 
@@ -11,10 +11,10 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const { QuickToggle, SystemIndicator } = imports.ui.quickSettings;
 const QuickSettingsMenu = imports.ui.main.panel.statusArea.quickSettings;
 
-import { AnimeDbus } from './modules/anime_dbus';
-import { Power } from './modules/power_dbus';
-import { Supported } from './modules/supported_dbus';
-import { Platform } from './modules/platform_dbus';
+import { AnimeDbus } from './modules/dbus/animatrix';
+import { Power } from './modules/dbus/power';
+import { Supported } from './modules/dbus/supported';
+import { Platform } from './modules/dbus/platform';
 
 const QuickMiniLed = GObject.registerClass(
     class QuickMiniLed extends QuickToggle {
@@ -23,7 +23,7 @@ const QuickMiniLed = GObject.registerClass(
                 title: 'MiniLED',
                 iconName: 'selection-mode-symbolic',
                 toggleMode: true,
-                checked: asusctlGexInstance.dbus_platform.bios.mini_led_mode,
+                checked:  extensionInstance.dbus_platform.bios.mini_led_mode,
             });
 
             this.label = 'MiniLED';
@@ -44,12 +44,12 @@ const QuickMiniLed = GObject.registerClass(
         }
 
         _toggleMode() {
-            asusctlGexInstance.dbus_platform.setMiniLedMode(this.checked);
+            extensionInstance.dbus_platform.setMiniLedMode(this.checked);
             this._sync();
         }
 
         _sync() {
-            const checked = asusctlGexInstance.dbus_platform.getMiniLedMode();
+            const checked = extensionInstance.dbus_platform.getMiniLedMode();
             if (this.checked !== checked)
                 this.set({ checked });
             // this.set_property('checked', checked);
@@ -105,12 +105,12 @@ const QuickPanelOd = GObject.registerClass(
         }
 
         _toggleMode() {
-            asusctlGexInstance.dbus_platform.setPanelOd(this.checked);
+            extensionInstance.dbus_platform.setPanelOd(this.checked);
             this._sync();
         }
 
         _sync() {
-            const checked = asusctlGexInstance.dbus_platform.getPanelOd();
+            const checked = extensionInstance.dbus_platform.getPanelOd();
             if (this.checked !== checked)
                 this.set({ checked });
         }
@@ -174,6 +174,6 @@ class Extension {
 
 //@ts-ignore
 function init() {
-    asusctlGexInstance = new Extension();
-    return new Extension();
+    extensionInstance = new Extension();
+    return extensionInstance;
 }

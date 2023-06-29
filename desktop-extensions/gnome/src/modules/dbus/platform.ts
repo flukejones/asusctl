@@ -1,10 +1,9 @@
-declare const global: any, imports: any;
-declare var asusctlGexInstance: any;
+declare const imports: any;
 //@ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import * as bios from '../bindings/platform';
-import { DbusBase } from '../modules/dbus';
+import * as bios from '../../bindings/platform';
+import { DbusBase } from './base';
 
 // TODO: add callbacks for notifications
 export class Platform extends DbusBase {

@@ -2,9 +2,9 @@ declare const global: any, imports: any;
 //@ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import { SupportedFunctions, AdvancedAura } from '../bindings/platform';
-import { AuraDevice, AuraModeNum, AuraZone } from '../bindings/aura';
-import { DbusBase } from '../modules/dbus';
+import { SupportedFunctions, AdvancedAura } from '../../bindings/platform';
+import { AuraDevice, AuraModeNum, AuraZone } from '../../bindings/aura';
+import { DbusBase } from './base';
 
 export class Supported extends DbusBase {
   // False,

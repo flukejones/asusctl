@@ -1,8 +1,8 @@
-declare const global: any, imports: any;
+declare const imports: any;
 //@ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import * as Resources from '../modules/resources';
+import * as Resources from '../resources';
 
 const { Gio } = imports.gi;
 

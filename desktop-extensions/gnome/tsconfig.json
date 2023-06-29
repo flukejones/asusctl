@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
-    "lib": ["es2019"],
+    "lib": [
+      "es2019"
+    ],
     "types": [],
     "target": "es2019",
     "module": "CommonJS",
@@ -10,8 +12,10 @@
     "strict": true,
     "allowJs": true
   },
-  "include": [],
   "files": [
+    "./src/extension.ts",
+  ],
+  "include": [
     "src/*.ts",
     "src/**/*.ts"
   ]

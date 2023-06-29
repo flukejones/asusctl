@@ -1,9 +1,8 @@
-declare const global: any, imports: any;
-declare var asusctlGexInstance: any;
+declare const imports: any;
 //@ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import { DbusBase } from '../modules/dbus';
+import { DbusBase } from './base';
 
 // function getMethods(obj: { [x: string]: { toString: () => string; }; }) {
 //     var result = [];

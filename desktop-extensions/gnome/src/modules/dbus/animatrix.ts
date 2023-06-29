@@ -1,10 +1,9 @@
-declare const global: any, imports: any;
-declare var asusctlGexInstance: any;
+declare const imports: any;
 //@ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import { DbusBase } from '../modules/dbus';
-import { DeviceState, AnimBooting, Brightness, AnimAwake, AnimSleeping, AnimShutdown } from '../bindings/anime';
+import { DbusBase } from './base';
+import { DeviceState, AnimBooting, Brightness, AnimAwake, AnimSleeping, AnimShutdown } from '../../bindings/anime';
 
 export class AnimeDbus extends DbusBase {
     deviceState: DeviceState = {
