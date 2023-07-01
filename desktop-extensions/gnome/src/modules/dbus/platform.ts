@@ -1,9 +1,5 @@
-declare const imports: any;
-//@ts-ignore
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-
-import * as bios from '../../bindings/platform';
-import { DbusBase } from './base';
+import * as bios from "../../bindings/platform";
+import { DbusBase } from "./base";
 
 // TODO: add callbacks for notifications
 export class Platform extends DbusBase {
@@ -14,19 +10,19 @@ export class Platform extends DbusBase {
         dgpu_disable: false,
         egpu_enable: false,
         mini_led_mode: false
-    }
+    };
 
     constructor() {
-        super('org-asuslinux-platform-4', '/org/asuslinux/Platform');
+        super("org-asuslinux-platform-4", "/org/asuslinux/Platform");
     }
 
     public getPostBootSound() {
         if (this.isRunning()) {
             try {
-                this.bios.post_sound = this.dbus_proxy.PostBootSoundSync() == 'true' ? true : false;
+                this.bios.post_sound = this.dbus_proxy.PostBootSoundSync() == "true" ? true : false;
             } catch (e) {
                 //@ts-ignore
-                log(`Failed to get POST Boot Sound state!`, e);
+                log("Failed to get POST Boot Sound state!", e);
             }
         }
         return this.bios.post_sound;
@@ -41,7 +37,7 @@ export class Platform extends DbusBase {
                 return this.dbus_proxy.SetPostBootSoundSync(state);
             } catch (e) {
                 //@ts-ignore
-                log(`Platform DBus set Post Boot Sound failed!`, e);
+                log("Platform DBus set Post Boot Sound failed!", e);
             }
         }
     }
@@ -49,10 +45,10 @@ export class Platform extends DbusBase {
     public getGpuMuxMode() {
         if (this.isRunning()) {
             try {
-                this.bios.gpu_mux = this.dbus_proxy.GpuMuxModeSync() == 'true' ? true : false;
+                this.bios.gpu_mux = this.dbus_proxy.GpuMuxModeSync() == "true" ? true : false;
             } catch (e) {
                 //@ts-ignore
-                log(`Failed to get MUX state!`, e);
+                log("Failed to get MUX state!", e);
             }
         }
         return this.bios.gpu_mux;
@@ -67,7 +63,7 @@ export class Platform extends DbusBase {
                 return this.dbus_proxy.SetGpuMuxModeSync(!state);
             } catch (e) {
                 //@ts-ignore
-                log(`Switching the MUX failed!`, e);
+                log("Switching the MUX failed!", e);
             }
         }
     }
@@ -75,10 +71,10 @@ export class Platform extends DbusBase {
     public getPanelOd() {
         if (this.isRunning()) {
             try {
-                this.bios.panel_overdrive = this.dbus_proxy.PanelOdSync() == 'true' ? true : false;
+                this.bios.panel_overdrive = this.dbus_proxy.PanelOdSync() == "true" ? true : false;
             } catch (e) {
                 //@ts-ignore
-                log(`Failed to get Overdrive state!`, e);
+                log("Failed to get Overdrive state!", e);
             }
         }
         return this.bios.panel_overdrive;
@@ -93,7 +89,7 @@ export class Platform extends DbusBase {
                 return this.dbus_proxy.SetPanelOdSync(state);
             } catch (e) {
                 //@ts-ignore
-                log(`Overdrive DBus set overdrive state failed!`, e);
+                log("Overdrive DBus set overdrive state failed!", e);
             }
         }
     }
@@ -101,10 +97,10 @@ export class Platform extends DbusBase {
     public getMiniLedMode() {
         if (this.isRunning()) {
             try {
-                this.bios.mini_led_mode = this.dbus_proxy.MiniLedModeSync() == 'true' ? true : false;
+                this.bios.mini_led_mode = this.dbus_proxy.MiniLedModeSync() == "true" ? true : false;
             } catch (e) {
                 //@ts-ignore
-                log(`Failed to get Overdrive state!`, e);
+                log("Failed to get Overdrive state!", e);
             }
         }
         return this.bios.mini_led_mode;
@@ -119,7 +115,7 @@ export class Platform extends DbusBase {
                 return this.dbus_proxy.SetMiniLedModeSync(state);
             } catch (e) {
                 //@ts-ignore
-                log(`setMiniLedMode failed!`, e);
+                log("setMiniLedMode failed!", e);
             }
         }
     }
@@ -174,7 +170,7 @@ export class Platform extends DbusBase {
 
         } catch (e) {
             //@ts-ignore
-            log(`Platform DBus init failed!`, e);
+            log("Platform DBus init failed!", e);
         }
     }
 

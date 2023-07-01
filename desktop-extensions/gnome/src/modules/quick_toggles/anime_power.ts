@@ -14,25 +14,25 @@ export const QuickAnimePower = GObject.registerClass(
 
         constructor(dbus_anime: AnimeDbus) {
             super({
-                title: 'AniMatrix Power',
-                iconName: 'selection-mode-symbolic',
+                title: "AniMatrix Power",
+                iconName: "selection-mode-symbolic",
                 toggleMode: true,
             });
             this._dbus_anime = dbus_anime;
-            this.label = 'AniMatrix Power';
+            this.label = "AniMatrix Power";
             this._settings = ExtensionUtils.getSettings();
 
             this.connectObject(
-                'destroy', () => this._settings.run_dispose(),
-                'clicked', () => this._toggleMode(),
+                "destroy", () => this._settings.run_dispose(),
+                "clicked", () => this._toggleMode(),
                 this);
 
-            this.connect('destroy', () => {
+            this.connect("destroy", () => {
                 this.destroy();
             });
 
-            this._settings.bind('anime-power',
-                this, 'checked',
+            this._settings.bind("anime-power",
+                this, "checked",
                 Gio.SettingsBindFlags.DEFAULT);
 
             this._sync();

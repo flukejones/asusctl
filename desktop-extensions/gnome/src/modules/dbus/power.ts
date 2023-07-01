@@ -1,8 +1,4 @@
-declare const imports: any;
-//@ts-ignore
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-
-import { DbusBase } from './base';
+import { DbusBase } from "./base";
 
 // function getMethods(obj: { [x: string]: { toString: () => string; }; }) {
 //     var result = [];
@@ -19,11 +15,11 @@ import { DbusBase } from './base';
 //   }
 
 export class Power extends DbusBase {
-    chargeLimit: number = 100;
+    chargeLimit = 100;
     mainsOnline = false;
 
     constructor() {
-        super('org-asuslinux-power-4', '/org/asuslinux/Power');
+        super("org-asuslinux-power-4", "/org/asuslinux/Power");
     }
 
     public getChargingLimit() {
@@ -32,7 +28,7 @@ export class Power extends DbusBase {
                 this.chargeLimit = this.dbus_proxy.ChargeControlEndThresholdSync();
             } catch (e) {
                 //@ts-ignore
-                log(`Failed to fetch Charging Limit!`, e);
+                log("Failed to fetch Charging Limit!", e);
             }
         }
         return this.chargeLimit;
@@ -48,7 +44,7 @@ export class Power extends DbusBase {
                 return this.dbus_proxy.SetChargeControlEndThresholdSync(limit);
             } catch (e) {
                 //@ts-ignore
-                log(`Profile DBus set power profile failed!`, e);
+                log("Profile DBus set power profile failed!", e);
             }
         }
     }
@@ -59,7 +55,7 @@ export class Power extends DbusBase {
                 this.mainsOnline = this.dbus_proxy.MainsOnlineSync();
             } catch (e) {
                 //@ts-ignore
-                log(`Failed to fetch MainsLonline!`, e);
+                log("Failed to fetch MainsLonline!", e);
             }
         }
         return this.mainsOnline;
@@ -93,7 +89,7 @@ export class Power extends DbusBase {
             );
         } catch (e) {
             //@ts-ignore
-            log(`Charging Limit DBus initialization failed!`, e);
+            log("Charging Limit DBus initialization failed!", e);
         }
     }
 

@@ -14,25 +14,25 @@ export const QuickMiniLed = GObject.registerClass(
 
         constructor(dbus_platform: Platform) {
             super({
-                title: 'MiniLED',
-                iconName: 'selection-mode-symbolic',
+                title: "MiniLED",
+                iconName: "selection-mode-symbolic",
                 toggleMode: true,
             });
             this._dbus_platform = dbus_platform;
-            this.label = 'MiniLED';
+            this.label = "MiniLED";
             this._settings = ExtensionUtils.getSettings();
 
             this.connectObject(
-                'destroy', () => this._settings.run_dispose(),
-                'clicked', () => this._toggleMode(),
+                "destroy", () => this._settings.run_dispose(),
+                "clicked", () => this._toggleMode(),
                 this);
 
-            this.connect('destroy', () => {
+            this.connect("destroy", () => {
                 this.destroy();
             });
 
-            this._settings.bind('mini-led-enabled',
-                this, 'checked',
+            this._settings.bind("mini-led-enabled",
+                this, "checked",
                 Gio.SettingsBindFlags.DEFAULT);
 
             this._sync();

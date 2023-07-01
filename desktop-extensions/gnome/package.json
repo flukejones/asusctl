@@ -10,11 +10,12 @@
     "validate": "tsc --noEmit"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.60.1",
+    "@typescript-eslint/parser": "^5.60.1",
     "adm-zip": "^0.5.10",
     "esbuild": "^0.17.19",
-    "typescript": "^5.0.4"
-  },
-  "dependencies": {
+    "eslint": "^8.44.0",
+    "typescript": "^5.1.6"
   },
   "repository": {
     "type": "git",

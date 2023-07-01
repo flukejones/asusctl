@@ -1,20 +1,15 @@
-declare const imports: any;
-var extensionInstance: any;
-//@ts-ignore
-// const Me = imports.misc.extensionUtils.getCurrentExtension();
-
 // REF: https://gjs.guide/extensions/development/creating.html
 
-import { AnimeDbus } from './modules/dbus/animatrix';
-import { Power } from './modules/dbus/power';
-import { Supported } from './modules/dbus/supported';
-import { Platform } from './modules/dbus/platform';
+import { AnimeDbus } from "./modules/dbus/animatrix";
+import { Power } from "./modules/dbus/power";
+import { Supported } from "./modules/dbus/supported";
+import { Platform } from "./modules/dbus/platform";
 
-import { QuickPanelOd } from './modules/quick_toggles/panel_od';
-import { IndicateMiniLed } from './modules/indicators/mini_led';
-import { QuickMiniLed } from './modules/quick_toggles/mini_led';
-import { SliderChargeLevel } from './modules/sliders/charge';
-import { QuickAnimePower } from './modules/quick_toggles/anime_power';
+import { QuickPanelOd } from "./modules/quick_toggles/panel_od";
+import { IndicateMiniLed } from "./modules/indicators/mini_led";
+import { QuickMiniLed } from "./modules/quick_toggles/mini_led";
+import { SliderChargeLevel } from "./modules/sliders/charge";
+import { QuickAnimePower } from "./modules/quick_toggles/anime_power";
 
 class Extension {
     private _indicateMiniLed: typeof IndicateMiniLed;
@@ -103,8 +98,7 @@ class Extension {
     }
 }
 
-//@ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function init() {
-    extensionInstance = new Extension();
-    return extensionInstance;
+    return new Extension();
 }

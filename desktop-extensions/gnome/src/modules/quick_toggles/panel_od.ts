@@ -14,25 +14,25 @@ export const QuickPanelOd = GObject.registerClass(
 
         constructor(dbus_platform: Platform) {
             super({
-                title: 'Panel Overdrive',
-                iconName: 'selection-mode-symbolic',
+                title: "Panel Overdrive",
+                iconName: "selection-mode-symbolic",
                 toggleMode: true,
             });
             this._dbus_platform = dbus_platform;
-            this.label = 'Panel Overdrive';
+            this.label = "Panel Overdrive";
             this._settings = ExtensionUtils.getSettings();
 
             this.connectObject(
-                'destroy', () => this._settings.run_dispose(),
-                'clicked', () => this._toggleMode(),
+                "destroy", () => this._settings.run_dispose(),
+                "clicked", () => this._toggleMode(),
                 this);
 
-            this.connect('destroy', () => {
+            this.connect("destroy", () => {
                 this.destroy();
             });
 
-            this._settings.bind('panel-od-enabled',
-                this, 'checked',
+            this._settings.bind("panel-od-enabled",
+                this, "checked",
                 Gio.SettingsBindFlags.DEFAULT);
 
             this._sync();

@@ -1,16 +1,14 @@
 declare const imports: any;
-//@ts-ignore
-const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import * as Resources from '../resources';
+import * as Resources from "../resources";
 
 const { Gio } = imports.gi;
 
 export class DbusBase {
     dbus_proxy: any = null; // type: Gio.DbusProxy
-    connected: boolean = false;
-    xml_resource: string = '';
-    dbus_path: string = '';
+    connected = false;
+    xml_resource = "";
+    dbus_path = "";
 
     constructor(resource: string, dbus_path: string) {
         this.xml_resource = resource;
@@ -21,10 +19,10 @@ export class DbusBase {
         //@ts-ignore
         log(`Starting ${this.dbus_path} dbus module`);
         try {
-            let xml = Resources.File.DBus(this.xml_resource);
+            const xml = Resources.File.DBus(this.xml_resource);
             this.dbus_proxy = new Gio.DBusProxy.makeProxyWrapper(xml)(
                 Gio.DBus.system,
-                'org.asuslinux.Daemon',
+                "org.asuslinux.Daemon",
                 this.dbus_path,
             );
 
@@ -33,7 +31,7 @@ export class DbusBase {
             log(`${this.dbus_path} client started successfully.`);
         } catch (e) {
             //@ts-ignore
-            log(`${this.xml_resource} dbus init failed!`, e);
+            logError(`${this.xml_resource} dbus init failed!`, e);
         }
     }
 

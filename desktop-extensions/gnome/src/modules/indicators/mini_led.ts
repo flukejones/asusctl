@@ -14,12 +14,12 @@ export const IndicateMiniLed = GObject.registerClass(
 
             // Create the icon for the indicator
             this._indicator = this._addIndicator();
-            this._indicator.icon_name = 'selection-mode-symbolic';
+            this._indicator.icon_name = "selection-mode-symbolic";
 
             // Showing the indicator when the feature is enabled
             this._settings = ExtensionUtils.getSettings();
-            this._settings.bind('mini-led-enabled',
-                this._indicator, 'visible',
+            this._settings.bind("mini-led-enabled",
+                this._indicator, "visible",
                 Gio.SettingsBindFlags.DEFAULT);
 
             // Add the indicator to the panel and the toggle to the menu
