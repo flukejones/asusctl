@@ -7,9 +7,9 @@
     <key type="b" name="panel-od-enabled">
       <default>false</default>
     </key>
-    <key type="b" name="supernotice">
-      <default>false</default>
-      <summary>hide the supergfxctl-gex notice</summary>
+    <key name="charge-level" type="u">
+      <range min="20" max="100"/>
+      <default>100</default>
     </key>
   </schema>
 </schemalist>

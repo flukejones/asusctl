@@ -13,14 +13,16 @@ import { Platform } from './modules/dbus/platform';
 import { QuickPanelOd } from './modules/quick_toggles/panel_od';
 import { IndicateMiniLed } from './modules/indicators/mini_led';
 import { QuickMiniLed } from './modules/quick_toggles/mini_led';
+import { SliderChargeLevel } from './modules/sliders/charge';
 
 class Extension {
     private _indicateMiniLed: typeof IndicateMiniLed;
     private _quickMiniLed: typeof QuickMiniLed;
     private _quickPanelOd: typeof QuickPanelOd;
-    private _dbus_power!: Power;
-    private _dbus_anime!: AnimeDbus;
+    private _sliderCharge: typeof SliderChargeLevel;
 
+    public _dbus_power!: Power;
+    public _dbus_anime!: AnimeDbus;
     public dbus_platform!: Platform;
     public dbus_supported!: Supported;
 
@@ -28,6 +30,7 @@ class Extension {
         this._indicateMiniLed = null;
         this._quickMiniLed = null;
         this._quickPanelOd = null;
+        this._sliderCharge = null;
 
         this.dbus_supported = new Supported();
         this.dbus_supported.start();
@@ -56,6 +59,11 @@ class Extension {
                 this._quickPanelOd = new QuickPanelOd(this.dbus_platform);
             }
         }
+        if (this.dbus_supported.supported.charge_ctrl.charge_level_set) {
+            if (this._sliderCharge == null) {
+                this._sliderCharge = new SliderChargeLevel(this._dbus_power);
+            }
+        }
     }
 
     disable() {
@@ -70,6 +78,10 @@ class Extension {
         if (this._quickPanelOd != null) {
             this._quickPanelOd.destroy();
             this._quickPanelOd = null;
+        }
+        if (this._sliderCharge != null) {
+            this._sliderCharge.destroy();
+            this._sliderCharge = null;
         }
 
         this._dbus_power.stop();
