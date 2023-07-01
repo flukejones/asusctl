@@ -5,10 +5,7 @@ var extensionInstance: any;
 
 // REF: https://gjs.guide/extensions/development/creating.html
 
-const { GObject, Gio } = imports.gi;
-const ExtensionUtils = imports.misc.extensionUtils;
-
-const { QuickToggle, SystemIndicator } = imports.ui.quickSettings;
+const { QuickToggle } = imports.ui.quickSettings;
 const QuickSettingsMenu = imports.ui.main.panel.statusArea.quickSettings;
 
 import { AnimeDbus } from './modules/dbus/animatrix';
@@ -16,123 +13,26 @@ import { Power } from './modules/dbus/power';
 import { Supported } from './modules/dbus/supported';
 import { Platform } from './modules/dbus/platform';
 
-const QuickMiniLed = GObject.registerClass(
-    class QuickMiniLed extends QuickToggle {
-        constructor() {
-            super({
-                title: 'MiniLED',
-                iconName: 'selection-mode-symbolic',
-                toggleMode: true,
-                checked: extensionInstance.dbus_platform.bios.mini_led_mode,
-            });
-
-            this.label = 'MiniLED';
-
-            // Binding the toggle to a GSettings key
-            this._settings = ExtensionUtils.getSettings();
-
-            this.connectObject(
-                'destroy', () => this._settings.run_dispose(),
-                'clicked', () => this._toggleMode(),
-                this);
-
-            this._settings.bind('mini-led-enabled',
-                this, 'checked',
-                Gio.SettingsBindFlags.DEFAULT);
-
-            this._sync();
-        }
-
-        _toggleMode() {
-            extensionInstance.dbus_platform.setMiniLedMode(this.checked);
-            this._sync();
-        }
-
-        _sync() {
-            const checked = extensionInstance.dbus_platform.getMiniLedMode();
-            if (this.checked !== checked)
-                this.set({ checked });
-            // this.set_property('checked', checked);
-        }
-    });
-
-const IndicateMiniLed = GObject.registerClass(
-    class IndicateMiniLed extends SystemIndicator {
-        constructor() {
-            super();
-
-            // Create the icon for the indicator
-            this._indicator = this._addIndicator();
-            this._indicator.icon_name = 'selection-mode-symbolic';
-
-            // Showing the indicator when the feature is enabled
-            this._settings = ExtensionUtils.getSettings();
-            this._settings.bind('mini-led-enabled',
-                this._indicator, 'visible',
-                Gio.SettingsBindFlags.DEFAULT);
-
-            // Create the toggle and associate it with the indicator, being sure to
-            // destroy it along with the indicator
-            this.quickSettingsItems.push(new QuickMiniLed());
-
-            this.connect('destroy', () => {
-                this.quickSettingsItems.forEach((item: { destroy: () => any; }) => item.destroy());
-            });
-
-            // Add the indicator to the panel and the toggle to the menu
-            QuickSettingsMenu._indicators.add_child(this);
-            QuickSettingsMenu._addItems(this.quickSettingsItems);
-        }
-    });
+import { QuickPanelOd } from './modules/quick_toggles/panel_od';
+import { IndicateMiniLed } from './modules/indicators/mini_led';
+import { QuickMiniLed } from './modules/quick_toggles/mini_led';
 
 
-const QuickPanelOd = GObject.registerClass(
-    class QuickPanelOd extends QuickToggle {
-        constructor() {
-            super({
-                title: 'Panel Overdrive',
-                iconName: 'selection-mode-symbolic',
-                toggleMode: true,
-            });
-            this.label = 'Panel Overdrive';
-            this._settings = ExtensionUtils.getSettings();
+function addQuickSettingsItems(items: [typeof QuickToggle]) {
+    // Add the items with the built-in function
+    QuickSettingsMenu._addItems(items);
 
-            this.connectObject(
-                'destroy', () => this._settings.run_dispose(),
-                'clicked', () => this._toggleMode(),
-                this);
-            this._sync();
-        }
-
-        _toggleMode() {
-            extensionInstance.dbus_platform.setPanelOd(this.checked);
-            this._sync();
-        }
-
-        _sync() {
-            const checked = extensionInstance.dbus_platform.getPanelOd();
-            if (this.checked !== checked)
-                this.set({ checked });
-        }
-    });
-
-const IndicatePanelOd = GObject.registerClass(
-    class IndicatePanelOd extends SystemIndicator {
-        constructor() {
-            super();
-
-            this.quickSettingsItems.push(new QuickPanelOd());
-            // this.connect('destroy', () => {
-            //     this.quickSettingsItems.forEach((item: { destroy: () => any; }) => item.destroy());
-            // });
-            // QuickSettingsMenu._indicators.add_child(this);
-            QuickSettingsMenu._addItems(this.quickSettingsItems);
-        }
-    });
+    // Ensure the tile(s) are above the background apps menu
+    for (const item of items) {
+        QuickSettingsMenu.menu._grid.set_child_below_sibling(item,
+            QuickSettingsMenu._backgroundApps.quickSettingsItems[0]);
+    }
+}
 
 class Extension {
     private _indicateMiniLed: typeof IndicateMiniLed;
-    private _indicatePanelOd: typeof IndicatePanelOd;
+    private _quickMiniLed: typeof QuickMiniLed;
+    private _quickPanelOd: typeof QuickPanelOd;
     private _dbus_power!: Power;
     private _dbus_anime!: AnimeDbus;
 
@@ -141,7 +41,8 @@ class Extension {
 
     constructor() {
         this._indicateMiniLed = null;
-        this._indicatePanelOd = null;
+        this._quickMiniLed = null;
+        this._quickPanelOd = null;
 
         this.dbus_supported = new Supported();
         this.dbus_supported.start();
@@ -157,20 +58,35 @@ class Extension {
     }
 
     enable() {
-        if (this.dbus_supported.supported.rog_bios_ctrl.mini_led_mode)
-            this._indicateMiniLed = new IndicateMiniLed();
-        if (this.dbus_supported.supported.rog_bios_ctrl.panel_overdrive)
-            this._indicatePanelOd = new IndicatePanelOd();
+        if (this.dbus_supported.supported.rog_bios_ctrl.mini_led_mode) {
+            if (this._quickMiniLed == null) {
+                this._quickMiniLed = new QuickMiniLed(this.dbus_platform);
+                addQuickSettingsItems([this._quickMiniLed]);
+            }
+            if (this._indicateMiniLed == null) {
+                this._indicateMiniLed = new IndicateMiniLed(this.dbus_platform);
+            }
+        }
+        if (this.dbus_supported.supported.rog_bios_ctrl.panel_overdrive) {
+            if (this._quickPanelOd == null) {
+                this._quickPanelOd = new QuickPanelOd(this.dbus_platform);
+                addQuickSettingsItems([this._quickPanelOd]);
+            }
+        }
     }
 
     disable() {
-        if (this.dbus_supported.supported.rog_bios_ctrl.mini_led_mode) {
+        if (this._indicateMiniLed != null) {
             this._indicateMiniLed.destroy();
             this._indicateMiniLed = null;
         }
-        if (this.dbus_supported.supported.rog_bios_ctrl.panel_overdrive) {
-            this._indicatePanelOd.destroy();
-            this._indicatePanelOd = null;
+        if (this._quickMiniLed != null) {
+            this._quickMiniLed.destroy();
+            this._quickMiniLed = null;
+        }
+        if (this._quickPanelOd != null) {
+            this._quickPanelOd.destroy();
+            this._quickPanelOd = null;
         }
 
         this._dbus_power.stop();

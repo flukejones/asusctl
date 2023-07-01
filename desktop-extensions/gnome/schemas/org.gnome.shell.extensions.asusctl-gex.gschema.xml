@@ -6,8 +6,6 @@
     </key>
     <key type="b" name="panel-od-enabled">
       <default>false</default>
-      <summary>enable / disable debug messages</summary>
-      <description>If enabled, various events of the extension will get logged and are available via journalctl.</description>
     </key>
     <key type="b" name="supernotice">
       <default>false</default>
