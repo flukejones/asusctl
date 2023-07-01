@@ -35,17 +35,17 @@ export const QuickPanelOd = GObject.registerClass(
                 this, "checked",
                 Gio.SettingsBindFlags.DEFAULT);
 
-            this._sync();
+            this.sync();
 
             addQuickSettingsItems([this]);
         }
 
         _toggleMode() {
             this._dbus_platform.setPanelOd(this.checked);
-            this._sync();
+            this.sync();
         }
 
-        _sync() {
+        sync() {
             const checked = this._dbus_platform.getPanelOd();
             if (this.checked !== checked)
                 this.set({ checked });

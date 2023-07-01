@@ -20,7 +20,7 @@ class Extension {
 
     public _dbus_power!: Power;
     public _dbus_anime!: AnimeDbus;
-    public dbus_platform!: Platform;
+    public dbus_platform: Platform = new Platform;
     public dbus_supported!: Supported;
 
     constructor() {
@@ -33,7 +33,7 @@ class Extension {
         this.dbus_supported = new Supported();
         this.dbus_supported.start();
 
-        this.dbus_platform = new Platform();
+        // this.dbus_platform = new Platform();
         this.dbus_platform.start();
 
         this._dbus_power = new Power();
@@ -55,6 +55,7 @@ class Extension {
         if (this.dbus_supported.supported.rog_bios_ctrl.panel_overdrive) {
             if (this._quickPanelOd == null) {
                 this._quickPanelOd = new QuickPanelOd(this.dbus_platform);
+                this.dbus_platform.notifyPanelOdSubscribers.push(this._quickPanelOd);
             }
         }
         if (this.dbus_supported.supported.anime_ctrl) {

@@ -12,6 +12,9 @@ export class Platform extends DbusBase {
         mini_led_mode: false
     };
 
+    // TODO: interface or something to enforce requirement of "sync()" method
+    public notifyPanelOdSubscribers: any[] = [];
+
     constructor() {
         super("org-asuslinux-platform-4", "/org/asuslinux/Platform");
     }
@@ -142,6 +145,9 @@ export class Platform extends DbusBase {
                     if (proxy) {
                         //@ts-ignore
                         log(`NotifyPanelOd has changed to ${data}.`);
+                        this.notifyPanelOdSubscribers.forEach(sub => {
+                            sub.sync();
+                        });
                     }
                 }
             );
