@@ -59,7 +59,7 @@
      system-status animations
      -->
     <signal name="NotifyDeviceState">
-      <arg name="data" type="bsb(ssss)"/>
+      <arg name="data" type="(bsb(ssss))"/>
     </signal>
   </interface>
 </node>

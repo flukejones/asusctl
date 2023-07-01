@@ -31,7 +31,7 @@ export class AnimeDbus extends DbusBase {
                 if (this.deviceState.display_enabled !== state) {
                     this.deviceState.display_enabled = state;
                 }
-                return this.dbus_proxy.SetOnOffSync(state);
+                return this.dbus_proxy.SetEnableDisplaySync(state);
             } catch (e) {
                 //@ts-ignore
                 log(`AniMe DBus set power failed!`, e);
@@ -53,7 +53,29 @@ export class AnimeDbus extends DbusBase {
         }
     }
 
-    _parseDeviceState(input: String) {
+    public getDeviceState() {
+        if (this.isRunning()) {
+            try {
+                let _data = this.dbus_proxy.DeviceStateSync();
+                if (_data.length > 0) {
+                    this.deviceState.display_enabled = _data[0];
+                    this.deviceState.display_brightness = Brightness[_data[1] as Brightness];
+                    this.deviceState.builtin_anims_enabled = _data[2];
+                    this.deviceState.builtin_anims.boot = AnimBooting[_data[3][0] as AnimBooting];
+                    this.deviceState.builtin_anims.awake = AnimAwake[_data[3][1] as AnimAwake];
+                    this.deviceState.builtin_anims.sleep = AnimSleeping[_data[3][2] as AnimSleeping];
+                    this.deviceState.builtin_anims.shutdown = AnimShutdown[_data[3][2] as AnimShutdown];
+                    // this._parseDeviceStateString(_data);
+                }
+            } catch (e) {
+                //@ts-ignore
+                log(`Failed to fetch DeviceState!`, e);
+            }
+        }
+        return this.deviceState;
+    }
+
+    _parseDeviceStateString(input: String) {
         let valueString: string = '';
 
         for (const [_key, value] of Object.entries(input)) {
@@ -81,20 +103,6 @@ export class AnimeDbus extends DbusBase {
         }
     }
 
-    public getDeviceState() {
-        if (this.isRunning()) {
-            try {
-                let _data = this.dbus_proxy.DeviceStateSync();
-                if (_data.length > 0) {
-                    this._parseDeviceState(_data);
-                }
-            } catch (e) {
-                //@ts-ignore
-                log(`Failed to fetch DeviceState!`, e);
-            }
-        }
-        return this.deviceState;
-    }
 
     async start() {
         await super.start();
@@ -104,9 +112,9 @@ export class AnimeDbus extends DbusBase {
             "NotifyDeviceState",
             (proxy: any = null, name: string, data: string) => {
                 if (proxy) {
-                    this._parseDeviceState(data);
+                    this._parseDeviceStateString(data);
                     //@ts-ignore
-                    log(`NotifyDeviceState has changed to ${data}% (${name}).`);
+                    log(`NotifyDeviceState has changed to ${data}`);
                 }
             }
         );
