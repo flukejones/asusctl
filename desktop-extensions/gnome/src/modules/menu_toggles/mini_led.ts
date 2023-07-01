@@ -1,30 +1,25 @@
 declare const imports: any;
 
 import { Platform } from "../dbus/platform";
-import { addQuickSettingsItems } from "../helpers";
 
 const { GObject, Gio } = imports.gi;
 const ExtensionUtils = imports.misc.extensionUtils;
+const PopupMenu = imports.ui.popupMenu;
 
-const { QuickToggle } = imports.ui.quickSettings;
-
-export const QuickMiniLed = GObject.registerClass(
-    class QuickMiniLed extends QuickToggle {
+export const MenuToggleMiniLed = GObject.registerClass(
+    class MenuToggleMiniLed extends PopupMenu.PopupSwitchMenuItem {
         private _dbus_platform: Platform;
 
         constructor(dbus_platform: Platform) {
-            super({
-                title: "MiniLED",
-                iconName: "selection-mode-symbolic",
-                toggleMode: true,
-            });
+            super("MiniLED", dbus_platform.bios.mini_led_mode);
+
             this._dbus_platform = dbus_platform;
             this.label = "MiniLED";
             this._settings = ExtensionUtils.getSettings();
 
             this.connectObject(
                 "destroy", () => this._settings.run_dispose(),
-                "clicked", () => this._toggleMode(),
+                "toggled", () => this._toggleMode(),
                 this);
 
             this.connect("destroy", () => {
@@ -32,23 +27,22 @@ export const QuickMiniLed = GObject.registerClass(
             });
 
             this._settings.bind("mini-led-enabled",
-                this, "checked",
+                this, "toggled",
                 Gio.SettingsBindFlags.DEFAULT);
 
             this.sync();
-
-            addQuickSettingsItems([this]);
         }
 
         _toggleMode() {
-            const checked = this._dbus_platform.getMiniLedMode();
-            if (this.checked !== checked)
-                this._dbus_platform.setMiniLedMode(this.checked);
+            this._dbus_platform.getMiniLedMode();
+            const state = this._dbus_platform.bios.mini_led_mode;
+            if (this.state !== state)
+                this._dbus_platform.setMiniLedMode(this.state);
         }
 
         sync() {
-            const checked = this._dbus_platform.getMiniLedMode();
-            if (this.checked !== checked)
-                this.set({ checked });
+            this._dbus_platform.getMiniLedMode();
+            const toggled = this._dbus_platform.bios.mini_led_mode;
+            this.setToggleState(toggled);
         }
     });

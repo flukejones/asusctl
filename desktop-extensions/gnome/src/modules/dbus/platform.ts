@@ -14,6 +14,9 @@ export class Platform extends DbusBase {
 
     // TODO: interface or something to enforce requirement of "sync()" method
     public notifyPanelOdSubscribers: any[] = [];
+    public notifyPostBootSoundSubscribers: any[] = [];
+    public notifyMiniLedSubscribers: any[] = [];
+    public notifyGpuMuxSubscribers: any[] = [];
 
     constructor() {
         super("org-asuslinux-platform-4", "/org/asuslinux/Platform");
@@ -134,6 +137,9 @@ export class Platform extends DbusBase {
                     if (proxy) {
                         //@ts-ignore
                         log(`PostBootSound changed to ${data}`);
+                        this.notifyPostBootSoundSubscribers.forEach(sub => {
+                            sub.sync();
+                        });
                     }
                 }
             );
@@ -159,6 +165,9 @@ export class Platform extends DbusBase {
                     if (proxy) {
                         //@ts-ignore
                         log(`MiniLedMode has changed to ${data}.`);
+                        this.notifyMiniLedSubscribers.forEach(sub => {
+                            sub.sync();
+                        });
                     }
                 }
             );
@@ -170,6 +179,9 @@ export class Platform extends DbusBase {
                     if (proxy) {
                         //@ts-ignore
                         log(`MUX has changed to ${data}.`);
+                        this.notifyGpuMuxSubscribers.forEach(sub => {
+                            sub.sync();
+                        });
                     }
                 }
             );

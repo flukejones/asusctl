@@ -14,6 +14,9 @@ export class AnimeDbus extends DbusBase {
         },
     };
 
+    // TODO: interface or something to enforce requirement of "sync()" method
+    public notifyAnimeStateSubscribers: any[] = [];
+
     constructor() {
         super("org-asuslinux-anime-4", "/org/asuslinux/Anime");
     }
@@ -85,6 +88,9 @@ export class AnimeDbus extends DbusBase {
                 if (proxy) {
                     // idiot xml parsing mneans the get is not nested while this is
                     this._parseData(data[0]);
+                    this.notifyAnimeStateSubscribers.forEach(sub => {
+                        sub.sync();
+                    });
                 }
             }
         );
