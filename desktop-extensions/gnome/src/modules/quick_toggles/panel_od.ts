@@ -1,6 +1,7 @@
 declare const imports: any;
 
 import { Platform } from "../dbus/platform";
+import { addQuickSettingsItems } from "../helpers";
 
 const { GObject, Gio } = imports.gi;
 const ExtensionUtils = imports.misc.extensionUtils;
@@ -35,6 +36,8 @@ export const QuickPanelOd = GObject.registerClass(
                 Gio.SettingsBindFlags.DEFAULT);
 
             this._sync();
+
+            addQuickSettingsItems([this]);
         }
 
         _toggleMode() {
