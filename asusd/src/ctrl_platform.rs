@@ -182,7 +182,13 @@ impl CtrlPlatform {
                 err
             })
             .ok();
-        Self::notify_post_boot_sound(&ctxt, on).await.ok();
+        Self::notify_post_boot_sound(&ctxt, on)
+            .await
+            .map_err(|err| {
+                warn!("CtrlRogBios: set_post_boot_sound {}", err);
+                err
+            })
+            .ok();
     }
 
     fn post_boot_sound(&self) -> i8 {
@@ -197,18 +203,13 @@ impl CtrlPlatform {
     #[dbus_interface(signal)]
     async fn notify_post_boot_sound(ctxt: &SignalContext<'_>, on: bool) -> zbus::Result<()> {}
 
-    async fn set_panel_od(
-        &mut self,
-        #[zbus(signal_context)] ctxt: SignalContext<'_>,
-        overdrive: bool,
-    ) {
+    async fn set_panel_od(&mut self, overdrive: bool) {
         match self.platform.set_panel_od(overdrive) {
             Ok(_) => {
                 if let Some(mut lock) = self.config.try_lock() {
                     lock.panel_od = overdrive;
                     lock.write();
                 }
-                Self::notify_panel_od(&ctxt, overdrive).await.ok();
             }
             Err(err) => warn!("CtrlRogBios: set_panel_overdrive {}", err),
         };
@@ -230,18 +231,13 @@ impl CtrlPlatform {
     async fn notify_panel_od(signal_ctxt: &SignalContext<'_>, overdrive: bool) -> zbus::Result<()> {
     }
 
-    async fn set_mini_led_mode(
-        &mut self,
-        #[zbus(signal_context)] ctxt: SignalContext<'_>,
-        on: bool,
-    ) {
+    async fn set_mini_led_mode(&mut self, on: bool) {
         match self.platform.set_mini_led_mode(on) {
             Ok(_) => {
                 if let Some(mut lock) = self.config.try_lock() {
                     lock.mini_led_mode = on;
                     lock.write();
                 }
-                Self::notify_mini_led_mode(&ctxt, on).await.ok();
             }
             Err(err) => warn!("CtrlRogBios: set_mini_led_mode {}", err),
         };
@@ -348,6 +344,8 @@ impl CtrlPlatform {
     task_watch_item!(dgpu_disable platform);
 
     task_watch_item!(egpu_enable platform);
+
+    task_watch_item!(mini_led_mode platform);
     // NOTE: see note further below
     // task_watch_item!(gpu_mux_mode platform);
 }
@@ -402,6 +400,7 @@ impl CtrlTask for CtrlPlatform {
         self.watch_panel_od(signal_ctxt.clone()).await?;
         self.watch_dgpu_disable(signal_ctxt.clone()).await?;
         self.watch_egpu_enable(signal_ctxt.clone()).await?;
+        self.watch_mini_led_mode(signal_ctxt.clone()).await?;
         // NOTE: Can't have this as a watch because on a write to it, it reverts back to
         // booted-with value  as it does not actually change until reboot.
         // self.watch_gpu_mux_mode(signal_ctxt.clone()).await?;
