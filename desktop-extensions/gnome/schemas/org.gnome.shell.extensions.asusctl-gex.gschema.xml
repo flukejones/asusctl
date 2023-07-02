@@ -14,5 +14,8 @@
       <range min="20" max="100"/>
       <default>100</default>
     </key>
+    <key type="s" name="primary-quickmenu-toggle">
+      <default>"mini-led"</default>
+    </key>
   </schema>
 </schemalist>

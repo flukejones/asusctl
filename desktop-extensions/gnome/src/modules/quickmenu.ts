@@ -48,16 +48,21 @@ export const FeatureMenuToggle = GObject.registerClass(
             this.menu.setHeader("selection-mode-symbolic", "Laptop features");
 
             this._settings = ExtensionUtils.getSettings();
-            this._itemsSection = new PopupMenu.PopupMenuSection();
+            this.primary = this._settings.get_string("primary-quickmenu-toggle");
 
             // TODO: temporary block
-            if (this._dbus_supported.supported.rog_bios_ctrl.mini_led_mode) {
-                this.primary = "mini-led";
-            } else if (this._dbus_supported.supported.rog_bios_ctrl.panel_overdrive) {
+            if (this.primary == "mini-led" && !this._dbus_supported.supported.rog_bios_ctrl.mini_led_mode) {
                 this.primary = "panel-od";
-            } else if (this._dbus_supported.supported.anime_ctrl) {
+            } else if (this.primary == "panel-od" && !this._dbus_supported.supported.rog_bios_ctrl.panel_overdrive) {
                 this.primary = "anime-power";
+            } else if (this.primary == "anime-power" && !this._dbus_supported.supported.anime_ctrl) {
+                this.primary = "mini-led";
+            } else if (this.primary.length == 0) {
+                this.primary = "panel-od";
             }
+            this._settings.set_string("primary-quickmenu-toggle", this.primary);
+
+            this._itemsSection = new PopupMenu.PopupMenuSection();
 
             if (this._dbus_supported.supported.rog_bios_ctrl.mini_led_mode) {
                 if (this.miniLed == null) {
