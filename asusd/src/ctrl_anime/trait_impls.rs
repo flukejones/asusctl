@@ -88,7 +88,8 @@ impl CtrlAnimeZbus {
         .ok();
     }
 
-    /// Enable the builtin animations or not
+    /// Enable the builtin animations or not. This is quivalent to "Powersave
+    /// animations" in Armory crate
     async fn set_builtins_enabled(
         &self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,

@@ -6,7 +6,7 @@ import { Supported } from "./dbus/supported";
 import { Platform } from "./dbus/platform";
 
 import { addQuickSettingsItems } from "./helpers";
-import { MenuToggleAnimePower } from "./menu_toggles/anime_power";
+import { MenuToggleAnimeBuiltins, MenuToggleAnimePower } from "./menu_toggles/anime";
 import { MenuTogglePanelOd } from "./menu_toggles/panel_od";
 import { MenuToggleMiniLed } from "./menu_toggles/mini_led";
 
@@ -28,7 +28,8 @@ export const FeatureMenuToggle = GObject.registerClass(
 
         public miniLed: typeof MenuToggleMiniLed;
         public panelOd: typeof MenuTogglePanelOd;
-        public animePower: typeof MenuToggleAnimePower;
+        public animeDisplayPower: typeof MenuToggleAnimePower;
+        public animePowersaveAnim: typeof MenuToggleAnimeBuiltins;
         private primary = "mini-led";
 
         constructor(dbus_supported: Supported, dbus_platform: Platform, dbus_anime: AnimeDbus) {
@@ -111,14 +112,14 @@ export const FeatureMenuToggle = GObject.registerClass(
             }
 
             if (this._dbus_supported.supported.anime_ctrl) {
-                if (this.animePower == null) {
-                    this.animePower = new MenuToggleAnimePower(this._dbus_anime);
-                    this._dbus_anime.notifyAnimeStateSubscribers.push(this.animePower);
-                    this._itemsSection.addMenuItem(this.animePower);
+                if (this.animeDisplayPower == null) {
+                    this.animeDisplayPower = new MenuToggleAnimePower(this._dbus_anime);
+                    this._dbus_anime.notifyAnimeStateSubscribers.push(this.animeDisplayPower);
+                    this._itemsSection.addMenuItem(this.animeDisplayPower);
 
                     if (this.primary == "anime-power") {
                         // Set the togglemenu title and action
-                        this.title = this.animePower.label;
+                        this.title = this.animeDisplayPower.label;
 
                         this.connectObject(
                             "clicked", () => {
@@ -131,6 +132,12 @@ export const FeatureMenuToggle = GObject.registerClass(
                         this.sync();
                         this._dbus_anime.notifyAnimeStateSubscribers.push(this);
                     }
+                }
+
+                if (this.animePowersaveAnim == null) {
+                    this.animePowersaveAnim = new MenuToggleAnimeBuiltins(this._dbus_anime);
+                    this._dbus_anime.notifyAnimeStateSubscribers.push(this.animePowersaveAnim);
+                    this._itemsSection.addMenuItem(this.animePowersaveAnim);
                 }
             }
 

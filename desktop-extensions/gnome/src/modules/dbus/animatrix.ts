@@ -38,6 +38,23 @@ export class AnimeDbus extends DbusBase {
         }
     }
 
+    public setPowersaveAnim(state: boolean | null) {
+        if (this.isRunning()) {
+            try {
+                // if null, toggle the current state
+                state = (state == null ? !this.deviceState.builtin_anims_enabled : state);
+
+                if (this.deviceState.builtin_anims_enabled !== state) {
+                    this.deviceState.builtin_anims_enabled = state;
+                }
+                return this.dbus_proxy.SetEnableBuiltinsSync(state);
+            } catch (e) {
+                //@ts-ignore
+                log("AniMe DBus set builtins failed!", e);
+            }
+        }
+    }
+
     public setBrightness(brightness: Brightness) {
         if (this.isRunning()) {
             try {
