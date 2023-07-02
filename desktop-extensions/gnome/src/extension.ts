@@ -1,4 +1,3 @@
-declare const imports: any;
 // REF: https://gjs.guide/extensions/development/creating.html
 
 import { AnimeDbus } from "./modules/dbus/animatrix";

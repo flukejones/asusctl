@@ -18,5 +18,8 @@ module.exports = {
 
         // disable rules from base configurations
         "for-direction": "off",
+
+        "@typescript-eslint/no-explicit-any": "warn",
+        "@typescript-eslint/ban-ts-comment": "off"
     }
 };
