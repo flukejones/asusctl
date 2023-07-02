@@ -26,10 +26,6 @@ export const MenuTogglePanelOd = GObject.registerClass(
                 this.destroy();
             });
 
-            this._settings.bind("panel-od-enabled",
-                this, "toggled",
-                Gio.SettingsBindFlags.DEFAULT);
-
             this.sync();
         }
 

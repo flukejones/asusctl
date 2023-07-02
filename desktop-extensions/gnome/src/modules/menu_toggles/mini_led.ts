@@ -26,10 +26,6 @@ export const MenuToggleMiniLed = GObject.registerClass(
                 this.destroy();
             });
 
-            this._settings.bind("mini-led-enabled",
-                this, "toggled",
-                Gio.SettingsBindFlags.DEFAULT);
-
             this.sync();
         }
 

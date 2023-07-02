@@ -27,10 +27,6 @@ export const MenuToggleAnimePower = GObject.registerClass(
                 this.destroy();
             });
 
-            this._settings.bind("anime-power",
-                this, "toggled",
-                Gio.SettingsBindFlags.DEFAULT);
-
             this.sync();
         }
 
