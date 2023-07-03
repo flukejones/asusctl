@@ -155,7 +155,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     }
                 }
                 for (x_count, b) in dev.buffer[start..=end].iter().enumerate() {
-                    canvas.set_draw_color(Color::RGB(*b as u8, *b as u8, *b as u8));
+                    canvas.set_draw_color(Color::RGB(*b, *b, *b));
 
                     let x: i32 = w + x_count as i32 * w
                         - if (y_count + y_offset as usize) % 2 != 0 {

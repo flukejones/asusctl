@@ -99,17 +99,14 @@ impl From<Colour> for [u8; 3] {
 
 #[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum Speed {
     Low = 0xe1,
+    #[default]
     Med = 0xeb,
     High = 0xf5,
 }
-impl Default for Speed {
-    fn default() -> Self {
-        Speed::Med
-    }
-}
+
 impl FromStr for Speed {
     type Err = Error;
 
@@ -138,18 +135,15 @@ impl From<Speed> for u8 {
 /// Enum corresponds to the required integer value
 #[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum Direction {
+    #[default]
     Right,
     Left,
     Up,
     Down,
 }
-impl Default for Direction {
-    fn default() -> Self {
-        Direction::Right
-    }
-}
+
 impl FromStr for Direction {
     type Err = Error;
 
