@@ -1,14 +1,14 @@
 declare const imports: any;
 // REF: https://gjs.guide/extensions/development/creating.html
 
-import { AnimeDbus } from "./dbus/animatrix";
-import { Supported } from "./dbus/supported";
-import { Platform } from "./dbus/platform";
+import { AnimeDbus } from "../dbus/animatrix";
+import { Supported } from "../dbus/supported";
+import { Platform } from "../dbus/platform";
 
-import { addQuickSettingsItems } from "./helpers";
-import { MenuToggleAnimeBuiltins, MenuToggleAnimePower } from "./menu_toggles/anime";
-import { MenuTogglePanelOd } from "./menu_toggles/panel_od";
-import { MenuToggleMiniLed } from "./menu_toggles/mini_led";
+import { addQuickSettingsItems } from "../helpers";
+import { MenuToggleAnimeBuiltins, MenuToggleAnimePower } from "../menu_toggles/anime";
+import { MenuTogglePanelOd } from "../menu_toggles/panel_od";
+import { MenuToggleMiniLed } from "../menu_toggles/mini_led";
 
 
 const { GObject } = imports.gi;

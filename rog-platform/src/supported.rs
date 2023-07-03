@@ -1,5 +1,6 @@
 use std::fmt;
 
+use rog_aura::aura_detection::PowerZones;
 use rog_aura::usb::AuraDevice;
 use rog_aura::{AdvancedAuraType, AuraModeNum, AuraZone};
 use serde_derive::{Deserialize, Serialize};
@@ -61,6 +62,7 @@ pub struct LedSupportedFunctions {
     pub basic_modes: Vec<AuraModeNum>,
     pub basic_zones: Vec<AuraZone>,
     pub advanced_type: AdvancedAura,
+    pub power_zones: Vec<PowerZones>,
 }
 
 #[typeshare]

@@ -2,7 +2,7 @@
 <node>
   <interface name="org.asuslinux.Daemon">
     <method name="SupportedFunctions">
-      <arg type="b(b)(bb)(sbasass)(bbbbbb)" direction="out"/>
+      <arg type="b(b)(bb)(sbasassas)(bbbbbb)" direction="out"/>
     </method>
     <method name="MeaningOfLife">
       <arg name="answer" type="i" direction="out"/>

@@ -1,5 +1,7 @@
 use log::{error, info, warn};
 use serde_derive::{Deserialize, Serialize};
+use typeshare::typeshare;
+use zbus::zvariant::Type;
 
 use crate::usb::AuraDevice;
 use crate::{AdvancedAuraType, AuraModeNum, AuraZone};
@@ -19,6 +21,24 @@ pub const ASUS_KEYBOARD_DEVICES: [AuraDevice; 7] = [
 #[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct LedSupportFile(Vec<LaptopLedData>);
 
+/// The powerr zones this laptop supports
+#[typeshare]
+#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Default, Clone)]
+pub enum PowerZones {
+    /// The logo on some laptop lids
+    #[default]
+    Logo,
+    /// The full keyboard (not zones)
+    Keyboard,
+    /// The lightbar, typically on the front of the laptop
+    Lightbar,
+    /// The leds that may be placed around the edge of the laptop lid
+    Lid,
+    /// The led strip on the rear of some laptops
+    RearGlow,
+}
+
 #[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize, Serialize)]
 pub struct LaptopLedData {
     /// Found via `cat /sys/class/dmi/id/board_name`, e.g `GU603ZW`.
@@ -33,15 +53,7 @@ pub struct LaptopLedData {
     pub basic_modes: Vec<AuraModeNum>,
     pub basic_zones: Vec<AuraZone>,
     pub advanced_type: AdvancedAuraType,
-}
-
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
-pub struct LaptopLedData456 {
-    pub prod_family: String,
-    pub board_names: Vec<String>,
-    pub standard: Vec<AuraModeNum>,
-    pub multizone: Vec<AuraZone>,
-    pub per_key: bool,
+    pub power_zones: Vec<PowerZones>,
 }
 
 impl LaptopLedData {
@@ -132,7 +144,7 @@ mod tests {
 
     use super::LaptopLedData;
     use crate::advanced::LedCode;
-    use crate::aura_detection::LedSupportFile;
+    use crate::aura_detection::{LedSupportFile, PowerZones};
     // use crate::zoned::Zone;
     use crate::{AdvancedAuraType, AuraModeNum, AuraZone};
 
@@ -144,6 +156,7 @@ mod tests {
             basic_modes: vec![AuraModeNum::Static],
             basic_zones: vec![AuraZone::Key1, AuraZone::Logo, AuraZone::BarLeft],
             advanced_type: AdvancedAuraType::Zoned(vec![LedCode::LightbarRight]),
+            power_zones: vec![PowerZones::Keyboard, PowerZones::RearGlow],
         };
 
         assert!(ron::to_string(&led).is_ok());

@@ -115,23 +115,20 @@ export enum AuraDevTuf {
 }
 
 /**
- * # Bits for older 0x1866, 0x1869, 0x1854 keyboard models
+ * # Bits for older 0x1866 keyboard model
  * 
  * Keybord and Lightbar require Awake, Boot and Sleep apply to both
  * Keybord and Lightbar regardless of if either are enabled (or Awake is
  * enabled)
  * 
- * |   Byte 1   |   Byte 2   |   Byte 3   |   Byte 4   | function  |   hex
- * |
- * |------------|------------|------------|------------|-----------|-------------|
- * | 0000, 0000 | 0000, 0000 | 0000, 0010 | 0000, 0000 | Awake     |
- * 00,00,02,00 | | 0000, 1000 | 0000, 0000 | 0000, 0000 | 0000, 0000 | Keyboard
- * | 08,00,00,00 | | 0000, 0100 | 0000, 0101 | 0000, 0000 | 0000, 0000 |
- * Lightbar  | 04,05,00,00 | | 1100, 0011 | 0001, 0010 | 0000, 1001 | 0000,
- * 0000 | Boot/Sht  | c3,12,09,00 | | 0011, 0000 | 0000, 1000 | 0000, 0100 |
- * 0000, 0000 | Sleep     | 30,08,04,00 | | 1111, 1111 | 0001, 1111 | 0000,
- * 1111 | 0000, 0000 | all on    |             | | 0000, 0000 | 0000, 0000 |
- * 0000, 0000 | 0000, 0010 | Rear Glow | 00,00,00,02 |
+ * |   Byte 1   |   Byte 2   |   Byte 3   | function |   hex    |
+ * |------------|------------|------------|----------|----------|
+ * | 0000, 0000 | 0000, 0000 | 0000, 0010 | Awake    | 00,00,02 |
+ * | 0000, 1000 | 0000, 0000 | 0000, 0000 | Keyboard | 08,00,00 |
+ * | 0000, 0100 | 0000, 0101 | 0000, 0000 | Lightbar | 04,05,00 |
+ * | 1100, 0011 | 0001, 0010 | 0000, 1001 | Boot/Sht | c3,12,09 |
+ * | 0011, 0000 | 0000, 1000 | 0000, 0100 | Sleep    | 30,08,04 |
+ * | 1111, 1111 | 0001, 1111 | 0000, 1111 | all on   |          |
  */
 export enum AuraDevRog1 {
 	Awake = "Awake",
@@ -144,30 +141,28 @@ export enum AuraDevRog1 {
 /**
  * # Bits for newer 0x18c6, 0x19B6, 0x1a30, keyboard models
  * 
- * byte 4 in the USB packet is for keyboard + logo power states
- * default is on, `ff`
- * Keyboard and logo use the full range of bits (almost)
- * 
- * | n1   | n2   | hex | action                | bit   |
- * |------|------|-----|-----------------------|-------|
- * | 0000 | 0000 | 00  | all off               |       |
- * | 0000 | 0001 | 01  | logo boot             | bit 1 |
- * | 0000 | 0010 | 02  | keyboard boot         | bit 2 |
- * | 0000 | 0100 | 04  | logo awake            | bit 3 |
- * | 0000 | 1000 | 08  | keyboard awake        | bit 4 |
- * | 0001 | 0000 | 10  | logo sleep off        | bit 5 |
- * | 0010 | 0000 | 20  | keyboard sleep        | bit 6 |
- * | 0100 | 0000 | 40  | logo shutdown off     | bit 7 |
- * | 1000 | 0000 | 80  | keyboard shutdown off | bit 8 |
- * 
- * byte 5 = lightbar
- * 
- * |  1   |  2   | hex | action               | bit   |
- * |------|------|-----|----------------------|-------|
- * | 0000 | 0010 | 02  | lightbar off boot    | bit 2 |
- * | 0000 | 0100 | 04  | lightbar on          | bit 3 |
- * | 0000 | 1000 | 08  | lightbar off sleep   | bit 4 |
- * | 0001 | 0000 | 10  | lightbar shtdn off   | bit 5 |
+ * | Byte 1 | Byte 2  | Byte 3  | Byte 4  | Label    |
+ * |--------|---------|---------|---------|----------|
+ * |00000001| 00000000| 00000000| 00000000|boot_logo_|
+ * |00000010| 00000000| 00000000| 00000000|boot_keyb_|
+ * |00000100| 00000000| 00000000| 00000000|awake_logo|
+ * |00001000| 00000000| 00000000| 00000000|awake_keyb|
+ * |00010000| 00000000| 00000000| 00000000|sleep_logo|
+ * |00100000| 00000000| 00000000| 00000000|sleep_keyb|
+ * |01000000| 00000000| 00000000| 00000000|shut_logo_|
+ * |10000000| 00000000| 00000000| 00000000|shut_keyb_|
+ * |00000000| 00000010| 00000000| 00000000|boot_bar__|
+ * |00000000| 00000100| 00000000| 00000000|awake_bar_|
+ * |00000000| 00001000| 00000000| 00000000|sleep_bar_|
+ * |00000000| 00010000| 00000000| 00000000|shut_bar__|
+ * |00000000| 00000000| 00000001| 00000000|boot_lid__|
+ * |00000000| 00000000| 00000010| 00000000|awkae_lid_|
+ * |00000000| 00000000| 00000100| 00000000|sleep_lid_|
+ * |00000000| 00000000| 00001000| 00000000|shut_lid__|
+ * |00000000| 00000000| 00000000| 00000001|boot_rear_|
+ * |00000000| 00000000| 00000000| 00000010|awake_rear|
+ * |00000000| 00000000| 00000000| 00000100|sleep_rear|
+ * |00000000| 00000000| 00000000| 00001000|shut_rear_|
  */
 export enum AuraDevRog2 {
 	BootLogo = "BootLogo",
@@ -197,6 +192,20 @@ export interface AuraPowerDev {
 	tuf: AuraDevTuf[];
 	x1866: AuraDevRog1[];
 	x19b6: AuraDevRog2[];
+}
+
+/** The powerr zones this laptop supports */
+export enum PowerZones {
+	/** The logo on some laptop lids */
+	Logo = "Logo",
+	/** The full keyboard (not zones) */
+	Keyboard = "Keyboard",
+	/** The lightbar, typically on the front of the laptop */
+	Lightbar = "Lightbar",
+	/** The leds that may be placed around the edge of the laptop lid */
+	Lid = "Lid",
+	/** The led strip on the rear of some laptops */
+	RearGlow = "RearGlow",
 }
 
 export enum LedBrightness {

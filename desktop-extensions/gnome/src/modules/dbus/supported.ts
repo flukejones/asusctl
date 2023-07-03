@@ -1,5 +1,5 @@
 import { SupportedFunctions, AdvancedAura } from "../../bindings/platform";
-import { AuraDevice, AuraModeNum, AuraZone } from "../../bindings/aura";
+import { AuraDevice, AuraModeNum, AuraZone, PowerZones } from "../../bindings/aura";
 import { DbusBase } from "./base";
 
 export class Supported extends DbusBase {
@@ -21,7 +21,8 @@ export class Supported extends DbusBase {
     //   'Comet',
     //   'Flash'],
     //   [],
-    //   2),
+    //   'PerKey',
+    //   ['Keyboard', 'Lightbar', 'Logo', 'RearGlow']),
     // (False, True, True, True, False, True)
 
     supported: SupportedFunctions = {
@@ -68,11 +69,13 @@ export class Supported extends DbusBase {
                 this.supported.keyboard_led.basic_modes = _data[3][2].map(function (value: string) {
                     return AuraModeNum[value as AuraModeNum];
                 });
-
                 this.supported.keyboard_led.basic_zones = _data[3][3].map(function (value: string) {
                     return AuraZone[value as AuraZone];
                 });
                 this.supported.keyboard_led.advanced_type = AdvancedAura[_data[3][4] as AdvancedAura];
+                this.supported.keyboard_led.power_zones = _data[3][5].map(function (value: string) {
+                    return PowerZones[value as PowerZones];
+                });
 
                 this.supported.rog_bios_ctrl.post_sound = _data[4][0];
                 this.supported.rog_bios_ctrl.gpu_mux = _data[4][1];

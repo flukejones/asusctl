@@ -5,6 +5,7 @@
         basic_modes: [Static, Breathe, Strobe, Pulse],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "FA506Q",
@@ -12,6 +13,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "FA507",
@@ -19,6 +21,7 @@
         basic_modes: [Static, Breathe, Strobe, Pulse],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "FX505D",
@@ -26,6 +29,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "FX506H",
@@ -33,6 +37,7 @@
         basic_modes: [Static, Breathe, Strobe, Pulse],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "FX506L",
@@ -40,6 +45,7 @@
         basic_modes: [Static, Breathe, Strobe, Pulse],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "FX507Z",
@@ -47,6 +53,7 @@
         basic_modes: [Static, Breathe, Strobe, Pulse],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "FX516P",
@@ -54,6 +61,7 @@
         basic_modes: [Static, Breathe, Strobe],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G512",
@@ -61,6 +69,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G512LV",
@@ -68,6 +77,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G513I",
@@ -75,6 +85,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: Zoned([ZonedKbLeft, ZonedKbLeftMid, ZonedKbRightMid, ZonedKbRight, LightbarRight, LightbarRightCorner, LightbarRightBottom, LightbarLeftBottom, LightbarLeftCorner, LightbarLeft]),
+        power_zones: [Keyboard, Lightbar],
     ),
     (
         board_name: "G513QE",
@@ -82,6 +93,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G513QM",
@@ -89,6 +101,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G513QR",
@@ -96,6 +109,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G513QY",
@@ -103,6 +117,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G513RC",
@@ -110,6 +125,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
         advanced_type: Zoned([ZonedKbLeft, ZonedKbLeftMid, ZonedKbRightMid, ZonedKbRight, LightbarRight, LightbarRightCorner, LightbarRightBottom, LightbarLeftBottom, LightbarLeftCorner, LightbarLeft]),
+        power_zones: [Keyboard, Lightbar],
     ),
     (
         board_name: "G513RM",
@@ -117,6 +133,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
         advanced_type: Zoned([ZonedKbLeft, ZonedKbLeftMid, ZonedKbRightMid, ZonedKbRight, LightbarRight, LightbarRightCorner, LightbarRightBottom, LightbarLeftBottom, LightbarLeftCorner, LightbarLeft]),
+        power_zones: [Keyboard, Lightbar],
     ),
     (
         board_name: "G531",
@@ -124,6 +141,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G531",
@@ -131,6 +149,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G531GD",
@@ -138,6 +157,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G531GT",
@@ -145,6 +165,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G531GU",
@@ -152,6 +173,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G531GV",
@@ -159,6 +181,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G531GW",
@@ -166,6 +189,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G532",
@@ -173,6 +197,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G533Q",
@@ -180,6 +205,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G533Z",
@@ -187,6 +213,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G634J",
@@ -194,6 +221,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard, Lightbar, Logo, RearGlow],
     ),
     (
         board_name: "G712LI",
@@ -201,6 +229,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G712LV",
@@ -208,6 +237,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G712LW",
@@ -215,6 +245,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G713IC",
@@ -222,6 +253,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G713QM",
@@ -229,6 +261,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G713QR",
@@ -236,6 +269,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G713RM",
@@ -243,6 +277,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G713RS",
@@ -250,6 +285,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G713RW",
@@ -257,6 +293,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G731",
@@ -264,6 +301,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G731GT",
@@ -271,6 +309,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G731GU",
@@ -278,6 +317,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G731GV",
@@ -285,6 +325,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G731GW",
@@ -292,6 +333,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G733C",
@@ -299,6 +341,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [Logo, BarLeft, BarRight],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G733Q",
@@ -306,6 +349,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "G733Z",
@@ -313,6 +357,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GA401Q",
@@ -320,6 +365,7 @@
         basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GA402R",
@@ -327,6 +373,7 @@
         basic_modes: [Static, Breathe, Pulse, Rainbow],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GA503Q",
@@ -334,6 +381,7 @@
         basic_modes: [Static, Breathe, Pulse, Rainbow, Strobe],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GA503QE",
@@ -341,6 +389,7 @@
         basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GA503R",
@@ -348,6 +397,7 @@
         basic_modes: [Static, Breathe, Pulse, Rainbow, Strobe],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GL503",
@@ -355,6 +405,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GL503V",
@@ -362,6 +413,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GL504G",
@@ -369,6 +421,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4, Logo, BarLeft, BarRight],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GL531",
@@ -376,6 +429,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GL553VE",
@@ -383,6 +437,7 @@
         basic_modes: [Static, Breathe, Strobe],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GL703G",
@@ -390,6 +445,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GM501G",
@@ -397,6 +453,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GU502",
@@ -404,6 +461,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GU502G",
@@ -411,6 +469,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GU502L",
@@ -418,6 +477,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GU502LU",
@@ -425,6 +485,7 @@
         basic_modes: [Static, Breathe, Strobe, Pulse],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GU603H",
@@ -432,6 +493,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
         advanced_type: Zoned([SingleZone]),
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GU603Z",
@@ -439,6 +501,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
         advanced_type: Zoned([SingleZone]),
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GU604V",
@@ -446,6 +509,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
         advanced_type: Zoned([SingleZone]),
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GV301Q",
@@ -453,6 +517,7 @@
         basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GV301V",
@@ -460,6 +525,7 @@
         basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GV301VIC",
@@ -467,6 +533,7 @@
         basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GV601R",
@@ -474,6 +541,7 @@
         basic_modes: [Static, Breathe, Strobe, Pulse],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GV601VI",
@@ -481,6 +549,7 @@
         basic_modes: [Static, Breathe, Pulse, Strobe],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GV604V",
@@ -488,6 +557,7 @@
         basic_modes: [Static, Breathe, Strobe, Pulse],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GX502",
@@ -495,6 +565,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GX531",
@@ -502,6 +573,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GX550L",
@@ -509,6 +581,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GX551Q",
@@ -516,6 +589,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GX650P",
@@ -523,6 +597,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GX701",
@@ -530,6 +605,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GX703H",
@@ -537,6 +613,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GZ301V",
@@ -544,6 +621,7 @@
         basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         board_name: "GZ301VIC",
@@ -551,5 +629,6 @@
         basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],
         advanced_type: None,
+        power_zones: [Keyboard],
     ),
 ])

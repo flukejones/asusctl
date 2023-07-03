@@ -20,9 +20,6 @@ impl GetSupported for CtrlKbdLed {
     fn get_supported() -> Self::A {
         // let mode = <&str>::from(&<AuraModes>::from(*mode));
         let laptop = LaptopLedData::get_data();
-        let stock_led_modes = laptop.basic_modes;
-        let multizone_led_mode = laptop.basic_zones;
-        let advanced_type = laptop.advanced_type;
 
         let mut prod_id = AuraDevice::Unknown;
         for prod in ASUS_KEYBOARD_DEVICES {
@@ -42,9 +39,10 @@ impl GetSupported for CtrlKbdLed {
         LedSupportedFunctions {
             dev_id: prod_id,
             brightness: rgb.is_ok(),
-            basic_modes: stock_led_modes,
-            basic_zones: multizone_led_mode,
-            advanced_type: advanced_type.into(),
+            basic_modes: laptop.basic_modes,
+            basic_zones: laptop.basic_zones,
+            advanced_type: laptop.advanced_type.into(),
+            power_zones: laptop.power_zones,
         }
     }
 }
@@ -403,7 +401,7 @@ impl CtrlKbdLed {
 
 #[cfg(test)]
 mod tests {
-    use rog_aura::aura_detection::LaptopLedData;
+    use rog_aura::aura_detection::{LaptopLedData, PowerZones};
     use rog_aura::usb::AuraDevice;
     use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour};
     use rog_platform::keyboard_led::KeyboardLed;
@@ -423,6 +421,7 @@ mod tests {
             basic_modes: vec![AuraModeNum::Static],
             basic_zones: vec![],
             advanced_type: rog_aura::AdvancedAuraType::None,
+            power_zones: vec![PowerZones::Keyboard, PowerZones::RearGlow],
         };
         let mut controller = CtrlKbdLed {
             led_prod: AuraDevice::X19b6,
@@ -490,6 +489,7 @@ mod tests {
             basic_modes: vec![AuraModeNum::Static],
             basic_zones: vec![],
             advanced_type: rog_aura::AdvancedAuraType::None,
+            power_zones: vec![PowerZones::Keyboard, PowerZones::RearGlow],
         };
         let mut controller = CtrlKbdLed {
             led_prod: AuraDevice::X19b6,
@@ -528,6 +528,7 @@ mod tests {
             basic_modes: vec![AuraModeNum::Static],
             basic_zones: vec![AuraZone::Key1, AuraZone::Key2],
             advanced_type: rog_aura::AdvancedAuraType::None,
+            power_zones: vec![PowerZones::Keyboard, PowerZones::RearGlow],
         };
         let mut controller = CtrlKbdLed {
             led_prod: AuraDevice::X19b6,

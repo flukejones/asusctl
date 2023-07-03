@@ -10,7 +10,8 @@ import { IndicateMiniLed } from "./modules/indicators/mini_led";
 import { QuickMiniLed } from "./modules/quick_toggles/mini_led";
 import { SliderChargeLevel } from "./modules/sliders/charge";
 import { QuickAnimePower } from "./modules/quick_toggles/anime_power";
-import { FeatureMenuToggle } from "./modules/quickmenu";
+import { FeatureMenuToggle } from "./modules/quick_menus/laptop_features";
+import { AuraDbus } from "./modules/dbus/aura";
 
 class Extension {
     private _indicateMiniLed: typeof IndicateMiniLed;
@@ -22,6 +23,7 @@ class Extension {
 
     public dbus_supported: Supported = new Supported;
     public dbus_power: Power = new Power;
+    public dbus_aura: AuraDbus = new AuraDbus;
     public dbus_anime: AnimeDbus = new AnimeDbus;
     public dbus_platform: Platform = new Platform;
 
@@ -34,6 +36,7 @@ class Extension {
         this._sliderCharge = null;
 
         this.dbus_supported.start();
+        this.dbus_aura.start();
         this.dbus_platform.start();
         this.dbus_power.start();
         this.dbus_anime.start();
@@ -95,6 +98,7 @@ class Extension {
         this.dbus_power.stop();
         this.dbus_platform.stop();
         this.dbus_anime.stop();
+        this.dbus_aura.stop();
         this.dbus_supported.stop();
     }
 }
