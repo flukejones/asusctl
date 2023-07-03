@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for GV601VI LED modes
 - Support for G634J LED modes (layout is in progress)
 - Support the Rear Glow on some laptops
+- Added field to aura_support to determine which LED power zones are supported. This will need folks to contribute data.
 - Support M16 matrix display
   - Custom images
   - Pixel gifs
