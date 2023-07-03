@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `model_override` option to anime config, this is handy for forcing a model for "Unknown" anime, and for simulators
 - Add `mini_led_mode` support to asusd and zbus crates (requires kernel patch https://lkml.org/lkml/2023/6/19/1264)
 - Add `mini_led_mode` toggle to rog-control-center GUI, tray, notifications
+- Add generation of typescript types from the rust types used via dbus using typeshare
+- Add generation of introspection XML from asusd dbus
+- Add a reworked gnome extension to the main repo under `desktop-extensions/gnome/`. This was done to better keep the extension in sync with work done on asusd, especially around breaking dbus
 ### Changed
 - Move FX506HC to FX506H in arua DB to catch full series of this range
 - Move FX506LH to FX506L in arua DB to catch full series of this range
