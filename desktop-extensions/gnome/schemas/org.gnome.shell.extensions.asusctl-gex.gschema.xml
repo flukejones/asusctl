@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-  <schema id="org.gnome.shell.extensions.asusctl-gex" path="/org/gnome/shell/extensions/asusctl-gex/" >
+  <schema id="org.gnome.shell.extensions.asusctl-gnome" path="/org/gnome/shell/extensions/asusctl-gnome/" >
     <key type="b" name="mini-led-enabled">
       <default>false</default>
     </key>

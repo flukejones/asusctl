@@ -1,7 +1,7 @@
 {
-  "name": "asusctl-gex",
+  "name": "asusctl-gnome",
   "version": "4.7.0",
-  "description": "asusctl-gex is a frontend for some functionalities of asusctl and supergfxctl that were born inside the asus-linux.org community.\n\nasusctl is required.\n\nTo learn more about it, please have a look at:\nhttps://gitlab.com/asus-linux/asusctl\nhttps://gitlab.com/asus-linux/asusctl-gex\n\nhttps://asus-linux.org/",
+  "description": "asusctl-gnome a gnome extension exposing some of the base features of asusd in a helpful and easy to use way",
   "main": "dist/extension.js",
   "scripts": {
     "clear": "rm -rf dist",
@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@gitlab.com/asus-linux/asusctl-gex.git"
+    "url": "git+ssh://git@gitlab.com/asus-linux/asusctl.git"
   },
   "keywords": [
     "gnome-shell",
