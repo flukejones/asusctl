@@ -138,7 +138,7 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
                     .asus_dbus
                     .proxies()
                     .led()
-                    .set_leds_power(options, enable)
+                    .set_led_power(options, enable)
                     .map_err(|err| {
                         states.error = Some(err.to_string());
                     })
@@ -189,7 +189,7 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
                     .asus_dbus
                     .proxies()
                     .led()
-                    .set_leds_power(options, enable)
+                    .set_led_power(options, enable)
                     .map_err(|err| {
                         states.error = Some(err.to_string());
                     })
@@ -317,7 +317,7 @@ fn aura_power2(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
                 .asus_dbus
                 .proxies()
                 .led()
-                .set_leds_power(options, enable)
+                .set_led_power(options, enable)
                 .map_err(|err| {
                     states.error = Some(err.to_string());
                 })

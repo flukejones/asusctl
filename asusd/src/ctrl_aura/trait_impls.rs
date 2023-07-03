@@ -95,7 +95,7 @@ impl CtrlKbdLedZbus {
     ///     ShutdownRearGlow = 1 << (23 + 4),
     /// }
     /// ```
-    async fn set_leds_power(
+    async fn set_led_power(
         &mut self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
         options: AuraPowerDev,
@@ -210,7 +210,7 @@ impl CtrlKbdLedZbus {
 
     // As property doesn't work for AuraPowerDev (complexity of serialization?)
     // #[dbus_interface(property)]
-    async fn leds_enabled(&self) -> AuraPowerDev {
+    async fn led_power(&self) -> AuraPowerDev {
         let ctrl = self.0.lock().await;
         AuraPowerDev::from(&ctrl.config.enabled)
     }

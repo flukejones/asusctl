@@ -54,7 +54,7 @@
      }
      ```
      -->
-    <method name="SetLedsPower">
+    <method name="SetLedPower">
       <arg name="options" type="(asasas)" direction="in"/>
       <arg name="enabled" type="b" direction="in"/>
     </method>
@@ -69,7 +69,7 @@
     </method>
     <method name="PrevLedBrightness">
     </method>
-    <method name="LedsEnabled">
+    <method name="LedPower">
       <arg type="(asasas)" direction="out"/>
     </method>
     <!--

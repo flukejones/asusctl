@@ -1,19 +1,38 @@
-import { AuraEffect, AuraModeNum, AuraZone, Direction, Speed } from "../../bindings/aura";
+import { AuraEffect, AuraModeNum, AuraPowerDev, AuraZone, Direction, Speed } from "../../bindings/aura";
 import { DbusBase } from "./base";
 
 export class AuraDbus extends DbusBase {
-    public aura_modes: Map<string, AuraEffect> = new Map;
+    public current_aura_mode: AuraModeNum = AuraModeNum.Static;
+    public aura_modes: Map<AuraModeNum, AuraEffect> = new Map;
+    public leds_powered: AuraPowerDev = {
+        tuf: [],
+        x1866: [],
+        x19b6: []
+    };
 
     constructor() {
         super("org-asuslinux-aura-4", "/org/asuslinux/Aura");
     }
 
+    public getLedPower() {
+        if (this.isRunning()) {
+            try {
+                const data = this.dbus_proxy.LedPowerSync();
+                //@ts-ignore
+                log("Current LED mode:", data);
+            } catch (e) {
+                //@ts-ignore
+                log("Failed to fetch supported functionalities", e);
+            }
+        }
+    }
+
     public getLedMode() {
         if (this.isRunning()) {
             try {
-                const _data = this.dbus_proxy.LedModeSync();
+                this.current_aura_mode = AuraModeNum[this.dbus_proxy.LedModeSync() as AuraModeNum];
                 //@ts-ignore
-                log("Led Mode:", _data);
+                log("Current LED mode:", this.current_aura_mode);
             } catch (e) {
                 //@ts-ignore
                 log("Failed to fetch supported functionalities", e);
@@ -25,14 +44,6 @@ export class AuraDbus extends DbusBase {
     public getLedModes() {
         // {'Breathe': ('Breathe', 'None', (166, 0, 0), (0, 0, 0), 'Med', 'Right'),
         // 'Comet': ('Comet', 'None', (166, 0, 0), (0, 0, 0), 'Med', 'Right'),
-        // 'Flash': ('Flash', 'None', (166, 0, 0), (0, 0, 0), 'Med', 'Right'),
-        // 'Highlight': ('Highlight', 'None', (166, 0, 0), (0, 0, 0), 'Med', 'Right'),
-        // 'Laser': ('Laser', 'None', (166, 0, 0), (0, 0, 0), 'Med', 'Right'),
-        // 'Pulse': ('Pulse', 'None', (166, 0, 0), (0, 0, 0), 'Med', 'Right'),
-        // 'Rain': ('Rain', 'None', (166, 0, 0), (0, 0, 0), 'Med', 'Right'),
-        // 'Rainbow': ('Rainbow', 'None', (166, 0, 0), (0, 0, 0), 'Med', 'Right'),
-        // 'Ripple': ('Ripple', 'None', (166, 0, 0), (0, 0, 0), 'Med', 'Right'),
-        // 'Star': ('Star', 'None', (166, 0, 0), (0, 0, 0), 'Med', 'Right'),
         // 'Static': ('Static', 'None', (78, 0, 0), (0, 0, 0), 'Med', 'Right'),
         // 'Strobe': ('Strobe', 'None', (166, 0, 0), (0, 0, 0), 'Med', 'Right')}
         if (this.isRunning()) {
@@ -56,12 +67,12 @@ export class AuraDbus extends DbusBase {
                         speed: Speed[value[4] as Speed],
                         direction: Direction[value[5] as Direction],
                     };
-                    this.aura_modes.set(key, aura);
+                    this.aura_modes.set(AuraModeNum[key as AuraModeNum], aura);
                 }
 
                 for (const [key, value] of this.aura_modes) {
                     //@ts-ignore
-                    log(key + " = ", value.zone, value.colour1, value.speed, value.direction);
+                    log(key, value.zone, value.colour1.r, value.speed, value.direction);
                 }
 
             } catch (e) {
@@ -74,6 +85,7 @@ export class AuraDbus extends DbusBase {
     async start() {
         try {
             await super.start();
+            this.getLedPower();
             this.getLedMode();
             this.getLedModes();
         } catch (e) {

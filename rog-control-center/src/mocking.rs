@@ -187,7 +187,7 @@ impl Led {
         Ok(1)
     }
 
-    pub fn leds_enabled(&self) -> Result<AuraPowerDev> {
+    pub fn led_powered(&self) -> Result<AuraPowerDev> {
         Ok(AuraPowerDev {
             tuf: vec![],
             x1866: vec![],
@@ -200,7 +200,7 @@ impl Led {
         })
     }
 
-    pub fn set_leds_power(&self, _a: AuraPowerDev, _b: bool) -> Result<()> {
+    pub fn set_led_power(&self, _a: AuraPowerDev, _b: bool) -> Result<()> {
         Ok(())
     }
 

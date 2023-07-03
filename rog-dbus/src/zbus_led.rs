@@ -53,7 +53,7 @@ trait Led {
     /// SetLedMode method
     fn set_led_mode(&self, effect: &AuraEffect) -> zbus::Result<()>;
 
-    fn set_leds_power(&self, options: AuraPowerDev, enabled: bool) -> zbus::Result<()>;
+    fn set_led_power(&self, options: AuraPowerDev, enabled: bool) -> zbus::Result<()>;
 
     /// On machine that have some form of either per-key keyboard or per-zone
     /// this can be used to write custom effects over dbus. The input is a
@@ -79,7 +79,7 @@ trait Led {
 
     // As property doesn't work for AuraPowerDev (complexity of serialization?)
     // #[dbus_proxy(property)]
-    fn leds_enabled(&self) -> zbus::Result<AuraPowerDev>;
+    fn led_powered(&self) -> zbus::Result<AuraPowerDev>;
 }
 
 pub struct LedProxyPerkey<'a>(LedProxyBlocking<'a>);

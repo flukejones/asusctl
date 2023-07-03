@@ -507,14 +507,14 @@ fn handle_led_power_1_do_1866(
         x19b6: vec![],
         tuf: vec![],
     };
-    dbus.proxies().led().set_leds_power(data, true)?;
+    dbus.proxies().led().set_led_power(data, true)?;
 
     let data = AuraPowerDev {
         x1866: disabled,
         x19b6: vec![],
         tuf: vec![],
     };
-    dbus.proxies().led().set_leds_power(data, false)?;
+    dbus.proxies().led().set_led_power(data, false)?;
 
     Ok(())
 }
@@ -546,14 +546,14 @@ fn handle_led_power_1_do_tuf(
         x19b6: vec![],
         tuf: enabled,
     };
-    dbus.proxies().led().set_leds_power(data, true)?;
+    dbus.proxies().led().set_led_power(data, true)?;
 
     let data = AuraPowerDev {
         x1866: vec![],
         x19b6: vec![],
         tuf: disabled,
     };
-    dbus.proxies().led().set_leds_power(data, false)?;
+    dbus.proxies().led().set_led_power(data, false)?;
 
     Ok(())
 }
@@ -640,7 +640,7 @@ fn handle_led_power2(
                 x1866: vec![],
                 x19b6: enabled,
             };
-            dbus.proxies().led().set_leds_power(data, true)?;
+            dbus.proxies().led().set_led_power(data, true)?;
         }
 
         if !disabled.is_empty() {
@@ -649,7 +649,7 @@ fn handle_led_power2(
                 x1866: vec![],
                 x19b6: disabled,
             };
-            dbus.proxies().led().set_leds_power(data, false)?;
+            dbus.proxies().led().set_led_power(data, false)?;
         }
     }
 
