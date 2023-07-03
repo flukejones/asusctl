@@ -127,12 +127,11 @@ impl eframe::App for RogApp {
                 self.aura_page(&mut states, ctx);
                 return;
             }
+
+            self.top_bar(&mut states, ctx, frame);
+            self.side_panel(ctx);
         }
-
         let page = self.page;
-
-        self.top_bar(ctx, frame);
-        self.side_panel(ctx);
 
         let mut was_error = false;
 
@@ -163,16 +162,13 @@ impl eframe::App for RogApp {
 
         if !was_error {
             if let Ok(mut states) = states.try_lock() {
-                if page == Page::System {
-                    self.system_page(&mut states, ctx);
-                } else if page == Page::AuraEffects {
-                    self.aura_page(&mut states, ctx);
-                // TODO: Anime page is not complete
-                // } else if page == Page::AnimeMatrix {
-                //     self.anime_page(ctx);
-                } else if page == Page::FanCurves {
-                    self.fan_curve_page(&mut states, ctx);
-                }
+                match page {
+                    Page::AppSettings => self.app_settings_page(&mut states, ctx),
+                    Page::System => self.system_page(&mut states, ctx),
+                    Page::AuraEffects => self.aura_page(&mut states, ctx),
+                    Page::AnimeMatrix => todo!(),
+                    Page::FanCurves => self.fan_curve_page(&mut states, ctx),
+                };
             }
         }
     }

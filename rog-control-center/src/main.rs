@@ -189,7 +189,9 @@ fn main() -> Result<()> {
         &supported,
     )?;
 
-    init_tray(supported, states.clone());
+    if config.enable_tray_icon {
+        init_tray(supported, states.clone());
+    }
 
     let mut bg_check_spawned = false;
     loop {
@@ -210,35 +212,32 @@ fn main() -> Result<()> {
             bg_check_spawned = false;
         }
 
-        if !config.run_in_background || cli_parsed.board_name.is_some() || cli_parsed.layout_viewing
-        {
-            break;
+        if let Ok(lock) = states.try_lock() {
+            if !lock.run_in_bg || cli_parsed.board_name.is_some() || cli_parsed.layout_viewing {
+                break;
+            }
+
+            if lock.run_in_bg && running_in_bg.load(Ordering::Acquire) && !bg_check_spawned {
+                let running_in_bg = running_in_bg.clone();
+                thread::spawn(move || {
+                    let mut buf = [0u8; 4];
+                    // blocks until it is read, typically the read will happen after a second
+                    // process writes to the IPC (so there is data to actually read)
+                    loop {
+                        if get_ipc_file().unwrap().read(&mut buf).is_ok() && buf[0] == SHOW_GUI {
+                            running_in_bg.store(false, Ordering::Release);
+                            debug!("Wait thread got from tray {buf:#?}");
+                            break;
+                        }
+                    }
+                });
+                bg_check_spawned = true;
+            }
         }
 
-        if config.run_in_background && running_in_bg.load(Ordering::Acquire) && !bg_check_spawned {
-            let running_in_bg = running_in_bg.clone();
-            thread::spawn(move || {
-                let mut buf = [0u8; 4];
-                // blocks until it is read, typically the read will happen after a second
-                // process writes to the IPC (so there is data to actually read)
-                loop {
-                    if get_ipc_file().unwrap().read(&mut buf).is_ok() && buf[0] == SHOW_GUI {
-                        running_in_bg.store(false, Ordering::Release);
-                        debug!("Wait thread got from tray {buf:#?}");
-                        break;
-                    }
-                }
-            });
-            bg_check_spawned = true;
-        }
         // Prevent hogging CPU
         thread::sleep(Duration::from_millis(500));
     }
-
-    // loop {
-    //     // This is just a blocker to idle and ensure the reator reacts
-    //     sleep(Duration::from_millis(1000)).await;
-    // }
     Ok(())
 }
 
@@ -255,6 +254,8 @@ fn setup_page_state_and_notifs(
         keyboard_layout,
         keyboard_layouts,
         enabled_notifications.clone(),
+        config.enable_tray_icon,
+        config.run_in_background,
         supported,
     )?));
 

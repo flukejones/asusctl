@@ -49,6 +49,14 @@ impl RogApp {
                 //     }
                 // }
 
+                ui.separator();
+                if ui
+                    .selectable_value(page, Page::AppSettings, "App Settings")
+                    .clicked()
+                {
+                    *page = Page::AppSettings;
+                }
+
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                     ui.horizontal(|ui| {
                         ui.spacing_mut().item_spacing.x = 0.0;

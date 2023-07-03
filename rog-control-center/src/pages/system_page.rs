@@ -1,17 +1,13 @@
 use crate::system_state::SystemState;
-use crate::widgets::{
-    anime_power_group, app_settings, aura_power_group, platform_profile, rog_bios_group,
-};
+use crate::widgets::{anime_power_group, aura_power_group, platform_profile, rog_bios_group};
 use crate::RogApp;
 
 impl RogApp {
     pub fn system_page(&mut self, states: &mut SystemState, ctx: &egui::Context) {
-        let Self {
-            config, supported, ..
-        } = self;
+        let Self { supported, .. } = self;
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Base settings");
+            ui.heading("Laptop settings");
 
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.spacing_mut().item_spacing = egui::vec2(8.0, 10.0);
@@ -31,10 +27,6 @@ impl RogApp {
                         });
                         ui.end_row();
 
-                        ui.vertical(|ui| {
-                            ui.separator();
-                            app_settings(config, states, ui);
-                        });
                         ui.vertical(|ui| {
                             ui.separator();
                             rog_bios_group(supported, states, ui);

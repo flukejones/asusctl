@@ -47,6 +47,7 @@ pub const SHOW_GUI: u8 = 2;
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub enum Page {
+    AppSettings,
     System,
     AuraEffects,
     AnimeMatrix,

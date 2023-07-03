@@ -2,7 +2,6 @@
 //! commands over an MPSC channel.
 
 use std::io::Write;
-use std::sync::mpsc::{channel, Receiver};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
@@ -27,11 +26,6 @@ const TRAY_LABEL: &str = "ROG Control Center";
 
 pub enum AppToTray {
     DgpuStatus(GfxPower),
-}
-
-pub enum TrayToApp {
-    Open,
-    Quit,
 }
 
 pub struct RadioGroup(Vec<gtk::RadioMenuItem>);
@@ -418,13 +412,8 @@ impl ROGTray {
     }
 }
 
-pub fn init_tray(
-    supported: SupportedFunctions,
-    states: Arc<Mutex<SystemState>>,
-) -> Receiver<TrayToApp> {
-    let (send, recv) = channel();
-    let _send = Arc::new(Mutex::new(send));
-
+/// The tray is controlled somewhat by `Arc<Mutex<SystemState>>`
+pub fn init_tray(supported: SupportedFunctions, states: Arc<Mutex<SystemState>>) {
     std::thread::spawn(move || {
         let gtk_init = gtk::init().map_err(|e| {
             error!("ROGTray: gtk init {e}");
@@ -538,6 +527,4 @@ pub fn init_tray(
             trace!("Tray loop ticked");
         }
     });
-
-    recv
 }

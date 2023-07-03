@@ -1,15 +1,25 @@
 use egui::{vec2, Align2, FontId, Id, Sense};
 
+use crate::system_state::SystemState;
 use crate::{RogApp, VERSION};
 
 impl RogApp {
-    pub fn top_bar(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    pub fn top_bar(
+        &mut self,
+        states: &mut SystemState,
+        ctx: &egui::Context,
+        frame: &mut eframe::Frame,
+    ) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {
                 ui.horizontal(|ui| {
                     self.dark_light_mode_buttons(ui);
                     egui::warn_if_debug_build(ui);
+                    if ui.button("Quit app").clicked() {
+                        states.run_in_bg = false;
+                        frame.close();
+                    }
                 });
 
                 // Drag area
@@ -35,9 +45,9 @@ impl RogApp {
                 );
                 // // Add the close button:
                 // let close_response = ui.put(
-                //     Rect::from_min_size(titlebar_rect.right_top(),
-                // Vec2::splat(height)),
-                //     Button::new(RichText::new("❌").size(height -
+                //     egui::Rect::from_min_size(titlebar_rect.right_top(),
+                // egui::Vec2::splat(height)),
+                //     egui::Button::new(egui::RichText::new("❌").size(height -
                 // 4.0)).frame(false), );
                 // if close_response.clicked() {
                 //     frame.close();

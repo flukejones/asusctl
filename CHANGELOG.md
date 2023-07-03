@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-## [v4.7.0-RC1]
+## [v4.7.0-RC2]
 ### Added
 - Support for FX507Z LED modes
 - Support for GL503V LED modes
@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prevent the multiple notifications from a profile change from occuring (too many functions with side effects!)
 - Apply keyboard brightness when setting a mode
 - Update GL503 led config
+- Rog Control Center:
+  - Added option to enable/disable system tray
+  - Added button to fully quit app (exits from background)
+  - Moved application settings to new page
 ### BREAKING
 - All Anime related DBUS methods/notifs are changed
 - All dbus interfaces that handled an enum have now been forced to use the enum as String type, not uint or similar, this unfortunately breaks a heap of stuff but has the benefit of allowing asusctl to use crates to generate a typescript (or other) binding to the types being used by zbus for the proxies. The implication here is that there will be an eventual tighter integration with the gnome extension and maybe KDE also.

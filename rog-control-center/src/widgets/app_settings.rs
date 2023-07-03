@@ -4,8 +4,7 @@ use crate::config::Config;
 use crate::system_state::SystemState;
 
 pub fn app_settings(config: &mut Config, states: &mut SystemState, ui: &mut Ui) {
-    ui.heading("ROG GUI Settings");
-    // ui.label("Options are incomplete. Awake + Boot should work");
+    ui.heading("App Settings");
 
     let mut enabled_notifications = if let Ok(lock) = states.enabled_notifications.lock() {
         lock.clone()
@@ -15,8 +14,14 @@ pub fn app_settings(config: &mut Config, states: &mut SystemState, ui: &mut Ui) 
 
     ui.label("Application settings");
     let app_changed = ui
-        .checkbox(&mut config.run_in_background, "Run in Background")
+        .checkbox(
+            &mut config.enable_tray_icon,
+            "Enable Tray Icon (restart required)",
+        )
         .clicked()
+        || ui
+            .checkbox(&mut config.run_in_background, "Run in Background")
+            .clicked()
         || ui
             .checkbox(&mut config.startup_in_background, "Startup Hidden")
             .clicked()
@@ -26,6 +31,10 @@ pub fn app_settings(config: &mut Config, states: &mut SystemState, ui: &mut Ui) 
                 "Enable Notifications",
             )
             .clicked();
+
+    // if ui.button("Quit").clicked() {
+    //     states.run_in_bg = false;
+    // }
 
     ui.label("Notification settings");
     let notif_changed = ui
@@ -100,6 +109,9 @@ pub fn app_settings(config: &mut Config, states: &mut SystemState, ui: &mut Ui) 
                     states.error = Some(err.to_string());
                 })
                 .ok();
+
+            states.tray_enabled = config.enable_tray_icon;
+            states.run_in_bg = config.run_in_background;
         }
     }
 }

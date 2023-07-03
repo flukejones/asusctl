@@ -14,6 +14,7 @@ const CFG_FILE_NAME: &str = "rog-control-center.cfg";
 pub struct Config {
     pub run_in_background: bool,
     pub startup_in_background: bool,
+    pub enable_tray_icon: bool,
     pub ac_command: String,
     pub bat_command: String,
     pub enable_notifications: bool,
@@ -28,6 +29,7 @@ impl Default for Config {
             run_in_background: true,
             startup_in_background: false,
             enable_notifications: true,
+            enable_tray_icon: true,
             dark_mode: true,
             enabled_notifications: EnabledNotifications::default(),
             ac_command: String::new(),
@@ -74,6 +76,9 @@ impl Config {
             } else if let Ok(data) = toml::from_str::<Config>(&buf) {
                 info!("Loaded config file {path:?}");
                 return Ok(data);
+            } else if let Ok(data) = toml::from_str::<Config461>(&buf) {
+                info!("Loaded old v4.6.1 config file {path:?}");
+                return Ok(data.into());
             } else if let Ok(data) = toml::from_str::<Config460>(&buf) {
                 info!("Loaded old v4.6.0 config file {path:?}");
                 return Ok(data.into());
@@ -127,6 +132,7 @@ impl From<Config455> for Config {
         Self {
             run_in_background: c.run_in_background,
             startup_in_background: c.startup_in_background,
+            enable_tray_icon: true,
             enable_notifications: c.enable_notifications,
             enabled_notifications: c.enabled_notifications,
             dark_mode: true,
@@ -151,6 +157,34 @@ impl From<Config460> for Config {
         Self {
             run_in_background: c.run_in_background,
             startup_in_background: c.startup_in_background,
+            enable_tray_icon: true,
+            ac_command: c.ac_command,
+            bat_command: c.bat_command,
+            dark_mode: true,
+            enable_notifications: c.enable_notifications,
+            enabled_notifications: c.enabled_notifications,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct Config461 {
+    pub run_in_background: bool,
+    pub startup_in_background: bool,
+    pub ac_command: String,
+    pub bat_command: String,
+    pub enable_notifications: bool,
+    pub dark_mode: bool,
+    // This field must be last
+    pub enabled_notifications: EnabledNotifications,
+}
+
+impl From<Config461> for Config {
+    fn from(c: Config461) -> Self {
+        Self {
+            run_in_background: c.run_in_background,
+            startup_in_background: c.startup_in_background,
+            enable_tray_icon: true,
             ac_command: c.ac_command,
             bat_command: c.bat_command,
             dark_mode: true,

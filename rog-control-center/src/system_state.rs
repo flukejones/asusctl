@@ -316,6 +316,8 @@ pub struct SystemState {
     pub app_should_update: bool,
     pub asus_dbus: RogDbusClientBlocking<'static>,
     pub gfx_dbus: GfxProxyBlocking<'static>,
+    pub tray_enabled: bool,
+    pub run_in_bg: bool,
 }
 
 impl SystemState {
@@ -326,6 +328,8 @@ impl SystemState {
         keyboard_layout: KeyLayout,
         keyboard_layouts: Vec<PathBuf>,
         enabled_notifications: Arc<Mutex<EnabledNotifications>>,
+        tray_enabled: bool,
+        run_in_bg: bool,
         supported: &SupportedFunctions,
     ) -> Result<Self> {
         let (asus_dbus, conn) = RogDbusClientBlocking::new()?;
@@ -390,6 +394,8 @@ impl SystemState {
             app_should_update: true,
             asus_dbus,
             gfx_dbus,
+            tray_enabled,
+            run_in_bg,
         })
     }
 
@@ -449,6 +455,8 @@ impl Default for SystemState {
             app_should_update: true,
             asus_dbus,
             gfx_dbus,
+            tray_enabled: true,
+            run_in_bg: true,
         }
     }
 }
