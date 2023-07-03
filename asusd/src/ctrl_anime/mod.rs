@@ -63,13 +63,12 @@ pub struct CtrlAnime {
 impl CtrlAnime {
     #[inline]
     pub fn new(config: AnimeConfig) -> Result<CtrlAnime, RogError> {
-        // let node = HidRaw::new("193b")?;
-        let usb = USBRaw::new(0x193b).ok();
         let hid = HidRaw::new("193b").ok();
-        let node = if usb.is_some() {
-            unsafe { Node::Usb(usb.unwrap_unchecked()) }
-        } else if hid.is_some() {
+        let usb = USBRaw::new(0x193b).ok();
+        let node = if hid.is_some() {
             unsafe { Node::Hid(hid.unwrap_unchecked()) }
+        } else if usb.is_some() {
+            unsafe { Node::Usb(usb.unwrap_unchecked()) }
         } else {
             return Err(RogError::Anime(AnimeError::NoDevice));
         };

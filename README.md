@@ -48,13 +48,11 @@ and AniMe parts should work regardless of your latop make.
 ## Implemented
 
 - [X] System daemon
-- [X] GUI app
-- [X] User notifications daemon
+- [X] GUI app (includes tray and notifications)
 - [X] Setting/modifying built-in LED modes
 - [X] Per-key LED setting
 - [X] Fancy LED modes (See examples) (currently being reworked)
-- [X] Saving settings for reload
-- [X] AniMatrix display on G14 models that include it
+- [X] AniMatrix display on G14 and M16 models that include it
 - [X] Set battery charge limit (with kernel supporting this)
 - [X] Fan curve control on supported laptops (G14/G15, some TUF like FA507)
 - [X] Toggle bios setting for boot/POST sound
@@ -135,6 +133,10 @@ Generation of the bindings with `make bindings` requires `typeshare` to be insta
 Dbus introsepction XML requires with `make introspection` requires `anime_sim` to be running before starting `asusd`.
 
 # OTHER
+
+## AniMe Matrix simulator
+
+A simulator using SDL2 can be built using `cargo build --package rog_simulators` and run with `./target/debug/anime_sim`. Once started `asusd` will need restarting to pick it up. If running this sim on a laptop *with* the display, the simulated display will be used instead of the physical display.
 
 ## Supporting more laptops
 
