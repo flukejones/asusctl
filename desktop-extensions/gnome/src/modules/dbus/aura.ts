@@ -85,7 +85,13 @@ export class AuraDbus extends DbusBase {
     public setLedMode(mode: AuraEffect) {
         if (this.isRunning()) {
             try {
-                this.dbus_proxy.SetLedModeSync(mode);
+                this.dbus_proxy.SetLedModeSync([
+                    mode.mode,
+                    mode.zone,
+                    [mode.colour1.r, mode.colour1.g, mode.colour1.b],
+                    [mode.colour2.r, mode.colour2.g, mode.colour2.b],
+                    mode.speed,
+                    mode.direction]);
             } catch (e) {
                 //@ts-ignore
                 log("Failed to fetch supported functionalities", e);

@@ -12,6 +12,7 @@ import { SliderChargeLevel } from "./modules/sliders/charge";
 import { QuickAnimePower } from "./modules/quick_toggles/anime_power";
 import { FeatureMenuToggle } from "./modules/quick_menus/laptop_features";
 import { AuraDbus } from "./modules/dbus/aura";
+import { AuraMenuToggle } from "./modules/quick_menus/aura";
 
 class Extension {
     private _indicateMiniLed: typeof IndicateMiniLed;
@@ -19,6 +20,7 @@ class Extension {
     private _quickPanelOd: typeof QuickPanelOd;
     private _quickAnimePower: typeof QuickAnimePower;
     private _featureMenuToggle: typeof FeatureMenuToggle;
+    private _auraModeMenuToggle: typeof AuraMenuToggle;
     private _sliderCharge: typeof SliderChargeLevel;
 
     public dbus_supported: Supported = new Supported;
@@ -45,6 +47,9 @@ class Extension {
     enable() {
         if (this._featureMenuToggle == null) {
             this._featureMenuToggle = new FeatureMenuToggle(this.dbus_supported, this.dbus_platform, this.dbus_anime);
+        }
+        if (this._auraModeMenuToggle == null) {
+            this._auraModeMenuToggle = new AuraMenuToggle(this.dbus_aura);
         }
         if (this.dbus_supported.supported.rog_bios_ctrl.mini_led_mode) {
             // if (this._quickMiniLed == null) {

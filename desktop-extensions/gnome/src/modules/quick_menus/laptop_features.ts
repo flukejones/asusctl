@@ -14,9 +14,8 @@ import { MenuToggleMiniLed } from "../menu_toggles/mini_led";
 const { GObject } = imports.gi;
 
 const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-
-const Main = imports.ui.main;
+// const Me = ExtensionUtils.getCurrentExtension();
+// const Main = imports.ui.main;
 const PopupMenu = imports.ui.popupMenu;
 const QuickSettings = imports.ui.quickSettings;
 
@@ -143,14 +142,13 @@ export const FeatureMenuToggle = GObject.registerClass(
 
             this.menu.addMenuItem(this._itemsSection);
 
-            // Add an entry-point for more settings
-            this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-            const settingsItem = this.menu.addAction("More Settings",
-                () => ExtensionUtils.openPrefs());
-
-            // Ensure the settings are unavailable when the screen is locked
-            settingsItem.visible = Main.sessionMode.allowSettings;
-            this.menu._settingsActions[Me.uuid] = settingsItem;
+            // // Add an entry-point for more settings
+            // this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+            // const settingsItem = this.menu.addAction("More Settings",
+            //     () => ExtensionUtils.openPrefs());
+            // // Ensure the settings are unavailable when the screen is locked
+            // settingsItem.visible = Main.sessionMode.allowSettings;
+            // this.menu._settingsActions[Me.uuid] = settingsItem;
 
             addQuickSettingsItems([this]);
         }
