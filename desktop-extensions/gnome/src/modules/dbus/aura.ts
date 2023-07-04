@@ -1,7 +1,8 @@
-import { AuraEffect, AuraModeNum, AuraPowerDev, AuraZone, Direction, Speed } from "../../bindings/aura";
+import { AuraDevRog1, AuraDevRog2, AuraDevTuf, AuraDevice, AuraEffect, AuraModeNum, AuraPowerDev, AuraZone, Direction, Speed } from "../../bindings/aura";
 import { DbusBase } from "./base";
 
 export class AuraDbus extends DbusBase {
+    public device: AuraDevice = AuraDevice.Unknown;
     public current_aura_mode: AuraModeNum = AuraModeNum.Static;
     public aura_modes: Map<AuraModeNum, AuraEffect> = new Map;
     public leds_powered: AuraPowerDev = {
@@ -14,12 +15,38 @@ export class AuraDbus extends DbusBase {
         super("org-asuslinux-aura-4", "/org/asuslinux/Aura");
     }
 
+    public getDevice() {
+        if (this.isRunning()) {
+            try {
+                this.device = AuraDevice[this.dbus_proxy.DeviceTypeSync() as AuraDevice];
+                //@ts-ignore
+                log("LED device: " + this.device);
+            } catch (e) {
+                //@ts-ignore
+                log("Failed to fetch supported functionalities", e);
+            }
+        }
+    }
+
     public getLedPower() {
         if (this.isRunning()) {
             try {
                 const data = this.dbus_proxy.LedPowerSync();
+                this.leds_powered.tuf = data[0].map((value: string) => {
+                    return AuraDevTuf[value as AuraDevTuf];
+                });
+                this.leds_powered.x1866 = data[1].map((value: string) => {
+                    return AuraDevRog1[value as AuraDevRog1];
+                });
+                this.leds_powered.x19b6 = data[2].map((value: string) => {
+                    return AuraDevRog2[value as AuraDevRog2];
+                });
                 //@ts-ignore
-                log("Current LED mode:", data);
+                log("LED power tuf: " + this.leds_powered.tuf);
+                //@ts-ignore
+                log("LED power x1866: " + this.leds_powered.x1866);
+                //@ts-ignore
+                log("LED power x19b6: " + this.leds_powered.x19b6);
             } catch (e) {
                 //@ts-ignore
                 log("Failed to fetch supported functionalities", e);
@@ -85,6 +112,7 @@ export class AuraDbus extends DbusBase {
     async start() {
         try {
             await super.start();
+            this.getDevice();
             this.getLedPower();
             this.getLedMode();
             this.getLedModes();

@@ -69,8 +69,14 @@
     </method>
     <method name="PrevLedBrightness">
     </method>
+    <!--
+     Return the device type for this Aura keyboard
+     -->
+    <method name="DeviceType">
+      <arg type="s" direction="out"/>
+    </method>
     <method name="LedPower">
-      <arg type="(asasas)" direction="out"/>
+      <arg type="asasas" direction="out"/>
     </method>
     <!--
      Return the current mode data

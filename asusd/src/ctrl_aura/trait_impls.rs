@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use config_traits::StdConfig;
 use log::{error, info, warn};
 use rog_aura::advanced::UsbPackets;
-use rog_aura::usb::AuraPowerDev;
+use rog_aura::usb::{AuraDevice, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, LedBrightness};
 use zbus::export::futures_util::lock::{Mutex, MutexGuard};
 use zbus::export::futures_util::StreamExt;
@@ -206,6 +206,12 @@ impl CtrlKbdLedZbus {
             e
         })?;
         Ok(())
+    }
+
+    /// Return the device type for this Aura keyboard
+    async fn device_type(&self) -> AuraDevice {
+        let ctrl = self.0.lock().await;
+        ctrl.led_prod
     }
 
     // As property doesn't work for AuraPowerDev (complexity of serialization?)
