@@ -18,7 +18,7 @@ export const AuraMenuToggle = GObject.registerClass(
 
         constructor(dbus_aura: AuraDbus) {
             super({
-                title: "Laptop",
+                title: "Aura Modes",
                 iconName: "selection-mode-symbolic",
                 toggleMode: true,
             });
@@ -28,7 +28,7 @@ export const AuraMenuToggle = GObject.registerClass(
                 "destroy", () => this._settings.run_dispose(),
                 this);
 
-            this.menu.setHeader("selection-mode-symbolic", "Laptop features");
+            this.menu.setHeader("selection-mode-symbolic", this._dbus_aura.current_aura_mode);
 
             this._settings = ExtensionUtils.getSettings();
 
