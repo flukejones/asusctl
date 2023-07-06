@@ -27,4 +27,4 @@ rog_anime = { path = "../rog-anime", features = ["dbus"] }
 [dependencies.sdl2]
 version = "0.35"
 default-features = false
-features = ["gfx"]
+# features = ["gfx"]

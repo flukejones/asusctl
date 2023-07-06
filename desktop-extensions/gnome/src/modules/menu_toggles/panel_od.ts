@@ -9,6 +9,7 @@ const PopupMenu = imports.ui.popupMenu;
 export const MenuTogglePanelOd = GObject.registerClass(
     class MenuTogglePanelOd extends PopupMenu.PopupSwitchMenuItem {
         private _dbus_platform: Platform;
+        public toggle_callback = () => {};
 
         constructor(dbus_platform: Platform) {
             super("Panel Overdrive", dbus_platform.bios.panel_overdrive);
@@ -34,6 +35,7 @@ export const MenuTogglePanelOd = GObject.registerClass(
             const state = this._dbus_platform.bios.panel_overdrive;
             if (this.state !== state)
                 this._dbus_platform.setPanelOd(this.state);
+            this.toggle_callback();
         }
 
         sync() {

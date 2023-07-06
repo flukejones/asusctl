@@ -41,10 +41,6 @@ export const FeatureMenuToggle = GObject.registerClass(
             this._dbus_platform = dbus_platform;
             this._dbus_anime = dbus_anime;
 
-            this.connectObject(
-                "destroy", () => this._settings.run_dispose(),
-                this);
-
             this.menu.setHeader("selection-mode-symbolic", "Laptop features");
 
             this._settings = ExtensionUtils.getSettings();
@@ -60,29 +56,24 @@ export const FeatureMenuToggle = GObject.registerClass(
             } else if (this.primary.length == 0) {
                 this.primary = "panel-od";
             }
+
+            this.connectObject(
+                "destroy", () => this._settings.run_dispose(),
+                this);
+            this._settings.connect('changed::primary-quickmenu-toggle',
+                this.sync);
             this._settings.set_string("primary-quickmenu-toggle", this.primary);
 
             this._itemsSection = new PopupMenu.PopupMenuSection();
-
             if (this._dbus_supported.supported.rog_bios_ctrl.mini_led_mode) {
                 if (this.miniLed == null) {
                     this.miniLed = new MenuToggleMiniLed(this._dbus_platform);
                     this._dbus_platform.notifyMiniLedSubscribers.push(this.miniLed);
                     this._itemsSection.addMenuItem(this.miniLed);
-
-                    if (this.primary == "mini-led") {
-                        // Set the togglemenu title and action
-                        this.title = this.miniLed.label;
-
-                        this.connectObject(
-                            "clicked", () => {
-                                const checked = this._dbus_platform.getMiniLedMode();
-                                if (this.checked !== checked)
-                                    this._dbus_platform.setMiniLedMode(this.checked);
-                            },
-                            this);
+                    this._dbus_platform.notifyMiniLedSubscribers.push(this);
+                    this.miniLed.toggle_callback = () => {
+                        this.primary = "mini-led";
                         this.sync();
-                        this._dbus_platform.notifyMiniLedSubscribers.push(this);
                     }
                 }
             }
@@ -92,20 +83,10 @@ export const FeatureMenuToggle = GObject.registerClass(
                     this.panelOd = new MenuTogglePanelOd(this._dbus_platform);
                     this._dbus_platform.notifyPanelOdSubscribers.push(this.panelOd);
                     this._itemsSection.addMenuItem(this.panelOd);
-
-                    if (this.primary == "panel-od") {
-                        // Set the togglemenu title and action
-                        this.title = this.panelOd.label;
-
-                        this.connectObject(
-                            "clicked", () => {
-                                const checked = this._dbus_platform.getPanelOd();
-                                if (this.checked !== checked)
-                                    this._dbus_platform.setPanelOd(this.checked);
-                            },
-                            this);
+                    this._dbus_platform.notifyPanelOdSubscribers.push(this);
+                    this.panelOd.toggle_callback = () => {
+                        this.primary = "panel-od";
                         this.sync();
-                        this._dbus_platform.notifyPanelOdSubscribers.push(this);
                     }
                 }
             }
@@ -115,21 +96,10 @@ export const FeatureMenuToggle = GObject.registerClass(
                     this.animeDisplayPower = new MenuToggleAnimePower(this._dbus_anime);
                     this._dbus_anime.notifyAnimeStateSubscribers.push(this.animeDisplayPower);
                     this._itemsSection.addMenuItem(this.animeDisplayPower);
-
-                    if (this.primary == "anime-power") {
-                        // Set the togglemenu title and action
-                        this.title = this.animeDisplayPower.label;
-
-                        this.connectObject(
-                            "clicked", () => {
-                                this._dbus_anime.getDeviceState();
-                                const checked = this._dbus_anime.deviceState.display_enabled;
-                                if (this.checked !== checked)
-                                    this._dbus_anime.setEnableDisplay(this.checked);
-                            },
-                            this);
+                    this._dbus_anime.notifyAnimeStateSubscribers.push(this);
+                    this.animeDisplayPower.toggle_callback = () => {
+                        this.primary = "anime-power";
                         this.sync();
-                        this._dbus_anime.notifyAnimeStateSubscribers.push(this);
                     }
                 }
 
@@ -139,6 +109,12 @@ export const FeatureMenuToggle = GObject.registerClass(
                     this._itemsSection.addMenuItem(this.animePowersaveAnim);
                 }
             }
+
+            this.connectObject(
+                "clicked", () => {
+                    this._toggle();
+                },
+                this);
 
             this.menu.addMenuItem(this._itemsSection);
 
@@ -150,25 +126,52 @@ export const FeatureMenuToggle = GObject.registerClass(
             // settingsItem.visible = Main.sessionMode.allowSettings;
             // this.menu._settingsActions[Me.uuid] = settingsItem;
 
+            this.sync();
             addQuickSettingsItems([this]);
+        }
+
+        _toggle() {
+            if (this.primary == "mini-led" && this.miniLed != null) {
+                this._dbus_platform.getMiniLedMode();
+                const checked = this._dbus_platform.bios.mini_led_mode;
+                if (this.checked !== checked)
+                    this._dbus_platform.setMiniLedMode(this.checked);
+            }
+
+            if (this.primary == "panel-od" && this.panelOd != null) {
+                this._dbus_platform.getPanelOd();
+                const checked = this._dbus_platform.bios.panel_overdrive;
+                if (this.checked !== checked)
+                    this._dbus_platform.setPanelOd(this.checked);
+            }
+
+            if (this.primary == "anime-power" && this.animeDisplayPower != null) {
+                this._dbus_anime.getDeviceState();
+                const checked = this._dbus_anime.deviceState.display_enabled;
+                if (this.checked !== checked)
+                    this._dbus_anime.setEnableDisplay(this.checked);
+            }
         }
 
         sync() {
             let checked = false;
-            switch (this.primary) {
-            case "mini-led":
-                checked = this._dbus_platform.getMiniLedMode();
-                break;
-            case "panel-od":
-                checked = this._dbus_platform.getPanelOd();
-                break;
-            case "anime-power":
-                this._dbus_anime.getDeviceState();
-                checked = this._dbus_anime.deviceState.display_enabled;
-                break;
-            default:
-                return;
+            if (this.primary == "mini-led" && this.miniLed != null) {
+                this.title = this.miniLed.label;
+                checked = this._dbus_platform.bios.mini_led_mode;
             }
+
+            if (this.primary == "panel-od" && this.panelOd != null) {
+                this.title = this.panelOd.label;
+                checked = this._dbus_platform.bios.panel_overdrive;
+            }
+
+            if (this.primary == "anime-power" && this.animeDisplayPower != null) {
+                this.title = this.animeDisplayPower.label;
+                checked = this._dbus_anime.deviceState.display_enabled;
+            }
+
+            // if (this.animePowersaveAnim != null) {
+            // }
 
             if (this.checked !== checked)
                 this.set({ checked });

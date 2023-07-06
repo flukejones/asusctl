@@ -9,6 +9,7 @@ const PopupMenu = imports.ui.popupMenu;
 export const MenuToggleMiniLed = GObject.registerClass(
     class MenuToggleMiniLed extends PopupMenu.PopupSwitchMenuItem {
         private _dbus_platform: Platform;
+        public toggle_callback = () => {};
 
         constructor(dbus_platform: Platform) {
             super("MiniLED", dbus_platform.bios.mini_led_mode);
@@ -34,6 +35,7 @@ export const MenuToggleMiniLed = GObject.registerClass(
             const state = this._dbus_platform.bios.mini_led_mode;
             if (this.state !== state)
                 this._dbus_platform.setMiniLedMode(this.state);
+            this.toggle_callback();
         }
 
         sync() {

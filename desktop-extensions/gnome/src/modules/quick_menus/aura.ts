@@ -3,7 +3,7 @@ declare const imports: any;
 
 import { addQuickSettingsItems } from "../helpers";
 import { AuraDbus } from "../dbus/aura";
-import { AuraModeNum } from "../../bindings/aura";
+import { AuraEffect, AuraModeNum } from "../../bindings/aura";
 
 const { GObject } = imports.gi;
 const ExtensionUtils = imports.misc.extensionUtils;
@@ -15,6 +15,7 @@ const QuickSettings = imports.ui.quickSettings;
 export const AuraMenuToggle = GObject.registerClass(
     class AuraMenuToggle extends QuickSettings.QuickMenuToggle {
         private _dbus_aura: AuraDbus;
+        private _last_mode: AuraModeNum = AuraModeNum.Static;
 
         constructor(dbus_aura: AuraDbus) {
             super({
@@ -35,7 +36,7 @@ export const AuraMenuToggle = GObject.registerClass(
             this._itemsSection = new PopupMenu.PopupMenuSection();
 
             this._dbus_aura.aura_modes.forEach((mode, key) => {
-                this._itemsSection.addAction(key, ()=>{
+                this._itemsSection.addAction(key, () => {
                     this._dbus_aura.setLedMode(mode);
                     this.sync();
                 }, "");
@@ -53,8 +54,16 @@ export const AuraMenuToggle = GObject.registerClass(
 
             this.connectObject(
                 "clicked", () => {
-                    // TODO: open a configuration tool
-                    this.sync();
+                    let mode: AuraEffect | undefined;
+                    if (this._dbus_aura.current_aura_mode == AuraModeNum.Static) {
+                        mode = this._dbus_aura.aura_modes.get(this._last_mode);
+                    } else {
+                        mode = this._dbus_aura.aura_modes.get(AuraModeNum.Static);
+                    }
+                    if (mode != undefined) {
+                        this._dbus_aura.setLedMode(mode);
+                        this.sync();
+                    }
                 },
                 this);
 
@@ -67,6 +76,9 @@ export const AuraMenuToggle = GObject.registerClass(
         sync() {
             const checked = this._dbus_aura.current_aura_mode != AuraModeNum.Static;
             this.title = this._dbus_aura.current_aura_mode;
+            if (this._last_mode != this._dbus_aura.current_aura_mode && this._dbus_aura.current_aura_mode != AuraModeNum.Static) {
+                this._last_mode = this._dbus_aura.current_aura_mode;
+            }
 
             if (this.checked !== checked)
                 this.set({ checked });

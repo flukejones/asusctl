@@ -9,6 +9,7 @@ const PopupMenu = imports.ui.popupMenu;
 export const MenuToggleAnimePower = GObject.registerClass(
     class MenuToggleAnimePower extends PopupMenu.PopupSwitchMenuItem {
         private _dbus_anime: AnimeDbus;
+        public toggle_callback = () => {};
 
         constructor(dbus_anime: AnimeDbus) {
             super(
@@ -34,6 +35,7 @@ export const MenuToggleAnimePower = GObject.registerClass(
             this._dbus_anime.getDeviceState();
             if (this.state !== this._dbus_anime.deviceState.display_enabled)
                 this._dbus_anime.setEnableDisplay(this.state);
+            this.toggle_callback();
         }
 
         sync() {
@@ -47,6 +49,7 @@ export const MenuToggleAnimePower = GObject.registerClass(
 export const MenuToggleAnimeBuiltins = GObject.registerClass(
     class MenuToggleAnimeBuiltins extends PopupMenu.PopupSwitchMenuItem {
         private _dbus_anime: AnimeDbus;
+        public toggle_callback = () => {};
 
         constructor(dbus_anime: AnimeDbus) {
             super(
@@ -72,6 +75,7 @@ export const MenuToggleAnimeBuiltins = GObject.registerClass(
             this._dbus_anime.getDeviceState();
             if (this.state !== this._dbus_anime.deviceState.builtin_anims_enabled)
                 this._dbus_anime.setPowersaveAnim(this.state);
+            this.toggle_callback();
         }
 
         sync() {
