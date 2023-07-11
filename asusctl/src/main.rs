@@ -10,14 +10,15 @@ use gumdrop::{Opt, Options};
 use profiles_cli::{FanCurveCommand, ProfileCommand};
 use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType, Vec2};
-use rog_aura::usb::{AuraDevRog1, AuraDevRog2, AuraDevTuf, AuraDevice, AuraPowerDev};
+use rog_aura::power::KbAuraPowerState;
+use rog_aura::usb::{AuraDevRog1, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClientBlocking;
 use rog_platform::platform::GpuMode;
 use rog_platform::supported::*;
 use rog_profiles::error::ProfileError;
 
-use crate::aura_cli::LedBrightness;
+use crate::aura_cli::{AuraPowerStates, LedBrightness};
 use crate::cli_opts::*;
 
 mod anime_cli;
@@ -503,16 +504,14 @@ fn handle_led_power_1_do_1866(
     check(power.lightbar, AuraDevRog1::Lightbar);
 
     let data = AuraPowerDev {
-        x1866: enabled,
-        x19b6: vec![],
-        tuf: vec![],
+        old_rog: enabled,
+        ..Default::default()
     };
     dbus.proxies().led().set_led_power(data, true)?;
 
     let data = AuraPowerDev {
-        x1866: disabled,
-        x19b6: vec![],
-        tuf: vec![],
+        old_rog: disabled,
+        ..Default::default()
     };
     dbus.proxies().led().set_led_power(data, false)?;
 
@@ -542,16 +541,14 @@ fn handle_led_power_1_do_tuf(
     check(power.keyboard, AuraDevTuf::Keyboard);
 
     let data = AuraPowerDev {
-        x1866: vec![],
-        x19b6: vec![],
         tuf: enabled,
+        ..Default::default()
     };
     dbus.proxies().led().set_led_power(data, true)?;
 
     let data = AuraPowerDev {
-        x1866: vec![],
-        x19b6: vec![],
         tuf: disabled,
+        ..Default::default()
     };
     dbus.proxies().led().set_led_power(data, false)?;
 
@@ -591,66 +588,25 @@ fn handle_led_power2(
             println!("This option applies only to keyboards with product ID 0x19b6");
         }
 
-        let mut enabled: Vec<AuraDevRog2> = Vec::new();
-        let mut disabled: Vec<AuraDevRog2> = Vec::new();
-        let mut check = |e: Option<bool>, a: AuraDevRog2| {
-            if let Some(arg) = e {
-                if arg {
-                    enabled.push(a);
-                } else {
-                    disabled.push(a);
-                }
-            }
+        let set = |power: &mut KbAuraPowerState, set_to: &AuraPowerStates| {
+            power.boot = set_to.boot;
+            power.awake = set_to.awake;
+            power.sleep = set_to.sleep;
+            power.shutdown = set_to.shutdown;
         };
 
-        match pow {
-            aura_cli::SetAuraEnabled::Boot(arg) => {
-                check(arg.keyboard, AuraDevRog2::BootKeyb);
-                check(arg.logo, AuraDevRog2::BootLogo);
-                check(arg.frontglow, AuraDevRog2::BootBar);
-                check(arg.rearglow, AuraDevRog2::BootRearGlow);
-                check(arg.lid, AuraDevRog2::AwakeLid);
-            }
-            aura_cli::SetAuraEnabled::Sleep(arg) => {
-                check(arg.keyboard, AuraDevRog2::SleepKeyb);
-                check(arg.logo, AuraDevRog2::SleepLogo);
-                check(arg.frontglow, AuraDevRog2::SleepBar);
-                check(arg.rearglow, AuraDevRog2::SleepRearGlow);
-                check(arg.lid, AuraDevRog2::SleepLid);
-            }
-            aura_cli::SetAuraEnabled::Awake(arg) => {
-                check(arg.keyboard, AuraDevRog2::AwakeKeyb);
-                check(arg.logo, AuraDevRog2::AwakeLogo);
-                check(arg.frontglow, AuraDevRog2::AwakeBar);
-                check(arg.rearglow, AuraDevRog2::AwakeRearGlow);
-                check(arg.lid, AuraDevRog2::AwakeLid);
-            }
-            aura_cli::SetAuraEnabled::Shutdown(arg) => {
-                check(arg.keyboard, AuraDevRog2::ShutdownKeyb);
-                check(arg.logo, AuraDevRog2::ShutdownLogo);
-                check(arg.frontglow, AuraDevRog2::ShutdownBar);
-                check(arg.rearglow, AuraDevRog2::ShutdownRearGlow);
-                check(arg.lid, AuraDevRog2::ShutdownLid);
+        let mut enabled = dbus.proxies().led().led_power()?;
+        if let Some(cmd) = &power.command {
+            match cmd {
+                aura_cli::SetAuraZoneEnabled::Keyboard(k) => set(&mut enabled.rog.keyboard, k),
+                aura_cli::SetAuraZoneEnabled::Logo(l) => set(&mut enabled.rog.logo, l),
+                aura_cli::SetAuraZoneEnabled::Lightbar(l) => set(&mut enabled.rog.lightbar, l),
+                aura_cli::SetAuraZoneEnabled::Lid(l) => set(&mut enabled.rog.lid, l),
+                aura_cli::SetAuraZoneEnabled::RearGlow(r) => set(&mut enabled.rog.rear_glow, r),
             }
         }
 
-        if !enabled.is_empty() {
-            let data = AuraPowerDev {
-                tuf: vec![],
-                x1866: vec![],
-                x19b6: enabled,
-            };
-            dbus.proxies().led().set_led_power(data, true)?;
-        }
-
-        if !disabled.is_empty() {
-            let data = AuraPowerDev {
-                tuf: vec![],
-                x1866: vec![],
-                x19b6: disabled,
-            };
-            dbus.proxies().led().set_led_power(data, false)?;
-        }
+        dbus.proxies().led().set_led_power(enabled, true)?;
     }
 
     Ok(())

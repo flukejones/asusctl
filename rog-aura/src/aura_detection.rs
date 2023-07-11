@@ -24,7 +24,7 @@ pub struct LedSupportFile(Vec<LaptopLedData>);
 /// The powerr zones this laptop supports
 #[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
-#[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Default, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Default, Copy, Clone)]
 pub enum PowerZones {
     /// The logo on some laptop lids
     #[default]

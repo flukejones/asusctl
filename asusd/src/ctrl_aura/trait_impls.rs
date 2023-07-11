@@ -53,48 +53,7 @@ impl CtrlKbdLedZbus {
     /// Set a variety of states, input is array of enum.
     /// `enabled` sets if the sent array should be disabled or enabled
     ///
-    /// ```text
-    /// pub struct AuraPowerDev {
-    ///     tuf: Vec<AuraDevTuf>,
-    ///     x1866: Vec<AuraDevRog1>,
-    ///     x19b6: Vec<AuraDevRog2>,
-    /// }
-    /// pub enum AuraDevTuf {
-    ///     Boot,
-    ///     Awake,
-    ///     Sleep,
-    ///     Keyboard,
-    /// }
-    /// pub enum AuraDevRog1 {
-    ///     Awake = 0x000002,
-    ///     Keyboard = 0x080000,
-    ///     Lightbar = 0x040500,
-    ///     Boot = 0xc31209,
-    ///     Sleep = 0x300804,
-    /// }
-    /// pub enum AuraDevRog2 {
-    ///     BootLogo = 1,
-    ///     BootKeyb = 1 << 1,
-    ///     AwakeLogo = 1 << 2,
-    ///     AwakeKeyb = 1 << 3,
-    ///     SleepLogo = 1 << 4,
-    ///     SleepKeyb = 1 << 5,
-    ///     ShutdownLogo = 1 << 6,
-    ///     ShutdownKeyb = 1 << 7,
-    ///     BootBar = 1 << (7 + 2),
-    ///     AwakeBar = 1 << (7 + 3),
-    ///     SleepBar = 1 << (7 + 4),
-    ///     ShutdownBar = 1 << (7 + 5),
-    ///     BootLid = 1 << (15 + 1),
-    ///     AwakeLid = 1 << (15 + 2),
-    ///     SleepLid = 1 << (15 + 3),
-    ///     ShutdownLid = 1 << (15 + 4),
-    ///     BootRearGlow = 1 << (23 + 1),
-    ///     AwakeRearGlow = 1 << (23 + 2),
-    ///     SleepRearGlow = 1 << (23 + 3),
-    ///     ShutdownRearGlow = 1 << (23 + 4),
-    /// }
-    /// ```
+    /// For Modern ROG devices the "enabled" flag is ignored.
     async fn set_led_power(
         &mut self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
@@ -105,12 +64,10 @@ impl CtrlKbdLedZbus {
         for p in options.tuf {
             ctrl.config.enabled.set_tuf(p, enabled);
         }
-        for p in options.x1866 {
+        for p in options.old_rog {
             ctrl.config.enabled.set_0x1866(p, enabled);
         }
-        for p in options.x19b6 {
-            ctrl.config.enabled.set_0x19b6(p, enabled);
-        }
+        ctrl.config.enabled.set_0x19b6(options.rog);
 
         ctrl.config.write();
 

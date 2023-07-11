@@ -1,12 +1,12 @@
 use egui::{RichText, Ui};
-use rog_aura::usb::{AuraDevRog1, AuraDevRog2, AuraDevTuf, AuraDevice, AuraPowerDev};
-use rog_aura::AuraZone;
+use rog_aura::power::{AuraPower, KbAuraPowerState};
+use rog_aura::usb::{AuraDevRog1, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_platform::supported::SupportedFunctions;
 
 use crate::system_state::SystemState;
 
 pub fn aura_power_group(supported: &SupportedFunctions, states: &mut SystemState, ui: &mut Ui) {
-    ui.heading("LED settings");
+    ui.heading("Keyboard LED power settings");
 
     match supported.keyboard_led.dev_id {
         AuraDevice::X1854 | AuraDevice::X1869 | AuraDevice::X1866 => {
@@ -22,10 +22,10 @@ pub fn aura_power_group(supported: &SupportedFunctions, states: &mut SystemState
 
 fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mut Ui) {
     let enabled_states = &mut states.aura.enabled;
-    let mut boot = enabled_states.x1866.contains(&AuraDevRog1::Boot);
-    let mut sleep = enabled_states.x1866.contains(&AuraDevRog1::Sleep);
-    let mut keyboard = enabled_states.x1866.contains(&AuraDevRog1::Keyboard);
-    let mut lightbar = enabled_states.x1866.contains(&AuraDevRog1::Lightbar);
+    let mut boot = enabled_states.old_rog.contains(&AuraDevRog1::Boot);
+    let mut sleep = enabled_states.old_rog.contains(&AuraDevRog1::Sleep);
+    let mut keyboard = enabled_states.old_rog.contains(&AuraDevRog1::Keyboard);
+    let mut lightbar = enabled_states.old_rog.contains(&AuraDevRog1::Lightbar);
     if supported.keyboard_led.dev_id == AuraDevice::Tuf {
         boot = enabled_states.tuf.contains(&AuraDevTuf::Boot);
         sleep = enabled_states.tuf.contains(&AuraDevTuf::Sleep);
@@ -130,8 +130,7 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
             let mut send = |enable: bool, data: Vec<AuraDevTuf>| {
                 let options = AuraPowerDev {
                     tuf: data,
-                    x1866: vec![],
-                    x19b6: vec![],
+                    ..Default::default()
                 };
                 // build data to send
                 states
@@ -153,21 +152,21 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
             let mut modify_x1866 = |b: bool, a: AuraDevRog1| {
                 if b {
                     enabled.push(a);
-                    if !enabled_states.x1866.contains(&a) {
-                        enabled_states.x1866.push(a);
+                    if !enabled_states.old_rog.contains(&a) {
+                        enabled_states.old_rog.push(a);
                     }
                 } else {
                     disabled.push(a);
                     // This would be so much better as a hashset
-                    if enabled_states.x1866.contains(&a) {
+                    if enabled_states.old_rog.contains(&a) {
                         let mut idx = 0;
-                        for (i, n) in enabled_states.x1866.iter().enumerate() {
+                        for (i, n) in enabled_states.old_rog.iter().enumerate() {
                             if *n == a {
                                 idx = i;
                                 break;
                             }
                         }
-                        enabled_states.x1866.remove(idx);
+                        enabled_states.old_rog.remove(idx);
                     }
                 }
             };
@@ -180,9 +179,8 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
 
             let mut send = |enable: bool, data: Vec<AuraDevRog1>| {
                 let options = AuraPowerDev {
-                    tuf: vec![],
-                    x1866: data,
-                    x19b6: vec![],
+                    old_rog: data,
+                    ..Default::default()
                 };
                 // build data to send
                 states
@@ -202,115 +200,52 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
 }
 
 fn aura_power2(supported: &SupportedFunctions, states: &mut SystemState, ui: &mut Ui) {
-    let enabled_states = &mut states.aura.enabled;
-    let has_logo = supported.keyboard_led.basic_zones.contains(&AuraZone::Logo);
-    let has_lightbar = supported
-        .keyboard_led
-        .basic_zones
-        .contains(&AuraZone::BarLeft)
-        || supported
-            .keyboard_led
-            .basic_zones
-            .contains(&AuraZone::BarRight);
+    let AuraPower {
+        keyboard,
+        logo,
+        lightbar,
+        lid,
+        rear_glow,
+    } = &mut states.aura.enabled.rog;
 
-    let boot_bar = &mut enabled_states.x19b6.contains(&AuraDevRog2::AwakeBar);
-    let boot_logo = &mut enabled_states.x19b6.contains(&AuraDevRog2::BootLogo);
-    let boot_keyb = &mut enabled_states.x19b6.contains(&AuraDevRog2::BootKeyb);
-
-    let awake_bar = &mut enabled_states.x19b6.contains(&AuraDevRog2::BootBar);
-    let awake_logo = &mut enabled_states.x19b6.contains(&AuraDevRog2::AwakeLogo);
-    let awake_keyb = &mut enabled_states.x19b6.contains(&AuraDevRog2::AwakeKeyb);
-
-    let sleep_bar = &mut enabled_states.x19b6.contains(&AuraDevRog2::SleepBar);
-    let sleep_logo = &mut enabled_states.x19b6.contains(&AuraDevRog2::SleepLogo);
-    let sleep_keyb = &mut enabled_states.x19b6.contains(&AuraDevRog2::SleepKeyb);
+    const LABELS: [&str; 4] = ["Boot", "Awake", "Sleep", "Shutdown"];
 
     let mut changed = false;
-
-    let mut item = |keyboard: &mut bool, logo: &mut bool, lightbar: &mut bool, ui: &mut Ui| {
-        ui.horizontal_wrapped(|ui| {
-            if ui.checkbox(keyboard, "Keyboard").changed() {
-                changed = true;
-            }
-            if has_logo && ui.checkbox(logo, "Logo").changed() {
-                changed = true;
-            }
-            if has_lightbar && ui.checkbox(lightbar, "Lightbar").changed() {
-                changed = true;
+    let mut item = |power: &mut KbAuraPowerState, ui: &mut Ui| {
+        ui.vertical(|ui| {
+            if supported.keyboard_led.power_zones.contains(&power.zone) {
+                ui.horizontal_wrapped(|ui| {
+                    ui.label(RichText::new(format!("{:?}", power.zone)).size(14.0));
+                });
+                if ui.checkbox(&mut power.boot, LABELS[0]).changed() {
+                    changed = true;
+                }
+                if ui.checkbox(&mut power.awake, LABELS[1]).changed() {
+                    changed = true;
+                }
+                if ui.checkbox(&mut power.sleep, LABELS[2]).changed() {
+                    changed = true;
+                }
+                if ui.checkbox(&mut power.shutdown, LABELS[3]).changed() {
+                    changed = true;
+                }
             }
         });
     };
 
     ui.horizontal_wrapped(|ui| {
-        ui.vertical(|ui| {
-            let h = 16.0;
-            ui.set_row_height(22.0);
-            ui.horizontal_wrapped(|ui| {
-                ui.label(RichText::new("Boot").size(h));
-            });
-            ui.horizontal_wrapped(|ui| {
-                ui.label(RichText::new("Awake").size(h));
-            });
-            ui.horizontal_wrapped(|ui| {
-                ui.label(RichText::new("Sleep").size(h));
-            });
-        });
-        ui.vertical(|ui| {
-            ui.set_row_height(22.0);
-            item(boot_keyb, boot_logo, boot_bar, ui);
-            item(awake_keyb, awake_logo, awake_bar, ui);
-            item(sleep_keyb, sleep_logo, sleep_bar, ui);
-        });
+        item(lid, ui);
+        item(logo, ui);
+        item(keyboard, ui);
+        item(lightbar, ui);
+        item(rear_glow, ui);
     });
 
     if changed {
-        let mut enabled = Vec::new();
-        let mut disabled = Vec::new();
-
-        let mut modify = |b: bool, a: AuraDevRog2| {
-            if b {
-                enabled.push(a);
-                if !enabled_states.x19b6.contains(&a) {
-                    enabled_states.x19b6.push(a);
-                }
-            } else {
-                disabled.push(a);
-                // This would be so much better as a hashset
-                if enabled_states.x19b6.contains(&a) {
-                    let mut idx = 0;
-                    for (i, n) in enabled_states.x19b6.iter().enumerate() {
-                        if *n == a {
-                            idx = i;
-                            break;
-                        }
-                    }
-                    enabled_states.x19b6.remove(idx);
-                }
-            }
-        };
-        modify(*boot_keyb, AuraDevRog2::BootKeyb);
-        modify(*sleep_keyb, AuraDevRog2::SleepKeyb);
-        modify(*awake_keyb, AuraDevRog2::AwakeKeyb);
-        if supported.keyboard_led.basic_zones.contains(&AuraZone::Logo) {
-            modify(*boot_logo, AuraDevRog2::BootLogo);
-            modify(*sleep_logo, AuraDevRog2::SleepLogo);
-            modify(*awake_logo, AuraDevRog2::AwakeLogo);
-        }
-        if supported
-            .keyboard_led
-            .basic_zones
-            .contains(&AuraZone::BarLeft)
-        {
-            modify(*boot_bar, AuraDevRog2::AwakeBar);
-            modify(*sleep_bar, AuraDevRog2::SleepBar);
-            modify(*awake_bar, AuraDevRog2::BootBar);
-        }
-
-        let mut send = |enable: bool, data: Vec<AuraDevRog2>| {
+        let mut send = |enable: bool, data: AuraPower| {
             let options = AuraPowerDev {
-                tuf: vec![],
-                x1866: vec![],
-                x19b6: data,
+                rog: data,
+                ..Default::default()
             };
             // build data to send
             states
@@ -323,7 +258,15 @@ fn aura_power2(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
                 })
                 .ok();
         };
-        send(true, enabled);
-        send(false, disabled);
+        send(
+            true,
+            AuraPower {
+                keyboard: *keyboard,
+                logo: *logo,
+                lightbar: *lightbar,
+                lid: *lid,
+                rear_glow: *rear_glow,
+            },
+        );
     }
 }

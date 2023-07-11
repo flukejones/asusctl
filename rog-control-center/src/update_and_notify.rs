@@ -274,19 +274,48 @@ pub fn start_notifications(
         let conn = zbus::Connection::system()
             .await
             .map_err(|e| {
-                error!("zbus signal: receive_power_states: {e}");
+                error!("zbus signal: receive_device_state: {e}");
+                e
+            })
+            .unwrap();
+        let proxy = LedProxy::new(&conn)
+            .await
+            .map_err(|e| {
+                error!("zbus signal: receive_device_state: {e}");
+                e
+            })
+            .unwrap();
+        if let Ok(mut p) = proxy.receive_notify_power_states().await {
+            info!("Started zbus signal thread: receive_notify_power_states");
+            while let Some(e) = p.next().await {
+                if let Ok(out) = e.args() {
+                    if let Ok(mut lock) = page_states1.lock() {
+                        lock.aura.enabled = out.data;
+                        lock.set_notified();
+                    }
+                }
+            }
+        };
+    });
+
+    let page_states1 = page_states.clone();
+    tokio::spawn(async move {
+        let conn = zbus::Connection::system()
+            .await
+            .map_err(|e| {
+                error!("zbus signal: receive_device_state: {e}");
                 e
             })
             .unwrap();
         let proxy = AnimeProxy::new(&conn)
             .await
             .map_err(|e| {
-                error!("zbus signal: receive_power_states: {e}");
+                error!("zbus signal: receive_device_state: {e}");
                 e
             })
             .unwrap();
         if let Ok(p) = proxy.receive_device_state().await {
-            info!("Started zbus signal thread: receive_power_states");
+            info!("Started zbus signal thread: receive_device_state");
             p.for_each(|_| {
                 if let Ok(_lock) = page_states1.lock() {
                     // TODO: lock.anime.
@@ -320,7 +349,7 @@ pub fn start_notifications(
         }
 
         if let Ok(mut p) = proxy.receive_notify_gpu_mux_mode().await {
-            info!("Started zbus signal thread: receive_power_states");
+            info!("Started zbus signal thread: receive_notify_gpu_mux_mode");
             while let Some(e) = p.next().await {
                 if let Ok(out) = e.args() {
                     if out.mode == actual_mux_mode {

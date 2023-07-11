@@ -79,7 +79,7 @@ trait Led {
 
     // As property doesn't work for AuraPowerDev (complexity of serialization?)
     // #[dbus_proxy(property)]
-    fn led_powered(&self) -> zbus::Result<AuraPowerDev>;
+    fn led_power(&self) -> zbus::Result<AuraPowerDev>;
 }
 
 pub struct LedProxyPerkey<'a>(LedProxyBlocking<'a>);

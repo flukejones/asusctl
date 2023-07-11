@@ -4,7 +4,7 @@ use gumdrop::Options;
 use rog_aura::error::Error;
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour, Direction, Speed};
 
-#[derive(Options)]
+#[derive(Options, Debug)]
 pub struct LedPowerCommand1 {
     #[options(help = "print help message")]
     pub help: bool,
@@ -20,62 +20,42 @@ pub struct LedPowerCommand1 {
     pub sleep: Option<bool>,
 }
 
-#[derive(Options)]
+#[derive(Options, Debug)]
 pub struct LedPowerCommand2 {
     #[options(help = "print help message")]
     pub help: bool,
     #[options(command)]
-    pub command: Option<SetAuraEnabled>,
+    pub command: Option<SetAuraZoneEnabled>,
 }
 
-#[derive(Options)]
-pub enum SetAuraEnabled {
+#[derive(Options, Debug)]
+pub enum SetAuraZoneEnabled {
     /// Applies to both old and new models
-    #[options(help = "set <keyboard, logo, lightbar, rearglow> to enabled while device is awake")]
-    Awake(AuraEnabled),
-    #[options(
-        help = "set <keyboard, logo, lightbar, rearglow> to enabled while the device is booting"
-    )]
-    Boot(AuraEnabled),
-    #[options(
-        help = "set <keyboard, logo, lightbar, rearglow> to animate while the device is suspended"
-    )]
-    Sleep(AuraEnabled),
-    #[options(
-        help = "set <keyboard, logo, lightbar, rearglow> to animate while the device is shutdown"
-    )]
-    Shutdown(AuraEnabled),
+    #[options(help = "")]
+    Keyboard(AuraPowerStates),
+    #[options(help = "")]
+    Logo(AuraPowerStates),
+    #[options(help = "")]
+    Lightbar(AuraPowerStates),
+    #[options(help = "")]
+    Lid(AuraPowerStates),
+    #[options(help = "")]
+    RearGlow(AuraPowerStates),
 }
 
-#[derive(Debug, Clone, Default, Options)]
-pub struct AuraEnabled {
+#[derive(Debug, Clone, Options)]
+pub struct AuraPowerStates {
     #[options(help = "print help message")]
     pub help: bool,
-    #[options(meta = "", help = "<true/false>")]
-    pub keyboard: Option<bool>,
-    #[options(meta = "", help = "<true/false>")]
-    pub logo: Option<bool>,
-    #[options(meta = "", help = "<true/false>")]
-    pub frontglow: Option<bool>,
-    #[options(meta = "", help = "<true/false>")]
-    pub rearglow: Option<bool>,
-    #[options(meta = "", help = "<true/false>")]
-    pub lid: Option<bool>,
+    #[options(help = "defaults to false if option unused")]
+    pub boot: bool,
+    #[options(help = "defaults to false if option unused")]
+    pub awake: bool,
+    #[options(help = "defaults to false if option unused")]
+    pub sleep: bool,
+    #[options(help = "defaults to false if option unused")]
+    pub shutdown: bool,
 }
-
-// impl FromStr for AuraEnabled {
-//     type Err = Error;
-
-//     fn from_str(s: &str) -> Result<Self, Self::Err> {
-//         let s = s.to_lowercase();
-//         Ok(Self {
-//             help: false,
-//             keyboard: None,
-//             logo: None,
-//             lightbar: None,
-//         })
-//     }
-// }
 
 #[derive(Options)]
 pub struct LedBrightness {

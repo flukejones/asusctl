@@ -1,9 +1,12 @@
 use std::collections::{BTreeMap, HashSet};
 
 use config_traits::{StdConfig, StdConfigLoad};
-use rog_aura::aura_detection::LaptopLedData;
-use rog_aura::usb::{AuraDevRog1, AuraDevRog2, AuraDevTuf, AuraDevice, AuraPowerDev};
+use log::warn;
+use rog_aura::aura_detection::{LaptopLedData, ASUS_KEYBOARD_DEVICES};
+use rog_aura::power::AuraPower;
+use rog_aura::usb::{AuraDevRog1, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Direction, LedBrightness, Speed, GRADIENT};
+use rog_platform::hid_raw::HidRaw;
 use serde_derive::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "aura.ron";
@@ -15,7 +18,7 @@ const CONFIG_FILE: &str = "aura.ron";
 pub enum AuraPowerConfig {
     AuraDevTuf(HashSet<AuraDevTuf>),
     AuraDevRog1(HashSet<AuraDevRog1>),
-    AuraDevRog2(HashSet<AuraDevRog2>),
+    AuraDevRog2(AuraPower),
 }
 
 impl AuraPowerConfig {
@@ -27,10 +30,7 @@ impl AuraPowerConfig {
                 let c: Vec<AuraDevRog1> = c.iter().copied().collect();
                 AuraDevRog1::to_bytes(&c)
             }
-            AuraPowerConfig::AuraDevRog2(c) => {
-                let c: Vec<AuraDevRog2> = c.iter().copied().collect();
-                AuraDevRog2::to_bytes(&c)
-            }
+            AuraPowerConfig::AuraDevRog2(c) => c.to_bytes(),
         }
     }
 
@@ -78,13 +78,9 @@ impl AuraPowerConfig {
         }
     }
 
-    pub fn set_0x19b6(&mut self, power: AuraDevRog2, on: bool) {
+    pub fn set_0x19b6(&mut self, power: AuraPower) {
         if let Self::AuraDevRog2(p) = self {
-            if on {
-                p.insert(power);
-            } else {
-                p.remove(&power);
-            }
+            *p = power;
         }
     }
 }
@@ -94,18 +90,15 @@ impl From<&AuraPowerConfig> for AuraPowerDev {
         match config {
             AuraPowerConfig::AuraDevTuf(d) => AuraPowerDev {
                 tuf: d.iter().copied().collect(),
-                x1866: vec![],
-                x19b6: vec![],
+                ..Default::default()
             },
             AuraPowerConfig::AuraDevRog1(d) => AuraPowerDev {
-                tuf: vec![],
-                x1866: d.iter().copied().collect(),
-                x19b6: vec![],
+                old_rog: d.iter().copied().collect(),
+                ..Default::default()
             },
             AuraPowerConfig::AuraDevRog2(d) => AuraPowerDev {
-                tuf: vec![],
-                x1866: vec![],
-                x19b6: d.iter().copied().collect(),
+                rog: d.clone(),
+                ..Default::default()
             },
         }
     }
@@ -124,8 +117,15 @@ pub struct AuraConfig {
 
 impl StdConfig for AuraConfig {
     fn new() -> Self {
-        // Self::create_default(AuraDevice::X19b6, &LaptopLedData::get_data())
-        panic!("AuraConfig::new() should not be used, use AuraConfig::create_default() instead");
+        warn!("AuraConfig: creating new config");
+        let mut prod_id = AuraDevice::Unknown;
+        for prod in ASUS_KEYBOARD_DEVICES {
+            if HidRaw::new(prod.into()).is_ok() {
+                prod_id = prod;
+                break;
+            }
+        }
+        Self::create_default(prod_id, &LaptopLedData::get_data())
     }
 
     fn config_dir() -> std::path::PathBuf {
@@ -143,24 +143,7 @@ impl AuraConfig {
     pub fn create_default(prod_id: AuraDevice, support_data: &LaptopLedData) -> Self {
         // create a default config here
         let enabled = if prod_id == AuraDevice::X19b6 {
-            AuraPowerConfig::AuraDevRog2(HashSet::from([
-                AuraDevRog2::BootLogo,
-                AuraDevRog2::BootKeyb,
-                AuraDevRog2::SleepLogo,
-                AuraDevRog2::SleepKeyb,
-                AuraDevRog2::AwakeLogo,
-                AuraDevRog2::AwakeKeyb,
-                AuraDevRog2::ShutdownLogo,
-                AuraDevRog2::ShutdownKeyb,
-                AuraDevRog2::BootBar,
-                AuraDevRog2::AwakeBar,
-                AuraDevRog2::SleepBar,
-                AuraDevRog2::ShutdownBar,
-                AuraDevRog2::BootRearGlow,
-                AuraDevRog2::AwakeRearGlow,
-                AuraDevRog2::SleepRearGlow,
-                AuraDevRog2::ShutdownRearGlow,
-            ]))
+            AuraPowerConfig::AuraDevRog2(AuraPower::new_all_on())
         } else if prod_id == AuraDevice::Tuf {
             AuraPowerConfig::AuraDevTuf(HashSet::from([
                 AuraDevTuf::Awake,

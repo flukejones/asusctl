@@ -18,6 +18,10 @@ pub mod aura_detection;
 pub mod layouts;
 pub mod usb;
 
+pub mod power;
+
+mod deprecated;
+
 pub const LED_MSG_LEN: usize = 17;
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 

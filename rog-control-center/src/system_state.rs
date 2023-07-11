@@ -177,7 +177,7 @@ impl AuraState {
             } else {
                 BTreeMap::new()
             },
-            enabled: dbus.proxies().led().led_powered().unwrap_or_default(),
+            enabled: dbus.proxies().led().led_power().unwrap_or_default(),
             bright: dbus.proxies().led().led_brightness().unwrap_or_default(),
             wave_red: [0u8; 22],
             wave_green: [0u8; 22],
@@ -427,11 +427,7 @@ impl Default for SystemState {
             aura: AuraState {
                 current_mode: AuraModeNum::Static,
                 modes: Default::default(),
-                enabled: AuraPowerDev {
-                    tuf: vec![],
-                    x1866: vec![],
-                    x19b6: vec![],
-                },
+                enabled: AuraPowerDev::default(),
                 ..Default::default()
             },
             anime: AnimeState::default(),
