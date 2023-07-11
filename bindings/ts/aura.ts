@@ -107,6 +107,64 @@ export interface AuraEffect {
 	direction: Direction;
 }
 
+/** The powerr zones this laptop supports */
+export enum PowerZones {
+	/** The logo on some laptop lids */
+	Logo = "Logo",
+	/** The full keyboard (not zones) */
+	Keyboard = "Keyboard",
+	/** The lightbar, typically on the front of the laptop */
+	Lightbar = "Lightbar",
+	/** The leds that may be placed around the edge of the laptop lid */
+	Lid = "Lid",
+	/** The led strip on the rear of some laptops */
+	RearGlow = "RearGlow",
+}
+
+export interface KbAuraPowerState {
+	zone: PowerZones;
+	boot: boolean;
+	awake: boolean;
+	sleep: boolean;
+	shutdown: boolean;
+}
+
+/**
+ * Track and control the Aura keyboard power state
+ * 
+ * # Bits for newer 0x18c6, 0x19B6, 0x1a30, keyboard models
+ * 
+ * | Byte 1 | Byte 2  | Byte 3  | Byte 4  | Label    |
+ * |--------|---------|---------|---------|----------|
+ * |00000001| 00000000| 00000000| 00000000|boot_logo_|
+ * |00000010| 00000000| 00000000| 00000000|boot_keyb_|
+ * |00000100| 00000000| 00000000| 00000000|awake_logo|
+ * |00001000| 00000000| 00000000| 00000000|awake_keyb|
+ * |00010000| 00000000| 00000000| 00000000|sleep_logo|
+ * |00100000| 00000000| 00000000| 00000000|sleep_keyb|
+ * |01000000| 00000000| 00000000| 00000000|shut_logo_|
+ * |10000000| 00000000| 00000000| 00000000|shut_keyb_|
+ * |00000000| 00000010| 00000000| 00000000|boot_bar__|
+ * |00000000| 00000100| 00000000| 00000000|awake_bar_|
+ * |00000000| 00001000| 00000000| 00000000|sleep_bar_|
+ * |00000000| 00010000| 00000000| 00000000|shut_bar__|
+ * |00000000| 00000000| 00000001| 00000000|boot_lid__|
+ * |00000000| 00000000| 00000010| 00000000|awkae_lid_|
+ * |00000000| 00000000| 00000100| 00000000|sleep_lid_|
+ * |00000000| 00000000| 00001000| 00000000|shut_lid__|
+ * |00000000| 00000000| 00000000| 00000001|boot_rear_|
+ * |00000000| 00000000| 00000000| 00000010|awake_rear|
+ * |00000000| 00000000| 00000000| 00000100|sleep_rear|
+ * |00000000| 00000000| 00000000| 00001000|shut_rear_|
+ */
+export interface AuraPower {
+	keyboard: KbAuraPowerState;
+	logo: KbAuraPowerState;
+	lightbar: KbAuraPowerState;
+	lid: KbAuraPowerState;
+	rear_glow: KbAuraPowerState;
+}
+
 export enum AuraDevTuf {
 	Boot = "Boot",
 	Awake = "Awake",
@@ -138,74 +196,20 @@ export enum AuraDevRog1 {
 	Sleep = "Sleep",
 }
 
-/**
- * # Bits for newer 0x18c6, 0x19B6, 0x1a30, keyboard models
- * 
- * | Byte 1 | Byte 2  | Byte 3  | Byte 4  | Label    |
- * |--------|---------|---------|---------|----------|
- * |00000001| 00000000| 00000000| 00000000|boot_logo_|
- * |00000010| 00000000| 00000000| 00000000|boot_keyb_|
- * |00000100| 00000000| 00000000| 00000000|awake_logo|
- * |00001000| 00000000| 00000000| 00000000|awake_keyb|
- * |00010000| 00000000| 00000000| 00000000|sleep_logo|
- * |00100000| 00000000| 00000000| 00000000|sleep_keyb|
- * |01000000| 00000000| 00000000| 00000000|shut_logo_|
- * |10000000| 00000000| 00000000| 00000000|shut_keyb_|
- * |00000000| 00000010| 00000000| 00000000|boot_bar__|
- * |00000000| 00000100| 00000000| 00000000|awake_bar_|
- * |00000000| 00001000| 00000000| 00000000|sleep_bar_|
- * |00000000| 00010000| 00000000| 00000000|shut_bar__|
- * |00000000| 00000000| 00000001| 00000000|boot_lid__|
- * |00000000| 00000000| 00000010| 00000000|awkae_lid_|
- * |00000000| 00000000| 00000100| 00000000|sleep_lid_|
- * |00000000| 00000000| 00001000| 00000000|shut_lid__|
- * |00000000| 00000000| 00000000| 00000001|boot_rear_|
- * |00000000| 00000000| 00000000| 00000010|awake_rear|
- * |00000000| 00000000| 00000000| 00000100|sleep_rear|
- * |00000000| 00000000| 00000000| 00001000|shut_rear_|
- */
-export enum AuraDevRog2 {
-	BootLogo = "BootLogo",
-	BootKeyb = "BootKeyb",
-	AwakeLogo = "AwakeLogo",
-	AwakeKeyb = "AwakeKeyb",
-	SleepLogo = "SleepLogo",
-	SleepKeyb = "SleepKeyb",
-	ShutdownLogo = "ShutdownLogo",
-	ShutdownKeyb = "ShutdownKeyb",
-	BootBar = "BootBar",
-	AwakeBar = "AwakeBar",
-	SleepBar = "SleepBar",
-	ShutdownBar = "ShutdownBar",
-	BootLid = "BootLid",
-	AwakeLid = "AwakeLid",
-	SleepLid = "SleepLid",
-	ShutdownLid = "ShutdownLid",
-	BootRearGlow = "BootRearGlow",
-	AwakeRearGlow = "AwakeRearGlow",
-	SleepRearGlow = "SleepRearGlow",
-	ShutdownRearGlow = "ShutdownRearGlow",
-}
-
 /** This struct is intended as a helper to pass args to generic dbus interface */
 export interface AuraPowerDev {
+	/**
+	 * TUF laptops use a similar style of control to the older ROG devices but
+	 * through WMI
+	 */
 	tuf: AuraDevTuf[];
-	x1866: AuraDevRog1[];
-	x19b6: AuraDevRog2[];
-}
-
-/** The powerr zones this laptop supports */
-export enum PowerZones {
-	/** The logo on some laptop lids */
-	Logo = "Logo",
-	/** The full keyboard (not zones) */
-	Keyboard = "Keyboard",
-	/** The lightbar, typically on the front of the laptop */
-	Lightbar = "Lightbar",
-	/** The leds that may be placed around the edge of the laptop lid */
-	Lid = "Lid",
-	/** The led strip on the rear of some laptops */
-	RearGlow = "RearGlow",
+	/**
+	 * Pre-0x19b6 devices use a different smaller scheme to the newer ROG
+	 * devices
+	 */
+	old_rog: AuraDevRog1[];
+	/** ASUS standardised control scheme from 2020 onwards */
+	rog: AuraPower;
 }
 
 export enum LedBrightness {
