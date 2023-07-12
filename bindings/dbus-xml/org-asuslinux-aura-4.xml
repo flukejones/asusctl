@@ -35,7 +35,7 @@
       <arg type="s" direction="out"/>
     </method>
     <method name="LedPower">
-      <arg type="(asas((sbbbb)(sbbbb)(sbbbb)(sbbbb)(sbbbb)))" direction="out"/>
+      <arg type="asas((sbbbb)(sbbbb)(sbbbb)(sbbbb)(sbbbb))" direction="out"/>
     </method>
     <!--
      Return the current mode data

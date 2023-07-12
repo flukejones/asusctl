@@ -1,4 +1,4 @@
-import { AuraDevRog1, AuraDevRog2, AuraDevTuf, AuraDevice, AuraEffect, AuraModeNum, AuraPowerDev, AuraZone, Direction, Speed } from "../../bindings/aura";
+import { AuraDevRog1, AuraDevTuf, AuraDevice, AuraEffect, AuraModeNum, AuraPower, AuraPowerDev, AuraZone, Direction, PowerZones, Speed } from "../../bindings/aura";
 import { DbusBase } from "./base";
 
 export class AuraDbus extends DbusBase {
@@ -7,8 +7,44 @@ export class AuraDbus extends DbusBase {
     public aura_modes: Map<AuraModeNum, AuraEffect> = new Map;
     public leds_powered: AuraPowerDev = {
         tuf: [],
-        x1866: [],
-        x19b6: []
+        old_rog: [],
+        rog: {
+            keyboard: {
+                zone: PowerZones.Keyboard,
+                boot: false,
+                awake: false,
+                sleep: false,
+                shutdown: false
+            },
+            logo: {
+                zone: PowerZones.Logo,
+                boot: false,
+                awake: false,
+                sleep: false,
+                shutdown: false
+            },
+            lightbar: {
+                zone: PowerZones.Lightbar,
+                boot: false,
+                awake: false,
+                sleep: false,
+                shutdown: false
+            },
+            lid: {
+                zone: PowerZones.Lid,
+                boot: false,
+                awake: false,
+                sleep: false,
+                shutdown: false
+            },
+            rear_glow: {
+                zone: PowerZones.RearGlow,
+                boot: false,
+                awake: false,
+                sleep: false,
+                shutdown: false
+            },
+        }
     };
     // TODO: interface or something to enforce requirement of "sync()" method
     public notifyAuraModeSubscribers: any[] = [];
@@ -32,21 +68,51 @@ export class AuraDbus extends DbusBase {
     }
 
     _parsePowerStates(data: any[]) {
-        const power: AuraPowerDev = {
-            tuf: [],
-            x1866: [],
-            x19b6: []
-        };
+        const power: AuraPowerDev = this.leds_powered;
 
         power.tuf = data[0].map((value: string) => {
             return AuraDevTuf[value as AuraDevTuf];
         });
-        power.x1866 = data[1].map((value: string) => {
+        power.old_rog = data[1].map((value: string) => {
             return AuraDevRog1[value as AuraDevRog1];
         });
-        power.x19b6 = data[2].map((value: string) => {
-            return AuraDevRog2[value as AuraDevRog2];
-        });
+        power.rog = {
+            keyboard: {
+                zone: PowerZones[data[2][0][0] as PowerZones],
+                boot: data[2][0][1],
+                awake: data[2][0][2],
+                sleep: data[2][0][3],
+                shutdown: data[2][0][4]
+            },
+            logo: {
+                zone: PowerZones[data[2][1][0] as PowerZones],
+                boot: data[2][1][1],
+                awake: data[2][1][2],
+                sleep: data[2][1][3],
+                shutdown: data[2][1][4]
+            },
+            lightbar: {
+                zone: PowerZones[data[2][2][0] as PowerZones],
+                boot: data[2][2][1],
+                awake: data[2][2][2],
+                sleep: data[2][2][3],
+                shutdown: data[2][2][4]
+            },
+            lid: {
+                zone: PowerZones[data[2][3][0] as PowerZones],
+                boot: data[2][3][1],
+                awake: data[2][3][2],
+                sleep: data[2][3][3],
+                shutdown: data[2][3][4]
+            },
+            rear_glow: {
+                zone: PowerZones[data[2][4][0] as PowerZones],
+                boot: data[2][4][1],
+                awake: data[2][4][2],
+                sleep: data[2][4][3],
+                shutdown: data[2][4][4]
+            }
+        };
 
         return power;
     }
@@ -59,9 +125,9 @@ export class AuraDbus extends DbusBase {
                 //@ts-ignore
                 log("LED power tuf: " + this.leds_powered.tuf);
                 //@ts-ignore
-                log("LED power x1866: " + this.leds_powered.x1866);
+                log("LED power x1866: " + this.leds_powered.old_rog);
                 //@ts-ignore
-                log("LED power x19b6: " + this.leds_powered.x19b6);
+                log("LED power x19b6: " + this.leds_powered.rog);
             } catch (e) {
                 //@ts-ignore
                 log("Failed to fetch supported functionalities", e);
@@ -180,26 +246,26 @@ export class AuraDbus extends DbusBase {
                         const power: AuraPowerDev = this._parsePowerStates(data[0]);
                         this.leds_powered = power;
                         switch (this.device) {
-                        case AuraDevice.Tuf:
-                            //@ts-ignore
-                            log("LED power has changed to ", this.leds_powered.tuf);
-                            break;
-                        case AuraDevice.X1854:
-                        case AuraDevice.X1869:
-                        case AuraDevice.X18c6:
-                            //@ts-ignore
-                            log("LED power has changed to ", this.leds_powered.x1866);
-                            break;
-                        case AuraDevice.X19b6:
-                        case AuraDevice.X1a30:
-                            //@ts-ignore
-                            log("LED power has changed to ", this.leds_powered.x19b6);
-                            break;
-                        default:
-                            break;
+                            case AuraDevice.Tuf:
+                                //@ts-ignore
+                                log("LED power has changed to ", this.leds_powered.tuf);
+                                break;
+                            case AuraDevice.X1854:
+                            case AuraDevice.X1869:
+                            case AuraDevice.X18c6:
+                                //@ts-ignore
+                                log("LED power has changed to ", this.leds_powered.old_rog);
+                                break;
+                            case AuraDevice.X19b6:
+                            case AuraDevice.X1a30:
+                                //@ts-ignore
+                                log("LED power has changed to ", this.leds_powered.rog);
+                                break;
+                            default:
+                                break;
                         }
                         //@ts-ignore
-                        log("LED power has changed to ", this.leds_powered.x19b6);
+                        log("LED power has changed to ", this.leds_powered.rog);
                         this.notifyAuraPowerSubscribers.forEach(sub => {
                             sub.sync();
                         });
