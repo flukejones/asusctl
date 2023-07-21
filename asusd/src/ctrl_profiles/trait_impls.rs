@@ -4,7 +4,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use config_traits::StdConfig;
 use log::{error, info, warn};
-use rog_profiles::fan_curve_set::{CurveData, FanCurveSet};
+use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::{FanCurveProfiles, Profile};
 use zbus::export::futures_util::lock::Mutex;
 use zbus::export::futures_util::StreamExt;
@@ -83,16 +83,6 @@ impl ProfileZbus {
             .ok();
     }
 
-    /// Get a list of profiles that have fan-curves enabled.
-    async fn enabled_fan_profiles(&mut self) -> zbus::fdo::Result<Vec<Profile>> {
-        let mut ctrl = self.0.lock().await;
-        ctrl.profile_config.read();
-        if let Some(curves) = &mut ctrl.fan_curves {
-            return Ok(curves.profiles().get_enabled_curve_profiles());
-        }
-        Err(Error::Failed(UNSUPPORTED_MSG.to_owned()))
-    }
-
     /// Set a profile fan curve enabled status. Will also activate a fan curve
     /// if in the same profile mode
     async fn set_fan_curve_enabled(
@@ -119,12 +109,12 @@ impl ProfileZbus {
     }
 
     /// Get the fan-curve data for the currently active Profile
-    async fn fan_curve_data(&mut self, profile: Profile) -> zbus::fdo::Result<FanCurveSet> {
+    async fn fan_curve_data(&mut self, profile: Profile) -> zbus::fdo::Result<Vec<CurveData>> {
         let mut ctrl = self.0.lock().await;
         ctrl.profile_config.read();
         if let Some(curves) = &mut ctrl.fan_curves {
             let curve = curves.profiles().get_fan_curves_for(profile);
-            return Ok(curve.clone());
+            return Ok(curve.to_vec());
         }
         Err(Error::Failed(UNSUPPORTED_MSG.to_owned()))
     }

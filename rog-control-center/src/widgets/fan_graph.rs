@@ -1,6 +1,7 @@
 use egui::plot::Points;
 use egui::Ui;
 use rog_platform::supported::SupportedFunctions;
+use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::{FanCurvePU, Profile};
 
 use crate::system_state::FanCurvesState;
@@ -15,20 +16,36 @@ pub fn fan_graphs(
 ) {
     ui.separator();
 
-    let mut item = |p: Profile, ui: &mut Ui| {
+    let mut item = |profile: Profile, ui: &mut Ui| {
         ui.group(|ui| {
-            ui.selectable_value(&mut curves.show_curve, p, format!("{p:?}"));
-            ui.add_enabled_ui(curves.show_curve == p, |ui| {
-                ui.selectable_value(
-                    &mut curves.show_graph,
-                    FanCurvePU::CPU,
-                    format!("{:?}", FanCurvePU::CPU),
-                );
-                ui.selectable_value(
-                    &mut curves.show_graph,
-                    FanCurvePU::GPU,
-                    format!("{:?}", FanCurvePU::GPU),
-                );
+            if ui
+                .selectable_value(&mut curves.show_curve, profile, format!("{profile:?}"))
+                .clicked()
+            {
+                dbus.proxies().profile().set_active_profile(profile).ok();
+            }
+            ui.add_enabled_ui(curves.show_curve == profile, |ui| {
+                if curves.available_fans.contains(&FanCurvePU::CPU) {
+                    ui.selectable_value(
+                        &mut curves.show_graph,
+                        FanCurvePU::CPU,
+                        format!("{:?}", FanCurvePU::CPU),
+                    );
+                }
+                if curves.available_fans.contains(&FanCurvePU::GPU) {
+                    ui.selectable_value(
+                        &mut curves.show_graph,
+                        FanCurvePU::GPU,
+                        format!("{:?}", FanCurvePU::GPU),
+                    );
+                }
+                if curves.available_fans.contains(&FanCurvePU::MID) {
+                    ui.selectable_value(
+                        &mut curves.show_graph,
+                        FanCurvePU::MID,
+                        format!("{:?}", FanCurvePU::MID),
+                    );
+                }
             });
         });
     };
@@ -43,11 +60,13 @@ pub fn fan_graphs(
 
     use egui::plot::{Line, Plot};
 
-    let data = if curves.show_graph == FanCurvePU::CPU {
-        &mut curve.cpu
-    } else {
-        &mut curve.gpu
-    };
+    let mut data = &mut CurveData::default();
+    for c in curve {
+        if c.fan == curves.show_graph {
+            data = c;
+            break;
+        }
+    }
 
     let mut points: Vec<[f64; 2]> = data
         .temp

@@ -10,6 +10,7 @@ default = ["dbus"]
 dbus = ["zbus"]
 
 [dependencies]
+log.workspace = true
 udev.workspace = true
 serde.workspace = true
 serde_derive.workspace = true

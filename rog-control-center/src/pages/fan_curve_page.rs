@@ -1,6 +1,6 @@
-use egui::Ui;
+use egui::{RichText, Ui};
 use rog_platform::supported::SupportedFunctions;
-use rog_profiles::Profile;
+use rog_profiles::{FanCurvePU, Profile};
 
 use crate::system_state::{FanCurvesState, ProfilesState, SystemState};
 use crate::widgets::fan_graphs;
@@ -12,10 +12,6 @@ impl RogApp {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Custom fan curves");
-            ui.label(
-                "A fan curve is only active when the related profile is active and the curve is \
-                 enabled",
-            );
             Self::fan_curve(
                 supported,
                 &mut states.profiles,
@@ -44,35 +40,35 @@ impl RogApp {
         ui: &mut Ui,
     ) {
         ui.separator();
-        ui.label("Enabled fan-curves");
 
         let mut changed = false;
         ui.horizontal(|ui| {
-            let mut item = |p: Profile, curves: &mut FanCurvesState, mut checked: bool| {
+            ui.label("Current profile: ");
+            ui.label(RichText::new(format!("{}", profiles.current)).strong());
+        });
+
+        ui.horizontal(|ui| {
+            ui.label("Enabled fan-curves: ");
+            let mut fan_curve_enable = |profile: Profile, fan: FanCurvePU, mut checked: bool| {
                 if ui
-                    .add(egui::Checkbox::new(&mut checked, format!("{:?}", p)))
+                    .add(egui::Checkbox::new(&mut checked, format!("{:?}", fan)))
                     .changed()
                 {
                     dbus.proxies()
                         .profile()
-                        .set_fan_curve_enabled(p, checked)
+                        .set_fan_curve_enabled(profile, checked)
                         .map_err(|err| {
                             *do_error = Some(err.to_string());
                         })
                         .ok();
-
-                    if !checked {
-                        curves.enabled.remove(&p);
-                    } else {
-                        curves.enabled.insert(p);
-                    }
                     changed = true;
                 }
             };
 
-            profiles.list.sort();
-            for f in &profiles.list {
-                item(*f, curves, curves.enabled.contains(f));
+            if let Some(curves) = curves.curves.get_mut(&profiles.current) {
+                for curve in curves.iter_mut() {
+                    fan_curve_enable(profiles.current, curve.fan, curve.enabled);
+                }
             }
         });
 

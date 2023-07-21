@@ -20,7 +20,7 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use rog_profiles::fan_curve_set::{CurveData, FanCurveSet};
+use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::Profile;
 use zbus::dbus_proxy;
 
@@ -30,13 +30,10 @@ use zbus::dbus_proxy;
 )]
 trait Profile {
     /// Get the fan-curve data for the currently active Profile
-    fn fan_curve_data(&self, profile: Profile) -> zbus::Result<FanCurveSet>;
+    fn fan_curve_data(&self, profile: Profile) -> zbus::Result<Vec<CurveData>>;
 
     /// Fetch the active profile name
     fn active_profile(&self) -> zbus::Result<Profile>;
-
-    /// Get a list of profiles that have fan-curves enabled.
-    fn enabled_fan_profiles(&self) -> zbus::Result<Vec<Profile>>;
 
     /// Toggle to next platform_profile. Names provided by `Profiles`.
     /// If fan-curves are supported will also activate a fan curve for profile.

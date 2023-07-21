@@ -34,12 +34,12 @@ pub struct FanCurveCommand {
     pub mod_profile: Option<Profile>,
     #[options(
         meta = "",
-        help = "enable or disable <true/false> fan curve. `mod-profile` required"
+        help = "enable or disable <true/false> fan curve. `mod_profile` required"
     )]
     pub enabled: Option<bool>,
     #[options(
         meta = "",
-        help = "select fan <cpu/gpu> to modify. `mod-profile` required"
+        help = "select fan <cpu/gpu/mid> to modify. `mod_profile` required"
     )]
     pub fan: Option<FanCurvePU>,
 

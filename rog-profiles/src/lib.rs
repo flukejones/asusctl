@@ -7,7 +7,8 @@ use std::io::Write;
 use std::path::Path;
 
 use error::ProfileError;
-use fan_curve_set::{CurveData, FanCurveSet};
+use fan_curve_set::CurveData;
+use log::debug;
 use serde_derive::{Deserialize, Serialize};
 use typeshare::typeshare;
 use udev::Device;
@@ -131,10 +132,30 @@ impl Display for Profile {
 
 #[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
-#[derive(Deserialize, Serialize, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Deserialize, Serialize, Debug, Hash, PartialEq, Eq, Clone, Copy)]
 pub enum FanCurvePU {
     CPU,
     GPU,
+    MID,
+}
+
+impl FanCurvePU {
+    fn which_fans(device: &Device) -> Vec<Self> {
+        let mut fans = Vec::with_capacity(3);
+        for fan in [Self::CPU, Self::GPU, Self::MID] {
+            let pwm_num: char = fan.into();
+            let pwm_enable = format!("pwm{pwm_num}_enable");
+            debug!("Looking for {pwm_enable}");
+            for attr in device.attributes() {
+                let tmp = attr.name().to_string_lossy();
+                if tmp.contains(&pwm_enable) {
+                    debug!("Found {pwm_enable}");
+                    fans.push(fan);
+                }
+            }
+        }
+        fans
+    }
 }
 
 impl From<FanCurvePU> for &str {
@@ -142,6 +163,17 @@ impl From<FanCurvePU> for &str {
         match pu {
             FanCurvePU::CPU => "cpu",
             FanCurvePU::GPU => "gpu",
+            FanCurvePU::MID => "mid",
+        }
+    }
+}
+
+impl From<FanCurvePU> for char {
+    fn from(pu: FanCurvePU) -> char {
+        match pu {
+            FanCurvePU::CPU => '1',
+            FanCurvePU::GPU => '2',
+            FanCurvePU::MID => '3',
         }
     }
 }
@@ -153,6 +185,7 @@ impl std::str::FromStr for FanCurvePU {
         match fan.to_ascii_lowercase().trim() {
             "cpu" => Ok(FanCurvePU::CPU),
             "gpu" => Ok(FanCurvePU::GPU),
+            "mid" => Ok(FanCurvePU::MID),
             _ => Err(ProfileError::ParseProfileName),
         }
     }
@@ -169,9 +202,9 @@ impl Default for FanCurvePU {
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Deserialize, Serialize, Debug, Default)]
 pub struct FanCurveProfiles {
-    pub balanced: FanCurveSet,
-    pub performance: FanCurveSet,
-    pub quiet: FanCurveSet,
+    pub balanced: Vec<CurveData>,
+    pub performance: Vec<CurveData>,
+    pub quiet: Vec<CurveData>,
 }
 
 impl FanCurveProfiles {
@@ -180,35 +213,49 @@ impl FanCurveProfiles {
         enumerator.match_subsystem("hwmon")?;
 
         for device in enumerator.scan_devices()? {
-            // if device.parent_with_subsystem("platform")?.is_some() {
             if let Some(name) = device.attribute_value("name") {
                 if name == "asus_custom_fan_curve" {
+                    debug!("asus_custom_fan_curve found");
                     return Ok(device);
                 }
             }
-            // }
         }
         Err(ProfileError::NotSupported)
     }
 
-    pub fn is_supported() -> Result<bool, ProfileError> {
-        if Self::get_device().is_ok() {
-            return Ok(true);
-        }
-
-        Ok(false)
+    /// Return an array of `FanCurvePU`. An empty array indicates no support for
+    /// Curves.
+    pub fn supported_fans() -> Result<Vec<FanCurvePU>, ProfileError> {
+        let device = Self::get_device()?;
+        Ok(FanCurvePU::which_fans(&device))
     }
 
     ///
-    pub fn read_from_dev_profile(&mut self, profile: Profile, device: &Device) {
-        let mut tmp = FanCurveSet::default();
-        tmp.read_cpu_from_device(device);
-        tmp.read_gpu_from_device(device);
-        match profile {
-            Profile::Balanced => self.balanced = tmp,
-            Profile::Performance => self.performance = tmp,
-            Profile::Quiet => self.quiet = tmp,
+    pub fn read_from_dev_profile(
+        &mut self,
+        profile: Profile,
+        device: &Device,
+    ) -> Result<(), ProfileError> {
+        let fans = Self::supported_fans()?;
+        let mut curves = Vec::with_capacity(3);
+
+        for fan in fans {
+            let mut curve = CurveData {
+                fan,
+                ..Default::default()
+            };
+            debug!("Reading curve for {fan:?}");
+            curve.read_from_device(device);
+            debug!("Curve: {curve:?}");
+            curves.push(curve);
         }
+
+        match profile {
+            Profile::Balanced => self.balanced = curves,
+            Profile::Performance => self.performance = curves,
+            Profile::Quiet => self.quiet = curves,
+        }
+        Ok(())
     }
 
     /// Reset the stored (self) and device curve to the defaults of the
@@ -220,19 +267,15 @@ impl FanCurveProfiles {
         &mut self,
         profile: Profile,
         device: &mut Device,
-    ) -> std::io::Result<()> {
-        // Do reset
-        device.set_attribute_value("pwm1_enable", "3")?;
-        device.set_attribute_value("pwm2_enable", "3")?;
-        // Then read
-        let mut tmp = FanCurveSet::default();
-        tmp.read_cpu_from_device(device);
-        tmp.read_gpu_from_device(device);
-        match profile {
-            Profile::Balanced => self.balanced = tmp,
-            Profile::Performance => self.performance = tmp,
-            Profile::Quiet => self.quiet = tmp,
+    ) -> Result<(), ProfileError> {
+        let fans = Self::supported_fans()?;
+        // Do reset for all
+        for fan in fans {
+            let pwm_num: char = fan.into();
+            let pwm = format!("pwm{pwm_num}_enable");
+            device.set_attribute_value(&pwm, "3")?;
         }
+        self.read_from_dev_profile(profile, device)?;
         Ok(())
     }
 
@@ -250,50 +293,34 @@ impl FanCurveProfiles {
             Profile::Performance => &mut self.performance,
             Profile::Quiet => &mut self.quiet,
         };
-        fans.write_cpu_fan(device)?;
-        fans.write_gpu_fan(device)?;
+        for fan in fans {
+            debug!("write_profile_curve_to_platform: writing profile:{profile}, {fan:?}");
+            fan.write_to_device(device)?;
+        }
         Ok(())
-    }
-
-    pub fn get_enabled_curve_profiles(&self) -> Vec<Profile> {
-        let mut tmp = Vec::new();
-        if self.balanced.enabled {
-            tmp.push(Profile::Balanced);
-        }
-        if self.performance.enabled {
-            tmp.push(Profile::Performance);
-        }
-        if self.quiet.enabled {
-            tmp.push(Profile::Quiet);
-        }
-        tmp
     }
 
     pub fn set_profile_curve_enabled(&mut self, profile: Profile, enabled: bool) {
         match profile {
-            Profile::Balanced => self.balanced.enabled = enabled,
-            Profile::Performance => self.performance.enabled = enabled,
-            Profile::Quiet => self.quiet.enabled = enabled,
+            Profile::Balanced => {
+                for curve in self.balanced.iter_mut() {
+                    curve.enabled = enabled;
+                }
+            }
+            Profile::Performance => {
+                for curve in self.performance.iter_mut() {
+                    curve.enabled = enabled;
+                }
+            }
+            Profile::Quiet => {
+                for curve in self.quiet.iter_mut() {
+                    curve.enabled = enabled;
+                }
+            }
         }
     }
 
-    pub fn get_all_fan_curves(&self) -> Vec<FanCurveSet> {
-        vec![
-            self.balanced.clone(),
-            self.performance.clone(),
-            self.quiet.clone(),
-        ]
-    }
-
-    pub fn get_active_fan_curves(&self) -> Result<&FanCurveSet, ProfileError> {
-        match Profile::get_active_profile()? {
-            Profile::Balanced => Ok(&self.balanced),
-            Profile::Performance => Ok(&self.performance),
-            Profile::Quiet => Ok(&self.quiet),
-        }
-    }
-
-    pub fn get_fan_curves_for(&self, name: Profile) -> &FanCurveSet {
+    pub fn get_fan_curves_for(&self, name: Profile) -> &[CurveData] {
         match name {
             Profile::Balanced => &self.balanced,
             Profile::Performance => &self.performance,
@@ -301,37 +328,59 @@ impl FanCurveProfiles {
         }
     }
 
-    pub fn get_fan_curve_for(&self, name: &Profile, pu: &FanCurvePU) -> &CurveData {
+    pub fn get_fan_curve_for(&self, name: &Profile, pu: FanCurvePU) -> Option<&CurveData> {
         match name {
-            Profile::Balanced => match pu {
-                FanCurvePU::CPU => &self.balanced.cpu,
-                FanCurvePU::GPU => &self.balanced.gpu,
-            },
-            Profile::Performance => match pu {
-                FanCurvePU::CPU => &self.performance.cpu,
-                FanCurvePU::GPU => &self.performance.gpu,
-            },
-            Profile::Quiet => match pu {
-                FanCurvePU::CPU => &self.quiet.cpu,
-                FanCurvePU::GPU => &self.quiet.gpu,
-            },
+            Profile::Balanced => {
+                for this_curve in self.balanced.iter() {
+                    if this_curve.fan == pu {
+                        return Some(this_curve);
+                    }
+                }
+            }
+            Profile::Performance => {
+                for this_curve in self.performance.iter() {
+                    if this_curve.fan == pu {
+                        return Some(this_curve);
+                    }
+                }
+            }
+            Profile::Quiet => {
+                for this_curve in self.quiet.iter() {
+                    if this_curve.fan == pu {
+                        return Some(this_curve);
+                    }
+                }
+            }
         }
+        None
     }
 
     pub fn save_fan_curve(&mut self, curve: CurveData, profile: Profile) -> std::io::Result<()> {
         match profile {
-            Profile::Balanced => match curve.fan {
-                FanCurvePU::CPU => self.balanced.cpu = curve,
-                FanCurvePU::GPU => self.balanced.gpu = curve,
-            },
-            Profile::Performance => match curve.fan {
-                FanCurvePU::CPU => self.performance.cpu = curve,
-                FanCurvePU::GPU => self.performance.gpu = curve,
-            },
-            Profile::Quiet => match curve.fan {
-                FanCurvePU::CPU => self.quiet.cpu = curve,
-                FanCurvePU::GPU => self.quiet.gpu = curve,
-            },
+            Profile::Balanced => {
+                for this_curve in self.balanced.iter_mut() {
+                    if this_curve.fan == curve.fan {
+                        *this_curve = curve;
+                        break;
+                    }
+                }
+            }
+            Profile::Performance => {
+                for this_curve in self.performance.iter_mut() {
+                    if this_curve.fan == curve.fan {
+                        *this_curve = curve;
+                        break;
+                    }
+                }
+            }
+            Profile::Quiet => {
+                for this_curve in self.quiet.iter_mut() {
+                    if this_curve.fan == curve.fan {
+                        *this_curve = curve;
+                        break;
+                    }
+                }
+            }
         }
         Ok(())
     }

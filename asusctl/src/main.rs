@@ -660,7 +660,7 @@ fn handle_fan_curve(
     supported: &PlatformProfileFunctions,
     cmd: &FanCurveCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if !supported.fan_curves {
+    if supported.fans.is_empty() {
         println!("Fan-curves not supported by either this kernel or by the laptop.");
         println!("This requires kernel 5.17 or the fan curve patch listed in the readme.");
         return Err(ProfileError::NotSupported.into());
@@ -686,8 +686,9 @@ fn handle_fan_curve(
     }
 
     if cmd.get_enabled {
-        let res = dbus.proxies().profile().enabled_fan_profiles()?;
-        println!("{:?}", res);
+        // TODO:
+        // let res = dbus.proxies().profile().enabled_fan_profiles()?;
+        // println!("{:?}", res);
     }
 
     if cmd.default {

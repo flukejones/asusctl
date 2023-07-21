@@ -7,6 +7,7 @@ edition = "2021"
 [dependencies]
 log.workspace = true
 rog_aura = { path = "../rog-aura" }
+rog_profiles = { path = "../rog-profiles" }
 serde.workspace = true
 serde_derive.workspace = true
 zbus.workspace = true

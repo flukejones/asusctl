@@ -3,6 +3,7 @@ use std::fmt;
 use rog_aura::aura_detection::PowerZones;
 use rog_aura::usb::AuraDevice;
 use rog_aura::{AdvancedAuraType, AuraModeNum, AuraZone};
+use rog_profiles::FanCurvePU;
 use serde_derive::{Deserialize, Serialize};
 use typeshare::typeshare;
 use zbus::zvariant::Type;
@@ -31,7 +32,7 @@ pub struct ChargeSupportedFunctions {
 #[derive(Serialize, Deserialize, Type, Debug, Default, Clone)]
 pub struct PlatformProfileFunctions {
     pub platform_profile: bool,
-    pub fan_curves: bool,
+    pub fans: Vec<FanCurvePU>,
 }
 
 #[typeshare]
@@ -106,7 +107,7 @@ impl fmt::Display for PlatformProfileFunctions {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Platform profiles:")?;
         writeln!(f, "\tplatform: {}", self.platform_profile)?;
-        writeln!(f, "\tfan curves: {}", self.fan_curves)
+        writeln!(f, "\tfan curves: {:?}", self.fans)
     }
 }
 impl fmt::Display for LedSupportedFunctions {

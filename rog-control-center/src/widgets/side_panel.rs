@@ -18,7 +18,7 @@ impl RogApp {
                     *page = Page::System;
                 }
 
-                if self.supported.platform_profile.fan_curves {
+                if !self.supported.platform_profile.fans.is_empty() {
                     ui.separator();
                     if ui
                         .selectable_value(page, Page::FanCurves, "Fan Curves")

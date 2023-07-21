@@ -12,7 +12,7 @@ use rog_aura::usb::AuraPowerDev;
 use rog_aura::{AuraEffect, AuraModeNum};
 use rog_platform::platform::GpuMode;
 use rog_platform::supported::SupportedFunctions;
-use rog_profiles::fan_curve_set::FanCurveSet;
+use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::{FanCurvePU, Profile};
 use supergfxctl::pci_device::{GfxMode, GfxPower};
 #[cfg(not(feature = "mocking"))]
@@ -96,8 +96,8 @@ impl ProfilesState {
 pub struct FanCurvesState {
     pub show_curve: Profile,
     pub show_graph: FanCurvePU,
-    pub enabled: HashSet<Profile>,
-    pub curves: BTreeMap<Profile, FanCurveSet>,
+    pub curves: BTreeMap<Profile, Vec<CurveData>>,
+    pub available_fans: HashSet<FanCurvePU>,
     pub drag_delta: Vec2,
 }
 
@@ -108,34 +108,24 @@ impl FanCurvesState {
         } else {
             vec![Profile::Balanced, Profile::Quiet, Profile::Performance]
         };
-        let enabled = if supported.platform_profile.fan_curves {
-            dbus.proxies()
-                .profile()
-                .enabled_fan_profiles()?
-                .iter()
-                .cloned()
-                .collect::<HashSet<_>>()
-        } else {
-            HashSet::from([Profile::Balanced, Profile::Quiet, Profile::Performance])
-        };
 
-        let mut curves: BTreeMap<Profile, FanCurveSet> = BTreeMap::new();
+        let mut curves: BTreeMap<Profile, Vec<CurveData>> = BTreeMap::new();
         for p in &profiles {
-            if supported.platform_profile.fan_curves {
+            if !supported.platform_profile.fans.is_empty() {
                 if let Ok(curve) = dbus.proxies().profile().fan_curve_data(*p) {
                     curves.insert(*p, curve);
                 }
             } else {
-                let mut curve = FanCurveSet::default();
-                curve.cpu.pwm = [30, 40, 60, 100, 140, 180, 200, 250];
-                curve.cpu.temp = [20, 30, 40, 50, 70, 80, 90, 100];
-                curve.gpu.pwm = [40, 80, 100, 140, 170, 200, 230, 250];
-                curve.gpu.temp = [20, 30, 40, 50, 70, 80, 90, 100];
-                curves.insert(*p, curve);
+                curves.insert(*p, Vec::default());
             }
         }
 
-        let show_curve = if supported.platform_profile.fan_curves {
+        let mut available_fans = HashSet::new();
+        for fan in supported.platform_profile.fans.iter() {
+            available_fans.insert(*fan);
+        }
+
+        let show_curve = if !supported.platform_profile.fans.is_empty() {
             dbus.proxies().profile().active_profile()?
         } else {
             Profile::Balanced
@@ -144,8 +134,8 @@ impl FanCurvesState {
         Ok(Self {
             show_curve,
             show_graph: FanCurvePU::CPU,
-            enabled,
             curves,
+            available_fans,
             drag_delta: Vec2::default(),
         })
     }

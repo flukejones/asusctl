@@ -2739,6 +2739,7 @@ dependencies = [
  "inotify",
  "log",
  "rog_aura",
+ "rog_profiles",
  "rusb",
  "serde",
  "serde_derive",
@@ -2753,6 +2754,7 @@ name = "rog_profiles"
 version = "4.7.0-RC3"
 dependencies = [
  "cargo-husky",
+ "log",
  "serde",
  "serde_derive",
  "typeshare",
