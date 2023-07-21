@@ -32,6 +32,14 @@
         power_zones: [Keyboard],
     ),
     (
+        board_name: "FX505G",
+        layout_name: "fx505d",
+        basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
+        basic_zones: [],
+        advanced_type: None,
+        power_zones: [Keyboard],
+    ),
+    (
         board_name: "FX506H",
         layout_name: "fa506i",
         basic_modes: [Static, Breathe, Strobe, Pulse],
