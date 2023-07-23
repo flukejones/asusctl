@@ -384,6 +384,14 @@
         power_zones: [Keyboard],
     ),
     (
+        board_name: "GA402X",
+        layout_name: "ga401q",
+        basic_modes: [Static, Breathe, Pulse, Rainbow],
+        basic_zones: [],
+        advanced_type: None,
+        power_zones: [Keyboard],
+    ),
+    (
         board_name: "GA503Q",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse, Rainbow, Strobe],

@@ -1,6 +1,5 @@
 use egui::{RichText, Ui};
 use rog_platform::supported::SupportedFunctions;
-use rog_profiles::{FanCurvePU, Profile};
 
 use crate::system_state::{FanCurvesState, ProfilesState, SystemState};
 use crate::widgets::fan_graphs;
@@ -47,28 +46,61 @@ impl RogApp {
             ui.label(RichText::new(format!("{}", profiles.current)).strong());
         });
 
+        // ui.horizontal(|ui| {
+        //     ui.label("Enabled fan-curves: ");
+        //     let mut fan_curve_enable = |profile: Profile, fan: FanCurvePU, mut
+        // checked: bool| {         if ui
+        //             .add(egui::Checkbox::new(&mut checked, format!("{:?}", fan)))
+        //             .changed()
+        //         {
+        //             dbus.proxies()
+        //                 .profile()
+        //                 .set_fan_curves_enabled(profile, checked)
+        //                 .map_err(|err| {
+        //                     *do_error = Some(err.to_string());
+        //                 })
+        //                 .ok();
+        //             changed = true;
+        //         }
+        //     };
+
+        //     if let Some(curves) = curves.curves.get_mut(&profiles.current) {
+        //         for curve in curves.iter_mut() {
+        //             fan_curve_enable(profiles.current, curve.fan, curve.enabled);
+        //         }
+        //     }
+        // });
+
         ui.horizontal(|ui| {
             ui.label("Enabled fan-curves: ");
-            let mut fan_curve_enable = |profile: Profile, fan: FanCurvePU, mut checked: bool| {
-                if ui
-                    .add(egui::Checkbox::new(&mut checked, format!("{:?}", fan)))
-                    .changed()
-                {
-                    dbus.proxies()
-                        .profile()
-                        .set_fan_curve_enabled(profile, checked)
-                        .map_err(|err| {
-                            *do_error = Some(err.to_string());
-                        })
-                        .ok();
-                    changed = true;
-                }
-            };
-
+            let mut checked = false;
+            let mut label = String::default();
             if let Some(curves) = curves.curves.get_mut(&profiles.current) {
-                for curve in curves.iter_mut() {
-                    fan_curve_enable(profiles.current, curve.fan, curve.enabled);
+                for curve in curves.iter() {
+                    label.push_str(&<&str>::from(curve.fan).to_ascii_uppercase());
+                    label.push(' ');
+                    if curve.enabled {
+                        // TODO: it's possible to set just one fan to active
+                        checked = true;
+                    }
                 }
+            }
+
+            if ui
+                .add(egui::Checkbox::new(
+                    &mut checked,
+                    RichText::new(label).strong(),
+                ))
+                .changed()
+            {
+                dbus.proxies()
+                    .profile()
+                    .set_fan_curves_enabled(profiles.current, checked)
+                    .map_err(|err| {
+                        *do_error = Some(err.to_string());
+                    })
+                    .ok();
+                changed = true;
             }
         });
 

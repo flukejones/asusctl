@@ -300,7 +300,7 @@ impl FanCurveProfiles {
         Ok(())
     }
 
-    pub fn set_profile_curve_enabled(&mut self, profile: Profile, enabled: bool) {
+    pub fn set_profile_curves_enabled(&mut self, profile: Profile, enabled: bool) {
         match profile {
             Profile::Balanced => {
                 for curve in self.balanced.iter_mut() {
@@ -315,6 +315,40 @@ impl FanCurveProfiles {
             Profile::Quiet => {
                 for curve in self.quiet.iter_mut() {
                     curve.enabled = enabled;
+                }
+            }
+        }
+    }
+
+    pub fn set_profile_fan_curve_enabled(
+        &mut self,
+        profile: Profile,
+        fan: FanCurvePU,
+        enabled: bool,
+    ) {
+        match profile {
+            Profile::Balanced => {
+                for curve in self.balanced.iter_mut() {
+                    if curve.fan == fan {
+                        curve.enabled = enabled;
+                        break;
+                    }
+                }
+            }
+            Profile::Performance => {
+                for curve in self.performance.iter_mut() {
+                    if curve.fan == fan {
+                        curve.enabled = enabled;
+                        break;
+                    }
+                }
+            }
+            Profile::Quiet => {
+                for curve in self.quiet.iter_mut() {
+                    if curve.fan == fan {
+                        curve.enabled = enabled;
+                        break;
+                    }
                 }
             }
         }

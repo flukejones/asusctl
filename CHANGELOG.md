@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for G733C LED modes
 - Support for GV601VI LED modes
 - Support for FX505G LED modes
+- Support for GA402X LED modes
 - Support for G634J LED modes (layout is in progress)
 - Support the Rear Glow on some laptops
 - Added field to aura_support to determine which LED power zones are supported. This will need folks to contribute data.
@@ -27,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add generation of typescript types from the rust types used via dbus using typeshare
 - Add generation of introspection XML from asusd dbus
 - Add a reworked gnome extension to the main repo under `desktop-extensions/gnome/`. This was done to better keep the extension in sync with work done on asusd, especially around breaking dbus
+- Add support for the mid fan custom curves on some laptops
 ### Changed
 - Move FX506HC to FX506H in arua DB to catch full series of this range
 - Move FX506LH to FX506L in arua DB to catch full series of this range

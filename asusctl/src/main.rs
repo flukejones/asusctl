@@ -705,7 +705,7 @@ fn handle_fan_curve(
         if let Some(enabled) = cmd.enabled {
             dbus.proxies()
                 .profile()
-                .set_fan_curve_enabled(profile, enabled)?;
+                .set_fan_curves_enabled(profile, enabled)?;
         }
 
         if let Some(mut curve) = cmd.data.clone() {

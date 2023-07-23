@@ -21,7 +21,7 @@
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
 use rog_profiles::fan_curve_set::CurveData;
-use rog_profiles::Profile;
+use rog_profiles::{FanCurvePU, Profile};
 use zbus::dbus_proxy;
 
 #[dbus_proxy(
@@ -46,7 +46,16 @@ trait Profile {
     fn set_active_profile(&self, profile: Profile) -> zbus::Result<()>;
 
     /// Set a profile fan curve enabled status. Will also activate a fan curve.
-    fn set_fan_curve_enabled(&self, profile: Profile, enabled: bool) -> zbus::Result<()>;
+    fn set_fan_curves_enabled(&self, profile: Profile, enabled: bool) -> zbus::Result<()>;
+
+    /// Set a single fan curve for a profile to enabled status. Will also
+    /// activate a fan curve.
+    async fn set_profile_fan_curve_enabled(
+        &mut self,
+        profile: Profile,
+        fan: FanCurvePU,
+        enabled: bool,
+    ) -> zbus::Result<()>;
 
     /// Set the fan curve for the specified profile, or the profile the user is
     /// currently in if profile == None. Will also activate the fan curve.

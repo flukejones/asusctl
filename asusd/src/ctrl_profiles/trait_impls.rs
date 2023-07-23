@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use config_traits::StdConfig;
 use log::{error, info, warn};
 use rog_profiles::fan_curve_set::CurveData;
-use rog_profiles::{FanCurveProfiles, Profile};
+use rog_profiles::{FanCurvePU, FanCurveProfiles, Profile};
 use zbus::export::futures_util::lock::Mutex;
 use zbus::export::futures_util::StreamExt;
 use zbus::fdo::Error;
@@ -83,9 +83,9 @@ impl ProfileZbus {
             .ok();
     }
 
-    /// Set a profile fan curve enabled status. Will also activate a fan curve
-    /// if in the same profile mode
-    async fn set_fan_curve_enabled(
+    /// Set all fan curves for a profile to enabled status. Will also activate a
+    /// fan curve if in the same profile mode
+    async fn set_fan_curves_enabled(
         &mut self,
         profile: Profile,
         enabled: bool,
@@ -95,7 +95,33 @@ impl ProfileZbus {
         if let Some(curves) = &mut ctrl.fan_curves {
             curves
                 .profiles_mut()
-                .set_profile_curve_enabled(profile, enabled);
+                .set_profile_curves_enabled(profile, enabled);
+
+            ctrl.write_profile_curve_to_platform()
+                .map_err(|e| warn!("{MOD_NAME}: write_profile_curve_to_platform, {}", e))
+                .ok();
+
+            ctrl.save_config();
+            Ok(())
+        } else {
+            Err(Error::Failed(UNSUPPORTED_MSG.to_owned()))
+        }
+    }
+
+    /// Set a single fan curve for a profile to enabled status. Will also
+    /// activate a fan curve if in the same profile mode
+    async fn set_profile_fan_curve_enabled(
+        &mut self,
+        profile: Profile,
+        fan: FanCurvePU,
+        enabled: bool,
+    ) -> zbus::fdo::Result<()> {
+        let mut ctrl = self.0.lock().await;
+        ctrl.profile_config.read();
+        if let Some(curves) = &mut ctrl.fan_curves {
+            curves
+                .profiles_mut()
+                .set_profile_fan_curve_enabled(profile, fan, enabled);
 
             ctrl.write_profile_curve_to_platform()
                 .map_err(|e| warn!("{MOD_NAME}: write_profile_curve_to_platform, {}", e))
