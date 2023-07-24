@@ -560,7 +560,7 @@
         power_zones: [Keyboard],
     ),
     (
-        board_name: "GV601VI",
+        board_name: "GV601V",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse, Strobe],
         basic_zones: [],
