@@ -48,12 +48,12 @@ impl StdConfig for FanCurveConfig {
         Self::default()
     }
 
-    fn config_dir() -> std::path::PathBuf {
-        PathBuf::from(CONFIG_PATH_BASE)
-    }
-
     fn file_name(&self) -> String {
         CONFIG_FAN_FILE.to_owned()
+    }
+
+    fn config_dir() -> std::path::PathBuf {
+        PathBuf::from(CONFIG_PATH_BASE)
     }
 }
 
