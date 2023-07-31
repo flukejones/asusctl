@@ -686,9 +686,11 @@ fn handle_fan_curve(
     }
 
     if cmd.get_enabled {
-        // TODO:
-        // let res = dbus.proxies().profile().enabled_fan_profiles()?;
-        // println!("{:?}", res);
+        let profile = dbus.proxies().profile().active_profile()?;
+        let curves = dbus.proxies().profile().fan_curve_data(profile)?;
+        for curve in curves.iter() {
+            println!("{}", String::from(curve));
+        }
     }
 
     if cmd.default {

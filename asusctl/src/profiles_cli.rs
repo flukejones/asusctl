@@ -6,13 +6,16 @@ use rog_profiles::{FanCurvePU, Profile};
 pub struct ProfileCommand {
     #[options(help = "print help message")]
     pub help: bool,
+
     #[options(help = "toggle to next profile in list")]
     pub next: bool,
+
     #[options(help = "list available profiles")]
     pub list: bool,
 
     #[options(help = "get profile")]
     pub profile_get: bool,
+
     #[options(meta = "", help = "set the active profile")]
     pub profile_set: Option<Profile>,
 }
@@ -24,6 +27,7 @@ pub struct FanCurveCommand {
 
     #[options(help = "get enabled fan profiles")]
     pub get_enabled: bool,
+
     #[options(help = "set the active profile's fan curve to default")]
     pub default: bool,
 
@@ -32,11 +36,13 @@ pub struct FanCurveCommand {
         help = "profile to modify fan-curve for. Shows data if no options provided"
     )]
     pub mod_profile: Option<Profile>,
+
     #[options(
         meta = "",
         help = "enable or disable <true/false> fan curve. `mod_profile` required"
     )]
     pub enabled: Option<bool>,
+
     #[options(
         meta = "",
         help = "select fan <cpu/gpu/mid> to modify. `mod_profile` required"
