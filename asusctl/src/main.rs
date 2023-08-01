@@ -678,10 +678,13 @@ fn handle_fan_curve(
         return Ok(());
     }
 
-    if (cmd.enabled.is_some() || cmd.fan.is_some() || cmd.data.is_some())
+    if (cmd.enable_fan_curves.is_some() || cmd.fan.is_some() || cmd.data.is_some())
         && cmd.mod_profile.is_none()
     {
-        println!("--enabled, --fan, and --data options require --mod-profile");
+        println!(
+            "--enable-fan-curves, --enable-fan-curve, --fan, and --data options require \
+             --mod-profile"
+        );
         return Ok(());
     }
 
@@ -698,16 +701,29 @@ fn handle_fan_curve(
     }
 
     if let Some(profile) = cmd.mod_profile {
-        if cmd.enabled.is_none() && cmd.data.is_none() {
+        if cmd.enable_fan_curves.is_none() && cmd.data.is_none() {
             let data = dbus.proxies().profile().fan_curve_data(profile)?;
             let data = toml::to_string(&data)?;
             println!("\nFan curves for {:?}\n\n{}", profile, data);
         }
 
-        if let Some(enabled) = cmd.enabled {
+        if let Some(enabled) = cmd.enable_fan_curves {
             dbus.proxies()
                 .profile()
                 .set_fan_curves_enabled(profile, enabled)?;
+        }
+
+        if let Some(enabled) = cmd.enable_fan_curve {
+            if let Some(fan) = cmd.fan {
+                dbus.proxies()
+                    .profile()
+                    .set_profile_fan_curve_enabled(profile, fan, enabled)?;
+            } else {
+                println!(
+                    "--enable-fan-curves, --enable-fan-curve, --fan, and --data options require \
+                     --mod-profile"
+                );
+            }
         }
 
         if let Some(mut curve) = cmd.data.clone() {

@@ -43,8 +43,9 @@ pub struct CurveData {
 impl From<&CurveData> for String {
     fn from(c: &CurveData) -> Self {
         format!(
-            "{:?}: {}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%",
+            "{:?}: enabled: {}, {}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%",
             c.fan,
+            c.enabled,
             c.temp[0],
             (c.pwm[0] as u32) * 100 / 255,
             c.temp[1],
@@ -193,9 +194,10 @@ mod tests {
 
     #[test]
     fn curve_data_from_str_to_str() {
-        let curve =
+        let mut curve =
             CurveData::from_str("30c:1%,49c:2%,59c:3%,69c:4%,79c:31%,89c:49%,99c:56%,109c:58%")
                 .unwrap();
+        curve.enabled = true;
         assert_eq!(curve.fan, FanCurvePU::CPU);
         assert_eq!(curve.temp, [30, 49, 59, 69, 79, 89, 99, 109]);
         assert_eq!(curve.pwm, [3, 5, 8, 10, 79, 125, 143, 148]);
@@ -204,7 +206,7 @@ mod tests {
         // End result is slightly different due to type conversions and rounding errors
         assert_eq!(
             string.as_str(),
-            "CPU: 30c:1%,49c:1%,59c:3%,69c:3%,79c:30%,89c:49%,99c:56%,109c:58%"
+            "CPU: enabled: true, 30c:1%,49c:1%,59c:3%,69c:3%,79c:30%,89c:49%,99c:56%,109c:58%"
         );
 
         let curve = CurveData::from_str("30c:1%,49c:2%,59c:3%,69c:4%,79c:31%,89c:49%,99c:56%");

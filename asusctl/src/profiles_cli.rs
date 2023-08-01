@@ -39,20 +39,28 @@ pub struct FanCurveCommand {
 
     #[options(
         meta = "",
-        help = "enable or disable <true/false> fan curve. `mod_profile` required"
+        help = "enable or disable <true/false> fan all curves for a profile. `--mod_profile` \
+                required"
     )]
-    pub enabled: Option<bool>,
+    pub enable_fan_curves: Option<bool>,
 
     #[options(
         meta = "",
-        help = "select fan <cpu/gpu/mid> to modify. `mod_profile` required"
+        help = "enable or disable <true/false> a single fan curve for a profile. `--mod_profile` \
+                and `--fan` required"
+    )]
+    pub enable_fan_curve: Option<bool>,
+
+    #[options(
+        meta = "",
+        help = "select fan <cpu/gpu/mid> to modify. `--mod_profile` required"
     )]
     pub fan: Option<FanCurvePU>,
 
     #[options(
         meta = "",
-        help = "data format = 30c:1%,49c:2%,59c:3%,69c:4%,79c:31%,89c:49%,99c:56%,109c:58%.
-                      `--mod-profile` required. If '%' is omitted the fan range is 0-255"
+        help = "data format = 30c:1%,49c:2%,59c:3%,69c:4%,79c:31%,89c:49%,99c:56%,109c:58%. \
+                `--mod-profile` required. If '%' is omitted the fan range is 0-255"
     )]
     pub data: Option<CurveData>,
 }

@@ -51,7 +51,7 @@ trait Profile {
     /// Set a single fan curve for a profile to enabled status. Will also
     /// activate a fan curve.
     async fn set_profile_fan_curve_enabled(
-        &mut self,
+        &self,
         profile: Profile,
         fan: FanCurvePU,
         enabled: bool,
