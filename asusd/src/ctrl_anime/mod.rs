@@ -39,6 +39,7 @@ impl Node {
         match self {
             Node::Usb(u) => {
                 u.write_bytes(message).ok();
+                dbg!(message);
             }
             Node::Hid(h) => {
                 h.write_bytes(message).ok();
@@ -65,10 +66,10 @@ impl CtrlAnime {
     pub fn new(config: AnimeConfig) -> Result<CtrlAnime, RogError> {
         let hid = HidRaw::new("193b").ok();
         let usb = USBRaw::new(0x193b).ok();
-        let node = if hid.is_some() {
-            unsafe { Node::Hid(hid.unwrap_unchecked()) }
-        } else if usb.is_some() {
+        let node = if usb.is_some() {
             unsafe { Node::Usb(usb.unwrap_unchecked()) }
+        } else if hid.is_some() {
+            unsafe { Node::Hid(hid.unwrap_unchecked()) }
         } else {
             return Err(RogError::Anime(AnimeError::NoDevice));
         };
