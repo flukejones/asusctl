@@ -8,26 +8,27 @@ use zbus::zvariant::Type;
 use crate::error::ProfileError;
 use crate::FanCurvePU;
 
+fn set_sysfs_name(string: &mut [u8], fan: char, index: usize) {
+    string[3] = fan as u8;
+    string[15] = char::from_digit(index as u32 + 1, 10).unwrap() as u8;
+}
+
 pub(crate) fn pwm_str(fan: char, index: usize) -> String {
     // The char 'X' is replaced via indexing
-    let mut buf = "pwmX_auto_pointX_pwm".to_owned();
+    let mut string = "pwmX_auto_pointX_pwm".to_owned();
     unsafe {
-        let tmp = buf.as_bytes_mut();
-        tmp[3] = fan as u8;
-        tmp[15] = char::from_digit(index as u32 + 1, 10).unwrap() as u8;
+        set_sysfs_name(string.as_bytes_mut(), fan, index);
     }
-    buf
+    string
 }
 
 pub(crate) fn temp_str(fan: char, index: usize) -> String {
     // The char 'X' is replaced via indexing
-    let mut buf = "pwmX_auto_pointX_temp".to_owned();
+    let mut string = "pwmX_auto_pointX_temp".to_owned();
     unsafe {
-        let tmp = buf.as_bytes_mut();
-        tmp[3] = fan as u8;
-        tmp[15] = char::from_digit(index as u32 + 1, 10).unwrap() as u8;
+        set_sysfs_name(string.as_bytes_mut(), fan, index);
     }
-    buf
+    string
 }
 
 #[typeshare]
