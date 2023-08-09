@@ -96,7 +96,6 @@ impl CtrlAnimeZbus {
         enabled: bool,
     ) {
         let mut lock = self.0.lock().await;
-        dbg!("LOOOOOOOOOOCKEDDD");
         lock.node
             .write_bytes(&pkt_set_enable_powersave_anim(enabled))
             .map_err(|err| {

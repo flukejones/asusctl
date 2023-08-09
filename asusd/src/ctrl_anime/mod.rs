@@ -39,7 +39,6 @@ impl Node {
         match self {
             Node::Usb(u) => {
                 u.write_bytes(message).ok();
-                dbg!(message);
             }
             Node::Hid(h) => {
                 h.write_bytes(message).ok();
