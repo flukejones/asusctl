@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixes to asusctl CLI tool to show fan curves
 - Fixes to asusd to ensure fan curve defaults are loaded if the config file fails
 - Further refine the asusctl CLI for fan-curve control
+- Fixes to AniMe detection
 
 ### Added
 - Support for GV601V LED modes
