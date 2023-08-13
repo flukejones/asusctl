@@ -562,9 +562,9 @@
     (
         board_name: "GV601V",
         layout_name: "ga401q",
-        basic_modes: [Static, Breathe, Pulse, Strobe],
+        basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],
-        advanced_type: None,
+        advanced_type: Zoned([SingleZone]),
         power_zones: [Keyboard],
     ),
     (
