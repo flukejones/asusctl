@@ -21,6 +21,12 @@ pub enum AuraPowerConfig {
     AuraDevRog2(AuraPower),
 }
 
+impl Default for AuraPowerConfig {
+    fn default() -> Self {
+        Self::AuraDevRog2(AuraPower::default())
+    }
+}
+
 impl AuraPowerConfig {
     /// Invalid for TUF laptops
     pub fn to_bytes(control: &Self) -> [u8; 4] {
@@ -104,7 +110,7 @@ impl From<&AuraPowerConfig> for AuraPowerDev {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, Default)]
 // #[serde(default)]
 pub struct AuraConfig {
     pub brightness: LedBrightness,
@@ -125,7 +131,7 @@ impl StdConfig for AuraConfig {
                 break;
             }
         }
-        Self::create_default(prod_id, &LaptopLedData::get_data())
+        Self::from_default_support(prod_id, &LaptopLedData::get_data())
     }
 
     fn config_dir() -> std::path::PathBuf {
@@ -140,7 +146,7 @@ impl StdConfig for AuraConfig {
 impl StdConfigLoad for AuraConfig {}
 
 impl AuraConfig {
-    pub fn create_default(prod_id: AuraDevice, support_data: &LaptopLedData) -> Self {
+    pub fn from_default_support(prod_id: AuraDevice, support_data: &LaptopLedData) -> Self {
         // create a default config here
         let enabled = if prod_id == AuraDevice::X19b6 {
             AuraPowerConfig::AuraDevRog2(AuraPower::new_all_on())
@@ -247,7 +253,8 @@ mod tests {
 
     #[test]
     fn set_multizone_4key_config() {
-        let mut config = AuraConfig::create_default(AuraDevice::X19b6, &LaptopLedData::default());
+        let mut config =
+            AuraConfig::from_default_support(AuraDevice::X19b6, &LaptopLedData::default());
 
         let effect = AuraEffect {
             colour1: Colour {
@@ -337,7 +344,8 @@ mod tests {
 
     #[test]
     fn set_multizone_multimode_config() {
-        let mut config = AuraConfig::create_default(AuraDevice::X19b6, &LaptopLedData::default());
+        let mut config =
+            AuraConfig::from_default_support(AuraDevice::X19b6, &LaptopLedData::default());
 
         let effect = AuraEffect {
             zone: AuraZone::Key1,

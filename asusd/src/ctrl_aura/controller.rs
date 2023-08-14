@@ -112,7 +112,7 @@ impl CtrlKbdLed {
             LEDNode::None
         };
 
-        let mut config_init = AuraConfig::create_default(led_prod, &supported_modes);
+        let mut config_init = AuraConfig::default();
         let mut config_loaded = config_init.clone().load();
 
         for mode in &mut config_init.builtins {
@@ -414,7 +414,7 @@ mod tests {
     // #[ignore = "Must be manually run due to detection stage"]
     fn check_set_mode_errors() {
         // Checking to ensure set_mode errors when unsupported modes are tried
-        let config = AuraConfig::create_default(AuraDevice::X19b6, &LaptopLedData::default());
+        let config = AuraConfig::from_default_support(AuraDevice::X19b6, &LaptopLedData::default());
         let supported_modes = LaptopLedData {
             board_name: String::new(),
             layout_name: "ga401".to_owned(),
@@ -482,7 +482,7 @@ mod tests {
     #[test]
     fn create_multizone_if_no_config() {
         // Checking to ensure set_mode errors when unsupported modes are tried
-        let config = AuraConfig::create_default(AuraDevice::X19b6, &LaptopLedData::default());
+        let config = AuraConfig::from_default_support(AuraDevice::X19b6, &LaptopLedData::default());
         let supported_modes = LaptopLedData {
             board_name: String::new(),
             layout_name: "ga401".to_owned(),
@@ -521,7 +521,7 @@ mod tests {
     #[test]
     fn next_mode_create_multizone_if_no_config() {
         // Checking to ensure set_mode errors when unsupported modes are tried
-        let config = AuraConfig::create_default(AuraDevice::X19b6, &LaptopLedData::default());
+        let config = AuraConfig::from_default_support(AuraDevice::X19b6, &LaptopLedData::default());
         let supported_modes = LaptopLedData {
             board_name: String::new(),
             layout_name: "ga401".to_owned(),

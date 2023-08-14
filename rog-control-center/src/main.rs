@@ -127,7 +127,7 @@ fn main() -> Result<()> {
         layouts = KeyLayout::layout_files(path.clone()).unwrap();
 
         if let Some(name) = &cli_parsed.board_name {
-            if let Some(modes) = LedSupportFile::load_from_config() {
+            if let Some(modes) = LedSupportFile::load_from_supoprt_db() {
                 if let Some(data) = modes.matcher(name) {
                     led_support = data;
                 }

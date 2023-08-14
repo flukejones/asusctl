@@ -17,10 +17,11 @@ use crate::LED_MSG_LEN;
 
 #[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum LedBrightness {
     Off,
     Low,
+    #[default]
     Med,
     High,
 }

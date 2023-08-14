@@ -1,5 +1,3 @@
-// REF: https://gjs.guide/extensions/development/creating.html
-
 import { AnimeDbus } from "./modules/dbus/animatrix";
 import { Power } from "./modules/dbus/power";
 import { Supported } from "./modules/dbus/supported";

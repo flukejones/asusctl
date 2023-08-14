@@ -6,6 +6,6 @@
   "settings-schema": "org.gnome.shell.extensions.asusctl-gnome",
   "version": "4.3.2",
   "shell-version": [
-    "43", "44"
+    "43", "44", "45"
   ]
 }
