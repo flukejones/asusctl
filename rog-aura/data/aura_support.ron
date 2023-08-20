@@ -512,6 +512,14 @@
         power_zones: [Keyboard],
     ),
     (
+        board_name: "GU603VV",
+        layout_name: "ga401q",
+        basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
+        basic_zones: [],
+        advanced_type: Zoned([SingleZone]),
+        power_zones: [Keyboard],
+    ),
+    (
         board_name: "GU603Z",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
