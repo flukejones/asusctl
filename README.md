@@ -1,6 +1,6 @@
 # `asusctl` for ASUS ROG
 
-[![](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate/?hosted_button_id=4V2DEPS7K6APC) - [Asus Linux Website](https://asus-linux.org/)
+[Become a Patron!](https://www.patreon.com/bePatron?u=7602281) - [Asus Linux Website](https://asus-linux.org/)
 
 **WARNING:** Many features are developed in tandem with kernel patches. If you see a feature is missing you either need a patched kernel, or v6.1 which has all my work merged upstream.
 
