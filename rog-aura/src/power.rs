@@ -19,6 +19,7 @@ pub struct KbAuraPowerState {
 }
 
 impl Default for KbAuraPowerState {
+    /// Defaults all to off
     fn default() -> Self {
         Self {
             zone: PowerZones::Keyboard,

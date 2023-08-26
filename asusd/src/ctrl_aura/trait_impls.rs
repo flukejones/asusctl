@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use config_traits::StdConfig;
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use rog_aura::advanced::UsbPackets;
 use rog_aura::usb::{AuraDevice, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, LedBrightness};
@@ -302,7 +302,9 @@ impl CtrlTask for CtrlKbdLedZbus {
 impl crate::Reloadable for CtrlKbdLedZbus {
     async fn reload(&mut self) -> Result<(), RogError> {
         let mut ctrl = self.0.lock().await;
+        debug!("CtrlKbdLedZbus: reloading keyboard mode");
         ctrl.write_current_config_mode()?;
+        debug!("CtrlKbdLedZbus: reloading power states");
         ctrl.set_power_states().map_err(|err| warn!("{err}")).ok();
         Ok(())
     }

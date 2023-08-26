@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, HashSet};
 
 use config_traits::{StdConfig, StdConfigLoad};
-use log::warn;
+use log::{debug, warn};
 use rog_aura::aura_detection::{LaptopLedData, ASUS_KEYBOARD_DEVICES};
 use rog_aura::power::AuraPower;
 use rog_aura::usb::{AuraDevRog1, AuraDevTuf, AuraDevice, AuraPowerDev};
@@ -19,12 +19,6 @@ pub enum AuraPowerConfig {
     AuraDevTuf(HashSet<AuraDevTuf>),
     AuraDevRog1(HashSet<AuraDevRog1>),
     AuraDevRog2(AuraPower),
-}
-
-impl Default for AuraPowerConfig {
-    fn default() -> Self {
-        Self::AuraDevRog2(AuraPower::default())
-    }
 }
 
 impl AuraPowerConfig {
@@ -110,7 +104,7 @@ impl From<&AuraPowerConfig> for AuraPowerDev {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, Default)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 // #[serde(default)]
 pub struct AuraConfig {
     pub brightness: LedBrightness,
@@ -122,6 +116,7 @@ pub struct AuraConfig {
 }
 
 impl StdConfig for AuraConfig {
+    /// Detect the keyboard type and load from default DB if data available
     fn new() -> Self {
         warn!("AuraConfig: creating new config");
         let mut prod_id = AuraDevice::Unknown;
@@ -176,6 +171,7 @@ impl AuraConfig {
         };
 
         for n in &support_data.basic_modes {
+            debug!("AuraConfig: creating default for {n}");
             config
                 .builtins
                 .insert(*n, AuraEffect::default_with_mode(*n));
