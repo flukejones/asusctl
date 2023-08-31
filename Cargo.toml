@@ -1,7 +1,7 @@
 [workspace]
 members = ["asusctl", "asusd", "asusd-user", "config-traits", "rog-platform", "rog-dbus", "rog-anime", "rog-aura", "rog-profiles", "rog-control-center", "simulators"]
 default-members = ["asusctl", "asusd", "asusd-user", "rog-control-center"]
-workspace.resolver = "2"
+resolver = "2"
 
 [workspace.package]
 version = "4.7.1"
