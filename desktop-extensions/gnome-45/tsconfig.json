@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "es2019"
+    ],
+    "types": [],
+    "target": "es2019",
+    "module": "ES2022",
+    "moduleResolution": "node",
+    "declaration": true,
+    "removeComments": true,
+    "strict": true,
+    "allowJs": true
+  },
+  "files": [
+    "./src/extension.ts",
+  ],
+  "include": [
+    "src/*.ts",
+    "src/**/*.ts"
+  ]
+}
