@@ -63,7 +63,7 @@ impl LaptopLedData {
         // let prod_family = dmi.product_family().expect("Could not get
         // product_family");
 
-        if let Some(modes) = LedSupportFile::load_from_config() {
+        if let Some(modes) = LedSupportFile::load_from_supoprt_db() {
             if let Some(data) = modes.matcher(&board_name) {
                 return data;
             }
@@ -90,7 +90,12 @@ impl LedSupportFile {
         None
     }
 
-    pub fn load_from_config() -> Option<Self> {
+    /// Load `LedSupportFile` from the `aura_support.ron` file at
+    /// `/usr/share/asusd/aura_support.ron` and append with data from
+    /// `/etc/asusd/asusd_user_ledmodes.ron` if that file is available.
+    ///
+    /// Returns `None` if neither file exists or does not parse correctly.
+    pub fn load_from_supoprt_db() -> Option<Self> {
         let mut loaded = false;
         let mut data = LedSupportFile::default();
         // Load user configs first so they are first to be checked

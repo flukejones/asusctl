@@ -24,7 +24,11 @@ impl GetSupported for CtrlAnime {
     type A = AnimeSupportedFunctions;
 
     fn get_supported() -> Self::A {
-        AnimeSupportedFunctions(HidRaw::new("193b").is_ok())
+        if USBRaw::new(0x193b).is_ok() {
+            AnimeSupportedFunctions(true)
+        } else {
+            AnimeSupportedFunctions(HidRaw::new("193b").is_ok())
+        }
     }
 }
 
@@ -63,12 +67,12 @@ pub struct CtrlAnime {
 impl CtrlAnime {
     #[inline]
     pub fn new(config: AnimeConfig) -> Result<CtrlAnime, RogError> {
-        let hid = HidRaw::new("193b").ok();
         let usb = USBRaw::new(0x193b).ok();
-        let node = if hid.is_some() {
-            unsafe { Node::Hid(hid.unwrap_unchecked()) }
-        } else if usb.is_some() {
+        let hid = HidRaw::new("193b").ok();
+        let node = if usb.is_some() {
             unsafe { Node::Usb(usb.unwrap_unchecked()) }
+        } else if hid.is_some() {
+            unsafe { Node::Hid(hid.unwrap_unchecked()) }
         } else {
             return Err(RogError::Anime(AnimeError::NoDevice));
         };

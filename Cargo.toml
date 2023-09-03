@@ -1,9 +1,10 @@
 [workspace]
 members = ["asusctl", "asusd", "asusd-user", "config-traits", "rog-platform", "rog-dbus", "rog-anime", "rog-aura", "rog-profiles", "rog-control-center", "simulators"]
 default-members = ["asusctl", "asusd", "asusd-user", "rog-control-center"]
+resolver = "2"
 
 [workspace.package]
-version = "4.7.0"
+version = "4.7.1"
 
 [workspace.dependencies]
 async-trait = "^0.1"
@@ -12,8 +13,8 @@ concat-idents = "^1.1"
 dirs = "^4.0"
 smol = "^1.3"
 
-zbus = "~3.13.1"
-logind-zbus = { version = "^3.1.0" } #, default-features = false, features = ["non_blocking"] }
+zbus = "~3.14.1"
+logind-zbus = { version = "~3.1" } #, default-features = false, features = ["non_blocking"] }
 
 serde = "^1.0"
 serde_derive = "^1.0"

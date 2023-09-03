@@ -1,4 +1,4 @@
-// REF: https://gjs.guide/extensions/development/creating.html
+import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import { AnimeDbus } from "./modules/dbus/animatrix";
 import { Power } from "./modules/dbus/power";
@@ -14,7 +14,9 @@ import { FeatureMenuToggle } from "./modules/quick_menus/laptop_features";
 import { AuraDbus } from "./modules/dbus/aura";
 import { AuraMenuToggle } from "./modules/quick_menus/aura";
 
-class Extension {
+export var extension;
+
+export default class AsusExtension extends Extension {
     private _indicateMiniLed: typeof IndicateMiniLed;
     private _quickMiniLed: typeof QuickMiniLed;
     private _quickPanelOd: typeof QuickPanelOd;
@@ -28,23 +30,29 @@ class Extension {
     public dbus_aura: AuraDbus = new AuraDbus;
     public dbus_anime: AnimeDbus = new AnimeDbus;
     public dbus_platform: Platform = new Platform;
+    public extensionPath: any = null;
 
+    settings() {
+        return this._settings;
+    }
 
-    constructor() {
+    async enable() {
+        this._settings = this.getSettings();
+        this.extensionPath = this.path;
+        extension = this;
+
         this._indicateMiniLed = null;
         this._quickMiniLed = null;
         this._quickPanelOd = null;
         this._quickAnimePower = null;
         this._sliderCharge = null;
 
-        this.dbus_supported.start();
-        this.dbus_aura.start();
-        this.dbus_platform.start();
-        this.dbus_power.start();
-        this.dbus_anime.start();
-    }
+        await this.dbus_supported.start();
+        await this.dbus_aura.start();
+        await this.dbus_platform.start();
+        await this.dbus_power.start();
+        await this.dbus_anime.start();
 
-    enable() {
         if (this._featureMenuToggle == null) {
             this._featureMenuToggle = new FeatureMenuToggle(this.dbus_supported, this.dbus_platform, this.dbus_anime);
         }
@@ -102,13 +110,8 @@ class Extension {
 
         this.dbus_power.stop();
         this.dbus_platform.stop();
-        this.dbus_anime.stop();
+        // this.dbus_anime.stop();
         this.dbus_aura.stop();
         this.dbus_supported.stop();
     }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function init() {
-    return new Extension();
 }

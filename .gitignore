@@ -14,7 +14,7 @@ vendor_*
 node-modules
 bindings/ts/*.d.ts
 bindings/ts/*.js.map
-desktop-extensions/gnome/dist
-desktop-extensions/gnome/node_modules
-desktop-extensions/gnome/schemas/gschemas.compiled
-desktop-extensions/gnome/*.zip
+desktop-extensions/gnome*/dist
+desktop-extensions/gnome*/node_modules
+desktop-extensions/gnome*/schemas/gschemas.compiled
+desktop-extensions/gnome*/*.zip

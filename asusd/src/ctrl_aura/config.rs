@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, HashSet};
 
 use config_traits::{StdConfig, StdConfigLoad};
-use log::warn;
+use log::{debug, warn};
 use rog_aura::aura_detection::{LaptopLedData, ASUS_KEYBOARD_DEVICES};
 use rog_aura::power::AuraPower;
 use rog_aura::usb::{AuraDevRog1, AuraDevTuf, AuraDevice, AuraPowerDev};
@@ -116,6 +116,7 @@ pub struct AuraConfig {
 }
 
 impl StdConfig for AuraConfig {
+    /// Detect the keyboard type and load from default DB if data available
     fn new() -> Self {
         warn!("AuraConfig: creating new config");
         let mut prod_id = AuraDevice::Unknown;
@@ -125,7 +126,7 @@ impl StdConfig for AuraConfig {
                 break;
             }
         }
-        Self::create_default(prod_id, &LaptopLedData::get_data())
+        Self::from_default_support(prod_id, &LaptopLedData::get_data())
     }
 
     fn config_dir() -> std::path::PathBuf {
@@ -140,7 +141,7 @@ impl StdConfig for AuraConfig {
 impl StdConfigLoad for AuraConfig {}
 
 impl AuraConfig {
-    pub fn create_default(prod_id: AuraDevice, support_data: &LaptopLedData) -> Self {
+    pub fn from_default_support(prod_id: AuraDevice, support_data: &LaptopLedData) -> Self {
         // create a default config here
         let enabled = if prod_id == AuraDevice::X19b6 {
             AuraPowerConfig::AuraDevRog2(AuraPower::new_all_on())
@@ -170,6 +171,7 @@ impl AuraConfig {
         };
 
         for n in &support_data.basic_modes {
+            debug!("AuraConfig: creating default for {n}");
             config
                 .builtins
                 .insert(*n, AuraEffect::default_with_mode(*n));
@@ -247,7 +249,8 @@ mod tests {
 
     #[test]
     fn set_multizone_4key_config() {
-        let mut config = AuraConfig::create_default(AuraDevice::X19b6, &LaptopLedData::default());
+        let mut config =
+            AuraConfig::from_default_support(AuraDevice::X19b6, &LaptopLedData::default());
 
         let effect = AuraEffect {
             colour1: Colour {
@@ -337,7 +340,8 @@ mod tests {
 
     #[test]
     fn set_multizone_multimode_config() {
-        let mut config = AuraConfig::create_default(AuraDevice::X19b6, &LaptopLedData::default());
+        let mut config =
+            AuraConfig::from_default_support(AuraDevice::X19b6, &LaptopLedData::default());
 
         let effect = AuraEffect {
             zone: AuraZone::Key1,

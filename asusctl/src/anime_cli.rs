@@ -43,15 +43,27 @@ pub enum AnimeActions {
 pub struct Builtins {
     #[options(help = "print help message")]
     pub help: bool,
-    #[options(meta = "", help = " <GlitchConstruction, StaticEmergence>")]
+    #[options(
+        meta = "",
+        help = "Default is used if unspecified, <default:GlitchConstruction, StaticEmergence>"
+    )]
     pub boot: AnimBooting,
-    #[options(meta = "", help = "<BinaryBannerScroll, RogLogoGlitch>")]
+    #[options(
+        meta = "",
+        help = "Default is used if unspecified, <default:BinaryBannerScroll, RogLogoGlitch>"
+    )]
     pub awake: AnimAwake,
-    #[options(meta = "", help = "<BannerSwipe, Starfield>")]
+    #[options(
+        meta = "",
+        help = "Default is used if unspecified, <default:BannerSwipe, Starfield>"
+    )]
     pub sleep: AnimSleeping,
-    #[options(meta = "", help = "<GlitchOut, SeeYa>")]
+    #[options(
+        meta = "",
+        help = "Default is used if unspecified, <default:GlitchOut, SeeYa>"
+    )]
     pub shutdown: AnimShutdown,
-    #[options(meta = "", help = "set/apply the animations")]
+    #[options(meta = "", help = "set/apply the animations <true/false>")]
     pub set: Option<bool>,
 }
 

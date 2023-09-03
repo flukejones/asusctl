@@ -8,26 +8,27 @@ use zbus::zvariant::Type;
 use crate::error::ProfileError;
 use crate::FanCurvePU;
 
+fn set_sysfs_name(string: &mut [u8], fan: char, index: usize) {
+    string[3] = fan as u8;
+    string[15] = char::from_digit(index as u32 + 1, 10).unwrap() as u8;
+}
+
 pub(crate) fn pwm_str(fan: char, index: usize) -> String {
     // The char 'X' is replaced via indexing
-    let mut buf = "pwmX_auto_pointX_pwm".to_owned();
+    let mut string = "pwmX_auto_pointX_pwm".to_owned();
     unsafe {
-        let tmp = buf.as_bytes_mut();
-        tmp[3] = fan as u8;
-        tmp[15] = char::from_digit(index as u32 + 1, 10).unwrap() as u8;
+        set_sysfs_name(string.as_bytes_mut(), fan, index);
     }
-    buf
+    string
 }
 
 pub(crate) fn temp_str(fan: char, index: usize) -> String {
     // The char 'X' is replaced via indexing
-    let mut buf = "pwmX_auto_pointX_temp".to_owned();
+    let mut string = "pwmX_auto_pointX_temp".to_owned();
     unsafe {
-        let tmp = buf.as_bytes_mut();
-        tmp[3] = fan as u8;
-        tmp[15] = char::from_digit(index as u32 + 1, 10).unwrap() as u8;
+        set_sysfs_name(string.as_bytes_mut(), fan, index);
     }
-    buf
+    string
 }
 
 #[typeshare]
@@ -43,8 +44,9 @@ pub struct CurveData {
 impl From<&CurveData> for String {
     fn from(c: &CurveData) -> Self {
         format!(
-            "{:?}: {}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%",
+            "{:?}: enabled: {}, {}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%,{}c:{}%",
             c.fan,
+            c.enabled,
             c.temp[0],
             (c.pwm[0] as u32) * 100 / 255,
             c.temp[1],
@@ -193,9 +195,10 @@ mod tests {
 
     #[test]
     fn curve_data_from_str_to_str() {
-        let curve =
+        let mut curve =
             CurveData::from_str("30c:1%,49c:2%,59c:3%,69c:4%,79c:31%,89c:49%,99c:56%,109c:58%")
                 .unwrap();
+        curve.enabled = true;
         assert_eq!(curve.fan, FanCurvePU::CPU);
         assert_eq!(curve.temp, [30, 49, 59, 69, 79, 89, 99, 109]);
         assert_eq!(curve.pwm, [3, 5, 8, 10, 79, 125, 143, 148]);
@@ -204,7 +207,7 @@ mod tests {
         // End result is slightly different due to type conversions and rounding errors
         assert_eq!(
             string.as_str(),
-            "CPU: 30c:1%,49c:1%,59c:3%,69c:3%,79c:30%,89c:49%,99c:56%,109c:58%"
+            "CPU: enabled: true, 30c:1%,49c:1%,59c:3%,69c:3%,79c:30%,89c:49%,99c:56%,109c:58%"
         );
 
         let curve = CurveData::from_str("30c:1%,49c:2%,59c:3%,69c:4%,79c:31%,89c:49%,99c:56%");
