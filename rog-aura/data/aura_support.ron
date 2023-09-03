@@ -280,6 +280,14 @@
         power_zones: [Keyboard],
     ),
     (
+        board_name: "G713RC",
+        layout_name: "gx502",
+        basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
+        basic_zones: [],
+        advanced_type: Zoned([ZonedKbLeft, ZonedKbLeftMid, ZonedKbRightMid, ZonedKbRight, LightbarRight, LightbarRightCorner, LightbarRightBottom, LightbarLeftBottom, LightbarLeftCorner, LightbarLeft]),
+        power_zones: [Keyboard, Lightbar],
+    ),
+    (
         board_name: "G713RM",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
@@ -662,13 +670,5 @@
         basic_zones: [],
         advanced_type: None,
         power_zones: [Keyboard],
-    ),
-    (
-        board_name: "G713RC",
-        layout_name: "pc105",
-        basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
-        basic_zones: [],
-        advanced_type: Zoned([ZonedKbLeft, ZonedKbLeftMid, ZonedKbRightMid, ZonedKbRight, LightbarRight, LightbarRightCorner, LightbarRightBottom, LightbarLeftBottom, LightbarLeftCorner, LightbarLeft]),
-        power_zones: [Keyboard, Lightbar],
     ),
 ])
