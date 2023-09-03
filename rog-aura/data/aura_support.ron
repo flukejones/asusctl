@@ -352,6 +352,14 @@
         power_zones: [Keyboard],
     ),
     (
+        board_name: "G733PZ",
+        layout_name: "g733pz-per-key",
+        basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
+        basic_zones: [],
+        advanced_type: PerKey,
+        power_zones: [Keyboard, Lightbar],
+    ),
+    (
         board_name: "G733Q",
         layout_name: "gx502",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
