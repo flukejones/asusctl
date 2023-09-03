@@ -87,11 +87,7 @@ impl CtrlPlatformProfile {
                 info!("{MOD_NAME}: Device has fan curves available");
                 let fan_config = FanCurveConfig::new();
                 // Only do defaults if the config doesn't already exist
-                if !fan_config.file_path().exists()
-                    || fan_config.balanced.is_empty()
-                    || fan_config.performance.is_empty()
-                    || fan_config.quiet.is_empty()
-                {
+                if !fan_config.file_path().exists() {
                     info!("{MOD_NAME}: Fetching default fan curves");
                     controller.fan_curves = Some(FanCurves {
                         config_file: fan_config,
