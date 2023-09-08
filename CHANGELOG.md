@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [v4.7.2]
+### Added
+- Support for G733PZ LED modes
+- Support for G713RC LED modes
+
+### Changed
+- Fix loading of fan curves from stored settings
+
 ## [v4.7.1]
 ### Changed
 - Fixes to asusctl CLI tool to show fan curves
