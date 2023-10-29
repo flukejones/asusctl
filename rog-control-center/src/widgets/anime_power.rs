@@ -8,8 +8,6 @@ pub fn anime_power_group(_supported: &SupportedFunctions, states: &mut SystemSta
     ui.heading("AniMe Matrix Settings");
     ui.label("Options are incomplete. Awake + Boot should work");
 
-    let mut brightness = states.anime.display_brightness as u8;
-
     ui.horizontal_wrapped(|ui| {
         ui.vertical(|ui| {
             let h = 16.0;
@@ -30,12 +28,14 @@ pub fn anime_power_group(_supported: &SupportedFunctions, states: &mut SystemSta
         ui.vertical(|ui| {
             ui.set_row_height(22.0);
             ui.horizontal_wrapped(|ui| {
-                if ui.add(egui::Slider::new(&mut brightness, 0..=3)).changed() {
+                let slider =
+                    egui::Slider::new(&mut states.anime.display_brightness, 0..=3).step_by(1.0);
+                if ui.add(slider).drag_released() {
                     states
                         .asus_dbus
                         .proxies()
                         .anime()
-                        .set_brightness(Brightness::from(brightness))
+                        .set_brightness(Brightness::from(states.anime.display_brightness))
                         .map_err(|err| {
                             states.error = Some(err.to_string());
                         })

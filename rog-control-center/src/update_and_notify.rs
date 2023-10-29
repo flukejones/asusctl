@@ -23,7 +23,7 @@ use supergfxctl::actions::UserActionRequired as GfxUserAction;
 use supergfxctl::pci_device::{GfxMode, GfxPower};
 use supergfxctl::zbus_proxy::DaemonProxy as SuperProxy;
 use tokio::time::sleep;
-use zbus::export::futures_util::{future, StreamExt};
+use zbus::export::futures_util::StreamExt;
 
 use crate::config::Config;
 use crate::error::Result;
@@ -314,15 +314,15 @@ pub fn start_notifications(
                 e
             })
             .unwrap();
-        if let Ok(p) = proxy.receive_device_state().await {
+        if let Ok(mut p) = proxy.receive_device_state().await {
             info!("Started zbus signal thread: receive_device_state");
-            p.for_each(|_| {
-                if let Ok(_lock) = page_states1.lock() {
-                    // TODO: lock.anime.
+            while let Some(e) = p.next().await {
+                if let Ok(out) = e.args() {
+                    if let Ok(mut lock) = page_states1.lock() {
+                        lock.anime = out.data.into();
+                    }
                 }
-                future::ready(())
-            })
-            .await;
+            }
         };
     });
 

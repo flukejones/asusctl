@@ -5,8 +5,7 @@ use std::time::SystemTime;
 
 use egui::Vec2;
 use log::error;
-use rog_anime::usb::Brightness;
-use rog_anime::Animations;
+use rog_anime::{Animations, DeviceState};
 use rog_aura::layouts::KeyLayout;
 use rog_aura::usb::AuraPowerDev;
 use rog_aura::{AuraEffect, AuraModeNum};
@@ -193,7 +192,7 @@ impl AuraState {
 #[derive(Clone, Debug, Default)]
 pub struct AnimeState {
     pub display_enabled: bool,
-    pub display_brightness: Brightness,
+    pub display_brightness: u8,
     pub builtin_anims_enabled: bool,
     pub builtin_anims: Animations,
 }
@@ -204,12 +203,23 @@ impl AnimeState {
             let device_state = dbus.proxies().anime().device_state()?;
             Ok(Self {
                 display_enabled: device_state.display_enabled,
-                display_brightness: device_state.display_brightness,
+                display_brightness: device_state.display_brightness as u8,
                 builtin_anims_enabled: device_state.builtin_anims_enabled,
                 builtin_anims: device_state.builtin_anims,
             })
         } else {
             Ok(Default::default())
+        }
+    }
+}
+
+impl From<DeviceState> for AnimeState {
+    fn from(dev: DeviceState) -> Self {
+        Self {
+            display_enabled: dev.display_enabled,
+            display_brightness: dev.display_brightness as u8,
+            builtin_anims_enabled: dev.builtin_anims_enabled,
+            builtin_anims: dev.builtin_anims,
         }
     }
 }

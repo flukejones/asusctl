@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Added
+- Support for G513RW LED modes
+
+### Changed
+- rog-control-center: ensure brightness slider works correctly
+- Update `smithay-client-toolkit` for fix to issue #407
+
 ## [v4.7.2]
 ### Added
 - Support for G733PZ LED modes

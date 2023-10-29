@@ -75,11 +75,14 @@ pub fn read_attr_u8_array(device: &Device, attr_name: &str) -> Result<Vec<u8>> {
 }
 
 pub fn write_attr_u8_array(device: &mut Device, attr: &str, values: &[u8]) -> Result<()> {
-    #[allow(clippy::format_collect)]
-    let tmp: String = values.iter().map(|v| format!("{} ", v)).collect();
-    let tmp = tmp.trim();
+    let mut tmp = String::new();
+    for n in values {
+        tmp.push_str(&n.to_string());
+        tmp.push(' '); // space padding required
+    }
+    tmp.pop();
     device
-        .set_attribute_value(attr, tmp)
+        .set_attribute_value(attr, tmp.trim())
         .map_err(|e| PlatformError::IoPath(attr.into(), e))
 }
 
@@ -103,9 +106,12 @@ mod tests {
     #[test]
     fn check() {
         let data = [1, 2, 3, 4, 5];
-        #[allow(clippy::format_collect)]
-        let tmp: String = data.iter().map(|v| format!("{} ", v)).collect();
-        let tmp = tmp.trim();
+        let mut tmp = String::new();
+        for n in data {
+            tmp.push_str(&n.to_string());
+            tmp.push(' '); // space padding required
+        }
+        tmp.pop();
         assert_eq!(tmp, "1 2 3 4 5");
 
         let tmp: Vec<u8> = tmp
