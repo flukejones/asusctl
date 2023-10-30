@@ -12,10 +12,10 @@ rog_dbus = { path = "../rog-dbus" }
 rog_profiles = { path = "../rog-profiles" }
 rog_platform = { path = "../rog-platform" }
 asusd = { path = "../asusd" }
+dmi_id = { path = "../dmi-id" }
 
 gumdrop.workspace = true
 toml.workspace = true
-sysfs-class.workspace = true
 
 [dev-dependencies]
 gif.workspace = true

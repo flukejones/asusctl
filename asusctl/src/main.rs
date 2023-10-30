@@ -6,6 +6,7 @@ use std::thread::sleep;
 
 use anime_cli::{AnimeActions, AnimeCommand};
 use aura_cli::{LedPowerCommand1, LedPowerCommand2};
+use dmi_id::DMIID;
 use gumdrop::{Opt, Options};
 use profiles_cli::{FanCurveCommand, ProfileCommand};
 use rog_anime::usb::get_anime_type;
@@ -77,9 +78,9 @@ fn print_error_help(err: &dyn std::error::Error, supported: Option<&SupportedFun
 }
 
 fn print_info() {
-    let dmi = sysfs_class::DmiId::default();
-    let board_name = dmi.board_name().expect("Could not get board_name");
-    let prod_family = dmi.product_family().expect("Could not get product_family");
+    let dmi = DMIID::new().unwrap_or_default();
+    let board_name = dmi.board_name;
+    let prod_family = dmi.product_family;
     println!("asusctl version: {}", env!("CARGO_PKG_VERSION"));
     println!(" Product family: {}", prod_family.trim());
     println!("     Board name: {}", board_name.trim());

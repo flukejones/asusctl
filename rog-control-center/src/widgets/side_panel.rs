@@ -39,15 +39,15 @@ impl RogApp {
                 }
 
                 // TODO: Anime page is not complete
-                // if self.supported.anime_ctrl.0 {
-                //     ui.separator();
-                //     if ui
-                //         .selectable_value(page, Page::AnimeMatrix, "AniMe Matrix")
-                //         .clicked()
-                //     {
-                //         *page = Page::AnimeMatrix;
-                //     }
-                // }
+                if self.supported.anime_ctrl.0 {
+                    ui.separator();
+                    if ui
+                        .selectable_value(page, Page::AnimeMatrix, "AniMe Matrix")
+                        .clicked()
+                    {
+                        *page = Page::AnimeMatrix;
+                    }
+                }
 
                 ui.separator();
                 if ui

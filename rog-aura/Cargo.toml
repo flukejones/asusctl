@@ -20,13 +20,11 @@ dbus = ["zbus"]
 serde.workspace = true
 serde_derive.workspace = true
 zbus = { workspace = true, optional = true }
+dmi_id = { path = "../dmi-id" }
 
 # cli and logging
 log.workspace = true
 typeshare.workspace = true
-
-# Device control
-sysfs-class.workspace = true # used for backlight control and baord ID
 
 ron = { version = "*", optional = true }
 

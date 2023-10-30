@@ -20,6 +20,7 @@ pub mod error;
 use std::future::Future;
 
 use async_trait::async_trait;
+use dmi_id::DMIID;
 use log::{debug, info, warn};
 use logind_zbus::manager::ManagerProxy;
 use zbus::export::futures_util::StreamExt;
@@ -88,12 +89,9 @@ macro_rules! task_watch_item {
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub fn print_board_info() {
-    let dmi = sysfs_class::DmiId::default();
-    let board_name = dmi.board_name().expect("Could not get board_name");
-    let prod_family = dmi.product_family().expect("Could not get product_family");
-
-    info!("Product family: {}", prod_family.trim());
-    info!("Board name: {}", board_name.trim());
+    let dmi = DMIID::new().unwrap_or_default();
+    info!("Product family: {}", dmi.product_family);
+    info!("Board name: {}", dmi.board_name);
 }
 
 #[async_trait]

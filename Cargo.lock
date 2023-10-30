@@ -202,6 +202,7 @@ version = "4.7.2"
 dependencies = [
  "asusd",
  "cargo-husky",
+ "dmi_id",
  "gif",
  "glam",
  "gumdrop",
@@ -210,7 +211,6 @@ dependencies = [
  "rog_dbus",
  "rog_platform",
  "rog_profiles",
- "sysfs-class",
  "tinybmp",
  "toml 0.5.11",
 ]
@@ -223,6 +223,7 @@ dependencies = [
  "cargo-husky",
  "concat-idents",
  "config-traits",
+ "dmi_id",
  "env_logger",
  "log",
  "logind-zbus",
@@ -233,7 +234,6 @@ dependencies = [
  "rog_profiles",
  "serde",
  "serde_derive",
- "sysfs-class",
  "systemd-zbus",
  "tokio",
  "zbus",
@@ -836,6 +836,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "cpuctl"
+version = "4.7.2"
+
+[[package]]
 name = "cpufeatures"
 version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -953,6 +957,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "330c60081dcc4c72131f8eb70510f1ac07223e5d4163db481a04a0befcffa412"
 dependencies = [
  "libloading",
+]
+
+[[package]]
+name = "dmi_id"
+version = "4.7.2"
+dependencies = [
+ "log",
+ "udev",
 ]
 
 [[package]]
@@ -2276,12 +2288,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "numtoa"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6aa2c4e539b869820a2b82e1aef6ff40aa85e65decdd5185e83fb4b1249cd00f"
-
-[[package]]
 name = "objc"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2714,6 +2720,7 @@ name = "rog_anime"
 version = "4.7.2"
 dependencies = [
  "cargo-husky",
+ "dmi_id",
  "gif",
  "glam",
  "log",
@@ -2721,7 +2728,6 @@ dependencies = [
  "png_pong",
  "serde",
  "serde_derive",
- "sysfs-class",
  "typeshare",
  "zbus",
 ]
@@ -2731,11 +2737,11 @@ name = "rog_aura"
 version = "4.7.2"
 dependencies = [
  "cargo-husky",
+ "dmi_id",
  "log",
  "ron",
  "serde",
  "serde_derive",
- "sysfs-class",
  "typeshare",
  "zbus",
 ]
@@ -2765,7 +2771,6 @@ dependencies = [
  "rusb",
  "serde",
  "serde_derive",
- "sysfs-class",
  "typeshare",
  "udev",
  "zbus",
@@ -3170,15 +3175,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
-]
-
-[[package]]
-name = "sysfs-class"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e1bbcf869732c45a77898f7f61ed6d411dfc37613517e444842f58d428856d1"
-dependencies = [
- "numtoa",
 ]
 
 [[package]]

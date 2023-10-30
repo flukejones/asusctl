@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Support for G513RW LED modes
+- Support Rog Ally LED modes (basic)
 
 ### Changed
 - rog-control-center: ensure brightness slider works correctly
@@ -17,7 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Support for G733PZ LED modes
 - Support for G713RC LED modes
-- Support Rog Ally LED modes (basic)
 
 ### Changed
 - Fix loading of fan curves from stored settings

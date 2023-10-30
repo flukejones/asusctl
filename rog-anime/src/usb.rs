@@ -10,6 +10,7 @@
 
 use std::str::FromStr;
 
+use dmi_id::DMIID;
 use serde_derive::{Deserialize, Serialize};
 use typeshare::typeshare;
 #[cfg(feature = "dbus")]
@@ -151,8 +152,8 @@ impl FromStr for AnimShutdown {
 /// The currently known USB device is `19b6`.
 #[inline]
 pub fn get_anime_type() -> Result<AnimeType, AnimeError> {
-    let dmi = sysfs_class::DmiId::default();
-    let board_name = dmi.board_name()?;
+    let dmi = DMIID::new().map_err(|_| AnimeError::NoDevice)?; // TODO: better error
+    let board_name = dmi.board_name;
 
     if board_name.contains("GA401I") || board_name.contains("GA401Q") {
         return Ok(AnimeType::GA401);

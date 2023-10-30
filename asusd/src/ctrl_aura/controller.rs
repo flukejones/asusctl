@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
 use config_traits::{StdConfig, StdConfigLoad};
+use dmi_id::DMIID;
 use log::{info, warn};
 use rog_aura::advanced::{LedUsbPackets, UsbPackets};
 use rog_aura::aura_detection::{LaptopLedData, ASUS_KEYBOARD_DEVICES};
@@ -90,14 +91,12 @@ impl CtrlKbdLed {
         let rgb_led = KeyboardLed::new()?;
 
         if usb_node.is_none() && !rgb_led.has_kbd_rgb_mode() {
-            let dmi = sysfs_class::DmiId::default();
-            if let Ok(prod_family) = dmi.product_family() {
-                if prod_family.contains("TUF") {
-                    warn!(
-                        "kbd_rgb_mode was not found in the /sys/. You require a minimum 6.1 \
-                         kernel and a supported TUF laptop"
-                    );
-                }
+            let dmi = DMIID::new().unwrap_or_default();
+            if dmi.dmi_family.contains("TUF") {
+                warn!(
+                    "kbd_rgb_mode was not found in the /sys/. You require a minimum 6.1 kernel \
+                     and a supported TUF laptop"
+                );
             }
             return Err(RogError::NoAuraKeyboard);
         }

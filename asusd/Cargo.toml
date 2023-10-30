@@ -20,6 +20,7 @@ rog_aura = { path = "../rog-aura", features = ["dbus"] }
 rog_platform = { path = "../rog-platform" }
 rog_profiles = { path = "../rog-profiles" }
 rog_dbus = { path = "../rog-dbus" }
+dmi_id = { path = "../dmi-id" }
 
 async-trait.workspace = true
 tokio.workspace = true
@@ -34,9 +35,6 @@ logind-zbus.workspace = true
 # serialisation
 serde.workspace = true
 serde_derive.workspace = true
-
-# Device control
-sysfs-class.workspace = true # used for backlight control and baord ID
 
 concat-idents.workspace = true
 

@@ -15,7 +15,7 @@ exclude = ["data"]
 [features]
 default = ["dbus", "detect"]
 dbus = ["zbus"]
-detect = ["sysfs-class"]
+detect = ["dmi_id"]
 
 [lib]
 name = "rog_anime"
@@ -35,7 +35,7 @@ typeshare.workspace = true
 
 zbus = { workspace = true, optional = true }
 
-sysfs-class = { workspace = true, optional = true }
+dmi_id = { path = "../dmi-id", optional = true }
 
 [dev-dependencies]
 cargo-husky.workspace = true

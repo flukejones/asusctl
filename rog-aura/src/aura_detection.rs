@@ -1,3 +1,4 @@
+use dmi_id::DMIID;
 use log::{error, info, warn};
 use serde_derive::{Deserialize, Serialize};
 use typeshare::typeshare;
@@ -59,13 +60,12 @@ pub struct LaptopLedData {
 
 impl LaptopLedData {
     pub fn get_data() -> Self {
-        let dmi = sysfs_class::DmiId::default();
-        let board_name = dmi.board_name().expect("Could not get board_name");
+        let dmi = DMIID::new().unwrap_or_default();
         // let prod_family = dmi.product_family().expect("Could not get
         // product_family");
 
         if let Some(modes) = LedSupportFile::load_from_supoprt_db() {
-            if let Some(data) = modes.matcher(&board_name) {
+            if let Some(data) = modes.matcher(&dmi.board_name) {
                 return data;
             }
         }
