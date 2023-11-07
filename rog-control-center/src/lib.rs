@@ -100,7 +100,7 @@ pub fn get_ipc_file() -> Result<File, crate::error::Error> {
     let fifo_path = tmp_dir.join("ipc.pipe");
     if let Err(e) = unistd::mkfifo(&fifo_path, stat::Mode::S_IRWXU) {
         if !matches!(e, nix::errno::Errno::EEXIST) {
-            return Err(e)?;
+            Err(e)?
         }
     }
     Ok(OpenOptions::new()

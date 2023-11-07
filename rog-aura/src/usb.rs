@@ -37,7 +37,33 @@ pub enum AuraDevice {
     #[default]
     X19b6,
     X1a30,
+    X1abe,
     Unknown,
+}
+
+impl AuraDevice {
+    pub fn is_tuf_style(&self) -> bool {
+        matches!(self, AuraDevice::Tuf)
+    }
+
+    pub fn is_old_style(&self) -> bool {
+        !matches!(
+            self,
+            AuraDevice::Unknown
+                | AuraDevice::Tuf
+                | AuraDevice::X19b6
+                | AuraDevice::X18c6
+                | AuraDevice::X1a30
+                | AuraDevice::X1abe
+        )
+    }
+
+    pub fn is_new_style(&self) -> bool {
+        matches!(
+            self,
+            AuraDevice::X19b6 | AuraDevice::X18c6 | AuraDevice::X1a30 | AuraDevice::X1abe
+        )
+    }
 }
 
 impl From<AuraDevice> for &str {
@@ -50,6 +76,7 @@ impl From<AuraDevice> for &str {
             AuraDevice::X18c6 => "18c6",
             AuraDevice::X19b6 => "19b6",
             AuraDevice::X1a30 => "1a30",
+            AuraDevice::X1abe => "1abe",
             AuraDevice::Unknown => "unknown",
         }
     }
@@ -65,6 +92,7 @@ impl From<&str> for AuraDevice {
             "1854" | "0x1854" => AuraDevice::X1854,
             "19b6" | "0x19b6" => AuraDevice::X19b6,
             "1a30" | "0x1a30" => AuraDevice::X1a30,
+            "1abe" | "0x1abe" => AuraDevice::X1abe,
             _ => AuraDevice::Unknown,
         }
     }
@@ -80,6 +108,7 @@ impl Debug for AuraDevice {
             Self::X18c6 => write!(f, "0x18c6"),
             Self::X19b6 => write!(f, "0x19B6"),
             Self::X1a30 => write!(f, "0x1A30"),
+            Self::X1abe => write!(f, "0x1ABE"),
             Self::Unknown => write!(f, "Unknown"),
         }
     }

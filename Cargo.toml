@@ -45,7 +45,7 @@ notify-rust = { git = "https://github.com/flukejones/notify-rust.git", default-f
 [profile.release]
 # thin = 57s, asusd = 9.0M
 # fat = 72s, asusd = 6.4M
-lto = "fat"
+#lto = "fat"
 debug = false
 opt-level = 3
 panic = "abort"

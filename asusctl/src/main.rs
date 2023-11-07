@@ -131,17 +131,13 @@ fn do_parsed(
                 if let Some(cmdlist) = CliStart::command_list() {
                     let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
                     for command in commands.iter().filter(|command| {
-                        if !matches!(
-                            supported.keyboard_led.dev_id,
-                            AuraDevice::X1854
-                                | AuraDevice::X1869
-                                | AuraDevice::X1866
-                                | AuraDevice::Tuf
-                        ) && command.trim().starts_with("led-pow-1")
+                        if !supported.keyboard_led.dev_id.is_old_style()
+                            && !supported.keyboard_led.dev_id.is_tuf_style()
+                            && command.trim().starts_with("led-pow-1")
                         {
                             return false;
                         }
-                        if supported.keyboard_led.dev_id != AuraDevice::X19b6
+                        if !supported.keyboard_led.dev_id.is_new_style()
                             && command.trim().starts_with("led-pow-2")
                         {
                             return false;
@@ -584,7 +580,7 @@ fn handle_led_power2(
             return Ok(());
         }
 
-        if supported.dev_id != AuraDevice::X19b6 {
+        if !supported.dev_id.is_new_style() {
             println!("This option applies only to keyboards with product ID 0x19b6");
         }
 

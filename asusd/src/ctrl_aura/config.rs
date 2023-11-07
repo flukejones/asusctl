@@ -143,9 +143,9 @@ impl StdConfigLoad for AuraConfig {}
 impl AuraConfig {
     pub fn from_default_support(prod_id: AuraDevice, support_data: &LaptopLedData) -> Self {
         // create a default config here
-        let enabled = if prod_id == AuraDevice::X19b6 {
+        let enabled = if prod_id.is_new_style() {
             AuraPowerConfig::AuraDevRog2(AuraPower::new_all_on())
-        } else if prod_id == AuraDevice::Tuf {
+        } else if prod_id.is_tuf_style() {
             AuraPowerConfig::AuraDevTuf(HashSet::from([
                 AuraDevTuf::Awake,
                 AuraDevTuf::Boot,

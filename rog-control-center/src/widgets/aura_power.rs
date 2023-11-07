@@ -8,15 +8,11 @@ use crate::system_state::SystemState;
 pub fn aura_power_group(supported: &SupportedFunctions, states: &mut SystemState, ui: &mut Ui) {
     ui.heading("Keyboard LED power settings");
 
-    match supported.keyboard_led.dev_id {
-        AuraDevice::X1854 | AuraDevice::X1869 | AuraDevice::X1866 => {
-            aura_power1(supported, states, ui);
-        }
-        AuraDevice::X19b6 | AuraDevice::X18c6 | AuraDevice::X1a30 => {
-            aura_power2(supported, states, ui)
-        }
-        AuraDevice::Tuf => aura_power1(supported, states, ui),
-        AuraDevice::Unknown => {}
+    if supported.keyboard_led.dev_id.is_old_style() || supported.keyboard_led.dev_id.is_tuf_style()
+    {
+        aura_power1(supported, states, ui);
+    } else if supported.keyboard_led.dev_id.is_new_style() {
+        aura_power2(supported, states, ui);
     }
 }
 

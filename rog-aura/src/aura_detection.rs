@@ -8,7 +8,7 @@ use crate::{AdvancedAuraType, AuraModeNum, AuraZone};
 
 pub const ASUS_LED_MODE_CONF: &str = "/usr/share/asusd/aura_support.ron";
 pub const ASUS_LED_MODE_USER_CONF: &str = "/etc/asusd/asusd_user_ledmodes.ron";
-pub const ASUS_KEYBOARD_DEVICES: [AuraDevice; 7] = [
+pub const ASUS_KEYBOARD_DEVICES: [AuraDevice; 8] = [
     AuraDevice::Tuf,
     AuraDevice::X1854,
     AuraDevice::X1869,
@@ -16,6 +16,7 @@ pub const ASUS_KEYBOARD_DEVICES: [AuraDevice; 7] = [
     AuraDevice::X18c6,
     AuraDevice::X19b6,
     AuraDevice::X1a30,
+    AuraDevice::X1abe,
 ];
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize, Serialize)]

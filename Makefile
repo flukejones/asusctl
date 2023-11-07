@@ -134,6 +134,8 @@ introspect:
 
 build:
 ifeq ($(VENDORED),1)
+	cargo vendor-filterer --platform x86_64-unknown-linux-gnu vendor
+	#cargo vendor
 	@echo "version = $(VERSION)"
 	tar pxf vendor_asusctl_$(VERSION).tar.xz
 endif

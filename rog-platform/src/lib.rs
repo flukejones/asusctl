@@ -75,6 +75,7 @@ pub fn read_attr_u8_array(device: &Device, attr_name: &str) -> Result<Vec<u8>> {
 }
 
 pub fn write_attr_u8_array(device: &mut Device, attr: &str, values: &[u8]) -> Result<()> {
+    #[allow(clippy::format_collect)]
     let tmp: String = values.iter().map(|v| format!("{} ", v)).collect();
     let tmp = tmp.trim();
     device
@@ -102,7 +103,7 @@ mod tests {
     #[test]
     fn check() {
         let data = [1, 2, 3, 4, 5];
-
+        #[allow(clippy::format_collect)]
         let tmp: String = data.iter().map(|v| format!("{} ", v)).collect();
         let tmp = tmp.trim();
         assert_eq!(tmp, "1 2 3 4 5");
