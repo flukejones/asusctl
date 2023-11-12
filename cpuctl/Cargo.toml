@@ -1,0 +1,7 @@
+[package]
+name = "cpuctl"
+license = "MPL-2.0"
+edition = "2021"
+version.workspace = true
+
+[dependencies]
