@@ -5,7 +5,5 @@
   "uuid-dev": "asusctl-gnome-dev@asus-linux.org",
   "settings-schema": "org.gnome.shell.extensions.asusctl-gnome",
   "version": "4.3.2",
-  "shell-version": [
-    "43", "44", "45"
-  ]
+  "shell-version": ["45"]
 }
