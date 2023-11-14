@@ -15,13 +15,13 @@ fn main() {
 
     for step in (2..50).rev() {
         let mut matrix = AnimeDiagonal::new(AnimeType::GA401, None);
-        for c in (0..60).into_iter().step_by(step) {
+        for c in (0..60).step_by(step) {
             for i in matrix.get_mut().iter_mut() {
                 i[c] = 50;
             }
         }
 
-        for c in (0..35).into_iter().step_by(step) {
+        for c in (0..35).step_by(step) {
             for i in &mut matrix.get_mut()[c] {
                 *i = 50;
             }

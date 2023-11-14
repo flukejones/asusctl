@@ -10,7 +10,7 @@ use rog_dbus::RogDbusClientBlocking;
 fn main() -> Result<(), Box<dyn Error>> {
     let (client, _) = RogDbusClientBlocking::new().unwrap();
 
-    let args: Vec<String> = env::args().into_iter().collect();
+    let args: Vec<String> = env::args().collect();
     if args.len() != 3 {
         println!("Usage: <filepath> <brightness>");
         println!("e.g, asusctl/examples/doom_large.png 0.8");

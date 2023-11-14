@@ -9,7 +9,7 @@ use rog_dbus::RogDbusClientBlocking;
 fn main() {
     let (client, _) = RogDbusClientBlocking::new().unwrap();
 
-    let args: Vec<String> = env::args().into_iter().collect();
+    let args: Vec<String> = env::args().collect();
     if args.len() != 3 {
         println!("Please supply filepath and brightness");
         return;
