@@ -223,7 +223,6 @@ fn handle_anime(
         dbus.proxies().anime().set_enable_display(enable)?;
     }
     if let Some(enable) = cmd.enable_powersave_anim {
-        dbg!(enable);
         dbus.proxies().anime().set_builtins_enabled(enable)?;
     }
     if let Some(bright) = cmd.brightness {

@@ -103,7 +103,6 @@ impl CtrlAnimeZbus {
             }
         }
 
-        lock.config.display_enabled = enabled;
         lock.config.builtin_anims_enabled = enabled;
         lock.config.write();
         if enabled {
@@ -271,12 +270,13 @@ impl crate::CtrlTask for CtrlAnimeZbus {
                         }
                         if !lock.config.builtin_anims_enabled {
                             if sleeping {
-                                CtrlAnime::run_thread(
-                                    inner.clone(),
-                                    lock.cache.sleep.clone(),
-                                    true,
-                                )
-                                .await;
+                                lock.thread_exit.store(true, Ordering::Release);
+                                lock.node
+                                    .write_bytes(&pkt_set_enable_display(!sleeping))
+                                    .map_err(|err| {
+                                        warn!("create_sys_event_tasks::off_when_suspended {}", err);
+                                    })
+                                    .ok();
                             } else {
                                 CtrlAnime::run_thread(inner.clone(), lock.cache.wake.clone(), true)
                                     .await;

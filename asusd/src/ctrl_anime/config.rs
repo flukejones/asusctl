@@ -26,7 +26,6 @@ impl From<AnimeConfigV460> for AnimeConfig {
             system: c.system,
             boot: c.boot,
             wake: c.wake,
-            sleep: c.sleep,
             shutdown: c.shutdown,
             ..Default::default()
         }
@@ -54,7 +53,6 @@ impl From<AnimeConfigV472> for AnimeConfig {
             system: c.system,
             boot: c.boot,
             wake: c.wake,
-            sleep: c.sleep,
             shutdown: c.shutdown,
             model_override: c.model_override,
             display_enabled: c.display_enabled,
@@ -71,7 +69,6 @@ pub struct AnimeConfigCached {
     pub system: Vec<ActionData>,
     pub boot: Vec<ActionData>,
     pub wake: Vec<ActionData>,
-    pub sleep: Vec<ActionData>,
     pub shutdown: Vec<ActionData>,
 }
 
@@ -99,12 +96,6 @@ impl AnimeConfigCached {
         }
         self.wake = wake;
 
-        let mut sleep = Vec::with_capacity(config.sleep.len());
-        for ani in &config.sleep {
-            sleep.push(ActionData::from_anime_action(anime_type, ani)?);
-        }
-        self.sleep = sleep;
-
         let mut shutdown = Vec::with_capacity(config.shutdown.len());
         for ani in &config.shutdown {
             shutdown.push(ActionData::from_anime_action(anime_type, ani)?);
@@ -121,7 +112,6 @@ pub struct AnimeConfig {
     pub system: Vec<ActionLoader>,
     pub boot: Vec<ActionLoader>,
     pub wake: Vec<ActionLoader>,
-    pub sleep: Vec<ActionLoader>,
     pub shutdown: Vec<ActionLoader>,
     // pub brightness: f32,
     pub display_enabled: bool,
@@ -140,7 +130,6 @@ impl Default for AnimeConfig {
             system: Vec::new(),
             boot: Vec::new(),
             wake: Vec::new(),
-            sleep: Vec::new(),
             shutdown: Vec::new(),
             // brightness: 1.0,
             display_enabled: true,
@@ -222,14 +211,6 @@ impl AnimeConfig {
                     Some(Duration::from_secs(2)),
                     Duration::from_secs(2),
                 )),
-            }],
-            sleep: vec![ActionLoader::ImageAnimation {
-                file: "/usr/share/asusd/anime/custom/sonic-wait.gif".into(),
-                scale: 0.9,
-                angle: 0.0,
-                translation: Vec2::new(3.0, 2.0),
-                brightness: 1.0,
-                time: AnimTime::Infinite,
             }],
             shutdown: vec![ActionLoader::ImageAnimation {
                 file: "/usr/share/asusd/anime/custom/sonic-wait.gif".into(),
