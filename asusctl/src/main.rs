@@ -207,6 +207,10 @@ fn handle_anime(
         && cmd.enable_display.is_none()
         && cmd.enable_powersave_anim.is_none()
         && cmd.brightness.is_none()
+        && cmd.off_when_lid_closed.is_none()
+        && cmd.off_when_suspended.is_none()
+        && cmd.off_when_unplugged.is_none()
+        && cmd.off_with_his_head.is_none()
         && !cmd.clear)
         || cmd.help
     {
@@ -224,6 +228,18 @@ fn handle_anime(
     }
     if let Some(bright) = cmd.brightness {
         dbus.proxies().anime().set_brightness(bright)?;
+    }
+    if let Some(enable) = cmd.off_when_lid_closed {
+        dbus.proxies().anime().set_off_when_lid_closed(enable)?;
+    }
+    if let Some(enable) = cmd.off_when_suspended {
+        dbus.proxies().anime().set_off_when_suspended(enable)?;
+    }
+    if let Some(enable) = cmd.off_when_unplugged {
+        dbus.proxies().anime().set_off_when_unplugged(enable)?;
+    }
+    if cmd.off_with_his_head.is_some() {
+        println!("Did Alice _really_ make it back from Wonderland?");
     }
 
     let mut anime_type = get_anime_type()?;

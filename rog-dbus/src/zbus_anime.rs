@@ -44,8 +44,5 @@ trait Anime {
 
     /// NotifyDeviceState signal
     #[dbus_proxy(signal)]
-    fn notify_device_state(
-        &self,
-        data: (bool, &str, bool, (&str, &str, &str, &str)),
-    ) -> zbus::Result<()>;
+    fn notify_device_state(&self, data: AnimeDeviceState) -> zbus::Result<()>;
 }

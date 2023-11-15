@@ -19,6 +19,26 @@ pub struct AnimeCommand {
     pub brightness: Option<Brightness>,
     #[options(help = "clear the display")]
     pub clear: bool,
+    #[options(
+        no_short,
+        meta = "",
+        help = "turn the anime off when external power is unplugged"
+    )]
+    pub off_when_unplugged: Option<bool>,
+    #[options(
+        no_short,
+        meta = "",
+        help = "turn the anime off when the laptop suspends"
+    )]
+    pub off_when_suspended: Option<bool>,
+    #[options(
+        no_short,
+        meta = "",
+        help = "turn the anime off when the lid is closed"
+    )]
+    pub off_when_lid_closed: Option<bool>,
+    #[options(no_short, meta = "", help = "Off with his head!!!")]
+    pub off_with_his_head: Option<bool>,
     #[options(command)]
     pub command: Option<AnimeActions>,
 }
