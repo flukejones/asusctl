@@ -50,6 +50,7 @@ pub struct DeviceState {
     pub builtin_anims: Animations,
     pub off_when_unplugged: bool,
     pub off_when_suspended: bool,
+    pub off_when_lid_closed: bool,
 }
 
 #[typeshare]
