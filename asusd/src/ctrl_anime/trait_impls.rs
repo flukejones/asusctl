@@ -79,6 +79,7 @@ impl CtrlAnimeZbus {
                 builtin_anims: lock.config.builtin_anims,
                 off_when_unplugged: lock.config.off_when_unplugged,
                 off_when_suspended: lock.config.off_when_suspended,
+                off_when_lid_closed: lock.config.off_when_lid_closed,
             },
         )
         .await
@@ -130,6 +131,7 @@ impl CtrlAnimeZbus {
                 builtin_anims: lock.config.builtin_anims,
                 off_when_unplugged: lock.config.off_when_unplugged,
                 off_when_suspended: lock.config.off_when_suspended,
+                off_when_lid_closed: lock.config.off_when_lid_closed,
             },
         )
         .await
@@ -174,6 +176,7 @@ impl CtrlAnimeZbus {
                 builtin_anims: lock.config.builtin_anims,
                 off_when_unplugged: lock.config.off_when_unplugged,
                 off_when_suspended: lock.config.off_when_suspended,
+                off_when_lid_closed: lock.config.off_when_lid_closed,
             },
         )
         .await
@@ -205,6 +208,7 @@ impl CtrlAnimeZbus {
                 builtin_anims: lock.config.builtin_anims,
                 off_when_unplugged: lock.config.off_when_unplugged,
                 off_when_suspended: lock.config.off_when_suspended,
+                off_when_lid_closed: lock.config.off_when_lid_closed,
             },
         )
         .await
@@ -232,6 +236,7 @@ impl CtrlAnimeZbus {
             builtin_anims: lock.config.builtin_anims,
             off_when_unplugged: lock.config.off_when_unplugged,
             off_when_suspended: lock.config.off_when_suspended,
+            off_when_lid_closed: lock.config.off_when_lid_closed,
         }
     }
 
