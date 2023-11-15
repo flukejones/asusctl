@@ -4,6 +4,7 @@ use zbus::dbus_proxy;
 
 #[dbus_proxy(
     interface = "org.asuslinux.Daemon",
+    default_service = "org.asuslinux.Daemon",
     default_path = "/org/asuslinux/Anime"
 )]
 trait Anime {
@@ -25,6 +26,15 @@ trait Anime {
     /// Set whether the AniMe is displaying images/data
     fn set_enable_display(&self, status: bool) -> zbus::Result<()>;
 
+    /// SetOffWhenLidClosed method
+    fn set_off_when_lid_closed(&self, enabled: bool) -> zbus::Result<()>;
+
+    /// SetOffWhenSuspended method
+    fn set_off_when_suspended(&self, enabled: bool) -> zbus::Result<()>;
+
+    /// SetOffWhenUnplugged method
+    fn set_off_when_unplugged(&self, enabled: bool) -> zbus::Result<()>;
+
     /// Writes a data stream of length. Will force system thread to exit until
     /// it is restarted
     fn write(&self, input: AnimeDataBuffer) -> zbus::Result<()>;
@@ -32,8 +42,10 @@ trait Anime {
     // #[dbus_proxy(property)]
     fn device_state(&self) -> zbus::Result<AnimeDeviceState>;
 
-    /// Notify listeners of the status of AniMe LED power and factory
-    /// system-status animations
+    /// NotifyDeviceState signal
     #[dbus_proxy(signal)]
-    fn device_state(&self, data: AnimeDeviceState) -> zbus::Result<()>;
+    fn notify_device_state(
+        &self,
+        data: (bool, &str, bool, (&str, &str, &str, &str)),
+    ) -> zbus::Result<()>;
 }

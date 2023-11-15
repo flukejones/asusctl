@@ -33,7 +33,8 @@ impl crate::ZbusRun for CtrlAnimeZbus {
 // grab it until we finish.
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl CtrlAnimeZbus {
-    /// Writes a data stream of length. Will force system thread to exit until it is restarted
+    /// Writes a data stream of length. Will force system thread to exit until
+    /// it is restarted
     async fn write(&self, input: AnimeDataBuffer) -> zbus::fdo::Result<()> {
         let lock = self.0.lock().await;
         lock.thread_exit.store(true, Ordering::SeqCst);
@@ -164,6 +165,48 @@ impl CtrlAnimeZbus {
         lock.config.display_enabled = enabled;
         lock.config.write();
 
+        Self::notify_device_state(&ctxt, DeviceState::from(&lock.config))
+            .await
+            .ok();
+    }
+
+    /// Set if to turn the AniMe Matrix off when external power is unplugged
+    async fn set_off_when_unplugged(
+        &self,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+        enabled: bool,
+    ) {
+        let mut lock = self.0.lock().await;
+        lock.config.off_when_unplugged = enabled;
+        lock.config.write();
+        Self::notify_device_state(&ctxt, DeviceState::from(&lock.config))
+            .await
+            .ok();
+    }
+
+    /// Set if to turn the AniMe Matrix off when the laptop is suspended
+    async fn set_off_when_suspended(
+        &self,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+        enabled: bool,
+    ) {
+        let mut lock = self.0.lock().await;
+        lock.config.off_when_suspended = enabled;
+        lock.config.write();
+        Self::notify_device_state(&ctxt, DeviceState::from(&lock.config))
+            .await
+            .ok();
+    }
+
+    /// Set if to turn the AniMe Matrix off when the lid is closed
+    async fn set_off_when_lid_closed(
+        &self,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+        enabled: bool,
+    ) {
+        let mut lock = self.0.lock().await;
+        lock.config.off_when_lid_closed = enabled;
+        lock.config.write();
         Self::notify_device_state(&ctxt, DeviceState::from(&lock.config))
             .await
             .ok();

@@ -3,7 +3,9 @@ use std::time::Duration;
 use config_traits::{StdConfig, StdConfigLoad2};
 use rog_anime::error::AnimeError;
 use rog_anime::usb::Brightness;
-use rog_anime::{ActionData, ActionLoader, AnimTime, Animations, AnimeType, Fade, Vec2, DeviceState};
+use rog_anime::{
+    ActionData, ActionLoader, AnimTime, Animations, AnimeType, DeviceState, Fade, Vec2,
+};
 use serde_derive::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "anime.ron";

@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for G513RW LED modes
 - Support Rog Ally LED modes (basic)
 - Add on_lid_closed and on_external_power_changed events for running certain tasks
+- Anime dbus: add:
+  - SetOffWhenUnplugged
+  - SetOffWhenSuspended
+  - SetOffWhenLidClosed
 
 ### Changed
 - asusd: remove set_image_brightness for anime

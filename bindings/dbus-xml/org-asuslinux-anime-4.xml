@@ -2,17 +2,10 @@
 <node>
   <interface name="org.asuslinux.Daemon">
     <!--
-     Writes a data stream of length. Will force system thread to exit until
-     it is restarted
+     Writes a data stream of length. Will force system thread to exit until it is restarted
      -->
     <method name="Write">
       <arg name="input" type="(ays)" direction="in"/>
-    </method>
-    <!--
-     Set the global AniMe brightness
-     -->
-    <method name="SetImageBrightness">
-      <arg name="bright" type="d" direction="in"/>
     </method>
     <!--
      Set base brightness level
@@ -21,7 +14,8 @@
       <arg name="brightness" type="s" direction="in"/>
     </method>
     <!--
-     Enable the builtin animations or not
+     Enable the builtin animations or not. This is quivalent to "Powersave
+     animations" in Armory crate
      -->
     <method name="SetBuiltinsEnabled">
       <arg name="enabled" type="b" direction="in"/>
@@ -42,6 +36,24 @@
       <arg name="enabled" type="b" direction="in"/>
     </method>
     <!--
+     Set if to turn the AniMe Matrix off when external power is unplugged
+     -->
+    <method name="SetOffWhenUnplugged">
+      <arg name="enabled" type="b" direction="in"/>
+    </method>
+    <!--
+     Set if to turn the AniMe Matrix off when the laptop is suspended
+     -->
+    <method name="SetOffWhenSuspended">
+      <arg name="enabled" type="b" direction="in"/>
+    </method>
+    <!--
+     Set if to turn the AniMe Matrix off when the lid is closed
+     -->
+    <method name="SetOffWhenLidClosed">
+      <arg name="enabled" type="b" direction="in"/>
+    </method>
+    <!--
      The main loop is the base system set action if the user isn't running
      the user daemon
      -->
@@ -52,14 +64,14 @@
      Get the device state as stored by asusd
      -->
     <method name="DeviceState">
-      <arg type="bsb(ssss)" direction="out"/>
+      <arg type="bsb(ssss)bbb" direction="out"/>
     </method>
     <!--
      Notify listeners of the status of AniMe LED power and factory
      system-status animations
      -->
     <signal name="NotifyDeviceState">
-      <arg name="data" type="(bsb(ssss))"/>
+      <arg name="data" type="(bsb(ssss)bbb)"/>
     </signal>
   </interface>
 </node>
