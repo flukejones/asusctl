@@ -91,6 +91,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore = "Does not run in docker images"]
     fn dmi_sysfs_properties_not_unknown() {
         let dmi = DMIID::new().unwrap();
 
