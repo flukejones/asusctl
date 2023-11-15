@@ -260,27 +260,19 @@ impl crate::CtrlTask for CtrlAnimeZbus {
                 async move {
                     let lock = inner.lock().await;
                     if lock.config.display_enabled {
-                        if lock.config.off_when_suspended {
-                            lock.node
-                                .write_bytes(&pkt_set_enable_display(!sleeping))
-                                .map_err(|err| {
-                                    warn!("create_sys_event_tasks::off_when_suspended {}", err);
-                                })
-                                .ok();
-                        }
-                        if !lock.config.builtin_anims_enabled {
-                            if sleeping {
-                                lock.thread_exit.store(true, Ordering::Release);
-                                lock.node
-                                    .write_bytes(&pkt_set_enable_display(!sleeping))
-                                    .map_err(|err| {
-                                        warn!("create_sys_event_tasks::off_when_suspended {}", err);
-                                    })
-                                    .ok();
-                            } else {
-                                CtrlAnime::run_thread(inner.clone(), lock.cache.wake.clone(), true)
-                                    .await;
-                            }
+                        lock.thread_exit.store(true, Ordering::Release); // ensure clean slate
+                        lock.node
+                            .write_bytes(&pkt_set_enable_display(
+                                !(sleeping && lock.config.off_when_suspended),
+                            ))
+                            .map_err(|err| {
+                                warn!("create_sys_event_tasks::off_when_suspended {}", err);
+                            })
+                            .ok();
+
+                        if !sleeping && !lock.config.builtin_anims_enabled {
+                            CtrlAnime::run_thread(inner.clone(), lock.cache.wake.clone(), true)
+                                .await;
                         }
                     }
                 }
