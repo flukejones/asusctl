@@ -241,39 +241,29 @@ impl CtrlTask for CtrlKbdLedZbus {
         };
 
         let inner1 = self.0.clone();
-        let inner2 = self.0.clone();
         let inner3 = self.0.clone();
-        let inner4 = self.0.clone();
         self.create_sys_event_tasks(
-            // Loop so that we do aquire the lock but also don't block other
-            // threads (prevents potential deadlocks)
-            move || {
+            move |sleeping| {
                 let inner1 = inner1.clone();
                 async move {
                     let lock = inner1.lock().await;
-                    load_save(true, lock);
+                    load_save(sleeping, lock);
                 }
             },
-            move || {
-                let inner2 = inner2.clone();
-                async move {
-                    let lock = inner2.lock().await;
-                    load_save(false, lock);
-                }
-            },
-            move || {
+            move |_shutting_down| {
                 let inner3 = inner3.clone();
                 async move {
                     let lock = inner3.lock().await;
                     load_save(false, lock);
                 }
             },
-            move || {
-                let inner4 = inner4.clone();
-                async move {
-                    let lock = inner4.lock().await;
-                    load_save(false, lock);
-                }
+            move |_lid_closed| {
+                // on lid change
+                async move {}
+            },
+            move |_power_plugged| {
+                // power change
+                async move {}
             },
         )
         .await;

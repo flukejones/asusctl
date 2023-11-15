@@ -163,49 +163,59 @@ impl CtrlTask for CtrlPower {
         let power1 = self.clone();
         let power2 = self.clone();
         self.create_sys_event_tasks(
-            move || async {},
-            move || {
+            move |sleeping| {
                 let power = power1.clone();
                 let sysd = sysd1.clone();
                 async move {
-                    info!("CtrlCharge reloading charge limit");
-                    let lock = power.config.lock().await;
-                    power
-                        .set(lock.bat_charge_limit)
-                        .map_err(|err| {
-                            warn!("CtrlCharge: set_limit {}", err);
-                            err
-                        })
-                        .ok();
+                    if !sleeping {
+                        info!("CtrlCharge reloading charge limit");
+                        let lock = power.config.lock().await;
+                        power
+                            .set(lock.bat_charge_limit)
+                            .map_err(|err| {
+                                warn!("CtrlCharge: set_limit {}", err);
+                                err
+                            })
+                            .ok();
 
-                    if lock.disable_nvidia_powerd_on_battery {
-                        if let Ok(value) = power.power.get_online() {
-                            do_nvidia_powerd_action(&sysd, value == 1).await;
+                        if lock.disable_nvidia_powerd_on_battery {
+                            if let Ok(value) = power.power.get_online() {
+                                do_nvidia_powerd_action(&sysd, value == 1).await;
+                            }
                         }
                     }
                 }
             },
-            move || async {},
-            move || {
+            move |shutting_down| {
                 let power = power2.clone();
                 let sysd = sysd2.clone();
                 async move {
-                    info!("CtrlCharge reloading charge limit");
-                    let lock = power.config.lock().await;
-                    power
-                        .set(lock.bat_charge_limit)
-                        .map_err(|err| {
-                            warn!("CtrlCharge: set_limit {}", err);
-                            err
-                        })
-                        .ok();
+                    if !shutting_down {
+                        info!("CtrlCharge reloading charge limit");
+                        let lock = power.config.lock().await;
+                        power
+                            .set(lock.bat_charge_limit)
+                            .map_err(|err| {
+                                warn!("CtrlCharge: set_limit {}", err);
+                                err
+                            })
+                            .ok();
 
-                    if lock.disable_nvidia_powerd_on_battery {
-                        if let Ok(value) = power.power.get_online() {
-                            do_nvidia_powerd_action(&sysd, value == 1).await;
+                        if lock.disable_nvidia_powerd_on_battery {
+                            if let Ok(value) = power.power.get_online() {
+                                do_nvidia_powerd_action(&sysd, value == 1).await;
+                            }
                         }
                     }
                 }
+            },
+            move |_lid_closed| {
+                // on lid change
+                async move {}
+            },
+            move |_power_plugged| {
+                // power change
+                async move {}
             },
         )
         .await;

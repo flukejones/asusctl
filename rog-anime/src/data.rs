@@ -48,6 +48,8 @@ pub struct DeviceState {
     pub display_brightness: Brightness,
     pub builtin_anims_enabled: bool,
     pub builtin_anims: Animations,
+    pub off_when_unplugged: bool,
+    pub off_when_suspended: bool,
 }
 
 #[typeshare]

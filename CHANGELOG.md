@@ -9,8 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Support for G513RW LED modes
 - Support Rog Ally LED modes (basic)
+- Add on_lid_closed and on_external_power_changed events for running certain tasks
 
 ### Changed
+- asusd: remove set_image_brightness for anime
+- asusd: refactor how certain things like display enable/builtins are toggled
+- Refactor sleep/shutdown tasks
 - rog-control-center: ensure brightness slider works correctly
 - Update `smithay-client-toolkit` for fix to issue #407
 

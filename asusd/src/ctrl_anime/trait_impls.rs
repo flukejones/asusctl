@@ -39,23 +39,10 @@ impl CtrlAnimeZbus {
         let lock = self.0.lock().await;
         lock.thread_exit.store(true, Ordering::SeqCst);
         lock.write_data_buffer(input).map_err(|err| {
-            warn!("rog_anime::run_animation:callback {}", err);
+            warn!("ctrl_anime::run_animation:callback {}", err);
             err
         })?;
         Ok(())
-    }
-
-    /// Set the global AniMe brightness
-    async fn set_image_brightness(&self, bright: f32) {
-        let mut lock = self.0.lock().await;
-        let mut bright = bright;
-        if bright < 0.0 {
-            bright = 0.0;
-        } else if bright > 1.0 {
-            bright = 1.0;
-        }
-        lock.config.brightness = bright;
-        lock.config.write();
     }
 
     /// Set base brightness level
@@ -69,9 +56,17 @@ impl CtrlAnimeZbus {
         lock.node
             .write_bytes(&pkt_set_brightness(brightness))
             .map_err(|err| {
-                warn!("rog_anime::run_animation:callback {}", err);
+                warn!("ctrl_anime::set_brightness {}", err);
             })
             .ok();
+        lock.node
+            .write_bytes(&pkt_set_enable_display(brightness != Brightness::Off))
+            .map_err(|err| {
+                warn!("ctrl_anime::set_brightness {}", err);
+            })
+            .ok();
+
+        lock.config.display_enabled = brightness != Brightness::Off;
         lock.config.display_brightness = brightness;
         lock.config.write();
 
@@ -82,6 +77,8 @@ impl CtrlAnimeZbus {
                 display_brightness: lock.config.display_brightness,
                 builtin_anims_enabled: lock.config.builtin_anims_enabled,
                 builtin_anims: lock.config.builtin_anims,
+                off_when_unplugged: lock.config.off_when_unplugged,
+                off_when_suspended: lock.config.off_when_suspended,
             },
         )
         .await
@@ -97,11 +94,27 @@ impl CtrlAnimeZbus {
     ) {
         let mut lock = self.0.lock().await;
         lock.node
-            .write_bytes(&pkt_set_enable_powersave_anim(enabled))
+            .set_builtins_enabled(enabled, lock.config.display_brightness)
             .map_err(|err| {
-                warn!("rog_anime::run_animation:callback {}", err);
+                warn!("ctrl_anime::set_builtins_enabled {}", err);
             })
             .ok();
+
+        if !enabled {
+            let data = vec![255u8; lock.anime_type.data_length()];
+            if let Ok(tmp) = AnimeDataBuffer::from_vec(lock.anime_type, data).map_err(|err| {
+                warn!("ctrl_anime::set_builtins_enabled {}", err);
+            }) {
+                lock.node
+                    .write_bytes(tmp.data())
+                    .map_err(|err| {
+                        warn!("ctrl_anime::set_builtins_enabled {}", err);
+                    })
+                    .ok();
+            }
+        }
+
+        lock.config.display_enabled = enabled;
         lock.config.builtin_anims_enabled = enabled;
         lock.config.write();
         if enabled {
@@ -115,6 +128,8 @@ impl CtrlAnimeZbus {
                 display_brightness: lock.config.display_brightness,
                 builtin_anims_enabled: lock.config.builtin_anims_enabled,
                 builtin_anims: lock.config.builtin_anims,
+                off_when_unplugged: lock.config.off_when_unplugged,
+                off_when_suspended: lock.config.off_when_suspended,
             },
         )
         .await
@@ -132,17 +147,18 @@ impl CtrlAnimeZbus {
     ) {
         let mut lock = self.0.lock().await;
         lock.node
-            .write_bytes(&pkt_set_enable_powersave_anim(true))
+            .write_bytes(&pkt_set_builtin_animations(boot, awake, sleep, shutdown))
             .map_err(|err| {
-                warn!("rog_anime::run_animation:callback {}", err);
+                warn!("ctrl_anime::run_animation:callback {}", err);
             })
             .ok();
         lock.node
-            .write_bytes(&pkt_set_builtin_animations(boot, awake, sleep, shutdown))
+            .write_bytes(&pkt_set_enable_powersave_anim(true))
             .map_err(|err| {
-                warn!("rog_anime::run_animation:callback {}", err);
+                warn!("ctrl_anime::run_animation:callback {}", err);
             })
             .ok();
+        lock.config.display_enabled = true;
         lock.config.builtin_anims.boot = boot;
         lock.config.builtin_anims.sleep = sleep;
         lock.config.builtin_anims.awake = awake;
@@ -156,6 +172,8 @@ impl CtrlAnimeZbus {
                 display_brightness: lock.config.display_brightness,
                 builtin_anims_enabled: lock.config.builtin_anims_enabled,
                 builtin_anims: lock.config.builtin_anims,
+                off_when_unplugged: lock.config.off_when_unplugged,
+                off_when_suspended: lock.config.off_when_suspended,
             },
         )
         .await
@@ -172,7 +190,7 @@ impl CtrlAnimeZbus {
         lock.node
             .write_bytes(&pkt_set_enable_display(enabled))
             .map_err(|err| {
-                warn!("rog_anime::run_animation:callback {}", err);
+                warn!("ctrl_anime::run_animation:callback {}", err);
             })
             .ok();
         lock.config.display_enabled = enabled;
@@ -185,6 +203,8 @@ impl CtrlAnimeZbus {
                 display_brightness: lock.config.display_brightness,
                 builtin_anims_enabled: lock.config.builtin_anims_enabled,
                 builtin_anims: lock.config.builtin_anims,
+                off_when_unplugged: lock.config.off_when_unplugged,
+                off_when_suspended: lock.config.off_when_suspended,
             },
         )
         .await
@@ -210,6 +230,8 @@ impl CtrlAnimeZbus {
             display_brightness: lock.config.display_brightness,
             builtin_anims_enabled: lock.config.builtin_anims_enabled,
             builtin_anims: lock.config.builtin_anims,
+            off_when_unplugged: lock.config.off_when_unplugged,
+            off_when_suspended: lock.config.off_when_suspended,
         }
     }
 
@@ -231,36 +253,80 @@ impl crate::CtrlTask for CtrlAnimeZbus {
         let inner3 = self.0.clone();
         let inner4 = self.0.clone();
         self.create_sys_event_tasks(
-            move || {
+            move |sleeping| {
                 // on_sleep
-                let inner1 = inner1.clone();
+                let inner = inner1.clone();
                 async move {
-                    let lock = inner1.lock().await;
-                    CtrlAnime::run_thread(inner1.clone(), lock.cache.sleep.clone(), true).await;
+                    let lock = inner.lock().await;
+                    if lock.config.display_enabled {
+                        if lock.config.off_when_suspended {
+                            lock.node
+                                .write_bytes(&pkt_set_enable_display(!sleeping))
+                                .map_err(|err| {
+                                    warn!("create_sys_event_tasks::off_when_suspended {}", err);
+                                })
+                                .ok();
+                        }
+                        if !lock.config.builtin_anims_enabled {
+                            if sleeping {
+                                CtrlAnime::run_thread(
+                                    inner.clone(),
+                                    lock.cache.sleep.clone(),
+                                    true,
+                                )
+                                .await;
+                            } else {
+                                CtrlAnime::run_thread(inner.clone(), lock.cache.wake.clone(), true)
+                                    .await;
+                            }
+                        }
+                    }
                 }
             },
-            move || {
-                // on_wake
-                let inner2 = inner2.clone();
-                async move {
-                    let lock = inner2.lock().await;
-                    CtrlAnime::run_thread(inner2.clone(), lock.cache.wake.clone(), true).await;
-                }
-            },
-            move || {
+            move |shutting_down| {
                 // on_shutdown
-                let inner3 = inner3.clone();
+                let inner = inner2.clone();
                 async move {
-                    let lock = inner3.lock().await;
-                    CtrlAnime::run_thread(inner3.clone(), lock.cache.shutdown.clone(), true).await;
+                    let lock = inner.lock().await;
+                    if lock.config.display_enabled && !lock.config.builtin_anims_enabled {
+                        if shutting_down {
+                            CtrlAnime::run_thread(inner.clone(), lock.cache.shutdown.clone(), true)
+                                .await;
+                        } else {
+                            CtrlAnime::run_thread(inner.clone(), lock.cache.boot.clone(), true)
+                                .await;
+                        }
+                    }
                 }
             },
-            move || {
-                // on_boot
-                let inner4 = inner4.clone();
+            move |lid_closed| {
+                let inner = inner3.clone();
+                // on lid change
                 async move {
-                    let lock = inner4.lock().await;
-                    CtrlAnime::run_thread(inner4.clone(), lock.cache.boot.clone(), true).await;
+                    let lock = inner.lock().await;
+                    if lock.config.off_when_lid_closed {
+                        lock.node
+                            .write_bytes(&pkt_set_enable_display(lid_closed))
+                            .map_err(|err| {
+                                warn!("create_sys_event_tasks::off_when_lid_closed {}", err);
+                            })
+                            .ok();
+                    }
+                }
+            },
+            move |power_plugged| {
+                let inner = inner4.clone();
+                // on power change
+                async move {
+                    let lock = inner.lock().await;
+                    if lock.config.off_when_unplugged {
+                        lock.node
+                            .write_bytes(&pkt_set_enable_display(power_plugged))
+                            .map_err(|err| {
+                                warn!("create_sys_event_tasks::off_when_unplugged {}", err);
+                            })
+                            .ok();
+                    }
                 }
             },
         )
@@ -275,25 +341,29 @@ impl crate::Reloadable for CtrlAnimeZbus {
     async fn reload(&mut self) -> Result<(), RogError> {
         if let Some(lock) = self.0.try_lock() {
             let anim = &lock.config.builtin_anims;
-            lock.node
-                .write_bytes(&pkt_set_enable_display(lock.config.display_enabled))?;
-            lock.node.write_bytes(&pkt_set_enable_powersave_anim(
+            // Set builtins
+            if lock.config.builtin_anims_enabled {
+                lock.node.write_bytes(&pkt_set_builtin_animations(
+                    anim.boot,
+                    anim.awake,
+                    anim.sleep,
+                    anim.shutdown,
+                ))?;
+            }
+            // Builtins enabled or na?
+            lock.node.set_builtins_enabled(
                 lock.config.builtin_anims_enabled,
-            ))?;
-            lock.node.write_bytes(&pkt_set_builtin_animations(
-                anim.boot,
-                anim.awake,
-                anim.sleep,
-                anim.shutdown,
-            ))?;
+                lock.config.display_brightness,
+            )?;
 
-            if lock.config.builtin_anims_enabled && !lock.cache.boot.is_empty() {
+            if !lock.config.builtin_anims_enabled && !lock.cache.boot.is_empty() {
                 lock.node
                     .write_bytes(&pkt_set_enable_powersave_anim(false))
                     .ok();
+
+                let action = lock.cache.boot.clone();
+                CtrlAnime::run_thread(self.0.clone(), action, true).await;
             }
-            let action = lock.cache.boot.clone();
-            CtrlAnime::run_thread(self.0.clone(), action, true).await;
         }
         Ok(())
     }

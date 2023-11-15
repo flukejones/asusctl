@@ -10,7 +10,10 @@ use std::thread::sleep;
 use ::zbus::export::futures_util::lock::Mutex;
 use log::{error, info, warn};
 use rog_anime::error::AnimeError;
-use rog_anime::usb::{get_anime_type, pkt_flush, pkt_set_enable_powersave_anim, pkts_for_init};
+use rog_anime::usb::{
+    get_anime_type, pkt_flush, pkt_set_brightness, pkt_set_enable_display,
+    pkt_set_enable_powersave_anim, pkts_for_init, Brightness,
+};
 use rog_anime::{ActionData, AnimeDataBuffer, AnimePacketType, AnimeType};
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::supported::AnimeSupportedFunctions;
@@ -49,6 +52,13 @@ impl Node {
             }
         }
         Ok(())
+    }
+
+    pub fn set_builtins_enabled(&self, enabled: bool, bright: Brightness) -> Result<(), RogError> {
+        self.write_bytes(&pkt_set_enable_powersave_anim(enabled))?;
+        self.write_bytes(&pkt_set_enable_display(enabled))?;
+        self.write_bytes(&pkt_set_brightness(bright))?;
+        self.write_bytes(&pkt_set_enable_powersave_anim(enabled))
     }
 }
 
@@ -234,6 +244,14 @@ impl CtrlAnime {
                             })
                             .ok();
                     }
+                    lock.node
+                        .write_bytes(&pkt_set_enable_powersave_anim(
+                            lock.config.builtin_anims_enabled,
+                        ))
+                        .map_err(|err| {
+                            warn!("rog_anime::run_animation:callback {}", err);
+                        })
+                        .ok();
                 }
                 // Loop ended, set the atmonics
                 thread_running.store(false, Ordering::SeqCst);
@@ -247,7 +265,7 @@ impl CtrlAnime {
     /// global brightness set in config.
     fn write_data_buffer(&self, mut buffer: AnimeDataBuffer) -> Result<(), RogError> {
         for led in buffer.data_mut().iter_mut() {
-            let mut bright = *led as f32 * self.config.brightness;
+            let mut bright = *led as f32;
             if bright > 254.0 {
                 bright = 254.0;
             }

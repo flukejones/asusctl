@@ -18,14 +18,16 @@ pub mod ctrl_supported;
 pub mod error;
 
 use std::future::Future;
+use std::time::Duration;
 
 use async_trait::async_trait;
 use dmi_id::DMIID;
+use futures_lite::stream::StreamExt;
 use log::{debug, info, warn};
 use logind_zbus::manager::ManagerProxy;
-use zbus::export::futures_util::StreamExt;
+use tokio::time::sleep;
 use zbus::zvariant::ObjectPath;
-use zbus::{Connection, SignalContext};
+use zbus::{CacheProperties, Connection, SignalContext};
 
 use crate::error::RogError;
 
@@ -161,15 +163,15 @@ pub trait CtrlTask {
         F4: Send + 'static,
     >(
         &self,
-        mut on_sleep: F1,
-        mut on_wake: F2,
-        mut on_shutdown: F3,
-        mut on_boot: F4,
+        mut on_prepare_for_sleep: F1,
+        mut on_prepare_for_shutdown: F2,
+        mut on_lid_change: F3,
+        mut on_external_power_change: F4,
     ) where
-        F1: FnMut() -> Fut1,
-        F2: FnMut() -> Fut2,
-        F3: FnMut() -> Fut3,
-        F4: FnMut() -> Fut4,
+        F1: FnMut(bool) -> Fut1,
+        F2: FnMut(bool) -> Fut2,
+        F3: FnMut(bool) -> Fut3,
+        F4: FnMut(bool) -> Fut4,
         Fut1: Future<Output = ()> + Send,
         Fut2: Future<Output = ()> + Send,
         Fut3: Future<Output = ()> + Send,
@@ -179,7 +181,9 @@ pub trait CtrlTask {
             .await
             .expect("Controller could not create dbus connection");
 
-        let manager = ManagerProxy::new(&connection)
+        let manager = ManagerProxy::builder(&connection)
+            .cache_properties(CacheProperties::No)
+            .build()
             .await
             .expect("Controller could not create ManagerProxy");
 
@@ -187,35 +191,46 @@ pub trait CtrlTask {
             if let Ok(mut notif) = manager.receive_prepare_for_sleep().await {
                 while let Some(event) = notif.next().await {
                     if let Ok(args) = event.args() {
-                        if args.start {
-                            debug!("Doing on_sleep()");
-                            on_sleep().await;
-                        } else if !args.start() {
-                            debug!("Doing on_wake()");
-                            on_wake().await;
-                        }
+                        debug!("Doing on_prepare_for_sleep({})", args.start);
+                        on_prepare_for_sleep(args.start).await;
+                    }
+                }
+            }
+
+            if let Ok(mut notif) = manager.receive_prepare_for_shutdown().await {
+                while let Some(event) = notif.next().await {
+                    if let Ok(args) = event.args() {
+                        debug!("Doing on_prepare_for_shutdown({})", args.start);
+                        on_prepare_for_shutdown(args.start).await;
                     }
                 }
             }
         });
 
-        let manager = ManagerProxy::new(&connection)
+        let manager = ManagerProxy::builder(&connection)
+            .cache_properties(CacheProperties::No)
+            .build()
             .await
             .expect("Controller could not create ManagerProxy");
 
         tokio::spawn(async move {
-            if let Ok(mut notif) = manager.receive_prepare_for_shutdown().await {
-                while let Some(event) = notif.next().await {
-                    if let Ok(args) = event.args() {
-                        if args.start {
-                            debug!("Doing on_shutdown()");
-                            on_shutdown().await;
-                        } else if !args.start() {
-                            debug!("Doing on_boot()");
-                            on_boot().await;
-                        }
+            let mut last_power = manager.on_external_power().await.unwrap_or_default();
+            let mut last_lid = manager.lid_closed().await.unwrap_or_default();
+            // need to loop on these as they don't emit signals
+            loop {
+                if let Ok(next) = manager.on_external_power().await {
+                    if next != last_power {
+                        last_power = next;
+                        on_external_power_change(next).await;
                     }
                 }
+                if let Ok(next) = manager.lid_closed().await {
+                    if next != last_lid {
+                        last_lid = next;
+                        on_lid_change(next).await;
+                    }
+                }
+                sleep(Duration::from_secs(2)).await;
             }
         });
     }

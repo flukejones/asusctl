@@ -207,7 +207,6 @@ fn handle_anime(
         && cmd.enable_display.is_none()
         && cmd.enable_powersave_anim.is_none()
         && cmd.brightness.is_none()
-        && cmd.image_brightness.is_none()
         && !cmd.clear)
         || cmd.help
     {
@@ -220,14 +219,11 @@ fn handle_anime(
         dbus.proxies().anime().set_enable_display(enable)?;
     }
     if let Some(enable) = cmd.enable_powersave_anim {
+        dbg!(enable);
         dbus.proxies().anime().set_builtins_enabled(enable)?;
     }
     if let Some(bright) = cmd.brightness {
         dbus.proxies().anime().set_brightness(bright)?;
-    }
-    if let Some(bright) = cmd.image_brightness {
-        verify_brightness(bright);
-        dbus.proxies().anime().set_image_brightness(bright)?;
     }
 
     let mut anime_type = get_anime_type()?;

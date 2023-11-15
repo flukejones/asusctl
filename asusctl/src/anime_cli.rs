@@ -17,8 +17,6 @@ pub struct AnimeCommand {
         help = "set global base brightness value <Off, Low, Med, High>"
     )]
     pub brightness: Option<Brightness>,
-    #[options(meta = "", help = "set global (image) brightness value")]
-    pub image_brightness: Option<f32>,
     #[options(help = "clear the display")]
     pub clear: bool,
     #[options(command)]

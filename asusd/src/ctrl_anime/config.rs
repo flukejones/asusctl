@@ -32,25 +32,33 @@ impl From<AnimeConfigV460> for AnimeConfig {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct AnimeConfigV5 {
+pub struct AnimeConfigV472 {
+    pub model_override: Option<AnimeType>,
     pub system: Vec<ActionLoader>,
     pub boot: Vec<ActionLoader>,
     pub wake: Vec<ActionLoader>,
     pub sleep: Vec<ActionLoader>,
     pub shutdown: Vec<ActionLoader>,
     pub brightness: f32,
-    pub awake_enabled: bool,
-    pub boot_anim_enabled: bool,
+    pub display_enabled: bool,
+    pub display_brightness: Brightness,
+    pub builtin_anims_enabled: bool,
+    pub builtin_anims: Animations,
 }
 
-impl From<AnimeConfigV5> for AnimeConfig {
-    fn from(c: AnimeConfigV5) -> AnimeConfig {
+impl From<AnimeConfigV472> for AnimeConfig {
+    fn from(c: AnimeConfigV472) -> AnimeConfig {
         AnimeConfig {
             system: c.system,
             boot: c.boot,
             wake: c.wake,
             sleep: c.sleep,
             shutdown: c.shutdown,
+            model_override: c.model_override,
+            display_enabled: c.display_enabled,
+            display_brightness: c.display_brightness,
+            builtin_anims_enabled: c.builtin_anims_enabled,
+            builtin_anims: c.builtin_anims,
             ..Default::default()
         }
     }
@@ -113,10 +121,13 @@ pub struct AnimeConfig {
     pub wake: Vec<ActionLoader>,
     pub sleep: Vec<ActionLoader>,
     pub shutdown: Vec<ActionLoader>,
-    pub brightness: f32,
+    // pub brightness: f32,
     pub display_enabled: bool,
     pub display_brightness: Brightness,
     pub builtin_anims_enabled: bool,
+    pub off_when_unplugged: bool,
+    pub off_when_suspended: bool,
+    pub off_when_lid_closed: bool,
     pub builtin_anims: Animations,
 }
 
@@ -129,10 +140,13 @@ impl Default for AnimeConfig {
             wake: Vec::new(),
             sleep: Vec::new(),
             shutdown: Vec::new(),
-            brightness: 1.0,
+            // brightness: 1.0,
             display_enabled: true,
             display_brightness: Brightness::Med,
             builtin_anims_enabled: true,
+            off_when_unplugged: true,
+            off_when_suspended: true,
+            off_when_lid_closed: true,
             builtin_anims: Animations::default(),
         }
     }
@@ -152,7 +166,7 @@ impl StdConfig for AnimeConfig {
     }
 }
 
-impl StdConfigLoad2<AnimeConfigV460, AnimeConfigV5> for AnimeConfig {}
+impl StdConfigLoad2<AnimeConfigV460, AnimeConfigV472> for AnimeConfig {}
 
 impl AnimeConfig {
     // fn clamp_config_brightness(mut config: &mut AnimeConfig) {
@@ -209,7 +223,6 @@ impl AnimeConfig {
                 brightness: 1.0,
                 time: AnimTime::Infinite,
             }],
-            brightness: 1.0,
             ..Default::default()
         }
     }

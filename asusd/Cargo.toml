@@ -21,6 +21,7 @@ rog_platform = { path = "../rog-platform" }
 rog_profiles = { path = "../rog-profiles" }
 rog_dbus = { path = "../rog-dbus" }
 dmi_id = { path = "../dmi-id" }
+futures-lite = "*"
 
 async-trait.workspace = true
 tokio.workspace = true

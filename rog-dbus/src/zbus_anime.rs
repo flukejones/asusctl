@@ -7,9 +7,6 @@ use zbus::dbus_proxy;
     default_path = "/org/asuslinux/Anime"
 )]
 trait Anime {
-    /// Set the global (image) brightness
-    fn set_image_brightness(&self, bright: f32) -> zbus::Result<()>;
-
     /// Set the global base brightness
     fn set_brightness(&self, bright: Brightness) -> zbus::Result<()>;
 
