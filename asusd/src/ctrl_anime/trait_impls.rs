@@ -33,8 +33,7 @@ impl crate::ZbusRun for CtrlAnimeZbus {
 // grab it until we finish.
 #[dbus_interface(name = "org.asuslinux.Daemon")]
 impl CtrlAnimeZbus {
-    /// Writes a data stream of length. Will force system thread to exit until
-    /// it is restarted
+    /// Writes a data stream of length. Will force system thread to exit until it is restarted
     async fn write(&self, input: AnimeDataBuffer) -> zbus::fdo::Result<()> {
         let lock = self.0.lock().await;
         lock.thread_exit.store(true, Ordering::SeqCst);
@@ -46,7 +45,6 @@ impl CtrlAnimeZbus {
     }
 
     /// Set base brightness level
-    // TODO: enum for brightness
     async fn set_brightness(
         &self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
@@ -70,20 +68,9 @@ impl CtrlAnimeZbus {
         lock.config.display_brightness = brightness;
         lock.config.write();
 
-        Self::notify_device_state(
-            &ctxt,
-            DeviceState {
-                display_enabled: lock.config.display_enabled,
-                display_brightness: lock.config.display_brightness,
-                builtin_anims_enabled: lock.config.builtin_anims_enabled,
-                builtin_anims: lock.config.builtin_anims,
-                off_when_unplugged: lock.config.off_when_unplugged,
-                off_when_suspended: lock.config.off_when_suspended,
-                off_when_lid_closed: lock.config.off_when_lid_closed,
-            },
-        )
-        .await
-        .ok();
+        Self::notify_device_state(&ctxt, DeviceState::from(&lock.config))
+            .await
+            .ok();
     }
 
     /// Enable the builtin animations or not. This is quivalent to "Powersave
@@ -122,20 +109,9 @@ impl CtrlAnimeZbus {
             lock.thread_exit.store(true, Ordering::Release);
         }
 
-        Self::notify_device_state(
-            &ctxt,
-            DeviceState {
-                display_enabled: lock.config.display_enabled,
-                display_brightness: lock.config.display_brightness,
-                builtin_anims_enabled: lock.config.builtin_anims_enabled,
-                builtin_anims: lock.config.builtin_anims,
-                off_when_unplugged: lock.config.off_when_unplugged,
-                off_when_suspended: lock.config.off_when_suspended,
-                off_when_lid_closed: lock.config.off_when_lid_closed,
-            },
-        )
-        .await
-        .ok();
+        Self::notify_device_state(&ctxt, DeviceState::from(&lock.config))
+            .await
+            .ok();
     }
 
     /// Set which builtin animation is used for each stage
@@ -167,20 +143,9 @@ impl CtrlAnimeZbus {
         lock.config.builtin_anims.shutdown = shutdown;
         lock.config.write();
 
-        Self::notify_device_state(
-            &ctxt,
-            DeviceState {
-                display_enabled: lock.config.display_enabled,
-                display_brightness: lock.config.display_brightness,
-                builtin_anims_enabled: lock.config.builtin_anims_enabled,
-                builtin_anims: lock.config.builtin_anims,
-                off_when_unplugged: lock.config.off_when_unplugged,
-                off_when_suspended: lock.config.off_when_suspended,
-                off_when_lid_closed: lock.config.off_when_lid_closed,
-            },
-        )
-        .await
-        .ok();
+        Self::notify_device_state(&ctxt, DeviceState::from(&lock.config))
+            .await
+            .ok();
     }
 
     /// Set whether the AniMe is enabled at all
@@ -199,20 +164,9 @@ impl CtrlAnimeZbus {
         lock.config.display_enabled = enabled;
         lock.config.write();
 
-        Self::notify_device_state(
-            &ctxt,
-            DeviceState {
-                display_enabled: lock.config.display_enabled,
-                display_brightness: lock.config.display_brightness,
-                builtin_anims_enabled: lock.config.builtin_anims_enabled,
-                builtin_anims: lock.config.builtin_anims,
-                off_when_unplugged: lock.config.off_when_unplugged,
-                off_when_suspended: lock.config.off_when_suspended,
-                off_when_lid_closed: lock.config.off_when_lid_closed,
-            },
-        )
-        .await
-        .ok();
+        Self::notify_device_state(&ctxt, DeviceState::from(&lock.config))
+            .await
+            .ok();
     }
 
     /// The main loop is the base system set action if the user isn't running

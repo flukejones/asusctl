@@ -3,7 +3,7 @@ use std::time::Duration;
 use config_traits::{StdConfig, StdConfigLoad2};
 use rog_anime::error::AnimeError;
 use rog_anime::usb::Brightness;
-use rog_anime::{ActionData, ActionLoader, AnimTime, Animations, AnimeType, Fade, Vec2};
+use rog_anime::{ActionData, ActionLoader, AnimTime, Animations, AnimeType, Fade, Vec2, DeviceState};
 use serde_derive::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "anime.ron";
@@ -167,6 +167,20 @@ impl StdConfig for AnimeConfig {
 }
 
 impl StdConfigLoad2<AnimeConfigV460, AnimeConfigV472> for AnimeConfig {}
+
+impl From<&AnimeConfig> for DeviceState {
+    fn from(config: &AnimeConfig) -> Self {
+        DeviceState {
+            display_enabled: config.display_enabled,
+            display_brightness: config.display_brightness,
+            builtin_anims_enabled: config.builtin_anims_enabled,
+            builtin_anims: config.builtin_anims,
+            off_when_unplugged: config.off_when_unplugged,
+            off_when_suspended: config.off_when_suspended,
+            off_when_lid_closed: config.off_when_lid_closed,
+        }
+    }
+}
 
 impl AnimeConfig {
     // fn clamp_config_brightness(mut config: &mut AnimeConfig) {
