@@ -1,8 +1,8 @@
 #[macro_export]
 macro_rules! has_attr {
-    ($(#[$doc_comment:meta])? $attr_name:literal $item:ident) => {
+    ($(#[$attr:meta])* $attr_name:literal $item:ident) => {
         concat_idents::concat_idents!(fn_name = has_, $attr_name {
-            $(#[$doc_comment])*
+            $(#[$attr])*
             pub fn fn_name(&self) -> bool {
                 match to_device(&self.$item) {
                     Ok(p) => $crate::has_attr(&p, $attr_name),
@@ -15,9 +15,9 @@ macro_rules! has_attr {
 
 #[macro_export]
 macro_rules! watch_attr {
-    ($(#[$doc_comment:meta])? $attr_name:literal $item:ident) => {
+    ($(#[$attr:meta])* $attr_name:literal $item:ident) => {
         concat_idents::concat_idents!(fn_name = monitor_, $attr_name {
-            $(#[$doc_comment])*
+            $(#[$attr])*
             pub fn fn_name(&self) -> Result<inotify::Inotify> {
                 let mut path = self.$item.clone();
                 path.push($attr_name);
@@ -41,9 +41,9 @@ macro_rules! watch_attr {
 
 #[macro_export]
 macro_rules! get_attr_bool {
-    ($(#[$doc_comment:meta])? $attr_name:literal $item:ident) => {
+    ($(#[$attr:meta])* $attr_name:literal $item:ident) => {
         concat_idents::concat_idents!(fn_name = get_, $attr_name {
-            $(#[$doc_comment])*
+            $(#[$attr])*
             pub fn fn_name(&self) -> Result<bool> {
                 $crate::read_attr_bool(&to_device(&self.$item)?, $attr_name)
             }
@@ -53,9 +53,9 @@ macro_rules! get_attr_bool {
 
 #[macro_export]
 macro_rules! set_attr_bool {
-    ($(#[$doc_comment:meta])? $attr_name:literal $item:ident) => {
+    ($(#[$attr:meta])* $attr_name:literal $item:ident) => {
         concat_idents::concat_idents!(fn_name = set_, $attr_name {
-            $(#[$doc_comment])*
+            $(#[$attr])*
             pub fn fn_name(&self, value: bool) -> Result<()> {
                 $crate::write_attr_bool(&mut to_device(&self.$item)?, $attr_name, value)
             }
@@ -65,7 +65,7 @@ macro_rules! set_attr_bool {
 
 #[macro_export]
 macro_rules! attr_bool {
-    ($attr_name:literal, $item:ident) => {
+    ($(#[$attr:meta])* $attr_name:literal, $item:ident) => {
         $crate::has_attr!($attr_name $item);
         $crate::get_attr_bool!( $attr_name $item);
         $crate::set_attr_bool!($attr_name $item);
@@ -75,9 +75,9 @@ macro_rules! attr_bool {
 
 #[macro_export]
 macro_rules! get_attr_u8 {
-    ($(#[$doc_comment:meta])? $attr_name:literal $item:ident) => {
+    ($(#[$attr:meta])* $attr_name:literal $item:ident) => {
         concat_idents::concat_idents!(fn_name = get_, $attr_name {
-            $(#[$doc_comment])*
+            $(#[$attr])*
             pub fn fn_name(&self) -> Result<u8> {
                 $crate::read_attr_u8(&to_device(&self.$item)?, $attr_name)
             }
@@ -88,9 +88,9 @@ macro_rules! get_attr_u8 {
 /// Most attributes expect `u8` as a char, so `1` should be written as `b'1'`.
 #[macro_export]
 macro_rules! set_attr_u8 {
-    ($(#[$doc_comment:meta])? $attr_name:literal $item:ident) => {
+    ($(#[$attr:meta])* $attr_name:literal $item:ident) => {
         concat_idents::concat_idents!(fn_name = set_, $attr_name {
-            $(#[$doc_comment])*
+            $(#[$attr])*
             pub fn fn_name(&self, value: u8) -> Result<()> {
                 $crate::write_attr_u8(&mut to_device(&self.$item)?, $attr_name, value)
             }
@@ -100,19 +100,19 @@ macro_rules! set_attr_u8 {
 
 #[macro_export]
 macro_rules! attr_u8 {
-    ($attr_name:literal, $item:ident) => {
-        $crate::has_attr!($attr_name $item);
-        $crate::get_attr_u8!($attr_name $item);
-        $crate::set_attr_u8!($attr_name $item);
-        $crate::watch_attr!($attr_name $item);
+    ($(#[$attr:meta])* $attr_name:literal, $item:ident) => {
+        $crate::has_attr!($(#[$attr])* $attr_name $item);
+        $crate::get_attr_u8!($(#[$attr])* $attr_name $item);
+        $crate::set_attr_u8!($(#[$attr])* $attr_name $item);
+        $crate::watch_attr!($(#[$attr])* $attr_name $item);
     };
 }
 
 #[macro_export]
 macro_rules! get_attr_u8_array {
-    ($(#[$doc_comment:meta])? $attr_name:literal $item:ident) => {
+    ($(#[$attr:meta])* $attr_name:literal $item:ident) => {
         concat_idents::concat_idents!(fn_name = get_, $attr_name {
-            $(#[$doc_comment])*
+            $(#[$attr])*
             pub fn fn_name(&self) -> Result<Vec<u8>> {
                 $crate::read_attr_u8_array(&to_device(&self.$item)?, $attr_name)
             }
@@ -122,9 +122,9 @@ macro_rules! get_attr_u8_array {
 
 #[macro_export]
 macro_rules! set_attr_u8_array {
-    ($(#[$doc_comment:meta])? $attr_name:literal $item:ident) => {
+    ($(#[$attr:meta])* $attr_name:literal $item:ident) => {
         concat_idents::concat_idents!(fn_name = set_, $attr_name {
-            $(#[$doc_comment])*
+            $(#[$attr])*
             pub fn fn_name(&self, values: &[u8]) -> Result<()> {
                 $crate::write_attr_u8_array(&mut to_device(&self.$item)?, $attr_name, values)
             }
@@ -134,7 +134,7 @@ macro_rules! set_attr_u8_array {
 
 #[macro_export]
 macro_rules! attr_u8_array {
-    ($attr_name:literal, $item:ident) => {
+    ($(#[$attr:meta])* $attr_name:literal, $item:ident) => {
         $crate::has_attr!($attr_name $item);
         $crate::get_attr_u8_array!($attr_name $item);
         $crate::set_attr_u8_array!($attr_name $item);
@@ -144,9 +144,9 @@ macro_rules! attr_u8_array {
 
 #[macro_export]
 macro_rules! get_attr_string {
-    ($(#[$doc_comment:meta])? $attr_name:literal $item:ident) => {
+    ($(#[$attr:meta])* $attr_name:literal $item:ident) => {
         concat_idents::concat_idents!(fn_name = get_, $attr_name {
-            $(#[$doc_comment])*
+            $(#[$attr])*
             pub fn fn_name(&self) -> Result<String> {
                 $crate::read_attr_string(&to_device(&self.$item)?, $attr_name)
             }
@@ -156,9 +156,9 @@ macro_rules! get_attr_string {
 
 #[macro_export]
 macro_rules! set_attr_string {
-    ($(#[$doc_comment:meta])? $attr_name:literal $item:ident) => {
+    ($(#[$attr:meta])* $attr_name:literal $item:ident) => {
         concat_idents::concat_idents!(fn_name = set_, $attr_name {
-            $(#[$doc_comment])*
+            $(#[$attr])*
             pub fn fn_name(&self, values: &str) -> Result<()> {
                 $crate::write_attr_string(&mut to_device(&self.$item)?, $attr_name, values)
             }
@@ -168,7 +168,7 @@ macro_rules! set_attr_string {
 
 #[macro_export]
 macro_rules! attr_string {
-    ($attr_name:literal, $item:ident) => {
+    ($(#[$attr:meta])* $attr_name:literal, $item:ident) => {
         $crate::has_attr!($attr_name $item);
         $crate::get_attr_string!($attr_name $item);
         $crate::set_attr_string!($attr_name $item);

@@ -4,18 +4,31 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use config_traits::StdConfig;
 use log::warn;
+use logind_zbus::manager::ManagerProxy;
 use rog_anime::usb::{
     pkt_set_brightness, pkt_set_builtin_animations, pkt_set_enable_display,
     pkt_set_enable_powersave_anim, AnimAwake, AnimBooting, AnimShutdown, AnimSleeping, Brightness,
 };
 use rog_anime::{AnimeDataBuffer, DeviceState};
 use zbus::export::futures_util::lock::Mutex;
-use zbus::{dbus_interface, Connection, SignalContext};
+use zbus::{dbus_interface, CacheProperties, Connection, SignalContext};
 
 use super::CtrlAnime;
 use crate::error::RogError;
 
 pub(super) const ZBUS_PATH: &str = "/org/asuslinux/Anime";
+
+async fn get_logind_manager<'a>() -> ManagerProxy<'a> {
+    let connection = Connection::system()
+        .await
+        .expect("Controller could not create dbus connection");
+
+    ManagerProxy::builder(&connection)
+        .cache_properties(CacheProperties::No)
+        .build()
+        .await
+        .expect("Controller could not create ManagerProxy")
+}
 
 #[derive(Clone)]
 pub struct CtrlAnimeZbus(pub Arc<Mutex<CtrlAnime>>);
@@ -176,6 +189,16 @@ impl CtrlAnimeZbus {
         enabled: bool,
     ) {
         let mut lock = self.0.lock().await;
+        let manager = get_logind_manager().await;
+        let pow = manager.on_external_power().await.unwrap_or_default();
+
+        lock.node
+            .write_bytes(&pkt_set_enable_display(!pow && !enabled))
+            .map_err(|err| {
+                warn!("create_sys_event_tasks::off_when_lid_closed {}", err);
+            })
+            .ok();
+
         lock.config.off_when_unplugged = enabled;
         lock.config.write();
         Self::notify_device_state(&ctxt, DeviceState::from(&lock.config))
@@ -204,6 +227,16 @@ impl CtrlAnimeZbus {
         enabled: bool,
     ) {
         let mut lock = self.0.lock().await;
+        let manager = get_logind_manager().await;
+        let lid = manager.lid_closed().await.unwrap_or_default();
+
+        lock.node
+            .write_bytes(&pkt_set_enable_display(lid && !enabled))
+            .map_err(|err| {
+                warn!("create_sys_event_tasks::off_when_lid_closed {}", err);
+            })
+            .ok();
+
         lock.config.off_when_lid_closed = enabled;
         lock.config.write();
         Self::notify_device_state(&ctxt, DeviceState::from(&lock.config))
@@ -225,15 +258,7 @@ impl CtrlAnimeZbus {
     // #[dbus_interface(property)]
     async fn device_state(&self) -> DeviceState {
         let lock = self.0.lock().await;
-        DeviceState {
-            display_enabled: lock.config.display_enabled,
-            display_brightness: lock.config.display_brightness,
-            builtin_anims_enabled: lock.config.builtin_anims_enabled,
-            builtin_anims: lock.config.builtin_anims,
-            off_when_unplugged: lock.config.off_when_unplugged,
-            off_when_suspended: lock.config.off_when_suspended,
-            off_when_lid_closed: lock.config.off_when_lid_closed,
-        }
+        DeviceState::from(&lock.config)
     }
 
     /// Notify listeners of the status of AniMe LED power and factory
@@ -316,6 +341,13 @@ impl crate::CtrlTask for CtrlAnimeZbus {
                     if lock.config.off_when_unplugged {
                         lock.node
                             .write_bytes(&pkt_set_enable_display(power_plugged))
+                            .map_err(|err| {
+                                warn!("create_sys_event_tasks::off_when_unplugged {}", err);
+                            })
+                            .ok();
+                    } else {
+                        lock.node
+                            .write_bytes(&pkt_set_brightness(lock.config.brightness_on_battery))
                             .map_err(|err| {
                                 warn!("create_sys_event_tasks::off_when_unplugged {}", err);
                             })

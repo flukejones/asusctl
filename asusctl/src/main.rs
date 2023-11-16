@@ -746,7 +746,7 @@ fn handle_fan_curve(
 
 fn handle_bios_option(
     dbus: &RogDbusClientBlocking<'_>,
-    supported: &RogBiosSupportedFunctions,
+    supported: &PlatformSupportedFunctions,
     cmd: &BiosCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
     {

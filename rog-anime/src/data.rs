@@ -39,6 +39,7 @@ pub struct Animations {
     pub shutdown: AnimShutdown,
 }
 
+// TODO: move this out
 #[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[typeshare]
@@ -51,6 +52,7 @@ pub struct DeviceState {
     pub off_when_unplugged: bool,
     pub off_when_suspended: bool,
     pub off_when_lid_closed: bool,
+    pub brightness_on_battery: Brightness,
 }
 
 #[typeshare]

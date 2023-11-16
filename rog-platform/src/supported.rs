@@ -15,7 +15,7 @@ pub struct SupportedFunctions {
     pub charge_ctrl: ChargeSupportedFunctions,
     pub platform_profile: PlatformProfileFunctions,
     pub keyboard_led: LedSupportedFunctions,
-    pub rog_bios_ctrl: RogBiosSupportedFunctions,
+    pub rog_bios_ctrl: PlatformSupportedFunctions,
 }
 
 #[typeshare]
@@ -68,13 +68,21 @@ pub struct LedSupportedFunctions {
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Type, Debug, Default, Clone)]
-pub struct RogBiosSupportedFunctions {
+pub struct PlatformSupportedFunctions {
     pub post_sound: bool,
     pub gpu_mux: bool,
     pub panel_overdrive: bool,
     pub dgpu_disable: bool,
     pub egpu_enable: bool,
     pub mini_led_mode: bool,
+
+    pub ppt_pl1_spl: bool,
+    pub ppt_pl2_sppt: bool,
+    pub ppt_fppt: bool,
+    pub ppt_apu_sppt: bool,
+    pub ppt_platform_sppt: bool,
+    pub nv_dynamic_boost: bool,
+    pub nv_temp_target: bool,
 }
 
 impl fmt::Display for SupportedFunctions {
@@ -120,7 +128,8 @@ impl fmt::Display for LedSupportedFunctions {
         writeln!(f, "\tAdvanced modes: {:?}", self.advanced_type)
     }
 }
-impl fmt::Display for RogBiosSupportedFunctions {
+
+impl fmt::Display for PlatformSupportedFunctions {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "ROG BIOS:")?;
         writeln!(f, "\tPOST sound switch: {}", self.post_sound)?;
@@ -129,6 +138,13 @@ impl fmt::Display for RogBiosSupportedFunctions {
         writeln!(f, "\tdGPU disable switch: {}", self.dgpu_disable)?;
         writeln!(f, "\teGPU enable switch: {}", self.egpu_enable)?;
         writeln!(f, "\tGPU MUX control: {}", self.gpu_mux)?;
+        writeln!(f, "\tppt_pl1_spl: {}", self.ppt_pl1_spl)?;
+        writeln!(f, "\tppt_pl2_sppt: {}", self.ppt_pl2_sppt)?;
+        writeln!(f, "\tppt_fppt {}", self.ppt_fppt)?;
+        writeln!(f, "\tppt_apu_sppt: {}", self.ppt_apu_sppt)?;
+        writeln!(f, "\tppt_platform_sppt: {}", self.ppt_platform_sppt)?;
+        writeln!(f, "\tnv_dynamic_boost: {}", self.nv_dynamic_boost)?;
+        writeln!(f, "\tnv_temp_target: {}", self.nv_temp_target)?;
         Ok(())
     }
 }

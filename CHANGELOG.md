@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Gnome 45 plugin
 - Support for G513RW LED modes
 - Support Rog Ally LED modes (basic)
 - Add on_lid_closed and on_external_power_changed events for running certain tasks
@@ -14,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - SetOffWhenUnplugged, also add asusctl CLI option
   - SetOffWhenSuspended, also add asusctl CLI option
   - SetOffWhenLidClosed, also add asusctl CLI option
+- Anime: add brightness_on_battery config option
 
 ### Changed
 - asusd: remove set_image_brightness for anime
@@ -22,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - rog-control-center: ensure brightness slider works correctly
 - Update `smithay-client-toolkit` for fix to issue #407
 - Remove the "sleep" animations from Anime to stop preventing the display-off
+- Anime:
+  - Ensure display is off when lid is closed and option is set
+  - Ensure display is off when on battery and option is set
+  - Ensure builtin animations run instead of custom animations if option is set
 
 ## [v4.7.2]
 ### Added

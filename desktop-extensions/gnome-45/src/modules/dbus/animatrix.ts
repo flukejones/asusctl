@@ -50,7 +50,7 @@ export class AnimeDbus extends DbusBase {
                 if (this.deviceState.builtin_anims_enabled !== state) {
                     this.deviceState.builtin_anims_enabled = state;
                 }
-                return this.dbus_proxy.SetEnableBuiltinsSync(state);
+                return this.dbus_proxy.SetBuiltinsEnabledSync(state);
             } catch (e) {
                 //@ts-ignore
                 log("AniMe DBus set builtins failed!", e);

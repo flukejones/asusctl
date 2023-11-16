@@ -120,6 +120,7 @@ pub struct AnimeConfig {
     pub off_when_unplugged: bool,
     pub off_when_suspended: bool,
     pub off_when_lid_closed: bool,
+    pub brightness_on_battery: Brightness,
     pub builtin_anims: Animations,
 }
 
@@ -138,6 +139,7 @@ impl Default for AnimeConfig {
             off_when_unplugged: true,
             off_when_suspended: true,
             off_when_lid_closed: true,
+            brightness_on_battery: Brightness::Low,
             builtin_anims: Animations::default(),
         }
     }
@@ -169,6 +171,7 @@ impl From<&AnimeConfig> for DeviceState {
             off_when_unplugged: config.off_when_unplugged,
             off_when_suspended: config.off_when_suspended,
             off_when_lid_closed: config.off_when_lid_closed,
+            brightness_on_battery: config.brightness_on_battery,
         }
     }
 }

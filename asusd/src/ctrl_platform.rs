@@ -8,7 +8,7 @@ use async_trait::async_trait;
 use config_traits::StdConfig;
 use log::{info, warn};
 use rog_platform::platform::{AsusPlatform, GpuMode};
-use rog_platform::supported::RogBiosSupportedFunctions;
+use rog_platform::supported::PlatformSupportedFunctions;
 use zbus::export::futures_util::lock::Mutex;
 use zbus::{dbus_interface, Connection, SignalContext};
 
@@ -27,31 +27,11 @@ pub struct CtrlPlatform {
 }
 
 impl GetSupported for CtrlPlatform {
-    type A = RogBiosSupportedFunctions;
+    type A = PlatformSupportedFunctions;
 
     fn get_supported() -> Self::A {
-        let mut panel_overdrive = false;
-        let mut mini_led_mode = false;
-        let mut dgpu_disable = false;
-        let mut egpu_enable = false;
-        let mut gpu_mux = false;
-
-        if let Ok(platform) = AsusPlatform::new() {
-            panel_overdrive = platform.has_panel_od();
-            mini_led_mode = platform.has_mini_led_mode();
-            dgpu_disable = platform.has_dgpu_disable();
-            egpu_enable = platform.has_egpu_enable();
-            gpu_mux = platform.has_gpu_mux_mode();
-        }
-
-        RogBiosSupportedFunctions {
-            post_sound: Path::new(ASUS_POST_LOGO_SOUND).exists(),
-            gpu_mux,
-            panel_overdrive,
-            mini_led_mode,
-            dgpu_disable,
-            egpu_enable,
-        }
+        let platform = AsusPlatform::new().unwrap_or_default();
+        platform.into()
     }
 }
 
