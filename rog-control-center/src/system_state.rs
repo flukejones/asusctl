@@ -39,13 +39,13 @@ pub struct BiosState {
 impl BiosState {
     pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
         Ok(Self {
-            post_sound: if supported.rog_bios_ctrl.post_sound {
-                dbus.proxies().rog_bios().post_boot_sound()? != 0
+            post_sound: if supported.rog_bios_ctrl.post_animation_sound {
+                dbus.proxies().rog_bios().post_animation_sound()?
             } else {
                 false
             },
             dedicated_gfx: if supported.rog_bios_ctrl.gpu_mux {
-                dbus.proxies().rog_bios().gpu_mux_mode()?
+                GpuMode::from(dbus.proxies().rog_bios().gpu_mux_mode()?)
             } else {
                 GpuMode::NotSupported
             },

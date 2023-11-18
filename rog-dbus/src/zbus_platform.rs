@@ -28,64 +28,69 @@ use zbus::dbus_proxy;
     default_path = "/org/asuslinux/Platform"
 )]
 trait RogBios {
-    /// DgpuDisable method
+    /// SupportedProperties method
+    fn supported_properties(&self) -> zbus::Result<Vec<String>>;
+
+    /// DgpuDisable property
+    #[dbus_proxy(property)]
     fn dgpu_disable(&self) -> zbus::Result<bool>;
 
-    /// EgpuEnable method
+    /// EgpuEnable property
+    #[dbus_proxy(property)]
     fn egpu_enable(&self) -> zbus::Result<bool>;
 
-    /// GpuMuxMode method
-    fn gpu_mux_mode(&self) -> zbus::Result<GpuMode>;
+    /// GpuMuxMode property
+    #[dbus_proxy(property)]
+    fn gpu_mux_mode(&self) -> zbus::Result<u8>;
+    fn set_gpu_mux_mode(&self, value: GpuMode) -> zbus::Result<()>;
 
-    /// PanelOd method
-    fn panel_od(&self) -> zbus::Result<bool>;
-
-    /// MiniLedMode method
+    /// MiniLedMode property
+    #[dbus_proxy(property)]
     fn mini_led_mode(&self) -> zbus::Result<bool>;
+    fn set_mini_led_mode(&self, value: bool) -> zbus::Result<()>;
 
-    /// PostBootSound method
-    fn post_boot_sound(&self) -> zbus::Result<i16>;
+    /// NvDynamicBoost property
+    #[dbus_proxy(property)]
+    fn nv_dynamic_boost(&self) -> zbus::Result<u8>;
+    fn set_nv_dynamic_boost(&self, value: u8) -> zbus::Result<()>;
 
-    /// SetDgpuDisable method
-    fn set_dgpu_disable(&self, disable: bool) -> zbus::Result<()>;
+    /// NvTempTarget property
+    #[dbus_proxy(property)]
+    fn nv_temp_target(&self) -> zbus::Result<u8>;
+    fn set_nv_temp_target(&self, value: u8) -> zbus::Result<()>;
 
-    /// SetEgpuEnable method
-    fn set_egpu_enable(&self, enable: bool) -> zbus::Result<()>;
+    /// PanelOd property
+    #[dbus_proxy(property)]
+    fn panel_od(&self) -> zbus::Result<bool>;
+    fn set_panel_od(&self, value: bool) -> zbus::Result<()>;
 
-    /// SetGpuMuxMode method
-    fn set_gpu_mux_mode(&self, mode: GpuMode) -> zbus::Result<()>;
+    /// PostAnimationSound property
+    #[dbus_proxy(property)]
+    fn post_animation_sound(&self) -> zbus::Result<bool>;
+    fn set_post_animation_sound(&self, value: bool) -> zbus::Result<()>;
 
-    /// SetPanelOd method
-    fn set_panel_od(&self, overdrive: bool) -> zbus::Result<()>;
+    /// PptApuSppt property
+    #[dbus_proxy(property)]
+    fn ppt_apu_sppt(&self) -> zbus::Result<u8>;
+    fn set_ppt_apu_sppt(&self, value: u8) -> zbus::Result<()>;
 
-    /// SetminiLedMode
-    fn set_mini_led_mode(&self, on: bool) -> zbus::Result<()>;
+    /// PptFppt property
+    #[dbus_proxy(property)]
+    fn ppt_fppt(&self) -> zbus::Result<u8>;
+    fn set_ppt_fppt(&self, value: u8) -> zbus::Result<()>;
 
-    /// SetPostBootSound method
-    fn set_post_boot_sound(&self, on: bool) -> zbus::Result<()>;
+    /// PptPl1Spl property
+    #[dbus_proxy(property)]
+    fn ppt_pl1_spl(&self) -> zbus::Result<u8>;
+    fn set_ppt_pl1_spl(&self, value: u8) -> zbus::Result<()>;
 
-    /// NotifyDgpuDisable signal
-    #[dbus_proxy(signal)]
-    fn notify_dgpu_disable(&self, disable: bool) -> zbus::Result<()>;
+    /// PptPl2Sppt property
+    #[dbus_proxy(property)]
+    fn ppt_pl2_sppt(&self) -> zbus::Result<u8>;
+    fn set_ppt_pl2_sppt(&self, value: u8) -> zbus::Result<()>;
 
-    /// NotifyEgpuEnable signal
-    #[dbus_proxy(signal)]
-    fn notify_egpu_enable(&self, enable: bool) -> zbus::Result<()>;
-
-    /// NotifyGpuMuxMode signal
-    #[dbus_proxy(signal)]
-    fn notify_gpu_mux_mode(&self, mode: GpuMode) -> zbus::Result<()>;
-
-    /// NotifyPanelOd signal
-    #[dbus_proxy(signal)]
-    fn notify_panel_od(&self, overdrive: bool) -> zbus::Result<()>;
-
-    /// NotifyMiniLedMode signal
-    #[dbus_proxy(signal)]
-    fn notify_mini_led_mode(&self, on: bool) -> zbus::Result<()>;
-
-    /// NotifyPostBootSound signal
-    #[inline]
-    #[dbus_proxy(signal)]
-    fn notify_post_boot_sound(&self, on: bool) -> zbus::Result<()>;
+    /// PptPlatformSppt property
+    #[dbus_proxy(property)]
+    fn ppt_platform_sppt(&self) -> zbus::Result<u8>;
+    fn set_ppt_platform_sppt(&self, value: u8) -> zbus::Result<()>;
 }

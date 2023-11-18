@@ -325,7 +325,7 @@ impl ROGTray {
 
         let mut reboot_required = false;
         if let Ok(mode) = gfx_dbus.gpu_mux_mode() {
-            let mode = match mode {
+            let mode = match GpuMode::from(mode) {
                 GpuMode::Discrete => GfxMode::AsusMuxDgpu,
                 _ => GfxMode::Hybrid,
             };

@@ -55,7 +55,7 @@ pub fn rog_bios_group(supported: &SupportedFunctions, states: &mut SystemState, 
             .ok();
     }
 
-    if supported.rog_bios_ctrl.post_sound
+    if supported.rog_bios_ctrl.post_animation_sound
         && ui
             .add(egui::Checkbox::new(
                 &mut states.bios.post_sound,
@@ -67,7 +67,7 @@ pub fn rog_bios_group(supported: &SupportedFunctions, states: &mut SystemState, 
             .asus_dbus
             .proxies()
             .rog_bios()
-            .set_post_boot_sound(states.bios.post_sound)
+            .set_post_animation_sound(states.bios.post_sound)
             .map_err(|err| {
                 states.error = Some(err.to_string());
             })
@@ -118,7 +118,7 @@ pub fn rog_bios_group(supported: &SupportedFunctions, states: &mut SystemState, 
 
         let mut reboot_required = false;
         if let Ok(mode) = states.asus_dbus.proxies().rog_bios().gpu_mux_mode() {
-            reboot_required = mode != states.bios.dedicated_gfx;
+            reboot_required = GpuMode::from(mode) != states.bios.dedicated_gfx;
         }
 
         ui.group(|ui| {

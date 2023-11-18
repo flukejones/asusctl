@@ -51,13 +51,13 @@ pub fn app_settings(config: &mut Config, states: &mut SystemState, ui: &mut Ui) 
             .clicked()
         || ui
             .checkbox(
-                &mut enabled_notifications.receive_notify_dgpu_disable,
+                &mut enabled_notifications.receive_dgpu_disable_changed,
                 "Enable dGPU disablement notification",
             )
             .clicked()
         || ui
             .checkbox(
-                &mut enabled_notifications.receive_notify_egpu_enable,
+                &mut enabled_notifications.receive_egpu_enable_changed,
                 "Enable eGPU enablement notification",
             )
             .clicked()
@@ -81,19 +81,19 @@ pub fn app_settings(config: &mut Config, states: &mut SystemState, ui: &mut Ui) 
             .clicked()
         || ui
             .checkbox(
-                &mut enabled_notifications.receive_notify_panel_od,
+                &mut enabled_notifications.receive_panel_od_changed,
                 "Enable panel overdrive notification",
             )
             .clicked()
         || ui
             .checkbox(
-                &mut enabled_notifications.receive_notify_mini_led_mode,
+                &mut enabled_notifications.receive_mini_led_mode_changed,
                 "Enable MiniLED mode notification",
             )
             .clicked()
         || ui
             .checkbox(
-                &mut enabled_notifications.receive_notify_post_boot_sound,
+                &mut enabled_notifications.receive_post_animation_sound_changed,
                 "Enable BIOS post sound notification",
             )
             .clicked();

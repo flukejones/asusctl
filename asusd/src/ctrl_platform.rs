@@ -240,7 +240,7 @@ impl CtrlPlatform {
         platform_get_value!(self, egpu_enable, "egpu_enable")
     }
 
-    /// ***************************************************************************
+    /// ************************************************************************
     #[dbus_interface(property)]
     async fn ppt_pl1_spl(&self) -> Result<u8, FdoErr> {
         platform_get_value_if_some!(self, ppt_pl1_spl, "ppt_pl1_spl", 5)

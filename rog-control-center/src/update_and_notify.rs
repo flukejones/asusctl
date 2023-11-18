@@ -37,11 +37,11 @@ static mut POWER_BAT_CMD: Option<Command> = None;
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(default)]
 pub struct EnabledNotifications {
-    pub receive_notify_post_boot_sound: bool,
-    pub receive_notify_panel_od: bool,
-    pub receive_notify_mini_led_mode: bool,
-    pub receive_notify_dgpu_disable: bool,
-    pub receive_notify_egpu_enable: bool,
+    pub receive_post_animation_sound_changed: bool,
+    pub receive_panel_od_changed: bool,
+    pub receive_mini_led_mode_changed: bool,
+    pub receive_dgpu_disable_changed: bool,
+    pub receive_egpu_enable_changed: bool,
     pub receive_notify_gpu_mux_mode: bool,
     pub receive_notify_charge_control_end_threshold: bool,
     pub receive_notify_mains_online: bool,
@@ -57,11 +57,11 @@ pub struct EnabledNotifications {
 impl Default for EnabledNotifications {
     fn default() -> Self {
         Self {
-            receive_notify_post_boot_sound: false,
-            receive_notify_panel_od: true,
-            receive_notify_mini_led_mode: true,
-            receive_notify_dgpu_disable: true,
-            receive_notify_egpu_enable: true,
+            receive_post_animation_sound_changed: false,
+            receive_panel_od_changed: true,
+            receive_mini_led_mode_changed: true,
+            receive_dgpu_disable_changed: true,
+            receive_egpu_enable_changed: true,
             receive_notify_gpu_mux_mode: true,
             receive_notify_charge_control_end_threshold: true,
             receive_notify_mains_online: false,
@@ -127,6 +127,49 @@ macro_rules! recv_notif {
     };
 }
 
+macro_rules! recv_changed {
+    ($proxy:ident,
+        $signal:ident,
+        $last_notif:ident,
+        $notif_enabled:ident,
+        $page_states:ident,
+        ($($args: tt)*),
+        // ($($out_arg:tt)+),
+        $msg:literal,
+        $notifier:ident) => {
+
+        let notifs_enabled1 = $notif_enabled.clone();
+        let page_states1 = $page_states.clone();
+
+        tokio::spawn(async move {
+                let conn = zbus::Connection::system().await.map_err(|e| {
+                        log::error!("zbus signal: {}: {e}", stringify!($signal));
+                        e
+                    }).unwrap();
+                let proxy = $proxy::new(&conn).await.map_err(|e| {
+                        log::error!("zbus signal: {}: {e}", stringify!($signal));
+                        e
+                    }).unwrap();
+                info!("Started zbus signal thread: {}", stringify!($signal));
+                while let Some(e) = proxy.$signal().await.next().await {
+                    if let Ok(out) = e.get().await {
+                        if let Ok(config) = notifs_enabled1.lock() {
+                            if config.all_enabled && config.$signal {
+                                trace!("zbus signal {}", stringify!($signal));
+                                $notifier($msg, &out).ok();
+                            }
+                        }
+                        if let Ok(mut lock) = page_states1.lock() {
+                            lock.$($args)+ = out;
+                            lock.set_notified();
+                        }
+                    }
+                    sleep(Duration::from_millis(500)).await;
+                }
+            });
+    };
+}
+
 pub fn start_notifications(
     config: &Config,
     page_states: &Arc<Mutex<SystemState>>,
@@ -157,62 +200,57 @@ pub fn start_notifications(
     }
 
     // BIOS notif
-    recv_notif!(
+    recv_changed!(
         RogBiosProxy,
-        receive_notify_post_boot_sound,
+        receive_post_animation_sound_changed,
         last_notification,
         enabled_notifications,
         page_states,
         (bios.post_sound),
-        (on),
         "BIOS Post sound",
         do_notification
     );
 
-    recv_notif!(
+    recv_changed!(
         RogBiosProxy,
-        receive_notify_panel_od,
+        receive_panel_od_changed,
         last_notification,
         enabled_notifications,
         page_states,
         (bios.panel_overdrive),
-        (overdrive),
         "Panel Overdrive enabled:",
         do_notification
     );
 
-    recv_notif!(
+    recv_changed!(
         RogBiosProxy,
-        receive_notify_mini_led_mode,
+        receive_mini_led_mode_changed,
         last_notification,
         enabled_notifications,
         page_states,
         (bios.mini_led_mode),
-        (on),
         "MiniLED mode enabled:",
         do_notification
     );
 
-    recv_notif!(
+    recv_changed!(
         RogBiosProxy,
-        receive_notify_dgpu_disable,
+        receive_dgpu_disable_changed,
         last_notification,
         enabled_notifications,
         page_states,
         (bios.dgpu_disable),
-        (disable),
         "BIOS dGPU disabled",
         do_notification
     );
 
-    recv_notif!(
+    recv_changed!(
         RogBiosProxy,
-        receive_notify_egpu_enable,
+        receive_egpu_enable_changed,
         last_notification,
         enabled_notifications,
         page_states,
         (bios.egpu_enable),
-        (enable),
         "BIOS eGPU enabled",
         do_notification
     );
@@ -314,7 +352,7 @@ pub fn start_notifications(
                 e
             })
             .unwrap();
-        if let Ok(mut p) = proxy.receive_device_state().await {
+        if let Ok(mut p) = proxy.receive_notify_device_state().await {
             info!("Started zbus signal thread: receive_device_state");
             while let Some(e) = p.next().await {
                 if let Ok(out) = e.args() {
@@ -345,25 +383,23 @@ pub fn start_notifications(
 
         let mut actual_mux_mode = GpuMode::Error;
         if let Ok(mode) = proxy.gpu_mux_mode().await {
-            actual_mux_mode = mode;
+            actual_mux_mode = GpuMode::from(mode);
         }
 
-        if let Ok(mut p) = proxy.receive_notify_gpu_mux_mode().await {
-            info!("Started zbus signal thread: receive_notify_gpu_mux_mode");
-            while let Some(e) = p.next().await {
-                if let Ok(out) = e.args() {
-                    if out.mode == actual_mux_mode {
-                        continue;
-                    }
-                    if let Ok(mut lock) = page_states1.lock() {
-                        lock.bios.dedicated_gfx = out.mode;
-                        lock.set_notified();
-                    }
-                    do_mux_notification("Reboot required. BIOS GPU MUX mode set to", &out.mode)
-                        .ok();
+        info!("Started zbus signal thread: receive_notify_gpu_mux_mode");
+        while let Some(e) = proxy.receive_gpu_mux_mode_changed().await.next().await {
+            if let Ok(out) = e.get().await {
+                let mode = GpuMode::from(out);
+                if mode == actual_mux_mode {
+                    continue;
                 }
+                if let Ok(mut lock) = page_states1.lock() {
+                    lock.bios.dedicated_gfx = mode;
+                    lock.set_notified();
+                }
+                do_mux_notification("Reboot required. BIOS GPU MUX mode set to", &mode).ok();
             }
-        };
+        }
     });
 
     if let Ok(lock) = page_states.try_lock() {

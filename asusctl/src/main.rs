@@ -772,10 +772,10 @@ fn handle_bios_option(
         }
 
         if let Some(opt) = cmd.post_sound_set {
-            dbus.proxies().rog_bios().set_post_boot_sound(opt)?;
+            dbus.proxies().rog_bios().set_post_animation_sound(opt)?;
         }
         if cmd.post_sound_get {
-            let res = dbus.proxies().rog_bios().post_boot_sound()? == 1;
+            let res = dbus.proxies().rog_bios().post_animation_sound()?;
             println!("Bios POST sound on: {}", res);
         }
 
