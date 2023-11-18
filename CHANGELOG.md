@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - SetOffWhenSuspended, also add asusctl CLI option
   - SetOffWhenLidClosed, also add asusctl CLI option
 - Anime: add brightness_on_battery config option
+- Platform: add `post_animation_sound`, kernel 6.7+ requires patch
 
 ### Changed
 - asusd: remove set_image_brightness for anime
@@ -28,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Ensure display is off when lid is closed and option is set
   - Ensure display is off when on battery and option is set
   - Ensure builtin animations run instead of custom animations if option is set
+
+### Breaking
+- DBUS stuff. Again.
+  - Platform dbus refactored to Properties as it makes more sense than a pile of functions
 
 ## [v4.7.2]
 ### Added

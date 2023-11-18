@@ -72,10 +72,15 @@ macro_rules! task_watch_item {
                         tokio::spawn(async move {
                             let mut buffer = [0; 32];
                             watch.into_event_stream(&mut buffer).unwrap().for_each(|_| async {
-                                let value = ctrl.$name();
-                                concat_idents::concat_idents!(notif_fn = notify_, $name {
-                                    Self::notif_fn(&signal_ctxt, value).await.ok();
-                                });
+                                if let Ok(value) = ctrl.$name(){
+                                    concat_idents::concat_idents!(notif_fn = $name, _changed {
+                                        Self::notif_fn(&ctrl, &signal_ctxt).await.ok();
+                                    });
+                                    if let Some(mut lock) = ctrl.config.try_lock() {
+                                        lock.$name = value;
+                                        lock.write();
+                                    }
+                                }
                             }).await;
                         });
                     }

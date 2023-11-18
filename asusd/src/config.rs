@@ -12,17 +12,24 @@ pub struct Config {
     pub disable_nvidia_powerd_on_battery: bool,
     pub ac_command: String,
     pub bat_command: String,
+    pub post_animation_sound: bool,
+    pub ppt_pl1_spl: Option<u8>,
+    pub ppt_pl2_sppt: Option<u8>,
+    pub ppt_fppt: Option<u8>,
+    pub ppt_apu_sppt: Option<u8>,
+    pub ppt_platform_sppt: Option<u8>,
+    pub nv_dynamic_boost: Option<u8>,
+    pub nv_temp_target: Option<u8>,
 }
 
 impl StdConfig for Config {
     fn new() -> Self {
         Config {
             bat_charge_limit: 100,
-            panel_od: false,
-            mini_led_mode: false,
             disable_nvidia_powerd_on_battery: true,
             ac_command: String::new(),
             bat_command: String::new(),
+            ..Default::default()
         }
     }
 
@@ -35,7 +42,32 @@ impl StdConfig for Config {
     }
 }
 
-impl StdConfigLoad2<Config458, Config462> for Config {}
+impl StdConfigLoad2<Config462, Config472> for Config {}
+
+#[derive(Deserialize, Serialize, Default, Debug)]
+pub struct Config472 {
+    /// Save charge limit for restoring on boot
+    pub bat_charge_limit: u8,
+    pub panel_od: bool,
+    pub mini_led_mode: bool,
+    pub disable_nvidia_powerd_on_battery: bool,
+    pub ac_command: String,
+    pub bat_command: String,
+    pub post_animation_sound: bool,
+}
+
+impl From<Config472> for Config {
+    fn from(c: Config472) -> Self {
+        Self {
+            bat_charge_limit: c.bat_charge_limit,
+            panel_od: c.panel_od,
+            disable_nvidia_powerd_on_battery: true,
+            ac_command: c.ac_command,
+            bat_command: c.bat_command,
+            ..Default::default()
+        }
+    }
+}
 
 #[derive(Deserialize, Serialize)]
 pub struct Config462 {
@@ -52,32 +84,10 @@ impl From<Config462> for Config {
         Self {
             bat_charge_limit: c.bat_charge_limit,
             panel_od: c.panel_od,
-            mini_led_mode: false,
             disable_nvidia_powerd_on_battery: true,
             ac_command: String::new(),
             bat_command: String::new(),
-        }
-    }
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct Config458 {
-    /// Save charge limit for restoring on boot
-    pub bat_charge_limit: u8,
-    pub panel_od: bool,
-    pub ac_command: String,
-    pub bat_command: String,
-}
-
-impl From<Config458> for Config {
-    fn from(c: Config458) -> Self {
-        Self {
-            bat_charge_limit: c.bat_charge_limit,
-            panel_od: c.panel_od,
-            mini_led_mode: false,
-            disable_nvidia_powerd_on_battery: true,
-            ac_command: c.ac_command,
-            bat_command: c.bat_command,
+            ..Default::default()
         }
     }
 }

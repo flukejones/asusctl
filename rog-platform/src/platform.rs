@@ -34,7 +34,7 @@ impl AsusPlatform {
 
     attr_bool!("mini_led_mode", path);
 
-    attr_bool!("gpu_mux_mode", path);
+    attr_u8!("gpu_mux_mode", path);
 
     attr_u8!(
         /// This is technically the same as `platform_profile` since both are
@@ -100,6 +100,12 @@ impl AsusPlatform {
         path
     );
 
+    attr_bool!(
+        /// Control the POST animation "FWOOoosh" sound
+        "post_animation_sound",
+        path
+    );
+
     pub fn new() -> Result<Self> {
         let mut enumerator = udev::Enumerator::new().map_err(|err| {
             warn!("{}", err);
@@ -146,7 +152,7 @@ impl Default for AsusPlatform {
 impl From<AsusPlatform> for PlatformSupportedFunctions {
     fn from(a: AsusPlatform) -> Self {
         PlatformSupportedFunctions {
-            post_sound: false,
+            post_animation_sound: a.has_post_animation_sound(),
             gpu_mux: a.has_gpu_mux_mode(),
             panel_overdrive: a.has_panel_od(),
             dgpu_disable: a.has_dgpu_disable(),
@@ -164,6 +170,7 @@ impl From<AsusPlatform> for PlatformSupportedFunctions {
 }
 
 #[typeshare]
+#[repr(u8)]
 #[derive(Serialize, Deserialize, Default, Type, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum GpuMode {
     Discrete,
@@ -177,13 +184,34 @@ pub enum GpuMode {
     NotSupported,
 }
 
+impl From<u8> for GpuMode {
+    fn from(v: u8) -> Self {
+        match v {
+            0 => GpuMode::Discrete,
+            1 => GpuMode::Optimus,
+            2 => GpuMode::Integrated,
+            3 => GpuMode::Egpu,
+            4 => GpuMode::Vfio,
+            5 => GpuMode::Ultimate,
+            6 => GpuMode::Error,
+            _ => GpuMode::NotSupported,
+        }
+    }
+}
+
+impl From<GpuMode> for u8 {
+    fn from(v: GpuMode) -> Self {
+        v as u8
+    }
+}
+
 impl GpuMode {
     /// For writing to `gpu_mux_mode` attribute
-    pub fn to_mux_attr(&self) -> bool {
+    pub fn to_mux_attr(&self) -> u8 {
         if *self == Self::Discrete {
-            return false;
+            return 0;
         }
-        true
+        1
     }
 
     pub fn to_dgpu_attr(&self) -> u8 {

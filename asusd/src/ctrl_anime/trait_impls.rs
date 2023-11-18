@@ -382,6 +382,23 @@ impl crate::Reloadable for CtrlAnimeZbus {
                 lock.config.display_brightness,
             )?;
 
+            let manager = get_logind_manager().await;
+            let lid_closed = manager.lid_closed().await.unwrap_or_default();
+            let power_plugged = manager.on_external_power().await.unwrap_or_default();
+
+            let on = (lid_closed && lock.config.off_when_lid_closed)
+                || (power_plugged && lock.config.off_when_unplugged);
+            lock.node
+                .write_bytes(&pkt_set_enable_display(on))
+                .map_err(|err| {
+                    warn!("create_sys_event_tasks::reload {}", err);
+                })
+                .ok();
+            if !on {
+                // early return so we don't run animation thread
+                return Ok(());
+            }
+
             if !lock.config.builtin_anims_enabled && !lock.cache.boot.is_empty() {
                 lock.node
                     .write_bytes(&pkt_set_enable_powersave_anim(false))

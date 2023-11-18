@@ -8,7 +8,7 @@ version = "4.7.2"
 
 [workspace.dependencies]
 async-trait = "^0.1"
-tokio = { version = "^1.23.0", features = ["macros", "rt-multi-thread", "time", "sync"]}
+tokio = { version = "^1.23.0", features = ["macros", "rt-multi-thread"]}
 concat-idents = "^1.1"
 dirs = "^4.0"
 smol = "^1.3"
@@ -44,11 +44,11 @@ notify-rust = { git = "https://github.com/flukejones/notify-rust.git", default-f
 [profile.release]
 # thin = 57s, asusd = 9.0M
 # fat = 72s, asusd = 6.4M
-#lto = "fat"
+lto = "fat"
 debug = false
 opt-level = 3
 panic = "abort"
-#codegen-units = 1
+codegen-units = 1
 
 [profile.dev]
 debug = true

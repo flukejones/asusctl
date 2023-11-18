@@ -763,7 +763,7 @@ fn handle_bios_option(
             let usage: Vec<String> = BiosCommand::usage().lines().map(|s| s.to_owned()).collect();
 
             for line in usage.iter().filter(|line| {
-                line.contains("sound") && supported.post_sound
+                line.contains("sound") && supported.post_animation_sound
                     || line.contains("GPU") && supported.gpu_mux
                     || line.contains("panel") && supported.panel_overdrive
             }) {

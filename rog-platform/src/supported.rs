@@ -69,7 +69,7 @@ pub struct LedSupportedFunctions {
 #[typeshare]
 #[derive(Serialize, Deserialize, Type, Debug, Default, Clone)]
 pub struct PlatformSupportedFunctions {
-    pub post_sound: bool,
+    pub post_animation_sound: bool,
     pub gpu_mux: bool,
     pub panel_overdrive: bool,
     pub dgpu_disable: bool,
@@ -132,7 +132,7 @@ impl fmt::Display for LedSupportedFunctions {
 impl fmt::Display for PlatformSupportedFunctions {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "ROG BIOS:")?;
-        writeln!(f, "\tPOST sound switch: {}", self.post_sound)?;
+        writeln!(f, "\tPOST sound switch: {}", self.post_animation_sound)?;
         writeln!(f, "\tPanel Overdrive: {}", self.panel_overdrive)?;
         writeln!(f, "\tMiniLED backlight: {}", self.mini_led_mode)?;
         writeln!(f, "\tdGPU disable switch: {}", self.dgpu_disable)?;
