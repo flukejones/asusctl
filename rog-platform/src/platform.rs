@@ -5,10 +5,9 @@ use std::str::FromStr;
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
-use zbus::zvariant::Type;
+use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::{PlatformError, Result};
-use crate::supported::PlatformSupportedFunctions;
 use crate::{attr_bool, attr_string, attr_u8, to_device};
 
 /// The "platform" device provides access to things like:
@@ -20,12 +19,12 @@ use crate::{attr_bool, attr_string, attr_u8, to_device};
 /// - `keyboard_mode`, set keyboard RGB mode and speed
 /// - `keyboard_state`, set keyboard power states
 #[derive(Debug, PartialEq, Eq, PartialOrd, Clone)]
-pub struct AsusPlatform {
+pub struct RogPlatform {
     path: PathBuf,
     pp_path: PathBuf,
 }
 
-impl AsusPlatform {
+impl RogPlatform {
     attr_bool!("dgpu_disable", path);
 
     attr_bool!("egpu_enable", path);
@@ -138,7 +137,7 @@ impl AsusPlatform {
     }
 }
 
-impl Default for AsusPlatform {
+impl Default for RogPlatform {
     fn default() -> Self {
         unsafe {
             Self {
@@ -149,39 +148,21 @@ impl Default for AsusPlatform {
     }
 }
 
-impl From<AsusPlatform> for PlatformSupportedFunctions {
-    fn from(a: AsusPlatform) -> Self {
-        PlatformSupportedFunctions {
-            post_animation_sound: a.has_post_animation_sound(),
-            gpu_mux: a.has_gpu_mux_mode(),
-            panel_overdrive: a.has_panel_od(),
-            dgpu_disable: a.has_dgpu_disable(),
-            egpu_enable: a.has_egpu_enable(),
-            mini_led_mode: a.has_mini_led_mode(),
-            ppt_pl1_spl: a.has_ppt_pl1_spl(),
-            ppt_pl2_sppt: a.has_ppt_pl2_sppt(),
-            ppt_fppt: a.has_ppt_fppt(),
-            ppt_apu_sppt: a.has_ppt_apu_sppt(),
-            ppt_platform_sppt: a.has_ppt_platform_sppt(),
-            nv_dynamic_boost: a.has_nv_dynamic_boost(),
-            nv_temp_target: a.has_nv_temp_target(),
-        }
-    }
-}
-
 #[typeshare]
 #[repr(u8)]
-#[derive(Serialize, Deserialize, Default, Type, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(
+    Serialize, Deserialize, Default, Type, Value, OwnedValue, Debug, PartialEq, Eq, Clone, Copy,
+)]
 pub enum GpuMode {
-    Discrete,
-    Optimus,
-    Integrated,
-    Egpu,
-    Vfio,
-    Ultimate,
+    Discrete = 0,
+    Optimus = 1,
+    Integrated = 2,
+    Egpu = 3,
+    Vfio = 4,
+    Ultimate = 5,
     #[default]
-    Error,
-    NotSupported,
+    Error = 6,
+    NotSupported = 7,
 }
 
 impl From<u8> for GpuMode {
@@ -265,4 +246,131 @@ impl Display for GpuMode {
             GpuMode::NotSupported => write!(f, "Not Supported"),
         }
     }
+}
+
+#[typeshare]
+#[repr(u8)]
+#[derive(
+    Deserialize,
+    Serialize,
+    Default,
+    Type,
+    Value,
+    OwnedValue,
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Clone,
+    Copy,
+)]
+#[zvariant(signature = "s")]
+/// `throttle_thermal_policy` in asus_wmi
+pub enum PlatformPolicy {
+    #[default]
+    Balanced = 0,
+    Performance = 1,
+    Quiet = 2,
+}
+
+impl PlatformPolicy {
+    pub const fn next(&self) -> Self {
+        match self {
+            Self::Balanced => Self::Balanced,
+            Self::Performance => Self::Quiet,
+            Self::Quiet => Self::Balanced,
+        }
+    }
+
+    pub const fn list() -> [Self; 3] {
+        [Self::Balanced, Self::Performance, Self::Quiet]
+    }
+}
+
+impl From<u8> for PlatformPolicy {
+    fn from(num: u8) -> Self {
+        match num {
+            0 => Self::Balanced,
+            1 => Self::Performance,
+            2 => Self::Quiet,
+            _ => {
+                warn!("Unknown number for PlatformProfile: {}", num);
+                Self::Balanced
+            }
+        }
+    }
+}
+
+impl From<PlatformPolicy> for u8 {
+    fn from(p: PlatformPolicy) -> Self {
+        match p {
+            PlatformPolicy::Balanced => 0,
+            PlatformPolicy::Performance => 1,
+            PlatformPolicy::Quiet => 2,
+        }
+    }
+}
+
+impl From<PlatformPolicy> for &str {
+    fn from(profile: PlatformPolicy) -> &'static str {
+        match profile {
+            PlatformPolicy::Balanced => "balanced",
+            PlatformPolicy::Performance => "performance",
+            PlatformPolicy::Quiet => "quiet",
+        }
+    }
+}
+
+impl std::str::FromStr for PlatformPolicy {
+    type Err = PlatformError;
+
+    fn from_str(profile: &str) -> Result<Self> {
+        match profile.to_ascii_lowercase().trim() {
+            "balanced" => Ok(PlatformPolicy::Balanced),
+            "performance" => Ok(PlatformPolicy::Performance),
+            "quiet" => Ok(PlatformPolicy::Quiet),
+            _ => Err(PlatformError::NotSupported),
+        }
+    }
+}
+
+impl Display for PlatformPolicy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl PlatformPolicy {
+    pub fn get_next_profile(current: PlatformPolicy) -> PlatformPolicy {
+        match current {
+            PlatformPolicy::Balanced => PlatformPolicy::Performance,
+            PlatformPolicy::Performance => PlatformPolicy::Quiet,
+            PlatformPolicy::Quiet => PlatformPolicy::Balanced,
+        }
+    }
+}
+
+/// CamelCase names of the properties. Intended for use with DBUS
+#[typeshare]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Type, PartialEq, PartialOrd)]
+#[zvariant(signature = "s")]
+pub enum Properties {
+    ChargeControlEndThreshold,
+    DgpuDisable,
+    GpuMuxMode,
+    PostAnimationSound,
+    PanelOd,
+    MiniLedMode,
+    EgpuEnable,
+    PlatformPolicy,
+    PptPl1Spl,
+    PptPl2Sppt,
+    PptFppt,
+    PptApuSppt,
+    PptPlatformSppt,
+    NvDynamicBoost,
+    NvTempTarget,
 }

@@ -10,6 +10,9 @@
     <key type="b" name="anime-power">
       <default>false</default>
     </key>
+    <key type="b" name="anime-builtins">
+      <default>false</default>
+    </key>
     <key name="charge-level" type="u">
       <range min="20" max="100"/>
       <default>100</default>

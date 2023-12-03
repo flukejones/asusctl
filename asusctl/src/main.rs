@@ -5,18 +5,20 @@ use std::process::Command;
 use std::thread::sleep;
 
 use anime_cli::{AnimeActions, AnimeCommand};
+use asusd::ctrl_aura::trait_impls::AURA_ZBUS_NAME;
+use asusd::ctrl_fancurves::FAN_CURVE_ZBUS_NAME;
 use aura_cli::{LedPowerCommand1, LedPowerCommand2};
 use dmi_id::DMIID;
+use fan_curve_cli::FanCurveCommand;
 use gumdrop::{Opt, Options};
-use profiles_cli::{FanCurveCommand, ProfileCommand};
 use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType, Vec2};
 use rog_aura::power::KbAuraPowerState;
-use rog_aura::usb::{AuraDevRog1, AuraDevTuf, AuraDevice, AuraPowerDev};
+use rog_aura::usb::{AuraDevRog1, AuraDevTuf, AuraPowerDev};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClientBlocking;
-use rog_platform::platform::GpuMode;
-use rog_platform::supported::*;
+use rog_platform::error::PlatformError;
+use rog_platform::platform::{GpuMode, PlatformPolicy, Properties};
 use rog_profiles::error::ProfileError;
 
 use crate::aura_cli::{AuraPowerStates, LedBrightness};
@@ -25,7 +27,7 @@ use crate::cli_opts::*;
 mod anime_cli;
 mod aura_cli;
 mod cli_opts;
-mod profiles_cli;
+mod fan_curve_cli;
 
 fn main() {
     let args: Vec<String> = args().skip(1).collect();
@@ -44,37 +46,36 @@ fn main() {
     };
 
     if let Ok((dbus, _)) = RogDbusClientBlocking::new().map_err(|e| {
-        print_error_help(&e, None);
+        check_service("asusd");
+        println!("\nError: {e}\n");
+        print_info();
     }) {
-        if let Ok(supported) = dbus
-            .proxies()
-            .supported()
-            .supported_functions()
-            .map_err(|e| {
-                print_error_help(&e, None);
-            })
-        {
-            if parsed.version {
-                println!("asusctl v{}", env!("CARGO_PKG_VERSION"));
-                println!();
-                print_info();
-            }
+        let supported_properties = dbus.proxies().platform().supported_properties().unwrap();
+        let supported_interfaces = dbus.proxies().platform().supported_interfaces().unwrap();
 
-            if let Err(err) = do_parsed(&parsed, &supported, &dbus) {
-                print_error_help(&*err, Some(&supported));
-            }
+        if parsed.version {
+            println!("asusctl v{}", env!("CARGO_PKG_VERSION"));
+            println!();
+            print_info();
+        }
+
+        if let Err(err) = do_parsed(&parsed, &supported_interfaces, &supported_properties, &dbus) {
+            print_error_help(&*err, &supported_interfaces, &supported_properties);
         }
     }
 }
 
-fn print_error_help(err: &dyn std::error::Error, supported: Option<&SupportedFunctions>) {
+fn print_error_help(
+    err: &dyn std::error::Error,
+    supported_interfaces: &[String],
+    supported_properties: &[Properties],
+) {
     check_service("asusd");
     println!("\nError: {}\n", err);
     print_info();
-    if let Some(supported) = supported {
-        println!();
-        println!("Supported laptop functions:\n\n{}", supported);
-    }
+    println!();
+    println!("Supported interfaces:\n\n{:#?}\n", supported_interfaces);
+    println!("Supported properties:\n\n{:#?}\n", supported_properties);
 }
 
 fn print_info() {
@@ -105,20 +106,21 @@ fn check_service(name: &str) -> bool {
 
 fn do_parsed(
     parsed: &CliStart,
-    supported: &SupportedFunctions,
+    supported_interfaces: &[String],
+    supported_properties: &[Properties],
     dbus: &RogDbusClientBlocking<'_>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     match &parsed.command {
-        Some(CliCommand::LedMode(mode)) => handle_led_mode(dbus, &supported.keyboard_led, mode)?,
-        Some(CliCommand::LedPow1(pow)) => handle_led_power1(dbus, &supported.keyboard_led, pow)?,
-        Some(CliCommand::LedPow2(pow)) => handle_led_power2(dbus, &supported.keyboard_led, pow)?,
-        Some(CliCommand::Profile(cmd)) => handle_profile(dbus, &supported.platform_profile, cmd)?,
+        Some(CliCommand::LedMode(mode)) => handle_led_mode(dbus, supported_interfaces, mode)?,
+        Some(CliCommand::LedPow1(pow)) => handle_led_power1(dbus, supported_interfaces, pow)?,
+        Some(CliCommand::LedPow2(pow)) => handle_led_power2(dbus, supported_interfaces, pow)?,
+        Some(CliCommand::Profile(cmd)) => handle_throttle_profile(dbus, supported_properties, cmd)?,
         Some(CliCommand::FanCurve(cmd)) => {
-            handle_fan_curve(dbus, &supported.platform_profile, cmd)?;
+            handle_fan_curve(dbus, supported_interfaces, cmd)?;
         }
         Some(CliCommand::Graphics(_)) => do_gfx(),
-        Some(CliCommand::Anime(cmd)) => handle_anime(dbus, &supported.anime_ctrl, cmd)?,
-        Some(CliCommand::Bios(cmd)) => handle_bios_option(dbus, &supported.rog_bios_ctrl, cmd)?,
+        Some(CliCommand::Anime(cmd)) => handle_anime(dbus, cmd)?,
+        Some(CliCommand::Bios(cmd)) => handle_platform_properties(dbus, supported_properties, cmd)?,
         None => {
             if (!parsed.show_supported
                 && parsed.kbd_bright.is_none()
@@ -132,15 +134,14 @@ fn do_parsed(
                 if let Some(cmdlist) = CliStart::command_list() {
                     let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
                     for command in commands.iter().filter(|command| {
-                        if !supported.keyboard_led.dev_id.is_old_style()
-                            && !supported.keyboard_led.dev_id.is_tuf_style()
+                        let dev_type = dbus.proxies().aura().device_type().unwrap();
+                        if !dev_type.is_old_style()
+                            && !dev_type.is_tuf_style()
                             && command.trim().starts_with("led-pow-1")
                         {
                             return false;
                         }
-                        if !supported.keyboard_led.dev_id.is_new_style()
-                            && command.trim().starts_with("led-pow-2")
-                        {
+                        if !dev_type.is_new_style() && command.trim().starts_with("led-pow-2") {
                             return false;
                         }
                         true
@@ -159,31 +160,34 @@ fn do_parsed(
     if let Some(brightness) = &parsed.kbd_bright {
         match brightness.level() {
             None => {
-                let level = dbus.proxies().led().led_brightness()?;
-                println!("Current keyboard led brightness: {}", level);
+                let level = dbus.proxies().aura().brightness()?;
+                println!("Current keyboard led brightness: {level:?}");
             }
             Some(level) => dbus
                 .proxies()
-                .led()
-                .set_brightness(<rog_aura::LedBrightness>::from(level))?,
+                .aura()
+                .set_brightness(rog_aura::LedBrightness::from(level))?,
         }
     }
 
     if parsed.next_kbd_bright {
-        dbus.proxies().led().next_led_brightness()?;
+        let brightness = dbus.proxies().aura().brightness()?;
+        dbus.proxies().aura().set_brightness(brightness.next())?;
     }
 
     if parsed.prev_kbd_bright {
-        dbus.proxies().led().prev_led_brightness()?;
+        let brightness = dbus.proxies().aura().brightness()?;
+        dbus.proxies().aura().set_brightness(brightness.prev())?;
     }
 
-    if parsed.show_supported {
-        println!("Supported laptop functions:\n\n{}", supported);
-    }
+    // TODO:
+    // if parsed.show_supported {
+    //     println!("Supported laptop functions:\n\n{}", supported);
+    // }
 
     if let Some(chg_limit) = parsed.chg_limit {
         dbus.proxies()
-            .charge()
+            .platform()
             .set_charge_control_end_threshold(chg_limit)?;
     }
 
@@ -200,7 +204,6 @@ fn do_gfx() {
 
 fn handle_anime(
     dbus: &RogDbusClientBlocking<'_>,
-    _supported: &AnimeSupportedFunctions,
     cmd: &AnimeCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if (cmd.command.is_none()
@@ -375,12 +378,14 @@ fn handle_anime(
                     return Ok(());
                 }
 
-                dbus.proxies().anime().set_builtin_animations(
-                    builtins.boot,
-                    builtins.awake,
-                    builtins.sleep,
-                    builtins.shutdown,
-                )?;
+                dbus.proxies()
+                    .anime()
+                    .set_builtin_animations(rog_anime::Animations {
+                        boot: builtins.boot,
+                        awake: builtins.awake,
+                        sleep: builtins.sleep,
+                        shutdown: builtins.shutdown,
+                    })?;
             }
         }
     }
@@ -398,9 +403,14 @@ fn verify_brightness(brightness: f32) {
 
 fn handle_led_mode(
     dbus: &RogDbusClientBlocking<'_>,
-    supported: &LedSupportedFunctions,
+    supported: &[String],
     mode: &LedModeCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    if !supported.contains(&AURA_ZBUS_NAME.to_string()) {
+        println!("This laptop does not support power options");
+        return Err(PlatformError::NotSupported.into());
+    }
+
     if mode.command.is_none() && !mode.prev_mode && !mode.next_mode {
         if !mode.help {
             println!("Missing arg or command\n");
@@ -411,7 +421,8 @@ fn handle_led_mode(
         if let Some(cmdlist) = LedModeCommand::command_list() {
             let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
             for command in commands.iter().filter(|command| {
-                for mode in &supported.basic_modes {
+                let modes = dbus.proxies().aura().supported_modes().unwrap();
+                for mode in &modes {
                     if command
                         .trim()
                         .starts_with(&<&str>::from(mode).to_lowercase())
@@ -419,9 +430,10 @@ fn handle_led_mode(
                         return true;
                     }
                 }
-                if !supported.basic_zones.is_empty() && command.trim().starts_with("multi") {
-                    return true;
-                }
+                // TODO
+                // if !supported.basic_zones.is_empty() && command.trim().starts_with("multi") {
+                //     return true;
+                // }
                 false
             }) {
                 println!("{}", command);
@@ -437,17 +449,31 @@ fn handle_led_mode(
         return Ok(());
     }
     if mode.next_mode {
-        dbus.proxies().led().next_led_mode()?;
+        let mode = dbus.proxies().aura().led_mode()?;
+        let modes = dbus.proxies().aura().supported_modes()?;
+        let mut pos = modes.iter().position(|m| *m == mode).unwrap() + 1;
+        if pos >= modes.len() {
+            pos = 0;
+        }
+        dbus.proxies().aura().set_led_mode(modes[pos])?;
     } else if mode.prev_mode {
-        dbus.proxies().led().prev_led_mode()?;
+        let mode = dbus.proxies().aura().led_mode()?;
+        let modes = dbus.proxies().aura().supported_modes()?;
+        let mut pos = modes.iter().position(|m| *m == mode).unwrap();
+        if pos == 0 {
+            pos = modes.len() - 1;
+        } else {
+            pos -= 1;
+        }
+        dbus.proxies().aura().set_led_mode(modes[pos])?;
     } else if let Some(mode) = mode.command.as_ref() {
         if mode.help_requested() {
             println!("{}", mode.self_usage());
             return Ok(());
         }
         dbus.proxies()
-            .led()
-            .set_led_mode(&<AuraEffect>::from(mode))?;
+            .aura()
+            .set_led_mode_data(<AuraEffect>::from(mode))?;
     }
 
     Ok(())
@@ -455,9 +481,18 @@ fn handle_led_mode(
 
 fn handle_led_power1(
     dbus: &RogDbusClientBlocking<'_>,
-    supported: &LedSupportedFunctions,
+    supported: &[String],
     power: &LedPowerCommand1,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    if !supported.contains(&AURA_ZBUS_NAME.to_string()) {
+        println!("This laptop does not support power options");
+        return Err(PlatformError::NotSupported.into());
+    }
+    let dev_type = dbus.proxies().aura().device_type()?;
+    if !dev_type.is_old_style() && !dev_type.is_tuf_style() {
+        println!("This option applies only to keyboards 2021+");
+    }
+
     if power.awake.is_none()
         && power.sleep.is_none()
         && power.boot.is_none()
@@ -471,15 +506,12 @@ fn handle_led_power1(
         return Ok(());
     }
 
-    if matches!(
-        supported.dev_id,
-        AuraDevice::X1854 | AuraDevice::X1869 | AuraDevice::X1866
-    ) {
+    if dev_type.is_old_style() {
         handle_led_power_1_do_1866(dbus, power)?;
         return Ok(());
     }
 
-    if matches!(supported.dev_id, AuraDevice::Tuf) {
+    if dev_type.is_tuf_style() {
         handle_led_power_1_do_tuf(dbus, power)?;
         return Ok(());
     }
@@ -515,13 +547,13 @@ fn handle_led_power_1_do_1866(
         old_rog: enabled,
         ..Default::default()
     };
-    dbus.proxies().led().set_led_power(data, true)?;
+    dbus.proxies().aura().set_led_power((data, true))?;
 
     let data = AuraPowerDev {
         old_rog: disabled,
         ..Default::default()
     };
-    dbus.proxies().led().set_led_power(data, false)?;
+    dbus.proxies().aura().set_led_power((data, false))?;
 
     Ok(())
 }
@@ -552,22 +584,31 @@ fn handle_led_power_1_do_tuf(
         tuf: enabled,
         ..Default::default()
     };
-    dbus.proxies().led().set_led_power(data, true)?;
+    dbus.proxies().aura().set_led_power((data, true))?;
 
     let data = AuraPowerDev {
         tuf: disabled,
         ..Default::default()
     };
-    dbus.proxies().led().set_led_power(data, false)?;
+    dbus.proxies().aura().set_led_power((data, false))?;
 
     Ok(())
 }
 
 fn handle_led_power2(
     dbus: &RogDbusClientBlocking<'_>,
-    supported: &LedSupportedFunctions,
+    supported: &[String],
     power: &LedPowerCommand2,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    if !supported.contains(&AURA_ZBUS_NAME.to_string()) {
+        println!("This laptop does not support power options");
+        return Err(PlatformError::NotSupported.into());
+    }
+    let dev_type = dbus.proxies().aura().device_type()?;
+    if !dev_type.is_new_style() {
+        println!("This option applies only to keyboards 2021+");
+    }
+
     if power.command().is_none() {
         if !power.help {
             println!("Missing arg or command\n");
@@ -592,10 +633,6 @@ fn handle_led_power2(
             return Ok(());
         }
 
-        if !supported.dev_id.is_new_style() {
-            println!("This option applies only to keyboards with product ID 0x19b6");
-        }
-
         let set = |power: &mut KbAuraPowerState, set_to: &AuraPowerStates| {
             power.boot = set_to.boot;
             power.awake = set_to.awake;
@@ -603,7 +640,7 @@ fn handle_led_power2(
             power.shutdown = set_to.shutdown;
         };
 
-        let mut enabled = dbus.proxies().led().led_power()?;
+        let mut enabled = dbus.proxies().aura().led_power()?;
         if let Some(cmd) = &power.command {
             match cmd {
                 aura_cli::SetAuraZoneEnabled::Keyboard(k) => set(&mut enabled.rog.keyboard, k),
@@ -614,18 +651,18 @@ fn handle_led_power2(
             }
         }
 
-        dbus.proxies().led().set_led_power(enabled, true)?;
+        dbus.proxies().aura().set_led_power((enabled, true))?;
     }
 
     Ok(())
 }
 
-fn handle_profile(
+fn handle_throttle_profile(
     dbus: &RogDbusClientBlocking<'_>,
-    supported: &PlatformProfileFunctions,
+    supported: &[Properties],
     cmd: &ProfileCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if !supported.platform_profile {
+    if !supported.contains(&Properties::DgpuDisable) {
         println!("Profiles not supported by either this kernel or by the laptop.");
         return Err(ProfileError::NotSupported.into());
     }
@@ -641,23 +678,27 @@ fn handle_profile(
         }
         return Ok(());
     }
+    let current = dbus.proxies().platform().throttle_thermal_policy()?;
 
     if cmd.next {
-        dbus.proxies().profile().next_profile()?;
+        dbus.proxies()
+            .platform()
+            .set_throttle_thermal_policy(current.next())?;
     } else if let Some(profile) = cmd.profile_set {
-        dbus.proxies().profile().set_active_profile(profile)?;
+        dbus.proxies()
+            .platform()
+            .set_throttle_thermal_policy(profile)?;
     }
 
     if cmd.list {
-        let res = dbus.proxies().profile().profiles()?;
+        let res = PlatformPolicy::list();
         for p in &res {
             println!("{:?}", p);
         }
     }
 
     if cmd.profile_get {
-        let res = dbus.proxies().profile().active_profile()?;
-        println!("Active profile is {:?}", res);
+        println!("Active profile is {current:?}");
     }
 
     Ok(())
@@ -665,12 +706,11 @@ fn handle_profile(
 
 fn handle_fan_curve(
     dbus: &RogDbusClientBlocking<'_>,
-    supported: &PlatformProfileFunctions,
+    supported: &[String],
     cmd: &FanCurveCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if supported.fans.is_empty() {
+    if !supported.contains(&FAN_CURVE_ZBUS_NAME.to_string()) {
         println!("Fan-curves not supported by either this kernel or by the laptop.");
-        println!("This requires kernel 5.17 or the fan curve patch listed in the readme.");
         return Err(ProfileError::NotSupported.into());
     }
 
@@ -697,34 +737,34 @@ fn handle_fan_curve(
     }
 
     if cmd.get_enabled {
-        let profile = dbus.proxies().profile().active_profile()?;
-        let curves = dbus.proxies().profile().fan_curve_data(profile)?;
+        let profile = dbus.proxies().platform().throttle_thermal_policy()?;
+        let curves = dbus.proxies().fan_curves().fan_curve_data(profile)?;
         for curve in curves.iter() {
             println!("{}", String::from(curve));
         }
     }
 
     if cmd.default {
-        dbus.proxies().profile().set_active_curve_to_defaults()?;
+        dbus.proxies().fan_curves().set_active_curve_to_defaults()?;
     }
 
     if let Some(profile) = cmd.mod_profile {
         if cmd.enable_fan_curves.is_none() && cmd.data.is_none() {
-            let data = dbus.proxies().profile().fan_curve_data(profile)?;
+            let data = dbus.proxies().fan_curves().fan_curve_data(profile)?;
             let data = toml::to_string(&data)?;
             println!("\nFan curves for {:?}\n\n{}", profile, data);
         }
 
         if let Some(enabled) = cmd.enable_fan_curves {
             dbus.proxies()
-                .profile()
+                .fan_curves()
                 .set_fan_curves_enabled(profile, enabled)?;
         }
 
         if let Some(enabled) = cmd.enable_fan_curve {
             if let Some(fan) = cmd.fan {
                 dbus.proxies()
-                    .profile()
+                    .fan_curves()
                     .set_profile_fan_curve_enabled(profile, fan, enabled)?;
             } else {
                 println!(
@@ -737,16 +777,16 @@ fn handle_fan_curve(
         if let Some(mut curve) = cmd.data.clone() {
             let fan = cmd.fan.unwrap_or_default();
             curve.set_fan(fan);
-            dbus.proxies().profile().set_fan_curve(profile, curve)?;
+            dbus.proxies().fan_curves().set_fan_curve(profile, curve)?;
         }
     }
 
     Ok(())
 }
 
-fn handle_bios_option(
+fn handle_platform_properties(
     dbus: &RogDbusClientBlocking<'_>,
-    supported: &PlatformSupportedFunctions,
+    supported: &[Properties],
     cmd: &BiosCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
     {
@@ -763,26 +803,26 @@ fn handle_bios_option(
             let usage: Vec<String> = BiosCommand::usage().lines().map(|s| s.to_owned()).collect();
 
             for line in usage.iter().filter(|line| {
-                line.contains("sound") && supported.post_animation_sound
-                    || line.contains("GPU") && supported.gpu_mux
-                    || line.contains("panel") && supported.panel_overdrive
+                line.contains("sound") && supported.contains(&Properties::PostAnimationSound)
+                    || line.contains("GPU") && supported.contains(&Properties::GpuMuxMode)
+                    || line.contains("panel") && supported.contains(&Properties::PanelOd)
             }) {
                 println!("{}", line);
             }
         }
 
         if let Some(opt) = cmd.post_sound_set {
-            dbus.proxies().rog_bios().set_post_animation_sound(opt)?;
+            dbus.proxies().platform().set_post_animation_sound(opt)?;
         }
         if cmd.post_sound_get {
-            let res = dbus.proxies().rog_bios().post_animation_sound()?;
+            let res = dbus.proxies().platform().post_animation_sound()?;
             println!("Bios POST sound on: {}", res);
         }
 
         if let Some(opt) = cmd.gpu_mux_mode_set {
             println!("Rebuilding initrd to include drivers");
             dbus.proxies()
-                .rog_bios()
+                .platform()
                 .set_gpu_mux_mode(GpuMode::from_mux(opt))?;
             println!(
                 "The mode change is not active until you reboot, on boot the bios will make the \
@@ -790,15 +830,15 @@ fn handle_bios_option(
             );
         }
         if cmd.gpu_mux_mode_get {
-            let res = dbus.proxies().rog_bios().gpu_mux_mode()?;
+            let res = dbus.proxies().platform().gpu_mux_mode()?;
             println!("Bios GPU MUX: {:?}", res);
         }
 
         if let Some(opt) = cmd.panel_overdrive_set {
-            dbus.proxies().rog_bios().set_panel_od(opt)?;
+            dbus.proxies().platform().set_panel_od(opt)?;
         }
         if cmd.panel_overdrive_get {
-            let res = dbus.proxies().rog_bios().panel_od()?;
+            let res = dbus.proxies().platform().panel_od()?;
             println!("Panel overdrive on: {}", res);
         }
     }

@@ -1,22 +1,19 @@
 {
+  // "extends": "@tsconfig/strictest/tsconfig.json",
   "compilerOptions": {
-    "lib": [
-      "es2019"
-    ],
+    "lib": ["ESNext"],
     "types": [],
-    "target": "es2019",
-    "module": "ES2022",
-    "moduleResolution": "node",
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "declaration": true,
     "removeComments": true,
     "strict": true,
-    "allowJs": true
+    "allowJs": true,
+    "paths": {},
+    "skipLibCheck": true
   },
-  "files": [
-    "./src/extension.ts",
-  ],
-  "include": [
-    "src/*.ts",
-    "src/**/*.ts"
-  ]
+  "files": ["./src/extension.ts"],
+  "include": ["src/*.ts"],
+  "exclude": [".ts-for-girrc.js", ".eslintrc.cjs"]
 }

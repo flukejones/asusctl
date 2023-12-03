@@ -62,7 +62,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         seq.next_state(&layout);
         let packets = seq.create_packets();
 
-        client.proxies().led().direct_addressing_raw(packets)?;
+        client.proxies().aura().direct_addressing_raw(packets)?;
         std::thread::sleep(std::time::Duration::from_millis(33));
     }
 }

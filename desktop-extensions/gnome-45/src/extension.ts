@@ -1,117 +1,127 @@
-import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
-
-import { AnimeDbus } from "./modules/dbus/animatrix";
-import { Power } from "./modules/dbus/power";
-import { Supported } from "./modules/dbus/supported";
-import { Platform } from "./modules/dbus/platform";
-
-import { QuickPanelOd } from "./modules/quick_toggles/panel_od";
-import { IndicateMiniLed } from "./modules/indicators/mini_led";
-import { QuickMiniLed } from "./modules/quick_toggles/mini_led";
-import { SliderChargeLevel } from "./modules/sliders/charge";
-import { QuickAnimePower } from "./modules/quick_toggles/anime_power";
+import { Extension, gettext as _ } from "@girs/gnome-shell/extensions/extension";
+import * as platform from "./bindings/platform";
+import { AsusQuickToggle } from "./modules/rog_quick_toggle";
+import { AsusMenuToggle } from "./modules/rog_menu_toggle";
+import { AsusIndicator } from "./modules/rog_indicator";
+import { AsusSlider } from "./modules/rog_slider_100pc";
 import { FeatureMenuToggle } from "./modules/quick_menus/laptop_features";
-import { AuraDbus } from "./modules/dbus/aura";
-import { AuraMenuToggle } from "./modules/quick_menus/aura";
+import { DbusBase } from "./modules/dbus_proxy";
+import { main } from "@girs/gnome-shell/ui";
 
-export var extension;
-
+export const uuid = "asusctl-gnome@asus-linux.org";
 export default class AsusExtension extends Extension {
-    private _indicateMiniLed: typeof IndicateMiniLed;
-    private _quickMiniLed: typeof QuickMiniLed;
-    private _quickPanelOd: typeof QuickPanelOd;
-    private _quickAnimePower: typeof QuickAnimePower;
-    private _featureMenuToggle: typeof FeatureMenuToggle;
-    private _auraModeMenuToggle: typeof AuraMenuToggle;
-    private _sliderCharge: typeof SliderChargeLevel;
+  // public dbus_aura: AuraDbus = new AuraDbus;
+  // public dbus_anime: AnimeDbus = new AnimeDbus;
+  public dbus_platform: DbusBase | undefined;
+  public dbus_anime: DbusBase | undefined;
 
-    public dbus_supported: Supported = new Supported;
-    public dbus_power: Power = new Power;
-    public dbus_aura: AuraDbus = new AuraDbus;
-    public dbus_anime: AnimeDbus = new AnimeDbus;
-    public dbus_platform: Platform = new Platform;
-    public extensionPath: any = null;
+  private individual = false;
+  public supported_properties!: platform.Properties;
+  public supported_interfaces: string[] = [];
+  private feature_menu = null;
+  private panel_od = null;
+  private mini_led = null;
+  private anime_display = null;
+  private anime_builtins = null;
+  private charge_thres = null;
+  // private _feature: typeof FeatureMenuToggle;
 
-    settings() {
-        return this._settings;
+  async enable() {
+    log(this.path);
+
+    if (this.dbus_platform == undefined) {
+      this.dbus_platform = new DbusBase("org-asuslinux-platform-4.xml", "/org/asuslinux/Platform");
+      await this.dbus_platform.start();
     }
 
-    async enable() {
-        this._settings = this.getSettings();
-        this.extensionPath = this.path;
-        extension = this;
+    if (this.dbus_anime == undefined) {
+      this.dbus_anime = new DbusBase("org-asuslinux-anime-4.xml", "/org/asuslinux/Anime");
+      await this.dbus_anime.start();
+    }
 
-        this._indicateMiniLed = null;
-        this._quickMiniLed = null;
-        this._quickPanelOd = null;
-        this._quickAnimePower = null;
-        this._sliderCharge = null;
+    this.supported_interfaces = this.dbus_platform?.proxy.SupportedInterfacesSync()[0];
+    this.supported_properties = this.dbus_platform?.proxy.SupportedPropertiesSync()[0];
+    log(this.supported_interfaces);
+    log(this.supported_properties);
 
-        await this.dbus_supported.start();
-        await this.dbus_aura.start();
-        await this.dbus_platform.start();
-        await this.dbus_power.start();
-        await this.dbus_anime.start();
+    // new AsusIndicator("selection-mode-symbolic", "mini-led-enabled");
+    // new AsusIndicator("selection-mode-symbolic", "panel-od-enabled");
 
-        if (this._featureMenuToggle == null) {
-            this._featureMenuToggle = new FeatureMenuToggle(this.dbus_supported, this.dbus_platform, this.dbus_anime);
+    if (!this.individual) {
+      if (this.feature_menu == null)
+        this.feature_menu = new FeatureMenuToggle(this.dbus_platform, this.dbus_anime);
+    } else {
+      if (this.supported_properties.includes("PanelOd") && this.dbus_platform.proxy.PanelOd != null)
+        if (this.panel_od == null) {
+          this.panel_od = new AsusQuickToggle(
+            this.dbus_platform,
+            "PanelOd",
+            "panel-od-enabled",
+            "Panel Overdrive",
+          );
         }
-        if (this._auraModeMenuToggle == null) {
-            this._auraModeMenuToggle = new AuraMenuToggle(this.dbus_aura);
+
+      if (this.supported_properties.includes("MiniLed") && this.dbus_platform.proxy.MiniLed != null)
+        if (this.mini_led == null) {
+          this.mini_led = new AsusQuickToggle(
+            this.dbus_platform,
+            "MiniLed",
+            "mini-led-enabled",
+            "Mini-LED",
+          );
         }
-        if (this.dbus_supported.supported.rog_bios_ctrl.mini_led_mode) {
-            // if (this._quickMiniLed == null) {
-            //     this._quickMiniLed = new QuickMiniLed(this.dbus_platform);
-            //     this.dbus_platform.notifyMiniLedSubscribers.push(this._quickMiniLed);
-            // }
-            if (this._indicateMiniLed == null) {
-                this._indicateMiniLed = new IndicateMiniLed(this.dbus_platform);
-            }
+
+      if (
+        this.supported_interfaces.includes("Anime") &&
+        this.dbus_anime.proxy.EnableDisplay != null
+      )
+        if (this.anime_display == null) {
+          this.anime_display = new AsusQuickToggle(
+            this.dbus_anime,
+            "EnableDisplay",
+            "anime-power",
+            "AniMe Display",
+          );
         }
-        // if (this.dbus_supported.supported.rog_bios_ctrl.panel_overdrive) {
-        //     if (this._quickPanelOd == null) {
-        //         this._quickPanelOd = new QuickPanelOd(this.dbus_platform);
-        //         this.dbus_platform.notifyPanelOdSubscribers.push(this._quickPanelOd);
-        //     }
-        // }
-        // if (this.dbus_supported.supported.anime_ctrl) {
-        //     if (this._quickAnimePower == null) {
-        //         this._quickAnimePower = new QuickAnimePower(this._dbus_anime);
-        //     }
-        // }
-        if (this.dbus_supported.supported.charge_ctrl.charge_level_set) {
-            if (this._sliderCharge == null) {
-                this._sliderCharge = new SliderChargeLevel(this.dbus_power);
-            }
+
+      if (
+        this.supported_interfaces.includes("Anime") &&
+        this.dbus_anime.proxy.BuiltinsEnabled != null
+      )
+        if (this.anime_builtins == null) {
+          this.anime_builtins = new AsusQuickToggle(
+            this.dbus_anime,
+            "BuiltinsEnabled",
+            "anime-builtins",
+            "Use builtins",
+          );
         }
     }
 
-    disable() {
-        if (this._indicateMiniLed != null) {
-            this._indicateMiniLed.destroy();
-            this._indicateMiniLed = null;
-        }
-        if (this._quickMiniLed != null) {
-            this._quickMiniLed.destroy();
-            this._quickMiniLed = null;
-        }
-        if (this._quickPanelOd != null) {
-            this._quickPanelOd.destroy();
-            this._quickPanelOd = null;
-        }
-        if (this._quickAnimePower != null) {
-            this._quickAnimePower.destroy();
-            this._quickAnimePower = null;
-        }
-        if (this._sliderCharge != null) {
-            this._sliderCharge.destroy();
-            this._sliderCharge = null;
-        }
+    if (
+      this.supported_properties.includes("ChargeControlEndThreshold") &&
+      this.dbus_platform.proxy.ChargeControlEndThreshold != null
+    )
+      if (this.charge_thres == null) {
+        this.charge_thres = new AsusSlider(
+          this.dbus_platform,
+          "ChargeControlEndThreshold",
+          "charge-level",
+          "Charge Level",
+        );
+      }
+  }
 
-        this.dbus_power.stop();
-        this.dbus_platform.stop();
-        // this.dbus_anime.stop();
-        this.dbus_aura.stop();
-        this.dbus_supported.stop();
-    }
+  disable() {
+    this.dbus_platform?.stop();
+    this.dbus_anime?.stop();
+
+    this.feature_menu?.destroy();
+    feature_menu?.destroy();
+    panel_od?.destroy();
+    mini_led?.destroy();
+    anime_display?.destroy();
+    anime_builtins?.destroy();
+    charge_thres?.destroy();
+  }
 }

@@ -8,11 +8,10 @@ use log::error;
 use rog_anime::{Animations, DeviceState};
 use rog_aura::layouts::KeyLayout;
 use rog_aura::usb::AuraPowerDev;
-use rog_aura::{AuraEffect, AuraModeNum};
-use rog_platform::platform::GpuMode;
-use rog_platform::supported::SupportedFunctions;
+use rog_aura::{AuraEffect, AuraModeNum, LedBrightness};
+use rog_platform::platform::{GpuMode, PlatformPolicy};
 use rog_profiles::fan_curve_set::CurveData;
-use rog_profiles::{FanCurvePU, Profile};
+use rog_profiles::FanCurvePU;
 use supergfxctl::pci_device::{GfxMode, GfxPower};
 #[cfg(not(feature = "mocking"))]
 use supergfxctl::zbus_proxy::DaemonProxyBlocking as GfxProxyBlocking;
@@ -24,111 +23,77 @@ use crate::update_and_notify::EnabledNotifications;
 use crate::RogDbusClientBlocking;
 
 #[derive(Clone, Debug, Default)]
-pub struct BiosState {
+pub struct PlatformState {
     /// To be shared to a thread that checks notifications.
     /// It's a bit general in that it won't provide *what* was
     /// updated, so the full state needs refresh
-    pub post_sound: bool,
-    pub dedicated_gfx: GpuMode,
-    pub panel_overdrive: bool,
-    pub mini_led_mode: bool,
-    pub dgpu_disable: bool,
-    pub egpu_enable: bool,
+    pub post_sound: Option<bool>,
+    pub gpu_mux_mode: Option<GpuMode>,
+    pub panel_overdrive: Option<bool>,
+    pub mini_led_mode: Option<bool>,
+    pub dgpu_disable: Option<bool>,
+    pub egpu_enable: Option<bool>,
+    pub throttle: Option<PlatformPolicy>,
+    pub charge_limit: Option<u8>,
 }
 
-impl BiosState {
-    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
+impl PlatformState {
+    pub fn new(dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
         Ok(Self {
-            post_sound: if supported.rog_bios_ctrl.post_animation_sound {
-                dbus.proxies().rog_bios().post_animation_sound()?
-            } else {
-                false
-            },
-            dedicated_gfx: if supported.rog_bios_ctrl.gpu_mux {
-                GpuMode::from(dbus.proxies().rog_bios().gpu_mux_mode()?)
-            } else {
-                GpuMode::NotSupported
-            },
-            panel_overdrive: if supported.rog_bios_ctrl.panel_overdrive {
-                dbus.proxies().rog_bios().panel_od()?
-            } else {
-                false
-            },
-            mini_led_mode: if supported.rog_bios_ctrl.mini_led_mode {
-                dbus.proxies().rog_bios().mini_led_mode()?
-            } else {
-                false
-            },
+            post_sound: dbus.proxies().platform().post_animation_sound().ok(),
+            gpu_mux_mode: dbus
+                .proxies()
+                .platform()
+                .gpu_mux_mode()
+                .map(GpuMode::from)
+                .ok(),
+            panel_overdrive: dbus.proxies().platform().panel_od().ok(),
+            mini_led_mode: dbus.proxies().platform().mini_led_mode().ok(),
             // TODO: needs supergfx
-            dgpu_disable: supported.rog_bios_ctrl.dgpu_disable,
-            egpu_enable: supported.rog_bios_ctrl.egpu_enable,
-        })
-    }
-}
-
-#[derive(Clone, Debug, Default)]
-pub struct ProfilesState {
-    pub list: Vec<Profile>,
-    pub current: Profile,
-}
-
-impl ProfilesState {
-    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
-        Ok(Self {
-            list: if supported.platform_profile.platform_profile {
-                let mut list = dbus.proxies().profile().profiles()?;
-                list.sort();
-                list
-            } else {
-                vec![]
-            },
-            current: if supported.platform_profile.platform_profile {
-                dbus.proxies().profile().active_profile()?
-            } else {
-                Profile::Balanced
-            },
+            dgpu_disable: dbus.proxies().platform().dgpu_disable().ok(),
+            egpu_enable: dbus.proxies().platform().egpu_enable().ok(),
+            throttle: dbus.proxies().platform().throttle_thermal_policy().ok(),
+            charge_limit: dbus
+                .proxies()
+                .platform()
+                .charge_control_end_threshold()
+                .ok(),
         })
     }
 }
 
 #[derive(Clone, Debug, Default)]
 pub struct FanCurvesState {
-    pub show_curve: Profile,
+    pub show_curve: PlatformPolicy,
     pub show_graph: FanCurvePU,
-    pub curves: BTreeMap<Profile, Vec<CurveData>>,
+    pub curves: BTreeMap<PlatformPolicy, Vec<CurveData>>,
     pub available_fans: HashSet<FanCurvePU>,
     pub drag_delta: Vec2,
 }
 
 impl FanCurvesState {
-    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
-        let profiles = if supported.platform_profile.platform_profile {
-            dbus.proxies().profile().profiles()?
-        } else {
-            vec![Profile::Balanced, Profile::Quiet, Profile::Performance]
-        };
+    pub fn new(dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
+        let profiles = vec![
+            PlatformPolicy::Balanced,
+            PlatformPolicy::Quiet,
+            PlatformPolicy::Performance,
+        ];
 
-        let mut curves: BTreeMap<Profile, Vec<CurveData>> = BTreeMap::new();
+        let mut curves: BTreeMap<PlatformPolicy, Vec<CurveData>> = BTreeMap::new();
         for p in &profiles {
-            if !supported.platform_profile.fans.is_empty() {
-                if let Ok(curve) = dbus.proxies().profile().fan_curve_data(*p) {
-                    curves.insert(*p, curve);
-                }
+            if let Ok(curve) = dbus.proxies().fan_curves().fan_curve_data(*p) {
+                curves.insert(*p, curve);
             } else {
-                curves.insert(*p, Vec::default());
+                curves.insert(*p, Default::default());
             }
         }
 
-        let mut available_fans = HashSet::new();
-        for fan in supported.platform_profile.fans.iter() {
-            available_fans.insert(*fan);
-        }
+        let available_fans = HashSet::new();
+        // for fan in supported.platform_profile.fans.iter() {
+        //     available_fans.insert(*fan);
+        // }
 
-        let show_curve = if !supported.platform_profile.fans.is_empty() {
-            dbus.proxies().profile().active_profile()?
-        } else {
-            Profile::Balanced
-        };
+        let show_curve = dbus.proxies().platform().throttle_thermal_policy()?;
 
         Ok(Self {
             show_curve,
@@ -146,7 +111,7 @@ pub struct AuraState {
     pub modes: BTreeMap<AuraModeNum, AuraEffect>,
     pub enabled: AuraPowerDev,
     /// Brightness from 0-3
-    pub bright: i16,
+    pub bright: LedBrightness,
     pub wave_red: [u8; 22],
     pub wave_green: [u8; 22],
     pub wave_blue: [u8; 22],
@@ -156,18 +121,18 @@ impl AuraState {
     pub fn new(layout: &KeyLayout, dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
         Ok(Self {
             current_mode: if !layout.basic_modes().is_empty() {
-                dbus.proxies().led().led_mode().unwrap_or_default()
+                dbus.proxies().aura().led_mode().unwrap_or_default()
             } else {
                 AuraModeNum::Static
             },
 
             modes: if !layout.basic_modes().is_empty() {
-                dbus.proxies().led().led_modes().unwrap_or_default()
+                dbus.proxies().aura().all_mode_data().unwrap_or_default()
             } else {
                 BTreeMap::new()
             },
-            enabled: dbus.proxies().led().led_power().unwrap_or_default(),
-            bright: dbus.proxies().led().led_brightness().unwrap_or_default(),
+            enabled: dbus.proxies().aura().led_power().unwrap_or_default(),
+            bright: dbus.proxies().aura().brightness().unwrap_or_default(),
             wave_red: [0u8; 22],
             wave_green: [0u8; 22],
             wave_blue: [0u8; 22],
@@ -198,18 +163,14 @@ pub struct AnimeState {
 }
 
 impl AnimeState {
-    pub fn new(supported: &SupportedFunctions, dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
-        if supported.anime_ctrl.0 {
-            let device_state = dbus.proxies().anime().device_state()?;
-            Ok(Self {
-                display_enabled: device_state.display_enabled,
-                display_brightness: device_state.display_brightness as u8,
-                builtin_anims_enabled: device_state.builtin_anims_enabled,
-                builtin_anims: device_state.builtin_anims,
-            })
-        } else {
-            Ok(Default::default())
-        }
+    pub fn new(dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
+        let device_state = dbus.proxies().anime().device_state()?;
+        Ok(Self {
+            display_enabled: device_state.display_enabled,
+            display_brightness: device_state.display_brightness as u8,
+            builtin_anims_enabled: device_state.builtin_anims_enabled,
+            builtin_anims: device_state.builtin_anims,
+        })
     }
 }
 
@@ -232,7 +193,7 @@ pub struct GfxState {
 }
 
 impl GfxState {
-    pub fn new(_supported: &SupportedFunctions, dbus: &GfxProxyBlocking<'_>) -> Result<Self> {
+    pub fn new(dbus: &GfxProxyBlocking<'_>) -> Result<Self> {
         Ok(Self {
             has_supergfx: dbus.mode().is_ok(),
             mode: dbus.mode().unwrap_or(GfxMode::None),
@@ -248,21 +209,6 @@ impl Default for GfxState {
             mode: GfxMode::None,
             power_status: GfxPower::Unknown,
         }
-    }
-}
-
-#[derive(Clone, Debug, Default)]
-pub struct PowerState {
-    pub charge_limit: u8,
-    pub ac_power: bool,
-}
-
-impl PowerState {
-    pub fn new(_supported: &SupportedFunctions, dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
-        Ok(Self {
-            charge_limit: dbus.proxies().charge().charge_control_end_threshold()?,
-            ac_power: dbus.proxies().charge().mains_online()?,
-        })
     }
 }
 
@@ -302,13 +248,11 @@ pub struct SystemState {
     pub enabled_notifications: Arc<Mutex<EnabledNotifications>>,
     /// Because much of the app state here is the same as
     /// `RogBiosSupportedFunctions` we can re-use that structure.
-    pub bios: BiosState,
+    pub bios: PlatformState,
     pub aura: AuraState,
     pub anime: AnimeState,
-    pub profiles: ProfilesState,
     pub fan_curves: FanCurvesState,
     pub gfx_state: GfxState,
-    pub power_state: PowerState,
     pub error: Option<String>,
     /// Specific field for the tray only so that we can know when it does need
     /// update. The tray should set this to false when done.
@@ -330,66 +274,46 @@ impl SystemState {
         enabled_notifications: Arc<Mutex<EnabledNotifications>>,
         tray_enabled: bool,
         run_in_bg: bool,
-        supported: &SupportedFunctions,
     ) -> Result<Self> {
         let (asus_dbus, conn) = RogDbusClientBlocking::new()?;
-        let mut error = None;
         let gfx_dbus = GfxProxyBlocking::new(&conn).expect("Couldn't connect to supergfxd");
+
         let aura = AuraState::new(&keyboard_layout, &asus_dbus)
             .map_err(|e| {
                 let e = format!("Could not get AuraState state: {e}");
                 error!("{e}");
-                error = Some(e);
             })
             .unwrap_or_default();
 
         Ok(Self {
             aura_creation: AuraCreation::new(layout_testing, keyboard_layout, keyboard_layouts),
             enabled_notifications,
-            power_state: PowerState::new(supported, &asus_dbus)
-                .map_err(|e| {
-                    let e = format!("Could not get PowerState state: {e}");
-                    error!("{e}");
-                    error = Some(e);
-                })
-                .unwrap_or_default(),
-            bios: BiosState::new(supported, &asus_dbus)
+            bios: PlatformState::new(&asus_dbus)
                 .map_err(|e| {
                     let e = format!("Could not get BiosState state: {e}");
                     error!("{e}");
-                    error = Some(e);
                 })
                 .unwrap_or_default(),
             aura,
-            anime: AnimeState::new(supported, &asus_dbus)
+            anime: AnimeState::new(&asus_dbus)
                 .map_err(|e| {
                     let e = format!("Could not get AanimeState state: {e}");
                     error!("{e}");
-                    error = Some(e);
                 })
                 .unwrap_or_default(),
-            profiles: ProfilesState::new(supported, &asus_dbus)
-                .map_err(|e| {
-                    let e = format!("Could not get ProfilesState state: {e}");
-                    error!("{e}");
-                    error = Some(e);
-                })
-                .unwrap_or_default(),
-            fan_curves: FanCurvesState::new(supported, &asus_dbus)
+            fan_curves: FanCurvesState::new(&asus_dbus)
                 .map_err(|e| {
                     let e = format!("Could not get FanCurvesState state: {e}");
                     error!("{e}");
-                    error = Some(e);
                 })
                 .unwrap_or_default(),
-            gfx_state: GfxState::new(supported, &gfx_dbus)
+            gfx_state: GfxState::new(&gfx_dbus)
                 .map_err(|e| {
                     let e = format!("Could not get supergfxd state: {e}");
                     error!("{e}");
-                    error = Some(e);
                 })
                 .unwrap_or_default(),
-            error,
+            error: None,
             tray_should_update: true,
             app_should_update: true,
             asus_dbus,
@@ -419,9 +343,10 @@ impl Default for SystemState {
                 keyboard_layout_index: 0,
             },
             enabled_notifications: Default::default(),
-            bios: BiosState {
+            bios: PlatformState {
                 post_sound: Default::default(),
-                dedicated_gfx: GpuMode::NotSupported,
+                gpu_mux_mode: None,
+                charge_limit: Some(100),
                 ..Default::default()
             },
             aura: AuraState {
@@ -431,9 +356,6 @@ impl Default for SystemState {
                 ..Default::default()
             },
             anime: AnimeState::default(),
-            profiles: ProfilesState {
-                ..Default::default()
-            },
             fan_curves: FanCurvesState {
                 ..Default::default()
             },
@@ -441,10 +363,6 @@ impl Default for SystemState {
                 has_supergfx: false,
                 mode: GfxMode::None,
                 power_status: GfxPower::Unknown,
-            },
-            power_state: PowerState {
-                charge_limit: 99,
-                ac_power: false,
             },
             error: Default::default(),
             tray_should_update: true,

@@ -19,7 +19,6 @@ rog_anime = { path = "../rog-anime", features = ["dbus"] }
 rog_aura = { path = "../rog-aura", features = ["dbus"] }
 rog_platform = { path = "../rog-platform" }
 rog_profiles = { path = "../rog-profiles" }
-rog_dbus = { path = "../rog-dbus" }
 dmi_id = { path = "../dmi-id" }
 futures-lite = "*"
 

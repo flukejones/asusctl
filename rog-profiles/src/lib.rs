@@ -1,26 +1,19 @@
 pub mod error;
 pub mod fan_curve_set;
 
-use std::fmt::Display;
-use std::fs::{self, OpenOptions};
-use std::io::Write;
-use std::path::Path;
-
 use error::ProfileError;
 use fan_curve_set::CurveData;
 use log::debug;
+use rog_platform::platform::PlatformPolicy;
 use serde_derive::{Deserialize, Serialize};
 use typeshare::typeshare;
-use udev::Device;
+pub use udev::Device;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
 
-pub const PLATFORM_PROFILE: &str = "/sys/firmware/acpi/platform_profile";
-pub const PLATFORM_PROFILES: &str = "/sys/firmware/acpi/platform_profile_choices";
-
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub fn find_fan_curve_node() -> Result<Option<Device>, ProfileError> {
+pub fn find_fan_curve_node() -> Result<Device, ProfileError> {
     let mut enumerator = udev::Enumerator::new()?;
     enumerator.match_subsystem("hwmon")?;
 
@@ -28,106 +21,13 @@ pub fn find_fan_curve_node() -> Result<Option<Device>, ProfileError> {
         if device.parent_with_subsystem("platform")?.is_some() {
             if let Some(name) = device.attribute_value("name") {
                 if name == "asus_custom_fan_curve" {
-                    return Ok(Some(device));
+                    return Ok(device);
                 }
             }
         }
     }
 
     Err(ProfileError::NotSupported)
-}
-
-#[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
-#[derive(Deserialize, Serialize, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
-pub enum Profile {
-    Balanced,
-    Performance,
-    Quiet,
-}
-
-impl Profile {
-    pub fn is_platform_profile_supported() -> bool {
-        Path::new(PLATFORM_PROFILES).exists()
-    }
-
-    pub fn get_active_profile() -> Result<Profile, ProfileError> {
-        let buf = fs::read_to_string(PLATFORM_PROFILE)?;
-        Ok(buf.as_str().into())
-    }
-
-    pub fn get_profile_names() -> Result<Vec<Profile>, ProfileError> {
-        let buf = fs::read_to_string(PLATFORM_PROFILES)?;
-        Ok(buf.rsplit(' ').map(|p| p.into()).collect())
-    }
-
-    pub fn set_profile(profile: Profile) -> Result<(), ProfileError> {
-        let mut file = OpenOptions::new().write(true).open(PLATFORM_PROFILE)?;
-        file.write_all(<&str>::from(profile).as_bytes())?;
-        Ok(())
-    }
-
-    pub fn from_throttle_thermal_policy(num: u8) -> Self {
-        match num {
-            1 => Self::Performance,
-            2 => Self::Quiet,
-            _ => Self::Balanced,
-        }
-    }
-
-    pub fn get_next_profile(current: Profile) -> Profile {
-        // Read first just incase the user has modified the config before calling this
-        match current {
-            Profile::Balanced => Profile::Performance,
-            Profile::Performance => Profile::Quiet,
-            Profile::Quiet => Profile::Balanced,
-        }
-    }
-}
-
-impl Default for Profile {
-    fn default() -> Self {
-        Self::Balanced
-    }
-}
-
-impl From<Profile> for &str {
-    fn from(profile: Profile) -> &'static str {
-        match profile {
-            Profile::Balanced => "balanced",
-            Profile::Performance => "performance",
-            Profile::Quiet => "quiet",
-        }
-    }
-}
-
-impl From<&str> for Profile {
-    fn from(profile: &str) -> Profile {
-        match profile.to_ascii_lowercase().trim() {
-            "performance" => Profile::Performance,
-            "quiet" => Profile::Quiet,
-            _ => Profile::Balanced,
-        }
-    }
-}
-
-impl std::str::FromStr for Profile {
-    type Err = ProfileError;
-
-    fn from_str(profile: &str) -> Result<Self, Self::Err> {
-        match profile.to_ascii_lowercase().trim() {
-            "balanced" => Ok(Profile::Balanced),
-            "performance" => Ok(Profile::Performance),
-            "quiet" => Ok(Profile::Quiet),
-            _ => Err(ProfileError::ParseProfileName),
-        }
-    }
-}
-
-impl Display for Profile {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
 }
 
 #[typeshare]
@@ -208,32 +108,17 @@ pub struct FanCurveProfiles {
 }
 
 impl FanCurveProfiles {
-    pub fn get_device() -> Result<Device, ProfileError> {
-        let mut enumerator = udev::Enumerator::new()?;
-        enumerator.match_subsystem("hwmon")?;
-
-        for device in enumerator.scan_devices()? {
-            if let Some(name) = device.attribute_value("name") {
-                if name == "asus_custom_fan_curve" {
-                    debug!("asus_custom_fan_curve found");
-                    return Ok(device);
-                }
-            }
-        }
-        Err(ProfileError::NotSupported)
-    }
-
     /// Return an array of `FanCurvePU`. An empty array indicates no support for
     /// Curves.
     pub fn supported_fans() -> Result<Vec<FanCurvePU>, ProfileError> {
-        let device = Self::get_device()?;
+        let device = find_fan_curve_node()?;
         Ok(FanCurvePU::which_fans(&device))
     }
 
     ///
     pub fn read_from_dev_profile(
         &mut self,
-        profile: Profile,
+        profile: PlatformPolicy,
         device: &Device,
     ) -> Result<(), ProfileError> {
         let fans = Self::supported_fans()?;
@@ -251,9 +136,9 @@ impl FanCurveProfiles {
         }
 
         match profile {
-            Profile::Balanced => self.balanced = curves,
-            Profile::Performance => self.performance = curves,
-            Profile::Quiet => self.quiet = curves,
+            PlatformPolicy::Balanced => self.balanced = curves,
+            PlatformPolicy::Performance => self.performance = curves,
+            PlatformPolicy::Quiet => self.quiet = curves,
         }
         Ok(())
     }
@@ -265,7 +150,7 @@ impl FanCurveProfiles {
     /// read only for the currently active profile.
     pub fn set_active_curve_to_defaults(
         &mut self,
-        profile: Profile,
+        profile: PlatformPolicy,
         device: &mut Device,
     ) -> Result<(), ProfileError> {
         let fans = Self::supported_fans()?;
@@ -285,13 +170,13 @@ impl FanCurveProfiles {
     // TODO: Make this return an error if curve is zeroed
     pub fn write_profile_curve_to_platform(
         &mut self,
-        profile: Profile,
+        profile: PlatformPolicy,
         device: &mut Device,
-    ) -> std::io::Result<()> {
+    ) -> Result<(), ProfileError> {
         let fans = match profile {
-            Profile::Balanced => &mut self.balanced,
-            Profile::Performance => &mut self.performance,
-            Profile::Quiet => &mut self.quiet,
+            PlatformPolicy::Balanced => &mut self.balanced,
+            PlatformPolicy::Performance => &mut self.performance,
+            PlatformPolicy::Quiet => &mut self.quiet,
         };
         for fan in fans {
             debug!("write_profile_curve_to_platform: writing profile:{profile}, {fan:?}");
@@ -300,19 +185,19 @@ impl FanCurveProfiles {
         Ok(())
     }
 
-    pub fn set_profile_curves_enabled(&mut self, profile: Profile, enabled: bool) {
+    pub fn set_profile_curves_enabled(&mut self, profile: PlatformPolicy, enabled: bool) {
         match profile {
-            Profile::Balanced => {
+            PlatformPolicy::Balanced => {
                 for curve in self.balanced.iter_mut() {
                     curve.enabled = enabled;
                 }
             }
-            Profile::Performance => {
+            PlatformPolicy::Performance => {
                 for curve in self.performance.iter_mut() {
                     curve.enabled = enabled;
                 }
             }
-            Profile::Quiet => {
+            PlatformPolicy::Quiet => {
                 for curve in self.quiet.iter_mut() {
                     curve.enabled = enabled;
                 }
@@ -322,12 +207,12 @@ impl FanCurveProfiles {
 
     pub fn set_profile_fan_curve_enabled(
         &mut self,
-        profile: Profile,
+        profile: PlatformPolicy,
         fan: FanCurvePU,
         enabled: bool,
     ) {
         match profile {
-            Profile::Balanced => {
+            PlatformPolicy::Balanced => {
                 for curve in self.balanced.iter_mut() {
                     if curve.fan == fan {
                         curve.enabled = enabled;
@@ -335,7 +220,7 @@ impl FanCurveProfiles {
                     }
                 }
             }
-            Profile::Performance => {
+            PlatformPolicy::Performance => {
                 for curve in self.performance.iter_mut() {
                     if curve.fan == fan {
                         curve.enabled = enabled;
@@ -343,7 +228,7 @@ impl FanCurveProfiles {
                     }
                 }
             }
-            Profile::Quiet => {
+            PlatformPolicy::Quiet => {
                 for curve in self.quiet.iter_mut() {
                     if curve.fan == fan {
                         curve.enabled = enabled;
@@ -354,31 +239,31 @@ impl FanCurveProfiles {
         }
     }
 
-    pub fn get_fan_curves_for(&self, name: Profile) -> &[CurveData] {
+    pub fn get_fan_curves_for(&self, name: PlatformPolicy) -> &[CurveData] {
         match name {
-            Profile::Balanced => &self.balanced,
-            Profile::Performance => &self.performance,
-            Profile::Quiet => &self.quiet,
+            PlatformPolicy::Balanced => &self.balanced,
+            PlatformPolicy::Performance => &self.performance,
+            PlatformPolicy::Quiet => &self.quiet,
         }
     }
 
-    pub fn get_fan_curve_for(&self, name: &Profile, pu: FanCurvePU) -> Option<&CurveData> {
+    pub fn get_fan_curve_for(&self, name: &PlatformPolicy, pu: FanCurvePU) -> Option<&CurveData> {
         match name {
-            Profile::Balanced => {
+            PlatformPolicy::Balanced => {
                 for this_curve in self.balanced.iter() {
                     if this_curve.fan == pu {
                         return Some(this_curve);
                     }
                 }
             }
-            Profile::Performance => {
+            PlatformPolicy::Performance => {
                 for this_curve in self.performance.iter() {
                     if this_curve.fan == pu {
                         return Some(this_curve);
                     }
                 }
             }
-            Profile::Quiet => {
+            PlatformPolicy::Quiet => {
                 for this_curve in self.quiet.iter() {
                     if this_curve.fan == pu {
                         return Some(this_curve);
@@ -389,9 +274,13 @@ impl FanCurveProfiles {
         None
     }
 
-    pub fn save_fan_curve(&mut self, curve: CurveData, profile: Profile) -> std::io::Result<()> {
+    pub fn save_fan_curve(
+        &mut self,
+        curve: CurveData,
+        profile: PlatformPolicy,
+    ) -> Result<(), ProfileError> {
         match profile {
-            Profile::Balanced => {
+            PlatformPolicy::Balanced => {
                 for this_curve in self.balanced.iter_mut() {
                     if this_curve.fan == curve.fan {
                         *this_curve = curve;
@@ -399,7 +288,7 @@ impl FanCurveProfiles {
                     }
                 }
             }
-            Profile::Performance => {
+            PlatformPolicy::Performance => {
                 for this_curve in self.performance.iter_mut() {
                     if this_curve.fan == curve.fan {
                         *this_curve = curve;
@@ -407,7 +296,7 @@ impl FanCurveProfiles {
                     }
                 }
             }
-            Profile::Quiet => {
+            PlatformPolicy::Quiet => {
                 for this_curve in self.quiet.iter_mut() {
                     if this_curve.fan == curve.fan {
                         *this_curve = curve;

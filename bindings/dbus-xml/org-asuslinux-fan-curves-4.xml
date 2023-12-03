@@ -2,49 +2,28 @@
 <node>
   <interface name="org.asuslinux.Daemon">
     <!--
-     Fetch profile names
+     Set all fan curves for a profile to enabled status. Will also activate a
+     fan curve if in the same profile mode
      -->
-    <method name="Profiles">
-      <arg type="as" direction="out"/>
-    </method>
-    <!--
-     Toggle to next platform_profile. Names provided by `Profiles`.
-     If fan-curves are supported will also activate a fan curve for profile.
-     -->
-    <method name="NextProfile">
-    </method>
-    <!--
-     Fetch the active profile name
-     -->
-    <method name="ActiveProfile">
-      <arg type="s" direction="out"/>
-    </method>
-    <!--
-     Set this platform_profile name as active
-     -->
-    <method name="SetActiveProfile">
-      <arg name="profile" type="s" direction="in"/>
-    </method>
-    <!--
-     Get a list of profiles that have fan-curves enabled.
-     -->
-    <method name="EnabledFanProfiles">
-      <arg type="as" direction="out"/>
-    </method>
-    <!--
-     Set a profile fan curve enabled status. Will also activate a fan curve
-     if in the same profile mode
-     -->
-    <method name="SetFanCurveEnabled">
+    <method name="SetFanCurvesEnabled">
       <arg name="profile" type="s" direction="in"/>
       <arg name="enabled" type="b" direction="in"/>
     </method>
     <!--
-     Get the fan-curve data for the currently active Profile
+     Set a single fan curve for a profile to enabled status. Will also
+     activate a fan curve if in the same profile mode
+     -->
+    <method name="SetProfileFanCurveEnabled">
+      <arg name="profile" type="s" direction="in"/>
+      <arg name="fan" type="s" direction="in"/>
+      <arg name="enabled" type="b" direction="in"/>
+    </method>
+    <!--
+     Get the fan-curve data for the currently active PlatformPolicy
      -->
     <method name="FanCurveData">
       <arg name="profile" type="s" direction="in"/>
-      <arg type="(b(s(yyyyyyyy)(yyyyyyyy))(s(yyyyyyyy)(yyyyyyyy)))" direction="out"/>
+      <arg type="a(s(yyyyyyyy)(yyyyyyyy)b)" direction="out"/>
     </method>
     <!--
      Set the fan curve for the specified profile.
@@ -52,7 +31,7 @@
      -->
     <method name="SetFanCurve">
       <arg name="profile" type="s" direction="in"/>
-      <arg name="curve" type="(s(yyyyyyyy)(yyyyyyyy))" direction="in"/>
+      <arg name="curve" type="(s(yyyyyyyy)(yyyyyyyy)b)" direction="in"/>
     </method>
     <!--
      Reset the stored (self) and device curve to the defaults of the
@@ -73,8 +52,5 @@
     <method name="ResetProfileCurves">
       <arg name="profile" type="s" direction="in"/>
     </method>
-    <signal name="NotifyProfile">
-      <arg name="profile" type="s"/>
-    </signal>
   </interface>
 </node>

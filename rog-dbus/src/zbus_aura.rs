@@ -23,7 +23,7 @@
 use std::collections::BTreeMap;
 
 use rog_aura::advanced::UsbPackets;
-use rog_aura::usb::AuraPowerDev;
+use rog_aura::usb::{AuraDevice, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, LedBrightness};
 use zbus::blocking::Connection;
 use zbus::{dbus_proxy, Result};
@@ -32,66 +32,63 @@ const BLOCKING_TIME: u64 = 33; // 100ms = 10 FPS, max 50ms = 20 FPS, 40ms = 25 F
 
 #[dbus_proxy(
     interface = "org.asuslinux.Daemon",
+    default_service = "org.asuslinux.Daemon",
     default_path = "/org/asuslinux/Aura"
 )]
-trait Led {
-    /// NextLedMode method
-    fn next_led_mode(&self) -> zbus::Result<()>;
+trait Aura {
+    /// AllModeData method
+    fn all_mode_data(&self) -> zbus::Result<BTreeMap<AuraModeNum, AuraEffect>>;
 
-    /// PrevLedMode method
-    fn prev_led_mode(&self) -> zbus::Result<()>;
+    /// DirectAddressingRaw method
+    fn direct_addressing_raw(&self, data: UsbPackets) -> zbus::Result<()>;
 
-    /// Toggle to next led brightness
-    fn next_led_brightness(&self) -> zbus::Result<()>;
-
-    /// Toggle to previous led brightness
-    fn prev_led_brightness(&self) -> zbus::Result<()>;
-
-    /// SetBrightness method
-    fn set_brightness(&self, brightness: LedBrightness) -> zbus::Result<()>;
-
-    /// SetLedMode method
-    fn set_led_mode(&self, effect: &AuraEffect) -> zbus::Result<()>;
-
-    fn set_led_power(&self, options: AuraPowerDev, enabled: bool) -> zbus::Result<()>;
-
-    /// On machine that have some form of either per-key keyboard or per-zone
-    /// this can be used to write custom effects over dbus. The input is a
-    /// nested `Vec<Vec<8>>` where `Vec<u8>` is a raw USB packet
-    fn direct_addressing_raw(&self, data: UsbPackets) -> zbus::fdo::Result<()>;
-
-    /// NotifyLed signal
-    #[dbus_proxy(signal)]
-    fn notify_led(&self, data: AuraEffect) -> zbus::Result<()>;
-
-    #[dbus_proxy(signal)]
-    fn notify_power_states(&self, data: AuraPowerDev) -> zbus::Result<()>;
-
-    /// LedBrightness property
+    /// Brightness property
     #[dbus_proxy(property)]
-    fn led_brightness(&self) -> zbus::Result<i16>;
+    fn brightness(&self) -> zbus::Result<LedBrightness>;
+    #[dbus_proxy(property)]
+    fn set_brightness(&self, value: LedBrightness) -> zbus::Result<()>;
+
+    /// DeviceType property
+    #[dbus_proxy(property)]
+    fn device_type(&self) -> zbus::Result<AuraDevice>;
 
     /// LedMode property
+    #[dbus_proxy(property)]
     fn led_mode(&self) -> zbus::Result<AuraModeNum>;
+    #[dbus_proxy(property)]
+    fn set_led_mode(&self, value: AuraModeNum) -> zbus::Result<()>;
 
-    /// LedModes property
-    fn led_modes(&self) -> zbus::Result<BTreeMap<AuraModeNum, AuraEffect>>;
+    /// LedModeData property
+    #[dbus_proxy(property)]
+    fn led_mode_data(&self) -> zbus::Result<AuraEffect>;
+    #[dbus_proxy(property)]
+    fn set_led_mode_data(&self, value: AuraEffect) -> zbus::Result<()>;
 
-    // As property doesn't work for AuraPowerDev (complexity of serialization?)
-    // #[dbus_proxy(property)]
+    /// LedPower property
+    #[dbus_proxy(property)]
     fn led_power(&self) -> zbus::Result<AuraPowerDev>;
+    #[dbus_proxy(property)]
+    fn set_led_power(&self, value: (AuraPowerDev, bool)) -> zbus::Result<()>;
+
+    /// SupportedBrightness property
+    #[dbus_proxy(property)]
+    fn supported_brightness(&self) -> zbus::Result<Vec<LedBrightness>>;
+
+    /// SupportedModes property
+    #[dbus_proxy(property)]
+    fn supported_modes(&self) -> zbus::Result<Vec<AuraModeNum>>;
 }
 
-pub struct LedProxyPerkey<'a>(LedProxyBlocking<'a>);
+pub struct AuraProxyPerkey<'a>(AuraProxyBlocking<'a>);
 
-impl<'a> LedProxyPerkey<'a> {
+impl<'a> AuraProxyPerkey<'a> {
     #[inline]
     pub fn new(conn: &Connection) -> Result<Self> {
-        Ok(LedProxyPerkey(LedProxyBlocking::new(conn)?))
+        Ok(AuraProxyPerkey(AuraProxyBlocking::new(conn)?))
     }
 
     #[inline]
-    pub fn proxy(&self) -> &LedProxyBlocking<'a> {
+    pub fn proxy(&self) -> &AuraProxyBlocking<'a> {
         &self.0
     }
 

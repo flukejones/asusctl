@@ -10,24 +10,48 @@ use std::str::FromStr;
 use serde_derive::{Deserialize, Serialize};
 use typeshare::typeshare;
 #[cfg(feature = "dbus")]
-use zbus::zvariant::Type;
+use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::Error;
 use crate::LED_MSG_LEN;
 
 #[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[cfg_attr(
+    feature = "dbus",
+    derive(Type, Value, OwnedValue),
+    zvariant(signature = "u")
+)]
 pub enum LedBrightness {
-    Off,
-    Low,
+    Off = 0,
+    Low = 1,
     #[default]
-    Med,
-    High,
+    Med = 2,
+    High = 3,
 }
 
-impl From<u32> for LedBrightness {
-    fn from(bright: u32) -> Self {
+impl LedBrightness {
+    pub const fn next(&self) -> Self {
+        match self {
+            Self::Off => Self::Low,
+            Self::Low => Self::Med,
+            Self::Med => Self::High,
+            Self::High => Self::Off,
+        }
+    }
+
+    pub const fn prev(&self) -> Self {
+        match self {
+            Self::Off => Self::High,
+            Self::Low => Self::Off,
+            Self::Med => Self::Low,
+            Self::High => Self::Med,
+        }
+    }
+}
+
+impl From<u8> for LedBrightness {
+    fn from(bright: u8) -> Self {
         match bright {
             0 => LedBrightness::Off,
             1 => LedBrightness::Low,
@@ -37,8 +61,14 @@ impl From<u32> for LedBrightness {
     }
 }
 
+impl From<LedBrightness> for u8 {
+    fn from(l: LedBrightness) -> Self {
+        l as u8
+    }
+}
+
 #[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type))]
+#[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Deserialize, Serialize)]
 pub struct Colour {
     pub r: u8,
@@ -99,7 +129,11 @@ impl From<Colour> for [u8; 3] {
 }
 
 #[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[cfg_attr(
+    feature = "dbus",
+    derive(Type, Value, OwnedValue),
+    zvariant(signature = "s")
+)]
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum Speed {
     Low = 0xe1,
@@ -135,14 +169,18 @@ impl From<Speed> for u8 {
 ///
 /// Enum corresponds to the required integer value
 #[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[cfg_attr(
+    feature = "dbus",
+    derive(Type, Value, OwnedValue),
+    zvariant(signature = "s")
+)]
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum Direction {
     #[default]
-    Right,
-    Left,
-    Up,
-    Down,
+    Right = 0,
+    Left = 1,
+    Up = 2,
+    Down = 3,
 }
 
 impl FromStr for Direction {
@@ -162,7 +200,11 @@ impl FromStr for Direction {
 
 /// Enum of modes that convert to the actual number required by a USB HID packet
 #[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[cfg_attr(
+    feature = "dbus",
+    derive(Type, Value, OwnedValue),
+    zvariant(signature = "u")
+)]
 #[derive(
     Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Copy, Deserialize, Serialize,
 )]
@@ -250,28 +292,38 @@ impl From<u8> for AuraModeNum {
     }
 }
 
+impl From<AuraEffect> for AuraModeNum {
+    fn from(value: AuraEffect) -> Self {
+        value.mode
+    }
+}
+
 /// Base effects have no zoning, while multizone is 1-4
 #[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[cfg_attr(
+    feature = "dbus",
+    derive(Type, Value, OwnedValue),
+    zvariant(signature = "s")
+)]
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum AuraZone {
     /// Used if keyboard has no zones, or if setting all
     #[default]
-    None,
+    None = 0,
     /// Leftmost zone
-    Key1,
+    Key1 = 1,
     /// Zone after leftmost
-    Key2,
+    Key2 = 2,
     /// Zone second from right
-    Key3,
+    Key3 = 3,
     /// Rightmost zone
-    Key4,
+    Key4 = 4,
     /// Logo on the lid (or elsewhere?)
-    Logo,
+    Logo = 5,
     /// The left part of a lightbar (typically on the front of laptop)
-    BarLeft,
+    BarLeft = 6,
     /// The right part of a lightbar
-    BarRight,
+    BarRight = 7,
 }
 
 impl FromStr for AuraZone {
@@ -299,7 +351,7 @@ impl FromStr for AuraZone {
 /// // let bytes: [u8; LED_MSG_LEN] = mode.into();
 /// ```
 #[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type))]
+#[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AuraEffect {
     /// The effect type
@@ -351,6 +403,12 @@ impl Default for AuraEffect {
             speed: Speed::Med,
             direction: Direction::Right,
         }
+    }
+}
+
+impl Display for AuraEffect {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
 

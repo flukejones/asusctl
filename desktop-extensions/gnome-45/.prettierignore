@@ -1,0 +1,13 @@
+# Generated files
+/@types/gir-generated/*
+
+# Build outputes
+/dist/
+/build/
+
+# Node configuration and modules
+/package.json
+/node_modules/
+
+# Files I prefer not to be formatted
+*.md

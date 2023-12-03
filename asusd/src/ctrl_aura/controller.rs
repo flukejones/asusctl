@@ -6,49 +6,14 @@ use log::{info, warn};
 use rog_aura::advanced::{LedUsbPackets, UsbPackets};
 use rog_aura::aura_detection::{LaptopLedData, ASUS_KEYBOARD_DEVICES};
 use rog_aura::usb::{AuraDevice, LED_APPLY, LED_SET};
-use rog_aura::{AuraEffect, AuraZone, Direction, LedBrightness, Speed, GRADIENT, LED_MSG_LEN};
+use rog_aura::{AuraEffect, Direction, LedBrightness, Speed, GRADIENT, LED_MSG_LEN};
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::keyboard_led::KeyboardLed;
-use rog_platform::supported::LedSupportedFunctions;
 
 use super::config::{AuraConfig, AuraPowerConfig};
 use crate::error::RogError;
-use crate::GetSupported;
 
-impl GetSupported for CtrlKbdLed {
-    type A = LedSupportedFunctions;
-
-    fn get_supported() -> Self::A {
-        // let mode = <&str>::from(&<AuraModes>::from(*mode));
-        let laptop = LaptopLedData::get_data();
-
-        let mut prod_id = AuraDevice::Unknown;
-        for prod in ASUS_KEYBOARD_DEVICES {
-            if HidRaw::new(prod.into()).is_ok() {
-                prod_id = prod;
-                break;
-            }
-        }
-
-        let rgb = KeyboardLed::new();
-        if let Ok(p) = rgb.as_ref() {
-            if p.has_kbd_rgb_mode() {
-                prod_id = AuraDevice::Tuf;
-            }
-        }
-
-        LedSupportedFunctions {
-            dev_id: prod_id,
-            brightness: rgb.is_ok(),
-            basic_modes: laptop.basic_modes,
-            basic_zones: laptop.basic_zones,
-            advanced_type: laptop.advanced_type.into(),
-            power_zones: laptop.power_zones,
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug)]
 pub enum LEDNode {
     KbdLed(KeyboardLed),
     Rog(HidRaw),
@@ -59,9 +24,8 @@ pub struct CtrlKbdLed {
     // TODO: config stores the keyboard type as an AuraPower, use or update this
     pub led_prod: AuraDevice,
     pub led_node: LEDNode,
-    pub kd_brightness: KeyboardLed,
+    pub sysfs_node: KeyboardLed,
     pub supported_modes: LaptopLedData,
-    pub flip_effect_write: bool,
     pub per_key_mode_active: bool,
     pub config: AuraConfig,
 }
@@ -145,48 +109,13 @@ impl CtrlKbdLed {
 
         let ctrl = CtrlKbdLed {
             led_prod,
-            led_node,               // on TUF this is the same as rgb_led / kd_brightness
-            kd_brightness: rgb_led, // If was none then we already returned above
+            led_node,            // on TUF this is the same as rgb_led / kd_brightness
+            sysfs_node: rgb_led, // If was none then we already returned above
             supported_modes,
-            flip_effect_write: false,
             per_key_mode_active: false,
             config: config_loaded,
         };
         Ok(ctrl)
-    }
-
-    pub(super) fn get_brightness(&self) -> Result<u8, RogError> {
-        self.kd_brightness
-            .get_brightness()
-            .map_err(RogError::Platform)
-    }
-
-    pub(super) fn set_brightness(&self, brightness: LedBrightness) -> Result<(), RogError> {
-        self.kd_brightness
-            .set_brightness(brightness as u8)
-            .map_err(RogError::Platform)
-    }
-
-    pub fn next_brightness(&mut self) -> Result<(), RogError> {
-        let mut bright = (self.config.brightness as u32) + 1;
-        if bright > 3 {
-            bright = 0;
-        }
-        self.config.brightness = <LedBrightness>::from(bright);
-        self.config.write();
-        self.set_brightness(self.config.brightness)
-    }
-
-    pub fn prev_brightness(&mut self) -> Result<(), RogError> {
-        let mut bright = self.config.brightness as u32;
-        if bright == 0 {
-            bright = 3;
-        } else {
-            bright -= 1;
-        }
-        self.config.brightness = <LedBrightness>::from(bright);
-        self.config.write();
-        self.set_brightness(self.config.brightness)
     }
 
     /// Set combination state for boot animation/sleep animation/all leds/keys
@@ -206,29 +135,6 @@ impl CtrlKbdLed {
             // Changes won't persist unless apply is set
             hid_raw.write_bytes(&LED_APPLY)?;
         }
-        Ok(())
-    }
-
-    /// Set an Aura effect if the effect mode or zone is supported.
-    ///
-    /// On success the aura config file is read to refresh cached values, then
-    /// the effect is stored and config written to disk.
-    pub(crate) fn set_effect(&mut self, effect: AuraEffect) -> Result<(), RogError> {
-        if !self.supported_modes.basic_modes.contains(&effect.mode)
-            || effect.zone != AuraZone::None
-                && !self.supported_modes.basic_zones.contains(&effect.zone)
-        {
-            return Err(RogError::AuraEffectNotSupported);
-        }
-
-        self.write_mode(&effect)?;
-        self.config.read(); // refresh config if successful
-        self.config.set_builtin(effect);
-        if self.config.brightness == LedBrightness::Off {
-            self.config.brightness = LedBrightness::Med;
-        }
-        self.config.write();
-        self.set_brightness(self.config.brightness)?;
         Ok(())
     }
 
@@ -271,47 +177,11 @@ impl CtrlKbdLed {
                     tuf.set_kbd_rgb_mode(&[0, 0, r, g, b, 0])?;
                 }
             }
-            self.flip_effect_write = !self.flip_effect_write;
         }
         Ok(())
     }
 
-    pub(super) fn toggle_mode(&mut self, reverse: bool) -> Result<(), RogError> {
-        let current = self.config.current_mode;
-        if let Some(idx) = self
-            .supported_modes
-            .basic_modes
-            .iter()
-            .position(|v| *v == current)
-        {
-            let mut idx = idx;
-            // goes past end of array
-            if reverse {
-                if idx == 0 {
-                    idx = self.supported_modes.basic_modes.len() - 1;
-                } else {
-                    idx -= 1;
-                }
-            } else {
-                idx += 1;
-                if idx == self.supported_modes.basic_modes.len() {
-                    idx = 0;
-                }
-            }
-            let next = self.supported_modes.basic_modes[idx];
-
-            self.config.read();
-            // if self.config.builtins.contains_key(&next) {
-            self.config.current_mode = next;
-            self.write_current_config_mode()?;
-            // }
-            self.config.write();
-        }
-
-        Ok(())
-    }
-
-    fn write_mode(&mut self, mode: &AuraEffect) -> Result<(), RogError> {
+    pub fn write_mode(&mut self, mode: &AuraEffect) -> Result<(), RogError> {
         if let LEDNode::KbdLed(platform) = &self.led_node {
             let buf = [
                 1,
@@ -404,81 +274,12 @@ impl CtrlKbdLed {
 mod tests {
     use rog_aura::aura_detection::{LaptopLedData, PowerZones};
     use rog_aura::usb::AuraDevice;
-    use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour};
+    use rog_aura::{AuraModeNum, AuraZone};
     use rog_platform::keyboard_led::KeyboardLed;
 
     use super::CtrlKbdLed;
     use crate::ctrl_aura::config::AuraConfig;
     use crate::ctrl_aura::controller::LEDNode;
-
-    #[test]
-    // #[ignore = "Must be manually run due to detection stage"]
-    fn check_set_mode_errors() {
-        // Checking to ensure set_mode errors when unsupported modes are tried
-        let config = AuraConfig::from_default_support(AuraDevice::X19b6, &LaptopLedData::default());
-        let supported_modes = LaptopLedData {
-            board_name: String::new(),
-            layout_name: "ga401".to_owned(),
-            basic_modes: vec![AuraModeNum::Static],
-            basic_zones: vec![],
-            advanced_type: rog_aura::AdvancedAuraType::None,
-            power_zones: vec![PowerZones::Keyboard, PowerZones::RearGlow],
-        };
-        let mut controller = CtrlKbdLed {
-            led_prod: AuraDevice::X19b6,
-            led_node: LEDNode::None,
-            kd_brightness: KeyboardLed::default(),
-            supported_modes,
-            flip_effect_write: false,
-            per_key_mode_active: false,
-            config,
-        };
-
-        let mut effect = AuraEffect {
-            colour1: Colour {
-                r: 0xff,
-                g: 0x00,
-                b: 0xff,
-            },
-            zone: AuraZone::None,
-            ..Default::default()
-        };
-
-        // This error comes from write_bytes because we don't have a keyboard node
-        // stored
-        assert_eq!(
-            controller
-                .set_effect(effect.clone())
-                .unwrap_err()
-                .to_string(),
-            "No supported Aura keyboard"
-        );
-
-        effect.mode = AuraModeNum::Laser;
-        assert_eq!(
-            controller
-                .set_effect(effect.clone())
-                .unwrap_err()
-                .to_string(),
-            "Aura effect not supported"
-        );
-
-        effect.mode = AuraModeNum::Static;
-        effect.zone = AuraZone::Key2;
-        assert_eq!(
-            controller
-                .set_effect(effect.clone())
-                .unwrap_err()
-                .to_string(),
-            "Aura effect not supported"
-        );
-
-        controller.supported_modes.basic_zones.push(AuraZone::Key2);
-        assert_eq!(
-            controller.set_effect(effect).unwrap_err().to_string(),
-            "No supported Aura keyboard"
-        );
-    }
 
     #[test]
     fn create_multizone_if_no_config() {
@@ -495,9 +296,8 @@ mod tests {
         let mut controller = CtrlKbdLed {
             led_prod: AuraDevice::X19b6,
             led_node: LEDNode::None,
-            kd_brightness: KeyboardLed::default(),
+            sysfs_node: KeyboardLed::default(),
             supported_modes,
-            flip_effect_write: false,
             per_key_mode_active: false,
             config,
         };
@@ -534,9 +334,8 @@ mod tests {
         let mut controller = CtrlKbdLed {
             led_prod: AuraDevice::X19b6,
             led_node: LEDNode::None,
-            kd_brightness: KeyboardLed::default(),
+            sysfs_node: KeyboardLed::default(),
             supported_modes,
-            flip_effect_write: false,
             per_key_mode_active: false,
             config,
         };

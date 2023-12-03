@@ -14,7 +14,7 @@ use dmi_id::DMIID;
 use serde_derive::{Deserialize, Serialize};
 use typeshare::typeshare;
 #[cfg(feature = "dbus")]
-use zbus::zvariant::Type;
+use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::AnimeError;
 use crate::AnimeType;
@@ -24,16 +24,20 @@ const DEV_PAGE: u8 = 0x5e;
 pub const VENDOR_ID: u16 = 0x0b05;
 pub const PROD_ID: u16 = 0x193b;
 
-#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[cfg_attr(
+    feature = "dbus",
+    derive(Type, Value, OwnedValue),
+    zvariant(signature = "u")
+)]
 #[typeshare]
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 /// Base LED brightness of the display
 pub enum Brightness {
-    Off,
-    Low,
+    Off = 0,
+    Low = 1,
     #[default]
-    Med,
-    High,
+    Med = 2,
+    High = 3,
 }
 
 impl FromStr for Brightness {
@@ -61,13 +65,17 @@ impl From<u8> for Brightness {
     }
 }
 
-#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[cfg_attr(
+    feature = "dbus",
+    derive(Type, Value, OwnedValue),
+    zvariant(signature = "s")
+)]
 #[typeshare]
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub enum AnimBooting {
     #[default]
-    GlitchConstruction,
-    StaticEmergence,
+    GlitchConstruction = 0,
+    StaticEmergence = 1,
 }
 
 impl FromStr for AnimBooting {
@@ -82,13 +90,17 @@ impl FromStr for AnimBooting {
     }
 }
 
-#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[cfg_attr(
+    feature = "dbus",
+    derive(Type, Value, OwnedValue),
+    zvariant(signature = "s")
+)]
 #[typeshare]
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub enum AnimAwake {
     #[default]
-    BinaryBannerScroll,
-    RogLogoGlitch,
+    BinaryBannerScroll = 0,
+    RogLogoGlitch = 1,
 }
 
 impl FromStr for AnimAwake {
@@ -103,13 +115,17 @@ impl FromStr for AnimAwake {
     }
 }
 
-#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[cfg_attr(
+    feature = "dbus",
+    derive(Type, Value, OwnedValue),
+    zvariant(signature = "s")
+)]
 #[typeshare]
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub enum AnimSleeping {
     #[default]
-    BannerSwipe,
-    Starfield,
+    BannerSwipe = 0,
+    Starfield = 1,
 }
 
 impl FromStr for AnimSleeping {
@@ -124,13 +140,17 @@ impl FromStr for AnimSleeping {
     }
 }
 
-#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[cfg_attr(
+    feature = "dbus",
+    derive(Type, Value, OwnedValue),
+    zvariant(signature = "s")
+)]
 #[typeshare]
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub enum AnimShutdown {
     #[default]
-    GlitchOut,
-    SeeYa,
+    GlitchOut = 0,
+    SeeYa = 1,
 }
 
 impl FromStr for AnimShutdown {

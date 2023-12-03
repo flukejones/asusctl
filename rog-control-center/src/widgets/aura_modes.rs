@@ -228,8 +228,8 @@ pub fn aura_modes_group(states: &mut SystemState, freq: &mut Arc<AtomicU8>, ui: 
         states
             .asus_dbus
             .proxies()
-            .led()
-            .set_led_mode(states.aura.modes.get(&selected).unwrap())
+            .aura()
+            .set_led_mode(states.aura.modes.get(&selected).unwrap().mode)
             .map_err(|err| {
                 states.error = Some(err.to_string());
             })

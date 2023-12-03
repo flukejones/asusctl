@@ -2,7 +2,7 @@ use dmi_id::DMIID;
 use log::{error, info, warn};
 use serde_derive::{Deserialize, Serialize};
 use typeshare::typeshare;
-use zbus::zvariant::Type;
+use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::usb::AuraDevice;
 use crate::{AdvancedAuraType, AuraModeNum, AuraZone};
@@ -25,20 +25,24 @@ pub struct LedSupportFile(Vec<LaptopLedData>);
 
 /// The powerr zones this laptop supports
 #[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[cfg_attr(
+    feature = "dbus",
+    derive(Type, Value, OwnedValue),
+    zvariant(signature = "s")
+)]
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Default, Copy, Clone)]
 pub enum PowerZones {
     /// The logo on some laptop lids
     #[default]
-    Logo,
+    Logo = 0,
     /// The full keyboard (not zones)
-    Keyboard,
+    Keyboard = 1,
     /// The lightbar, typically on the front of the laptop
-    Lightbar,
+    Lightbar = 2,
     /// The leds that may be placed around the edge of the laptop lid
-    Lid,
+    Lid = 3,
     /// The led strip on the rear of some laptops
-    RearGlow,
+    RearGlow = 4,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize, Serialize)]

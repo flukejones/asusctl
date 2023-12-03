@@ -22,7 +22,6 @@ use rog_control_center::{
     get_ipc_file, on_tmp_dir_exists, print_versions, RogApp, RogDbusClientBlocking, SHOWING_GUI,
     SHOW_GUI,
 };
-use rog_platform::supported::SupportedFunctions;
 use tokio::runtime::Runtime;
 
 #[cfg(not(feature = "mocking"))]
@@ -82,7 +81,7 @@ fn main() -> Result<()> {
         })
         .unwrap();
 
-    let supported = match dbus.proxies().supported().supported_functions() {
+    let supported_properties = match dbus.proxies().platform().supported_properties() {
         Ok(s) => s,
         Err(e) => {
             eframe::run_native(
@@ -92,7 +91,7 @@ fn main() -> Result<()> {
             )
             .map_err(|e| error!("{e}"))
             .ok();
-            SupportedFunctions::default()
+            vec![]
         }
     };
 
@@ -186,11 +185,10 @@ fn main() -> Result<()> {
         layouts,
         &enabled_notifications,
         &config,
-        &supported,
     )?;
 
     if config.enable_tray_icon {
-        init_tray(supported, states.clone());
+        init_tray(supported_properties, states.clone());
     }
 
     let mut bg_check_spawned = false;
@@ -247,7 +245,6 @@ fn setup_page_state_and_notifs(
     keyboard_layouts: Vec<PathBuf>,
     enabled_notifications: &Arc<Mutex<EnabledNotifications>>,
     config: &Config,
-    supported: &SupportedFunctions,
 ) -> Result<Arc<Mutex<SystemState>>> {
     let page_states = Arc::new(Mutex::new(SystemState::new(
         layout_testing,
@@ -256,7 +253,6 @@ fn setup_page_state_and_notifs(
         enabled_notifications.clone(),
         config.enable_tray_icon,
         config.run_in_background,
-        supported,
     )?));
 
     start_notifications(config, &page_states, enabled_notifications)?;

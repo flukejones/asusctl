@@ -4,7 +4,7 @@ use std::ops::{BitAnd, BitOr};
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 #[cfg(feature = "dbus")]
-use zbus::zvariant::Type;
+use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::power::AuraPower;
 
@@ -26,19 +26,23 @@ pub const fn aura_brightness_bytes(brightness: u8) -> [u8; 17] {
 }
 
 #[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[cfg_attr(
+    feature = "dbus",
+    derive(Type, Value, OwnedValue),
+    zvariant(signature = "s")
+)]
 #[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum AuraDevice {
-    Tuf,
-    X1854,
-    X1869,
-    X1866,
-    X18c6,
+    Tuf = 0,
+    X1854 = 1,
+    X1869 = 2,
+    X1866 = 3,
+    X18c6 = 4,
     #[default]
-    X19b6,
-    X1a30,
-    X1abe,
-    Unknown,
+    X19b6 = 5,
+    X1a30 = 6,
+    X1abe = 7,
+    Unknown = 99,
 }
 
 impl AuraDevice {
@@ -116,7 +120,7 @@ impl Debug for AuraDevice {
 
 /// This struct is intended as a helper to pass args to generic dbus interface
 #[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type))]
+#[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
 #[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct AuraPowerDev {
     /// TUF laptops use a similar style of control to the older ROG devices but
@@ -130,14 +134,18 @@ pub struct AuraPowerDev {
 }
 
 #[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[cfg_attr(
+    feature = "dbus",
+    derive(Type, Value, OwnedValue),
+    zvariant(signature = "s")
+)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(u32)]
 pub enum AuraDevTuf {
-    Boot,
-    Awake,
-    Sleep,
-    Keyboard,
+    Boot = 0,
+    Awake = 1,
+    Sleep = 2,
+    Keyboard = 3,
 }
 
 impl AuraDevTuf {
@@ -161,7 +169,11 @@ impl AuraDevTuf {
 /// | 0011, 0000 | 0000, 1000 | 0000, 0100 | Sleep    | 30,08,04 |
 /// | 1111, 1111 | 0001, 1111 | 0000, 1111 | all on   |          |
 #[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[cfg_attr(
+    feature = "dbus",
+    derive(Type, Value, OwnedValue),
+    zvariant(signature = "s")
+)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(u32)]
 pub enum AuraDevRog1 {

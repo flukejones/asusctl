@@ -1,5 +1,8 @@
 use std::fmt;
 
+use log::error;
+use zbus::fdo::Error as FdoErr;
+
 #[derive(Debug)]
 pub enum ProfileError {
     Path(String, std::io::Error),
@@ -48,6 +51,17 @@ impl std::error::Error for ProfileError {}
 
 impl From<std::io::Error> for ProfileError {
     fn from(err: std::io::Error) -> Self {
+        error!("ProfileError: got: {err}");
         ProfileError::Io(err)
+    }
+}
+
+impl From<ProfileError> for FdoErr {
+    fn from(error: ProfileError) -> Self {
+        error!("ProfileError: got: {error}");
+        match error {
+            ProfileError::NotSupported => FdoErr::NotSupported("".to_owned()),
+            _ => FdoErr::Failed(format!("Failed with {error}")),
+        }
     }
 }
