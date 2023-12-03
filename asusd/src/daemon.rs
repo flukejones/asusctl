@@ -11,19 +11,13 @@ use asusd::ctrl_anime::config::AnimeConfig;
 use asusd::ctrl_anime::trait_impls::CtrlAnimeZbus;
 use asusd::ctrl_anime::CtrlAnime;
 use asusd::ctrl_aura::controller::CtrlKbdLed;
-use asusd::ctrl_aura::trait_impls::CtrlKbdLedZbus;
+use asusd::ctrl_aura::trait_impls::CtrlAuraZbus;
+use asusd::ctrl_fancurves::CtrlFanCurveZbus;
 use asusd::ctrl_platform::CtrlPlatform;
-use asusd::ctrl_power::CtrlPower;
-use asusd::ctrl_profiles::config::ProfileConfig;
-use asusd::ctrl_profiles::controller::CtrlPlatformProfile;
-use asusd::ctrl_profiles::trait_impls::ProfileZbus;
-use asusd::ctrl_supported::SupportedFunctions;
-use asusd::{print_board_info, CtrlTask, GetSupported, Reloadable, ZbusRun};
-use config_traits::{StdConfig, StdConfigLoad, StdConfigLoad2};
+use asusd::{print_board_info, CtrlTask, Reloadable, ZbusRun, DBUS_NAME};
+use config_traits::{StdConfig, StdConfigLoad2};
 use log::{error, info, warn};
 use rog_aura::aura_detection::LaptopLedData;
-use rog_dbus::DBUS_NAME;
-use rog_profiles::Profile;
 use tokio::time::sleep;
 use zbus::SignalContext;
 
@@ -53,7 +47,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("       daemon v{}", asusd::VERSION);
     info!("    rog-anime v{}", rog_anime::VERSION);
     info!("     rog-aura v{}", rog_aura::VERSION);
-    info!("     rog-dbus v{}", rog_dbus::VERSION);
     info!(" rog-profiles v{}", rog_profiles::VERSION);
     info!("rog-platform v{}", rog_platform::VERSION);
 
@@ -63,9 +56,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 /// The actual main loop for the daemon
 async fn start_daemon() -> Result<(), Box<dyn Error>> {
-    let supported = SupportedFunctions::get_supported();
+    // let supported = SupportedFunctions::get_supported();
     print_board_info();
-    println!("{:?}", supported.supported_functions());
+    // println!("{:?}", supported.supported_functions());
 
     // Start zbus server
     let mut connection = Connection::system().await?;
@@ -73,7 +66,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     let config = Config::new().load();
     let config = Arc::new(Mutex::new(config));
 
-    supported.add_to_server(&mut connection).await;
+    // supported.add_to_server(&mut connection).await;
 
     match CtrlPlatform::new(config.clone()) {
         Ok(ctrl) => {
@@ -85,30 +78,14 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    match CtrlPower::new(config.clone()) {
+    match CtrlFanCurveZbus::new() {
         Ok(ctrl) => {
-            let sig_ctx = CtrlPower::signal_context(&connection)?;
+            let sig_ctx = CtrlFanCurveZbus::signal_context(&connection)?;
             start_tasks(ctrl, &mut connection, sig_ctx).await?;
         }
         Err(err) => {
-            error!("CtrlPower: {}", err);
+            error!("FanCurves: {}", err);
         }
-    }
-
-    if Profile::is_platform_profile_supported() {
-        let profile_config = ProfileConfig::new().load();
-        match CtrlPlatformProfile::new(profile_config) {
-            Ok(ctrl) => {
-                let zbus = ProfileZbus(Arc::new(Mutex::new(ctrl)));
-                let sig_ctx = ProfileZbus::signal_context(&connection)?;
-                start_tasks(zbus, &mut connection, sig_ctx).await?;
-            }
-            Err(err) => {
-                error!("Profile control: {}", err);
-            }
-        }
-    } else {
-        warn!("platform_profile support not found");
     }
 
     match CtrlAnime::new(AnimeConfig::new().load()) {
@@ -127,8 +104,8 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     // detection first
     match CtrlKbdLed::new(laptop) {
         Ok(ctrl) => {
-            let zbus = CtrlKbdLedZbus(Arc::new(Mutex::new(ctrl)));
-            let sig_ctx = CtrlKbdLedZbus::signal_context(&connection)?;
+            let zbus = CtrlAuraZbus(Arc::new(Mutex::new(ctrl)));
+            let sig_ctx = CtrlAuraZbus::signal_context(&connection)?;
             start_tasks(zbus, &mut connection, sig_ctx).await?;
         }
         Err(err) => {

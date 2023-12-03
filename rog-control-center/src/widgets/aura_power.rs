@@ -1,7 +1,6 @@
 use egui::{RichText, Ui};
 use rog_aura::power::{AuraPower, KbAuraPowerState};
 use rog_aura::usb::{AuraDevRog1, AuraDevTuf, AuraDevice, AuraPowerDev};
-use rog_platform::supported::SupportedFunctions;
 
 use crate::system_state::SystemState;
 
@@ -132,7 +131,7 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
                 states
                     .asus_dbus
                     .proxies()
-                    .led()
+                    .aura()
                     .set_led_power(options, enable)
                     .map_err(|err| {
                         states.error = Some(err.to_string());
@@ -182,7 +181,7 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
                 states
                     .asus_dbus
                     .proxies()
-                    .led()
+                    .aura()
                     .set_led_power(options, enable)
                     .map_err(|err| {
                         states.error = Some(err.to_string());
@@ -247,7 +246,7 @@ fn aura_power2(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
             states
                 .asus_dbus
                 .proxies()
-                .led()
+                .aura()
                 .set_led_power(options, enable)
                 .map_err(|err| {
                     states.error = Some(err.to_string());

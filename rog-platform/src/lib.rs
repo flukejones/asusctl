@@ -1,13 +1,13 @@
 //! This crate functions as a wrapper of all the relevant ASUS functionality
 //! on ROG, Strix, and TUF laptops.
 
+pub mod cpu;
 pub mod error;
 pub mod hid_raw;
 pub mod keyboard_led;
 pub(crate) mod macros;
 pub mod platform;
 pub mod power;
-pub mod supported;
 pub mod usb_raw;
 
 use std::path::Path;

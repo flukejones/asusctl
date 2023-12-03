@@ -7,7 +7,7 @@ use log::info;
 use serde_derive::{Deserialize, Serialize};
 use typeshare::typeshare;
 #[cfg(feature = "dbus")]
-use zbus::zvariant::Type;
+use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::{AnimeError, Result};
 use crate::usb::{AnimAwake, AnimBooting, AnimShutdown, AnimSleeping, Brightness};
@@ -29,7 +29,7 @@ pub const USB_PREFIX2: [u8; 7] = [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x02];
 pub const USB_PREFIX3: [u8; 7] = [0x5e, 0xc0, 0x02, 0xe7, 0x04, 0x73, 0x02];
 
 #[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type))]
+#[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
 #[typeshare]
 #[derive(Default, Deserialize, PartialEq, Eq, Clone, Copy, Serialize, Debug)]
 pub struct Animations {

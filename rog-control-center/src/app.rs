@@ -5,7 +5,7 @@ use std::time::{Duration, Instant};
 
 use egui::{Button, RichText};
 use rog_aura::layouts::KeyLayout;
-use rog_platform::supported::SupportedFunctions;
+use rog_platform::platform::Properties;
 
 use crate::config::Config;
 use crate::error::Result;
@@ -15,7 +15,6 @@ use crate::{Page, RogDbusClientBlocking};
 pub struct RogApp {
     pub page: Page,
     pub states: Arc<Mutex<SystemState>>,
-    pub supported: SupportedFunctions,
     // TODO: can probably just open and read whenever
     pub config: Config,
     /// Oscillator in percentage
@@ -26,6 +25,8 @@ pub struct RogApp {
     pub oscillator_freq: Arc<AtomicU8>,
     /// A toggle that toggles true/false when the oscillator reaches 0
     pub oscillator_toggle: Arc<AtomicBool>,
+    pub supported_interfaces: Vec<String>,
+    pub supported_properties: Vec<Properties>,
 }
 
 impl RogApp {
@@ -36,7 +37,8 @@ impl RogApp {
         _cc: &eframe::CreationContext<'_>,
     ) -> Result<Self> {
         let (dbus, _) = RogDbusClientBlocking::new()?;
-        let supported = dbus.proxies().supported().supported_functions()?;
+        let supported_interfaces = dbus.proxies().platform().supported_interfaces()?;
+        let supported_properties = dbus.proxies().platform().supported_properties()?;
 
         // Set up an oscillator to run on a thread.
         // Helpful for visual effects like colour pulse.
@@ -87,7 +89,8 @@ impl RogApp {
         });
 
         Ok(Self {
-            supported,
+            supported_interfaces,
+            supported_properties,
             states,
             page: Page::System,
             config,
@@ -166,7 +169,7 @@ impl eframe::App for RogApp {
                     Page::AppSettings => self.app_settings_page(&mut states, ctx),
                     Page::System => self.system_page(&mut states, ctx),
                     Page::AuraEffects => self.aura_page(&mut states, ctx),
-                    Page::AnimeMatrix => todo!(),
+                    Page::AnimeMatrix => self.anime_page(ctx),
                     Page::FanCurves => self.fan_curve_page(&mut states, ctx),
                 };
             }

@@ -2,56 +2,11 @@
 <node>
   <interface name="org.asuslinux.Daemon">
     <!--
-     Writes a data stream of length. Will force system thread to exit until it is restarted
+     Writes a data stream of length. Will force system thread to exit until
+     it is restarted
      -->
     <method name="Write">
       <arg name="input" type="(ays)" direction="in"/>
-    </method>
-    <!--
-     Set base brightness level
-     -->
-    <method name="SetBrightness">
-      <arg name="brightness" type="s" direction="in"/>
-    </method>
-    <!--
-     Enable the builtin animations or not. This is quivalent to "Powersave
-     animations" in Armory crate
-     -->
-    <method name="SetBuiltinsEnabled">
-      <arg name="enabled" type="b" direction="in"/>
-    </method>
-    <!--
-     Set which builtin animation is used for each stage
-     -->
-    <method name="SetBuiltinAnimations">
-      <arg name="boot" type="s" direction="in"/>
-      <arg name="awake" type="s" direction="in"/>
-      <arg name="sleep" type="s" direction="in"/>
-      <arg name="shutdown" type="s" direction="in"/>
-    </method>
-    <!--
-     Set whether the AniMe is enabled at all
-     -->
-    <method name="SetEnableDisplay">
-      <arg name="enabled" type="b" direction="in"/>
-    </method>
-    <!--
-     Set if to turn the AniMe Matrix off when external power is unplugged
-     -->
-    <method name="SetOffWhenUnplugged">
-      <arg name="enabled" type="b" direction="in"/>
-    </method>
-    <!--
-     Set if to turn the AniMe Matrix off when the laptop is suspended
-     -->
-    <method name="SetOffWhenSuspended">
-      <arg name="enabled" type="b" direction="in"/>
-    </method>
-    <!--
-     Set if to turn the AniMe Matrix off when the lid is closed
-     -->
-    <method name="SetOffWhenLidClosed">
-      <arg name="enabled" type="b" direction="in"/>
     </method>
     <!--
      The main loop is the base system set action if the user isn't running
@@ -64,14 +19,39 @@
      Get the device state as stored by asusd
      -->
     <method name="DeviceState">
-      <arg type="bsb(ssss)bbb" direction="out"/>
+      <arg type="(bub(ssss)bbbu)" direction="out"/>
     </method>
     <!--
-     Notify listeners of the status of AniMe LED power and factory
-     system-status animations
+     Set base brightness level
      -->
-    <signal name="NotifyDeviceState">
-      <arg name="data" type="(bsb(ssss)bbb)"/>
-    </signal>
+    <!--
+     Set base brightness level
+     -->
+    <property name="Brightness" type="u" access="readwrite"/>
+    <!--
+     Set which builtin animation is used for each stage
+     -->
+    <property name="BuiltinAnimations" type="(ssss)" access="readwrite"/>
+    <!--
+     Enable the builtin animations or not. This is quivalent to "Powersave
+     animations" in Armory crate
+     -->
+    <property name="BuiltinsEnabled" type="b" access="readwrite"/>
+    <!--
+     Set whether the AniMe is enabled at all
+     -->
+    <property name="EnableDisplay" type="b" access="readwrite"/>
+    <!--
+     Set if to turn the AniMe Matrix off when the lid is closed
+     -->
+    <property name="OffWhenLidClosed" type="b" access="readwrite"/>
+    <!--
+     Set if to turn the AniMe Matrix off when the laptop is suspended
+     -->
+    <property name="OffWhenSuspended" type="b" access="readwrite"/>
+    <!--
+     Set if to turn the AniMe Matrix off when external power is unplugged
+     -->
+    <property name="OffWhenUnplugged" type="b" access="readwrite"/>
   </interface>
 </node>

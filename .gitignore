@@ -15,6 +15,7 @@ node-modules
 bindings/ts/*.d.ts
 bindings/ts/*.js.map
 desktop-extensions/gnome*/dist
+desktop-extensions/gnome*/@types/gir-generated
 desktop-extensions/gnome*/node_modules
 desktop-extensions/gnome*/schemas/gschemas.compiled
 desktop-extensions/gnome*/*.zip

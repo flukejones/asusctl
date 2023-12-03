@@ -1,38 +1,35 @@
 use egui::{RichText, Ui};
-use rog_platform::supported::SupportedFunctions;
+use rog_platform::platform::PlatformPolicy;
 
-use crate::system_state::{FanCurvesState, ProfilesState, SystemState};
+use crate::system_state::{FanCurvesState, SystemState};
 use crate::widgets::fan_graphs;
 use crate::{RogApp, RogDbusClientBlocking};
 
 impl RogApp {
     pub fn fan_curve_page(&mut self, states: &mut SystemState, ctx: &egui::Context) {
-        let Self { supported, .. } = self;
+        if let Some(mut throttle) = states.bios.throttle {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                ui.heading("Custom fan curves");
+                Self::fan_curve(
+                    &mut throttle,
+                    &mut states.fan_curves,
+                    &states.asus_dbus,
+                    &mut states.error,
+                    ui,
+                );
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Custom fan curves");
-            Self::fan_curve(
-                supported,
-                &mut states.profiles,
-                &mut states.fan_curves,
-                &states.asus_dbus,
-                &mut states.error,
-                ui,
-            );
-
-            fan_graphs(
-                supported,
-                &mut states.fan_curves,
-                &states.asus_dbus,
-                &mut states.error,
-                ui,
-            );
-        });
+                fan_graphs(
+                    &mut states.fan_curves,
+                    &states.asus_dbus,
+                    &mut states.error,
+                    ui,
+                );
+            });
+        }
     }
 
     fn fan_curve(
-        supported: &SupportedFunctions,
-        profiles: &mut ProfilesState,
+        current: &mut PlatformPolicy,
         curves: &mut FanCurvesState,
         dbus: &RogDbusClientBlocking<'_>,
         do_error: &mut Option<String>,
@@ -43,7 +40,7 @@ impl RogApp {
         let mut changed = false;
         ui.horizontal(|ui| {
             ui.label("Current profile: ");
-            ui.label(RichText::new(format!("{}", profiles.current)).strong());
+            ui.label(RichText::new(format!("{}", current)).strong());
         });
 
         // ui.horizontal(|ui| {
@@ -64,9 +61,9 @@ impl RogApp {
         //         }
         //     };
 
-        //     if let Some(curves) = curves.curves.get_mut(&profiles.current) {
+        //     if let Some(curves) = curves.curves.get_mut(&current) {
         //         for curve in curves.iter_mut() {
-        //             fan_curve_enable(profiles.current, curve.fan, curve.enabled);
+        //             fan_curve_enable(current, curve.fan, curve.enabled);
         //         }
         //     }
         // });
@@ -75,7 +72,7 @@ impl RogApp {
             ui.label("Enabled fan-curves: ");
             let mut checked = false;
             let mut label = String::default();
-            if let Some(curves) = curves.curves.get_mut(&profiles.current) {
+            if let Some(curves) = curves.curves.get_mut(current) {
                 for curve in curves.iter() {
                     label.push_str(&<&str>::from(curve.fan).to_ascii_uppercase());
                     label.push(' ');
@@ -94,8 +91,8 @@ impl RogApp {
                 .changed()
             {
                 dbus.proxies()
-                    .profile()
-                    .set_fan_curves_enabled(profiles.current, checked)
+                    .fan_curves()
+                    .set_fan_curves_enabled(*current, checked)
                     .map_err(|err| {
                         *do_error = Some(err.to_string());
                     })
@@ -108,7 +105,7 @@ impl RogApp {
             let selected_profile = curves.show_curve;
             let selected_pu = curves.show_graph;
 
-            match FanCurvesState::new(supported, dbus) {
+            match FanCurvesState::new(dbus) {
                 Ok(f) => *curves = f,
                 Err(e) => *do_error = Some(e.to_string()),
             }

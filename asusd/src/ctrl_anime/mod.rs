@@ -16,24 +16,10 @@ use rog_anime::usb::{
 };
 use rog_anime::{ActionData, AnimeDataBuffer, AnimePacketType, AnimeType};
 use rog_platform::hid_raw::HidRaw;
-use rog_platform::supported::AnimeSupportedFunctions;
 use rog_platform::usb_raw::USBRaw;
 
 use self::config::{AnimeConfig, AnimeConfigCached};
 use crate::error::RogError;
-use crate::GetSupported;
-
-impl GetSupported for CtrlAnime {
-    type A = AnimeSupportedFunctions;
-
-    fn get_supported() -> Self::A {
-        if USBRaw::new(0x193b).is_ok() {
-            AnimeSupportedFunctions(true)
-        } else {
-            AnimeSupportedFunctions(HidRaw::new("193b").is_ok())
-        }
-    }
-}
 
 enum Node {
     Usb(USBRaw),

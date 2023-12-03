@@ -59,14 +59,14 @@ pub struct AuraPowerStates {
 
 #[derive(Options)]
 pub struct LedBrightness {
-    level: Option<u32>,
+    level: Option<u8>,
 }
 impl LedBrightness {
-    pub fn new(level: Option<u32>) -> Self {
+    pub fn new(level: Option<u8>) -> Self {
         LedBrightness { level }
     }
 
-    pub fn level(&self) -> Option<u32> {
+    pub fn level(&self) -> Option<u8> {
         self.level
     }
 }

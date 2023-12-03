@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - SetOffWhenLidClosed, also add asusctl CLI option
 - Anime: add brightness_on_battery config option
 - Platform: add `post_animation_sound`, kernel 6.7+ requires patch
+- Add changing of CPU energy perfromance preference in relation to throttle_thermal_policy. This means that the CPU correctly behaves according to throttle_thermal_policy (and platform profile use is *removed*)
+- Add setting of throttle_thermal_policy on power plug/unplug
 
 ### Changed
 - asusd: remove set_image_brightness for anime
@@ -31,8 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Ensure builtin animations run instead of custom animations if option is set
 
 ### Breaking
-- DBUS stuff. Again.
-  - Platform dbus refactored to Properties as it makes more sense than a pile of functions
+- DBUS stuff. Again. All of it.
 
 ## [v4.7.2]
 ### Added

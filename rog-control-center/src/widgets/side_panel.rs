@@ -18,7 +18,7 @@ impl RogApp {
                     *page = Page::System;
                 }
 
-                if !self.supported.platform_profile.fans.is_empty() {
+                if self.supported_interfaces.contains(&"FanCurves".to_owned()) {
                     ui.separator();
                     if ui
                         .selectable_value(page, Page::FanCurves, "Fan Curves")
@@ -28,7 +28,7 @@ impl RogApp {
                     }
                 }
 
-                if !self.supported.keyboard_led.basic_modes.is_empty() {
+                if self.supported_interfaces.contains(&"Aura".to_owned()) {
                     ui.separator();
                     if ui
                         .selectable_value(page, Page::AuraEffects, "Keyboard Aura")
@@ -39,7 +39,7 @@ impl RogApp {
                 }
 
                 // TODO: Anime page is not complete
-                if self.supported.anime_ctrl.0 {
+                if self.supported_interfaces.contains(&"Anime".to_owned()) {
                     ui.separator();
                     if ui
                         .selectable_value(page, Page::AnimeMatrix, "AniMe Matrix")

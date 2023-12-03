@@ -1,14 +1,13 @@
 use egui::plot::Points;
 use egui::Ui;
-use rog_platform::supported::SupportedFunctions;
+use rog_platform::platform::PlatformPolicy;
 use rog_profiles::fan_curve_set::CurveData;
-use rog_profiles::{FanCurvePU, Profile};
+use rog_profiles::FanCurvePU;
 
 use crate::system_state::FanCurvesState;
 use crate::RogDbusClientBlocking;
 
 pub fn fan_graphs(
-    supported: &SupportedFunctions,
     curves: &mut FanCurvesState,
     dbus: &RogDbusClientBlocking<'_>,
     do_error: &mut Option<String>,
@@ -16,13 +15,16 @@ pub fn fan_graphs(
 ) {
     ui.separator();
 
-    let mut item = |profile: Profile, ui: &mut Ui| {
+    let mut item = |profile: PlatformPolicy, ui: &mut Ui| {
         ui.group(|ui| {
             if ui
                 .selectable_value(&mut curves.show_curve, profile, format!("{profile:?}"))
                 .clicked()
             {
-                dbus.proxies().profile().set_active_profile(profile).ok();
+                dbus.proxies()
+                    .platform()
+                    .set_throttle_thermal_policy(profile)
+                    .ok();
             }
             ui.add_enabled_ui(curves.show_curve == profile, |ui| {
                 if curves.available_fans.contains(&FanCurvePU::CPU) {
@@ -164,7 +166,7 @@ pub fn fan_graphs(
 
     if set {
         dbus.proxies()
-            .profile()
+            .fan_curves()
             .set_fan_curve(curves.show_curve, data.clone())
             .map_err(|err| {
                 *do_error = Some(err.to_string());
@@ -175,7 +177,7 @@ pub fn fan_graphs(
     if clear {
         if let Ok(curve) = dbus
             .proxies()
-            .profile()
+            .fan_curves()
             .fan_curve_data(curves.show_curve)
             .map_err(|err| {
                 *do_error = Some(err.to_string());
@@ -189,14 +191,14 @@ pub fn fan_graphs(
 
     if reset {
         dbus.proxies()
-            .profile()
+            .fan_curves()
             .reset_profile_curves(curves.show_curve)
             .map_err(|err| {
                 *do_error = Some(err.to_string());
             })
             .ok();
 
-        match FanCurvesState::new(supported, dbus) {
+        match FanCurvesState::new(dbus) {
             Ok(f) => *curves = f,
             Err(e) => *do_error = Some(e.to_string()),
         }

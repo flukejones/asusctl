@@ -45,6 +45,7 @@ export interface DeviceState {
 	off_when_unplugged: boolean;
 	off_when_suspended: boolean;
 	off_when_lid_closed: boolean;
+	brightness_on_battery: Brightness;
 }
 
 export enum AnimeType {

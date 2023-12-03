@@ -2,52 +2,10 @@
 <node>
   <interface name="org.asuslinux.Daemon">
     <!--
-     Set the keyboard brightness level (0-3)
+     Get the data set for every mode available
      -->
-    <method name="SetBrightness">
-      <arg name="brightness" type="s" direction="in"/>
-    </method>
-    <!--
-     Set a variety of states, input is array of enum.
-     `enabled` sets if the sent array should be disabled or enabled
-
-     For Modern ROG devices the "enabled" flag is ignored.
-     -->
-    <method name="SetLedPower">
-      <arg name="options" type="(asas((sbbbb)(sbbbb)(sbbbb)(sbbbb)(sbbbb)))" direction="in"/>
-      <arg name="enabled" type="b" direction="in"/>
-    </method>
-    <method name="SetLedMode">
-      <arg name="effect" type="(ss(yyy)(yyy)ss)" direction="in"/>
-    </method>
-    <method name="NextLedMode">
-    </method>
-    <method name="PrevLedMode">
-    </method>
-    <method name="NextLedBrightness">
-    </method>
-    <method name="PrevLedBrightness">
-    </method>
-    <!--
-     Return the device type for this Aura keyboard
-     -->
-    <method name="DeviceType">
-      <arg type="s" direction="out"/>
-    </method>
-    <method name="LedPower">
-      <arg type="asas((sbbbb)(sbbbb)(sbbbb)(sbbbb)(sbbbb))" direction="out"/>
-    </method>
-    <!--
-     Return the current mode data
-     -->
-    <method name="LedMode">
-      <arg type="s" direction="out"/>
-    </method>
-    <!--
-     Return a list of available modes
-     -->
-    <method name="LedModes">
-      <arg type="a{s(ss(yyy)(yyy)ss)}" direction="out"/>
+    <method name="AllModeData">
+      <arg type="a{u(us(yyy)(yyy)ss)}" direction="out"/>
     </method>
     <!--
      On machine that have some form of either per-key keyboard or per-zone
@@ -57,15 +15,51 @@
     <method name="DirectAddressingRaw">
       <arg name="data" type="aay" direction="in"/>
     </method>
-    <signal name="NotifyLed">
-      <arg name="data" type="(ss(yyy)(yyy)ss)"/>
-    </signal>
-    <signal name="NotifyPowerStates">
-      <arg name="data" type="(asas((sbbbb)(sbbbb)(sbbbb)(sbbbb)(sbbbb)))"/>
-    </signal>
     <!--
      Return the current LED brightness
      -->
-    <property name="LedBrightness" type="n" access="read"/>
+    <!--
+     Set the keyboard brightness level (0-3)
+     -->
+    <property name="Brightness" type="u" access="readwrite"/>
+    <!--
+     Return the device type for this Aura keyboard
+     -->
+    <property name="DeviceType" type="s" access="read"/>
+    <!--
+     The current mode data
+     -->
+    <!--
+     Set an Aura effect if the effect mode or zone is supported.
+
+     On success the aura config file is read to refresh cached values, then
+     the effect is stored and config written to disk.
+     -->
+    <property name="LedMode" type="u" access="readwrite"/>
+    <!--
+     The current mode data
+     -->
+    <!--
+     Set an Aura effect if the effect mode or zone is supported.
+
+     On success the aura config file is read to refresh cached values, then
+     the effect is stored and config written to disk.
+     -->
+    <property name="LedModeData" type="(us(yyy)(yyy)ss)" access="readwrite"/>
+    <!--
+     Set a variety of states, input is array of enum.
+     `enabled` sets if the sent array should be disabled or enabled
+
+     For Modern ROG devices the "enabled" flag is ignored.
+     -->
+    <property name="LedPower" type="(asas((sbbbb)(sbbbb)(sbbbb)(sbbbb)(sbbbb)))" access="readwrite"/>
+    <!--
+     Total levels of brightness available
+     -->
+    <property name="SupportedBrightness" type="au" access="read"/>
+    <!--
+     The total available modes
+     -->
+    <property name="SupportedModes" type="au" access="read"/>
   </interface>
 </node>

@@ -1,4 +1,5 @@
 use config_traits::{StdConfig, StdConfigLoad2};
+use rog_platform::platform::PlatformPolicy;
 use serde_derive::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "asusd.ron";
@@ -6,13 +7,18 @@ const CONFIG_FILE: &str = "asusd.ron";
 #[derive(Deserialize, Serialize, Default, Debug)]
 pub struct Config {
     /// Save charge limit for restoring on boot
-    pub bat_charge_limit: u8,
+    pub charge_control_end_threshold: u8,
     pub panel_od: bool,
     pub mini_led_mode: bool,
     pub disable_nvidia_powerd_on_battery: bool,
     pub ac_command: String,
     pub bat_command: String,
-    pub post_animation_sound: bool,
+    /// Restored on boot as well as when power is plugged
+    #[serde(skip)]
+    pub platform_policy_to_restore: PlatformPolicy,
+    pub platform_policy_on_battery: PlatformPolicy,
+    pub platform_policy_on_ac: PlatformPolicy,
+    //
     pub ppt_pl1_spl: Option<u8>,
     pub ppt_pl2_sppt: Option<u8>,
     pub ppt_fppt: Option<u8>,
@@ -25,8 +31,10 @@ pub struct Config {
 impl StdConfig for Config {
     fn new() -> Self {
         Config {
-            bat_charge_limit: 100,
+            charge_control_end_threshold: 100,
             disable_nvidia_powerd_on_battery: true,
+            platform_policy_on_battery: PlatformPolicy::Quiet,
+            platform_policy_on_ac: PlatformPolicy::Performance,
             ac_command: String::new(),
             bat_command: String::new(),
             ..Default::default()
@@ -53,13 +61,12 @@ pub struct Config472 {
     pub disable_nvidia_powerd_on_battery: bool,
     pub ac_command: String,
     pub bat_command: String,
-    pub post_animation_sound: bool,
 }
 
 impl From<Config472> for Config {
     fn from(c: Config472) -> Self {
         Self {
-            bat_charge_limit: c.bat_charge_limit,
+            charge_control_end_threshold: c.bat_charge_limit,
             panel_od: c.panel_od,
             disable_nvidia_powerd_on_battery: true,
             ac_command: c.ac_command,
@@ -82,7 +89,7 @@ pub struct Config462 {
 impl From<Config462> for Config {
     fn from(c: Config462) -> Self {
         Self {
-            bat_charge_limit: c.bat_charge_limit,
+            charge_control_end_threshold: c.bat_charge_limit,
             panel_od: c.panel_od,
             disable_nvidia_powerd_on_battery: true,
             ac_command: String::new(),

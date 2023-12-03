@@ -1,15 +1,13 @@
 [Unit]
 Description=ASUS Notebook Control
-StartLimitInterval=200
-StartLimitBurst=2
-Before=multi-user.target
-After=power-profiles-daemon.service
-After=nvidia-powerd.service
+StartLimitInterval=500
+StartLimitBurst=5
+After=nvidia-powerd.service,systemd-udevd.service
 
 [Service]
 Environment=IS_SERVICE=1
 Environment=RUST_LOG="info"
-ExecStartPre=/bin/sleep 2
+# ExecStartPre=/bin/sleep 2 # was required only for slow devices
 ExecStart=/usr/bin/asusd
 Restart=on-failure
 RestartSec=1

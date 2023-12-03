@@ -1,5 +1,7 @@
 use std::fmt;
 
+use zbus::fdo::Error as FdoErr;
+
 pub type Result<T> = std::result::Result<T, PlatformError>;
 
 #[derive(Debug)]
@@ -19,6 +21,7 @@ pub enum PlatformError {
     Io(std::io::Error),
     NoAuraKeyboard,
     NoAuraNode,
+    CPU(String),
 }
 
 impl fmt::Display for PlatformError {
@@ -45,6 +48,7 @@ impl fmt::Display for PlatformError {
             PlatformError::IoPath(path, detail) => write!(f, "{} {}", path, detail),
             PlatformError::NoAuraKeyboard => write!(f, "No supported Aura keyboard"),
             PlatformError::NoAuraNode => write!(f, "No Aura keyboard node found"),
+            PlatformError::CPU(s) => write!(f, "CPU control: {s}"),
         }
     }
 }
@@ -60,5 +64,15 @@ impl From<rusb::Error> for PlatformError {
 impl From<std::io::Error> for PlatformError {
     fn from(err: std::io::Error) -> Self {
         PlatformError::Io(err)
+    }
+}
+
+impl From<PlatformError> for FdoErr {
+    fn from(error: PlatformError) -> Self {
+        log::error!("PlatformError: got: {error}");
+        match error {
+            PlatformError::NotSupported => FdoErr::NotSupported("".to_owned()),
+            _ => FdoErr::Failed(format!("Failed with {error}")),
+        }
     }
 }

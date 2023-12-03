@@ -1,3 +1,4 @@
+use std::cell::UnsafeCell;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
@@ -6,8 +7,11 @@ use log::{info, warn};
 
 use crate::error::{PlatformError, Result};
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Clone)]
-pub struct HidRaw(PathBuf);
+#[derive(Debug)]
+pub struct HidRaw {
+    path: UnsafeCell<PathBuf>,
+    prod_id: String,
+}
 
 impl HidRaw {
     pub fn new(id_product: &str) -> Result<Self> {
@@ -35,7 +39,10 @@ impl HidRaw {
                     if parent == id_product {
                         if let Some(dev_node) = device.devnode() {
                             info!("Using device at: {:?} for hidraw control", dev_node);
-                            return Ok(Self(dev_node.to_owned()));
+                            return Ok(Self {
+                                path: UnsafeCell::new(dev_node.to_owned()),
+                                prod_id: id_product.to_string(),
+                            });
                         }
                     }
                 }
@@ -48,7 +55,10 @@ impl HidRaw {
                             "Using device at: {:?} for <TODO: label control> control",
                             dev_node
                         );
-                        return Ok(Self(dev_node.to_owned()));
+                        return Ok(Self {
+                            path: UnsafeCell::new(dev_node.to_owned()),
+                            prod_id: id_product.to_string(),
+                        });
                     }
                 }
             }
@@ -60,12 +70,22 @@ impl HidRaw {
     }
 
     pub fn write_bytes(&self, message: &[u8]) -> Result<()> {
-        let mut file = OpenOptions::new()
-            .write(true)
-            .open(&self.0)
-            .map_err(|e| PlatformError::IoPath(self.0.to_string_lossy().to_string(), e))?;
-        // println!("write: {:02x?}", &message);
+        let mut path = unsafe { &*(self.path.get()) };
+        let mut file = match OpenOptions::new().write(true).open(path) {
+            Ok(f) => f,
+            Err(e) => {
+                warn!("write_bytes failed for {:?}, trying again: {e}", self.path);
+                unsafe {
+                    *(self.path.get()) = (*(Self::new(&self.prod_id)?.path.get())).clone();
+                    path = &mut *(self.path.get());
+                }
+                OpenOptions::new()
+                    .write(true)
+                    .open(path)
+                    .map_err(|e| PlatformError::IoPath(path.to_string_lossy().to_string(), e))?
+            }
+        };
         file.write_all(message)
-            .map_err(|e| PlatformError::IoPath(self.0.to_string_lossy().to_string(), e))
+            .map_err(|e| PlatformError::IoPath(path.to_string_lossy().to_string(), e))
     }
 }

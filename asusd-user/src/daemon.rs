@@ -5,12 +5,11 @@ use std::sync::{Arc, Mutex};
 
 use asusd_user::config::*;
 use asusd_user::ctrl_anime::{CtrlAnime, CtrlAnimeInner};
-use asusd_user::DBUS_NAME;
 use config_traits::{StdConfig, StdConfigLoad};
 use rog_anime::usb::get_anime_type;
 use rog_aura::aura_detection::LaptopLedData;
 use rog_aura::layouts::KeyLayout;
-use rog_dbus::RogDbusClientBlocking;
+use rog_dbus::{RogDbusClientBlocking, DBUS_NAME};
 use smol::Executor;
 use zbus::Connection;
 
@@ -34,15 +33,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("rog-platform v{}", rog_platform::VERSION);
 
     let (client, _) = RogDbusClientBlocking::new()?;
-    let supported = client.proxies().supported().supported_functions()?;
-
+    let supported = client
+        .proxies()
+        .platform()
+        .supported_interfaces()
+        .unwrap_or_default()
+        .contains(&"Anime".to_string());
     let config = ConfigBase::new().load();
-
     let executor = Executor::new();
 
     let early_return = Arc::new(AtomicBool::new(false));
     // Set up the anime data and run loop/thread
-    if supported.anime_ctrl.0 {
+    if supported {
         if let Some(cfg) = config.active_anime {
             let anime_type = get_anime_type()?;
             let anime_config = ConfigAnime::new().set_name(cfg).load();
@@ -100,7 +102,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                     client
                         .proxies()
-                        .led()
+                        .aura()
                         .direct_addressing_raw(packets)
                         .unwrap();
                     std::thread::sleep(std::time::Duration::from_millis(33));

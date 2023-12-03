@@ -5,15 +5,10 @@ pub mod config;
 pub mod ctrl_anime;
 /// Keyboard LED brightness control, RGB, and LED display modes
 pub mod ctrl_aura;
+/// Control platform profiles + fan-curves if available
+pub mod ctrl_fancurves;
 /// Control ASUS bios function such as boot sound, Optimus/Dedicated gfx mode
 pub mod ctrl_platform;
-/// Control of battery charge level
-pub mod ctrl_power;
-/// Control platform profiles + fan-curves if available
-pub mod ctrl_profiles;
-
-/// Fetch all supported functions for the laptop
-pub mod ctrl_supported;
 
 pub mod error;
 
@@ -32,6 +27,9 @@ use zbus::{CacheProperties, Connection, SignalContext};
 use crate::error::RogError;
 
 const CONFIG_PATH_BASE: &str = "/etc/asusd/";
+pub static DBUS_NAME: &str = "org.asuslinux.Daemon";
+pub static DBUS_PATH: &str = "/org/asuslinux/Daemon";
+pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";
 
 /// This macro adds a function which spawns an `inotify` task on the passed in
 /// `Executor`.
@@ -49,7 +47,7 @@ const CONFIG_PATH_BASE: &str = "/etc/asusd/";
 /// # Example
 ///
 /// ```ignore
-/// impl CtrlRogBios {
+/// impl RogPlatform {
 ///     task_watch_item!(panel_od platform);
 ///     task_watch_item!(gpu_mux_mode platform);
 /// }
@@ -72,15 +70,46 @@ macro_rules! task_watch_item {
                         tokio::spawn(async move {
                             let mut buffer = [0; 32];
                             watch.into_event_stream(&mut buffer).unwrap().for_each(|_| async {
-                                if let Ok(value) = ctrl.$name(){
+                                if let Ok(value) = ctrl.$name() { // get new value from zbus method
                                     concat_idents::concat_idents!(notif_fn = $name, _changed {
-                                        Self::notif_fn(&ctrl, &signal_ctxt).await.ok();
+                                        ctrl.notif_fn(&signal_ctxt).await.ok();
                                     });
-                                    if let Some(mut lock) = ctrl.config.try_lock() {
-                                        lock.$name = value;
-                                        lock.write();
-                                    }
+                                    let mut lock = ctrl.config.lock().await;
+                                    lock.$name = value;
+                                    lock.write();
                                 }
+                            }).await;
+                        });
+                    }
+                    Err(e) => info!("inotify watch failed: {}. You can ignore this if your device does not support the feature", e),
+                }
+            });
+            Ok(())
+        }
+        });
+    };
+}
+
+#[macro_export]
+macro_rules! task_watch_item_notify {
+    ($name:ident $self_inner:ident) => {
+        concat_idents::concat_idents!(fn_name = watch_, $name {
+        async fn fn_name(
+            &self,
+            signal_ctxt: SignalContext<'static>,
+        ) -> Result<(), RogError> {
+            use zbus::export::futures_util::StreamExt;
+
+            let ctrl = self.clone();
+            concat_idents::concat_idents!(watch_fn = monitor_, $name {
+                match self.$self_inner.watch_fn() {
+                    Ok(watch) => {
+                        tokio::spawn(async move {
+                            let mut buffer = [0; 32];
+                            watch.into_event_stream(&mut buffer).unwrap().for_each(|_| async {
+                                concat_idents::concat_idents!(notif_fn = $name, _changed {
+                                    ctrl.notif_fn(&signal_ctxt).await.ok();
+                                });
                             }).await;
                         });
                     }
@@ -192,18 +221,11 @@ pub trait CtrlTask {
             .await
             .expect("Controller could not create ManagerProxy");
 
+        let manager1 = manager.clone();
         tokio::spawn(async move {
-            if let Ok(mut notif) = manager.receive_prepare_for_sleep().await {
+            if let Ok(mut notif) = manager1.receive_prepare_for_shutdown().await {
                 while let Some(event) = notif.next().await {
-                    if let Ok(args) = event.args() {
-                        debug!("Doing on_prepare_for_sleep({})", args.start);
-                        on_prepare_for_sleep(args.start).await;
-                    }
-                }
-            }
-
-            if let Ok(mut notif) = manager.receive_prepare_for_shutdown().await {
-                while let Some(event) = notif.next().await {
+                    // blocks thread :|
                     if let Ok(args) = event.args() {
                         debug!("Doing on_prepare_for_shutdown({})", args.start);
                         on_prepare_for_shutdown(args.start).await;
@@ -212,23 +234,38 @@ pub trait CtrlTask {
             }
         });
 
-        let manager = ManagerProxy::builder(&connection)
-            .cache_properties(CacheProperties::No)
-            .build()
-            .await
-            .expect("Controller could not create ManagerProxy");
-
+        let manager2 = manager.clone();
         tokio::spawn(async move {
-            let mut last_power = manager.on_external_power().await.unwrap_or_default();
-            let mut last_lid = manager.lid_closed().await.unwrap_or_default();
-            // need to loop on these as they don't emit signals
+            if let Ok(mut notif) = manager2.receive_prepare_for_sleep().await {
+                while let Some(event) = notif.next().await {
+                    // blocks thread :|
+                    if let Ok(args) = event.args() {
+                        debug!("Doing on_prepare_for_sleep({})", args.start);
+                        on_prepare_for_sleep(args.start).await;
+                    }
+                }
+            }
+        });
+
+        let manager3 = manager.clone();
+        tokio::spawn(async move {
+            let mut last_power = manager3.on_external_power().await.unwrap_or_default();
+
             loop {
-                if let Ok(next) = manager.on_external_power().await {
+                if let Ok(next) = manager3.on_external_power().await {
                     if next != last_power {
                         last_power = next;
                         on_external_power_change(next).await;
                     }
                 }
+                sleep(Duration::from_secs(2)).await;
+            }
+        });
+
+        tokio::spawn(async move {
+            let mut last_lid = manager.lid_closed().await.unwrap_or_default();
+            // need to loop on these as they don't emit signals
+            loop {
                 if let Ok(next) = manager.lid_closed().await {
                     if next != last_lid {
                         last_lid = next;

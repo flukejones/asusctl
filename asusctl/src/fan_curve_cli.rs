@@ -1,24 +1,7 @@
 use gumdrop::Options;
+use rog_platform::platform::PlatformPolicy;
 use rog_profiles::fan_curve_set::CurveData;
-use rog_profiles::{FanCurvePU, Profile};
-
-#[derive(Debug, Clone, Options)]
-pub struct ProfileCommand {
-    #[options(help = "print help message")]
-    pub help: bool,
-
-    #[options(help = "toggle to next profile in list")]
-    pub next: bool,
-
-    #[options(help = "list available profiles")]
-    pub list: bool,
-
-    #[options(help = "get profile")]
-    pub profile_get: bool,
-
-    #[options(meta = "", help = "set the active profile")]
-    pub profile_set: Option<Profile>,
-}
+use rog_profiles::FanCurvePU;
 
 #[derive(Debug, Clone, Options)]
 pub struct FanCurveCommand {
@@ -35,7 +18,7 @@ pub struct FanCurveCommand {
         meta = "",
         help = "profile to modify fan-curve for. Shows data if no options provided"
     )]
-    pub mod_profile: Option<Profile>,
+    pub mod_profile: Option<PlatformPolicy>,
 
     #[options(
         meta = "",

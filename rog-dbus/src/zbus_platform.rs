@@ -20,16 +20,29 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use rog_platform::platform::GpuMode;
+use rog_platform::platform::{GpuMode, PlatformPolicy, Properties};
 use zbus::dbus_proxy;
 
 #[dbus_proxy(
     interface = "org.asuslinux.Daemon",
+    default_service = "org.asuslinux.Daemon",
     default_path = "/org/asuslinux/Platform"
 )]
-trait RogBios {
+trait Platform {
+    /// NextThrottleThermalPolicy method
+    fn next_throttle_thermal_policy(&self) -> zbus::Result<()>;
+
+    /// SupportedInterfaces method
+    fn supported_interfaces(&self) -> zbus::Result<Vec<String>>;
+
     /// SupportedProperties method
-    fn supported_properties(&self) -> zbus::Result<Vec<String>>;
+    fn supported_properties(&self) -> zbus::Result<Vec<Properties>>;
+
+    /// ChargeControlEndThreshold property
+    #[dbus_proxy(property)]
+    fn charge_control_end_threshold(&self) -> zbus::Result<u8>;
+    #[dbus_proxy(property)]
+    fn set_charge_control_end_threshold(&self, value: u8) -> zbus::Result<()>;
 
     /// DgpuDisable property
     #[dbus_proxy(property)]
@@ -42,55 +55,72 @@ trait RogBios {
     /// GpuMuxMode property
     #[dbus_proxy(property)]
     fn gpu_mux_mode(&self) -> zbus::Result<u8>;
+    #[dbus_proxy(property)]
     fn set_gpu_mux_mode(&self, value: GpuMode) -> zbus::Result<()>;
 
     /// MiniLedMode property
     #[dbus_proxy(property)]
     fn mini_led_mode(&self) -> zbus::Result<bool>;
+    #[dbus_proxy(property)]
     fn set_mini_led_mode(&self, value: bool) -> zbus::Result<()>;
 
     /// NvDynamicBoost property
     #[dbus_proxy(property)]
     fn nv_dynamic_boost(&self) -> zbus::Result<u8>;
+    #[dbus_proxy(property)]
     fn set_nv_dynamic_boost(&self, value: u8) -> zbus::Result<()>;
 
     /// NvTempTarget property
     #[dbus_proxy(property)]
     fn nv_temp_target(&self) -> zbus::Result<u8>;
+    #[dbus_proxy(property)]
     fn set_nv_temp_target(&self, value: u8) -> zbus::Result<()>;
 
     /// PanelOd property
     #[dbus_proxy(property)]
     fn panel_od(&self) -> zbus::Result<bool>;
+    #[dbus_proxy(property)]
     fn set_panel_od(&self, value: bool) -> zbus::Result<()>;
 
     /// PostAnimationSound property
     #[dbus_proxy(property)]
     fn post_animation_sound(&self) -> zbus::Result<bool>;
+    #[dbus_proxy(property)]
     fn set_post_animation_sound(&self, value: bool) -> zbus::Result<()>;
 
     /// PptApuSppt property
     #[dbus_proxy(property)]
     fn ppt_apu_sppt(&self) -> zbus::Result<u8>;
+    #[dbus_proxy(property)]
     fn set_ppt_apu_sppt(&self, value: u8) -> zbus::Result<()>;
 
     /// PptFppt property
     #[dbus_proxy(property)]
     fn ppt_fppt(&self) -> zbus::Result<u8>;
+    #[dbus_proxy(property)]
     fn set_ppt_fppt(&self, value: u8) -> zbus::Result<()>;
 
     /// PptPl1Spl property
     #[dbus_proxy(property)]
     fn ppt_pl1_spl(&self) -> zbus::Result<u8>;
+    #[dbus_proxy(property)]
     fn set_ppt_pl1_spl(&self, value: u8) -> zbus::Result<()>;
 
     /// PptPl2Sppt property
     #[dbus_proxy(property)]
     fn ppt_pl2_sppt(&self) -> zbus::Result<u8>;
+    #[dbus_proxy(property)]
     fn set_ppt_pl2_sppt(&self, value: u8) -> zbus::Result<()>;
 
     /// PptPlatformSppt property
     #[dbus_proxy(property)]
     fn ppt_platform_sppt(&self) -> zbus::Result<u8>;
+    #[dbus_proxy(property)]
     fn set_ppt_platform_sppt(&self, value: u8) -> zbus::Result<()>;
+
+    /// PlatformPolicy property
+    #[dbus_proxy(property)]
+    fn throttle_thermal_policy(&self) -> zbus::Result<PlatformPolicy>;
+    #[dbus_proxy(property)]
+    fn set_throttle_thermal_policy(&self, value: PlatformPolicy) -> zbus::Result<()>;
 }

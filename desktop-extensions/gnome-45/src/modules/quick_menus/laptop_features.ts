@@ -1,169 +1,216 @@
-import { AnimeDbus } from "../dbus/animatrix";
-import { Supported } from "../dbus/supported";
-import { Platform } from "../dbus/platform";
+import { Extension, gettext as _ } from "@girs/gnome-shell/extensions/extension";
+import { quickSettings, popupMenu } from "@girs/gnome-shell/ui";
+import { GObject } from "@girs/gobject-2.0";
+
+import { DbusBase } from "../../modules/dbus_proxy";
 
 import { addQuickSettingsItems } from "../helpers";
-import { MenuToggleAnimeBuiltins, MenuToggleAnimePower } from "../menu_toggles/anime";
-import { MenuTogglePanelOd } from "../menu_toggles/panel_od";
-import { MenuToggleMiniLed } from "../menu_toggles/mini_led";
-
-import GObject from 'gi://GObject';
 
 import * as AsusExtension from "../../extension";
-// import {PopupMenu, PopupMenuSection} from 'resource:///org/gnome/shell/ui/popupMenu.js';
-import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
-import {QuickMenuToggle} from 'resource:///org/gnome/shell/ui/quickSettings.js';
+import * as platform from "../../bindings/platform";
+import { uuid } from "../../extension";
+import { AsusMenuToggle } from "../rog_menu_toggle";
 
 export const FeatureMenuToggle = GObject.registerClass(
-    class FeatureMenuToggle extends QuickMenuToggle {
-        private _dbus_supported: Supported;
-        private _dbus_platform: Platform;
-        private _dbus_anime: AnimeDbus;
+  class FeatureMenuToggle extends quickSettings.QuickMenuToggle {
+    private dbus_platform: DbusBase;
+    private dbus_anime: DbusBase;
+    private last_selection = "mini-led";
+    private supported_properties!: platform.Properties;
+    private supported_interfaces: string[] = [];
 
-        public miniLed: typeof MenuToggleMiniLed;
-        public panelOd: typeof MenuTogglePanelOd;
-        public animeDisplayPower: typeof MenuToggleAnimePower;
-        public animePowersaveAnim: typeof MenuToggleAnimeBuiltins;
-        private primary = "mini-led";
+    private miniLed?: typeof AsusMenuToggle;
+    private panelOd?: typeof AsusMenuToggle;
+    private animeDisplayPower?: typeof AsusMenuToggle;
+    private animePowersaveAnim?: typeof AsusMenuToggle;
+    _itemsSection: popupMenu.PopupMenuSection;
 
-        constructor(dbus_supported: Supported, dbus_platform: Platform, dbus_anime: AnimeDbus) {
-            super({
-                title: "Laptop",
-                iconName: "selection-mode-symbolic",
-                toggleMode: true,
-            });
-            this._dbus_supported = dbus_supported;
-            this._dbus_platform = dbus_platform;
-            this._dbus_anime = dbus_anime;
+    constructor(dbus_platform: DbusBase, dbus_anime: DbusBase) {
+      super({
+        label: "Laptop",
+        toggle_mode: true,
+        icon_name: "selection-mode-symbolic",
+      });
+      this.label = "Laptop";
+      this.title = "Laptop";
+      this.dbus_platform = dbus_platform;
+      this.dbus_anime = dbus_anime;
 
-            this.menu.setHeader("selection-mode-symbolic", "Laptop features");
+      this.menu.setHeader("selection-mode-symbolic", "Laptop features");
 
-            this.primary =  AsusExtension.extension._settings.get_string("primary-quickmenu-toggle");
+      this.last_selection = Extension.lookupByUUID(AsusExtension.uuid)
+        ?.getSettings()
+        .get_string("primary-quickmenu-toggle")!;
 
-            // TODO: temporary block
-            if (this.primary == "mini-led" && !this._dbus_supported.supported.rog_bios_ctrl.mini_led_mode) {
-                this.primary = "panel-od";
-            } else if (this.primary == "panel-od" && !this._dbus_supported.supported.rog_bios_ctrl.panel_overdrive) {
-                this.primary = "anime-power";
-            } else if (this.primary == "anime-power" && !this._dbus_supported.supported.anime_ctrl) {
-                this.primary = "mini-led";
-            } else if (this.primary.length == 0) {
-                this.primary = "panel-od";
-            }
+      this.supported_interfaces = this.dbus_platform?.proxy.SupportedInterfacesSync()[0];
+      this.supported_properties = this.dbus_platform?.proxy.SupportedPropertiesSync()[0];
 
-            // AsusExtension.extension._settings.connect('changed::primary-quickmenu-toggle', this.sync);
-            AsusExtension.extension._settings.set_string("primary-quickmenu-toggle", this.primary);
+      // TODO: temporary block
+      if (this.last_selection == "mini-led" && !this.supported_properties.includes("MiniLed")) {
+        this.last_selection = "panel-od";
+      } else if (
+        this.last_selection == "panel-od" &&
+        !this.supported_properties.includes("PanelOd")
+      ) {
+        this.last_selection = "anime-power";
+      } else if (
+        this.last_selection == "anime-power" &&
+        !this.supported_interfaces.includes("Anime")
+      ) {
+        this.last_selection = "mini-led";
+      } else if (this.last_selection.length == 0) {
+        this.last_selection = "panel-od";
+      }
 
-            this._itemsSection = new PopupMenu.PopupMenuSection();
-            if (this._dbus_supported.supported.rog_bios_ctrl.mini_led_mode) {
-                if (this.miniLed == null) {
-                    this.miniLed = new MenuToggleMiniLed(this._dbus_platform);
-                    this._dbus_platform.notifyMiniLedSubscribers.push(this.miniLed);
-                    this._itemsSection.addMenuItem(this.miniLed, 0);
-                    this._dbus_platform.notifyMiniLedSubscribers.push(this);
-                    this.miniLed.toggle_callback = () => {
-                        this.primary = "mini-led";
-                        this.sync();
-                    }
-                }
-            }
+      // AsusExtension.extension._settings.connect('changed::primary-quickmenu-toggle', this.sync);
+      Extension.lookupByUUID(uuid)
+        ?.getSettings()
+        .set_string("primary-quickmenu-toggle", this.last_selection);
 
-            if (this._dbus_supported.supported.rog_bios_ctrl.panel_overdrive) {
-                if (this.panelOd == null) {
-                    this.panelOd = new MenuTogglePanelOd(this._dbus_platform);
-                    this._dbus_platform.notifyPanelOdSubscribers.push(this.panelOd);
-                    this._itemsSection.addMenuItem(this.panelOd, 1);
-                    this._dbus_platform.notifyPanelOdSubscribers.push(this);
-                    this.panelOd.toggle_callback = () => {
-                        this.primary = "panel-od";
-                        this.sync();
-                    }
-                }
-            }
+      this._itemsSection = new popupMenu.PopupMenuSection();
+      if (this.supported_properties.includes("MiniLed")) {
+        if (this.miniLed == null) {
+          this.miniLed = new AsusMenuToggle(
+            this.dbus_platform,
+            "MiniLed",
+            "mini-led-enabled",
+            "Mini-LED Enabled",
+          );
+          this._itemsSection.addMenuItem(this.miniLed, 0);
+          this.miniLed.toggle_callback = () => {
+            this.last_selection = "mini-led";
+          };
+        }
+      }
 
-            if (this._dbus_supported.supported.anime_ctrl) {
-                if (this.animeDisplayPower == null) {
-                    this.animeDisplayPower = new MenuToggleAnimePower(this._dbus_anime);
-                    this._dbus_anime.notifyAnimeStateSubscribers.push(this.animeDisplayPower);
-                    this._itemsSection.addMenuItem(this.animeDisplayPower, 2);
-                    this._dbus_anime.notifyAnimeStateSubscribers.push(this);
-                    this.animeDisplayPower.toggle_callback = () => {
-                        this.primary = "anime-power";
-                        this.sync();
-                    }
-                }
+      if (this.supported_properties.includes("PanelOd")) {
+        if (this.panelOd == null) {
+          this.panelOd = new AsusMenuToggle(
+            this.dbus_platform,
+            "PanelOd",
+            "panel-od-enabled",
+            "Panel Overdrive Enabled",
+          );
+          this._itemsSection.addMenuItem(this.panelOd, 1);
+          this.panelOd.toggle_callback = () => {
+            this.last_selection = "panel-od";
+          };
+        }
+      }
 
-                if (this.animePowersaveAnim == null) {
-                    this.animePowersaveAnim = new MenuToggleAnimeBuiltins(this._dbus_anime);
-                    this._dbus_anime.notifyAnimeStateSubscribers.push(this.animePowersaveAnim);
-                    this._itemsSection.addMenuItem(this.animePowersaveAnim, 3);
-                }
-            }
-
-            this.connectObject(
-                "clicked", () => {
-                    this._toggle();
-                },
-                this);
-
-            this.menu.addMenuItem(this._itemsSection, 0);
-
-            // // Add an entry-point for more extension._settings
-            // this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-            // const settingsItem = this.menu.addAction("More Settings",
-            //     () => ExtensionUtils.openPrefs());
-            // // Ensure the extension._settings are unavailable when the screen is locked
-            // settingsItem.visible = Main.sessionMode.allowSettings;
-            // this.menu._settingsActions[Me.uuid] = settingsItem;
-
-            this.sync();
-            addQuickSettingsItems([this]);
+      if (this.supported_interfaces.includes("Anime")) {
+        if (this.animeDisplayPower == null) {
+          this.animeDisplayPower = new AsusMenuToggle(
+            this.dbus_anime,
+            "EnableDisplay",
+            "anime-power",
+            "AniMe Display Enabled",
+          );
+          this._itemsSection.addMenuItem(this.animeDisplayPower, 2);
+          this.animeDisplayPower.toggle_callback = () => {
+            this.last_selection = "anime-power";
+          };
         }
 
-        _toggle() {
-            if (this.primary == "mini-led" && this.miniLed != null) {
-                this._dbus_platform.getMiniLedMode();
-                const checked = this._dbus_platform.bios.mini_led_mode;
-                if (this.checked !== checked)
-                    this._dbus_platform.setMiniLedMode(this.checked);
-            }
-
-            if (this.primary == "panel-od" && this.panelOd != null) {
-                this._dbus_platform.getPanelOd();
-                const checked = this._dbus_platform.bios.panel_overdrive;
-                if (this.checked !== checked)
-                    this._dbus_platform.setPanelOd(this.checked);
-            }
-
-            if (this.primary == "anime-power" && this.animeDisplayPower != null) {
-                this._dbus_anime.getDeviceState();
-                const checked = this._dbus_anime.deviceState.display_enabled;
-                if (this.checked !== checked)
-                    this._dbus_anime.setEnableDisplay(this.checked);
-            }
+        if (this.animePowersaveAnim == null) {
+          this.animePowersaveAnim = new AsusMenuToggle(
+            this.dbus_anime,
+            "BuiltinsEnabled",
+            "anime-builtins",
+            "AniMe Built-in Animations",
+          );
+          this._itemsSection.addMenuItem(this.animePowersaveAnim, 3);
+          this.animePowersaveAnim.toggle_callback = () => {
+            this.last_selection = "anime-builtins";
+          };
         }
+      }
 
-        sync() {
-            let checked = false;
-            if (this.primary == "mini-led" && this.miniLed != null) {
-                this.title = this.miniLed.label;
-                checked = this._dbus_platform.bios.mini_led_mode;
-            }
+      this.connectObject(
+        "clicked",
+        () => {
+          this._toggle();
+        },
+        this,
+      );
 
-            if (this.primary == "panel-od" && this.panelOd != null) {
-                this.title = this.panelOd.label;
-                checked = this._dbus_platform.bios.panel_overdrive;
-            }
+      this.menu.addMenuItem(this._itemsSection, 0);
 
-            if (this.primary == "anime-power" && this.animeDisplayPower != null) {
-                this.title = this.animeDisplayPower.label;
-                checked = this._dbus_anime.deviceState.display_enabled;
-            }
+      this.dbus_platform?.proxy.connect("g-properties-changed", (_proxy, changed, invalidated) => {
+        //const properties = changed.deepUnpack();
+        this.sync();
+      });
 
-            // if (this.animePowersaveAnim != null) {
-            // }
+      this.dbus_anime?.proxy.connect("g-properties-changed", (_proxy, changed, invalidated) => {
+        //const properties = changed.deepUnpack();
+        this.sync();
+      });
 
-            if (this.checked !== checked)
-                this.set({ checked });
+      // // Add an entry-point for more extension._settings
+      // this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+      // const settingsItem = this.menu.addAction("More Settings",
+      //     () => ExtensionUtils.openPrefs());
+      // // Ensure the extension._settings are unavailable when the screen is locked
+      // settingsItem.visible = Main.sessionMode.allowSettings;
+      // this.menu._settingsActions[Me.uuid] = settingsItem;
+
+      this.sync();
+      addQuickSettingsItems([this]);
+    }
+
+    _toggle() {
+      if (this.last_selection == "mini-led" && this.miniLed != null) {
+        if (this.checked !== this.dbus_platform.proxy.MiniLed)
+          this.dbus_platform.proxy.MiniLed = this.checked;
+      }
+
+      if (this.last_selection == "panel-od" && this.panelOd != null) {
+        if (this.checked !== this.dbus_platform.proxy.PanelOd) {
+          this.dbus_platform.proxy.PanelOd = this.checked;
         }
-    });
+      }
+
+      if (this.last_selection == "anime-power" && this.animeDisplayPower != null) {
+        if (this.checked !== this.dbus_anime.proxy.EnableDisplay)
+          this.dbus_anime.proxy.EnableDisplay = this.checked;
+      }
+
+      if (this.last_selection == "anime-builtins" && this.animePowersaveAnim != null) {
+        if (this.checked !== this.dbus_anime.proxy.BuiltinsEnabled)
+          this.dbus_anime.proxy.BuiltinsEnabled = this.checked;
+      }
+    }
+
+    sync() {
+      let checked = false;
+      if (this.last_selection == "mini-led" && this.miniLed != null) {
+        this.title = this.miniLed.title;
+        checked = this.dbus_platform.proxy.MiniLed;
+      }
+
+      if (this.last_selection == "panel-od" && this.panelOd != null) {
+        this.title = this.panelOd.title;
+        checked = this.dbus_platform.proxy.PanelOd;
+      }
+
+      if (this.last_selection == "anime-power" && this.animeDisplayPower != null) {
+        this.title = this.animeDisplayPower.title;
+        checked = this.dbus_anime.proxy.EnableDisplay;
+      }
+
+      if (this.last_selection == "anime-builtins" && this.animePowersaveAnim != null) {
+        this.title = this.animePowersaveAnim.title;
+        checked = this.dbus_anime.proxy.BuiltinsEnabled;
+      }
+
+      // if (this.animePowersaveAnim != null) {
+      // }
+
+      if (this.checked !== checked) this.set({ checked });
+    }
+
+    destroy() {
+      // this.panelOd?.destroy();
+    }
+  },
+);

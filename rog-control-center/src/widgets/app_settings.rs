@@ -45,7 +45,7 @@ pub fn app_settings(config: &mut Config, states: &mut SystemState, ui: &mut Ui) 
         .clicked()
         || ui
             .checkbox(
-                &mut enabled_notifications.receive_notify_led,
+                &mut enabled_notifications.receive_led_mode_data_changed,
                 "Enable LED mode change notification",
             )
             .clicked()
@@ -69,13 +69,13 @@ pub fn app_settings(config: &mut Config, states: &mut SystemState, ui: &mut Ui) 
             .clicked()
         || ui
             .checkbox(
-                &mut enabled_notifications.receive_notify_charge_control_end_threshold,
+                &mut enabled_notifications.receive_charge_control_end_threshold_changed,
                 "Enable charge threshold notification",
             )
             .clicked()
         || ui
             .checkbox(
-                &mut enabled_notifications.receive_notify_profile,
+                &mut enabled_notifications.receive_throttle_thermal_policy_changed,
                 "Enable profile change notification",
             )
             .clicked()

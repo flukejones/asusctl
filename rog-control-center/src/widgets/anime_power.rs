@@ -1,10 +1,9 @@
 use egui::{RichText, Ui};
 use rog_anime::usb::Brightness;
-use rog_platform::supported::SupportedFunctions;
 
 use crate::system_state::SystemState;
 
-pub fn anime_power_group(_supported: &SupportedFunctions, states: &mut SystemState, ui: &mut Ui) {
+pub fn anime_power_group(states: &mut SystemState, ui: &mut Ui) {
     ui.heading("AniMe Matrix Settings");
     ui.label("Options are incomplete. Awake + Boot should work");
 

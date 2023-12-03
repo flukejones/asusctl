@@ -3,12 +3,12 @@ use std::fmt::Debug;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 #[cfg(feature = "dbus")]
-use zbus::zvariant::Type;
+use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::aura_detection::PowerZones;
 
 #[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type))]
+#[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct KbAuraPowerState {
     pub zone: PowerZones,
@@ -95,7 +95,7 @@ impl KbAuraPowerState {
 /// |00000000| 00000000| 00000000| 00000100|sleep_rear|
 /// |00000000| 00000000| 00000000| 00001000|shut_rear_|
 #[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type))]
+#[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AuraPower {
     pub keyboard: KbAuraPowerState,

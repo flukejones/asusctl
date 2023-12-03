@@ -12,12 +12,9 @@ use std::time::Duration;
 use log::{error, info, trace, warn};
 use notify_rust::{Hint, Notification, NotificationHandle, Urgency};
 use rog_dbus::zbus_anime::AnimeProxy;
-use rog_dbus::zbus_led::LedProxy;
-use rog_dbus::zbus_platform::RogBiosProxy;
-use rog_dbus::zbus_power::PowerProxy;
-use rog_dbus::zbus_profile::ProfileProxy;
-use rog_platform::platform::GpuMode;
-use rog_profiles::Profile;
+use rog_dbus::zbus_aura::AuraProxy;
+use rog_dbus::zbus_platform::PlatformProxy;
+use rog_platform::platform::{GpuMode, PlatformPolicy};
 use serde::{Deserialize, Serialize};
 use supergfxctl::actions::UserActionRequired as GfxUserAction;
 use supergfxctl::pci_device::{GfxMode, GfxPower};
@@ -42,11 +39,11 @@ pub struct EnabledNotifications {
     pub receive_mini_led_mode_changed: bool,
     pub receive_dgpu_disable_changed: bool,
     pub receive_egpu_enable_changed: bool,
-    pub receive_notify_gpu_mux_mode: bool,
-    pub receive_notify_charge_control_end_threshold: bool,
+    pub receive_gpu_mux_mode_changed: bool,
+    pub receive_charge_control_end_threshold_changed: bool,
     pub receive_notify_mains_online: bool,
-    pub receive_notify_profile: bool,
-    pub receive_notify_led: bool,
+    pub receive_throttle_thermal_policy_changed: bool,
+    pub receive_led_mode_data_changed: bool,
     /// Anime
     pub receive_power_states: bool,
     pub receive_notify_gfx: bool,
@@ -62,11 +59,11 @@ impl Default for EnabledNotifications {
             receive_mini_led_mode_changed: true,
             receive_dgpu_disable_changed: true,
             receive_egpu_enable_changed: true,
-            receive_notify_gpu_mux_mode: true,
-            receive_notify_charge_control_end_threshold: true,
+            receive_gpu_mux_mode_changed: true,
+            receive_charge_control_end_threshold_changed: true,
             receive_notify_mains_online: false,
-            receive_notify_profile: true,
-            receive_notify_led: true,
+            receive_throttle_thermal_policy_changed: true,
+            receive_led_mode_data_changed: true,
             receive_power_states: false,
             receive_notify_gfx: false,
             receive_notify_gfx_status: false,
@@ -160,7 +157,7 @@ macro_rules! recv_changed {
                             }
                         }
                         if let Ok(mut lock) = page_states1.lock() {
-                            lock.$($args)+ = out;
+                            lock.$($args)+ = out.into();
                             lock.set_notified();
                         }
                     }
@@ -201,7 +198,7 @@ pub fn start_notifications(
 
     // BIOS notif
     recv_changed!(
-        RogBiosProxy,
+        PlatformProxy,
         receive_post_animation_sound_changed,
         last_notification,
         enabled_notifications,
@@ -212,7 +209,7 @@ pub fn start_notifications(
     );
 
     recv_changed!(
-        RogBiosProxy,
+        PlatformProxy,
         receive_panel_od_changed,
         last_notification,
         enabled_notifications,
@@ -223,7 +220,7 @@ pub fn start_notifications(
     );
 
     recv_changed!(
-        RogBiosProxy,
+        PlatformProxy,
         receive_mini_led_mode_changed,
         last_notification,
         enabled_notifications,
@@ -234,7 +231,7 @@ pub fn start_notifications(
     );
 
     recv_changed!(
-        RogBiosProxy,
+        PlatformProxy,
         receive_dgpu_disable_changed,
         last_notification,
         enabled_notifications,
@@ -245,7 +242,7 @@ pub fn start_notifications(
     );
 
     recv_changed!(
-        RogBiosProxy,
+        PlatformProxy,
         receive_egpu_enable_changed,
         last_notification,
         enabled_notifications,
@@ -256,85 +253,69 @@ pub fn start_notifications(
     );
 
     // Charge notif
-    recv_notif!(
-        PowerProxy,
-        receive_notify_charge_control_end_threshold,
+    recv_changed!(
+        PlatformProxy,
+        receive_charge_control_end_threshold_changed,
         last_notification,
         enabled_notifications,
         page_states,
-        (power_state.charge_limit),
-        (limit),
+        (bios.charge_limit),
         "Battery charge limit changed to",
         do_notification
     );
 
-    recv_notif!(
-        PowerProxy,
-        receive_notify_mains_online,
-        last_notification,
-        enabled_notifications,
-        page_states,
-        (power_state.ac_power),
-        (on),
-        "AC Power power is",
-        ac_power_notification
-    );
-
     // Profile notif
-    recv_notif!(
-        ProfileProxy,
-        receive_notify_profile,
+    recv_changed!(
+        PlatformProxy,
+        receive_throttle_thermal_policy_changed,
         last_notification,
         enabled_notifications,
         page_states,
-        (profiles.current),
-        (profile),
+        (bios.throttle),
         "Profile changed to",
         do_thermal_notif
     );
     // notify!(do_thermal_notif(&out.profile), lock);
 
     // LED notif
-    recv_notif!(
-        LedProxy,
-        receive_notify_led,
+    recv_changed!(
+        AuraProxy,
+        receive_led_mode_data_changed,
         last_notification,
         enabled_notifications,
         page_states,
         (aura.current_mode),
-        (data.mode),
         "Keyboard LED mode changed to",
         do_notification
     );
 
-    let page_states1 = page_states.clone();
-    tokio::spawn(async move {
-        let conn = zbus::Connection::system()
-            .await
-            .map_err(|e| {
-                error!("zbus signal: receive_device_state: {e}");
-                e
-            })
-            .unwrap();
-        let proxy = LedProxy::new(&conn)
-            .await
-            .map_err(|e| {
-                error!("zbus signal: receive_device_state: {e}");
-                e
-            })
-            .unwrap();
-        if let Ok(mut p) = proxy.receive_notify_power_states().await {
-            info!("Started zbus signal thread: receive_notify_power_states");
-            while let Some(e) = p.next().await {
-                if let Ok(out) = e.args() {
-                    if let Ok(mut lock) = page_states1.lock() {
-                        lock.aura.enabled = out.data;
-                        lock.set_notified();
-                    }
-                }
-            }
-        };
-    });
+    // let page_states1 = page_states.clone();
+    // tokio::spawn(async move {
+    //     let conn = zbus::Connection::system()
+    //         .await
+    //         .map_err(|e| {
+    //             error!("zbus signal: receive_device_state: {e}");
+    //             e
+    //         })
+    //         .unwrap();
+    //     let proxy = AuraProxy::new(&conn)
+    //         .await
+    //         .map_err(|e| {
+    //             error!("zbus signal: receive_device_state: {e}");
+    //             e
+    //         })
+    //         .unwrap();
+    //     let p = proxy.receive_led_power_changed().await;
+    //     info!("Started zbus signal thread: receive_notify_power_states");
+    //     while let Some(e) = p.next().await {
+    //         if let Ok(out) = e.get().await {
+    //             if let Ok(mut lock) = page_states1.lock() {
+    //                 lock.aura.enabled = out;
+    //                 lock.set_notified();
+    //             }
+    //         }
+    //     }
+    // });
 
     let page_states1 = page_states.clone();
     tokio::spawn(async move {
@@ -373,7 +354,7 @@ pub fn start_notifications(
                 e
             })
             .unwrap();
-        let proxy = RogBiosProxy::new(&conn)
+        let proxy = PlatformProxy::new(&conn)
             .await
             .map_err(|e| {
                 error!("zbus signal: receive_notify_gpu_mux_mode: {e}");
@@ -394,7 +375,7 @@ pub fn start_notifications(
                     continue;
                 }
                 if let Ok(mut lock) = page_states1.lock() {
-                    lock.bios.dedicated_gfx = mode;
+                    lock.bios.gpu_mux_mode = Some(mode);
                     lock.set_notified();
                 }
                 do_mux_notification("Reboot required. BIOS GPU MUX mode set to", &mode).ok();
@@ -541,7 +522,8 @@ where
     Ok(base_notification(message, data).show()?)
 }
 
-fn ac_power_notification(message: &str, on: &bool) -> Result<NotificationHandle> {
+// TODO:
+fn _ac_power_notification(message: &str, on: &bool) -> Result<NotificationHandle> {
     let data = if *on {
         unsafe {
             if let Some(cmd) = POWER_AC_CMD.as_mut() {
@@ -564,11 +546,11 @@ fn ac_power_notification(message: &str, on: &bool) -> Result<NotificationHandle>
     Ok(base_notification(message, &data).show()?)
 }
 
-fn do_thermal_notif(message: &str, profile: &Profile) -> Result<NotificationHandle> {
+fn do_thermal_notif(message: &str, profile: &PlatformPolicy) -> Result<NotificationHandle> {
     let icon = match profile {
-        Profile::Balanced => "asus_notif_yellow",
-        Profile::Performance => "asus_notif_red",
-        Profile::Quiet => "asus_notif_green",
+        PlatformPolicy::Balanced => "asus_notif_yellow",
+        PlatformPolicy::Performance => "asus_notif_red",
+        PlatformPolicy::Quiet => "asus_notif_green",
     };
     let profile: &str = (*profile).into();
     let mut notif = base_notification(message, &profile.to_uppercase());

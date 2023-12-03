@@ -1,8 +1,9 @@
 use gumdrop::Options;
+use rog_platform::platform::PlatformPolicy;
 
 use crate::anime_cli::AnimeCommand;
 use crate::aura_cli::{LedBrightness, LedPowerCommand1, LedPowerCommand2, SetAuraBuiltin};
-use crate::profiles_cli::{FanCurveCommand, ProfileCommand};
+use crate::fan_curve_cli::FanCurveCommand;
 
 #[derive(Default, Options)]
 pub struct CliStart {
@@ -42,6 +43,24 @@ pub enum CliCommand {
     Anime(AnimeCommand),
     #[options(help = "Change bios settings")]
     Bios(BiosCommand),
+}
+
+#[derive(Debug, Clone, Options)]
+pub struct ProfileCommand {
+    #[options(help = "print help message")]
+    pub help: bool,
+
+    #[options(help = "toggle to next profile in list")]
+    pub next: bool,
+
+    #[options(help = "list available profiles")]
+    pub list: bool,
+
+    #[options(help = "get profile")]
+    pub profile_get: bool,
+
+    #[options(meta = "", help = "set the active profile")]
+    pub profile_set: Option<PlatformPolicy>,
 }
 
 #[derive(Options)]
