@@ -179,6 +179,20 @@ impl CtrlPlatform {
             }
         }
     }
+
+    async fn update_policy_ac_or_bat(&self, power_plugged: bool) {
+        let profile = if power_plugged {
+            self.config.lock().await.platform_policy_on_ac
+        } else {
+            self.config.lock().await.platform_policy_on_battery
+        };
+        self.platform
+            .set_throttle_thermal_policy(profile.into())
+            .ok();
+        if let Some(cpu) = self.cpu_control.as_ref() {
+            cpu.set_epp(profile.into()).ok();
+        }
+    }
 }
 
 #[dbus_interface(name = "org.asuslinux.Daemon")]
@@ -508,21 +522,10 @@ impl crate::Reloadable for CtrlPlatform {
             )?;
         }
 
-        if self.platform.has_throttle_thermal_policy() {
-            if let Ok(ac) = self.power.get_online() {
-                let profile = if ac == 1 {
-                    self.config.lock().await.platform_policy_on_ac
-                } else {
-                    self.config.lock().await.platform_policy_on_battery
-                };
-                self.platform.set_throttle_thermal_policy(profile.into())?;
-                if let Some(cpu) = self.cpu_control.as_ref() {
-                    cpu.set_epp(profile.into())?;
-                }
-            }
-        }
-
         if let Ok(power_plugged) = self.power.get_online() {
+            if self.platform.has_throttle_thermal_policy() {
+                self.update_policy_ac_or_bat(power_plugged > 0).await;
+            }
             self.run_ac_or_bat_cmd(power_plugged > 0).await;
         }
 
@@ -600,6 +603,14 @@ impl CtrlTask for CtrlPlatform {
                             )
                             .ok();
                     }
+                    if let Ok(power_plugged) = platform1.power.get_online() {
+                        if !sleeping && platform1.platform.has_throttle_thermal_policy() {
+                            platform1.update_policy_ac_or_bat(power_plugged > 0).await;
+                        }
+                        if !sleeping {
+                            platform1.run_ac_or_bat_cmd(power_plugged > 0).await;
+                        }
+                    }
                 }
             },
             move |shutting_down| {
@@ -624,23 +635,12 @@ impl CtrlTask for CtrlPlatform {
                 async move {}
             },
             move |power_plugged| {
-                let mut platform3 = platform3.clone();
+                let platform3 = platform3.clone();
                 // power change
                 async move {
-                    let policy = if power_plugged {
-                        platform3.config.lock().await.platform_policy_on_ac
-                    } else {
-                        platform3.config.lock().await.platform_policy_on_battery
-                    };
-                    platform3
-                        .set_throttle_thermal_policy(policy)
-                        .await
-                        .map_err(|err| {
-                            warn!("RogPlatform: throttle_thermal_policy {}", err);
-                            FdoErr::Failed(format!("RogPlatform: throttle_thermal_policy: {err}"))
-                        })
-                        .ok();
-
+                    if platform3.platform.has_throttle_thermal_policy() {
+                        platform3.update_policy_ac_or_bat(power_plugged).await;
+                    }
                     platform3.run_ac_or_bat_cmd(power_plugged).await;
                 }
             },
