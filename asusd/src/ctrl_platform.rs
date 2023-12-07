@@ -1,12 +1,14 @@
 use std::process::Command;
 use std::sync::Arc;
+use std::time::Duration;
 
 use async_trait::async_trait;
 use config_traits::StdConfig;
-use log::{debug, error, info, warn};
-use rog_platform::cpu::CPUControl;
+use log::{error, info, warn};
+use rog_platform::cpu::{CPUControl, CPUEPP};
 use rog_platform::platform::{GpuMode, PlatformPolicy, Properties, RogPlatform};
 use rog_platform::power::AsusPower;
+use tokio::time::sleep;
 use zbus::export::futures_util::lock::Mutex;
 use zbus::fdo::Error as FdoErr;
 use zbus::{dbus_interface, Connection, ObjectServer, SignalContext};
@@ -670,31 +672,38 @@ impl CtrlTask for CtrlPlatform {
         self.watch_nv_dynamic_boost(signal_ctxt.clone()).await?;
         self.watch_nv_temp_target(signal_ctxt.clone()).await?;
 
-        let watch_throttle_thermal_policy = self.platform.monitor_throttle_thermal_policy()?;
+        // let watch_throttle_thermal_policy =
+        // self.platform.monitor_throttle_thermal_policy()?;
         let ctrl = self.clone();
 
         tokio::spawn(async move {
-            use futures_lite::StreamExt;
-            let mut buffer = [0; 32];
-            if let Ok(mut stream) = watch_throttle_thermal_policy.into_event_stream(&mut buffer) {
-                while (stream.next().await).is_some() {
-                    // this blocks
-                    debug!("Platform: watch_throttle_thermal_policy changed");
-                    if let Ok(profile) = ctrl
-                        .platform
-                        .get_throttle_thermal_policy()
-                        .map(PlatformPolicy::from)
-                        .map_err(|e| {
-                            error!("Platform: get_throttle_thermal_policy error: {e}");
-                        })
-                    {
-                        if let Some(cpu) = ctrl.cpu_control.as_ref() {
-                            info!("PlatformPolicy setting EPP");
-                            cpu.set_epp(profile.into()).ok();
+            let mut last_epp = CPUEPP::Default;
+            loop {
+                if let Ok(profile) = ctrl
+                    .platform
+                    .get_throttle_thermal_policy()
+                    .map(PlatformPolicy::from)
+                    .map_err(|e| {
+                        error!("Platform: get_throttle_thermal_policy error: {e}");
+                    })
+                {
+                    if let Some(cpu) = ctrl.cpu_control.as_ref() {
+                        if let Ok(epp) = cpu.get_epp() {
+                            if last_epp != epp {
+                                info!(
+                                    "PlatformPolicy setting EPP due to throttle_thermal_policy \
+                                     change"
+                                );
+                                cpu.set_epp(profile.into()).ok();
+                                last_epp = epp;
+                            }
                         }
-                        ctrl.config.lock().await.platform_policy_to_restore = profile;
                     }
+                    ctrl.config.lock().await.platform_policy_to_restore = profile;
                 }
+                // This needs to be a loop due to a conlict in fan_curves
+                // TODO: fix it
+                sleep(Duration::from_secs(1)).await;
             }
         });
 
