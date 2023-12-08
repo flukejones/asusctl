@@ -579,11 +579,10 @@ impl CtrlTask for CtrlPlatform {
                 let platform1 = platform1.clone();
                 async move {
                     info!("RogPlatform reloading panel_od");
-                    let lock = platform1.config.lock().await;
                     if !sleeping && platform1.platform.has_panel_od() {
                         platform1
                             .platform
-                            .set_panel_od(lock.panel_od)
+                            .set_panel_od(platform1.config.lock().await.panel_od)
                             .map_err(|err| {
                                 warn!("CtrlCharge: panel_od {}", err);
                                 err
