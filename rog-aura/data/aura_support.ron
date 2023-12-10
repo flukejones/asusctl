@@ -392,6 +392,14 @@
         power_zones: [Keyboard],
     ),
     (
+        board_name: "G814JI",
+        layout_name: "g814ji-per-key",
+        basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
+        basic_zones: [],
+        advanced_type: None,
+        power_zones: [Keyboard],
+    ),
+    (
         board_name: "GA401Q",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse],
@@ -686,5 +694,5 @@
         basic_zones: [],
         advanced_type: None,
         power_zones: [Keyboard],
-    )
+    ),
 ])
