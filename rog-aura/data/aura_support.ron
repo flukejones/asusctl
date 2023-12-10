@@ -124,7 +124,8 @@
         layout_name: "g513i-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
-        advanced_type: PerKey,
+        advanced_error: test failed, to rerun pass `-p rog_aura --lib`
+type: PerKey,
         power_zones: [Keyboard],
     ),
     (
@@ -389,6 +390,14 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
+        power_zones: [Keyboard],
+    ),
+    (
+        board_name: "G814JI",
+        layout_name: "g814ji-per-key",
+        basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
+        basic_zones: [],
+        advanced_type: None,
         power_zones: [Keyboard],
     ),
     (
@@ -686,13 +695,5 @@
         basic_zones: [],
         advanced_type: None,
         power_zones: [Keyboard],
-    ),
-    (
-        board_name: "G814JI",
-        layout_name: "g814ji-per-key",
-        basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
-        basic_zones: [],
-        advanced_type: None,
-        power_zones: [Keyboard],
-    ),
+    )
 ])
