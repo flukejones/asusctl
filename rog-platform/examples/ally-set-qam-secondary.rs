@@ -1,6 +1,4 @@
 use std::error::Error;
-use std::thread::sleep;
-use std::time::Duration;
 
 use rog_aura::usb::AuraDevice;
 use rog_platform::hid_raw::HidRaw;
