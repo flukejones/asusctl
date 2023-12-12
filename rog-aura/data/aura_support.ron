@@ -396,8 +396,8 @@
         layout_name: "g814ji-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
-        advanced_type: None,
-        power_zones: [Keyboard],
+        advanced_type: PerKey,
+        power_zones: [Keyboard, Lightbar],
     ),
     (
         board_name: "GA401Q",
