@@ -112,6 +112,8 @@ vendor:
 	echo 'directory = "vendor"' >> .cargo/config
 	mv .cargo/config ./cargo-config
 	rm -rf .cargo
+	rm -rf vendor
+	cargo vendor-filterer --platform x86_64-unknown-linux-gnu vendor
 	tar pcfJ vendor_asusctl_$(VERSION).tar.xz vendor
 	rm -rf vendor
 
@@ -132,8 +134,7 @@ introspect:
 
 build:
 ifeq ($(VENDORED),1)
-	cargo vendor-filterer --platform x86_64-unknown-linux-gnu vendor
-	#cargo vendor
+	cargo vendor
 	@echo "version = $(VERSION)"
 	tar pxf vendor_asusctl_$(VERSION).tar.xz
 endif

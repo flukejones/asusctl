@@ -46,7 +46,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
     let lb = |n: u32| (n & 0xff) as u8;
 
     let checksum = |bytes: &[u8]| {
-        let total = bytes.iter().fold(0, |a, n| a as u32 + (*n) as u32);
+        let total = bytes.iter().fold(0, |a, n| a + (*n) as u32);
         total as u8
     };
 
