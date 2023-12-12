@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v5.0.0]
 ### Added
 - Gnome 45 plugin
 - Support for G513RW LED modes
