@@ -172,6 +172,7 @@
                 (VolDown, "rog_row"),
                 (VolUp, "rog_row"),
                 (MicMute, "rog_row"),
+                (RogFan, "rog_row"),
                 (RogApp, "rog_row"),
             ],
         ),
