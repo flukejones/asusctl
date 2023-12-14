@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Fix setting next fan profile
 - Fix the assud.service
+- Fix dbus signature of some power setting types for some keyboards
 
 ## [v5.0.0]
 ### Added

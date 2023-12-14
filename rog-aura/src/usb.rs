@@ -137,7 +137,7 @@ pub struct AuraPowerDev {
 #[cfg_attr(
     feature = "dbus",
     derive(Type, Value, OwnedValue),
-    zvariant(signature = "s")
+    zvariant(signature = "y")
 )]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(u32)]
@@ -172,7 +172,7 @@ impl AuraDevTuf {
 #[cfg_attr(
     feature = "dbus",
     derive(Type, Value, OwnedValue),
-    zvariant(signature = "s")
+    zvariant(signature = "y")
 )]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[repr(u32)]
