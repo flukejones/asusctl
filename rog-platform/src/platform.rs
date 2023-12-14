@@ -278,7 +278,7 @@ pub enum PlatformPolicy {
 impl PlatformPolicy {
     pub const fn next(&self) -> Self {
         match self {
-            Self::Balanced => Self::Balanced,
+            Self::Balanced => Self::Performance,
             Self::Performance => Self::Quiet,
             Self::Quiet => Self::Balanced,
         }

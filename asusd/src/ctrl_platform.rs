@@ -322,6 +322,7 @@ impl CtrlPlatform {
         let policy: PlatformPolicy =
             platform_get_value!(self, throttle_thermal_policy, "throttle_thermal_policy")
                 .map(|n| n.into())?;
+        let policy = PlatformPolicy::next(&policy);
 
         if self.platform.has_throttle_thermal_policy() {
             if let Some(cpu) = self.cpu_control.as_ref() {
