@@ -2,7 +2,7 @@
 Description=ASUS Notebook Control
 StartLimitInterval=500
 StartLimitBurst=5
-After=nvidia-powerd.service,systemd-udevd.service
+After=nvidia-powerd.service systemd-udevd.service
 
 [Service]
 Environment=IS_SERVICE=1

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Fix setting next fan profile
+- Fix the assud.service
 
 ## [v5.0.0]
 ### Added
