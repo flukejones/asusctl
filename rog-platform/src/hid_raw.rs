@@ -4,6 +4,7 @@ use std::io::Write;
 use std::path::PathBuf;
 
 use log::{info, warn};
+use udev::Device;
 
 use crate::error::{PlatformError, Result};
 
@@ -87,5 +88,11 @@ impl HidRaw {
         };
         file.write_all(message)
             .map_err(|e| PlatformError::IoPath(path.to_string_lossy().to_string(), e))
+    }
+
+    pub fn set_wakeup_disabled(&self) -> Result<()> {
+        let path = unsafe { &*(self.path.get()) };
+        let mut dev = Device::from_syspath(path)?;
+        Ok(dev.set_attribute_value("power/wakeup", "disabled")?)
     }
 }

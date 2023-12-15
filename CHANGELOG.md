@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Anime: force power/wakeup disabled to prevent idiotic random wakes
+
 ## [v5.0.1]
 ### Changed
 - Fix setting next fan profile

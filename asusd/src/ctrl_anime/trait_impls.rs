@@ -277,6 +277,15 @@ impl crate::CtrlTask for CtrlAnimeZbus {
                 async move {
                     let lock = inner.lock().await;
                     if lock.config.display_enabled {
+                        lock.node
+                            .write_bytes(&pkt_set_enable_powersave_anim(
+                                !(sleeping && lock.config.off_when_suspended),
+                            ))
+                            .map_err(|err| {
+                                warn!("create_sys_event_tasks::off_when_suspended {}", err);
+                            })
+                            .ok();
+
                         lock.thread_exit.store(true, Ordering::Release); // ensure clean slate
                         lock.node
                             .write_bytes(&pkt_set_enable_display(
@@ -316,8 +325,16 @@ impl crate::CtrlTask for CtrlAnimeZbus {
                 async move {
                     let lock = inner.lock().await;
                     if lock.config.off_when_lid_closed {
+                        if lock.config.builtin_anims_enabled {
+                            lock.node
+                                .write_bytes(&pkt_set_enable_powersave_anim(!lid_closed))
+                                .map_err(|err| {
+                                    warn!("create_sys_event_tasks::off_when_suspended {}", err);
+                                })
+                                .ok();
+                        }
                         lock.node
-                            .write_bytes(&pkt_set_enable_display(lid_closed))
+                            .write_bytes(&pkt_set_enable_display(!lid_closed))
                             .map_err(|err| {
                                 warn!("create_sys_event_tasks::off_when_lid_closed {}", err);
                             })
@@ -331,6 +348,14 @@ impl crate::CtrlTask for CtrlAnimeZbus {
                 async move {
                     let lock = inner.lock().await;
                     if lock.config.off_when_unplugged {
+                        if lock.config.builtin_anims_enabled {
+                            lock.node
+                                .write_bytes(&pkt_set_enable_powersave_anim(power_plugged))
+                                .map_err(|err| {
+                                    warn!("create_sys_event_tasks::off_when_suspended {}", err);
+                                })
+                                .ok();
+                        }
                         lock.node
                             .write_bytes(&pkt_set_enable_display(power_plugged))
                             .map_err(|err| {
