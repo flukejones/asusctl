@@ -6,7 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v5.0.2]
 ### Changed
+- Fan-curves: nuke a few async deadlocks
 - Anime: force power/wakeup disabled to prevent idiotic random wakes
 
 ## [v5.0.1]

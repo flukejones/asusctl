@@ -4,7 +4,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use config_traits::StdConfig;
 use log::{debug, error, info, warn};
-use rog_platform::cpu::CPUControl;
+use rog_platform::cpu::{CPUControl, CPUGovernor};
 use rog_platform::platform::{GpuMode, PlatformPolicy, Properties, RogPlatform};
 use rog_platform::power::AsusPower;
 use zbus::export::futures_util::lock::Mutex;
@@ -180,6 +180,23 @@ impl CtrlPlatform {
         }
     }
 
+    fn check_and_set_epp(&self, profile: PlatformPolicy) {
+        info!("PlatformPolicy setting EPP");
+        if let Some(cpu) = self.cpu_control.as_ref() {
+            if let Ok(epp) = cpu.get_available_epp() {
+                debug!("Available EPP: {epp:?}");
+                if epp.contains(&profile.into()) {
+                    debug!("Setting {profile:?}");
+                    cpu.set_epp(profile.into()).ok();
+                } else if let Ok(gov) = cpu.get_governor() {
+                    if gov != CPUGovernor::Powersave {
+                        warn!("powersave governor is not is use, you should use it.");
+                    }
+                }
+            }
+        }
+    }
+
     async fn update_policy_ac_or_bat(&self, power_plugged: bool) {
         let profile = if power_plugged {
             self.config.lock().await.platform_policy_on_ac
@@ -189,9 +206,7 @@ impl CtrlPlatform {
         self.platform
             .set_throttle_thermal_policy(profile.into())
             .ok();
-        if let Some(cpu) = self.cpu_control.as_ref() {
-            cpu.set_epp(profile.into()).ok();
-        }
+        self.check_and_set_epp(profile);
     }
 }
 
@@ -325,10 +340,7 @@ impl CtrlPlatform {
         let policy = PlatformPolicy::next(&policy);
 
         if self.platform.has_throttle_thermal_policy() {
-            if let Some(cpu) = self.cpu_control.as_ref() {
-                info!("PlatformPolicy setting EPP");
-                cpu.set_epp(policy.into())?
-            }
+            self.check_and_set_epp(policy);
             self.platform
                 .set_throttle_thermal_policy(policy.into())
                 .map_err(|err| {
@@ -354,10 +366,7 @@ impl CtrlPlatform {
     async fn set_throttle_thermal_policy(&mut self, policy: PlatformPolicy) -> Result<(), FdoErr> {
         // TODO: watch for external changes
         if self.platform.has_throttle_thermal_policy() {
-            if let Some(cpu) = self.cpu_control.as_ref() {
-                info!("PlatformPolicy setting EPP");
-                cpu.set_epp(policy.into())?
-            }
+            self.check_and_set_epp(policy);
             self.config.lock().await.platform_policy_to_restore = policy;
             self.platform
                 .set_throttle_thermal_policy(policy.into())
@@ -688,10 +697,7 @@ impl CtrlTask for CtrlPlatform {
                             error!("Platform: get_throttle_thermal_policy error: {e}");
                         })
                     {
-                        if let Some(cpu) = ctrl.cpu_control.as_ref() {
-                            info!("PlatformPolicy setting EPP");
-                            cpu.set_epp(profile.into()).ok();
-                        }
+                        ctrl.check_and_set_epp(profile);
                         ctrl.config.lock().await.platform_policy_to_restore = profile;
                     }
                 }
