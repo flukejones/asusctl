@@ -202,7 +202,9 @@ fn main() -> Result<()> {
                 "ROG Control Center",
                 native_options.clone(),
                 Box::new(move |cc| {
-                    Box::new(RogApp::new(Config::load().unwrap(), states, cc).unwrap())
+                    let cfg = Config::load().unwrap();
+                    let app = RogApp::new(cfg, states, cc);
+                    Box::new(app.unwrap())
                 }),
             )?;
 

@@ -4,24 +4,23 @@ use rog_aura::usb::{AuraDevRog1, AuraDevTuf, AuraDevice, AuraPowerDev};
 
 use crate::system_state::SystemState;
 
-pub fn aura_power_group(supported: &SupportedFunctions, states: &mut SystemState, ui: &mut Ui) {
+pub fn aura_power_group(states: &mut SystemState, ui: &mut Ui) {
     ui.heading("Keyboard LED power settings");
 
-    if supported.keyboard_led.dev_id.is_old_style() || supported.keyboard_led.dev_id.is_tuf_style()
-    {
-        aura_power1(supported, states, ui);
-    } else if supported.keyboard_led.dev_id.is_new_style() {
-        aura_power2(supported, states, ui);
+    if states.aura.dev_type.is_old_style() || states.aura.dev_type.is_tuf_style() {
+        aura_power1(states, ui);
+    } else if states.aura.dev_type.is_new_style() {
+        aura_power2(states, ui);
     }
 }
 
-fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mut Ui) {
+fn aura_power1(states: &mut SystemState, ui: &mut Ui) {
     let enabled_states = &mut states.aura.enabled;
     let mut boot = enabled_states.old_rog.contains(&AuraDevRog1::Boot);
     let mut sleep = enabled_states.old_rog.contains(&AuraDevRog1::Sleep);
     let mut keyboard = enabled_states.old_rog.contains(&AuraDevRog1::Keyboard);
     let mut lightbar = enabled_states.old_rog.contains(&AuraDevRog1::Lightbar);
-    if supported.keyboard_led.dev_id == AuraDevice::Tuf {
+    if states.aura.dev_type == AuraDevice::Tuf {
         boot = enabled_states.tuf.contains(&AuraDevTuf::Boot);
         sleep = enabled_states.tuf.contains(&AuraDevTuf::Sleep);
         keyboard = enabled_states.tuf.contains(&AuraDevTuf::Awake);
@@ -58,7 +57,7 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
                 if ui.toggle_value(&mut keyboard, "Keyboard").changed() {
                     changed = true;
                 }
-                if !supported.keyboard_led.basic_zones.is_empty()
+                if !states.aura.supported_basic_zones.is_empty()
                     && ui.toggle_value(&mut lightbar, "Lightbar").changed()
                 {
                     changed = true;
@@ -93,7 +92,7 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
     });
 
     if changed {
-        if supported.keyboard_led.dev_id == AuraDevice::Tuf {
+        if states.aura.dev_type == AuraDevice::Tuf {
             let mut enabled = Vec::new();
             let mut disabled = Vec::new();
 
@@ -132,7 +131,7 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
                     .asus_dbus
                     .proxies()
                     .aura()
-                    .set_led_power(options, enable)
+                    .set_led_power((options, enable))
                     .map_err(|err| {
                         states.error = Some(err.to_string());
                     })
@@ -168,7 +167,7 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
             modify_x1866(boot, AuraDevRog1::Boot);
             modify_x1866(sleep, AuraDevRog1::Sleep);
             modify_x1866(keyboard, AuraDevRog1::Keyboard);
-            if !supported.keyboard_led.basic_zones.is_empty() {
+            if !states.aura.supported_basic_zones.is_empty() {
                 modify_x1866(lightbar, AuraDevRog1::Lightbar);
             }
 
@@ -182,7 +181,7 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
                     .asus_dbus
                     .proxies()
                     .aura()
-                    .set_led_power(options, enable)
+                    .set_led_power((options, enable))
                     .map_err(|err| {
                         states.error = Some(err.to_string());
                     })
@@ -194,7 +193,7 @@ fn aura_power1(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
     }
 }
 
-fn aura_power2(supported: &SupportedFunctions, states: &mut SystemState, ui: &mut Ui) {
+fn aura_power2(states: &mut SystemState, ui: &mut Ui) {
     let AuraPower {
         keyboard,
         logo,
@@ -208,7 +207,7 @@ fn aura_power2(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
     let mut changed = false;
     let mut item = |power: &mut KbAuraPowerState, ui: &mut Ui| {
         ui.vertical(|ui| {
-            if supported.keyboard_led.power_zones.contains(&power.zone) {
+            if states.aura.supported_power_zones.contains(&power.zone) {
                 ui.horizontal_wrapped(|ui| {
                     ui.label(RichText::new(format!("{:?}", power.zone)).size(14.0));
                 });
@@ -247,7 +246,7 @@ fn aura_power2(supported: &SupportedFunctions, states: &mut SystemState, ui: &mu
                 .asus_dbus
                 .proxies()
                 .aura()
-                .set_led_power(options, enable)
+                .set_led_power((options, enable))
                 .map_err(|err| {
                     states.error = Some(err.to_string());
                 })

@@ -33,7 +33,7 @@ macro_rules! platform_get_value {
                     })
                 })
             } else {
-                error!("RogPlatform: {} not supported", $prop_name);
+                info!("RogPlatform: {} not supported", $prop_name);
                 return Err(FdoErr::NotSupported(format!("RogPlatform: {} not supported", $prop_name)));
             }
         })
@@ -45,9 +45,9 @@ macro_rules! platform_get_value_if_some {
         concat_idents::concat_idents!(has = has_, $property {
             if $self.platform.has() {
                 let lock = $self.config.lock().await;
-                Ok(lock.ppt_pl1_spl.unwrap_or($default))
+                Ok(lock.$property.unwrap_or($default))
             } else {
-                error!("RogPlatform: {} not supported", $prop_name);
+                info!("RogPlatform: {} not supported", $prop_name);
                 return Err(FdoErr::NotSupported(format!("RogPlatform: {} not supported", $prop_name)));
             }
         })
@@ -69,7 +69,7 @@ macro_rules! platform_set_bool {
                 lock.write();
                 Ok(())
             } else {
-                error!("RogPlatform: {} not supported", $prop_name);
+                info!("RogPlatform: {} not supported", $prop_name);
                 Err(FdoErr::NotSupported(format!("RogPlatform: {} not supported", $prop_name)))
             }
         })

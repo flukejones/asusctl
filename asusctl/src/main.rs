@@ -421,7 +421,7 @@ fn handle_led_mode(
         if let Some(cmdlist) = LedModeCommand::command_list() {
             let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
             for command in commands.iter().filter(|command| {
-                let modes = dbus.proxies().aura().supported_modes().unwrap();
+                let modes = dbus.proxies().aura().supported_basic_modes().unwrap();
                 for mode in &modes {
                     if command
                         .trim()
@@ -450,7 +450,7 @@ fn handle_led_mode(
     }
     if mode.next_mode {
         let mode = dbus.proxies().aura().led_mode()?;
-        let modes = dbus.proxies().aura().supported_modes()?;
+        let modes = dbus.proxies().aura().supported_basic_modes()?;
         let mut pos = modes.iter().position(|m| *m == mode).unwrap() + 1;
         if pos >= modes.len() {
             pos = 0;
@@ -458,7 +458,7 @@ fn handle_led_mode(
         dbus.proxies().aura().set_led_mode(modes[pos])?;
     } else if mode.prev_mode {
         let mode = dbus.proxies().aura().led_mode()?;
-        let modes = dbus.proxies().aura().supported_modes()?;
+        let modes = dbus.proxies().aura().supported_basic_modes()?;
         let mut pos = modes.iter().position(|m| *m == mode).unwrap();
         if pos == 0 {
             pos = modes.len() - 1;
@@ -662,7 +662,7 @@ fn handle_throttle_profile(
     supported: &[Properties],
     cmd: &ProfileCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if !supported.contains(&Properties::DgpuDisable) {
+    if !supported.contains(&Properties::PlatformPolicy) {
         println!("Profiles not supported by either this kernel or by the laptop.");
         return Err(ProfileError::NotSupported.into());
     }

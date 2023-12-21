@@ -28,7 +28,7 @@ pub struct LedSupportFile(Vec<LaptopLedData>);
 #[cfg_attr(
     feature = "dbus",
     derive(Type, Value, OwnedValue),
-    zvariant(signature = "s")
+    zvariant(signature = "u")
 )]
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Default, Copy, Clone)]
 pub enum PowerZones {

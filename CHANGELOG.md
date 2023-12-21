@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v5.0.3]
+### Changed
+- Fix and error in platform ppt value gets
+- Fix to asusctl CLI where an incorrect enum variant was used in throttle check
+- Turn some error messages in to warning or info to prevent confusion
+- Re-add the keyboard power settings in rogcc
+- Add two new aura dbus properties for providing some basic info on aura modes/power
+
 ## [v5.0.2]
 ### Changed
 - Fan-curves: nuke a few async deadlocks

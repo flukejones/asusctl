@@ -25,13 +25,13 @@ pub struct CtrlKbdLed {
     pub led_prod: AuraDevice,
     pub led_node: LEDNode,
     pub sysfs_node: KeyboardLed,
-    pub supported_modes: LaptopLedData,
+    pub supported_data: LaptopLedData,
     pub per_key_mode_active: bool,
     pub config: AuraConfig,
 }
 
 impl CtrlKbdLed {
-    pub fn new(supported_modes: LaptopLedData) -> Result<Self, RogError> {
+    pub fn new(supported_basic_modes: LaptopLedData) -> Result<Self, RogError> {
         let mut led_prod = AuraDevice::Unknown;
         let mut usb_node = None;
         for prod in ASUS_KEYBOARD_DEVICES {
@@ -97,7 +97,7 @@ impl CtrlKbdLed {
                     let mut new_set = Vec::new();
                     // only reuse a zone mode if the mode is supported
                     for mode in loaded {
-                        if supported_modes.basic_modes.contains(&mode.mode) {
+                        if supported_basic_modes.basic_modes.contains(&mode.mode) {
                             new_set.push(mode.clone());
                         }
                     }
@@ -111,7 +111,7 @@ impl CtrlKbdLed {
             led_prod,
             led_node,            // on TUF this is the same as rgb_led / kd_brightness
             sysfs_node: rgb_led, // If was none then we already returned above
-            supported_modes,
+            supported_data: supported_basic_modes,
             per_key_mode_active: false,
             config: config_loaded,
         };
@@ -245,7 +245,7 @@ impl CtrlKbdLed {
     /// exists.
     fn create_multizone_default(&mut self) -> Result<(), RogError> {
         let mut default = vec![];
-        for (i, tmp) in self.supported_modes.basic_zones.iter().enumerate() {
+        for (i, tmp) in self.supported_data.basic_zones.iter().enumerate() {
             default.push(AuraEffect {
                 mode: self.config.current_mode,
                 zone: *tmp,
@@ -285,7 +285,7 @@ mod tests {
     fn create_multizone_if_no_config() {
         // Checking to ensure set_mode errors when unsupported modes are tried
         let config = AuraConfig::from_default_support(AuraDevice::X19b6, &LaptopLedData::default());
-        let supported_modes = LaptopLedData {
+        let supported_basic_modes = LaptopLedData {
             board_name: String::new(),
             layout_name: "ga401".to_owned(),
             basic_modes: vec![AuraModeNum::Static],
@@ -297,7 +297,7 @@ mod tests {
             led_prod: AuraDevice::X19b6,
             led_node: LEDNode::None,
             sysfs_node: KeyboardLed::default(),
-            supported_modes,
+            supported_data: supported_basic_modes,
             per_key_mode_active: false,
             config,
         };
@@ -306,8 +306,8 @@ mod tests {
         assert!(controller.create_multizone_default().is_err());
         assert!(controller.config.multizone.is_none());
 
-        controller.supported_modes.basic_zones.push(AuraZone::Key1);
-        controller.supported_modes.basic_zones.push(AuraZone::Key2);
+        controller.supported_data.basic_zones.push(AuraZone::Key1);
+        controller.supported_data.basic_zones.push(AuraZone::Key2);
         assert!(controller.create_multizone_default().is_ok());
         assert!(controller.config.multizone.is_some());
 
@@ -323,7 +323,7 @@ mod tests {
     fn next_mode_create_multizone_if_no_config() {
         // Checking to ensure set_mode errors when unsupported modes are tried
         let config = AuraConfig::from_default_support(AuraDevice::X19b6, &LaptopLedData::default());
-        let supported_modes = LaptopLedData {
+        let supported_basic_modes = LaptopLedData {
             board_name: String::new(),
             layout_name: "ga401".to_owned(),
             basic_modes: vec![AuraModeNum::Static],
@@ -335,7 +335,7 @@ mod tests {
             led_prod: AuraDevice::X19b6,
             led_node: LEDNode::None,
             sysfs_node: KeyboardLed::default(),
-            supported_modes,
+            supported_data: supported_basic_modes,
             per_key_mode_active: false,
             config,
         };

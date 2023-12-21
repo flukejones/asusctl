@@ -303,7 +303,7 @@ impl From<AuraEffect> for AuraModeNum {
 #[cfg_attr(
     feature = "dbus",
     derive(Type, Value, OwnedValue),
-    zvariant(signature = "s")
+    zvariant(signature = "u")
 )]
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum AuraZone {

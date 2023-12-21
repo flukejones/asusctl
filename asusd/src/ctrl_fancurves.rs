@@ -229,12 +229,10 @@ impl CtrlFanCurveZbus {
             .unwrap_or(PlatformPolicy::Balanced.into());
 
         self.platform.set_throttle_thermal_policy(profile.into())?;
-        {
-            self.fan_curves
-                .lock()
-                .await
-                .set_active_curve_to_defaults(active.into(), &mut find_fan_curve_node()?)?;
-        }
+        self.fan_curves
+            .lock()
+            .await
+            .set_active_curve_to_defaults(active.into(), &mut find_fan_curve_node()?)?;
         self.platform.set_throttle_thermal_policy(active)?;
 
         self.update_config_from_profiles().await;

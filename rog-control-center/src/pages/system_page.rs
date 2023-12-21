@@ -1,5 +1,5 @@
 use crate::system_state::SystemState;
-use crate::widgets::{anime_power_group, platform_profile, rog_bios_group};
+use crate::widgets::{anime_power_group, aura_power_group, platform_profile, rog_bios_group};
 use crate::RogApp;
 
 impl RogApp {
@@ -22,7 +22,7 @@ impl RogApp {
                         ui.vertical(|ui| {
                             ui.separator();
                             if self.supported_interfaces.contains(&"Aura".to_string()) {
-                                // aura_power_group(states, ui);
+                                aura_power_group(states, ui);
                             }
                         });
                         ui.end_row();

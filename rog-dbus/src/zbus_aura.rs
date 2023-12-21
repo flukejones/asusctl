@@ -23,8 +23,9 @@
 use std::collections::BTreeMap;
 
 use rog_aura::advanced::UsbPackets;
+use rog_aura::aura_detection::PowerZones;
 use rog_aura::usb::{AuraDevice, AuraPowerDev};
-use rog_aura::{AuraEffect, AuraModeNum, LedBrightness};
+use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness};
 use zbus::blocking::Connection;
 use zbus::{dbus_proxy, Result};
 
@@ -74,9 +75,17 @@ trait Aura {
     #[dbus_proxy(property)]
     fn supported_brightness(&self) -> zbus::Result<Vec<LedBrightness>>;
 
-    /// SupportedModes property
+    /// SupportedBasicModes property
     #[dbus_proxy(property)]
-    fn supported_modes(&self) -> zbus::Result<Vec<AuraModeNum>>;
+    fn supported_basic_modes(&self) -> zbus::Result<Vec<AuraModeNum>>;
+
+    /// SupportedBasicZones property
+    #[dbus_proxy(property)]
+    fn supported_basic_zones(&self) -> zbus::Result<Vec<AuraZone>>;
+
+    /// SupportedPowerZones property
+    #[dbus_proxy(property)]
+    fn supported_power_zones(&self) -> zbus::Result<Vec<PowerZones>>;
 }
 
 pub struct AuraProxyPerkey<'a>(AuraProxyBlocking<'a>);

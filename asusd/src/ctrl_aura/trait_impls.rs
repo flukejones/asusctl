@@ -5,6 +5,7 @@ use async_trait::async_trait;
 use config_traits::StdConfig;
 use log::{debug, error, info, warn};
 use rog_aura::advanced::UsbPackets;
+use rog_aura::aura_detection::PowerZones;
 use rog_aura::usb::{AuraDevice, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness};
 use zbus::export::futures_util::lock::{Mutex, MutexGuard};
@@ -78,9 +79,21 @@ impl CtrlAuraZbus {
 
     /// The total available modes
     #[dbus_interface(property)]
-    async fn supported_modes(&self) -> Result<Vec<AuraModeNum>, ZbErr> {
+    async fn supported_basic_modes(&self) -> Result<Vec<AuraModeNum>, ZbErr> {
         let ctrl = self.0.lock().await;
         Ok(ctrl.config.builtins.keys().cloned().collect())
+    }
+
+    #[dbus_interface(property)]
+    async fn supported_basic_zones(&self) -> Result<Vec<AuraZone>, ZbErr> {
+        let ctrl = self.0.lock().await;
+        Ok(ctrl.supported_data.basic_zones.clone())
+    }
+
+    #[dbus_interface(property)]
+    async fn supported_power_zones(&self) -> Result<Vec<PowerZones>, ZbErr> {
+        let ctrl = self.0.lock().await;
+        Ok(ctrl.supported_data.power_zones.clone())
     }
 
     /// The current mode data
@@ -126,9 +139,9 @@ impl CtrlAuraZbus {
     #[dbus_interface(property)]
     async fn set_led_mode_data(&mut self, effect: AuraEffect) -> Result<(), ZbErr> {
         let mut ctrl = self.0.lock().await;
-        if !ctrl.supported_modes.basic_modes.contains(&effect.mode)
+        if !ctrl.supported_data.basic_modes.contains(&effect.mode)
             || effect.zone != AuraZone::None
-                && !ctrl.supported_modes.basic_zones.contains(&effect.zone)
+                && !ctrl.supported_data.basic_zones.contains(&effect.zone)
         {
             return Err(ZbErr::NotSupported(format!(
                 "The Aura effect is not supported: {effect:?}"
