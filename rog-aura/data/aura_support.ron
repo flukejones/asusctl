@@ -400,6 +400,14 @@
         power_zones: [Keyboard, Lightbar],
     ),
     (
+        board_name: "G834JZ",
+        layout_name: "G834JZ",
+        basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
+        basic_zones: [],
+        advanced_type: PerKey,
+        power_zones: [Keyboard, Lightbar, Logo, RearGlow],
+    ),
+    (
         board_name: "GA401Q",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse],

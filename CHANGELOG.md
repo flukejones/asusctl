@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Added G834JZ led config
+
 ## [v5.0.3]
 ### Changed
 - Fix and error in platform ppt value gets

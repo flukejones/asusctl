@@ -2,7 +2,7 @@
 
 [Become a Patron!](https://www.patreon.com/bePatron?u=7602281) - [Asus Linux Website](https://asus-linux.org/)
 
-**WARNING:** Many features are developed in tandem with kernel patches. If you see a feature is missing you either need a patched kernel, or v6.1 which has all my work merged upstream.
+**WARNING:** Many features are developed in tandem with kernel patches. If you see a feature is missing you either need a patched kernel or latest release.
 
 `asusd` is a utility for Linux to control many aspects of various ASUS laptops
 but can also be used with non-asus laptops with reduced features.
@@ -11,23 +11,23 @@ Now includes a GUI, `rog-control-center`.
 
 ## Kernel support
 
-**The minimum supported kernel version is 5.17**
-
-**For TUF laptops, the minimum supported kernel version is 6.1**
+**The minimum supported kernel version is 6.6**
 
 ## Goals
 
-1. To provide an interface for rootless control of some system functions most users wish to control such as fan speeds, keyboard LEDs, graphics modes.
-2. Enable third-party apps to use the above with dbus methods
-3. To make the above as easy as possible for new users
-4. Respect the users resources: be small, light, and fast
+The main goal of this work is to provide a safe and easy to use abstraction over various laptop features via DBUS, and to provide some helpful defaults and other behaviour such as toggling throttle/profile on AC/battery change.
 
-Point 3 means that the list of supported distros is very narrow - fedora is explicitly
-supported. All other distros are *not* supported (while asusd might still run fine on them).
-For best support use fedora 36+ Workstation.
+1. Provide safe dbus interface
+2. Respect the users resources: be small, light, and fast
 
 Point 4? asusd currently uses a tiny fraction of cpu time, and less than 1Mb of ram, the way
-a system-level daemon should.
+a system-level daemon should. Languages such as JS and python should never be used for system level daemons (please stop).
+
+## Keyboard LEDs
+
+The level of support for laptops is dependent on folks submitting data to include in [`./rog-aura/data/layouts/aura_support.ron`](./rog-aura/data/layouts/aura_support.ron), typically installed in `/usr/share/asusd/aura_support.ron`. This is because the controller used for keyboards and LEDs is used across many years and many laptop models, all with different firmware configurations - the only way to track this is with the file mentioned above. Why not just enable all by default? Because it confuses people.
+
+See the [rog-aura readme](./rog-aura/README.md) for more details.
 
 ## Discord
 
@@ -40,6 +40,10 @@ to this:
 
 ```
 Bus 001 Device 002: ID 0b05:1866 ASUSTek Computer, Inc. N-KEY Device
+```
+or
+```
+Bus 003 Device 002: ID 0b05:19b6 ASUSTek Computer, Inc. [unknown]
 ```
 
 then it may work without tweaks. Technically all other functions except the LED
