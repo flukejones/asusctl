@@ -80,19 +80,20 @@ impl FanCurvesState {
             PlatformPolicy::Performance,
         ];
 
+        let mut available_fans = HashSet::new();
         let mut curves: BTreeMap<PlatformPolicy, Vec<CurveData>> = BTreeMap::new();
         for p in &profiles {
             if let Ok(curve) = dbus.proxies().fan_curves().fan_curve_data(*p) {
+                if available_fans.is_empty() {
+                    for fan in &curve {
+                        available_fans.insert(fan.fan);
+                    }
+                }
                 curves.insert(*p, curve);
             } else {
                 curves.insert(*p, Default::default());
             }
         }
-
-        let available_fans = HashSet::new();
-        // for fan in supported.platform_profile.fans.iter() {
-        //     available_fans.insert(*fan);
-        // }
 
         let show_curve = dbus.proxies().platform().throttle_thermal_policy()?;
 

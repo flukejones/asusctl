@@ -1,4 +1,4 @@
-use egui::{vec2, Align2, FontId, Id, Sense};
+use egui::{vec2, Align2, FontId};
 
 use crate::system_state::SystemState;
 use crate::{RogApp, VERSION};
@@ -6,9 +6,9 @@ use crate::{RogApp, VERSION};
 impl RogApp {
     pub fn top_bar(
         &mut self,
-        states: &mut SystemState,
+        _states: &mut SystemState,
         ctx: &egui::Context,
-        frame: &mut eframe::Frame,
+        _frame: &mut eframe::Frame,
     ) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
@@ -16,22 +16,18 @@ impl RogApp {
                 ui.horizontal(|ui| {
                     self.dark_light_mode_buttons(ui);
                     egui::warn_if_debug_build(ui);
-                    if ui.button("Quit app").clicked() {
-                        states.run_in_bg = false;
-                        frame.close();
-                    }
                 });
 
                 // Drag area
                 let text_color = ctx.style().visuals.text_color();
                 let mut titlebar_rect = ui.available_rect_before_wrap();
                 titlebar_rect.max.x -= titlebar_rect.height();
-                if ui
-                    .interact(titlebar_rect, Id::new("title_bar"), Sense::drag())
-                    .drag_started()
-                {
-                    frame.drag_window();
-                }
+                // if ui
+                //     .interact(titlebar_rect, Id::new("title_bar"), Sense::drag())
+                //     .drag_started()
+                // {
+                //     frame.drag_window();
+                // }
 
                 let height = titlebar_rect.height();
 

@@ -43,31 +43,6 @@ impl RogApp {
             ui.label(RichText::new(format!("{}", current)).strong());
         });
 
-        // ui.horizontal(|ui| {
-        //     ui.label("Enabled fan-curves: ");
-        //     let mut fan_curve_enable = |profile: Profile, fan: FanCurvePU, mut
-        // checked: bool| {         if ui
-        //             .add(egui::Checkbox::new(&mut checked, format!("{:?}", fan)))
-        //             .changed()
-        //         {
-        //             dbus.proxies()
-        //                 .profile()
-        //                 .set_fan_curves_enabled(profile, checked)
-        //                 .map_err(|err| {
-        //                     *do_error = Some(err.to_string());
-        //                 })
-        //                 .ok();
-        //             changed = true;
-        //         }
-        //     };
-
-        //     if let Some(curves) = curves.curves.get_mut(&current) {
-        //         for curve in curves.iter_mut() {
-        //             fan_curve_enable(current, curve.fan, curve.enabled);
-        //         }
-        //     }
-        // });
-
         ui.horizontal(|ui| {
             ui.label("Enabled fan-curves: ");
             let mut checked = false;

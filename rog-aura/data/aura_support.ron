@@ -401,7 +401,7 @@
     ),
     (
         board_name: "G834JZ",
-        layout_name: "G834JZ",
+        layout_name: "g814ji-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,

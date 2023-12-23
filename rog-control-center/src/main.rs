@@ -6,9 +6,9 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-use eframe::IconData;
+use eframe::HardwareAcceleration;
 use gumdrop::Options;
-use log::{debug, error, info, warn, LevelFilter};
+use log::{debug, error, warn, LevelFilter};
 use rog_aura::aura_detection::{LaptopLedData, LedSupportFile};
 use rog_aura::layouts::KeyLayout;
 use rog_control_center::cli_options::CliStart;
@@ -29,7 +29,8 @@ const DATA_DIR: &str = "/usr/share/rog-gui/";
 #[cfg(feature = "mocking")]
 const DATA_DIR: &str = env!("CARGO_MANIFEST_DIR");
 const BOARD_NAME: &str = "/sys/class/dmi/id/board_name";
-const APP_ICON_PATH: &str = "/usr/share/icons/hicolor/512x512/apps/rog-control-center.png";
+// const APP_ICON_PATH: &str =
+// "/usr/share/icons/hicolor/512x512/apps/rog-control-center.png";
 
 fn main() -> Result<()> {
     let args: Vec<String> = args().skip(1).collect();
@@ -60,12 +61,10 @@ fn main() -> Result<()> {
 
     let native_options = eframe::NativeOptions {
         vsync: true,
-        decorated: true,
-        transparent: false,
-        min_window_size: Some(egui::vec2(960.0, 670.0)),
-        max_window_size: Some(egui::vec2(960.0, 670.0)),
+        hardware_acceleration: HardwareAcceleration::Preferred,
+        // min_window_size: Some(egui::vec2(960.0, 670.0)),
+        // max_window_size: Some(egui::vec2(960.0, 670.0)),
         run_and_return: true,
-        icon_data: Some(load_icon()),
         ..Default::default()
     };
 
@@ -263,37 +262,38 @@ fn setup_page_state_and_notifs(
 }
 
 /// Bah.. the icon dosn't work on wayland anyway, but we'll leave it in for now.
-fn load_icon() -> IconData {
-    let path = PathBuf::from(APP_ICON_PATH);
-    let mut rgba = Vec::new();
-    let mut height = 512;
-    let mut width = 512;
-    if path.exists() {
-        if let Ok(data) = std::fs::read(path)
-            .map_err(|e| error!("Error reading app icon: {e:?}"))
-            .map_err(|e| error!("Error opening app icon: {e:?}"))
-        {
-            let data = std::io::Cursor::new(data);
-            let decoder = png_pong::Decoder::new(data).unwrap().into_steps();
-            let png_pong::Step { raster, delay: _ } = decoder.last().unwrap().unwrap();
+// fn load_icon() -> IconData {
+//     let path = PathBuf::from(APP_ICON_PATH);
+//     let mut rgba = Vec::new();
+//     let mut height = 512;
+//     let mut width = 512;
+//     if path.exists() {
+//         if let Ok(data) = std::fs::read(path)
+//             .map_err(|e| error!("Error reading app icon: {e:?}"))
+//             .map_err(|e| error!("Error opening app icon: {e:?}"))
+//         {
+//             let data = std::io::Cursor::new(data);
+//             let decoder = png_pong::Decoder::new(data).unwrap().into_steps();
+//             let png_pong::Step { raster, delay: _ } =
+// decoder.last().unwrap().unwrap();
 
-            if let png_pong::PngRaster::Rgba8(ras) = raster {
-                rgba = ras.as_u8_slice().to_vec();
-                width = ras.width();
-                height = ras.height();
-                info!("Loaded app icon. Not actually supported in Wayland yet");
-            }
-        }
-    } else {
-        error!("Missing {APP_ICON_PATH}");
-    }
+//             if let png_pong::PngRaster::Rgba8(ras) = raster {
+//                 rgba = ras.as_u8_slice().to_vec();
+//                 width = ras.width();
+//                 height = ras.height();
+//                 info!("Loaded app icon. Not actually supported in Wayland
+// yet");             }
+//         }
+//     } else {
+//         error!("Missing {APP_ICON_PATH}");
+//     }
 
-    IconData {
-        height,
-        width,
-        rgba,
-    }
-}
+//     IconData {
+//         height,
+//         width,
+//         rgba,
+//     }
+// }
 
 fn do_cli_help(parsed: &CliStart) -> bool {
     if parsed.help {

@@ -6,9 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v5.0.4]
 ### Changed
 - Added G834JZ led config
 - Fix in ROGCC to apply the actual effect changed
+- Re-enable all fan curves (available) in ROGCC
+- Update smithay-client-toolkit
 
 ## [v5.0.3]
 ### Changed
