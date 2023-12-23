@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Added G834JZ led config
+- Fix in ROGCC to apply the actual effect changed
 
 ## [v5.0.3]
 ### Changed
