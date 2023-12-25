@@ -132,9 +132,9 @@ fn do_parsed(
                 println!("{}", CliStart::usage());
                 println!();
                 if let Some(cmdlist) = CliStart::command_list() {
+                    let dev_type = dbus.proxies().aura().device_type()?;
                     let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
                     for command in commands.iter().filter(|command| {
-                        let dev_type = dbus.proxies().aura().device_type().unwrap();
                         if !dev_type.is_old_style()
                             && !dev_type.is_tuf_style()
                             && command.trim().starts_with("led-pow-1")
@@ -420,8 +420,8 @@ fn handle_led_mode(
 
         if let Some(cmdlist) = LedModeCommand::command_list() {
             let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
+            let modes = dbus.proxies().aura().supported_basic_modes()?;
             for command in commands.iter().filter(|command| {
-                let modes = dbus.proxies().aura().supported_basic_modes().unwrap();
                 for mode in &modes {
                     if command
                         .trim()
