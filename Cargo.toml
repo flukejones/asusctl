@@ -4,7 +4,7 @@ default-members = ["asusctl", "asusd", "asusd-user", "cpuctl", "rog-control-cent
 resolver = "2"
 
 [workspace.package]
-version = "5.0.5"
+version = "5.0.6"
 
 [workspace.dependencies]
 async-trait = "^0.1"

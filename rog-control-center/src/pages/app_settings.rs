@@ -3,7 +3,7 @@ use crate::widgets::app_settings;
 use crate::RogApp;
 
 impl RogApp {
-    pub fn app_settings_page(&mut self, states: &mut SystemState, ctx: &egui::Context) {
+    pub fn app_settings_page(&mut self, states: &mut SystemState, ctx: &eframe::egui::Context) {
         let Self { config, .. } = self;
 
         egui::CentralPanel::default().show(ctx, |ui| {

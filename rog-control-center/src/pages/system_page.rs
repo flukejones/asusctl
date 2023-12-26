@@ -3,7 +3,7 @@ use crate::widgets::{anime_power_group, aura_power_group, platform_profile, rog_
 use crate::RogApp;
 
 impl RogApp {
-    pub fn system_page(&mut self, states: &mut SystemState, ctx: &egui::Context) {
+    pub fn system_page(&mut self, states: &mut SystemState, ctx: &eframe::egui::Context) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Laptop settings");
 

@@ -1,5 +1,5 @@
+use egui::plot::{Line, Plot, Points};
 use egui::Ui;
-use egui_plot::Points;
 use rog_platform::platform::PlatformPolicy;
 use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::FanCurvePU;
@@ -59,8 +59,6 @@ pub fn fan_graphs(
     });
 
     let curve = curves.curves.get_mut(&curves.show_curve).unwrap();
-
-    use egui_plot::{Line, Plot};
 
     let mut data = &mut CurveData::default();
     for c in curve {
@@ -126,7 +124,7 @@ pub fn fan_graphs(
             }
         })
         .show(ui, |plot_ui| {
-            if plot_ui.response().hovered() {
+            if plot_ui.plot_hovered() {
                 let mut idx = 0;
 
                 if let Some(point) = plot_ui.pointer_coordinate() {
@@ -139,7 +137,7 @@ pub fn fan_graphs(
                         }
                     }
 
-                    if plot_ui.response().clicked() {
+                    if plot_ui.plot_clicked() {
                         data.temp[idx] = point.x as u8;
                         data.pwm[idx] = (point.y * 255.0 / 100.0) as u8;
                     } else {

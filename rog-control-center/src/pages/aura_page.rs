@@ -9,7 +9,7 @@ use crate::widgets::{aura_modes_group, keyboard};
 use crate::RogApp;
 
 impl RogApp {
-    pub fn aura_page(&mut self, states: &mut SystemState, ctx: &egui::Context) {
+    pub fn aura_page(&mut self, states: &mut SystemState, ctx: &eframe::egui::Context) {
         let Self {
             oscillator1,
             oscillator2,

@@ -107,7 +107,7 @@ impl eframe::App for RogApp {
     /// Called each time the UI needs repainting, which may be many times per
     /// second. Put your widgets into a `SidePanel`, `TopPanel`,
     /// `CentralPanel`, `Window` or `Area`.
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &eframe::egui::Context, frame: &mut eframe::Frame) {
         let states = self.states.clone();
 
         if let Ok(mut states) = states.try_lock() {
@@ -131,7 +131,7 @@ impl eframe::App for RogApp {
                 return;
             }
 
-            self.top_bar(&mut states, ctx, frame);
+            self.top_bar(ctx, frame);
             self.side_panel(ctx);
         }
         let page = self.page;

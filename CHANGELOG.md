@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v5.0.6]
+- Revert egui update due to a lot of issues arising from window closing.
+
 ## [v5.0.5]
 - Resync. A release was made that was missing some commits.
 

@@ -1,7 +1,7 @@
 use crate::{Page, RogApp};
 
 impl RogApp {
-    pub fn side_panel(&mut self, ctx: &egui::Context) {
+    pub fn side_panel(&mut self, ctx: &eframe::egui::Context) {
         egui::SidePanel::left("side_panel")
             .resizable(false)
             .default_width(60.0) // TODO: set size to match icon buttons when done

@@ -6,7 +6,7 @@ use crate::widgets::fan_graphs;
 use crate::{RogApp, RogDbusClientBlocking};
 
 impl RogApp {
-    pub fn fan_curve_page(&mut self, states: &mut SystemState, ctx: &egui::Context) {
+    pub fn fan_curve_page(&mut self, states: &mut SystemState, ctx: &eframe::egui::Context) {
         if let Some(mut throttle) = states.bios.throttle {
             egui::CentralPanel::default().show(ctx, |ui| {
                 ui.heading("Custom fan curves");
