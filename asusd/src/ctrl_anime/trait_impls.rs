@@ -277,16 +277,8 @@ impl crate::CtrlTask for CtrlAnimeZbus {
                 async move {
                     let lock = inner.lock().await;
                     if lock.config.display_enabled {
-                        lock.node
-                            .write_bytes(&pkt_set_enable_powersave_anim(
-                                !(sleeping && lock.config.off_when_suspended),
-                            ))
-                            .map_err(|err| {
-                                warn!("create_sys_event_tasks::off_when_suspended {}", err);
-                            })
-                            .ok();
-
                         lock.thread_exit.store(true, Ordering::Release); // ensure clean slate
+
                         lock.node
                             .write_bytes(&pkt_set_enable_display(
                                 !(sleeping && lock.config.off_when_suspended),
@@ -296,7 +288,21 @@ impl crate::CtrlTask for CtrlAnimeZbus {
                             })
                             .ok();
 
-                        if !sleeping && !lock.config.builtin_anims_enabled {
+                        if lock.config.builtin_anims_enabled {
+                            lock.node
+                                .write_bytes(&pkt_set_enable_powersave_anim(
+                                    !(sleeping && lock.config.off_when_suspended),
+                                ))
+                                .map_err(|err| {
+                                    warn!("create_sys_event_tasks::off_when_suspended {}", err);
+                                })
+                                .ok();
+                        } else if !sleeping && !lock.config.builtin_anims_enabled {
+                            // Run custom wake animation
+                            lock.node
+                                .write_bytes(&pkt_set_enable_powersave_anim(false))
+                                .ok(); // ensure builtins are disabled
+
                             CtrlAnime::run_thread(inner.clone(), lock.cache.wake.clone(), true)
                                 .await;
                         }
