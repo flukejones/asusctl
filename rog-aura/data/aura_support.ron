@@ -72,6 +72,14 @@
         power_zones: [Keyboard],
     ),
     (
+        board_name: "FX705D",
+        layout_name: "fx505d",
+        basic_modes: [Static, Breathe, Strobe, Pulse],
+        basic_zones: [],
+        advanced_type: None,
+        power_zones: [Keyboard],
+    ),
+    (
         board_name: "G512",
         layout_name: "g512",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
