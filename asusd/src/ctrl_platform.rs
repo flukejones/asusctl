@@ -180,7 +180,11 @@ impl CtrlPlatform {
         }
     }
 
-    fn check_and_set_epp(&self, profile: PlatformPolicy) {
+    fn check_and_set_epp(&self, profile: PlatformPolicy, change_epp: bool) {
+        if !change_epp {
+            info!("PlatformPolicy unlinked from EPP");
+            return;
+        }
         info!("PlatformPolicy setting EPP");
         if let Some(cpu) = self.cpu_control.as_ref() {
             if let Ok(epp) = cpu.get_available_epp() {
@@ -197,7 +201,7 @@ impl CtrlPlatform {
         }
     }
 
-    async fn update_policy_ac_or_bat(&self, power_plugged: bool) {
+    async fn update_policy_ac_or_bat(&self, power_plugged: bool, change_epp: bool) {
         let profile = if power_plugged {
             self.config.lock().await.platform_policy_on_ac
         } else {
@@ -206,7 +210,7 @@ impl CtrlPlatform {
         self.platform
             .set_throttle_thermal_policy(profile.into())
             .ok();
-        self.check_and_set_epp(profile);
+        self.check_and_set_epp(profile, change_epp);
     }
 }
 
@@ -340,14 +344,14 @@ impl CtrlPlatform {
         let policy = PlatformPolicy::next(&policy);
 
         if self.platform.has_throttle_thermal_policy() {
-            self.check_and_set_epp(policy);
+            let change_epp = self.config.lock().await.platform_policy_linked_epp;
+            self.check_and_set_epp(policy, change_epp);
             self.platform
                 .set_throttle_thermal_policy(policy.into())
                 .map_err(|err| {
                     warn!("RogPlatform: throttle_thermal_policy {}", err);
                     FdoErr::Failed(format!("RogPlatform: throttle_thermal_policy: {err}"))
                 })?;
-            self.config.lock().await.platform_policy_to_restore = policy;
             Ok(self.throttle_thermal_policy_changed(&ctxt).await?)
         } else {
             Err(FdoErr::NotSupported(
@@ -366,8 +370,8 @@ impl CtrlPlatform {
     async fn set_throttle_thermal_policy(&mut self, policy: PlatformPolicy) -> Result<(), FdoErr> {
         // TODO: watch for external changes
         if self.platform.has_throttle_thermal_policy() {
-            self.check_and_set_epp(policy);
-            self.config.lock().await.platform_policy_to_restore = policy;
+            let change_epp = self.config.lock().await.platform_policy_linked_epp;
+            self.check_and_set_epp(policy, change_epp);
             self.platform
                 .set_throttle_thermal_policy(policy.into())
                 .map_err(|err| {
@@ -534,7 +538,9 @@ impl crate::Reloadable for CtrlPlatform {
 
         if let Ok(power_plugged) = self.power.get_online() {
             if self.platform.has_throttle_thermal_policy() {
-                self.update_policy_ac_or_bat(power_plugged > 0).await;
+                let change_epp = self.config.lock().await.platform_policy_linked_epp;
+                self.update_policy_ac_or_bat(power_plugged > 0, change_epp)
+                    .await;
             }
             self.run_ac_or_bat_cmd(power_plugged > 0).await;
         }
@@ -614,7 +620,11 @@ impl CtrlTask for CtrlPlatform {
                     }
                     if let Ok(power_plugged) = platform1.power.get_online() {
                         if !sleeping && platform1.platform.has_throttle_thermal_policy() {
-                            platform1.update_policy_ac_or_bat(power_plugged > 0).await;
+                            let change_epp =
+                                platform1.config.lock().await.platform_policy_linked_epp;
+                            platform1
+                                .update_policy_ac_or_bat(power_plugged > 0, change_epp)
+                                .await;
                         }
                         if !sleeping {
                             platform1.run_ac_or_bat_cmd(power_plugged > 0).await;
@@ -648,7 +658,10 @@ impl CtrlTask for CtrlPlatform {
                 // power change
                 async move {
                     if platform3.platform.has_throttle_thermal_policy() {
-                        platform3.update_policy_ac_or_bat(power_plugged).await;
+                        let change_epp = platform3.config.lock().await.platform_policy_linked_epp;
+                        platform3
+                            .update_policy_ac_or_bat(power_plugged, change_epp)
+                            .await;
                     }
                     platform3.run_ac_or_bat_cmd(power_plugged).await;
                 }
@@ -697,8 +710,8 @@ impl CtrlTask for CtrlPlatform {
                             error!("Platform: get_throttle_thermal_policy error: {e}");
                         })
                     {
-                        ctrl.check_and_set_epp(profile);
-                        ctrl.config.lock().await.platform_policy_to_restore = profile;
+                        let change_epp = ctrl.config.lock().await.platform_policy_linked_epp;
+                        ctrl.check_and_set_epp(profile, change_epp);
                     }
                 }
             }

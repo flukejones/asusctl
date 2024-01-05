@@ -15,7 +15,7 @@ use asusd::ctrl_aura::trait_impls::CtrlAuraZbus;
 use asusd::ctrl_fancurves::CtrlFanCurveZbus;
 use asusd::ctrl_platform::CtrlPlatform;
 use asusd::{print_board_info, CtrlTask, Reloadable, ZbusRun, DBUS_NAME};
-use config_traits::{StdConfig, StdConfigLoad2};
+use config_traits::{StdConfig, StdConfigLoad2, StdConfigLoad3};
 use log::{error, info, warn};
 use rog_aura::aura_detection::LaptopLedData;
 use tokio::time::sleep;

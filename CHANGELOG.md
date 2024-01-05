@@ -6,7 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
-- Fix to suspend process in anime thread to let custom anims run on wake
+- Fix to suspend process in anime thread to let custom anims run on wake.
+- Fix to reload the fan curves correctly on boot.
+- Add new config option `platform_policy_linked_epp` to set if energy_performance_preference should be paired with platform_profile/throttle_thermal_policy
 
 ## [v5.0.6]
 - Revert egui update due to a lot of issues arising from window closing.

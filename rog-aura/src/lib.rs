@@ -10,10 +10,9 @@ pub mod effects;
 pub mod advanced;
 /// Convert the `RgbAddress` to `&str` labels
 pub mod advanced_to_str;
-pub mod error;
-pub use advanced_to_str::*;
 /// Helper for detecting what is available
 pub mod aura_detection;
+pub mod error;
 /// Helpers for consructing keyboard layouts for UI use and effects
 pub mod layouts;
 pub mod usb;
