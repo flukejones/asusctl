@@ -1,4 +1,4 @@
-use egui::{vec2, Align2, FontId, Id, Sense};
+use egui::{vec2, Align2, Button, FontId, Id, Rect, RichText, Sense, Vec2};
 
 use crate::{RogApp, VERSION};
 
@@ -33,15 +33,14 @@ impl RogApp {
                     FontId::proportional(height - 2.0),
                     text_color,
                 );
-                // // Add the close button:
-                // let close_response = ui.put(
-                //     Rect::from_min_size(titlebar_rect.right_top(),
-                // Vec2::splat(height)),
-                //     Button::new(RichText::new("❌").size(height -
-                // 4.0)).frame(false), );
-                // if close_response.clicked() {
-                //     frame.close();
-                // }
+                // Add the close button:
+                let close_response = ui.put(
+                    Rect::from_min_size(titlebar_rect.right_top(), Vec2::splat(height)),
+                    Button::new(RichText::new("❌").size(height - 4.0)).frame(false),
+                );
+                if close_response.clicked() {
+                    frame.close();
+                }
             });
         });
     }

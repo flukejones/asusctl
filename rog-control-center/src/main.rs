@@ -62,8 +62,8 @@ fn main() -> Result<()> {
     let native_options = eframe::NativeOptions {
         vsync: true,
         hardware_acceleration: HardwareAcceleration::Preferred,
-        // min_window_size: Some(egui::vec2(960.0, 670.0)),
-        // max_window_size: Some(egui::vec2(960.0, 670.0)),
+        min_window_size: Some(egui::vec2(980.0, 670.0)),
+        max_window_size: Some(egui::vec2(980.0, 670.0)),
         run_and_return: true,
         ..Default::default()
     };
@@ -186,6 +186,13 @@ fn main() -> Result<()> {
         &config,
     )?;
 
+    if cli_parsed.board_name.is_some() || cli_parsed.layout_viewing {
+        if let Ok(mut lock) = states.lock() {
+            lock.run_in_bg = false;
+            running_in_bg.store(false, Ordering::Release);
+        }
+    }
+
     if config.enable_tray_icon {
         init_tray(supported_properties, states.clone());
     }
@@ -212,7 +219,7 @@ fn main() -> Result<()> {
         }
 
         if let Ok(lock) = states.try_lock() {
-            if !lock.run_in_bg || cli_parsed.board_name.is_some() || cli_parsed.layout_viewing {
+            if !lock.run_in_bg {
                 break;
             }
 

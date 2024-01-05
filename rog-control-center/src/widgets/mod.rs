@@ -15,5 +15,3 @@ pub use aura_power::*;
 pub use fan_graph::*;
 pub use keyboard_layout::*;
 pub use rog_bios::*;
-pub use side_panel::*;
-pub use top_bar::*;
