@@ -1,5 +1,5 @@
 use egui::{RichText, Ui};
-use rog_platform::platform::PlatformPolicy;
+use rog_platform::platform::ThrottlePolicy;
 
 use crate::system_state::{FanCurvesState, SystemState};
 use crate::widgets::fan_graphs;
@@ -29,7 +29,7 @@ impl RogApp {
     }
 
     fn fan_curve(
-        current: &mut PlatformPolicy,
+        current: &mut ThrottlePolicy,
         curves: &mut FanCurvesState,
         dbus: &RogDbusClientBlocking<'_>,
         do_error: &mut Option<String>,

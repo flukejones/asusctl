@@ -10,7 +10,7 @@ use rog_aura::aura_detection::PowerZones;
 use rog_aura::layouts::KeyLayout;
 use rog_aura::usb::{AuraDevice, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness};
-use rog_platform::platform::{GpuMode, PlatformPolicy};
+use rog_platform::platform::{GpuMode, ThrottlePolicy};
 use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::FanCurvePU;
 use supergfxctl::pci_device::{GfxMode, GfxPower};
@@ -34,7 +34,7 @@ pub struct PlatformState {
     pub mini_led_mode: Option<bool>,
     pub dgpu_disable: Option<bool>,
     pub egpu_enable: Option<bool>,
-    pub throttle: Option<PlatformPolicy>,
+    pub throttle: Option<ThrottlePolicy>,
     pub charge_limit: Option<u8>,
 }
 
@@ -65,9 +65,9 @@ impl PlatformState {
 
 #[derive(Clone, Debug, Default)]
 pub struct FanCurvesState {
-    pub show_curve: PlatformPolicy,
+    pub show_curve: ThrottlePolicy,
     pub show_graph: FanCurvePU,
-    pub curves: BTreeMap<PlatformPolicy, Vec<CurveData>>,
+    pub curves: BTreeMap<ThrottlePolicy, Vec<CurveData>>,
     pub available_fans: HashSet<FanCurvePU>,
     pub drag_delta: Vec2,
 }
@@ -75,13 +75,13 @@ pub struct FanCurvesState {
 impl FanCurvesState {
     pub fn new(dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
         let profiles = vec![
-            PlatformPolicy::Balanced,
-            PlatformPolicy::Quiet,
-            PlatformPolicy::Performance,
+            ThrottlePolicy::Balanced,
+            ThrottlePolicy::Quiet,
+            ThrottlePolicy::Performance,
         ];
 
         let mut available_fans = HashSet::new();
-        let mut curves: BTreeMap<PlatformPolicy, Vec<CurveData>> = BTreeMap::new();
+        let mut curves: BTreeMap<ThrottlePolicy, Vec<CurveData>> = BTreeMap::new();
         for p in &profiles {
             if let Ok(curve) = dbus.proxies().fan_curves().fan_curve_data(*p) {
                 if available_fans.is_empty() {

@@ -14,7 +14,7 @@ use notify_rust::{Hint, Notification, NotificationHandle, Urgency};
 use rog_dbus::zbus_anime::AnimeProxy;
 use rog_dbus::zbus_aura::AuraProxy;
 use rog_dbus::zbus_platform::PlatformProxy;
-use rog_platform::platform::{GpuMode, PlatformPolicy};
+use rog_platform::platform::{GpuMode, ThrottlePolicy};
 use serde::{Deserialize, Serialize};
 use supergfxctl::actions::UserActionRequired as GfxUserAction;
 use supergfxctl::pci_device::{GfxMode, GfxPower};
@@ -546,11 +546,11 @@ fn _ac_power_notification(message: &str, on: &bool) -> Result<NotificationHandle
     Ok(base_notification(message, &data).show()?)
 }
 
-fn do_thermal_notif(message: &str, profile: &PlatformPolicy) -> Result<NotificationHandle> {
+fn do_thermal_notif(message: &str, profile: &ThrottlePolicy) -> Result<NotificationHandle> {
     let icon = match profile {
-        PlatformPolicy::Balanced => "asus_notif_yellow",
-        PlatformPolicy::Performance => "asus_notif_red",
-        PlatformPolicy::Quiet => "asus_notif_green",
+        ThrottlePolicy::Balanced => "asus_notif_yellow",
+        ThrottlePolicy::Performance => "asus_notif_red",
+        ThrottlePolicy::Quiet => "asus_notif_green",
     };
     let profile: &str = (*profile).into();
     let mut notif = base_notification(message, &profile.to_uppercase());

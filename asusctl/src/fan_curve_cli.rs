@@ -1,5 +1,5 @@
 use gumdrop::Options;
-use rog_platform::platform::PlatformPolicy;
+use rog_platform::platform::ThrottlePolicy;
 use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::FanCurvePU;
 
@@ -18,7 +18,7 @@ pub struct FanCurveCommand {
         meta = "",
         help = "profile to modify fan-curve for. Shows data if no options provided"
     )]
-    pub mod_profile: Option<PlatformPolicy>,
+    pub mod_profile: Option<ThrottlePolicy>,
 
     #[options(
         meta = "",

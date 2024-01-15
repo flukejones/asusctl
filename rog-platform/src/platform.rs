@@ -268,15 +268,15 @@ impl Display for GpuMode {
 )]
 #[zvariant(signature = "s")]
 /// `throttle_thermal_policy` in asus_wmi
-pub enum PlatformPolicy {
+pub enum ThrottlePolicy {
     #[default]
     Balanced = 0,
     Performance = 1,
     Quiet = 2,
 }
 
-impl PlatformPolicy {
-    pub const fn next(&self) -> Self {
+impl ThrottlePolicy {
+    pub const fn next(self) -> Self {
         match self {
             Self::Balanced => Self::Performance,
             Self::Performance => Self::Quiet,
@@ -289,7 +289,7 @@ impl PlatformPolicy {
     }
 }
 
-impl From<u8> for PlatformPolicy {
+impl From<u8> for ThrottlePolicy {
     fn from(num: u8) -> Self {
         match num {
             0 => Self::Balanced,
@@ -303,52 +303,42 @@ impl From<u8> for PlatformPolicy {
     }
 }
 
-impl From<PlatformPolicy> for u8 {
-    fn from(p: PlatformPolicy) -> Self {
+impl From<ThrottlePolicy> for u8 {
+    fn from(p: ThrottlePolicy) -> Self {
         match p {
-            PlatformPolicy::Balanced => 0,
-            PlatformPolicy::Performance => 1,
-            PlatformPolicy::Quiet => 2,
+            ThrottlePolicy::Balanced => 0,
+            ThrottlePolicy::Performance => 1,
+            ThrottlePolicy::Quiet => 2,
         }
     }
 }
 
-impl From<PlatformPolicy> for &str {
-    fn from(profile: PlatformPolicy) -> &'static str {
+impl From<ThrottlePolicy> for &str {
+    fn from(profile: ThrottlePolicy) -> &'static str {
         match profile {
-            PlatformPolicy::Balanced => "balanced",
-            PlatformPolicy::Performance => "performance",
-            PlatformPolicy::Quiet => "quiet",
+            ThrottlePolicy::Balanced => "balanced",
+            ThrottlePolicy::Performance => "performance",
+            ThrottlePolicy::Quiet => "quiet",
         }
     }
 }
 
-impl std::str::FromStr for PlatformPolicy {
+impl std::str::FromStr for ThrottlePolicy {
     type Err = PlatformError;
 
     fn from_str(profile: &str) -> Result<Self> {
         match profile.to_ascii_lowercase().trim() {
-            "balanced" => Ok(PlatformPolicy::Balanced),
-            "performance" => Ok(PlatformPolicy::Performance),
-            "quiet" => Ok(PlatformPolicy::Quiet),
+            "balanced" => Ok(ThrottlePolicy::Balanced),
+            "performance" => Ok(ThrottlePolicy::Performance),
+            "quiet" => Ok(ThrottlePolicy::Quiet),
             _ => Err(PlatformError::NotSupported),
         }
     }
 }
 
-impl Display for PlatformPolicy {
+impl Display for ThrottlePolicy {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
-    }
-}
-
-impl PlatformPolicy {
-    pub fn get_next_profile(current: PlatformPolicy) -> PlatformPolicy {
-        match current {
-            PlatformPolicy::Balanced => PlatformPolicy::Performance,
-            PlatformPolicy::Performance => PlatformPolicy::Quiet,
-            PlatformPolicy::Quiet => PlatformPolicy::Balanced,
-        }
     }
 }
 
@@ -365,7 +355,7 @@ pub enum Properties {
     PanelOd,
     MiniLedMode,
     EgpuEnable,
-    PlatformPolicy,
+    ThrottlePolicy,
     PptPl1Spl,
     PptPl2Sppt,
     PptFppt,

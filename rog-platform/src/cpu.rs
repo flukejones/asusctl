@@ -6,7 +6,7 @@ use typeshare::typeshare;
 use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::{PlatformError, Result};
-use crate::platform::PlatformPolicy;
+use crate::platform::ThrottlePolicy;
 use crate::{read_attr_string, to_device};
 
 const ATTR_AVAILABLE_GOVERNORS: &str = "cpufreq/scaling_available_governors";
@@ -182,10 +182,21 @@ impl From<CPUGovernor> for String {
 #[typeshare]
 #[repr(u8)]
 #[derive(
-    Deserialize, Serialize, Type, Value, OwnedValue, Debug, PartialEq, PartialOrd, Clone, Copy,
+    Deserialize,
+    Serialize,
+    Type,
+    Value,
+    OwnedValue,
+    Default,
+    Debug,
+    PartialEq,
+    PartialOrd,
+    Clone,
+    Copy,
 )]
 #[zvariant(signature = "s")]
 pub enum CPUEPP {
+    #[default]
     Default = 0,
     Performance = 1,
     BalancePerformance = 2,
@@ -193,12 +204,12 @@ pub enum CPUEPP {
     Power = 4,
 }
 
-impl From<PlatformPolicy> for CPUEPP {
-    fn from(value: PlatformPolicy) -> Self {
+impl From<ThrottlePolicy> for CPUEPP {
+    fn from(value: ThrottlePolicy) -> Self {
         match value {
-            PlatformPolicy::Balanced => CPUEPP::BalancePerformance,
-            PlatformPolicy::Performance => CPUEPP::Performance,
-            PlatformPolicy::Quiet => CPUEPP::Power,
+            ThrottlePolicy::Balanced => CPUEPP::BalancePerformance,
+            ThrottlePolicy::Performance => CPUEPP::Performance,
+            ThrottlePolicy::Quiet => CPUEPP::Power,
         }
     }
 }

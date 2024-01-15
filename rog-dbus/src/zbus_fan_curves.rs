@@ -20,7 +20,7 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use rog_platform::platform::PlatformPolicy;
+use rog_platform::platform::ThrottlePolicy;
 use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::FanCurvePU;
 use zbus::dbus_proxy;
@@ -32,30 +32,30 @@ use zbus::dbus_proxy;
 )]
 trait FanCurves {
     /// Get the fan-curve data for the currently active PlatformProfile
-    fn fan_curve_data(&self, profile: PlatformPolicy) -> zbus::Result<Vec<CurveData>>;
+    fn fan_curve_data(&self, profile: ThrottlePolicy) -> zbus::Result<Vec<CurveData>>;
 
     /// Reset the stored (self) and device curve to the defaults of the
     /// platform.
     ///
     /// Each platform_profile has a different default and the defualt can be
     /// read only for the currently active profile.
-    fn reset_profile_curves(&self, profile: PlatformPolicy) -> zbus::fdo::Result<()>;
+    fn reset_profile_curves(&self, profile: ThrottlePolicy) -> zbus::fdo::Result<()>;
 
     /// SetActiveCurveToDefaults method
     fn set_active_curve_to_defaults(&self) -> zbus::Result<()>;
 
     /// Set the fan curve for the specified profile, or the profile the user is
     /// currently in if profile == None. Will also activate the fan curve.
-    fn set_fan_curve(&self, profile: PlatformPolicy, curve: CurveData) -> zbus::Result<()>;
+    fn set_fan_curve(&self, profile: ThrottlePolicy, curve: CurveData) -> zbus::Result<()>;
 
     /// Set a profile fan curve enabled status. Will also activate a fan curve.
-    fn set_fan_curves_enabled(&self, profile: PlatformPolicy, enabled: bool) -> zbus::Result<()>;
+    fn set_fan_curves_enabled(&self, profile: ThrottlePolicy, enabled: bool) -> zbus::Result<()>;
 
     /// Set a single fan curve for a profile to enabled status. Will also
     /// activate a fan curve.
     async fn set_profile_fan_curve_enabled(
         &self,
-        profile: PlatformPolicy,
+        profile: ThrottlePolicy,
         fan: FanCurvePU,
         enabled: bool,
     ) -> zbus::Result<()>;

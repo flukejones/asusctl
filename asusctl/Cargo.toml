@@ -22,5 +22,6 @@ gif.workspace = true
 tinybmp.workspace = true
 glam.workspace = true
 rog_dbus = { path = "../rog-dbus" }
+tokio = { version = "^1.23.0", default-features = false, features = ["macros", "sync", "rt", "time"]}
 
 cargo-husky.workspace = true

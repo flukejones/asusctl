@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Added ability to change what EPP is linked with each throttle profile
+
 ## [v5.0.7]
 ### Changed
 - Fix to suspend process in anime thread to let custom anims run on wake.

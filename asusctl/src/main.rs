@@ -18,7 +18,7 @@ use rog_aura::usb::{AuraDevRog1, AuraDevTuf, AuraPowerDev};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::RogDbusClientBlocking;
 use rog_platform::error::PlatformError;
-use rog_platform::platform::{GpuMode, PlatformPolicy, Properties};
+use rog_platform::platform::{GpuMode, Properties, ThrottlePolicy};
 use rog_profiles::error::ProfileError;
 
 use crate::aura_cli::{AuraPowerStates, LedBrightness};
@@ -662,7 +662,7 @@ fn handle_throttle_profile(
     supported: &[Properties],
     cmd: &ProfileCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if !supported.contains(&Properties::PlatformPolicy) {
+    if !supported.contains(&Properties::ThrottlePolicy) {
         println!("Profiles not supported by either this kernel or by the laptop.");
         return Err(ProfileError::NotSupported.into());
     }
@@ -691,7 +691,7 @@ fn handle_throttle_profile(
     }
 
     if cmd.list {
-        let res = PlatformPolicy::list();
+        let res = ThrottlePolicy::list();
         for p in &res {
             println!("{:?}", p);
         }

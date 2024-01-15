@@ -1,5 +1,5 @@
 use egui::Ui;
-use rog_platform::platform::{GpuMode, PlatformPolicy};
+use rog_platform::platform::{GpuMode, ThrottlePolicy};
 
 use crate::system_state::SystemState;
 
@@ -7,7 +7,7 @@ pub fn platform_profile(states: &mut SystemState, ui: &mut Ui) {
     if let Some(mut throttle) = states.bios.throttle {
         ui.heading("Platform profile");
 
-        let mut item = |p: PlatformPolicy, ui: &mut Ui| {
+        let mut item = |p: ThrottlePolicy, ui: &mut Ui| {
             if ui
                 .selectable_value(&mut throttle, p, format!("{p:?}"))
                 .clicked()
@@ -25,7 +25,7 @@ pub fn platform_profile(states: &mut SystemState, ui: &mut Ui) {
         };
 
         ui.horizontal_wrapped(|ui| {
-            for a in PlatformPolicy::list() {
+            for a in ThrottlePolicy::list() {
                 item(a, ui);
             }
         });

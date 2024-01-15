@@ -213,6 +213,7 @@ dependencies = [
  "rog_platform",
  "rog_profiles",
  "tinybmp",
+ "tokio",
  "toml 0.5.11",
 ]
 

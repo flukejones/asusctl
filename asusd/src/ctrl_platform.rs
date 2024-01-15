@@ -4,8 +4,8 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use config_traits::StdConfig;
 use log::{debug, error, info, warn};
-use rog_platform::cpu::{CPUControl, CPUGovernor};
-use rog_platform::platform::{GpuMode, PlatformPolicy, Properties, RogPlatform};
+use rog_platform::cpu::{CPUControl, CPUGovernor, CPUEPP};
+use rog_platform::platform::{GpuMode, Properties, RogPlatform, ThrottlePolicy};
 use rog_platform::power::AsusPower;
 use zbus::export::futures_util::lock::Mutex;
 use zbus::fdo::Error as FdoErr;
@@ -180,7 +180,7 @@ impl CtrlPlatform {
         }
     }
 
-    fn check_and_set_epp(&self, profile: PlatformPolicy, change_epp: bool) {
+    fn check_and_set_epp(&self, enegy_pref: CPUEPP, change_epp: bool) {
         if !change_epp {
             info!("PlatformPolicy unlinked from EPP");
             return;
@@ -189,9 +189,9 @@ impl CtrlPlatform {
         if let Some(cpu) = self.cpu_control.as_ref() {
             if let Ok(epp) = cpu.get_available_epp() {
                 debug!("Available EPP: {epp:?}");
-                if epp.contains(&profile.into()) {
-                    debug!("Setting {profile:?}");
-                    cpu.set_epp(profile.into()).ok();
+                if epp.contains(&enegy_pref) {
+                    debug!("Setting {enegy_pref:?}");
+                    cpu.set_epp(enegy_pref).ok();
                 } else if let Ok(gov) = cpu.get_governor() {
                     if gov != CPUGovernor::Powersave {
                         warn!("powersave governor is not is use, you should use it.");
@@ -201,16 +201,26 @@ impl CtrlPlatform {
         }
     }
 
+    async fn get_config_epp_for_throttle(&self, throttle: ThrottlePolicy) -> CPUEPP {
+        match throttle {
+            ThrottlePolicy::Balanced => self.config.lock().await.throttle_balanced_epp,
+            ThrottlePolicy::Performance => self.config.lock().await.throttle_performance_epp,
+            ThrottlePolicy::Quiet => self.config.lock().await.throttle_quiet_epp,
+        }
+    }
+
     async fn update_policy_ac_or_bat(&self, power_plugged: bool, change_epp: bool) {
-        let profile = if power_plugged {
-            self.config.lock().await.platform_policy_on_ac
+        let throttle = if power_plugged {
+            self.config.lock().await.throttle_policy_on_ac
         } else {
-            self.config.lock().await.platform_policy_on_battery
+            self.config.lock().await.throttle_policy_on_battery
         };
+        debug!("Setting {throttle:?} before EPP");
+        let epp = self.get_config_epp_for_throttle(throttle).await;
         self.platform
-            .set_throttle_thermal_policy(profile.into())
+            .set_throttle_thermal_policy(throttle.into())
             .ok();
-        self.check_and_set_epp(profile, change_epp);
+        self.check_and_set_epp(epp, change_epp);
     }
 }
 
@@ -252,7 +262,7 @@ impl CtrlPlatform {
         platform_name!(panel_od, Properties::PanelOd);
         platform_name!(mini_led_mode, Properties::MiniLedMode);
         platform_name!(egpu_enable, Properties::EgpuEnable);
-        platform_name!(throttle_thermal_policy, Properties::PlatformPolicy);
+        platform_name!(throttle_thermal_policy, Properties::ThrottlePolicy);
 
         platform_name!(ppt_pl1_spl, Properties::PptPl1Spl);
         platform_name!(ppt_pl2_sppt, Properties::PptPl2Sppt);
@@ -338,14 +348,15 @@ impl CtrlPlatform {
         &mut self,
         #[zbus(signal_context)] ctxt: SignalContext<'_>,
     ) -> Result<(), FdoErr> {
-        let policy: PlatformPolicy =
+        let policy: ThrottlePolicy =
             platform_get_value!(self, throttle_thermal_policy, "throttle_thermal_policy")
                 .map(|n| n.into())?;
-        let policy = PlatformPolicy::next(&policy);
+        let policy = ThrottlePolicy::next(policy);
 
         if self.platform.has_throttle_thermal_policy() {
-            let change_epp = self.config.lock().await.platform_policy_linked_epp;
-            self.check_and_set_epp(policy, change_epp);
+            let change_epp = self.config.lock().await.throttle_policy_linked_epp;
+            let epp = self.get_config_epp_for_throttle(policy).await;
+            self.check_and_set_epp(epp, change_epp);
             self.platform
                 .set_throttle_thermal_policy(policy.into())
                 .map_err(|err| {
@@ -361,17 +372,18 @@ impl CtrlPlatform {
     }
 
     #[dbus_interface(property)]
-    fn throttle_thermal_policy(&self) -> Result<PlatformPolicy, FdoErr> {
+    fn throttle_thermal_policy(&self) -> Result<ThrottlePolicy, FdoErr> {
         platform_get_value!(self, throttle_thermal_policy, "throttle_thermal_policy")
             .map(|n| n.into())
     }
 
     #[dbus_interface(property)]
-    async fn set_throttle_thermal_policy(&mut self, policy: PlatformPolicy) -> Result<(), FdoErr> {
+    async fn set_throttle_thermal_policy(&mut self, policy: ThrottlePolicy) -> Result<(), FdoErr> {
         // TODO: watch for external changes
         if self.platform.has_throttle_thermal_policy() {
-            let change_epp = self.config.lock().await.platform_policy_linked_epp;
-            self.check_and_set_epp(policy, change_epp);
+            let change_epp = self.config.lock().await.throttle_policy_linked_epp;
+            let epp = self.get_config_epp_for_throttle(policy).await;
+            self.check_and_set_epp(epp, change_epp);
             self.platform
                 .set_throttle_thermal_policy(policy.into())
                 .map_err(|err| {
@@ -538,7 +550,7 @@ impl crate::Reloadable for CtrlPlatform {
 
         if let Ok(power_plugged) = self.power.get_online() {
             if self.platform.has_throttle_thermal_policy() {
-                let change_epp = self.config.lock().await.platform_policy_linked_epp;
+                let change_epp = self.config.lock().await.throttle_policy_linked_epp;
                 self.update_policy_ac_or_bat(power_plugged > 0, change_epp)
                     .await;
             }
@@ -621,7 +633,7 @@ impl CtrlTask for CtrlPlatform {
                     if let Ok(power_plugged) = platform1.power.get_online() {
                         if !sleeping && platform1.platform.has_throttle_thermal_policy() {
                             let change_epp =
-                                platform1.config.lock().await.platform_policy_linked_epp;
+                                platform1.config.lock().await.throttle_policy_linked_epp;
                             platform1
                                 .update_policy_ac_or_bat(power_plugged > 0, change_epp)
                                 .await;
@@ -658,7 +670,7 @@ impl CtrlTask for CtrlPlatform {
                 // power change
                 async move {
                     if platform3.platform.has_throttle_thermal_policy() {
-                        let change_epp = platform3.config.lock().await.platform_policy_linked_epp;
+                        let change_epp = platform3.config.lock().await.throttle_policy_linked_epp;
                         platform3
                             .update_policy_ac_or_bat(power_plugged, change_epp)
                             .await;
@@ -705,13 +717,14 @@ impl CtrlTask for CtrlPlatform {
                     if let Ok(profile) = ctrl
                         .platform
                         .get_throttle_thermal_policy()
-                        .map(PlatformPolicy::from)
+                        .map(ThrottlePolicy::from)
                         .map_err(|e| {
                             error!("Platform: get_throttle_thermal_policy error: {e}");
                         })
                     {
-                        let change_epp = ctrl.config.lock().await.platform_policy_linked_epp;
-                        ctrl.check_and_set_epp(profile, change_epp);
+                        let change_epp = ctrl.config.lock().await.throttle_policy_linked_epp;
+                        let epp = ctrl.get_config_epp_for_throttle(profile).await;
+                        ctrl.check_and_set_epp(epp, change_epp);
                     }
                 }
             }

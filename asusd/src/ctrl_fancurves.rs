@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use config_traits::{StdConfig, StdConfigLoad};
 use futures_lite::StreamExt;
 use log::{debug, error, info, warn};
-use rog_platform::platform::{PlatformPolicy, RogPlatform};
+use rog_platform::platform::{RogPlatform, ThrottlePolicy};
 use rog_profiles::error::ProfileError;
 use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::{find_fan_curve_node, FanCurvePU, FanCurveProfiles};
@@ -70,19 +70,19 @@ impl CtrlFanCurveZbus {
                 info!("{MOD_NAME}: Fetching default fan curves");
 
                 for this in [
-                    PlatformPolicy::Balanced,
-                    PlatformPolicy::Performance,
-                    PlatformPolicy::Quiet,
+                    ThrottlePolicy::Balanced,
+                    ThrottlePolicy::Performance,
+                    ThrottlePolicy::Quiet,
                 ] {
                     // For each profile we need to switch to it before we
                     // can read the existing values from hardware. The ACPI method used
                     // for this is what limits us.
-                    let next = PlatformPolicy::get_next_profile(this);
+                    let next = ThrottlePolicy::next(this);
                     platform.set_throttle_thermal_policy(next.into())?;
 
                     let active = platform
                         .get_throttle_thermal_policy()
-                        .map_or(PlatformPolicy::Balanced, |t| t.into());
+                        .map_or(ThrottlePolicy::Balanced, |t| t.into());
 
                     info!("{MOD_NAME}: {active:?}:");
                     for curve in fan_curves.get_fan_curves_for(active) {
@@ -130,7 +130,7 @@ impl CtrlFanCurveZbus {
     /// fan curve if in the same profile mode
     async fn set_fan_curves_enabled(
         &mut self,
-        profile: PlatformPolicy,
+        profile: ThrottlePolicy,
         enabled: bool,
     ) -> zbus::fdo::Result<()> {
         self.fan_curves
@@ -150,7 +150,7 @@ impl CtrlFanCurveZbus {
     /// activate a fan curve if in the same profile mode
     async fn set_profile_fan_curve_enabled(
         &mut self,
-        profile: PlatformPolicy,
+        profile: ThrottlePolicy,
         fan: FanCurvePU,
         enabled: bool,
     ) -> zbus::fdo::Result<()> {
@@ -170,7 +170,7 @@ impl CtrlFanCurveZbus {
     /// Get the fan-curve data for the currently active PlatformPolicy
     async fn fan_curve_data(
         &mut self,
-        profile: PlatformPolicy,
+        profile: ThrottlePolicy,
     ) -> zbus::fdo::Result<Vec<CurveData>> {
         let curve = self
             .fan_curves
@@ -185,7 +185,7 @@ impl CtrlFanCurveZbus {
     /// Will also activate the fan curve if the user is in the same mode.
     async fn set_fan_curve(
         &mut self,
-        profile: PlatformPolicy,
+        profile: ThrottlePolicy,
         curve: CurveData,
     ) -> zbus::fdo::Result<()> {
         self.fan_curves
@@ -222,11 +222,11 @@ impl CtrlFanCurveZbus {
     ///
     /// Each platform_profile has a different default and the defualt can be
     /// read only for the currently active profile.
-    async fn reset_profile_curves(&self, profile: PlatformPolicy) -> zbus::fdo::Result<()> {
+    async fn reset_profile_curves(&self, profile: ThrottlePolicy) -> zbus::fdo::Result<()> {
         let active = self
             .platform
             .get_throttle_thermal_policy()
-            .unwrap_or(PlatformPolicy::Balanced.into());
+            .unwrap_or(ThrottlePolicy::Balanced.into());
 
         self.platform.set_throttle_thermal_policy(profile.into())?;
         self.fan_curves

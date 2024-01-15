@@ -1,6 +1,6 @@
 use egui::plot::{Line, Plot, Points};
 use egui::Ui;
-use rog_platform::platform::PlatformPolicy;
+use rog_platform::platform::ThrottlePolicy;
 use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::FanCurvePU;
 
@@ -15,7 +15,7 @@ pub fn fan_graphs(
 ) {
     ui.separator();
 
-    let mut item = |profile: PlatformPolicy, ui: &mut Ui| {
+    let mut item = |profile: ThrottlePolicy, ui: &mut Ui| {
         ui.group(|ui| {
             if ui
                 .selectable_value(&mut curves.show_curve, profile, format!("{profile:?}"))

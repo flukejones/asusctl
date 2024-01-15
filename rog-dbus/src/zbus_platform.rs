@@ -20,7 +20,7 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
-use rog_platform::platform::{GpuMode, PlatformPolicy, Properties};
+use rog_platform::platform::{GpuMode, Properties, ThrottlePolicy};
 use zbus::dbus_proxy;
 
 #[dbus_proxy(
@@ -120,7 +120,7 @@ trait Platform {
 
     /// PlatformPolicy property
     #[dbus_proxy(property)]
-    fn throttle_thermal_policy(&self) -> zbus::Result<PlatformPolicy>;
+    fn throttle_thermal_policy(&self) -> zbus::Result<ThrottlePolicy>;
     #[dbus_proxy(property)]
-    fn set_throttle_thermal_policy(&self, value: PlatformPolicy) -> zbus::Result<()>;
+    fn set_throttle_thermal_policy(&self, value: ThrottlePolicy) -> zbus::Result<()>;
 }
