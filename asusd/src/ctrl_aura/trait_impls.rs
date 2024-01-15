@@ -1,7 +1,6 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use async_trait::async_trait;
 use config_traits::StdConfig;
 use log::{debug, error, info, warn};
 use rog_aura::advanced::UsbPackets;
@@ -33,7 +32,6 @@ impl CtrlAuraZbus {
     }
 }
 
-#[async_trait]
 impl crate::ZbusRun for CtrlAuraZbus {
     async fn add_to_server(self, server: &mut Connection) {
         Self::add_to_server_helper(self, AURA_ZBUS_PATH, server).await;
@@ -205,7 +203,6 @@ impl CtrlAuraZbus {
     }
 }
 
-#[async_trait]
 impl CtrlTask for CtrlAuraZbus {
     fn zbus_path() -> &'static str {
         AURA_ZBUS_PATH
@@ -278,7 +275,6 @@ impl CtrlTask for CtrlAuraZbus {
     }
 }
 
-#[async_trait]
 impl crate::Reloadable for CtrlAuraZbus {
     async fn reload(&mut self) -> Result<(), RogError> {
         let mut ctrl = self.0.lock().await;

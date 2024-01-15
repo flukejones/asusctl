@@ -23,7 +23,6 @@ dmi_id = { path = "../dmi-id" }
 futures-lite = "*"
 udev.workspace = true
 
-async-trait.workspace = true
 tokio.workspace = true
 
 # cli and logging

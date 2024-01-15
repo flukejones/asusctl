@@ -15,7 +15,6 @@ pub mod error;
 use std::future::Future;
 use std::time::Duration;
 
-use async_trait::async_trait;
 use dmi_id::DMIID;
 use futures_lite::stream::StreamExt;
 use log::{debug, info, warn};
@@ -130,34 +129,33 @@ pub fn print_board_info() {
     info!("Board name: {}", dmi.board_name);
 }
 
-#[async_trait]
 pub trait Reloadable {
-    async fn reload(&mut self) -> Result<(), RogError>;
+    fn reload(&mut self) -> impl std::future::Future<Output = Result<(), RogError>> + Send;
 }
-
-#[async_trait]
 pub trait ZbusRun {
-    async fn add_to_server(self, server: &mut Connection);
+    fn add_to_server(self, server: &mut Connection)
+        -> impl std::future::Future<Output = ()> + Send;
 
-    async fn add_to_server_helper(
+    fn add_to_server_helper(
         iface: impl zbus::Interface,
         path: &str,
         server: &mut Connection,
-    ) {
-        server
-            .object_server()
-            .at(&ObjectPath::from_str_unchecked(path), iface)
-            .await
-            .map_err(|err| {
-                warn!("{}: add_to_server {}", path, err);
-                err
-            })
-            .ok();
+    ) -> impl std::future::Future<Output = ()> + Send {
+        async move {
+            server
+                .object_server()
+                .at(&ObjectPath::from_str_unchecked(path), iface)
+                .await
+                .map_err(|err| {
+                    warn!("{}: add_to_server {}", path, err);
+                    err
+                })
+                .ok();
+        }
     }
 }
 
 /// Set up a task to run on the async executor
-#[async_trait]
 pub trait CtrlTask {
     fn zbus_path() -> &'static str;
 
@@ -168,7 +166,10 @@ pub trait CtrlTask {
     /// Implement to set up various tasks that may be required, using the
     /// `Executor`. No blocking loops are allowed, or they must be run on a
     /// separate thread.
-    async fn create_tasks(&self, signal: SignalContext<'static>) -> Result<(), RogError>;
+    fn create_tasks(
+        &self,
+        signal: SignalContext<'static>,
+    ) -> impl std::future::Future<Output = Result<(), RogError>> + Send;
 
     // /// Create a timed repeating task
     // async fn repeating_task(&self, millis: u64, mut task: impl FnMut() + Send +
@@ -186,7 +187,7 @@ pub trait CtrlTask {
     ///
     /// The closures can potentially block, so execution time should be the
     /// minimal possible such as save a variable.
-    async fn create_sys_event_tasks<
+    fn create_sys_event_tasks<
         Fut1,
         Fut2,
         Fut3,
@@ -201,7 +202,8 @@ pub trait CtrlTask {
         mut on_prepare_for_shutdown: F2,
         mut on_lid_change: F3,
         mut on_external_power_change: F4,
-    ) where
+    ) -> impl std::future::Future<Output = ()> + Send
+    where
         F1: FnMut(bool) -> Fut1,
         F2: FnMut(bool) -> Fut2,
         F3: FnMut(bool) -> Fut3,
@@ -211,70 +213,72 @@ pub trait CtrlTask {
         Fut3: Future<Output = ()> + Send,
         Fut4: Future<Output = ()> + Send,
     {
-        let connection = Connection::system()
-            .await
-            .expect("Controller could not create dbus connection");
+        async {
+            let connection = Connection::system()
+                .await
+                .expect("Controller could not create dbus connection");
 
-        let manager = ManagerProxy::builder(&connection)
-            .cache_properties(CacheProperties::No)
-            .build()
-            .await
-            .expect("Controller could not create ManagerProxy");
+            let manager = ManagerProxy::builder(&connection)
+                .cache_properties(CacheProperties::No)
+                .build()
+                .await
+                .expect("Controller could not create ManagerProxy");
 
-        let manager1 = manager.clone();
-        tokio::spawn(async move {
-            if let Ok(mut notif) = manager1.receive_prepare_for_shutdown().await {
-                while let Some(event) = notif.next().await {
-                    // blocks thread :|
-                    if let Ok(args) = event.args() {
-                        debug!("Doing on_prepare_for_shutdown({})", args.start);
-                        on_prepare_for_shutdown(args.start).await;
+            let manager1 = manager.clone();
+            tokio::spawn(async move {
+                if let Ok(mut notif) = manager1.receive_prepare_for_shutdown().await {
+                    while let Some(event) = notif.next().await {
+                        // blocks thread :|
+                        if let Ok(args) = event.args() {
+                            debug!("Doing on_prepare_for_shutdown({})", args.start);
+                            on_prepare_for_shutdown(args.start).await;
+                        }
                     }
                 }
-            }
-        });
+            });
 
-        let manager2 = manager.clone();
-        tokio::spawn(async move {
-            if let Ok(mut notif) = manager2.receive_prepare_for_sleep().await {
-                while let Some(event) = notif.next().await {
-                    // blocks thread :|
-                    if let Ok(args) = event.args() {
-                        debug!("Doing on_prepare_for_sleep({})", args.start);
-                        on_prepare_for_sleep(args.start).await;
+            let manager2 = manager.clone();
+            tokio::spawn(async move {
+                if let Ok(mut notif) = manager2.receive_prepare_for_sleep().await {
+                    while let Some(event) = notif.next().await {
+                        // blocks thread :|
+                        if let Ok(args) = event.args() {
+                            debug!("Doing on_prepare_for_sleep({})", args.start);
+                            on_prepare_for_sleep(args.start).await;
+                        }
                     }
                 }
-            }
-        });
+            });
 
-        let manager3 = manager.clone();
-        tokio::spawn(async move {
-            let mut last_power = manager3.on_external_power().await.unwrap_or_default();
+            let manager3 = manager.clone();
+            tokio::spawn(async move {
+                let mut last_power = manager3.on_external_power().await.unwrap_or_default();
 
-            loop {
-                if let Ok(next) = manager3.on_external_power().await {
-                    if next != last_power {
-                        last_power = next;
-                        on_external_power_change(next).await;
+                loop {
+                    if let Ok(next) = manager3.on_external_power().await {
+                        if next != last_power {
+                            last_power = next;
+                            on_external_power_change(next).await;
+                        }
                     }
+                    sleep(Duration::from_secs(2)).await;
                 }
-                sleep(Duration::from_secs(2)).await;
-            }
-        });
+            });
 
-        tokio::spawn(async move {
-            let mut last_lid = manager.lid_closed().await.unwrap_or_default();
-            // need to loop on these as they don't emit signals
-            loop {
-                if let Ok(next) = manager.lid_closed().await {
-                    if next != last_lid {
-                        last_lid = next;
-                        on_lid_change(next).await;
+            tokio::spawn(async move {
+                let mut last_lid = manager.lid_closed().await.unwrap_or_default();
+                // need to loop on these as they don't emit signals
+                loop {
+                    if let Ok(next) = manager.lid_closed().await {
+                        if next != last_lid {
+                            last_lid = next;
+                            on_lid_change(next).await;
+                        }
                     }
+                    sleep(Duration::from_secs(2)).await;
                 }
-                sleep(Duration::from_secs(2)).await;
-            }
-        });
+            });
+        }
     }
 }
 

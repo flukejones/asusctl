@@ -5,9 +5,9 @@ resolver = "2"
 
 [workspace.package]
 version = "5.0.7"
+rust-version = "1.75"
 
 [workspace.dependencies]
-async-trait = "^0.1"
 tokio = { version = "^1.23.0", default-features = false, features = ["macros", "sync"]}
 concat-idents = "^1.1"
 dirs = "^4.0"

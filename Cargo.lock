@@ -221,7 +221,6 @@ dependencies = [
 name = "asusd"
 version = "5.0.7"
 dependencies = [
- "async-trait",
  "cargo-husky",
  "concat-idents",
  "config-traits",

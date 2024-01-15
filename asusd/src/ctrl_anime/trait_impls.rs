@@ -1,7 +1,6 @@
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
-use async_trait::async_trait;
 use config_traits::StdConfig;
 use log::warn;
 use logind_zbus::manager::ManagerProxy;
@@ -35,7 +34,6 @@ async fn get_logind_manager<'a>() -> ManagerProxy<'a> {
 pub struct CtrlAnimeZbus(pub Arc<Mutex<CtrlAnime>>);
 
 /// The struct with the main dbus methods requires this trait
-#[async_trait]
 impl crate::ZbusRun for CtrlAnimeZbus {
     async fn add_to_server(self, server: &mut Connection) {
         Self::add_to_server_helper(self, ANIME_ZBUS_PATH, server).await;
@@ -259,7 +257,6 @@ impl CtrlAnimeZbus {
     }
 }
 
-#[async_trait]
 impl crate::CtrlTask for CtrlAnimeZbus {
     fn zbus_path() -> &'static str {
         ANIME_ZBUS_PATH
@@ -385,7 +382,6 @@ impl crate::CtrlTask for CtrlAnimeZbus {
     }
 }
 
-#[async_trait]
 impl crate::Reloadable for CtrlAnimeZbus {
     async fn reload(&mut self) -> Result<(), RogError> {
         if let Some(lock) = self.0.try_lock() {

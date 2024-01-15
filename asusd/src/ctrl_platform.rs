@@ -1,7 +1,6 @@
 use std::process::Command;
 use std::sync::Arc;
 
-use async_trait::async_trait;
 use config_traits::StdConfig;
 use log::{debug, error, info, warn};
 use rog_platform::cpu::{CPUControl, CPUGovernor, CPUEPP};
@@ -522,14 +521,12 @@ impl CtrlPlatform {
     }
 }
 
-#[async_trait]
 impl crate::ZbusRun for CtrlPlatform {
     async fn add_to_server(self, server: &mut Connection) {
         Self::add_to_server_helper(self, ZBUS_PATH, server).await;
     }
 }
 
-#[async_trait]
 impl crate::Reloadable for CtrlPlatform {
     async fn reload(&mut self) -> Result<(), RogError> {
         if self.platform.has_panel_od() {
@@ -592,7 +589,6 @@ impl CtrlPlatform {
     task_watch_item_notify!(nv_temp_target platform);
 }
 
-#[async_trait]
 impl CtrlTask for CtrlPlatform {
     fn zbus_path() -> &'static str {
         ZBUS_PATH

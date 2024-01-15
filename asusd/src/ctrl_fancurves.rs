@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use async_trait::async_trait;
 use config_traits::{StdConfig, StdConfigLoad};
 use futures_lite::StreamExt;
 use log::{debug, error, info, warn};
@@ -241,14 +240,12 @@ impl CtrlFanCurveZbus {
     }
 }
 
-#[async_trait]
 impl crate::ZbusRun for CtrlFanCurveZbus {
     async fn add_to_server(self, server: &mut Connection) {
         Self::add_to_server_helper(self, FAN_CURVE_ZBUS_PATH, server).await;
     }
 }
 
-#[async_trait]
 impl CtrlTask for CtrlFanCurveZbus {
     fn zbus_path() -> &'static str {
         FAN_CURVE_ZBUS_PATH
@@ -292,7 +289,6 @@ impl CtrlTask for CtrlFanCurveZbus {
     }
 }
 
-#[async_trait]
 impl crate::Reloadable for CtrlFanCurveZbus {
     /// Fetch the active profile and use that to set all related components up
     async fn reload(&mut self) -> Result<(), RogError> {
