@@ -397,6 +397,85 @@ impl CtrlPlatform {
     }
 
     #[dbus_interface(property)]
+    async fn throttle_policy_linked_epp(&self) -> Result<bool, FdoErr> {
+        Ok(self.config.lock().await.throttle_policy_linked_epp)
+    }
+
+    #[dbus_interface(property)]
+    async fn set_throttle_policy_linked_epp(&self, linked: bool) -> Result<(), zbus::Error> {
+        self.config.lock().await.throttle_policy_linked_epp = linked;
+        Ok(())
+    }
+
+    #[dbus_interface(property)]
+    async fn throttle_policy_on_battery(&self) -> Result<ThrottlePolicy, FdoErr> {
+        Ok(self.config.lock().await.throttle_policy_on_battery)
+    }
+
+    #[dbus_interface(property)]
+    async fn set_throttle_policy_on_battery(
+        &mut self,
+        policy: ThrottlePolicy,
+    ) -> Result<(), FdoErr> {
+        self.config.lock().await.throttle_policy_on_battery = policy;
+        self.set_throttle_thermal_policy(policy).await?;
+        Ok(())
+    }
+
+    #[dbus_interface(property)]
+    async fn throttle_policy_on_ac(&self) -> Result<ThrottlePolicy, FdoErr> {
+        Ok(self.config.lock().await.throttle_policy_on_ac)
+    }
+
+    #[dbus_interface(property)]
+    async fn set_throttle_policy_on_ac(&mut self, policy: ThrottlePolicy) -> Result<(), FdoErr> {
+        self.config.lock().await.throttle_policy_on_ac = policy;
+        self.set_throttle_thermal_policy(policy).await?;
+        Ok(())
+    }
+
+    #[dbus_interface(property)]
+    async fn throttle_quiet_epp(&self) -> Result<CPUEPP, FdoErr> {
+        Ok(self.config.lock().await.throttle_quiet_epp)
+    }
+
+    #[dbus_interface(property)]
+    async fn set_throttle_quiet_epp(&mut self, epp: CPUEPP) -> Result<(), FdoErr> {
+        let change_pp = self.config.lock().await.throttle_policy_linked_epp;
+        self.config.lock().await.throttle_quiet_epp = epp;
+        self.check_and_set_epp(epp, change_pp);
+        Ok(())
+    }
+
+    #[dbus_interface(property)]
+    async fn throttle_balanced_epp(&self) -> Result<CPUEPP, FdoErr> {
+        Ok(self.config.lock().await.throttle_balanced_epp)
+    }
+
+    #[dbus_interface(property)]
+    async fn set_throttle_balanced_epp(&mut self, epp: CPUEPP) -> Result<(), FdoErr> {
+        let change_pp = self.config.lock().await.throttle_policy_linked_epp;
+        self.config.lock().await.throttle_balanced_epp = epp;
+        self.check_and_set_epp(epp, change_pp);
+        Ok(())
+    }
+
+    #[dbus_interface(property)]
+    async fn throttle_performance_epp(&self) -> Result<CPUEPP, FdoErr> {
+        Ok(self.config.lock().await.throttle_performance_epp)
+    }
+
+    #[dbus_interface(property)]
+    async fn set_throttle_performance_epp(&mut self, epp: CPUEPP) -> Result<(), FdoErr> {
+        let change_pp = self.config.lock().await.throttle_policy_linked_epp;
+        self.config.lock().await.throttle_performance_epp = epp;
+        self.check_and_set_epp(epp, change_pp);
+        Ok(())
+    }
+
+    /// ***********************************************************************
+
+    #[dbus_interface(property)]
     fn post_animation_sound(&self) -> Result<bool, FdoErr> {
         platform_get_value!(self, post_animation_sound, "post_animation_sound")
     }

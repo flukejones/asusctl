@@ -194,7 +194,7 @@ impl From<CPUGovernor> for String {
     Clone,
     Copy,
 )]
-#[zvariant(signature = "s")]
+#[zvariant(signature = "y")]
 pub enum CPUEPP {
     #[default]
     Default = 0,
