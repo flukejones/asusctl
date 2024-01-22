@@ -17,7 +17,8 @@ use crate::ctrl_fancurves::{CtrlFanCurveZbus, FAN_CURVE_ZBUS_NAME, FAN_CURVE_ZBU
 use crate::error::RogError;
 use crate::{task_watch_item, task_watch_item_notify, CtrlTask};
 
-const ZBUS_PATH: &str = "/org/asuslinux/Platform";
+const PLATFORM_ZBUS_NAME: &str = "Platform";
+const PLATFORM_ZBUS_PATH: &str = "/org/asuslinux/Platform";
 
 macro_rules! platform_get_value {
     ($self:ident, $property:tt, $prop_name:literal) => {
@@ -300,6 +301,13 @@ impl CtrlPlatform {
         {
             interfaces.push(FAN_CURVE_ZBUS_NAME.to_owned());
         }
+        if server
+            .interface::<_, CtrlPlatform>(PLATFORM_ZBUS_PATH)
+            .await
+            .is_ok()
+        {
+            interfaces.push(PLATFORM_ZBUS_NAME.to_owned());
+        }
         interfaces
     }
 
@@ -434,6 +442,8 @@ impl CtrlPlatform {
         Ok(())
     }
 
+    /// The energy_performance_preference for the quiet throttle/platform
+    /// profile
     #[dbus_interface(property)]
     async fn throttle_quiet_epp(&self) -> Result<CPUEPP, FdoErr> {
         Ok(self.config.lock().await.throttle_quiet_epp)
@@ -447,6 +457,8 @@ impl CtrlPlatform {
         Ok(())
     }
 
+    /// The energy_performance_preference for the balanced throttle/platform
+    /// profile
     #[dbus_interface(property)]
     async fn throttle_balanced_epp(&self) -> Result<CPUEPP, FdoErr> {
         Ok(self.config.lock().await.throttle_balanced_epp)
@@ -460,6 +472,8 @@ impl CtrlPlatform {
         Ok(())
     }
 
+    /// The energy_performance_preference for the performance throttle/platform
+    /// profile
     #[dbus_interface(property)]
     async fn throttle_performance_epp(&self) -> Result<CPUEPP, FdoErr> {
         Ok(self.config.lock().await.throttle_performance_epp)
@@ -528,7 +542,10 @@ impl CtrlPlatform {
         platform_get_value!(self, egpu_enable, "egpu_enable")
     }
 
-    /// ************************************************************************
+    /// ***********************************************************************
+    /// Set the Package Power Target total of CPU: PL1 on Intel, SPL on AMD.
+    /// Shown on Intel+Nvidia or AMD+Nvidia based systems:
+    /// * min=5, max=250
     #[dbus_interface(property)]
     async fn ppt_pl1_spl(&self) -> Result<u8, FdoErr> {
         platform_get_value_if_some!(self, ppt_pl1_spl, "ppt_pl1_spl", 5)
@@ -539,6 +556,9 @@ impl CtrlPlatform {
         platform_set_with_min_max!(self, ppt_pl1_spl, "ppt_pl1_spl", value, 5, 250)
     }
 
+    /// Set the Slow Package Power Tracking Limit of CPU: PL2 on Intel, SPPT,
+    /// on AMD. Shown on Intel+Nvidia or AMD+Nvidia based systems:
+    /// * min=5, max=250
     #[dbus_interface(property)]
     async fn ppt_pl2_sppt(&self) -> Result<u8, FdoErr> {
         platform_get_value_if_some!(self, ppt_pl2_sppt, "ppt_pl2_sppt", 5)
@@ -549,6 +569,8 @@ impl CtrlPlatform {
         platform_set_with_min_max!(self, ppt_pl2_sppt, "ppt_pl2_sppt", value, 5, 250)
     }
 
+    /// Set the Fast Package Power Tracking Limit of CPU. AMD+Nvidia only:
+    /// * min=5, max=250
     #[dbus_interface(property)]
     async fn ppt_fppt(&self) -> Result<u8, FdoErr> {
         platform_get_value_if_some!(self, ppt_fppt, "ppt_fppt", 5)
@@ -559,6 +581,8 @@ impl CtrlPlatform {
         platform_set_with_min_max!(self, ppt_fppt, "ppt_fppt", value, 5, 250)
     }
 
+    /// Set the APU SPPT limit. Shown on full AMD systems only:
+    /// * min=5, max=130
     #[dbus_interface(property)]
     async fn ppt_apu_sppt(&self) -> Result<u8, FdoErr> {
         platform_get_value_if_some!(self, ppt_apu_sppt, "ppt_apu_sppt", 5)
@@ -569,6 +593,8 @@ impl CtrlPlatform {
         platform_set_with_min_max!(self, ppt_apu_sppt, "ppt_apu_sppt", value, 5, 130)
     }
 
+    /// Set the platform SPPT limit. Shown on full AMD systems only:
+    /// * min=5, max=130
     #[dbus_interface(property)]
     async fn ppt_platform_sppt(&self) -> Result<u8, FdoErr> {
         platform_get_value_if_some!(self, ppt_platform_sppt, "ppt_platform_sppt", 5)
@@ -579,6 +605,8 @@ impl CtrlPlatform {
         platform_set_with_min_max!(self, ppt_platform_sppt, "ppt_platform_sppt", value, 5, 130)
     }
 
+    /// Set the dynamic boost limit of the Nvidia dGPU:
+    /// * min=5, max=25
     #[dbus_interface(property)]
     async fn nv_dynamic_boost(&self) -> Result<u8, FdoErr> {
         platform_get_value_if_some!(self, nv_dynamic_boost, "nv_dynamic_boost", 5)
@@ -589,6 +617,8 @@ impl CtrlPlatform {
         platform_set_with_min_max!(self, nv_dynamic_boost, "nv_dynamic_boost", value, 5, 25)
     }
 
+    /// Set the target temperature limit of the Nvidia dGPU:
+    /// * min=75, max=87
     #[dbus_interface(property)]
     async fn nv_temp_target(&self) -> Result<u8, FdoErr> {
         platform_get_value_if_some!(self, nv_temp_target, "nv_temp_target", 5)
@@ -602,7 +632,7 @@ impl CtrlPlatform {
 
 impl crate::ZbusRun for CtrlPlatform {
     async fn add_to_server(self, server: &mut Connection) {
-        Self::add_to_server_helper(self, ZBUS_PATH, server).await;
+        Self::add_to_server_helper(self, PLATFORM_ZBUS_PATH, server).await;
     }
 }
 
@@ -625,6 +655,7 @@ impl crate::Reloadable for CtrlPlatform {
         }
 
         if let Ok(power_plugged) = self.power.get_online() {
+            self.config.lock().await.last_power_plugged = power_plugged;
             if self.platform.has_throttle_thermal_policy() {
                 let change_epp = self.config.lock().await.throttle_policy_linked_epp;
                 self.update_policy_ac_or_bat(power_plugged > 0, change_epp)
@@ -670,7 +701,7 @@ impl CtrlPlatform {
 
 impl CtrlTask for CtrlPlatform {
     fn zbus_path() -> &'static str {
-        ZBUS_PATH
+        PLATFORM_ZBUS_PATH
     }
 
     async fn create_tasks(&self, signal_ctxt: SignalContext<'static>) -> Result<(), RogError> {
@@ -706,15 +737,18 @@ impl CtrlTask for CtrlPlatform {
                             .ok();
                     }
                     if let Ok(power_plugged) = platform1.power.get_online() {
-                        if !sleeping && platform1.platform.has_throttle_thermal_policy() {
-                            let change_epp =
-                                platform1.config.lock().await.throttle_policy_linked_epp;
-                            platform1
-                                .update_policy_ac_or_bat(power_plugged > 0, change_epp)
-                                .await;
-                        }
-                        if !sleeping {
-                            platform1.run_ac_or_bat_cmd(power_plugged > 0).await;
+                        if platform1.config.lock().await.last_power_plugged != power_plugged {
+                            if !sleeping && platform1.platform.has_throttle_thermal_policy() {
+                                let change_epp =
+                                    platform1.config.lock().await.throttle_policy_linked_epp;
+                                platform1
+                                    .update_policy_ac_or_bat(power_plugged > 0, change_epp)
+                                    .await;
+                            }
+                            if !sleeping {
+                                platform1.run_ac_or_bat_cmd(power_plugged > 0).await;
+                            }
+                            platform1.config.lock().await.last_power_plugged = power_plugged;
                         }
                     }
                 }

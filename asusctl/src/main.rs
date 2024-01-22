@@ -180,10 +180,23 @@ fn do_parsed(
         dbus.proxies().aura().set_brightness(brightness.prev())?;
     }
 
-    // TODO:
-    // if parsed.show_supported {
-    //     println!("Supported laptop functions:\n\n{}", supported);
-    // }
+    if parsed.show_supported {
+        println!("Supported Core Functions:\n{:#?}", supported_interfaces);
+        println!(
+            "Supported Platform Properties:\n{:#?}",
+            supported_properties
+        );
+        if supported_interfaces.contains(&"Aura".to_owned()) {
+            let bright = dbus.proxies().aura().supported_brightness()?;
+            let modes = dbus.proxies().aura().supported_basic_modes()?;
+            let zones = dbus.proxies().aura().supported_basic_zones()?;
+            let power = dbus.proxies().aura().supported_power_zones()?;
+            println!("Supported Keyboard Brightness:\n{:#?}", bright);
+            println!("Supported Aura Modes:\n{:#?}", modes);
+            println!("Supported Aura Zones:\n{:#?}", zones);
+            println!("Supported Aura Power Zones:\n{:#?}", power);
+        }
+    }
 
     if let Some(chg_limit) = parsed.chg_limit {
         dbus.proxies()

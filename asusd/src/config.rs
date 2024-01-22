@@ -7,29 +7,45 @@ const CONFIG_FILE: &str = "asusd.ron";
 
 #[derive(Deserialize, Serialize, Default, Debug)]
 pub struct Config {
-    /// Save charge limit for restoring on boot
+    /// Save charge limit for restoring on boot/resume
     pub charge_control_end_threshold: u8,
     pub panel_od: bool,
     pub mini_led_mode: bool,
     pub disable_nvidia_powerd_on_battery: bool,
+    /// An optional command/script to run when power is changed to AC
     pub ac_command: String,
+    /// An optional command/script to run when power is changed to battery
     pub bat_command: String,
+    /// Set true if energy_performance_preference should be set if the
+    /// throttle/platform profile is changed
     pub throttle_policy_linked_epp: bool,
+    /// Which throttle/profile to use on battery power
     pub throttle_policy_on_battery: ThrottlePolicy,
+    /// Which throttle/profile to use on AC power
     pub throttle_policy_on_ac: ThrottlePolicy,
-    //
+    /// The energy_performance_preference for this throttle/platform profile
     pub throttle_quiet_epp: CPUEPP,
+    /// The energy_performance_preference for this throttle/platform profile
     pub throttle_balanced_epp: CPUEPP,
+    /// The energy_performance_preference for this throttle/platform profile
     pub throttle_performance_epp: CPUEPP,
-
-    //
+    /// Defaults to `None` if not supported
     pub ppt_pl1_spl: Option<u8>,
+    /// Defaults to `None` if not supported
     pub ppt_pl2_sppt: Option<u8>,
+    /// Defaults to `None` if not supported
     pub ppt_fppt: Option<u8>,
+    /// Defaults to `None` if not supported
     pub ppt_apu_sppt: Option<u8>,
+    /// Defaults to `None` if not supported
     pub ppt_platform_sppt: Option<u8>,
+    /// Defaults to `None` if not supported
     pub nv_dynamic_boost: Option<u8>,
+    /// Defaults to `None` if not supported
     pub nv_temp_target: Option<u8>,
+    /// Temporary state for AC/Batt
+    #[serde(skip)]
+    pub last_power_plugged: u8,
 }
 
 impl StdConfig for Config {
@@ -100,6 +116,7 @@ impl From<Config507> for Config {
             ppt_platform_sppt: c.ppt_platform_sppt,
             nv_dynamic_boost: c.nv_dynamic_boost,
             nv_temp_target: c.nv_temp_target,
+            last_power_plugged: 0,
         }
     }
 }
@@ -150,6 +167,7 @@ impl From<Config506> for Config {
             ppt_platform_sppt: c.ppt_platform_sppt,
             nv_dynamic_boost: c.nv_dynamic_boost,
             nv_temp_target: c.nv_temp_target,
+            last_power_plugged: 0,
         }
     }
 }
