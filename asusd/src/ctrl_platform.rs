@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::process::Command;
 use std::sync::Arc;
 
@@ -15,7 +16,7 @@ use crate::ctrl_anime::trait_impls::{CtrlAnimeZbus, ANIME_ZBUS_NAME, ANIME_ZBUS_
 use crate::ctrl_aura::trait_impls::{CtrlAuraZbus, AURA_ZBUS_NAME, AURA_ZBUS_PATH};
 use crate::ctrl_fancurves::{CtrlFanCurveZbus, FAN_CURVE_ZBUS_NAME, FAN_CURVE_ZBUS_PATH};
 use crate::error::RogError;
-use crate::{task_watch_item, task_watch_item_notify, CtrlTask};
+use crate::{task_watch_item, task_watch_item_notify, CtrlTask, Reloadable};
 
 const PLATFORM_ZBUS_NAME: &str = "Platform";
 const PLATFORM_ZBUS_PATH: &str = "/org/asuslinux/Platform";
@@ -115,7 +116,7 @@ pub struct CtrlPlatform {
 }
 
 impl CtrlPlatform {
-    pub fn new(config: Arc<Mutex<Config>>) -> Result<Self, RogError> {
+    pub fn new(config: Arc<Mutex<Config>>, config_path: &Path) -> Result<Self, RogError> {
         let platform = RogPlatform::new()?;
         let power = AsusPower::new()?;
 
@@ -124,14 +125,60 @@ impl CtrlPlatform {
             info!("Standard graphics switching will still work.");
         }
 
-        Ok(CtrlPlatform {
+        let config1 = config.clone();
+        let inotify = inotify::Inotify::init()?;
+        inotify
+            .watches()
+            .add(config_path, inotify::WatchMask::MODIFY)
+            .map_err(|e| {
+                if e.kind() == std::io::ErrorKind::NotFound {
+                    error!("Not found: {:?}", config_path);
+                } else {
+                    error!("Could not set asusd config inotify: {:?}", config_path);
+                }
+                e
+            })
+            .ok();
+
+        let ret_self = CtrlPlatform {
             power,
             platform,
             config,
             cpu_control: CPUControl::new()
                 .map_err(|e| error!("Couldn't get CPU control sysfs: {e}"))
                 .ok(),
-        })
+        };
+        let inotify_self = ret_self.clone();
+
+        tokio::spawn(async move {
+            use zbus::export::futures_util::StreamExt;
+            info!("Starting inotify watch for asusd config file");
+
+            let mut buffer = [0; 32];
+            inotify
+                .into_event_stream(&mut buffer)
+                .unwrap()
+                .for_each(|_| async {
+                    let res = config1.lock().await.read_new();
+                    if let Some(new_cfg) = res {
+                        let mut old_cfg = config1.lock().await;
+                        if *old_cfg != new_cfg {
+                            info!(
+                                "asusd.ron updated externally, updating internal copy and \
+                                 reloading"
+                            );
+                            *old_cfg = new_cfg;
+                            // shitty way to handle this but it works. Only require the reload()
+                            let mut inotify_self = inotify_self.clone();
+                            // TODO: better reload with ReloadAndNotify
+                            inotify_self.reload().await.unwrap();
+                        }
+                    }
+                })
+                .await;
+        });
+
+        Ok(ret_self)
     }
 
     fn set_gfx_mode(&self, mode: GpuMode) -> Result<(), RogError> {

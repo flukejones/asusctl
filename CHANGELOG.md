@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Don't change EPP or thermal profile if the battery/ac state hasn't actually changed on resume
 - Re-implement the `asusctl -s` command (not fully)
 - Add more docs to some parts of code, and dbus interfaces
+- Reload asusd.ron if changed. Does not notify any dbus listeners (yet)
 
 ## [v5.0.7]
 ### Changed

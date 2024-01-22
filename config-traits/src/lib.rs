@@ -109,6 +109,20 @@ where
         }
     }
 
+    /// Open and parse the config file to self from ron format
+    fn read_new(&self) -> Option<Self> {
+        if let Ok(data) = fs::read_to_string(self.file_path()) {
+            if data.is_empty() {
+                warn!("File is empty {:?}", self.file_path());
+            } else if let Ok(data) = ron::from_str(&data) {
+                return Some(data);
+            } else {
+                warn!("Could not deserialise {:?}", self.file_path());
+            }
+        }
+        None
+    }
+
     /// Write the config file data to pretty ron format
     fn write(&self) {
         let mut file = match File::create(self.file_path()) {

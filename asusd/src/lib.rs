@@ -132,6 +132,14 @@ pub fn print_board_info() {
 pub trait Reloadable {
     fn reload(&mut self) -> impl std::future::Future<Output = Result<(), RogError>> + Send;
 }
+
+pub trait ReloadAndNotify {
+    fn reload_and_notify(
+        &mut self,
+        signal_context: SignalContext<'static>,
+    ) -> impl std::future::Future<Output = Result<(), RogError>> + Send;
+}
+
 pub trait ZbusRun {
     fn add_to_server(self, server: &mut Connection)
         -> impl std::future::Future<Output = ()> + Send;

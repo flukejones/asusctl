@@ -5,7 +5,7 @@ use serde_derive::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "asusd.ron";
 
-#[derive(Deserialize, Serialize, Default, Debug)]
+#[derive(Deserialize, Serialize, Default, Debug, PartialEq, PartialOrd)]
 pub struct Config {
     /// Save charge limit for restoring on boot/resume
     pub charge_control_end_threshold: u8,

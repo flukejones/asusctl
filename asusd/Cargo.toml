@@ -22,6 +22,7 @@ rog_profiles = { path = "../rog-profiles" }
 dmi_id = { path = "../dmi-id" }
 futures-lite = "*"
 udev.workspace = true
+inotify.workspace = true
 
 tokio.workspace = true
 

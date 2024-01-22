@@ -64,11 +64,12 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     let mut connection = Connection::system().await?;
 
     let config = Config::new().load();
+    let cfg_path = config.file_path();
     let config = Arc::new(Mutex::new(config));
 
     // supported.add_to_server(&mut connection).await;
 
-    match CtrlPlatform::new(config.clone()) {
+    match CtrlPlatform::new(config.clone(), &cfg_path) {
         Ok(ctrl) => {
             let sig_ctx = CtrlPlatform::signal_context(&connection)?;
             start_tasks(ctrl, &mut connection, sig_ctx).await?;
