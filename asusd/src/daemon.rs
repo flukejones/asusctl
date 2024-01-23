@@ -69,7 +69,11 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
 
     // supported.add_to_server(&mut connection).await;
 
-    match CtrlPlatform::new(config.clone(), &cfg_path) {
+    match CtrlPlatform::new(
+        config.clone(),
+        &cfg_path,
+        CtrlPlatform::signal_context(&connection)?,
+    ) {
         Ok(ctrl) => {
             let sig_ctx = CtrlPlatform::signal_context(&connection)?;
             start_tasks(ctrl, &mut connection, sig_ctx).await?;

@@ -16,7 +16,7 @@ use crate::ctrl_anime::trait_impls::{CtrlAnimeZbus, ANIME_ZBUS_NAME, ANIME_ZBUS_
 use crate::ctrl_aura::trait_impls::{CtrlAuraZbus, AURA_ZBUS_NAME, AURA_ZBUS_PATH};
 use crate::ctrl_fancurves::{CtrlFanCurveZbus, FAN_CURVE_ZBUS_NAME, FAN_CURVE_ZBUS_PATH};
 use crate::error::RogError;
-use crate::{task_watch_item, task_watch_item_notify, CtrlTask, Reloadable};
+use crate::{task_watch_item, task_watch_item_notify, CtrlTask, ReloadAndNotify, Reloadable};
 
 const PLATFORM_ZBUS_NAME: &str = "Platform";
 const PLATFORM_ZBUS_PATH: &str = "/org/asuslinux/Platform";
@@ -116,7 +116,11 @@ pub struct CtrlPlatform {
 }
 
 impl CtrlPlatform {
-    pub fn new(config: Arc<Mutex<Config>>, config_path: &Path) -> Result<Self, RogError> {
+    pub fn new(
+        config: Arc<Mutex<Config>>,
+        config_path: &Path,
+        signal_context: SignalContext<'static>,
+    ) -> Result<Self, RogError> {
         let platform = RogPlatform::new()?;
         let power = AsusPower::new()?;
 
@@ -126,19 +130,7 @@ impl CtrlPlatform {
         }
 
         let config1 = config.clone();
-        let inotify = inotify::Inotify::init()?;
-        inotify
-            .watches()
-            .add(config_path, inotify::WatchMask::MODIFY)
-            .map_err(|e| {
-                if e.kind() == std::io::ErrorKind::NotFound {
-                    error!("Not found: {:?}", config_path);
-                } else {
-                    error!("Could not set asusd config inotify: {:?}", config_path);
-                }
-                e
-            })
-            .ok();
+        let config_path = config_path.to_owned();
 
         let ret_self = CtrlPlatform {
             power,
@@ -148,17 +140,47 @@ impl CtrlPlatform {
                 .map_err(|e| error!("Couldn't get CPU control sysfs: {e}"))
                 .ok(),
         };
-        let inotify_self = ret_self.clone();
+        let mut inotify_self = ret_self.clone();
 
         tokio::spawn(async move {
             use zbus::export::futures_util::StreamExt;
             info!("Starting inotify watch for asusd config file");
 
             let mut buffer = [0; 32];
-            inotify
-                .into_event_stream(&mut buffer)
-                .unwrap()
-                .for_each(|_| async {
+            loop {
+                // vi and vim do stupid shit causing the file watch to be removed
+                let inotify = inotify::Inotify::init().unwrap();
+                inotify
+                    .watches()
+                    .add(
+                        &config_path,
+                        inotify::WatchMask::MODIFY
+                            | inotify::WatchMask::CLOSE_WRITE
+                            | inotify::WatchMask::ATTRIB
+                            | inotify::WatchMask::CREATE,
+                    )
+                    .map_err(|e| {
+                        if e.kind() == std::io::ErrorKind::NotFound {
+                            error!("Not found: {:?}", config_path);
+                        } else {
+                            error!("Could not set asusd config inotify: {:?}", config_path);
+                        }
+                        e
+                    })
+                    .ok();
+                let mut events = inotify.into_event_stream(&mut buffer).unwrap();
+
+                while let Some(ev) = events.next().await {
+                    if let Ok(ev) = ev {
+                        if ev.mask == inotify::EventMask::IGNORED {
+                            warn!(
+                                "Something modified asusd.ron vi/vim style. Now need to reload \
+                                 inotify watch"
+                            );
+                            break;
+                        }
+                    }
+
                     let res = config1.lock().await.read_new();
                     if let Some(new_cfg) = res {
                         let mut old_cfg = config1.lock().await;
@@ -168,14 +190,14 @@ impl CtrlPlatform {
                                  reloading"
                             );
                             *old_cfg = new_cfg;
-                            // shitty way to handle this but it works. Only require the reload()
-                            let mut inotify_self = inotify_self.clone();
-                            // TODO: better reload with ReloadAndNotify
-                            inotify_self.reload().await.unwrap();
+                            inotify_self
+                                .reload_and_notify(signal_context.clone())
+                                .await
+                                .unwrap();
                         }
                     }
-                })
-                .await;
+                }
+            }
         });
 
         Ok(ret_self)
@@ -680,6 +702,15 @@ impl CtrlPlatform {
 impl crate::ZbusRun for CtrlPlatform {
     async fn add_to_server(self, server: &mut Connection) {
         Self::add_to_server_helper(self, PLATFORM_ZBUS_PATH, server).await;
+    }
+}
+
+impl ReloadAndNotify for CtrlPlatform {
+    async fn reload_and_notify(
+        &mut self,
+        _signal_context: SignalContext<'static>,
+    ) -> Result<(), RogError> {
+        self.reload().await
     }
 }
 
