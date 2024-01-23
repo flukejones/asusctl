@@ -16,7 +16,7 @@ use crate::ctrl_anime::trait_impls::{CtrlAnimeZbus, ANIME_ZBUS_NAME, ANIME_ZBUS_
 use crate::ctrl_aura::trait_impls::{CtrlAuraZbus, AURA_ZBUS_NAME, AURA_ZBUS_PATH};
 use crate::ctrl_fancurves::{CtrlFanCurveZbus, FAN_CURVE_ZBUS_NAME, FAN_CURVE_ZBUS_PATH};
 use crate::error::RogError;
-use crate::{task_watch_item, task_watch_item_notify, CtrlTask, ReloadAndNotify, Reloadable};
+use crate::{task_watch_item, task_watch_item_notify, CtrlTask, ReloadAndNotify};
 
 const PLATFORM_ZBUS_NAME: &str = "Platform";
 const PLATFORM_ZBUS_PATH: &str = "/org/asuslinux/Platform";
@@ -183,18 +183,10 @@ impl CtrlPlatform {
 
                     let res = config1.lock().await.read_new();
                     if let Some(new_cfg) = res {
-                        let mut old_cfg = config1.lock().await;
-                        if *old_cfg != new_cfg {
-                            info!(
-                                "asusd.ron updated externally, updating internal copy and \
-                                 reloading"
-                            );
-                            *old_cfg = new_cfg;
-                            inotify_self
-                                .reload_and_notify(signal_context.clone())
-                                .await
-                                .unwrap();
-                        }
+                        inotify_self
+                            .reload_and_notify(&signal_context, new_cfg)
+                            .await
+                            .unwrap();
                     }
                 }
             }
@@ -706,11 +698,65 @@ impl crate::ZbusRun for CtrlPlatform {
 }
 
 impl ReloadAndNotify for CtrlPlatform {
+    type Data = Config;
+
     async fn reload_and_notify(
         &mut self,
-        _signal_context: SignalContext<'static>,
+        signal_context: &SignalContext<'static>,
+        data: Self::Data,
     ) -> Result<(), RogError> {
-        self.reload().await
+        let mut config = self.config.lock().await;
+        if *config != data {
+            info!("asusd.ron updated externally, reloading and updating internal copy");
+
+            if self.power.has_charge_control_end_threshold() {
+                self.power
+                    .set_charge_control_end_threshold(data.charge_control_end_threshold)?;
+                self.charge_control_end_threshold_changed(signal_context)
+                    .await?;
+            }
+
+            if self.platform.has_panel_od() && config.panel_od != data.panel_od {
+                self.platform.set_panel_od(data.panel_od)?;
+                self.panel_od_changed(signal_context).await?;
+            }
+
+            if self.platform.has_mini_led_mode() && config.mini_led_mode != data.mini_led_mode {
+                self.platform.set_mini_led_mode(data.mini_led_mode)?;
+                self.mini_led_mode_changed(signal_context).await?;
+            }
+
+            if self.platform.has_throttle_thermal_policy()
+                && config.throttle_policy_linked_epp != data.throttle_policy_linked_epp
+            {
+                // TODO: extra stuff
+            }
+
+            macro_rules! ppt_reload_and_notify {
+                ($property:tt, $prop_name:literal) => {
+                    concat_idents::concat_idents!(has = has_, $property {
+                        if self.platform.has() && config.$property != data.$property {
+                            concat_idents::concat_idents!(set = set_, $property {
+                            self.platform
+                                .set_ppt_pl1_spl(data.$property.unwrap_or_default())?;});
+                            concat_idents::concat_idents!(changed = $property, _changed {
+                            self.ppt_pl1_spl_changed(signal_context).await?;});
+                        }
+                    })
+                }
+            }
+            ppt_reload_and_notify!(ppt_pl1_spl, "ppt_pl1_spl");
+            ppt_reload_and_notify!(ppt_pl2_sppt, "ppt_pl2_sppt");
+            ppt_reload_and_notify!(ppt_fppt, "ppt_fppt");
+            ppt_reload_and_notify!(ppt_apu_sppt, "ppt_apu_sppt");
+            ppt_reload_and_notify!(ppt_platform_sppt, "ppt_platform_sppt");
+            ppt_reload_and_notify!(nv_dynamic_boost, "nv_dynamic_boost");
+            ppt_reload_and_notify!(nv_temp_target, "nv_temp_target");
+
+            *config = data;
+        }
+
+        Ok(())
     }
 }
 

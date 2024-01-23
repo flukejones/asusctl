@@ -134,9 +134,12 @@ pub trait Reloadable {
 }
 
 pub trait ReloadAndNotify {
+    type Data: Send;
+
     fn reload_and_notify(
         &mut self,
-        signal_context: SignalContext<'static>,
+        signal_context: &SignalContext<'static>,
+        data: Self::Data,
     ) -> impl std::future::Future<Output = Result<(), RogError>> + Send;
 }
 
