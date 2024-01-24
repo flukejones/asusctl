@@ -28,7 +28,7 @@ export enum GpuMode {
 }
 
 /** `throttle_thermal_policy` in asus_wmi */
-export enum PlatformPolicy {
+export enum ThrottlePolicy {
 	Balanced = "Balanced",
 	Performance = "Performance",
 	Quiet = "Quiet",
@@ -43,7 +43,7 @@ export enum Properties {
 	PanelOd = "PanelOd",
 	MiniLedMode = "MiniLedMode",
 	EgpuEnable = "EgpuEnable",
-	PlatformPolicy = "PlatformPolicy",
+	ThrottlePolicy = "ThrottlePolicy",
 	PptPl1Spl = "PptPl1Spl",
 	PptPl2Sppt = "PptPl2Sppt",
 	PptFppt = "PptFppt",
