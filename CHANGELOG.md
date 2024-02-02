@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Re-implement the `asusctl -s` command (not fully)
 - Add more docs to some parts of code, and dbus interfaces
 - Reload asusd.ron if changed. Does not notify any dbus listeners (yet)
+- Fix the broken pipe error
+
+### Added
+- Support for G614J LED modes
 
 ## [v5.0.7]
 ### Changed

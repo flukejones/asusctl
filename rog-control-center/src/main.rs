@@ -22,6 +22,8 @@ use rog_control_center::{
     get_ipc_file, on_tmp_dir_exists, print_versions, RogApp, RogDbusClientBlocking, SHOWING_GUI,
     SHOW_GUI,
 };
+#[cfg(not(feature = "mocking"))]
+use supergfxctl::zbus_proxy::DaemonProxyBlocking as GfxProxyBlocking;
 use tokio::runtime::Runtime;
 
 #[cfg(not(feature = "mocking"))]
@@ -195,6 +197,16 @@ fn main() -> Result<()> {
 
     if config.enable_tray_icon {
         init_tray(supported_properties, states.clone());
+    }
+
+    if let Ok(mut states) = states.lock() {
+        // For some reason the gui is causing a broke pipe error on dbus send, so
+        // replace it.
+        let (asus_dbus, conn) =
+            rog_dbus::RogDbusClientBlocking::new().expect("Couldn't connect to asusd");
+        states.asus_dbus = asus_dbus;
+        let gfx_dbus = GfxProxyBlocking::new(&conn).expect("Couldn't connect to supergfxd");
+        states.gfx_dbus = gfx_dbus;
     }
 
     let mut bg_check_spawned = false;
