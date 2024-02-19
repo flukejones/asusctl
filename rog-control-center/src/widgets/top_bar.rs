@@ -8,7 +8,7 @@ impl RogApp {
             // The top panel is often a good place for a menu bar:
             egui::menu::bar(ui, |ui| {
                 ui.horizontal(|ui| {
-                    egui::global_dark_light_mode_buttons(ui);
+                    self.dark_light_mode_buttons(ui);
                     egui::warn_if_debug_build(ui);
                 });
 
@@ -43,5 +43,35 @@ impl RogApp {
                 }
             });
         });
+    }
+
+    fn dark_light_mode_buttons(&mut self, ui: &mut egui::Ui) {
+        let load_from_cfg = self.config.dark_mode != ui.ctx().style().visuals.dark_mode;
+
+        if ui
+            .add(egui::SelectableLabel::new(
+                !self.config.dark_mode,
+                "☀ Light",
+            ))
+            .clicked()
+            || (load_from_cfg && !self.config.dark_mode)
+        {
+            ui.ctx().set_visuals(egui::Visuals::light());
+        }
+        if ui
+            .add(egui::SelectableLabel::new(self.config.dark_mode, "🌙 Dark"))
+            .clicked()
+            || (load_from_cfg && self.config.dark_mode)
+        {
+            ui.ctx().set_visuals(egui::Visuals::dark());
+        }
+
+        let applied_dark_mode = ui.ctx().style().visuals.dark_mode;
+
+        if self.config.dark_mode != applied_dark_mode {
+            self.config.dark_mode = applied_dark_mode;
+            let tmp = self.config.enabled_notifications.clone();
+            self.config.save(&tmp).ok();
+        }
     }
 }
