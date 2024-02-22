@@ -13,8 +13,8 @@ concat-idents = "^1.1"
 dirs = "^4.0"
 smol = "^1.3"
 
-zbus = "~3.14.1"
-logind-zbus = { version = "~3.1" } #, default-features = false, features = ["non_blocking"] }
+zbus = "~4.0.1"
+logind-zbus = { version = "~4.0.0" } #, default-features = false, features = ["non_blocking"] }
 
 serde = "^1.0"
 serde_derive = "^1.0"
@@ -39,7 +39,7 @@ gif = "^0.12.0"
 
 versions = "4.1"
 
-notify-rust = { git = "https://github.com/flukejones/notify-rust.git", default-features = false, features = ["z"] }
+notify-rust = { git = "https://github.com/flukejones/notify-rust.git", rev = "54176413b81189a3e4edbdc20a0b4f7e2e35c063", default-features = false, features = ["z"] }
 
 [profile.release]
 # thin = 57s, asusd = 9.0M
