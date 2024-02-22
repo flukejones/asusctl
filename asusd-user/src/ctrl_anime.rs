@@ -9,7 +9,7 @@ use rog_anime::error::AnimeError;
 use rog_anime::{ActionData, ActionLoader, AnimTime, Fade, Sequences, Vec2};
 use rog_dbus::RogDbusClientBlocking;
 use serde_derive::{Deserialize, Serialize};
-use zbus::dbus_interface;
+use zbus::interface;
 use zbus::zvariant::{ObjectPath, Type};
 
 use crate::config::ConfigAnime;
@@ -175,7 +175,7 @@ impl CtrlAnime<'static> {
 // - Do actions
 // - Write config if required
 // - Unset inner_early_return
-#[dbus_interface(name = "org.asuslinux.Daemon")]
+#[interface(name = "org.asuslinux.Daemon")]
 impl CtrlAnime<'static> {
     pub fn insert_asus_gif(
         &mut self,

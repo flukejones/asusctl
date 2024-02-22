@@ -98,7 +98,7 @@ macro_rules! recv_notif {
                         log::error!("zbus signal: {}: {e}", stringify!($signal));
                         e
                     }).unwrap();
-                let proxy = $proxy::new(&conn).await.map_err(|e| {
+                let proxy = $proxy::builder(&conn).build().await.map_err(|e| {
                         log::error!("zbus signal: {}: {e}", stringify!($signal));
                         e
                     }).unwrap();
@@ -446,7 +446,8 @@ pub fn start_notifications(
                         e
                     })
                     .unwrap();
-                let proxy = SuperProxy::new(&conn)
+                let proxy = SuperProxy::builder(&conn)
+                    .build()
                     .await
                     .map_err(|e| {
                         error!("zbus signal: receive_notify_action: {e}");

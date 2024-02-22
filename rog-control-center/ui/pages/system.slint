@@ -1,0 +1,113 @@
+import { ValueBar } from "../common_widgets.slint";
+import { Theme } from "../globals.slint";
+import { HorizontalBox , VerticalBox, ScrollView} from "std-widgets.slint";
+
+export component PageSystem inherits Rectangle {
+    background: Theme.background-color;
+    ScrollView {
+        VerticalLayout {
+            // padding: 10px;
+            spacing: 10px;
+            min-height: root.height;
+            Rectangle {
+                background: Theme.background-color;
+                VerticalBox {
+                    Text {
+                        color: Theme.text-foreground-color;
+                        text: @tr("ChargeMode" => "Charging mode");
+                    }
+
+                    Text {
+                        color: Theme.text-foreground-color;
+                        text: @tr("ChargeLimit" => "Charge limit");
+                    }
+                }
+            }
+
+            Rectangle {
+                background: Theme.background-color;
+                VerticalBox {
+                    Text {
+                        color: Theme.text-foreground-color;
+                        text: @tr("PanelOverdrive" => "Panel Overdrive");
+                    }
+
+                    Text {
+                        color: Theme.text-foreground-color;
+                        text: @tr("PerformanceProfile" => "Performance Profile");
+                    }
+                }
+            }
+
+            Rectangle {
+                background: Theme.background-color;
+                VerticalBox {
+                    Text {
+                        color: Theme.text-foreground-color;
+                        text: @tr("nv_dynamic_boost" => "nv_dynamic_boost");
+                    }
+
+                    Text {
+                        color: Theme.text-foreground-color;
+                        text: @tr("nv_temp_target" => "nv_temp_target");
+                    }
+
+                    Text {
+                        color: Theme.text-foreground-color;
+                        text: @tr("ppt_pl1_spl" => "ppt_pl1_spl");
+                    }
+
+                    Text {
+                        color: Theme.text-foreground-color;
+                        text: @tr("ppt_pl2_sppt" => "ppt_pl2_sppt");
+                    }
+                }
+            }
+
+            Rectangle {
+                background: Theme.background-color;
+                VerticalBox {
+                    Text {
+                        color: Theme.text-foreground-color;
+                        text: @tr("PanelOverdrive" => "Panel Overdrive");
+                    }
+
+                    Text {
+                        color: Theme.text-foreground-color;
+                        text: @tr("PerformanceProfile" => "Performance Profile");
+                    }
+                }
+            }
+
+            Rectangle {
+                background: Theme.background-color;
+                VerticalBox {
+                    Text {
+                        color: Theme.text-foreground-color;
+                        text: @tr("PanelOverdrive" => "Panel Overdrive");
+                    }
+
+                    Text {
+                        color: Theme.text-foreground-color;
+                        text: @tr("PerformanceProfile" => "Performance Profile");
+                    }
+                }
+            }
+
+            Rectangle {
+                background: Theme.background-color;
+                VerticalBox {
+                    Text {
+                        color: Theme.text-foreground-color;
+                        text: @tr("PanelOverdrive" => "Panel Overdrive");
+                    }
+
+                    Text {
+                        color: Theme.text-foreground-color;
+                        text: @tr("PerformanceProfile" => "Performance Profile");
+                    }
+                }
+            }
+        }
+    }
+}

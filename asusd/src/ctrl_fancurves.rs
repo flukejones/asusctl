@@ -10,7 +10,7 @@ use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::{find_fan_curve_node, FanCurvePU, FanCurveProfiles};
 use serde_derive::{Deserialize, Serialize};
 use tokio::sync::Mutex;
-use zbus::{dbus_interface, Connection, SignalContext};
+use zbus::{interface, Connection, SignalContext};
 
 use crate::error::RogError;
 use crate::{CtrlTask, CONFIG_PATH_BASE};
@@ -123,7 +123,7 @@ impl CtrlFanCurveZbus {
     }
 }
 
-#[dbus_interface(name = "org.asuslinux.Daemon")]
+#[interface(name = "org.asuslinux.Daemon")]
 impl CtrlFanCurveZbus {
     /// Set all fan curves for a profile to enabled status. Will also activate a
     /// fan curve if in the same profile mode

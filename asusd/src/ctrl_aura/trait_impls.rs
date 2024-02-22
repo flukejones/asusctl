@@ -10,7 +10,7 @@ use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness};
 use zbus::export::futures_util::lock::{Mutex, MutexGuard};
 use zbus::export::futures_util::StreamExt;
 use zbus::fdo::Error as ZbErr;
-use zbus::{dbus_interface, Connection, SignalContext};
+use zbus::{interface, Connection, SignalContext};
 
 use super::controller::CtrlKbdLed;
 use crate::error::RogError;
@@ -41,31 +41,31 @@ impl crate::ZbusRun for CtrlAuraZbus {
 /// The main interface for changing, reading, or notfying signals
 ///
 /// LED commands are split between Brightness, Modes, Per-Key
-#[dbus_interface(name = "org.asuslinux.Daemon")]
+#[interface(name = "org.asuslinux.Daemon")]
 impl CtrlAuraZbus {
     /// Return the device type for this Aura keyboard
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn device_type(&self) -> AuraDevice {
         let ctrl = self.0.lock().await;
         ctrl.led_prod
     }
 
     /// Return the current LED brightness
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn brightness(&self) -> Result<LedBrightness, ZbErr> {
         let ctrl = self.0.lock().await;
         Ok(ctrl.sysfs_node.get_brightness().map(|n| n.into())?)
     }
 
     /// Set the keyboard brightness level (0-3)
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_brightness(&mut self, brightness: LedBrightness) -> Result<(), ZbErr> {
         let ctrl = self.0.lock().await;
         Ok(ctrl.sysfs_node.set_brightness(brightness.into())?)
     }
 
     /// Total levels of brightness available
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn supported_brightness(&self) -> Vec<LedBrightness> {
         vec![
             LedBrightness::Off,
@@ -76,26 +76,26 @@ impl CtrlAuraZbus {
     }
 
     /// The total available modes
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn supported_basic_modes(&self) -> Result<Vec<AuraModeNum>, ZbErr> {
         let ctrl = self.0.lock().await;
         Ok(ctrl.config.builtins.keys().cloned().collect())
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn supported_basic_zones(&self) -> Result<Vec<AuraZone>, ZbErr> {
         let ctrl = self.0.lock().await;
         Ok(ctrl.supported_data.basic_zones.clone())
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn supported_power_zones(&self) -> Result<Vec<PowerZones>, ZbErr> {
         let ctrl = self.0.lock().await;
         Ok(ctrl.supported_data.power_zones.clone())
     }
 
     /// The current mode data
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn led_mode(&self) -> Result<AuraModeNum, ZbErr> {
         let ctrl = self.0.lock().await;
         Ok(ctrl.config.current_mode)
@@ -105,7 +105,7 @@ impl CtrlAuraZbus {
     ///
     /// On success the aura config file is read to refresh cached values, then
     /// the effect is stored and config written to disk.
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_led_mode(&mut self, num: AuraModeNum) -> Result<(), ZbErr> {
         let mut ctrl = self.0.lock().await;
         ctrl.config.current_mode = num;
@@ -120,7 +120,7 @@ impl CtrlAuraZbus {
     }
 
     /// The current mode data
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn led_mode_data(&self) -> Result<AuraEffect, ZbErr> {
         let ctrl = self.0.lock().await;
         let mode = ctrl.config.current_mode;
@@ -134,7 +134,7 @@ impl CtrlAuraZbus {
     ///
     /// On success the aura config file is read to refresh cached values, then
     /// the effect is stored and config written to disk.
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_led_mode_data(&mut self, effect: AuraEffect) -> Result<(), ZbErr> {
         let mut ctrl = self.0.lock().await;
         if !ctrl.supported_data.basic_modes.contains(&effect.mode)
@@ -164,7 +164,7 @@ impl CtrlAuraZbus {
     }
 
     // As property doesn't work for AuraPowerDev (complexity of serialization?)
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn led_power(&self) -> AuraPowerDev {
         let ctrl = self.0.lock().await;
         AuraPowerDev::from(&ctrl.config.enabled)
@@ -174,7 +174,7 @@ impl CtrlAuraZbus {
     /// `enabled` sets if the sent array should be disabled or enabled
     ///
     /// For Modern ROG devices the "enabled" flag is ignored.
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_led_power(&mut self, options: (AuraPowerDev, bool)) -> Result<(), ZbErr> {
         let enabled = options.1;
         let options = options.0;

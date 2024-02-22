@@ -1,0 +1,50 @@
+import { ValueBar } from "../common_widgets.slint";
+import { Theme } from "../globals.slint";
+
+export component PageAura inherits VerticalLayout {
+    Rectangle {
+        clip: true;
+        // TODO: slow with border-radius
+        padding: 8px;
+        // height: parent.height - infobar.height - mainview.padding - self.padding * 2;
+        // TODO: border-radius: 8px;
+        mainview := VerticalLayout {
+            padding: 10px;
+            spacing: 10px;
+            ValueBar {
+                height: 40px;
+                value: 10.5;
+                min: 0.0;
+                max: 100.0;
+            }
+
+            ValueBar {
+                height: 40px;
+                value: -70;
+                min: -100;
+                max: 0;
+            }
+
+            ValueBar {
+                height: 80px;
+                value: 40;
+                min: -50;
+                max: 50;
+            }
+
+            ValueBar {
+                height: 80px;
+                value: -40;
+                min: -50;
+                max: 50;
+            }
+
+            ValueBar {
+                height: 80px;
+                value: -40;
+                min: -50;
+                max: 50;
+            }
+        }
+    }
+}

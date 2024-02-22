@@ -9,7 +9,7 @@ use rog_platform::platform::{GpuMode, Properties, RogPlatform, ThrottlePolicy};
 use rog_platform::power::AsusPower;
 use zbus::export::futures_util::lock::Mutex;
 use zbus::fdo::Error as FdoErr;
-use zbus::{dbus_interface, Connection, ObjectServer, SignalContext};
+use zbus::{interface, Connection, ObjectServer, SignalContext};
 
 use crate::config::Config;
 use crate::ctrl_anime::trait_impls::{CtrlAnimeZbus, ANIME_ZBUS_NAME, ANIME_ZBUS_PATH};
@@ -285,7 +285,7 @@ impl CtrlPlatform {
     }
 }
 
-#[dbus_interface(name = "org.asuslinux.Daemon")]
+#[interface(name = "org.asuslinux.Daemon")]
 impl CtrlPlatform {
     /// Returns a list of property names that this system supports
     async fn supported_properties(&self) -> Vec<Properties> {
@@ -372,13 +372,13 @@ impl CtrlPlatform {
         interfaces
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     fn charge_control_end_threshold(&self) -> Result<u8, FdoErr> {
         let limit = self.power.get_charge_control_end_threshold()?;
         Ok(limit)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_charge_control_end_threshold(&mut self, limit: u8) -> Result<(), FdoErr> {
         if !(20..=100).contains(&limit) {
             return Err(RogError::ChargeLimit(limit))?;
@@ -388,7 +388,7 @@ impl CtrlPlatform {
         Ok(())
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     fn gpu_mux_mode(&self) -> Result<u8, FdoErr> {
         self.platform.get_gpu_mux_mode().map_err(|err| {
             warn!("RogPlatform: set_gpu_mux_mode {err}");
@@ -396,7 +396,7 @@ impl CtrlPlatform {
         })
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_gpu_mux_mode(&mut self, mode: u8) -> Result<(), FdoErr> {
         if self.platform.has_gpu_mux_mode() {
             self.set_gfx_mode(mode.into()).map_err(|err| {
@@ -439,13 +439,13 @@ impl CtrlPlatform {
         }
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     fn throttle_thermal_policy(&self) -> Result<ThrottlePolicy, FdoErr> {
         platform_get_value!(self, throttle_thermal_policy, "throttle_thermal_policy")
             .map(|n| n.into())
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_throttle_thermal_policy(&mut self, policy: ThrottlePolicy) -> Result<(), FdoErr> {
         // TODO: watch for external changes
         if self.platform.has_throttle_thermal_policy() {
@@ -465,23 +465,23 @@ impl CtrlPlatform {
         }
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn throttle_policy_linked_epp(&self) -> Result<bool, FdoErr> {
         Ok(self.config.lock().await.throttle_policy_linked_epp)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_throttle_policy_linked_epp(&self, linked: bool) -> Result<(), zbus::Error> {
         self.config.lock().await.throttle_policy_linked_epp = linked;
         Ok(())
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn throttle_policy_on_battery(&self) -> Result<ThrottlePolicy, FdoErr> {
         Ok(self.config.lock().await.throttle_policy_on_battery)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_throttle_policy_on_battery(
         &mut self,
         policy: ThrottlePolicy,
@@ -491,12 +491,12 @@ impl CtrlPlatform {
         Ok(())
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn throttle_policy_on_ac(&self) -> Result<ThrottlePolicy, FdoErr> {
         Ok(self.config.lock().await.throttle_policy_on_ac)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_throttle_policy_on_ac(&mut self, policy: ThrottlePolicy) -> Result<(), FdoErr> {
         self.config.lock().await.throttle_policy_on_ac = policy;
         self.set_throttle_thermal_policy(policy).await?;
@@ -505,12 +505,12 @@ impl CtrlPlatform {
 
     /// The energy_performance_preference for the quiet throttle/platform
     /// profile
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn throttle_quiet_epp(&self) -> Result<CPUEPP, FdoErr> {
         Ok(self.config.lock().await.throttle_quiet_epp)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_throttle_quiet_epp(&mut self, epp: CPUEPP) -> Result<(), FdoErr> {
         let change_pp = self.config.lock().await.throttle_policy_linked_epp;
         self.config.lock().await.throttle_quiet_epp = epp;
@@ -520,12 +520,12 @@ impl CtrlPlatform {
 
     /// The energy_performance_preference for the balanced throttle/platform
     /// profile
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn throttle_balanced_epp(&self) -> Result<CPUEPP, FdoErr> {
         Ok(self.config.lock().await.throttle_balanced_epp)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_throttle_balanced_epp(&mut self, epp: CPUEPP) -> Result<(), FdoErr> {
         let change_pp = self.config.lock().await.throttle_policy_linked_epp;
         self.config.lock().await.throttle_balanced_epp = epp;
@@ -535,12 +535,12 @@ impl CtrlPlatform {
 
     /// The energy_performance_preference for the performance throttle/platform
     /// profile
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn throttle_performance_epp(&self) -> Result<CPUEPP, FdoErr> {
         Ok(self.config.lock().await.throttle_performance_epp)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_throttle_performance_epp(&mut self, epp: CPUEPP) -> Result<(), FdoErr> {
         let change_pp = self.config.lock().await.throttle_policy_linked_epp;
         self.config.lock().await.throttle_performance_epp = epp;
@@ -550,12 +550,12 @@ impl CtrlPlatform {
 
     /// ***********************************************************************
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     fn post_animation_sound(&self) -> Result<bool, FdoErr> {
         platform_get_value!(self, post_animation_sound, "post_animation_sound")
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_post_animation_sound(&mut self, on: bool) -> Result<(), FdoErr> {
         if self.platform.has_post_animation_sound() {
             self.platform.set_post_animation_sound(on).map_err(|err| {
@@ -571,34 +571,34 @@ impl CtrlPlatform {
 
     /// Get the `panel_od` value from platform. Updates the stored value in
     /// internal config also.
-    #[dbus_interface(property)]
+    #[zbus(property)]
     fn panel_od(&self) -> Result<bool, FdoErr> {
         platform_get_value!(self, panel_od, "panel_od")
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_panel_od(&mut self, overdrive: bool) -> Result<(), FdoErr> {
         platform_set_bool!(self, panel_od, "panel_od", overdrive)
     }
 
     /// Get the `panel_od` value from platform. Updates the stored value in
     /// internal config also.
-    #[dbus_interface(property)]
+    #[zbus(property)]
     fn mini_led_mode(&self) -> Result<bool, FdoErr> {
         platform_get_value!(self, mini_led_mode, "mini_led_mode")
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_mini_led_mode(&mut self, on: bool) -> Result<(), FdoErr> {
         platform_set_bool!(self, mini_led_mode, "mini_led_mode", on)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     fn dgpu_disable(&self) -> Result<bool, FdoErr> {
         platform_get_value!(self, dgpu_disable, "dgpu_disable")
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     fn egpu_enable(&self) -> Result<bool, FdoErr> {
         platform_get_value!(self, egpu_enable, "egpu_enable")
     }
@@ -607,12 +607,12 @@ impl CtrlPlatform {
     /// Set the Package Power Target total of CPU: PL1 on Intel, SPL on AMD.
     /// Shown on Intel+Nvidia or AMD+Nvidia based systems:
     /// * min=5, max=250
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn ppt_pl1_spl(&self) -> Result<u8, FdoErr> {
         platform_get_value_if_some!(self, ppt_pl1_spl, "ppt_pl1_spl", 5)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_ppt_pl1_spl(&mut self, value: u8) -> Result<(), FdoErr> {
         platform_set_with_min_max!(self, ppt_pl1_spl, "ppt_pl1_spl", value, 5, 250)
     }
@@ -620,72 +620,72 @@ impl CtrlPlatform {
     /// Set the Slow Package Power Tracking Limit of CPU: PL2 on Intel, SPPT,
     /// on AMD. Shown on Intel+Nvidia or AMD+Nvidia based systems:
     /// * min=5, max=250
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn ppt_pl2_sppt(&self) -> Result<u8, FdoErr> {
         platform_get_value_if_some!(self, ppt_pl2_sppt, "ppt_pl2_sppt", 5)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_ppt_pl2_sppt(&mut self, value: u8) -> Result<(), FdoErr> {
         platform_set_with_min_max!(self, ppt_pl2_sppt, "ppt_pl2_sppt", value, 5, 250)
     }
 
     /// Set the Fast Package Power Tracking Limit of CPU. AMD+Nvidia only:
     /// * min=5, max=250
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn ppt_fppt(&self) -> Result<u8, FdoErr> {
         platform_get_value_if_some!(self, ppt_fppt, "ppt_fppt", 5)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_ppt_fppt(&mut self, value: u8) -> Result<(), FdoErr> {
         platform_set_with_min_max!(self, ppt_fppt, "ppt_fppt", value, 5, 250)
     }
 
     /// Set the APU SPPT limit. Shown on full AMD systems only:
     /// * min=5, max=130
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn ppt_apu_sppt(&self) -> Result<u8, FdoErr> {
         platform_get_value_if_some!(self, ppt_apu_sppt, "ppt_apu_sppt", 5)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_ppt_apu_sppt(&mut self, value: u8) -> Result<(), FdoErr> {
         platform_set_with_min_max!(self, ppt_apu_sppt, "ppt_apu_sppt", value, 5, 130)
     }
 
     /// Set the platform SPPT limit. Shown on full AMD systems only:
     /// * min=5, max=130
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn ppt_platform_sppt(&self) -> Result<u8, FdoErr> {
         platform_get_value_if_some!(self, ppt_platform_sppt, "ppt_platform_sppt", 5)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_ppt_platform_sppt(&mut self, value: u8) -> Result<(), FdoErr> {
         platform_set_with_min_max!(self, ppt_platform_sppt, "ppt_platform_sppt", value, 5, 130)
     }
 
     /// Set the dynamic boost limit of the Nvidia dGPU:
     /// * min=5, max=25
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn nv_dynamic_boost(&self) -> Result<u8, FdoErr> {
         platform_get_value_if_some!(self, nv_dynamic_boost, "nv_dynamic_boost", 5)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_nv_dynamic_boost(&mut self, value: u8) -> Result<(), FdoErr> {
         platform_set_with_min_max!(self, nv_dynamic_boost, "nv_dynamic_boost", value, 5, 25)
     }
 
     /// Set the target temperature limit of the Nvidia dGPU:
     /// * min=75, max=87
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn nv_temp_target(&self) -> Result<u8, FdoErr> {
         platform_get_value_if_some!(self, nv_temp_target, "nv_temp_target", 5)
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_nv_temp_target(&mut self, value: u8) -> Result<(), FdoErr> {
         platform_set_with_min_max!(self, nv_temp_target, "nv_temp_target", value, 5, 87)
     }

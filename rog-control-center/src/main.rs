@@ -1,30 +1,29 @@
+use std::borrow::BorrowMut;
 use std::env::args;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
-use std::thread;
+use std::thread::{self, sleep, spawn};
 use std::time::Duration;
 
-use eframe::HardwareAcceleration;
 use gumdrop::Options;
-use log::{debug, error, warn, LevelFilter};
+use log::{warn, LevelFilter};
 use rog_aura::aura_detection::{LaptopLedData, LedSupportFile};
 use rog_aura::layouts::KeyLayout;
 use rog_control_center::cli_options::CliStart;
 use rog_control_center::config::Config;
 use rog_control_center::error::Result;
-use rog_control_center::startup_error::AppErrorShow;
+use rog_control_center::slint::ComponentHandle;
 use rog_control_center::system_state::SystemState;
 use rog_control_center::tray::init_tray;
 use rog_control_center::update_and_notify::{start_notifications, EnabledNotifications};
 use rog_control_center::{
-    get_ipc_file, on_tmp_dir_exists, print_versions, RogApp, RogDbusClientBlocking, SHOWING_GUI,
-    SHOW_GUI,
+    get_ipc_file, on_tmp_dir_exists, print_versions, MainWindow, RogDbusClientBlocking, QUIT_APP,
+    SHOWING_GUI, SHOW_GUI,
 };
-#[cfg(not(feature = "mocking"))]
-use supergfxctl::zbus_proxy::DaemonProxyBlocking as GfxProxyBlocking;
 use tokio::runtime::Runtime;
+// use winit::monitor::VideoMode;
+// use winit::window::{Fullscreen, WindowLevel};
 
 #[cfg(not(feature = "mocking"))]
 const DATA_DIR: &str = "/usr/share/rog-gui/";
@@ -61,44 +60,22 @@ fn main() -> Result<()> {
     // Enter the runtime so that `tokio::spawn` is available immediately.
     let _enter = rt.enter();
 
-    let native_options = eframe::NativeOptions {
-        vsync: true,
-        hardware_acceleration: HardwareAcceleration::Preferred,
-        min_window_size: Some(egui::vec2(980.0, 670.0)),
-        max_window_size: Some(egui::vec2(980.0, 670.0)),
-        run_and_return: true,
-        ..Default::default()
-    };
-
     let (dbus, _) = RogDbusClientBlocking::new()
-        .map_err(|e| {
-            eframe::run_native(
-                "ROG Control Center",
-                native_options.clone(),
-                Box::new(move |_| Box::new(AppErrorShow::new(e.to_string()))),
-            )
-            .map_err(|e| error!("{e}"))
-            .ok();
+        .map_err(|_| {
+            // TODO: show an error window
         })
         .unwrap();
 
     let supported_properties = match dbus.proxies().platform().supported_properties() {
         Ok(s) => s,
-        Err(e) => {
-            eframe::run_native(
-                "ROG Control Center",
-                native_options.clone(),
-                Box::new(move |_| Box::new(AppErrorShow::new(e.to_string()))),
-            )
-            .map_err(|e| error!("{e}"))
-            .ok();
-            vec![]
+        Err(_e) => {
+            // TODO: show an error window
+            Vec::default()
         }
     };
 
     // Startup
     let mut config = Config::load()?;
-    let running_in_bg = Arc::new(AtomicBool::new(config.startup_in_background));
 
     if config.startup_in_background {
         config.run_in_background = true;
@@ -179,6 +156,7 @@ fn main() -> Result<()> {
         Ok(tmp) => tmp,
         Err(_) => on_tmp_dir_exists().unwrap(),
     };
+    dbg!();
 
     let states = setup_page_state_and_notifs(
         layout_name,
@@ -188,75 +166,105 @@ fn main() -> Result<()> {
         &config,
     )?;
 
-    if cli_parsed.board_name.is_some() || cli_parsed.layout_viewing {
-        if let Ok(mut lock) = states.lock() {
-            lock.run_in_bg = false;
-            running_in_bg.store(false, Ordering::Release);
-        }
-    }
-
     if config.enable_tray_icon {
         init_tray(supported_properties, states.clone());
     }
+    dbg!();
 
-    if let Ok(mut states) = states.lock() {
-        // For some reason the gui is causing a broke pipe error on dbus send, so
-        // replace it.
-        let (asus_dbus, conn) =
-            rog_dbus::RogDbusClientBlocking::new().expect("Couldn't connect to asusd");
-        states.asus_dbus = asus_dbus;
-        let gfx_dbus = GfxProxyBlocking::new(&conn).expect("Couldn't connect to supergfxd");
-        states.gfx_dbus = gfx_dbus;
-    }
+    thread_local! { pub static UI: std::cell::RefCell<Option<MainWindow>> = Default::default()};
+    i_slint_backend_selector::with_platform(|_| Ok(())).unwrap();
 
-    let mut bg_check_spawned = false;
-    loop {
-        if !running_in_bg.load(Ordering::Relaxed) {
-            // blocks until window is closed
-            let states = states.clone();
-            let mut ipc_file = get_ipc_file()?;
-            ipc_file.write_all(&[SHOWING_GUI])?;
-            eframe::run_native(
-                "ROG Control Center",
-                native_options.clone(),
-                Box::new(move |cc| {
-                    let cfg = Config::load().unwrap();
-                    let app = RogApp::new(cfg, states, cc);
-                    Box::new(app.unwrap())
-                }),
-            )?;
+    dbg!();
+    thread::spawn(move || {
+        let mut buf = [0u8; 2];
+        // blocks until it is read, typically the read will happen after a second
+        // process writes to the IPC (so there is data to actually read)
+        loop {
+            get_ipc_file().unwrap().read_exact(&mut buf).unwrap();
+            if buf[0] == SHOW_GUI {
+                println!("Should show window {buf:?}");
+                let mut ipc_file = get_ipc_file().unwrap();
+                ipc_file.write_all(&[SHOWING_GUI, 0]).unwrap();
 
-            running_in_bg.store(true, Ordering::SeqCst);
-            bg_check_spawned = false;
-        }
-
-        if let Ok(lock) = states.try_lock() {
-            if !lock.run_in_bg {
-                break;
-            }
-
-            if lock.run_in_bg && running_in_bg.load(Ordering::Acquire) && !bg_check_spawned {
-                let running_in_bg = running_in_bg.clone();
-                thread::spawn(move || {
-                    let mut buf = [0u8; 4];
-                    // blocks until it is read, typically the read will happen after a second
-                    // process writes to the IPC (so there is data to actually read)
-                    loop {
-                        if get_ipc_file().unwrap().read(&mut buf).is_ok() && buf[0] == SHOW_GUI {
-                            running_in_bg.store(false, Ordering::Release);
-                            debug!("Wait thread got from tray {buf:#?}");
-                            break;
+                let states = states.clone();
+                i_slint_core::api::invoke_from_event_loop(move || {
+                    UI.with(|ui| {
+                        let mut ui = ui.borrow_mut();
+                        if let Some(ui) = ui.as_mut() {
+                            ui.window().show().unwrap();
+                            ui.window().on_close_requested(|| {
+                                let mut ipc_file = get_ipc_file().unwrap();
+                                ipc_file.write_all(&[0, 0]).unwrap();
+                                slint::CloseRequestResponse::HideWindow
+                            });
+                        } else {
+                            let newui = setup_window(states.clone());
+                            newui.window().show().unwrap();
+                            println!("New window should be showing now"); // but it isn't
+                            newui.window().on_close_requested(|| {
+                                let mut ipc_file = get_ipc_file().unwrap();
+                                ipc_file.write_all(&[0, 0]).unwrap();
+                                slint::CloseRequestResponse::HideWindow
+                            });
+                            ui.replace(newui);
                         }
-                    }
-                });
-                bg_check_spawned = true;
+                    });
+                })
+                .unwrap();
+            } else if buf[1] == QUIT_APP {
+                slint::quit_event_loop().unwrap();
+            } else if buf[0] != SHOWING_GUI {
+                println!("Should hide window {buf:?}");
+                i_slint_core::api::invoke_from_event_loop(move || {
+                    UI.with(|ui| {
+                        let mut ui = ui.take();
+                        if let Some(ui) = ui.borrow_mut() {
+                            ui.window().hide().unwrap();
+                        }
+                    });
+                })
+                .unwrap();
             }
         }
+    });
 
-        // Prevent hogging CPU
-        thread::sleep(Duration::from_millis(500));
-    }
+    slint::run_event_loop_until_quit().unwrap();
     Ok(())
+}
+
+fn setup_window(_states: Arc<Mutex<SystemState>>) -> MainWindow {
+    // slint::platform::set_platform(Box::new(i_slint_backend_winit::Backend::new().
+    // unwrap())).unwrap();
+    let ui = MainWindow::new().unwrap();
+    // Example of how to do work in another thread.
+    // The thread itself can keep its own state, and then update vars in the UI
+    // when required.
+    let ui_handle = ui.as_weak();
+    spawn(move || loop {
+        sleep(Duration::from_secs(1));
+        // This is where the actual update happens
+        ui_handle
+            .upgrade_in_event_loop(move |handle| {
+                // handle.set_counter(handle.get_counter() + 1);
+                use i_slint_backend_winit::WinitWindowAccessor;
+                handle
+                    .window()
+                    .with_winit_window(|winit_window: &winit::window::Window| {
+                        // winit_window.set_fullscreen(Some(Fullscreen::Borderless(None)));
+                        if !winit_window.has_focus() {
+                            // slint::quit_event_loop().unwrap();
+                            // handle.hide().unwrap();
+                        }
+                    });
+            })
+            .ok();
+    });
+
+    ui.on_exit_app(move || {
+        slint::quit_event_loop().unwrap();
+    });
+
+    ui
 }
 
 fn setup_page_state_and_notifs(

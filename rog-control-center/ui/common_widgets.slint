@@ -1,0 +1,246 @@
+import { VerticalBox , StandardButton, Button} from "std-widgets.slint";
+import { Theme } from "globals.slint";
+
+export component SquareImageButton inherits Rectangle {
+    // if (AppConsts.sdfsdf.length < 0):  Rectangle { background: red; }
+
+    callback clicked;
+    in-out property <image> img;
+    border-radius: 7px;
+    border-width: 2px;
+    border-color: Theme.control-outline;
+    background: Theme.image-button-background;
+    touch := TouchArea {
+        clicked => {
+            root.clicked();
+        
+        }
+    }
+
+    Image {
+        height: 90%;
+        width: 90%;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        source <=> root.img;
+        image-fit: contain;
+        // colorize: Theme.control-secondary;
+    }
+}
+
+export component RoundImageButton inherits Rectangle {
+    callback clicked;
+    in-out property <image> img;
+    in property <length> size;
+    width: self.size;
+    height: self.size;
+    border-radius: root.width / 2;
+    border-width: 6px;
+    border-color: Theme.control-outline;
+    background: Theme.image-button-background;
+    touch := TouchArea {
+        clicked => {
+            root.clicked();
+        
+        }
+    }
+
+    Image {
+        height: 60%;
+        width: 60%;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        source <=> root.img;
+        image-fit: contain;
+        // colorize: Theme.control-secondary;
+    }
+}
+
+export component SquareCharButton inherits Rectangle {
+    callback clicked;
+    in-out property <string> char;
+    border-radius: 7px;
+    border-width: 2px;
+    border-color: Theme.control-outline;
+    background: Theme.image-button-background;
+    touch := TouchArea {
+        clicked => {
+            root.clicked();
+        
+        }
+    }
+
+    Text {
+        // height: 90%;
+        // width: 90%;
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        text: char;
+        font-size: 28px;
+        font-weight: 900;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        color: Theme.control-foreground;
+    }
+}
+
+// A variable bar that can be single or double ended
+export component ValueBar inherits Rectangle {
+    in property <float> value: 0.0;
+    in property <float> min: 0.0;
+    in property <float> max: 1.0;
+    function percentage(min: float, max: float, value: float) -> float{
+        if (min < 0.0 && max > 0.0) {
+            // do a percentage of each half as 0-50%
+            if (value >= max + min) {
+                return (value - (max + min) / 2) / (max - min);
+            
+            }
+            return 0.50 - (value - (min - max) / 2) / (max - min);
+        
+        }
+        return (value - min) / (max - min);
+    
+    }
+
+    function set_x(min: float, max: float, value: float, width: length) -> length{
+        if (min < 0.0 && max > 0.0) {
+            if (value < max + min) {
+                return width / 2 - width * (percentage(min, max, value));
+            
+            }
+            return width / 2;
+        
+        }
+        return 0;
+    
+    }
+
+    Rectangle {
+        border-radius: 3px;
+        background: Theme.neutral-box;
+        Rectangle {
+            x: set_x(root.min, root.max, root.value, root.width);
+            width: parent.x + parent.width * percentage(root.min, root.max, root.value);
+            border-radius: parent.border-radius;
+            background: Theme.control-secondary;
+        }
+
+        Text {
+            vertical-alignment: center;
+            horizontal-alignment: center;
+            text: root.value;
+            font-size: root.height;
+            font-weight: 900;
+            color: Theme.control-foreground;
+        }
+    }
+}
+
+// Single direction spinbox
+export component SpinBoxUni inherits Rectangle {
+    in-out property <int> value;
+    in property <int> minimum;
+    in property <int> maximum: 100;
+    height: 32px;
+    HorizontalLayout {
+        spacing: 12px;
+        padding: 0;
+        SquareCharButton {
+            width: root.height - parent.padding * 2;
+            char: "-";
+            clicked => {
+                if (root.value > root.minimum) {
+                    root.value -= 1;
+                
+                }
+            }
+        }
+
+        Rectangle {
+            border-radius: 3px;
+            border-width: 2px;
+            border-color: Theme.control-outline;
+            // TODO: replace with visual min/max drawing
+            Text {
+                width: 100%;
+                height: 100%;
+                vertical-alignment: center;
+                horizontal-alignment: center;
+                text: root.value;
+                color: Theme.control-foreground;
+            }
+        }
+
+        SquareCharButton {
+            width: root.height - parent.padding * 2;
+            char: "+";
+            clicked => {
+                if (root.value < root.maximum) {
+                    root.value += 1;
+                
+                }
+            }
+        }
+    }
+}
+
+export component PopupNotification {
+    in property <string> heading;
+    in property <string> content;
+    _p := PopupWindow {
+        x: root.x;
+        y: root.y;
+        width: root.width;
+        height: root.height;
+        // TODO: add properties to display
+        Rectangle {
+            border-width: 2px;
+            border-color: Theme.control-outline;
+            background: Theme.notification-background;
+            // TODO: drop shadows slow
+            // drop-shadow-offset-x: 7px;
+            // drop-shadow-offset-y: 7px;
+            // drop-shadow-color: black;
+            // drop-shadow-blur: 30px;
+            VerticalLayout {
+                Dialog {
+                    VerticalLayout {
+                        alignment: start;
+                        Text {
+                            text: heading;
+                            color: Theme.text-foreground-color;
+                            font-size: 32px;
+                            font-weight: 900;
+                        }
+
+                        Text {
+                            text: content;
+                            color: Theme.text-foreground-color;
+                            font-size: 18px;
+                        }
+                    }
+
+                    StandardButton {
+                        kind: ok;
+                    }
+
+                    StandardButton {
+                        kind: cancel;
+                    }
+
+                    Button {
+                        text: "More Info";
+                        dialog-button-role: action;
+                    }
+                }
+            }
+        }
+    }
+
+    public function show() {
+        _p.show();
+    
+    }
+
+}

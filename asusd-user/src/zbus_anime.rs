@@ -21,9 +21,9 @@
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 #![allow(clippy::too_many_arguments)]
 
-use zbus::dbus_proxy;
+use zbus::proxy;
 
-#[dbus_proxy(
+#[proxy(
     interface = "org.asuslinux.Daemon",
     default_path = "/org/asuslinux/Anime"
 )]

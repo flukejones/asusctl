@@ -10,7 +10,7 @@ use rog_anime::usb::{
 };
 use rog_anime::{Animations, AnimeDataBuffer, DeviceState};
 use zbus::export::futures_util::lock::Mutex;
-use zbus::{dbus_interface, CacheProperties, Connection, SignalContext};
+use zbus::{interface, CacheProperties, Connection, SignalContext};
 
 use super::CtrlAnime;
 use crate::error::RogError;
@@ -43,7 +43,7 @@ impl crate::ZbusRun for CtrlAnimeZbus {
 // None of these calls can be guarnateed to succeed unless we loop until okay
 // If the try_lock *does* succeed then any other thread trying to lock will not
 // grab it until we finish.
-#[dbus_interface(name = "org.asuslinux.Daemon")]
+#[interface(name = "org.asuslinux.Daemon")]
 impl CtrlAnimeZbus {
     /// Writes a data stream of length. Will force system thread to exit until
     /// it is restarted
@@ -58,14 +58,14 @@ impl CtrlAnimeZbus {
     }
 
     /// Set base brightness level
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn brightness(&self) -> Brightness {
         let lock = self.0.lock().await;
         lock.config.display_brightness
     }
 
     /// Set base brightness level
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_brightness(&self, brightness: Brightness) {
         let mut lock = self.0.lock().await;
         lock.node
@@ -86,7 +86,7 @@ impl CtrlAnimeZbus {
         lock.config.write();
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn builtins_enabled(&self) -> bool {
         let lock = self.0.lock().await;
         lock.config.builtin_anims_enabled
@@ -94,7 +94,7 @@ impl CtrlAnimeZbus {
 
     /// Enable the builtin animations or not. This is quivalent to "Powersave
     /// animations" in Armory crate
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_builtins_enabled(&self, enabled: bool) {
         let mut lock = self.0.lock().await;
         lock.node
@@ -125,14 +125,14 @@ impl CtrlAnimeZbus {
         }
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn builtin_animations(&self) -> Animations {
         let lock = self.0.lock().await;
         lock.config.builtin_anims
     }
 
     /// Set which builtin animation is used for each stage
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_builtin_animations(&self, settings: Animations) {
         let mut lock = self.0.lock().await;
         lock.node
@@ -157,14 +157,14 @@ impl CtrlAnimeZbus {
         lock.config.write();
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn enable_display(&self) -> bool {
         let lock = self.0.lock().await;
         lock.config.display_enabled
     }
 
     /// Set whether the AniMe is enabled at all
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_enable_display(&self, enabled: bool) {
         let mut lock = self.0.lock().await;
         lock.node
@@ -177,14 +177,14 @@ impl CtrlAnimeZbus {
         lock.config.write();
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn off_when_unplugged(&self) -> bool {
         let lock = self.0.lock().await;
         lock.config.off_when_unplugged
     }
 
     /// Set if to turn the AniMe Matrix off when external power is unplugged
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_off_when_unplugged(&self, enabled: bool) {
         let mut lock = self.0.lock().await;
         let manager = get_logind_manager().await;
@@ -201,28 +201,28 @@ impl CtrlAnimeZbus {
         lock.config.write();
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn off_when_suspended(&self) -> bool {
         let lock = self.0.lock().await;
         lock.config.off_when_suspended
     }
 
     /// Set if to turn the AniMe Matrix off when the laptop is suspended
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_off_when_suspended(&self, enabled: bool) {
         let mut lock = self.0.lock().await;
         lock.config.off_when_suspended = enabled;
         lock.config.write();
     }
 
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn off_when_lid_closed(&self) -> bool {
         let lock = self.0.lock().await;
         lock.config.off_when_lid_closed
     }
 
     /// Set if to turn the AniMe Matrix off when the lid is closed
-    #[dbus_interface(property)]
+    #[zbus(property)]
     async fn set_off_when_lid_closed(&self, enabled: bool) {
         let mut lock = self.0.lock().await;
         let manager = get_logind_manager().await;
@@ -250,7 +250,7 @@ impl CtrlAnimeZbus {
     }
 
     /// Get the device state as stored by asusd
-    // #[dbus_interface(property)]
+    // #[zbus(property)]
     async fn device_state(&self) -> DeviceState {
         let lock = self.0.lock().await;
         DeviceState::from(&lock.config)

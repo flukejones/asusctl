@@ -16,12 +16,13 @@ dmi_id = { path = "../dmi-id" }
 
 gumdrop.workspace = true
 toml.workspace = true
+zbus.workspace = true
 
 [dev-dependencies]
 gif.workspace = true
 tinybmp.workspace = true
 glam.workspace = true
 rog_dbus = { path = "../rog-dbus" }
-tokio = { version = "^1.23.0", default-features = false, features = ["macros", "sync", "rt", "time"]}
+tokio.workspace = true
 
 cargo-husky.workspace = true

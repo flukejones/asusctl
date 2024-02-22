@@ -123,7 +123,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
 
     loop {
         // This is just a blocker to idle and ensure the reator reacts
-        sleep(Duration::from_millis(1000)).await;
+        connection.executor().tick().await;
     }
 }
 

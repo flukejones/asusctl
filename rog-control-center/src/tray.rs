@@ -86,7 +86,7 @@ impl ROGTray {
             e
         })?;
 
-        let gfx_proxy = GfxProxyBlocking::new(&conn).map_err(|e| {
+        let gfx_proxy = GfxProxyBlocking::builder(&conn).build().map_err(|e| {
             error!("ROGTray: {e}");
             e
         })?;

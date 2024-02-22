@@ -1,23 +1,25 @@
-pub mod app;
+// These lints need to be allowed due to the generated sources
+#![allow(clippy::redundant_clone, clippy::cmp_owned)]
+slint::include_modules!();
+
+// Intentionally reexport slint so that GUI consumers don't need to add to
+// `Cargo.toml`
 use std::fs::{remove_dir_all, File, OpenOptions};
 use std::io::{Read, Write};
 use std::process::exit;
 use std::thread::sleep;
 use std::time::Duration;
 
-pub use app::RogApp;
+pub use slint;
 
 pub mod cli_options;
 pub mod config;
 pub mod error;
 #[cfg(feature = "mocking")]
 pub mod mocking;
-pub mod pages;
-pub mod startup_error;
 pub mod system_state;
 pub mod tray;
 pub mod update_and_notify;
-pub mod widgets;
 
 #[cfg(feature = "mocking")]
 pub use mocking::RogDbusClientBlocking;
@@ -44,6 +46,7 @@ pub fn print_versions() {
 
 pub const SHOWING_GUI: u8 = 1;
 pub const SHOW_GUI: u8 = 2;
+pub const QUIT_APP: u8 = 3;
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub enum Page {

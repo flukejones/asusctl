@@ -23,9 +23,9 @@
 use rog_platform::platform::ThrottlePolicy;
 use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::FanCurvePU;
-use zbus::dbus_proxy;
+use zbus::proxy;
 
-#[dbus_proxy(
+#[proxy(
     interface = "org.asuslinux.Daemon",
     default_service = "org.asuslinux.Daemon",
     default_path = "/org/asuslinux/FanCurves"

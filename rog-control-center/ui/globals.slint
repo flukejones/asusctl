@@ -1,0 +1,39 @@
+struct ButtonColours  {
+    base: color,
+    pressed: color,
+    hovered: color,
+}
+
+export global AppSize {
+    out property <length> width: 800px;
+    out property <length> height: 480px;
+}
+
+export global Theme {
+    out property <color> window-background: #000000;
+    out property <color> neutral-box: #BDC0D1;
+    // The background colour of pages and bars
+    out property <color> background-color: root.dark-mode ? #12387b : white;
+    out property <color> text-foreground-color: root.dark-mode ? #F4F6FF : black;
+    out property <color> secondary-foreground-color: root.dark-mode ? #C1C3CA : #6C6E7A;
+    out property <color> image-button-background: root.dark-mode ? root.window-background : white;
+    out property <color> toolbar-background: root.background-color;
+    out property <color> notification-border: root.background-color;
+    out property <color> notification-background: root.background-color;
+    out property <color> control-outline: #FFBF63;
+    out property <color> control-secondary: #6284FF;
+    out property <color> control-foreground: root.dark-mode ? white : #122F7B;
+    out property <color> push-button-base: #FFBF63;
+    out property <ButtonColours> push-button: {
+        base: root.push-button-base,
+        pressed: root.push-button-base.darker(40%),
+        hovered: root.push-button-base.darker(20%),
+    };
+    out property <color> push-button-text-color: white;
+    out property <length> base-font-size: 16px;
+    in property <bool> dark-mode: true;
+}
+
+export global IconImages {
+    //out property <image> two_t: @image-url("images/parameters/2t.png");
+}

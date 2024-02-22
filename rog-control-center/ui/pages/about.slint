@@ -1,0 +1,18 @@
+import { ValueBar } from "../common_widgets.slint";
+import { Theme } from "../globals.slint";
+import { AboutSlint } from "std-widgets.slint";
+
+export component PageAbout inherits VerticalLayout {
+    Rectangle {
+        clip: true;
+        // TODO: slow with border-radius
+        padding: 8px;
+        // height: parent.height - infobar.height - mainview.padding - self.padding * 2;
+        // TODO: border-radius: 8px;
+        mainview := VerticalLayout {
+            padding: 10px;
+            spacing: 10px;
+            AboutSlint {}
+        }
+    }
+}

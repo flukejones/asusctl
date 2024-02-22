@@ -10,15 +10,9 @@ edition = "2021"
 #mocking = []
 
 [dependencies]
-# egui = "0.24.1"
-# eframe = "0.24.1"
-# egui_plot = "0.24.1"
-# Stuck on this revision due to crash issues on app close
-egui = { git = "https://github.com/emilk/egui", rev = "b8e798777de519de3a1878798097ab2ab0bd4def"}
-eframe = { git = "https://github.com/emilk/egui", rev = "b8e798777de519de3a1878798097ab2ab0bd4def"}
 
-libappindicator = "0.8" # Tray icon
-gtk = "0.16"
+libappindicator = "0.9" # Tray icon
+gtk = "0.18"
 
 asusd = { path = "../asusd" }
 rog_anime = { path = "../rog-anime" }
@@ -48,9 +42,18 @@ versions.workspace = true
 nix = "^0.26.1"
 tempfile = "3.3.0"
 
-# [patch.crates-io]
-# egui = { git = "https://github.com/flukejones/egui" }
-# eframe = { git = "https://github.com/flukejones/egui" }
+i-slint-backend-selector = { git = "https://github.com/slint-ui/slint.git" }
+i-slint-core = { git = "https://github.com/slint-ui/slint.git" }
+i-slint-backend-winit = { git = "https://github.com/slint-ui/slint.git" }
+winit = "*"
+
+[dependencies.slint]
+git = "https://github.com/slint-ui/slint.git"
+default-features = false
+features = ["std", "compat-1-0", "backend-winit-wayland", "backend-linuxkms", "renderer-femtovg"]
+
+[build-dependencies.slint-build]
+git = "https://github.com/slint-ui/slint.git"
 
 [dev-dependencies]
 cargo-husky.workspace = true

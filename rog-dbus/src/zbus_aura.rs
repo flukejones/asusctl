@@ -27,11 +27,11 @@ use rog_aura::aura_detection::PowerZones;
 use rog_aura::usb::{AuraDevice, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness};
 use zbus::blocking::Connection;
-use zbus::{dbus_proxy, Result};
+use zbus::{proxy, Result};
 
 const BLOCKING_TIME: u64 = 33; // 100ms = 10 FPS, max 50ms = 20 FPS, 40ms = 25 FPS
 
-#[dbus_proxy(
+#[proxy(
     interface = "org.asuslinux.Daemon",
     default_service = "org.asuslinux.Daemon",
     default_path = "/org/asuslinux/Aura"
@@ -44,47 +44,47 @@ trait Aura {
     fn direct_addressing_raw(&self, data: UsbPackets) -> zbus::Result<()>;
 
     /// Brightness property
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn brightness(&self) -> zbus::Result<LedBrightness>;
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn set_brightness(&self, value: LedBrightness) -> zbus::Result<()>;
 
     /// DeviceType property
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn device_type(&self) -> zbus::Result<AuraDevice>;
 
     /// LedMode property
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn led_mode(&self) -> zbus::Result<AuraModeNum>;
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn set_led_mode(&self, value: AuraModeNum) -> zbus::Result<()>;
 
     /// LedModeData property
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn led_mode_data(&self) -> zbus::Result<AuraEffect>;
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn set_led_mode_data(&self, value: AuraEffect) -> zbus::Result<()>;
 
     /// LedPower property
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn led_power(&self) -> zbus::Result<AuraPowerDev>;
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn set_led_power(&self, value: (AuraPowerDev, bool)) -> zbus::Result<()>;
 
     /// SupportedBrightness property
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn supported_brightness(&self) -> zbus::Result<Vec<LedBrightness>>;
 
     /// SupportedBasicModes property
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn supported_basic_modes(&self) -> zbus::Result<Vec<AuraModeNum>>;
 
     /// SupportedBasicZones property
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn supported_basic_zones(&self) -> zbus::Result<Vec<AuraZone>>;
 
     /// SupportedPowerZones property
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn supported_power_zones(&self) -> zbus::Result<Vec<PowerZones>>;
 }
 

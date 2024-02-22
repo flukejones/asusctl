@@ -1,0 +1,120 @@
+import { Button, VerticalBox } from "std-widgets.slint";
+import { SpinBoxUni, ValueBar, SquareImageButton, RoundImageButton } from "common_widgets.slint";
+import { Theme, AppSize } from "globals.slint";
+import { PageSystem } from "pages/system.slint";
+import { SideBar } from "widgets/sidebar.slint";
+import { PageAbout } from "pages/about.slint";
+import { PageGpu } from "pages/gpu.slint";
+import { PageFans } from "pages/fans.slint";
+import { PageAnime } from "pages/anime.slint";
+import { PageAura } from "pages/aura.slint";
+
+export { AppSize, Theme }
+
+export component MainWindow inherits Window {
+    default-font-family: "DejaVu Sans";
+    private property <bool> show-notif;
+    private property <bool> fade-cover;
+    callback exit-app();
+    callback request-increase-value();
+    callback show-notification(bool);
+    show-notification(yes) => {
+        show-notif = yes;
+        fade-cover = yes;
+
+    }
+    height: AppSize.height;
+    width: AppSize.width;
+    background: Colors.orange;
+    HorizontalLayout {
+        padding: 0px;
+        side-bar := SideBar {
+            title: @tr("ROG");
+            model: [
+                @tr("Menu" => "System Control"),
+                @tr("Menu" => "Keyboard Aura"),
+                @tr("Menu" => "AniMe Matrix"),
+                @tr("Menu" => "Fan Curves"),
+                @tr("Menu" => "GPU Control"),
+                @tr("Menu" => "About"),
+            ];
+        }
+
+        Rectangle {
+            background: Colors.purple;
+            if(side-bar.current-item == 0): PageSystem {
+                width: root.width - side-bar.width;
+                height: root.height + 12px;
+            }
+
+            if(side-bar.current-item == 1): PageAura {
+                width: root.width - side-bar.width;
+            }
+
+            if(side-bar.current-item == 2): PageAnime {
+                width: root.width - side-bar.width;
+            }
+
+            if(side-bar.current-item == 3): PageFans {
+                width: root.width - side-bar.width;
+            }
+
+            if(side-bar.current-item == 4): PageGpu {
+                width: root.width - side-bar.width;
+            }
+
+            if(side-bar.current-item == 5): PageAbout {
+                width: root.width - side-bar.width;
+            }
+        }
+    }
+
+    if fade-cover: Rectangle {
+        x: 0px;
+        y: 0px;
+        width: root.width;
+        height: root.height;
+        background: Colors.rgba(25,33,23,20);
+        opacity: 0.7;
+        TouchArea {
+            height: 100%;
+            width: 100%;
+            clicked => {
+                // toolbar-dropdown.close();
+                if (show-notif) {
+                    show-notif = false;
+
+                }
+                fade-cover = false;
+
+            }
+        }
+    }
+
+    // // TODO: or use Dialogue
+    if show-notif: Rectangle {
+        x: root.width / 8;
+        y: root.height / 8;
+        height: (root.height / 8) * 6;
+        width: (root.width / 8) * 6;
+        TouchArea {
+            height: 100%;
+            width: 100%;
+            clicked => {
+                show-notif = false;
+                exit-app();
+
+            }
+        }
+
+        // TODO: add properties to display
+        Rectangle {
+            height: 100%;
+            width: 100%;
+            background: Theme.neutral-box;
+            Text {
+                text: "Click here to exit";
+            }
+        }
+    }
+}

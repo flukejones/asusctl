@@ -3,13 +3,11 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
-use egui::Vec2;
 use log::error;
 use rog_anime::{Animations, DeviceState};
-use rog_aura::aura_detection::PowerZones;
 use rog_aura::layouts::KeyLayout;
-use rog_aura::usb::{AuraDevice, AuraPowerDev};
-use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness};
+use rog_aura::usb::AuraPowerDev;
+use rog_aura::{AuraEffect, AuraModeNum, LedBrightness};
 use rog_platform::platform::{GpuMode, ThrottlePolicy};
 use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::FanCurvePU;
@@ -69,7 +67,7 @@ pub struct FanCurvesState {
     pub show_graph: FanCurvePU,
     pub curves: BTreeMap<ThrottlePolicy, Vec<CurveData>>,
     pub available_fans: HashSet<FanCurvePU>,
-    pub drag_delta: Vec2,
+    // pub drag_delta: Vec2,
 }
 
 impl FanCurvesState {
@@ -102,7 +100,7 @@ impl FanCurvesState {
             show_graph: FanCurvePU::CPU,
             curves,
             available_fans,
-            drag_delta: Vec2::default(),
+            // drag_delta: Vec2::default(),
         })
     }
 }
@@ -112,9 +110,6 @@ pub struct AuraState {
     pub current_mode: AuraModeNum,
     pub modes: BTreeMap<AuraModeNum, AuraEffect>,
     pub enabled: AuraPowerDev,
-    pub dev_type: AuraDevice,
-    pub supported_basic_zones: Vec<AuraZone>,
-    pub supported_power_zones: Vec<PowerZones>,
     /// Brightness from 0-3
     pub bright: LedBrightness,
     pub wave_red: [u8; 22],
@@ -126,7 +121,10 @@ impl AuraState {
     pub fn new(layout: &KeyLayout, dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
         Ok(Self {
             current_mode: if !layout.basic_modes().is_empty() {
-                dbus.proxies().aura().led_mode().unwrap_or_default()
+                dbg!();
+                let x = dbus.proxies().aura().led_mode().unwrap_or_default();
+                dbg!();
+                x
             } else {
                 AuraModeNum::Static
             },
@@ -137,18 +135,7 @@ impl AuraState {
                 BTreeMap::new()
             },
             enabled: dbus.proxies().aura().led_power().unwrap_or_default(),
-            supported_basic_zones: dbus
-                .proxies()
-                .aura()
-                .supported_basic_zones()
-                .unwrap_or_default(),
-            supported_power_zones: dbus
-                .proxies()
-                .aura()
-                .supported_power_zones()
-                .unwrap_or_default(),
-            dev_type: dbus.proxies().aura().device_type().unwrap_or_default(),
-            bright: dbus.proxies().aura().brightness().unwrap_or_default(),
+            bright: Default::default(),
             wave_red: [0u8; 22],
             wave_green: [0u8; 22],
             wave_blue: [0u8; 22],
@@ -291,9 +278,9 @@ impl SystemState {
         tray_enabled: bool,
         run_in_bg: bool,
     ) -> Result<Self> {
+        dbg!();
         let (asus_dbus, conn) = RogDbusClientBlocking::new()?;
-        let gfx_dbus = GfxProxyBlocking::new(&conn).expect("Couldn't connect to supergfxd");
-
+        dbg!();
         let aura = AuraState::new(&keyboard_layout, &asus_dbus)
             .map_err(|e| {
                 let e = format!("Could not get AuraState state: {e}");
@@ -301,6 +288,12 @@ impl SystemState {
             })
             .unwrap_or_default();
 
+        dbg!();
+        let gfx_dbus = GfxProxyBlocking::builder(&conn)
+            .destination(":org.supergfxctl.Daemon")?
+            .build()
+            .expect("Couldn't connect to supergfxd");
+        dbg!();
         Ok(Self {
             aura_creation: AuraCreation::new(layout_testing, keyboard_layout, keyboard_layouts),
             enabled_notifications,
@@ -348,7 +341,9 @@ impl SystemState {
 impl Default for SystemState {
     fn default() -> Self {
         let (asus_dbus, conn) = RogDbusClientBlocking::new().expect("Couldn't connect to asusd");
-        let gfx_dbus = GfxProxyBlocking::new(&conn).expect("Couldn't connect to supergfxd");
+        let gfx_dbus = GfxProxyBlocking::builder(&conn)
+            .build()
+            .expect("Couldn't connect to supergfxd");
 
         Self {
             aura_creation: AuraCreation {

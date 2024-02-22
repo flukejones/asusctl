@@ -1,8 +1,8 @@
 use rog_anime::usb::Brightness;
 use rog_anime::{Animations, AnimeDataBuffer, DeviceState as AnimeDeviceState};
-use zbus::dbus_proxy;
+use zbus::proxy;
 
-#[dbus_proxy(
+#[proxy(
     interface = "org.asuslinux.Daemon",
     default_service = "org.asuslinux.Daemon",
     default_path = "/org/asuslinux/Anime"
@@ -18,48 +18,48 @@ trait Anime {
     fn write(&self, input: AnimeDataBuffer) -> zbus::Result<()>;
 
     /// NotifyDeviceState signal
-    #[dbus_proxy(signal)]
+    #[zbus(signal)]
     fn notify_device_state(&self, data: AnimeDeviceState) -> zbus::Result<()>;
 
     /// Brightness property
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn brightness(&self) -> zbus::Result<Brightness>;
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn set_brightness(&self, value: Brightness) -> zbus::Result<()>;
 
     /// BuiltinAnimations property
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn builtin_animations(&self) -> zbus::Result<Animations>;
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn set_builtin_animations(&self, value: Animations) -> zbus::Result<()>;
 
     /// BuiltinsEnabled property
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn builtins_enabled(&self) -> zbus::Result<bool>;
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn set_builtins_enabled(&self, value: bool) -> zbus::Result<()>;
 
     /// EnableDisplay property
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn enable_display(&self) -> zbus::Result<bool>;
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn set_enable_display(&self, value: bool) -> zbus::Result<()>;
 
     /// OffWhenLidClosed property
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn off_when_lid_closed(&self) -> zbus::Result<bool>;
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn set_off_when_lid_closed(&self, value: bool) -> zbus::Result<()>;
 
     /// OffWhenSuspended property
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn off_when_suspended(&self) -> zbus::Result<bool>;
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn set_off_when_suspended(&self, value: bool) -> zbus::Result<()>;
 
     /// OffWhenUnplugged property
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn off_when_unplugged(&self) -> zbus::Result<bool>;
-    #[dbus_proxy(property)]
+    #[zbus(property)]
     fn set_off_when_unplugged(&self, value: bool) -> zbus::Result<()>;
 }
