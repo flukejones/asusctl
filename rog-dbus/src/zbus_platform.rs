@@ -118,7 +118,7 @@ trait Platform {
     #[dbus_proxy(property)]
     fn set_ppt_platform_sppt(&self, value: u8) -> zbus::Result<()>;
 
-    /// PlatformPolicy property
+    /// ThrottlePolicy property
     #[dbus_proxy(property)]
     fn throttle_thermal_policy(&self) -> zbus::Result<ThrottlePolicy>;
     #[dbus_proxy(property)]

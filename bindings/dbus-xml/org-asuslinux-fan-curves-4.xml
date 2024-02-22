@@ -19,7 +19,7 @@
       <arg name="enabled" type="b" direction="in"/>
     </method>
     <!--
-     Get the fan-curve data for the currently active PlatformPolicy
+     Get the fan-curve data for the currently active ThrottlePolicy
      -->
     <method name="FanCurveData">
       <arg name="profile" type="s" direction="in"/>

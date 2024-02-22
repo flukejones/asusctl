@@ -166,7 +166,7 @@ impl CtrlFanCurveZbus {
         Ok(())
     }
 
-    /// Get the fan-curve data for the currently active PlatformPolicy
+    /// Get the fan-curve data for the currently active ThrottlePolicy
     async fn fan_curve_data(
         &mut self,
         profile: ThrottlePolicy,

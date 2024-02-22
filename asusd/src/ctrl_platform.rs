@@ -243,10 +243,10 @@ impl CtrlPlatform {
 
     fn check_and_set_epp(&self, enegy_pref: CPUEPP, change_epp: bool) {
         if !change_epp {
-            info!("PlatformPolicy unlinked from EPP");
+            info!("ThrottlePolicy unlinked from EPP");
             return;
         }
-        info!("PlatformPolicy setting EPP");
+        info!("ThrottlePolicy setting EPP");
         if let Some(cpu) = self.cpu_control.as_ref() {
             if let Ok(epp) = cpu.get_available_epp() {
                 debug!("Available EPP: {epp:?}");
