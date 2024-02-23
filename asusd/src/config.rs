@@ -5,7 +5,7 @@ use serde_derive::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "asusd.ron";
 
-#[derive(Deserialize, Serialize, Default, Debug, PartialEq, PartialOrd)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, PartialOrd)]
 pub struct Config {
     /// Save charge limit for restoring on boot/resume
     pub charge_control_end_threshold: u8,
@@ -46,6 +46,33 @@ pub struct Config {
     /// Temporary state for AC/Batt
     #[serde(skip)]
     pub last_power_plugged: u8,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            charge_control_end_threshold: 100,
+            panel_od: false,
+            mini_led_mode: false,
+            disable_nvidia_powerd_on_battery: true,
+            ac_command: Default::default(),
+            bat_command: Default::default(),
+            throttle_policy_linked_epp: true,
+            throttle_policy_on_battery: ThrottlePolicy::Quiet,
+            throttle_policy_on_ac: ThrottlePolicy::Performance,
+            throttle_quiet_epp: CPUEPP::Power,
+            throttle_balanced_epp: CPUEPP::BalancePower,
+            throttle_performance_epp: CPUEPP::Performance,
+            ppt_pl1_spl: Default::default(),
+            ppt_pl2_sppt: Default::default(),
+            ppt_fppt: Default::default(),
+            ppt_apu_sppt: Default::default(),
+            ppt_platform_sppt: Default::default(),
+            nv_dynamic_boost: Default::default(),
+            nv_temp_target: Default::default(),
+            last_power_plugged: Default::default(),
+        }
+    }
 }
 
 impl StdConfig for Config {
