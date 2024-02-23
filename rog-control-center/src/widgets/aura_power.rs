@@ -133,7 +133,6 @@ fn aura_power1(states: &mut SystemState, ui: &mut Ui) {
                     .aura()
                     .set_led_power((options, enable))
                     .map_err(|err| {
-                        dbg!(&err);
                         states.error = Some(err.to_string());
                     })
                     .ok();
@@ -184,7 +183,6 @@ fn aura_power1(states: &mut SystemState, ui: &mut Ui) {
                     .aura()
                     .set_led_power((options, enable))
                     .map_err(|err| {
-                        dbg!(&err);
                         states.error = Some(err.to_string());
                     })
                     .ok();
@@ -250,7 +248,6 @@ fn aura_power2(states: &mut SystemState, ui: &mut Ui) {
                 .aura()
                 .set_led_power((options, enable))
                 .map_err(|err| {
-                    dbg!(&err);
                     states.error = Some(err.to_string());
                 })
                 .ok();

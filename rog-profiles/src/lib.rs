@@ -10,6 +10,7 @@ use typeshare::typeshare;
 pub use udev::Device;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
+use zbus::zvariant::{OwnedValue, Value};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -31,12 +32,16 @@ pub fn find_fan_curve_node() -> Result<Device, ProfileError> {
 }
 
 #[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
+#[cfg_attr(
+    feature = "dbus",
+    derive(Type, Value, OwnedValue),
+    zvariant(signature = "s")
+)]
 #[derive(Deserialize, Serialize, Debug, Hash, PartialEq, Eq, Clone, Copy)]
 pub enum FanCurvePU {
-    CPU,
-    GPU,
-    MID,
+    CPU = 0,
+    GPU = 1,
+    MID = 2,
 }
 
 impl FanCurvePU {

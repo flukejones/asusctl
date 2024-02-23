@@ -180,7 +180,7 @@ impl From<CPUGovernor> for String {
 }
 
 #[typeshare]
-#[repr(u8)]
+#[repr(u32)]
 #[derive(
     Deserialize,
     Serialize,
@@ -194,7 +194,7 @@ impl From<CPUGovernor> for String {
     Clone,
     Copy,
 )]
-#[zvariant(signature = "y")]
+#[zvariant(signature = "u")]
 pub enum CPUEPP {
     #[default]
     Default = 0,

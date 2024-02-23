@@ -222,10 +222,7 @@ impl CtrlFanCurveZbus {
     /// Each platform_profile has a different default and the defualt can be
     /// read only for the currently active profile.
     async fn reset_profile_curves(&self, profile: ThrottlePolicy) -> zbus::fdo::Result<()> {
-        let active = self
-            .platform
-            .get_throttle_thermal_policy()
-            .unwrap_or(ThrottlePolicy::Balanced.into());
+        let active = self.platform.get_throttle_thermal_policy()?;
 
         self.platform.set_throttle_thermal_policy(profile.into())?;
         self.fan_curves
@@ -281,7 +278,6 @@ impl CtrlTask for CtrlFanCurveZbus {
                         }
                     }
                 }
-                dbg!("STREAM ENDED");
             }
         });
 

@@ -7,14 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Reintroduce persisting dark/light mode in config file
-
-### Changed
 - Added ability to change what EPP is linked with each throttle profile
 - Don't change EPP or thermal profile if the battery/ac state hasn't actually changed on resume
 - Re-implement the `asusctl -s` command (not fully)
 - Add more docs to some parts of code, and dbus interfaces
 - Reload asusd.ron if changed. Does not notify any dbus listeners (yet)
 - Fix the broken pipe error
+- Remove the use of bytes in zbus signatures (another cause of broken pipe)
 
 ### Added
 - Support for G614J LED modes

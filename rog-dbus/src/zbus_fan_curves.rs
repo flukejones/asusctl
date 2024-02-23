@@ -39,7 +39,7 @@ trait FanCurves {
     ///
     /// Each platform_profile has a different default and the defualt can be
     /// read only for the currently active profile.
-    fn reset_profile_curves(&self, profile: ThrottlePolicy) -> zbus::fdo::Result<()>;
+    fn reset_profile_curves(&self, profile: ThrottlePolicy) -> zbus::Result<()>;
 
     /// SetActiveCurveToDefaults method
     fn set_active_curve_to_defaults(&self) -> zbus::Result<()>;

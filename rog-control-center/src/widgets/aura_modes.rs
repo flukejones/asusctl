@@ -230,7 +230,6 @@ pub fn aura_modes_group(states: &mut SystemState, freq: &mut Arc<AtomicU8>, ui: 
             .aura()
             .set_led_mode_data(states.aura.modes.get(&selected).unwrap().clone())
             .map_err(|err| {
-                dbg!(&err);
                 states.error = Some(err.to_string());
             })
             .ok();

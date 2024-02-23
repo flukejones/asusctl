@@ -249,7 +249,7 @@ impl Display for GpuMode {
 }
 
 #[typeshare]
-#[repr(u8)]
+#[repr(u32)]
 #[derive(
     Deserialize,
     Serialize,
@@ -266,7 +266,7 @@ impl Display for GpuMode {
     Clone,
     Copy,
 )]
-#[zvariant(signature = "y")]
+#[zvariant(signature = "u")]
 /// `throttle_thermal_policy` in asus_wmi
 pub enum ThrottlePolicy {
     #[default]

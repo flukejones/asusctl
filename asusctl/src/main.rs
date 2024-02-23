@@ -20,6 +20,7 @@ use rog_dbus::RogDbusClientBlocking;
 use rog_platform::error::PlatformError;
 use rog_platform::platform::{GpuMode, Properties, ThrottlePolicy};
 use rog_profiles::error::ProfileError;
+use rog_profiles::fan_curve_set::CurveData;
 
 use crate::aura_cli::{AuraPowerStates, LedBrightness};
 use crate::cli_opts::*;

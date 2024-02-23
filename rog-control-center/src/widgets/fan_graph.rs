@@ -13,6 +13,10 @@ pub fn fan_graphs(
     do_error: &mut Option<String>,
     ui: &mut Ui,
 ) {
+    if curves.available_fans.is_empty() {
+        return; // TODO:
+    }
+
     ui.separator();
 
     let mut item = |profile: ThrottlePolicy, ui: &mut Ui| {
