@@ -32,6 +32,13 @@ use tempfile::TempDir;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+#[cfg(not(feature = "mocking"))]
+const DATA_DIR: &str = "/usr/share/rog-gui/";
+#[cfg(feature = "mocking")]
+const DATA_DIR: &str = env!("CARGO_MANIFEST_DIR");
+const BOARD_NAME: &str = "/sys/class/dmi/id/board_name";
+pub const APP_ICON_PATH: &str = "/usr/share/icons/hicolor/512x512/apps/rog-control-center.png";
+
 pub fn print_versions() {
     println!("App and daemon versions:");
     println!("      rog-gui v{}", VERSION);
@@ -59,7 +66,7 @@ pub enum Page {
 
 /// Either exit the process, or return with a refreshed tmp-dir
 pub fn on_tmp_dir_exists() -> Result<TempDir, std::io::Error> {
-    let mut buf = [0u8; 4];
+    let mut buf = [0u8; 2];
     let path = std::env::temp_dir().join("rog-gui");
 
     if path.read_dir()?.next().is_none() {
@@ -77,15 +84,15 @@ pub fn on_tmp_dir_exists() -> Result<TempDir, std::io::Error> {
         .open(path.join("ipc.pipe"))?;
 
     // If the app is running this ends up stacked on top of SHOWING_GUI
-    ipc_file.write_all(&[SHOW_GUI])?;
+    ipc_file.write_all(&[SHOW_GUI, 0])?;
     // tiny sleep to give the app a chance to respond
-    sleep(Duration::from_millis(100));
+    sleep(Duration::from_millis(10));
     ipc_file.read(&mut buf).ok();
 
     // First entry is the actual state
     if buf[0] == SHOWING_GUI {
-        ipc_file.write_all(&[SHOWING_GUI])?; // Store state again as we drained the fifo
-                                             // Early exit is not an error and we don't want to pass back a dir
+        ipc_file.write_all(&[SHOWING_GUI, 0])?; // Store state again as we drained the fifo
+                                                // Early exit is not an error and we don't want to pass back a dir
         #[allow(clippy::exit)]
         exit(0);
     } else if buf[0] == SHOW_GUI {

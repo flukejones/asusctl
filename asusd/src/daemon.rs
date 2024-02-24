@@ -2,7 +2,6 @@ use std::env;
 use std::error::Error;
 use std::io::Write;
 use std::sync::Arc;
-use std::time::Duration;
 
 use ::zbus::export::futures_util::lock::Mutex;
 use ::zbus::Connection;
@@ -18,7 +17,6 @@ use asusd::{print_board_info, CtrlTask, Reloadable, ZbusRun, DBUS_NAME};
 use config_traits::{StdConfig, StdConfigLoad2, StdConfigLoad3};
 use log::{error, info, warn};
 use rog_aura::aura_detection::LaptopLedData;
-use tokio::time::sleep;
 use zbus::SignalContext;
 
 #[tokio::main]

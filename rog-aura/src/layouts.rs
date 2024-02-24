@@ -189,7 +189,7 @@ pub struct KeyLayout {
 }
 
 impl KeyLayout {
-    pub fn from_file(path: &Path) -> Result<Self, Error> {
+    fn from_file(path: &Path) -> Result<Self, Error> {
         let buf: String = std::fs::read_to_string(path)
             .map_err(|e| Error::IoPath(path.to_string_lossy().to_string(), e))?;
         if buf.is_empty() {

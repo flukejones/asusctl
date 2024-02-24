@@ -7,14 +7,12 @@ use std::thread::{self, sleep, spawn};
 use std::time::Duration;
 
 use gumdrop::Options;
-use log::{warn, LevelFilter};
-use rog_aura::aura_detection::{LaptopLedData, LedSupportFile};
-use rog_aura::layouts::KeyLayout;
+use log::LevelFilter;
 use rog_control_center::cli_options::CliStart;
 use rog_control_center::config::Config;
 use rog_control_center::error::Result;
 use rog_control_center::slint::ComponentHandle;
-use rog_control_center::system_state::SystemState;
+use rog_control_center::system_state::{AuraCreation, SystemState};
 use rog_control_center::tray::init_tray;
 use rog_control_center::update_and_notify::{start_notifications, EnabledNotifications};
 use rog_control_center::{
@@ -25,15 +23,17 @@ use tokio::runtime::Runtime;
 // use winit::monitor::VideoMode;
 // use winit::window::{Fullscreen, WindowLevel};
 
-#[cfg(not(feature = "mocking"))]
-const DATA_DIR: &str = "/usr/share/rog-gui/";
-#[cfg(feature = "mocking")]
-const DATA_DIR: &str = env!("CARGO_MANIFEST_DIR");
-const BOARD_NAME: &str = "/sys/class/dmi/id/board_name";
-// const APP_ICON_PATH: &str =
-// "/usr/share/icons/hicolor/512x512/apps/rog-control-center.png";
-
 fn main() -> Result<()> {
+    // tmp-dir must live to the end of program life
+    let _tmp_dir = match tempfile::Builder::new()
+        .prefix("rog-gui")
+        .rand_bytes(0)
+        .tempdir()
+    {
+        Ok(tmp) => tmp,
+        Err(_) => on_tmp_dir_exists().unwrap(),
+    };
+
     let args: Vec<String> = args().skip(1).collect();
 
     let cli_parsed = match CliStart::parse_args_default(&args) {
@@ -81,110 +81,46 @@ fn main() -> Result<()> {
         config.run_in_background = true;
         let tmp = config.enabled_notifications.clone(); // ends up being a double clone, oh well.
         config.save(&tmp)?;
+    } else {
+        get_ipc_file().unwrap().write_all(&[SHOW_GUI, 0]).unwrap();
     }
+
     let enabled_notifications = EnabledNotifications::tokio_mutex(&config);
+    let aura_creation = AuraCreation::new(cli_parsed.board_name, cli_parsed.layout_viewing)?;
 
-    // Find and load a matching layout for laptop
-    let mut board_name = std::fs::read_to_string(BOARD_NAME).map_err(|e| {
-        println!("DOH! {BOARD_NAME}, {e}");
-        e
-    })?;
-
-    let mut led_support = LaptopLedData::get_data();
-
-    let mut path = PathBuf::from(DATA_DIR);
-    let mut layout_name = None;
-    let mut layouts = Vec::new();
-    if cli_parsed.board_name.is_some() || cli_parsed.layout_viewing {
-        if cfg!(feature = "mocking") {
-            path.pop();
-            path.push("rog-aura");
-            path.push("data");
-        }
-        layouts = KeyLayout::layout_files(path.clone()).unwrap();
-
-        if let Some(name) = &cli_parsed.board_name {
-            if let Some(modes) = LedSupportFile::load_from_supoprt_db() {
-                if let Some(data) = modes.matcher(name) {
-                    led_support = data;
-                }
-            }
-            board_name = name.clone();
-            for layout in &layouts {
-                if layout
-                    .file_name()
-                    .unwrap()
-                    .to_string_lossy()
-                    .contains(&led_support.layout_name.to_lowercase())
-                {
-                    layout_name = Some(layout.clone());
-                }
-            }
-        } else {
-            board_name = "GQ401QM".to_owned();
-        };
-
-        if cli_parsed.layout_viewing {
-            layout_name = Some(layouts[0].clone());
-            board_name = layouts[0]
-                .file_name()
-                .unwrap()
-                .to_string_lossy()
-                .split_once('_')
-                .unwrap()
-                .0
-                .to_owned();
-            led_support.layout_name = board_name.clone();
-        }
-    }
-
-    let layout = KeyLayout::find_layout(led_support, path)
-        .map_err(|e| {
-            println!("DERP! , {e}");
-        })
-        .unwrap_or_else(|_| {
-            warn!("Did not find a keyboard layout matching {board_name}");
-            KeyLayout::default_layout()
-        });
-
-    // tmp-dir must live to the end of program life
-    let _tmp_dir = match tempfile::Builder::new()
-        .prefix("rog-gui")
-        .rand_bytes(0)
-        .tempdir()
-    {
-        Ok(tmp) => tmp,
-        Err(_) => on_tmp_dir_exists().unwrap(),
-    };
-    dbg!();
-
-    let states = setup_page_state_and_notifs(
-        layout_name,
-        layout,
-        layouts,
-        &enabled_notifications,
-        &config,
-    )?;
+    // TODO: config mutex to share config in various places
+    let states = setup_page_state_and_notifs(aura_creation, &enabled_notifications, &config)?;
 
     if config.enable_tray_icon {
         init_tray(supported_properties, states.clone());
     }
-    dbg!();
 
     thread_local! { pub static UI: std::cell::RefCell<Option<MainWindow>> = Default::default()};
     i_slint_backend_selector::with_platform(|_| Ok(())).unwrap();
 
-    dbg!();
+    let mut do_once = !config.startup_in_background;
     thread::spawn(move || {
         let mut buf = [0u8; 2];
         // blocks until it is read, typically the read will happen after a second
         // process writes to the IPC (so there is data to actually read)
         loop {
-            get_ipc_file().unwrap().read_exact(&mut buf).unwrap();
+            if do_once {
+                buf[0] = SHOW_GUI;
+                do_once = false;
+            } else {
+                get_ipc_file().unwrap().read_exact(&mut buf).unwrap();
+            }
+
             if buf[0] == SHOW_GUI {
                 println!("Should show window {buf:?}");
-                let mut ipc_file = get_ipc_file().unwrap();
-                ipc_file.write_all(&[SHOWING_GUI, 0]).unwrap();
+                // There's a balancing act with read/write timing of IPC, there needs to be a
+                // small sleep after this to give any other process a chance to
+                // read the IPC before looping
+                get_ipc_file()
+                    .unwrap()
+                    .write_all(&[SHOWING_GUI, 0])
+                    .unwrap();
+                sleep(Duration::from_millis(50));
 
                 let states = states.clone();
                 i_slint_core::api::invoke_from_event_loop(move || {
@@ -193,8 +129,7 @@ fn main() -> Result<()> {
                         if let Some(ui) = ui.as_mut() {
                             ui.window().show().unwrap();
                             ui.window().on_close_requested(|| {
-                                let mut ipc_file = get_ipc_file().unwrap();
-                                ipc_file.write_all(&[0, 0]).unwrap();
+                                get_ipc_file().unwrap().write_all(&[0, 0]).unwrap();
                                 slint::CloseRequestResponse::HideWindow
                             });
                         } else {
@@ -202,8 +137,7 @@ fn main() -> Result<()> {
                             newui.window().show().unwrap();
                             println!("New window should be showing now"); // but it isn't
                             newui.window().on_close_requested(|| {
-                                let mut ipc_file = get_ipc_file().unwrap();
-                                ipc_file.write_all(&[0, 0]).unwrap();
+                                get_ipc_file().unwrap().write_all(&[0, 0]).unwrap();
                                 slint::CloseRequestResponse::HideWindow
                             });
                             ui.replace(newui);
@@ -214,6 +148,12 @@ fn main() -> Result<()> {
             } else if buf[1] == QUIT_APP {
                 slint::quit_event_loop().unwrap();
             } else if buf[0] != SHOWING_GUI {
+                Config::load().unwrap();
+                if !config.run_in_background {
+                    slint::quit_event_loop().unwrap();
+                    return;
+                }
+
                 println!("Should hide window {buf:?}");
                 i_slint_core::api::invoke_from_event_loop(move || {
                     UI.with(|ui| {
@@ -268,16 +208,12 @@ fn setup_window(_states: Arc<Mutex<SystemState>>) -> MainWindow {
 }
 
 fn setup_page_state_and_notifs(
-    layout_testing: Option<PathBuf>,
-    keyboard_layout: KeyLayout,
-    keyboard_layouts: Vec<PathBuf>,
+    aura_creation: AuraCreation,
     enabled_notifications: &Arc<Mutex<EnabledNotifications>>,
     config: &Config,
 ) -> Result<Arc<Mutex<SystemState>>> {
     let page_states = Arc::new(Mutex::new(SystemState::new(
-        layout_testing,
-        keyboard_layout,
-        keyboard_layouts,
+        aura_creation,
         enabled_notifications.clone(),
         config.enable_tray_icon,
         config.run_in_background,
@@ -288,8 +224,8 @@ fn setup_page_state_and_notifs(
     Ok(page_states)
 }
 
-/// Bah.. the icon dosn't work on wayland anyway, but we'll leave it in for now.
-// fn load_icon() -> IconData {
+// /// Bah.. the icon dosn't work on wayland anyway, but we'll leave it in for
+// now. fn load_icon() -> IconData {
 //     let path = PathBuf::from(APP_ICON_PATH);
 //     let mut rgba = Vec::new();
 //     let mut height = 512;

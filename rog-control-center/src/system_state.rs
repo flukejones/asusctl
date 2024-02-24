@@ -3,8 +3,9 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
-use log::error;
+use log::{error, warn};
 use rog_anime::{Animations, DeviceState};
+use rog_aura::aura_detection::{LaptopLedData, LedSupportFile};
 use rog_aura::layouts::KeyLayout;
 use rog_aura::usb::AuraPowerDev;
 use rog_aura::{AuraEffect, AuraModeNum, LedBrightness};
@@ -19,7 +20,7 @@ use crate::error::Result;
 #[cfg(feature = "mocking")]
 use crate::mocking::DaemonProxyBlocking as GfxProxyBlocking;
 use crate::update_and_notify::EnabledNotifications;
-use crate::RogDbusClientBlocking;
+use crate::{RogDbusClientBlocking, BOARD_NAME, DATA_DIR};
 
 #[derive(Clone, Debug, Default)]
 pub struct PlatformState {
@@ -121,10 +122,7 @@ impl AuraState {
     pub fn new(layout: &KeyLayout, dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
         Ok(Self {
             current_mode: if !layout.basic_modes().is_empty() {
-                dbg!();
-                let x = dbus.proxies().aura().led_mode().unwrap_or_default();
-                dbg!();
-                x
+                dbus.proxies().aura().led_mode().unwrap_or_default()
             } else {
                 AuraModeNum::Static
             },
@@ -215,6 +213,7 @@ impl Default for GfxState {
     }
 }
 
+/// The keyboard layout, used for such things as per-key and zones
 #[derive(Clone, Debug)]
 pub struct AuraCreation {
     /// Specifically for testing the development of keyboard layouts (combined
@@ -228,18 +227,78 @@ pub struct AuraCreation {
 }
 
 impl AuraCreation {
-    pub fn new(
-        layout_testing: Option<PathBuf>,
-        keyboard_layout: KeyLayout,
-        keyboard_layouts: Vec<PathBuf>,
-    ) -> Self {
-        Self {
+    pub fn new(test_name: Option<String>, view_layout: bool) -> Result<Self> {
+        let mut led_support = LaptopLedData::get_data();
+
+        let mut path = PathBuf::from(DATA_DIR);
+        let mut layout_testing = None;
+        let mut keyboard_layouts = Vec::new();
+
+        // Find and load a matching layout for laptop
+        let mut board_name = std::fs::read_to_string(BOARD_NAME).map_err(|e| {
+            println!("DOH! {BOARD_NAME}, {e}");
+            e
+        })?;
+
+        if test_name.is_some() || view_layout {
+            if cfg!(feature = "mocking") {
+                path.pop();
+                path.push("rog-aura");
+                path.push("data");
+            }
+            keyboard_layouts = KeyLayout::layout_files(path.clone()).unwrap();
+
+            if let Some(name) = test_name {
+                if let Some(modes) = LedSupportFile::load_from_supoprt_db() {
+                    if let Some(data) = modes.matcher(&name) {
+                        led_support = data;
+                    }
+                }
+                board_name = name;
+                for layout in &keyboard_layouts {
+                    if layout
+                        .file_name()
+                        .unwrap()
+                        .to_string_lossy()
+                        .contains(&led_support.layout_name.to_lowercase())
+                    {
+                        layout_testing = Some(layout.clone());
+                    }
+                }
+            } else {
+                board_name = "GQ401QM".to_owned();
+            };
+
+            if view_layout {
+                layout_testing = Some(keyboard_layouts[0].clone());
+                board_name = keyboard_layouts[0]
+                    .file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .split_once('_')
+                    .unwrap()
+                    .0
+                    .to_owned();
+                led_support.layout_name = board_name.clone();
+            }
+        }
+
+        let keyboard_layout = KeyLayout::find_layout(led_support, path)
+            .map_err(|e| {
+                println!("DERP! , {e}");
+            })
+            .unwrap_or_else(|_| {
+                warn!("Did not find a keyboard layout matching {board_name}");
+                KeyLayout::default_layout()
+            });
+
+        Ok(Self {
             layout_testing,
             layout_last_modified: SystemTime::now(),
             keyboard_layout,
             keyboard_layouts,
             keyboard_layout_index: 0,
-        }
+        })
     }
 }
 
@@ -271,31 +330,25 @@ impl SystemState {
     /// Creates self, including the relevant dbus connections and proixies for
     /// internal use
     pub fn new(
-        layout_testing: Option<PathBuf>,
-        keyboard_layout: KeyLayout,
-        keyboard_layouts: Vec<PathBuf>,
+        aura_creation: AuraCreation,
         enabled_notifications: Arc<Mutex<EnabledNotifications>>,
         tray_enabled: bool,
         run_in_bg: bool,
     ) -> Result<Self> {
-        dbg!();
         let (asus_dbus, conn) = RogDbusClientBlocking::new()?;
-        dbg!();
-        let aura = AuraState::new(&keyboard_layout, &asus_dbus)
+        let aura = AuraState::new(&aura_creation.keyboard_layout, &asus_dbus)
             .map_err(|e| {
                 let e = format!("Could not get AuraState state: {e}");
                 error!("{e}");
             })
             .unwrap_or_default();
 
-        dbg!();
         let gfx_dbus = GfxProxyBlocking::builder(&conn)
             .destination(":org.supergfxctl.Daemon")?
             .build()
             .expect("Couldn't connect to supergfxd");
-        dbg!();
         Ok(Self {
-            aura_creation: AuraCreation::new(layout_testing, keyboard_layout, keyboard_layouts),
+            aura_creation,
             enabled_notifications,
             bios: PlatformState::new(&asus_dbus)
                 .map_err(|e| {
