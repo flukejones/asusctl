@@ -16,8 +16,8 @@ use rog_control_center::system_state::{AuraCreation, SystemState};
 use rog_control_center::tray::init_tray;
 use rog_control_center::update_and_notify::{start_notifications, EnabledNotifications};
 use rog_control_center::{
-    get_ipc_file, on_tmp_dir_exists, print_versions, MainWindow, RogDbusClientBlocking, QUIT_APP,
-    SHOWING_GUI, SHOW_GUI,
+    get_ipc_file, on_tmp_dir_exists, print_versions, AvailableSystemProperties, MainWindow,
+    RogDbusClientBlocking, SystemPage, QUIT_APP, SHOWING_GUI, SHOW_GUI,
 };
 use tokio::runtime::Runtime;
 // use winit::monitor::VideoMode;
@@ -199,6 +199,31 @@ fn setup_window(_states: Arc<Mutex<SystemState>>) -> MainWindow {
             })
             .ok();
     });
+
+    ui.global::<SystemPage>().on_set_charge(|v1, v2| {
+        if v1 != v2 {
+            dbg!(v1);
+            dbg!(v2);
+        }
+    });
+
+    let props = AvailableSystemProperties {
+        ac_command: true,
+        bat_command: true,
+        charge_limit: true,
+        disable_nvidia_powerd_on_battery: true,
+        mini_led_mode: true,
+        nv_dynamic_boost: true,
+        nv_temp_target: true,
+        panel_od: true,
+        ppt_apu_sppt: true,
+        ppt_fppt: true,
+        ppt_pl1_spl: true,
+        ppt_pl2_sppt: true,
+        ppt_platform_sppt: true,
+        throttle_policy: true,
+    };
+    ui.global::<SystemPage>().set_available(props);
 
     ui.on_exit_app(move || {
         slint::quit_event_loop().unwrap();

@@ -359,7 +359,7 @@ impl SystemState {
             aura,
             anime: AnimeState::new(&asus_dbus)
                 .map_err(|e| {
-                    let e = format!("Could not get AanimeState state: {e}");
+                    let e = format!("Could not get AnimeState state: {e}");
                     error!("{e}");
                 })
                 .unwrap_or_default(),

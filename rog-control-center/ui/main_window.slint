@@ -1,7 +1,7 @@
 import { Button, VerticalBox } from "std-widgets.slint";
 import { SpinBoxUni, ValueBar, SquareImageButton, RoundImageButton } from "common_widgets.slint";
 import { Theme, AppSize } from "globals.slint";
-import { PageSystem } from "pages/system.slint";
+import { PageSystem, AvailableSystemProperties, SystemPage } from "pages/system.slint";
 import { SideBar } from "widgets/sidebar.slint";
 import { PageAbout } from "pages/about.slint";
 import { PageGpu } from "pages/gpu.slint";
@@ -9,20 +9,22 @@ import { PageFans } from "pages/fans.slint";
 import { PageAnime } from "pages/anime.slint";
 import { PageAura } from "pages/aura.slint";
 
-export { AppSize, Theme }
+export { AppSize, Theme, AvailableSystemProperties, SystemPage }
 
 export component MainWindow inherits Window {
     default-font-family: "DejaVu Sans";
     private property <bool> show-notif;
     private property <bool> fade-cover;
     callback exit-app();
-    callback request-increase-value();
     callback show-notification(bool);
     show-notification(yes) => {
         show-notif = yes;
         fade-cover = yes;
 
     }
+
+    in-out property <bool> charge-available;
+
     height: AppSize.height;
     width: AppSize.width;
     background: Colors.orange;
@@ -42,7 +44,7 @@ export component MainWindow inherits Window {
 
         Rectangle {
             background: Colors.purple;
-            if(side-bar.current-item == 0): PageSystem {
+            if(side-bar.current-item == 0): page := PageSystem {
                 width: root.width - side-bar.width;
                 height: root.height + 12px;
             }

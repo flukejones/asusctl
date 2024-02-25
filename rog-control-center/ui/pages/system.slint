@@ -1,6 +1,38 @@
 import { ValueBar } from "../common_widgets.slint";
 import { Theme } from "../globals.slint";
-import { HorizontalBox , VerticalBox, ScrollView} from "std-widgets.slint";
+import { HorizontalBox , VerticalBox, ScrollView, Slider} from "std-widgets.slint";
+
+export struct AvailableSystemProperties {
+    charge_limit: bool,
+    panel_od: bool,
+    mini_led_mode: bool,
+    disable_nvidia_powerd_on_battery: bool,
+    ac_command: bool,
+    bat_command: bool,
+    throttle_policy: bool,
+    ppt_pl1_spl: bool,
+    ppt_pl2_sppt: bool,
+    ppt_fppt: bool,
+    ppt_apu_sppt: bool,
+    ppt_platform_sppt: bool,
+    nv_dynamic_boost: bool,
+    nv_temp_target: bool,
+}
+
+export struct SystemValues {
+    charge_limit: int,
+    last_charge_limit: int,
+    panel_od: bool,
+    mini_led_mode: bool,
+    disable_nvidia_powerd_on_battery: bool,
+}
+
+export global SystemPage {
+    in-out property <int> charge-limit;
+    callback set_charge(/* charge limit */ int, /* last limit */ int);
+    in-out property <AvailableSystemProperties> available;
+    in-out property <SystemValues> values;
+}
 
 export component PageSystem inherits Rectangle {
     background: Theme.background-color;
@@ -9,7 +41,7 @@ export component PageSystem inherits Rectangle {
             // padding: 10px;
             spacing: 10px;
             min-height: root.height;
-            Rectangle {
+            if SystemPage.available.charge-limit: Rectangle {
                 background: Theme.background-color;
                 VerticalBox {
                     Text {
@@ -21,10 +53,20 @@ export component PageSystem inherits Rectangle {
                         color: Theme.text-foreground-color;
                         text: @tr("ChargeLimit" => "Charge limit");
                     }
+
+                    charge_slider := Slider {
+                        value: SystemPage.values.charge_limit;
+                        changed => {
+                            if SystemPage.values.last_charge_limit != charge_slider.value {
+                                SystemPage.set_charge(charge_slider.value, SystemPage.values.last_charge_limit);
+                                SystemPage.values.last_charge_limit = charge_slider.value;
+                            }
+                        }
+                    }
                 }
             }
 
-            Rectangle {
+            if SystemPage.available.panel-od: Rectangle {
                 background: Theme.background-color;
                 VerticalBox {
                     Text {
