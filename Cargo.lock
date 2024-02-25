@@ -128,7 +128,7 @@ dependencies = [
  "asusd",
  "cargo-husky",
  "dmi_id",
- "gif",
+ "gif 0.12.0",
  "glam",
  "gumdrop",
  "rog_anime",
@@ -682,9 +682,9 @@ checksum = "7b02b629252fe8ef6460461409564e2c21d0c8e77e0944f3d189ff06c4e932ad"
 
 [[package]]
 name = "cc"
-version = "1.0.86"
+version = "1.0.87"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f9fa1897e4325be0d68d48df6aa1a71ac2ed4d27723887e7754192705350730"
+checksum = "3286b845d0fccbdd15af433f61c5970e711987036cb468f437ff6badd70f4e24"
 dependencies = [
  "libc",
 ]
@@ -879,7 +879,7 @@ dependencies = [
 [[package]]
 name = "const-field-offset"
 version = "0.1.4"
-source = "git+https://github.com/slint-ui/slint.git#fa2cf8c28aec3d15e8ba542cb603ef188e01ee94"
+source = "git+https://github.com/flukejones/sixtyfps.git#f63c4e3b8510e88a8496328a47e8a8dccdb1bcf3"
 dependencies = [
  "const-field-offset-macro",
  "field-offset",
@@ -888,7 +888,7 @@ dependencies = [
 [[package]]
 name = "const-field-offset-macro"
 version = "0.1.4"
-source = "git+https://github.com/slint-ui/slint.git#fa2cf8c28aec3d15e8ba542cb603ef188e01ee94"
+source = "git+https://github.com/flukejones/sixtyfps.git#f63c4e3b8510e88a8496328a47e8a8dccdb1bcf3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1836,6 +1836,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "gif"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3fb2d69b19215e18bb912fa30f7ce15846e301408695e44e0ef719f1da9e19f2"
+dependencies = [
+ "color_quant",
+ "weezl",
+]
+
+[[package]]
 name = "gimli"
 version = "0.28.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2134,9 +2144,9 @@ checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 
 [[package]]
 name = "hermit-abi"
-version = "0.3.6"
+version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd5256b483761cd23699d0da46cc6fd2ee3be420bbe6d020ae4a091e70b7e9fd"
+checksum = "379dada1584ad501b383485dd706b8afb7a70fcbc7f4da7d780638a5a6124a60"
 
 [[package]]
 name = "hex"
@@ -2162,7 +2172,7 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 [[package]]
 name = "i-slint-backend-linuxkms"
 version = "1.5.0"
-source = "git+https://github.com/slint-ui/slint.git#fa2cf8c28aec3d15e8ba542cb603ef188e01ee94"
+source = "git+https://github.com/flukejones/sixtyfps.git#f63c4e3b8510e88a8496328a47e8a8dccdb1bcf3"
 dependencies = [
  "calloop",
  "drm",
@@ -2181,7 +2191,7 @@ dependencies = [
 [[package]]
 name = "i-slint-backend-qt"
 version = "1.5.0"
-source = "git+https://github.com/slint-ui/slint.git#fa2cf8c28aec3d15e8ba542cb603ef188e01ee94"
+source = "git+https://github.com/flukejones/sixtyfps.git#f63c4e3b8510e88a8496328a47e8a8dccdb1bcf3"
 dependencies = [
  "const-field-offset",
  "i-slint-common",
@@ -2193,7 +2203,7 @@ dependencies = [
 [[package]]
 name = "i-slint-backend-selector"
 version = "1.5.0"
-source = "git+https://github.com/slint-ui/slint.git#fa2cf8c28aec3d15e8ba542cb603ef188e01ee94"
+source = "git+https://github.com/flukejones/sixtyfps.git#f63c4e3b8510e88a8496328a47e8a8dccdb1bcf3"
 dependencies = [
  "cfg-if",
  "i-slint-backend-linuxkms",
@@ -2206,7 +2216,7 @@ dependencies = [
 [[package]]
 name = "i-slint-backend-winit"
 version = "1.5.0"
-source = "git+https://github.com/slint-ui/slint.git#fa2cf8c28aec3d15e8ba542cb603ef188e01ee94"
+source = "git+https://github.com/flukejones/sixtyfps.git#f63c4e3b8510e88a8496328a47e8a8dccdb1bcf3"
 dependencies = [
  "bytemuck",
  "cfg-if",
@@ -2240,7 +2250,7 @@ dependencies = [
 [[package]]
 name = "i-slint-common"
 version = "1.5.0"
-source = "git+https://github.com/slint-ui/slint.git#fa2cf8c28aec3d15e8ba542cb603ef188e01ee94"
+source = "git+https://github.com/flukejones/sixtyfps.git#f63c4e3b8510e88a8496328a47e8a8dccdb1bcf3"
 dependencies = [
  "cfg-if",
  "derive_more",
@@ -2251,7 +2261,7 @@ dependencies = [
 [[package]]
 name = "i-slint-compiler"
 version = "1.5.0"
-source = "git+https://github.com/slint-ui/slint.git#fa2cf8c28aec3d15e8ba542cb603ef188e01ee94"
+source = "git+https://github.com/flukejones/sixtyfps.git#f63c4e3b8510e88a8496328a47e8a8dccdb1bcf3"
 dependencies = [
  "by_address",
  "codemap",
@@ -2280,7 +2290,7 @@ dependencies = [
 [[package]]
 name = "i-slint-core"
 version = "1.5.0"
-source = "git+https://github.com/slint-ui/slint.git#fa2cf8c28aec3d15e8ba542cb603ef188e01ee94"
+source = "git+https://github.com/flukejones/sixtyfps.git#f63c4e3b8510e88a8496328a47e8a8dccdb1bcf3"
 dependencies = [
  "auto_enums",
  "bytemuck",
@@ -2323,7 +2333,7 @@ dependencies = [
 [[package]]
 name = "i-slint-core-macros"
 version = "1.5.0"
-source = "git+https://github.com/slint-ui/slint.git#fa2cf8c28aec3d15e8ba542cb603ef188e01ee94"
+source = "git+https://github.com/flukejones/sixtyfps.git#f63c4e3b8510e88a8496328a47e8a8dccdb1bcf3"
 dependencies = [
  "quote",
  "syn 2.0.50",
@@ -2332,7 +2342,7 @@ dependencies = [
 [[package]]
 name = "i-slint-renderer-femtovg"
 version = "1.5.0"
-source = "git+https://github.com/slint-ui/slint.git#fa2cf8c28aec3d15e8ba542cb603ef188e01ee94"
+source = "git+https://github.com/flukejones/sixtyfps.git#f63c4e3b8510e88a8496328a47e8a8dccdb1bcf3"
 dependencies = [
  "cfg-if",
  "const-field-offset",
@@ -2364,7 +2374,7 @@ dependencies = [
 [[package]]
 name = "i-slint-renderer-skia"
 version = "1.5.0"
-source = "git+https://github.com/slint-ui/slint.git#fa2cf8c28aec3d15e8ba542cb603ef188e01ee94"
+source = "git+https://github.com/flukejones/sixtyfps.git#f63c4e3b8510e88a8496328a47e8a8dccdb1bcf3"
 dependencies = [
  "bytemuck",
  "cfg-if",
@@ -2440,15 +2450,15 @@ dependencies = [
 
 [[package]]
 name = "image"
-version = "0.24.8"
+version = "0.24.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "034bbe799d1909622a74d1193aa50147769440040ff36cb2baa947609b0a4e23"
+checksum = "5690139d2f55868e080017335e4b94cb7414274c74f1669c84fb5feba2c9f69d"
 dependencies = [
  "bytemuck",
  "byteorder",
  "color_quant",
  "exr",
- "gif",
+ "gif 0.13.1",
  "jpeg-decoder",
  "num-traits",
  "png",
@@ -2848,9 +2858,9 @@ dependencies = [
 
 [[package]]
 name = "lru"
-version = "0.12.2"
+version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db2c024b41519440580066ba82aab04092b333e09066a5eb86c7c4890df31f22"
+checksum = "d3262e75e648fce39813cb56ac41f3c3e3f65217ebf3844d818d1f9398cfb0dc"
 
 [[package]]
 name = "lyon_algorithms"
@@ -3132,7 +3142,7 @@ version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "681030a937600a36906c185595136d26abfebb4aa9c65701cefcaf8578bb982b"
 dependencies = [
- "proc-macro-crate 1.3.1",
+ "proc-macro-crate 3.1.0",
  "proc-macro2",
  "quote",
  "syn 2.0.50",
@@ -3460,6 +3470,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "proc-macro-crate"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d37c51ca738a55da99dc0c4a34860fd675453b8b36209178c2249bb13651284"
+dependencies = [
+ "toml_edit 0.21.1",
+]
+
+[[package]]
 name = "proc-macro-error"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3714,7 +3733,7 @@ version = "5.0.8"
 dependencies = [
  "cargo-husky",
  "dmi_id",
- "gif",
+ "gif 0.12.0",
  "glam",
  "log",
  "pix",
@@ -4151,7 +4170,7 @@ dependencies = [
 [[package]]
 name = "slint"
 version = "1.5.0"
-source = "git+https://github.com/slint-ui/slint.git#fa2cf8c28aec3d15e8ba542cb603ef188e01ee94"
+source = "git+https://github.com/flukejones/sixtyfps.git#f63c4e3b8510e88a8496328a47e8a8dccdb1bcf3"
 dependencies = [
  "const-field-offset",
  "i-slint-backend-selector",
@@ -4167,7 +4186,7 @@ dependencies = [
 [[package]]
 name = "slint-build"
 version = "1.5.0"
-source = "git+https://github.com/slint-ui/slint.git#fa2cf8c28aec3d15e8ba542cb603ef188e01ee94"
+source = "git+https://github.com/flukejones/sixtyfps.git#f63c4e3b8510e88a8496328a47e8a8dccdb1bcf3"
 dependencies = [
  "i-slint-compiler",
  "spin_on",
@@ -4178,7 +4197,7 @@ dependencies = [
 [[package]]
 name = "slint-macros"
 version = "1.5.0"
-source = "git+https://github.com/slint-ui/slint.git#fa2cf8c28aec3d15e8ba542cb603ef188e01ee94"
+source = "git+https://github.com/flukejones/sixtyfps.git#f63c4e3b8510e88a8496328a47e8a8dccdb1bcf3"
 dependencies = [
  "i-slint-compiler",
  "proc-macro2",
@@ -4275,12 +4294,12 @@ dependencies = [
 
 [[package]]
 name = "socket2"
-version = "0.5.5"
+version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b5fac59a5cb5dd637972e5fca70daf0523c9067fcdc4842f053dae04a18f8e9"
+checksum = "05ffd9c0a93b7543e062e759284fcf5f5e3b098501104bfbdde4d404db792871"
 dependencies = [
  "libc",
- "windows-sys 0.48.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -4621,7 +4640,7 @@ dependencies = [
  "mio",
  "num_cpus",
  "pin-project-lite",
- "socket2 0.5.5",
+ "socket2 0.5.6",
  "tokio-macros",
  "windows-sys 0.48.0",
 ]
@@ -4683,6 +4702,17 @@ name = "toml_edit"
 version = "0.20.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "70f427fce4d84c72b5b732388bf4a9f4531b53f74e2887e3ecb2481f68f66d81"
+dependencies = [
+ "indexmap",
+ "toml_datetime",
+ "winnow 0.5.40",
+]
+
+[[package]]
+name = "toml_edit"
+version = "0.21.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6a8534fd7f78b5405e860340ad6575217ce99f38d4d5c8f2442cb5ecb50090e1"
 dependencies = [
  "indexmap",
  "toml_datetime",
@@ -4965,7 +4995,7 @@ dependencies = [
 [[package]]
 name = "vtable"
 version = "0.1.11"
-source = "git+https://github.com/slint-ui/slint.git#fa2cf8c28aec3d15e8ba542cb603ef188e01ee94"
+source = "git+https://github.com/flukejones/sixtyfps.git#f63c4e3b8510e88a8496328a47e8a8dccdb1bcf3"
 dependencies = [
  "const-field-offset",
  "portable-atomic",
@@ -4976,7 +5006,7 @@ dependencies = [
 [[package]]
 name = "vtable-macro"
 version = "0.1.10"
-source = "git+https://github.com/slint-ui/slint.git#fa2cf8c28aec3d15e8ba542cb603ef188e01ee94"
+source = "git+https://github.com/flukejones/sixtyfps.git#f63c4e3b8510e88a8496328a47e8a8dccdb1bcf3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5812,9 +5842,9 @@ dependencies = [
 
 [[package]]
 name = "zvariant"
-version = "4.0.0"
+version = "4.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e09e8be97d44eeab994d752f341e67b3b0d80512a8b315a0671d47232ef1b65"
+checksum = "a660524eaa9f4a65c673006b034d2167a9a3ef821e9bd7311b2f1c77b904e312"
 dependencies = [
  "endi",
  "enumflags2",
@@ -5825,11 +5855,11 @@ dependencies = [
 
 [[package]]
 name = "zvariant_derive"
-version = "4.0.0"
+version = "4.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72a5857e2856435331636a9fbb415b09243df4521a267c5bedcd5289b4d5799e"
+checksum = "55b1565fbb82205a83de0bd1293fb2b5c9e34d4e74250fd4aed54903545b1fa2"
 dependencies = [
- "proc-macro-crate 1.3.1",
+ "proc-macro-crate 3.1.0",
  "proc-macro2",
  "quote",
  "syn 1.0.109",

@@ -42,18 +42,18 @@ versions.workspace = true
 nix = "^0.26.1"
 tempfile = "3.3.0"
 
-i-slint-backend-selector = { git = "https://github.com/slint-ui/slint.git" }
-i-slint-core = { git = "https://github.com/slint-ui/slint.git" }
-i-slint-backend-winit = { git = "https://github.com/slint-ui/slint.git" }
+i-slint-backend-selector = { git = "https://github.com/flukejones/sixtyfps.git" }
+i-slint-core = { git = "https://github.com/flukejones/sixtyfps.git" }
+i-slint-backend-winit = { git = "https://github.com/flukejones/sixtyfps.git" }
 winit = "*"
 
 [dependencies.slint]
-git = "https://github.com/slint-ui/slint.git"
+git = "https://github.com/flukejones/sixtyfps.git"
 default-features = false
 features = ["std", "compat-1-0", "backend-winit-wayland", "backend-linuxkms", "renderer-femtovg"]
 
 [build-dependencies.slint-build]
-git = "https://github.com/slint-ui/slint.git"
+git = "https://github.com/flukejones/sixtyfps.git"
 
 [dev-dependencies]
 cargo-husky.workspace = true

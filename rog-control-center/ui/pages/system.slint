@@ -1,6 +1,6 @@
-import { ValueBar } from "../common_widgets.slint";
+import { ValueBar, SquareCharButton } from "../common_widgets.slint";
 import { Theme } from "../globals.slint";
-import { HorizontalBox , VerticalBox, ScrollView, Slider} from "std-widgets.slint";
+import { HorizontalBox , VerticalBox, ScrollView, Slider, Button, Switch} from "std-widgets.slint";
 
 export struct AvailableSystemProperties {
     charge_limit: bool,
@@ -28,126 +28,175 @@ export struct SystemValues {
 }
 
 export global SystemPage {
-    in-out property <int> charge-limit;
-    callback set_charge(/* charge limit */ int, /* last limit */ int);
+    in-out property <float> charge_limit;
+    in-out property <int> last_charge_limit;
+    callback set_charge_limit(/* charge limit */ int);
+
+    in-out property <bool> panel_od;
+    in-out property <bool> last_panel_od;
+    callback set_panel_od(/* panel_od */ bool);
+
+    callback applied();
+    callback cancelled();
+
     in-out property <AvailableSystemProperties> available;
-    in-out property <SystemValues> values;
 }
 
 export component PageSystem inherits Rectangle {
     background: Theme.background-color;
-    ScrollView {
-        VerticalLayout {
-            // padding: 10px;
+
+    VerticalLayout {
+        ScrollView {
+            VerticalLayout {
+                // padding: 10px;
             spacing: 10px;
-            min-height: root.height;
-            if SystemPage.available.charge-limit: Rectangle {
-                background: Theme.background-color;
-                VerticalBox {
-                    Text {
-                        color: Theme.text-foreground-color;
-                        text: @tr("ChargeMode" => "Charging mode");
-                    }
+                min-height: root.height;
 
-                    Text {
-                        color: Theme.text-foreground-color;
-                        text: @tr("ChargeLimit" => "Charge limit");
-                    }
+                if SystemPage.available.charge-limit: Rectangle {
+                    background: Theme.background-color;
+                    VerticalBox {
 
-                    charge_slider := Slider {
-                        value: SystemPage.values.charge_limit;
-                        changed => {
-                            if SystemPage.values.last_charge_limit != charge_slider.value {
-                                SystemPage.set_charge(charge_slider.value, SystemPage.values.last_charge_limit);
-                                SystemPage.values.last_charge_limit = charge_slider.value;
+                        HorizontalBox {
+                            alignment: LayoutAlignment.start;
+                            Text {
+                                color: Theme.text-foreground-color;
+                                text: @tr("ChargeLimit" => "Charge limit");
+                            }
+
+                            Text {
+                                color: Theme.text-foreground-color;
+                                text: "\{Math.floor(SystemPage.charge_limit)}";
+                            }
+                        }
+
+                        HorizontalBox {
+                            TouchArea { }
+
+                            charge_slider := Slider {
+                                maximum: 100;
+                                minimum: 20;
+                                value <=> SystemPage.charge_limit;
+                                released => {
+                                    SystemPage.set_charge_limit(SystemPage.charge_limit)
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            if SystemPage.available.panel-od: Rectangle {
-                background: Theme.background-color;
-                VerticalBox {
-                    Text {
-                        color: Theme.text-foreground-color;
-                        text: @tr("PanelOverdrive" => "Panel Overdrive");
+                if SystemPage.available.panel-od: Rectangle {
+                    background: Theme.background-color;
+                    VerticalBox {
+                        HorizontalBox {
+                            alignment: LayoutAlignment.start;
+                            Text {
+                                color: Theme.text-foreground-color;
+                                text: @tr("PanelOverdrive" => "Panel Overdrive");
+                            }
+                            Switch {
+                                checked <=> SystemPage.panel_od;
+                                toggled => {
+                                    SystemPage.set_panel_od(SystemPage.panel_od)
+                                }
+                            }
+                        }
+
+                        Text {
+                            color: Theme.text-foreground-color;
+                            text: @tr("PerformanceProfile" => "Performance Profile");
+                        }
                     }
+                }
 
-                    Text {
-                        color: Theme.text-foreground-color;
-                        text: @tr("PerformanceProfile" => "Performance Profile");
+                Rectangle {
+                    background: Theme.background-color;
+                    VerticalBox {
+                        Text {
+                            color: Theme.text-foreground-color;
+                            text: @tr("nv_dynamic_boost" => "nv_dynamic_boost");
+                        }
+
+                        Text {
+                            color: Theme.text-foreground-color;
+                            text: @tr("nv_temp_target" => "nv_temp_target");
+                        }
+
+                        Text {
+                            color: Theme.text-foreground-color;
+                            text: @tr("ppt_pl1_spl" => "ppt_pl1_spl");
+                        }
+
+                        Text {
+                            color: Theme.text-foreground-color;
+                            text: @tr("ppt_pl2_sppt" => "ppt_pl2_sppt");
+                        }
+                    }
+                }
+
+                Rectangle {
+                    background: Theme.background-color;
+                    VerticalBox {
+                        Text {
+                            color: Theme.text-foreground-color;
+                            text: @tr("PanelOverdrive" => "Panel Overdrive");
+                        }
+
+                        Text {
+                            color: Theme.text-foreground-color;
+                            text: @tr("PerformanceProfile" => "Performance Profile");
+                        }
+                    }
+                }
+
+                Rectangle {
+                    background: Theme.background-color;
+                    VerticalBox {
+                        Text {
+                            color: Theme.text-foreground-color;
+                            text: @tr("PanelOverdrive" => "Panel Overdrive");
+                        }
+
+                        Text {
+                            color: Theme.text-foreground-color;
+                            text: @tr("PerformanceProfile" => "Performance Profile");
+                        }
+                    }
+                }
+
+                Rectangle {
+                    background: Theme.background-color;
+                    VerticalBox {
+                        Text {
+                            color: Theme.text-foreground-color;
+                            text: @tr("PanelOverdrive" => "Panel Overdrive");
+                        }
+
+                        Text {
+                            color: Theme.text-foreground-color;
+                            text: @tr("PerformanceProfile" => "Performance Profile");
+                        }
                     }
                 }
             }
+        }
 
-            Rectangle {
-                background: Theme.background-color;
-                VerticalBox {
-                    Text {
-                        color: Theme.text-foreground-color;
-                        text: @tr("nv_dynamic_boost" => "nv_dynamic_boost");
+        HorizontalLayout {
+            Button {
+                text: "Apply";
+                clicked => {
+                    if SystemPage.last_charge_limit != Math.floor(SystemPage.charge_limit) {
+                        SystemPage.set_charge_limit(SystemPage.charge_limit);
+                        SystemPage.last_charge_limit = Math.floor(SystemPage.charge_limit);
                     }
-
-                    Text {
-                        color: Theme.text-foreground-color;
-                        text: @tr("nv_temp_target" => "nv_temp_target");
-                    }
-
-                    Text {
-                        color: Theme.text-foreground-color;
-                        text: @tr("ppt_pl1_spl" => "ppt_pl1_spl");
-                    }
-
-                    Text {
-                        color: Theme.text-foreground-color;
-                        text: @tr("ppt_pl2_sppt" => "ppt_pl2_sppt");
-                    }
+                    SystemPage.applied();
                 }
             }
 
-            Rectangle {
-                background: Theme.background-color;
-                VerticalBox {
-                    Text {
-                        color: Theme.text-foreground-color;
-                        text: @tr("PanelOverdrive" => "Panel Overdrive");
-                    }
-
-                    Text {
-                        color: Theme.text-foreground-color;
-                        text: @tr("PerformanceProfile" => "Performance Profile");
-                    }
-                }
-            }
-
-            Rectangle {
-                background: Theme.background-color;
-                VerticalBox {
-                    Text {
-                        color: Theme.text-foreground-color;
-                        text: @tr("PanelOverdrive" => "Panel Overdrive");
-                    }
-
-                    Text {
-                        color: Theme.text-foreground-color;
-                        text: @tr("PerformanceProfile" => "Performance Profile");
-                    }
-                }
-            }
-
-            Rectangle {
-                background: Theme.background-color;
-                VerticalBox {
-                    Text {
-                        color: Theme.text-foreground-color;
-                        text: @tr("PanelOverdrive" => "Panel Overdrive");
-                    }
-
-                    Text {
-                        color: Theme.text-foreground-color;
-                        text: @tr("PerformanceProfile" => "Performance Profile");
-                    }
+            Button {
+                text: "Cancel";
+                clicked => {
+                    SystemPage.charge_limit = SystemPage.last_charge_limit;
+                    SystemPage.cancelled();
                 }
             }
         }

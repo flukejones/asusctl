@@ -2,8 +2,6 @@ import { VerticalBox , StandardButton, Button} from "std-widgets.slint";
 import { Theme } from "globals.slint";
 
 export component SquareImageButton inherits Rectangle {
-    // if (AppConsts.sdfsdf.length < 0):  Rectangle { background: red; }
-
     callback clicked;
     in-out property <image> img;
     border-radius: 7px;
@@ -13,7 +11,7 @@ export component SquareImageButton inherits Rectangle {
     touch := TouchArea {
         clicked => {
             root.clicked();
-        
+
         }
     }
 
@@ -41,7 +39,7 @@ export component RoundImageButton inherits Rectangle {
     touch := TouchArea {
         clicked => {
             root.clicked();
-        
+
         }
     }
 
@@ -66,7 +64,7 @@ export component SquareCharButton inherits Rectangle {
     touch := TouchArea {
         clicked => {
             root.clicked();
-        
+
         }
     }
 
@@ -94,26 +92,26 @@ export component ValueBar inherits Rectangle {
             // do a percentage of each half as 0-50%
             if (value >= max + min) {
                 return (value - (max + min) / 2) / (max - min);
-            
+
             }
             return 0.50 - (value - (min - max) / 2) / (max - min);
-        
+
         }
         return (value - min) / (max - min);
-    
+
     }
 
     function set_x(min: float, max: float, value: float, width: length) -> length{
         if (min < 0.0 && max > 0.0) {
             if (value < max + min) {
                 return width / 2 - width * (percentage(min, max, value));
-            
+
             }
             return width / 2;
-        
+
         }
         return 0;
-    
+
     }
 
     Rectangle {
@@ -152,7 +150,7 @@ export component SpinBoxUni inherits Rectangle {
             clicked => {
                 if (root.value > root.minimum) {
                     root.value -= 1;
-                
+
                 }
             }
         }
@@ -178,7 +176,7 @@ export component SpinBoxUni inherits Rectangle {
             clicked => {
                 if (root.value < root.maximum) {
                     root.value += 1;
-                
+
                 }
             }
         }
@@ -240,7 +238,7 @@ export component PopupNotification {
 
     public function show() {
         _p.show();
-    
+
     }
 
 }

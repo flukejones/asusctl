@@ -19,6 +19,7 @@ use rog_control_center::{
     get_ipc_file, on_tmp_dir_exists, print_versions, AvailableSystemProperties, MainWindow,
     RogDbusClientBlocking, SystemPage, QUIT_APP, SHOWING_GUI, SHOW_GUI,
 };
+use rog_dbus::zbus_platform::{PlatformProxy, PlatformProxyBlocking};
 use tokio::runtime::Runtime;
 // use winit::monitor::VideoMode;
 // use winit::window::{Fullscreen, WindowLevel};
@@ -176,36 +177,76 @@ fn setup_window(_states: Arc<Mutex<SystemState>>) -> MainWindow {
     // slint::platform::set_platform(Box::new(i_slint_backend_winit::Backend::new().
     // unwrap())).unwrap();
     let ui = MainWindow::new().unwrap();
-    // Example of how to do work in another thread.
-    // The thread itself can keep its own state, and then update vars in the UI
-    // when required.
-    let ui_handle = ui.as_weak();
-    spawn(move || loop {
-        sleep(Duration::from_secs(1));
-        // This is where the actual update happens
-        ui_handle
-            .upgrade_in_event_loop(move |handle| {
-                // handle.set_counter(handle.get_counter() + 1);
-                use i_slint_backend_winit::WinitWindowAccessor;
-                handle
-                    .window()
-                    .with_winit_window(|winit_window: &winit::window::Window| {
-                        // winit_window.set_fullscreen(Some(Fullscreen::Borderless(None)));
-                        if !winit_window.has_focus() {
-                            // slint::quit_event_loop().unwrap();
-                            // handle.hide().unwrap();
-                        }
-                    });
-            })
-            .ok();
+
+    let handle = ui.as_weak();
+    ui.global::<SystemPage>().on_cancelled(move || {
+        handle.upgrade_in_event_loop(|_handle| {}).ok();
     });
 
-    ui.global::<SystemPage>().on_set_charge(|v1, v2| {
-        if v1 != v2 {
-            dbg!(v1);
-            dbg!(v2);
-        }
+    // TODO: macro
+    let conn = zbus::blocking::Connection::system().unwrap();
+    let proxy = PlatformProxyBlocking::new(&conn).unwrap();
+    let proxy2 = proxy.clone();
+    ui.global::<SystemPage>().on_set_charge_limit(move |limit| {
+        dbg!(limit);
+        proxy.set_charge_control_end_threshold(limit as u8).unwrap();
     });
+
+    ui.global::<SystemPage>().on_set_panel_od(move |od| {
+        dbg!(od);
+        proxy2.set_panel_od(od).unwrap();
+    });
+
+    // let handle = ui.as_weak();
+    // ui.global::<SystemPage>().on_applied(move || {
+    //     handle
+    //         .upgrade_in_event_loop(|handle| {
+    //             let data = handle.global::<SystemPage>();
+    //             let charge_changed = data.get_charge_limit() as i32 !=
+    // data.get_last_charge_limit();             let charge =
+    // data.get_charge_limit() as u8;             tokio::spawn(async move {
+    //                 let conn = zbus::Connection::system().await.unwrap();
+    //                 let proxy = PlatformProxy::new(&conn).await.unwrap();
+    //                 if charge_changed {
+    //                     proxy
+    //                         .set_charge_control_end_threshold(charge)
+    //                         .await
+    //                         .unwrap();
+    //                 }
+    //             });
+    //         })
+    //         .ok();
+    // });
+
+    // or
+    // let handle = ui.as_weak();
+    // tokio::spawn(async move {
+    //     // TODO: macro
+    //     let conn = zbus::Connection::system().await.unwrap();
+    //     let proxy = PlatformProxy::new(&conn).await.unwrap();
+    //     let proxy2 = proxy.clone();
+    //     handle.upgrade_in_event_loop(move |handle| {
+    //         handle
+    //             .global::<SystemPage>()
+    //             .on_set_charge_limit(move |limit| {
+    //                 let proxy = proxy.clone();
+    //                 tokio::spawn(async move {
+    //                     dbg!(limit);
+    //                     proxy
+    //                         .set_charge_control_end_threshold(limit as u8)
+    //                         .await
+    //                         .unwrap();
+    //                 });
+    //             });
+    //         handle.global::<SystemPage>().on_set_panel_od(move |od| {
+    //             let proxy2 = proxy2.clone();
+    //             tokio::spawn(async move {
+    //                 dbg!(od);
+    //                 proxy2.set_panel_od(od).await.unwrap();
+    //             });
+    //         });
+    //     }).ok();
+    // });
 
     let props = AvailableSystemProperties {
         ac_command: true,
