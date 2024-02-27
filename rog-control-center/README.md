@@ -1,22 +1,11 @@
-# App template
+# ROGALOG
 
-This is a trial app cut down to bare essentials to show how to create an app that can run in the background
-with some user-config options.
+### Translations
 
-egui based. Keep in mind that this is very much a bit of a mess due to experimenting.
+You can help with translations by following https://slint.dev/releases/1.1.0/docs/slint/src/concepts/translations#translate-the-strings
 
-## Running
+Begin by copying `rog-control-center/translations/en/rog-control-center.po` to `rog-control-center/translations/<YOUR LOCALE>/rog-control-center.po`, then edit that file.
 
-Use `WINIT_UNIX_BACKEND=x11 rog-control-center`. `WINIT_UNIX_BACKEND` is required due to window decorations not updating and the window not really being set as visible/invisible on wayland.
+Run `msgfmt rog-control-center/translations/<YOUR LOCALE>/rog-control-center.po -o rog-control-center/translations/<YOUR LOCALE>/LC_MESSAGES/rog-control-center.mo` to make the binary formatted translation where `<YOUR LOCALE>` is changed to your translation locale.
 
-## Build features
-
-For testing some features that are typically not available on all laptops:
-
-```rust
-cargo run --features mocking
-```
-
-## TODO
-
-- Add notification watch for certain UI elements to enforce an update (for example when a user changes Aura via a hot key).
+To test you local translations run `RUST_TRANSLATIONS=1 rog-control-center`.

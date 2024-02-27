@@ -1,12 +1,45 @@
-<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
+  <interface name="org.freedesktop.DBus.Properties">
+    <method name="Get">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg name="property_name" type="s" direction="in"/>
+      <arg type="v" direction="out"/>
+    </method>
+    <method name="Set">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg name="property_name" type="s" direction="in"/>
+      <arg name="value" type="v" direction="in"/>
+    </method>
+    <method name="GetAll">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg type="a{sv}" direction="out"/>
+    </method>
+    <!--
+     Emits the `org.freedesktop.DBus.Properties.PropertiesChanged` signal.
+     -->
+    <signal name="PropertiesChanged">
+      <arg name="interface_name" type="s"/>
+      <arg name="changed_properties" type="a{sv}"/>
+      <arg name="invalidated_properties" type="as"/>
+    </signal>
+  </interface>
+  <interface name="org.freedesktop.DBus.Peer">
+    <method name="Ping">
+    </method>
+    <method name="GetMachineId">
+      <arg type="s" direction="out"/>
+    </method>
+  </interface>
   <interface name="org.asuslinux.Daemon">
     <!--
      Set all fan curves for a profile to enabled status. Will also activate a
      fan curve if in the same profile mode
      -->
     <method name="SetFanCurvesEnabled">
-      <arg name="profile" type="s" direction="in"/>
+      <arg name="profile" type="u" direction="in"/>
       <arg name="enabled" type="b" direction="in"/>
     </method>
     <!--
@@ -14,7 +47,7 @@
      activate a fan curve if in the same profile mode
      -->
     <method name="SetProfileFanCurveEnabled">
-      <arg name="profile" type="s" direction="in"/>
+      <arg name="profile" type="u" direction="in"/>
       <arg name="fan" type="s" direction="in"/>
       <arg name="enabled" type="b" direction="in"/>
     </method>
@@ -22,7 +55,7 @@
      Get the fan-curve data for the currently active ThrottlePolicy
      -->
     <method name="FanCurveData">
-      <arg name="profile" type="s" direction="in"/>
+      <arg name="profile" type="u" direction="in"/>
       <arg type="a(s(yyyyyyyy)(yyyyyyyy)b)" direction="out"/>
     </method>
     <!--
@@ -30,7 +63,7 @@
      Will also activate the fan curve if the user is in the same mode.
      -->
     <method name="SetFanCurve">
-      <arg name="profile" type="s" direction="in"/>
+      <arg name="profile" type="u" direction="in"/>
       <arg name="curve" type="(s(yyyyyyyy)(yyyyyyyy)b)" direction="in"/>
     </method>
     <!--
@@ -50,7 +83,12 @@
      read only for the currently active profile.
      -->
     <method name="ResetProfileCurves">
-      <arg name="profile" type="s" direction="in"/>
+      <arg name="profile" type="u" direction="in"/>
+    </method>
+  </interface>
+  <interface name="org.freedesktop.DBus.Introspectable">
+    <method name="Introspect">
+      <arg type="s" direction="out"/>
     </method>
   </interface>
 </node>

@@ -3,9 +3,10 @@ use std::env::args;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
-use std::thread::{self, sleep, spawn};
+use std::thread::{self, sleep};
 use std::time::Duration;
 
+use config_traits::{StdConfig, StdConfigLoad1};
 use gumdrop::Options;
 use log::LevelFilter;
 use rog_control_center::cli_options::CliStart;
@@ -14,12 +15,12 @@ use rog_control_center::error::Result;
 use rog_control_center::slint::ComponentHandle;
 use rog_control_center::system_state::{AuraCreation, SystemState};
 use rog_control_center::tray::init_tray;
+use rog_control_center::ui_setup::setup_window;
 use rog_control_center::update_and_notify::{start_notifications, EnabledNotifications};
 use rog_control_center::{
-    get_ipc_file, on_tmp_dir_exists, print_versions, AvailableSystemProperties, MainWindow,
-    RogDbusClientBlocking, SystemPage, QUIT_APP, SHOWING_GUI, SHOW_GUI,
+    get_ipc_file, on_tmp_dir_exists, print_versions, MainWindow, RogDbusClientBlocking, QUIT_APP,
+    SHOWING_GUI, SHOW_GUI,
 };
-use rog_dbus::zbus_platform::{PlatformProxy, PlatformProxyBlocking};
 use tokio::runtime::Runtime;
 // use winit::monitor::VideoMode;
 // use winit::window::{Fullscreen, WindowLevel};
@@ -76,12 +77,11 @@ fn main() -> Result<()> {
     };
 
     // Startup
-    let mut config = Config::load()?;
+    let mut config = Config::new().load();
 
     if config.startup_in_background {
         config.run_in_background = true;
-        let tmp = config.enabled_notifications.clone(); // ends up being a double clone, oh well.
-        config.save(&tmp)?;
+        config.write();
     } else {
         get_ipc_file().unwrap().write_all(&[SHOW_GUI, 0]).unwrap();
     }
@@ -92,14 +92,27 @@ fn main() -> Result<()> {
     // TODO: config mutex to share config in various places
     let states = setup_page_state_and_notifs(aura_creation, &enabled_notifications, &config)?;
 
-    if config.enable_tray_icon {
-        init_tray(supported_properties, states.clone());
+    let enable_tray_icon = config.enable_tray_icon;
+    let startup_in_background = config.startup_in_background;
+    let config = Arc::new(Mutex::new(config));
+    if enable_tray_icon {
+        init_tray(supported_properties, states.clone(), config.clone());
     }
 
     thread_local! { pub static UI: std::cell::RefCell<Option<MainWindow>> = Default::default()};
     i_slint_backend_selector::with_platform(|_| Ok(())).unwrap();
 
-    let mut do_once = !config.startup_in_background;
+    let mut do_once = !startup_in_background;
+
+    if std::env::var("RUST_TRANSLATIONS").is_ok() {
+        // don't care about content
+        log::debug!("---- Using local-dir translations");
+        slint::init_translations!("/usr/share/locale/");
+    } else {
+        log::debug!("Using system installed translations");
+        slint::init_translations!(concat!(env!("CARGO_MANIFEST_DIR"), "/translations/"));
+    }
+
     thread::spawn(move || {
         let mut buf = [0u8; 2];
         // blocks until it is read, typically the read will happen after a second
@@ -113,7 +126,6 @@ fn main() -> Result<()> {
             }
 
             if buf[0] == SHOW_GUI {
-                println!("Should show window {buf:?}");
                 // There's a balancing act with read/write timing of IPC, there needs to be a
                 // small sleep after this to give any other process a chance to
                 // read the IPC before looping
@@ -123,7 +135,7 @@ fn main() -> Result<()> {
                     .unwrap();
                 sleep(Duration::from_millis(50));
 
-                let states = states.clone();
+                let config_copy = config.clone();
                 i_slint_core::api::invoke_from_event_loop(move || {
                     UI.with(|ui| {
                         let mut ui = ui.borrow_mut();
@@ -134,9 +146,8 @@ fn main() -> Result<()> {
                                 slint::CloseRequestResponse::HideWindow
                             });
                         } else {
-                            let newui = setup_window(states.clone());
+                            let newui = setup_window(config_copy);
                             newui.window().show().unwrap();
-                            println!("New window should be showing now"); // but it isn't
                             newui.window().on_close_requested(|| {
                                 get_ipc_file().unwrap().write_all(&[0, 0]).unwrap();
                                 slint::CloseRequestResponse::HideWindow
@@ -149,13 +160,13 @@ fn main() -> Result<()> {
             } else if buf[1] == QUIT_APP {
                 slint::quit_event_loop().unwrap();
             } else if buf[0] != SHOWING_GUI {
-                Config::load().unwrap();
-                if !config.run_in_background {
-                    slint::quit_event_loop().unwrap();
-                    return;
+                if let Ok(lock) = config.lock() {
+                    if !lock.run_in_background {
+                        slint::quit_event_loop().unwrap();
+                        return;
+                    }
                 }
 
-                println!("Should hide window {buf:?}");
                 i_slint_core::api::invoke_from_event_loop(move || {
                     UI.with(|ui| {
                         let mut ui = ui.take();
@@ -171,106 +182,6 @@ fn main() -> Result<()> {
 
     slint::run_event_loop_until_quit().unwrap();
     Ok(())
-}
-
-fn setup_window(_states: Arc<Mutex<SystemState>>) -> MainWindow {
-    // slint::platform::set_platform(Box::new(i_slint_backend_winit::Backend::new().
-    // unwrap())).unwrap();
-    let ui = MainWindow::new().unwrap();
-
-    let handle = ui.as_weak();
-    ui.global::<SystemPage>().on_cancelled(move || {
-        handle.upgrade_in_event_loop(|_handle| {}).ok();
-    });
-
-    // TODO: macro
-    let conn = zbus::blocking::Connection::system().unwrap();
-    let proxy = PlatformProxyBlocking::new(&conn).unwrap();
-    let proxy2 = proxy.clone();
-    ui.global::<SystemPage>().on_set_charge_limit(move |limit| {
-        dbg!(limit);
-        proxy.set_charge_control_end_threshold(limit as u8).unwrap();
-    });
-
-    ui.global::<SystemPage>().on_set_panel_od(move |od| {
-        dbg!(od);
-        proxy2.set_panel_od(od).unwrap();
-    });
-
-    // let handle = ui.as_weak();
-    // ui.global::<SystemPage>().on_applied(move || {
-    //     handle
-    //         .upgrade_in_event_loop(|handle| {
-    //             let data = handle.global::<SystemPage>();
-    //             let charge_changed = data.get_charge_limit() as i32 !=
-    // data.get_last_charge_limit();             let charge =
-    // data.get_charge_limit() as u8;             tokio::spawn(async move {
-    //                 let conn = zbus::Connection::system().await.unwrap();
-    //                 let proxy = PlatformProxy::new(&conn).await.unwrap();
-    //                 if charge_changed {
-    //                     proxy
-    //                         .set_charge_control_end_threshold(charge)
-    //                         .await
-    //                         .unwrap();
-    //                 }
-    //             });
-    //         })
-    //         .ok();
-    // });
-
-    // or
-    // let handle = ui.as_weak();
-    // tokio::spawn(async move {
-    //     // TODO: macro
-    //     let conn = zbus::Connection::system().await.unwrap();
-    //     let proxy = PlatformProxy::new(&conn).await.unwrap();
-    //     let proxy2 = proxy.clone();
-    //     handle.upgrade_in_event_loop(move |handle| {
-    //         handle
-    //             .global::<SystemPage>()
-    //             .on_set_charge_limit(move |limit| {
-    //                 let proxy = proxy.clone();
-    //                 tokio::spawn(async move {
-    //                     dbg!(limit);
-    //                     proxy
-    //                         .set_charge_control_end_threshold(limit as u8)
-    //                         .await
-    //                         .unwrap();
-    //                 });
-    //             });
-    //         handle.global::<SystemPage>().on_set_panel_od(move |od| {
-    //             let proxy2 = proxy2.clone();
-    //             tokio::spawn(async move {
-    //                 dbg!(od);
-    //                 proxy2.set_panel_od(od).await.unwrap();
-    //             });
-    //         });
-    //     }).ok();
-    // });
-
-    let props = AvailableSystemProperties {
-        ac_command: true,
-        bat_command: true,
-        charge_limit: true,
-        disable_nvidia_powerd_on_battery: true,
-        mini_led_mode: true,
-        nv_dynamic_boost: true,
-        nv_temp_target: true,
-        panel_od: true,
-        ppt_apu_sppt: true,
-        ppt_fppt: true,
-        ppt_pl1_spl: true,
-        ppt_pl2_sppt: true,
-        ppt_platform_sppt: true,
-        throttle_policy: true,
-    };
-    ui.global::<SystemPage>().set_available(props);
-
-    ui.on_exit_app(move || {
-        slint::quit_event_loop().unwrap();
-    });
-
-    ui
 }
 
 fn setup_page_state_and_notifs(

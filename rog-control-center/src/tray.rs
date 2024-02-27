@@ -16,6 +16,7 @@ use supergfxctl::pci_device::{GfxMode, GfxPower};
 use supergfxctl::zbus_proxy::DaemonProxyBlocking as GfxProxyBlocking;
 use versions::Versioning;
 
+use crate::config::Config;
 use crate::error::Result;
 use crate::system_state::SystemState;
 use crate::{get_ipc_file, SHOW_GUI};
@@ -86,7 +87,7 @@ impl ROGTray {
             e
         })?;
 
-        let gfx_proxy = GfxProxyBlocking::builder(&conn).build().map_err(|e| {
+        let gfx_proxy = GfxProxyBlocking::new(&conn).map_err(|e| {
             error!("ROGTray: {e}");
             e
         })?;
@@ -438,7 +439,11 @@ impl ROGTray {
 }
 
 /// The tray is controlled somewhat by `Arc<Mutex<SystemState>>`
-pub fn init_tray(supported_properties: Vec<Properties>, states: Arc<Mutex<SystemState>>) {
+pub fn init_tray(
+    supported_properties: Vec<Properties>,
+    states: Arc<Mutex<SystemState>>,
+    config: Arc<Mutex<Config>>,
+) {
     std::thread::spawn(move || {
         let gtk_init = gtk::init().map_err(|e| {
             error!("ROGTray: gtk init {e}");
@@ -496,6 +501,12 @@ pub fn init_tray(supported_properties: Vec<Properties>, states: Arc<Mutex<System
         info!("Started ROGTray");
 
         loop {
+            if let Ok(lock) = config.try_lock() {
+                if !lock.enable_tray_icon {
+                    break;
+                }
+            }
+
             let states = tray.states.clone();
             if let Ok(mut lock) = states.lock() {
                 if lock.tray_should_update {

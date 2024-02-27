@@ -58,10 +58,22 @@ impl From<u8> for Brightness {
     fn from(v: u8) -> Brightness {
         match v {
             0 => Brightness::Off,
-            2 => Brightness::Low,
+            1 => Brightness::Low,
             3 => Brightness::High,
             _ => Brightness::Med,
         }
+    }
+}
+
+impl From<i32> for Brightness {
+    fn from(v: i32) -> Brightness {
+        (v as u8).into()
+    }
+}
+
+impl From<Brightness> for i32 {
+    fn from(v: Brightness) -> i32 {
+        v as i32
     }
 }
 
@@ -90,6 +102,22 @@ impl FromStr for AnimBooting {
     }
 }
 
+impl From<i32> for AnimBooting {
+    fn from(value: i32) -> Self {
+        match value {
+            0 => Self::GlitchConstruction,
+            1 => Self::StaticEmergence,
+            _ => Self::default(),
+        }
+    }
+}
+
+impl From<AnimBooting> for i32 {
+    fn from(value: AnimBooting) -> Self {
+        value as i32
+    }
+}
+
 #[cfg_attr(
     feature = "dbus",
     derive(Type, Value, OwnedValue),
@@ -112,6 +140,22 @@ impl FromStr for AnimAwake {
             "RogLogoGlitch" => Ok(Self::RogLogoGlitch),
             _ => Err(AnimeError::ParseError(s.to_owned())),
         }
+    }
+}
+
+impl From<i32> for AnimAwake {
+    fn from(value: i32) -> Self {
+        match value {
+            0 => Self::BinaryBannerScroll,
+            1 => Self::RogLogoGlitch,
+            _ => Self::default(),
+        }
+    }
+}
+
+impl From<AnimAwake> for i32 {
+    fn from(value: AnimAwake) -> Self {
+        value as i32
     }
 }
 
@@ -140,6 +184,22 @@ impl FromStr for AnimSleeping {
     }
 }
 
+impl From<i32> for AnimSleeping {
+    fn from(value: i32) -> Self {
+        match value {
+            0 => Self::BannerSwipe,
+            1 => Self::Starfield,
+            _ => Self::default(),
+        }
+    }
+}
+
+impl From<AnimSleeping> for i32 {
+    fn from(value: AnimSleeping) -> Self {
+        value as i32
+    }
+}
+
 #[cfg_attr(
     feature = "dbus",
     derive(Type, Value, OwnedValue),
@@ -162,6 +222,22 @@ impl FromStr for AnimShutdown {
             "SeeYa" => Ok(Self::SeeYa),
             _ => Err(AnimeError::ParseError(s.to_owned())),
         }
+    }
+}
+
+impl From<i32> for AnimShutdown {
+    fn from(value: i32) -> Self {
+        match value {
+            0 => Self::GlitchOut,
+            1 => Self::SeeYa,
+            _ => Self::default(),
+        }
+    }
+}
+
+impl From<AnimShutdown> for i32 {
+    fn from(value: AnimShutdown) -> Self {
+        value as i32
     }
 }
 

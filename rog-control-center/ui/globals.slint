@@ -5,15 +5,15 @@ struct ButtonColours  {
 }
 
 export global AppSize {
-    out property <length> width: 800px;
-    out property <length> height: 480px;
+    out property <length> width: 900px;
+    out property <length> height: 500px;
 }
 
 export global Theme {
     out property <color> window-background: #000000;
     out property <color> neutral-box: #BDC0D1;
     // The background colour of pages and bars
-    out property <color> background-color: root.dark-mode ? #12387b : white;
+    out property <color> background-color: root.dark-mode ? #3a127b : white;
     out property <color> text-foreground-color: root.dark-mode ? #F4F6FF : black;
     out property <color> secondary-foreground-color: root.dark-mode ? #C1C3CA : #6C6E7A;
     out property <color> image-button-background: root.dark-mode ? root.window-background : white;

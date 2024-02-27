@@ -239,6 +239,25 @@ impl From<CPUEPP> for String {
     }
 }
 
+impl From<i32> for CPUEPP {
+    fn from(value: i32) -> Self {
+        match value {
+            0 => Self::Default,
+            1 => Self::Performance,
+            2 => Self::BalancePerformance,
+            3 => Self::BalancePower,
+            4 => Self::Power,
+            _ => Self::Default,
+        }
+    }
+}
+
+impl From<CPUEPP> for i32 {
+    fn from(value: CPUEPP) -> Self {
+        value as i32
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::CPUControl;

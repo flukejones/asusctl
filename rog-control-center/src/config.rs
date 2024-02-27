@@ -1,10 +1,8 @@
-use std::fs::{create_dir, OpenOptions};
-use std::io::{Read, Write};
+use std::fs::create_dir;
 
-use log::{error, info, warn};
+use config_traits::{StdConfig, StdConfigLoad1};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::error::Error;
 use crate::update_and_notify::EnabledNotifications;
 
 const CFG_DIR: &str = "rog";
@@ -38,134 +36,32 @@ impl Default for Config {
     }
 }
 
-impl Config {
-    pub fn load() -> Result<Config, Error> {
-        let mut path = if let Some(dir) = dirs::config_dir() {
-            info!("Found XDG config dir {dir:?}");
-            dir
-        } else {
-            error!("Could not get XDG config dir");
-            return Err(Error::XdgVars);
-        };
+impl StdConfig for Config {
+    fn new() -> Self {
+        Config {
+            ..Default::default()
+        }
+    }
+
+    fn config_dir() -> std::path::PathBuf {
+        let mut path = dirs::config_dir().unwrap_or_default();
 
         path.push(CFG_DIR);
         if !path.exists() {
-            create_dir(path.clone())?;
-            info!("Created {path:?}");
+            create_dir(path.clone())
+                .map_err(|e| log::error!("Could not create config dir: {e}"))
+                .ok();
+            log::info!("Created {path:?}");
         }
-
-        path.push(CFG_FILE_NAME);
-
-        let mut file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .open(&path)?;
-
-        let mut buf = String::new();
-
-        // Lint to allow, because we want the above file behaviour
-        #[allow(clippy::verbose_file_reads)]
-        if let Ok(read_len) = file.read_to_string(&mut buf) {
-            if read_len == 0 {
-                warn!("Zero len read of Config file");
-                let default = Config::default();
-                let t = toml::to_string_pretty(&default).unwrap();
-                file.write_all(t.as_bytes())?;
-                return Ok(default);
-            } else if let Ok(data) = toml::from_str::<Config>(&buf) {
-                info!("Loaded config file {path:?}");
-                return Ok(data);
-            } else if let Ok(data) = toml::from_str::<Config461>(&buf) {
-                info!("Loaded old v4.6.1 config file {path:?}");
-                return Ok(data.into());
-            } else if let Ok(data) = toml::from_str::<Config460>(&buf) {
-                info!("Loaded old v4.6.0 config file {path:?}");
-                return Ok(data.into());
-            } else if let Ok(data) = toml::from_str::<Config455>(&buf) {
-                info!("Loaded old v4.5.5 config file {path:?}");
-                return Ok(data.into());
-            }
-        }
-        Err(Error::ConfigLoadFail)
+        path
     }
 
-    pub fn save(&mut self, enabled_notifications: &EnabledNotifications) -> Result<(), Error> {
-        let mut path = if let Some(dir) = dirs::config_dir() {
-            dir
-        } else {
-            return Err(Error::XdgVars);
-        };
-
-        path.push(CFG_DIR);
-        if !path.exists() {
-            create_dir(path.clone())?;
-            info!("Created {path:?}");
-        }
-
-        path.push(CFG_FILE_NAME);
-
-        let mut file = OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(&path)?;
-
-        self.enabled_notifications = enabled_notifications.clone();
-        let t = toml::to_string_pretty(&self).unwrap();
-        file.write_all(t.as_bytes())?;
-        info!("Saved config file {path:?}");
-        Ok(())
+    fn file_name(&self) -> String {
+        CFG_FILE_NAME.to_owned()
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct Config455 {
-    pub run_in_background: bool,
-    pub startup_in_background: bool,
-    pub enable_notifications: bool,
-    pub enabled_notifications: EnabledNotifications,
-}
-
-impl From<Config455> for Config {
-    fn from(c: Config455) -> Self {
-        Self {
-            run_in_background: c.run_in_background,
-            startup_in_background: c.startup_in_background,
-            enable_tray_icon: true,
-            enable_notifications: c.enable_notifications,
-            enabled_notifications: c.enabled_notifications,
-            dark_mode: true,
-            ac_command: String::new(),
-            bat_command: String::new(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct Config460 {
-    pub run_in_background: bool,
-    pub startup_in_background: bool,
-    pub ac_command: String,
-    pub bat_command: String,
-    pub enable_notifications: bool,
-    pub enabled_notifications: EnabledNotifications,
-}
-
-impl From<Config460> for Config {
-    fn from(c: Config460) -> Self {
-        Self {
-            run_in_background: c.run_in_background,
-            startup_in_background: c.startup_in_background,
-            enable_tray_icon: true,
-            ac_command: c.ac_command,
-            bat_command: c.bat_command,
-            dark_mode: true,
-            enable_notifications: c.enable_notifications,
-            enabled_notifications: c.enabled_notifications,
-        }
-    }
-}
+impl StdConfigLoad1<Config461> for Config {}
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Config461 {

@@ -19,6 +19,7 @@ pub mod error;
 pub mod mocking;
 pub mod system_state;
 pub mod tray;
+pub mod ui_setup;
 pub mod update_and_notify;
 
 #[cfg(feature = "mocking")]

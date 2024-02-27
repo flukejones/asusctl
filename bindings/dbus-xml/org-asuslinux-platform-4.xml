@@ -1,4 +1,6 @@
-<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
   <interface name="org.asuslinux.Daemon">
     <!--
@@ -25,22 +27,107 @@
      internal config also.
      -->
     <property name="MiniLedMode" type="b" access="readwrite"/>
+    <!--
+     Set the dynamic boost limit of the Nvidia dGPU:
+     * min=5, max=25
+     -->
     <property name="NvDynamicBoost" type="y" access="readwrite"/>
+    <!--
+     Set the target temperature limit of the Nvidia dGPU:
+     * min=75, max=87
+     -->
     <property name="NvTempTarget" type="y" access="readwrite"/>
     <!--
      Get the `panel_od` value from platform. Updates the stored value in
      internal config also.
      -->
     <property name="PanelOd" type="b" access="readwrite"/>
+    <!--
+     ***********************************************************************
+     -->
     <property name="PostAnimationSound" type="b" access="readwrite"/>
+    <!--
+     Set the APU SPPT limit. Shown on full AMD systems only:
+     * min=5, max=130
+     -->
     <property name="PptApuSppt" type="y" access="readwrite"/>
+    <!--
+     Set the Fast Package Power Tracking Limit of CPU. AMD+Nvidia only:
+     * min=5, max=250
+     -->
     <property name="PptFppt" type="y" access="readwrite"/>
     <!--
-     ************************************************************************
+     ***********************************************************************
+     Set the Package Power Target total of CPU: PL1 on Intel, SPL on AMD.
+     Shown on Intel+Nvidia or AMD+Nvidia based systems:
+     * min=5, max=250
      -->
     <property name="PptPl1Spl" type="y" access="readwrite"/>
+    <!--
+     Set the Slow Package Power Tracking Limit of CPU: PL2 on Intel, SPPT,
+     on AMD. Shown on Intel+Nvidia or AMD+Nvidia based systems:
+     * min=5, max=250
+     -->
     <property name="PptPl2Sppt" type="y" access="readwrite"/>
+    <!--
+     Set the platform SPPT limit. Shown on full AMD systems only:
+     * min=5, max=130
+     -->
     <property name="PptPlatformSppt" type="y" access="readwrite"/>
-    <property name="ThrottleThermalPolicy" type="s" access="readwrite"/>
+    <!--
+     The energy_performance_preference for the balanced throttle/platform
+     profile
+     -->
+    <property name="ThrottleBalancedEpp" type="u" access="readwrite"/>
+    <!--
+     The energy_performance_preference for the performance throttle/platform
+     profile
+     -->
+    <property name="ThrottlePerformanceEpp" type="u" access="readwrite"/>
+    <property name="ThrottlePolicyLinkedEpp" type="b" access="readwrite"/>
+    <property name="ThrottlePolicyOnAc" type="u" access="readwrite"/>
+    <property name="ThrottlePolicyOnBattery" type="u" access="readwrite"/>
+    <!--
+     The energy_performance_preference for the quiet throttle/platform
+     profile
+     -->
+    <property name="ThrottleQuietEpp" type="u" access="readwrite"/>
+    <property name="ThrottleThermalPolicy" type="u" access="readwrite"/>
+  </interface>
+  <interface name="org.freedesktop.DBus.Properties">
+    <method name="Get">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg name="property_name" type="s" direction="in"/>
+      <arg type="v" direction="out"/>
+    </method>
+    <method name="Set">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg name="property_name" type="s" direction="in"/>
+      <arg name="value" type="v" direction="in"/>
+    </method>
+    <method name="GetAll">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg type="a{sv}" direction="out"/>
+    </method>
+    <!--
+     Emits the `org.freedesktop.DBus.Properties.PropertiesChanged` signal.
+     -->
+    <signal name="PropertiesChanged">
+      <arg name="interface_name" type="s"/>
+      <arg name="changed_properties" type="a{sv}"/>
+      <arg name="invalidated_properties" type="as"/>
+    </signal>
+  </interface>
+  <interface name="org.freedesktop.DBus.Introspectable">
+    <method name="Introspect">
+      <arg type="s" direction="out"/>
+    </method>
+  </interface>
+  <interface name="org.freedesktop.DBus.Peer">
+    <method name="Ping">
+    </method>
+    <method name="GetMachineId">
+      <arg type="s" direction="out"/>
+    </method>
   </interface>
 </node>

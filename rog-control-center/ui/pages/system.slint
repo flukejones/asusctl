@@ -1,15 +1,15 @@
-import { ValueBar, SquareCharButton } from "../common_widgets.slint";
+import { SystemSlider, SystemDropdown, SystemToggle } from "../common_widgets.slint";
 import { Theme } from "../globals.slint";
-import { HorizontalBox , VerticalBox, ScrollView, Slider, Button, Switch} from "std-widgets.slint";
+import { HorizontalBox , VerticalBox, ScrollView, Slider, Button, Switch, ComboBox, GroupBox} from "std-widgets.slint";
 
 export struct AvailableSystemProperties {
-    charge_limit: bool,
+    charge_control_end_threshold: bool,
     panel_od: bool,
     mini_led_mode: bool,
     disable_nvidia_powerd_on_battery: bool,
     ac_command: bool,
     bat_command: bool,
-    throttle_policy: bool,
+    throttle_thermal_policy: bool,
     ppt_pl1_spl: bool,
     ppt_pl2_sppt: bool,
     ppt_fppt: bool,
@@ -19,185 +19,359 @@ export struct AvailableSystemProperties {
     nv_temp_target: bool,
 }
 
-export struct SystemValues {
-    charge_limit: int,
-    last_charge_limit: int,
-    panel_od: bool,
-    mini_led_mode: bool,
-    disable_nvidia_powerd_on_battery: bool,
-}
+export global SystemPageData {
+    in-out property <float> charge_control_end_threshold: 30;
+    callback set_charge_control_end_threshold(/* charge limit */ int);
 
-export global SystemPage {
-    in-out property <float> charge_limit;
-    in-out property <int> last_charge_limit;
-    callback set_charge_limit(/* charge limit */ int);
+    in-out property <int> throttle_thermal_policy: 0;
+    in-out property <[string]> throttle_policy_choices: [@tr("Balanced"), @tr("Performance"), @tr("Quiet")];
+    callback set_throttle_thermal_policy(int);
+
+    in-out property <[string]> energy_performance_choices: [
+        @tr("Default"),
+        @tr("Performance"),
+        @tr("BalancePerformance"),
+        @tr("BalancePower"),
+        @tr("Power")
+    ];
+    in-out property <int> throttle_balanced_epp: 0;
+    callback set_throttle_balanced_epp(int);
+    in-out property <int> throttle_performance_epp: 0;
+    callback set_throttle_performance_epp(int);
+    in-out property <int> throttle_quiet_epp: 0;
+    callback set_throttle_quiet_epp(int);
+    // if the EPP should change with throttle
+    in-out property <bool> throttle_policy_linked_epp: true;
+    callback set_throttle_policy_linked_epp(bool);
+    in-out property <int> throttle_policy_on_ac: 0;
+    callback set_throttle_policy_on_ac(int);
+    in-out property <int> throttle_policy_on_battery: 0;
+    callback set_throttle_policy_on_battery(int);
 
     in-out property <bool> panel_od;
-    in-out property <bool> last_panel_od;
-    callback set_panel_od(/* panel_od */ bool);
+    callback set_panel_od(bool);
 
-    callback applied();
-    callback cancelled();
+    in-out property <bool> mini_led_mode;
+    callback set_mini_led_mode(bool);
 
-    in-out property <AvailableSystemProperties> available;
+    in-out property <float> ppt_pl1_spl: 5;
+    callback set_ppt_pl1_spl(int);
+
+    in-out property <float> ppt_pl2_sppt: 5;
+    callback set_ppt_pl2_sppt(int);
+
+    in-out property <float> ppt_fppt: 5;
+    callback set_ppt_fppt(int);
+
+    in-out property <float> ppt_apu_sppt: 5;
+    callback set_ppt_apu_sppt(int);
+
+    in-out property <float> ppt_platform_sppt: 5;
+    callback set_ppt_platform_sppt(int);
+
+    in-out property <float> nv_dynamic_boost: 5;
+    callback set_nv_dynamic_boost(int);
+
+    in-out property <float> nv_temp_target: 75;
+    callback set_nv_temp_target(int);
+
+    in-out property <AvailableSystemProperties> available: {
+        charge_control_end_threshold: true,
+        panel_od: true,
+        mini_led_mode: true,
+        disable_nvidia_powerd_on_battery: true,
+        ac_command: true,
+        bat_command: true,
+        throttle_thermal_policy: true,
+        ppt_pl1_spl: true,
+        ppt_pl2_sppt: true,
+        ppt_fppt: true,
+        ppt_apu_sppt: true,
+        ppt_platform_sppt: true,
+        nv_dynamic_boost: true,
+        nv_temp_target: true,
+    };
 }
 
 export component PageSystem inherits Rectangle {
-    background: Theme.background-color;
+    property <bool> show_fade_cover: false;
+    property <bool> show_throttle_advanced: false;
+    clip: true;
+    padding: 8px;
+    ScrollView {
+        VerticalLayout {
+            padding: 10px;
+            spacing: 10px;
 
-    VerticalLayout {
+            Rectangle {
+                background: Theme.background-color;
+                border-color: Colors.black;
+                border-width: 6px;
+                border-radius: 10px;
+                height: 40px;
+                Text {
+                    font-size: 18px;
+                    color: Theme.text-foreground-color;
+                    horizontal-alignment: TextHorizontalAlignment.center;
+                    text: @tr("Base system settings");
+                }
+            }
+
+            if SystemPageData.available.charge-control-end-threshold: SystemSlider {
+                text: @tr("Charge limit");
+                minimum: 20;
+                maximum: 100;
+                value <=> SystemPageData.charge_control_end_threshold;
+                                released => {
+                    SystemPageData.set_charge_control_end_threshold(Math.round(SystemPageData.charge_control_end_threshold))
+                }
+            }
+
+            if SystemPageData.available.throttle-thermal-policy: HorizontalLayout {
+                spacing: 10px;
+                SystemDropdown {
+                    text: @tr("Throttle Policy");
+                    current_index <=> SystemPageData.throttle_thermal_policy;
+                    current_value: SystemPageData.throttle_policy_choices[SystemPageData.throttle_thermal_policy];
+                    model <=> SystemPageData.throttle_policy_choices;
+                                selected => {
+                        SystemPageData.set_throttle_thermal_policy(SystemPageData.throttle_thermal_policy)
+                    }
+                }
+
+                Button {
+                    text: @tr("Advanced");
+                    clicked => {
+                        root.show_fade_cover = true;
+                        root.show_throttle_advanced = true;
+                    }
+                }
+            }
+
+            HorizontalBox {
+                padding: 0px;
+                spacing: 10px;
+                if SystemPageData.available.panel-od: SystemToggle {
+                    text: @tr("Panel Overdrive");
+                    checked <=> SystemPageData.panel_od;
+                                    toggled => {
+                        SystemPageData.set_panel_od(SystemPageData.panel_od)
+                    }
+                }
+
+                if SystemPageData.available.mini-led-mode: SystemToggle {
+                    text: @tr("MiniLED Mode");
+                    checked <=> SystemPageData.mini_led_mode;
+                                    toggled => {
+                        SystemPageData.set_mini_led_mode(SystemPageData.mini_led_mode)
+                    }
+                }
+            }
+
+            Rectangle {
+                background: Theme.background-color;
+                border-color: Colors.black;
+                border-width: 6px;
+                border-radius: 10px;
+                height: 40px;
+                Text {
+                    font-size: 18px;
+                    color: Theme.text-foreground-color;
+                    horizontal-alignment: TextHorizontalAlignment.center;
+                    text: @tr("System performance settings");
+                }
+            }
+
+            if SystemPageData.available.ppt-pl1-spl: SystemSlider {
+                text: @tr("ppt_pl1_spl" => "ppt_pl1_spl");
+                minimum: 5;
+                maximum: 250;
+                value <=> SystemPageData.ppt_pl1_spl;
+                                released => {
+                    SystemPageData.set_ppt_pl1_spl(Math.round(SystemPageData.ppt_pl1_spl))
+                }
+            }
+
+            if SystemPageData.available.ppt-pl2-sppt: SystemSlider {
+                text: @tr("ppt_pl2_sppt" => "ppt_pl2_sppt");
+                minimum: 5;
+                maximum: 250;
+                value <=> SystemPageData.ppt_pl2_sppt;
+                                released => {
+                    SystemPageData.set_ppt_pl2_sppt(Math.round(SystemPageData.ppt_pl2_sppt))
+                }
+            }
+
+            if SystemPageData.available.ppt-fppt: SystemSlider {
+                text: @tr("ppt_fppt" => "ppt_fppt");
+                minimum: 5;
+                maximum: 250;
+                value <=> SystemPageData.ppt_fppt;
+                                released => {
+                    SystemPageData.set_ppt_fppt(Math.round(SystemPageData.ppt_fppt))
+                }
+            }
+
+            if SystemPageData.available.ppt-apu-sppt: SystemSlider {
+                text: @tr("ppt_apu_sppt" => "ppt_apu_sppt");
+                minimum: 5;
+                maximum: 130;
+                value <=> SystemPageData.ppt_apu_sppt;
+                                released => {
+                    SystemPageData.set_ppt_apu_sppt(Math.round(SystemPageData.ppt_apu_sppt))
+                }
+            }
+            if SystemPageData.available.ppt-platform-sppt: SystemSlider {
+                text: @tr("ppt_platform_sppt" => "ppt_platform_sppt");
+                maximum: 130;
+                minimum: 5;
+                value <=> SystemPageData.ppt_platform_sppt;
+                                released => {
+                    SystemPageData.set_ppt_platform_sppt(Math.round(SystemPageData.ppt_platform_sppt))
+                }
+            }
+
+            if SystemPageData.available.nv-dynamic-boost: SystemSlider {
+                text: @tr("nv_dynamic_boost" => "nv_dynamic_boost");
+                minimum: 5;
+                maximum: 25;
+                value <=> SystemPageData.nv_dynamic_boost;
+                                released => {
+                    SystemPageData.set_nv_dynamic_boost(Math.round(SystemPageData.nv_dynamic_boost))
+                }
+            }
+            if SystemPageData.available.nv-temp-target: SystemSlider {
+                text: @tr("nv_temp_target" => "nv_temp_target");
+                minimum: 75;
+                maximum: 87;
+                value <=> SystemPageData.nv_temp_target;
+                                released => {
+                    SystemPageData.set_nv_temp_target(Math.round(SystemPageData.nv_temp_target))
+                }
+            }
+        }
+    }
+
+    if root.show_fade_cover: Rectangle {
+        width: 100%;
+        height: 100%;
+        background: Theme.background-color;
+        opacity: 0.8;
+        TouchArea {
+            height: 100%;
+            width: 100%;
+            clicked => {
+                // toolbar-dropdown.close();
+                if (root.show_throttle_advanced) {
+                    root.show_throttle_advanced = false;
+                }
+                root.show_fade_cover = false;
+            }
+        }
+    }
+
+    if root.show_throttle_advanced: Rectangle {
+        width: 100%;
+        height: 100%;
+        opacity: 1;
         ScrollView {
             VerticalLayout {
-                // padding: 10px;
-            spacing: 10px;
-                min-height: root.height;
+                padding: 50px;
+                padding-top: 5px;
+                spacing: 10px;
 
-                if SystemPage.available.charge-limit: Rectangle {
-                    background: Theme.background-color;
+                GroupBox {
                     VerticalBox {
+                        spacing: 10px;
+                        Text {
+                            font-size: 18px;
+                            horizontal-alignment: TextHorizontalAlignment.center;
+                            vertical-alignment: TextVerticalAlignment.center;
+                            text: @tr("Energy Performance Preference linked to Throttle Policy");
+                        }
 
-                        HorizontalBox {
-                            alignment: LayoutAlignment.start;
-                            Text {
-                                color: Theme.text-foreground-color;
-                                text: @tr("ChargeLimit" => "Charge limit");
-                            }
-
-                            Text {
-                                color: Theme.text-foreground-color;
-                                text: "\{Math.floor(SystemPage.charge_limit)}";
+                        SystemToggle {
+                            text: @tr("Change EPP based on Throttle Policy");
+                            checked <=> SystemPageData.throttle_policy_linked_epp;
+                            toggled => {
+                                SystemPageData.set_throttle_policy_linked_epp(SystemPageData.throttle_policy_linked_epp)
                             }
                         }
 
-                        HorizontalBox {
-                            TouchArea { }
+                        SystemDropdown {
+                            text: @tr("EPP for Balanced Policy");
+                            current_index <=> SystemPageData.throttle_balanced_epp;
+                            current_value: SystemPageData.energy_performance_choices[SystemPageData.throttle_balanced_epp];
+                            model <=> SystemPageData.energy_performance_choices;
+                            selected => {
+                                SystemPageData.set_throttle_balanced_epp(SystemPageData.throttle_balanced_epp)
+                            }
+                        }
 
-                            charge_slider := Slider {
-                                maximum: 100;
-                                minimum: 20;
-                                value <=> SystemPage.charge_limit;
-                                released => {
-                                    SystemPage.set_charge_limit(SystemPage.charge_limit)
-                                }
+                        SystemDropdown {
+                            text: @tr("EPP for Performance Policy");
+                            current_index <=> SystemPageData.throttle_performance_epp;
+                            current_value: SystemPageData.energy_performance_choices[SystemPageData.throttle_performance_epp];
+                            model <=> SystemPageData.energy_performance_choices;
+                            selected => {
+                                SystemPageData.set_throttle_performance_epp(SystemPageData.throttle_performance_epp)
+                            }
+                        }
+
+                        SystemDropdown {
+                            text: @tr("EPP for Quiet Policy");
+                            current_index <=> SystemPageData.throttle_quiet_epp;
+                            current_value: SystemPageData.energy_performance_choices[SystemPageData.throttle_quiet_epp];
+                            model <=> SystemPageData.energy_performance_choices;
+                            selected => {
+                                SystemPageData.set_throttle_quiet_epp(SystemPageData.throttle_quiet_epp)
                             }
                         }
                     }
                 }
 
-                if SystemPage.available.panel-od: Rectangle {
-                    background: Theme.background-color;
+                GroupBox {
                     VerticalBox {
-                        HorizontalBox {
-                            alignment: LayoutAlignment.start;
-                            Text {
-                                color: Theme.text-foreground-color;
-                                text: @tr("PanelOverdrive" => "Panel Overdrive");
+                        spacing: 10px;
+                        Text {
+                            font-size: 18px;
+                            horizontal-alignment: TextHorizontalAlignment.center;
+                            vertical-alignment: TextVerticalAlignment.center;
+                            text: @tr("Throttle Policy for power state");
+                        }
+
+                        SystemDropdown {
+                            text: @tr("Throttle Policy on Battery");
+                            current_index <=> SystemPageData.throttle_policy_on_battery;
+                            current_value: SystemPageData.throttle_policy_choices[SystemPageData.throttle_policy_on_battery];
+                            model <=> SystemPageData.throttle_policy_choices;
+                            selected => {
+                                SystemPageData.set_throttle_policy_on_battery(SystemPageData.throttle_policy_on_battery)
                             }
-                            Switch {
-                                checked <=> SystemPage.panel_od;
-                                toggled => {
-                                    SystemPage.set_panel_od(SystemPage.panel_od)
-                                }
+                        }
+
+                        SystemDropdown {
+                            text: @tr("Throttle Policy on AC");
+                            current_index <=> SystemPageData.throttle_policy_on_ac;
+                            current_value: SystemPageData.throttle_policy_choices[SystemPageData.throttle_policy_on_ac];
+                            model <=> SystemPageData.throttle_policy_choices;
+                            selected => {
+                                SystemPageData.set_throttle_policy_on_ac(SystemPageData.throttle_policy_on_ac)
                             }
-                        }
-
-                        Text {
-                            color: Theme.text-foreground-color;
-                            text: @tr("PerformanceProfile" => "Performance Profile");
-                        }
-                    }
-                }
-
-                Rectangle {
-                    background: Theme.background-color;
-                    VerticalBox {
-                        Text {
-                            color: Theme.text-foreground-color;
-                            text: @tr("nv_dynamic_boost" => "nv_dynamic_boost");
-                        }
-
-                        Text {
-                            color: Theme.text-foreground-color;
-                            text: @tr("nv_temp_target" => "nv_temp_target");
-                        }
-
-                        Text {
-                            color: Theme.text-foreground-color;
-                            text: @tr("ppt_pl1_spl" => "ppt_pl1_spl");
-                        }
-
-                        Text {
-                            color: Theme.text-foreground-color;
-                            text: @tr("ppt_pl2_sppt" => "ppt_pl2_sppt");
-                        }
-                    }
-                }
-
-                Rectangle {
-                    background: Theme.background-color;
-                    VerticalBox {
-                        Text {
-                            color: Theme.text-foreground-color;
-                            text: @tr("PanelOverdrive" => "Panel Overdrive");
-                        }
-
-                        Text {
-                            color: Theme.text-foreground-color;
-                            text: @tr("PerformanceProfile" => "Performance Profile");
-                        }
-                    }
-                }
-
-                Rectangle {
-                    background: Theme.background-color;
-                    VerticalBox {
-                        Text {
-                            color: Theme.text-foreground-color;
-                            text: @tr("PanelOverdrive" => "Panel Overdrive");
-                        }
-
-                        Text {
-                            color: Theme.text-foreground-color;
-                            text: @tr("PerformanceProfile" => "Performance Profile");
-                        }
-                    }
-                }
-
-                Rectangle {
-                    background: Theme.background-color;
-                    VerticalBox {
-                        Text {
-                            color: Theme.text-foreground-color;
-                            text: @tr("PanelOverdrive" => "Panel Overdrive");
-                        }
-
-                        Text {
-                            color: Theme.text-foreground-color;
-                            text: @tr("PerformanceProfile" => "Performance Profile");
                         }
                     }
                 }
             }
         }
 
-        HorizontalLayout {
-            Button {
-                text: "Apply";
-                clicked => {
-                    if SystemPage.last_charge_limit != Math.floor(SystemPage.charge_limit) {
-                        SystemPage.set_charge_limit(SystemPage.charge_limit);
-                        SystemPage.last_charge_limit = Math.floor(SystemPage.charge_limit);
-                    }
-                    SystemPage.applied();
-                }
-            }
-
-            Button {
-                text: "Cancel";
-                clicked => {
-                    SystemPage.charge_limit = SystemPage.last_charge_limit;
-                    SystemPage.cancelled();
-                }
+        Button {
+            x: root.width - self.width - 6px;
+            y: 6px;
+            text: "X";
+            height: 40px;
+            clicked => {
+                root.show_throttle_advanced = false;
+                root.show_fade_cover = false;
             }
         }
     }

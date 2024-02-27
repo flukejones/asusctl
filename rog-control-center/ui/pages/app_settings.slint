@@ -1,0 +1,75 @@
+import { Theme } from "../globals.slint";
+import { SystemToggle } from "../common_widgets.slint";
+
+export global AppSettingsPageData {
+    in-out property <bool> run_in_background;
+    callback set_run_in_background(bool);
+
+    in-out property <bool> startup_in_background;
+    callback set_startup_in_background(bool);
+
+    in-out property <bool> enable_tray_icon;
+    callback set_enable_tray_icon(bool);
+
+    in-out property <bool> enable_notifications;
+    callback set_enable_notifications(bool);
+}
+
+export component PageAppSettings inherits VerticalLayout {
+    Rectangle {
+        clip: true;
+        // TODO: slow with border-radius
+        padding: 8px;
+        // height: parent.height - infobar.height - mainview.padding - self.padding * 2;
+        // TODO: border-radius: 8px;
+        mainview := VerticalLayout {
+            padding: 10px;
+            spacing: 10px;
+            HorizontalLayout {
+                spacing: 10px;
+                max-height: 32px;
+                SystemToggle {
+                    text: @tr("Run in background after closing");
+                    checked <=> AppSettingsPageData.run_in_background;
+                    toggled => {
+                        AppSettingsPageData.set_run_in_background(AppSettingsPageData.run_in_background)
+                    }
+                }
+
+                SystemToggle {
+                    width: parent.width * 1px / 2px;
+                    text: @tr("Start app in background (UI closed)");
+                    checked <=> AppSettingsPageData.startup_in_background;
+                    toggled => {
+                        AppSettingsPageData.set_run_in_background(AppSettingsPageData.startup_in_background)
+                    }
+                }
+            }
+
+            HorizontalLayout {
+                max-height: 32px;
+                spacing: 10px;
+                SystemToggle {
+                    text: @tr("Enable system tray icon");
+                    checked <=> AppSettingsPageData.enable_tray_icon;
+                    toggled => {
+                        AppSettingsPageData.set_enable_tray_icon(AppSettingsPageData.enable_tray_icon)
+                    }
+                }
+
+                SystemToggle {
+                    width: parent.width * 1px / 2px;
+                    text: @tr("Enable change notifications");
+                    checked <=> AppSettingsPageData.enable_notifications;
+                    toggled => {
+                        AppSettingsPageData.set_enable_notifications(AppSettingsPageData.enable_notifications)
+                    }
+                }
+            }
+
+            Text {
+                text: "TODO";
+            }
+        }
+    }
+}

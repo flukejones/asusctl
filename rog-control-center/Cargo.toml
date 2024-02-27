@@ -15,6 +15,7 @@ libappindicator = "0.9" # Tray icon
 gtk = "0.18"
 
 asusd = { path = "../asusd" }
+config-traits = { path = "../config-traits" }
 rog_anime = { path = "../rog-anime" }
 rog_dbus = { path = "../rog-dbus" }
 rog_aura = { path = "../rog-aura" }
@@ -28,12 +29,13 @@ env_logger.workspace = true
 
 tokio.workspace = true
 serde.workspace = true
-toml.workspace = true
+ron.workspace = true
 serde_json.workspace = true
 serde_derive.workspace = true
 zbus.workspace = true
 dirs.workspace = true
 notify-rust.workspace = true
+concat-idents.workspace = true
 
 png_pong.workspace = true
 
@@ -50,7 +52,7 @@ winit = "*"
 [dependencies.slint]
 git = "https://github.com/flukejones/sixtyfps.git"
 default-features = false
-features = ["std", "compat-1-0", "backend-winit-wayland", "backend-linuxkms", "renderer-femtovg"]
+features = ["std", "gettext", "compat-1-0", "backend-winit-wayland", "backend-linuxkms", "renderer-femtovg"]
 
 [build-dependencies.slint-build]
 git = "https://github.com/flukejones/sixtyfps.git"

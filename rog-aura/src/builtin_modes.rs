@@ -67,6 +67,24 @@ impl From<LedBrightness> for u8 {
     }
 }
 
+impl From<LedBrightness> for i32 {
+    fn from(l: LedBrightness) -> Self {
+        l as i32
+    }
+}
+
+impl From<i32> for LedBrightness {
+    fn from(l: i32) -> Self {
+        match l {
+            0 => LedBrightness::Off,
+            1 => LedBrightness::Low,
+            2 => LedBrightness::Med,
+            3 => LedBrightness::High,
+            _ => LedBrightness::Med,
+        }
+    }
+}
+
 #[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Deserialize, Serialize)]
@@ -156,6 +174,26 @@ impl FromStr for Speed {
     }
 }
 
+impl From<i32> for Speed {
+    fn from(value: i32) -> Self {
+        match value {
+            0 => Self::Low,
+            2 => Self::High,
+            _ => Self::Med,
+        }
+    }
+}
+
+impl From<Speed> for i32 {
+    fn from(value: Speed) -> Self {
+        match value {
+            Speed::Low => 0,
+            Speed::Med => 1,
+            Speed::High => 2,
+        }
+    }
+}
+
 impl From<Speed> for u8 {
     fn from(s: Speed) -> u8 {
         match s {
@@ -195,6 +233,23 @@ impl FromStr for Direction {
             "left" => Ok(Direction::Left),
             _ => Err(Error::ParseDirection),
         }
+    }
+}
+
+impl From<i32> for Direction {
+    fn from(value: i32) -> Self {
+        match value {
+            1 => Self::Left,
+            2 => Self::Up,
+            3 => Self::Down,
+            _ => Self::Right,
+        }
+    }
+}
+
+impl From<Direction> for i32 {
+    fn from(value: Direction) -> Self {
+        value as i32
     }
 }
 
@@ -292,6 +347,18 @@ impl From<u8> for AuraModeNum {
     }
 }
 
+impl From<i32> for AuraModeNum {
+    fn from(mode: i32) -> Self {
+        (mode as u8).into()
+    }
+}
+
+impl From<AuraModeNum> for i32 {
+    fn from(value: AuraModeNum) -> Self {
+        value as i32
+    }
+}
+
 impl From<AuraEffect> for AuraModeNum {
     fn from(value: AuraEffect) -> Self {
         value.mode
@@ -342,6 +409,27 @@ impl FromStr for AuraZone {
             "7" | "lightbar-right" => Ok(AuraZone::BarRight),
             _ => Err(Error::ParseSpeed),
         }
+    }
+}
+
+impl From<i32> for AuraZone {
+    fn from(value: i32) -> Self {
+        match value {
+            1 => Self::Key1,
+            2 => Self::Key2,
+            3 => Self::Key3,
+            4 => Self::Key4,
+            5 => Self::Logo,
+            6 => Self::BarLeft,
+            7 => Self::BarRight,
+            _ => Self::default(),
+        }
+    }
+}
+
+impl From<AuraZone> for i32 {
+    fn from(value: AuraZone) -> Self {
+        value as i32
     }
 }
 

@@ -24,7 +24,7 @@ default-members = [
 resolver = "2"
 
 [workspace.package]
-version = "5.0.8"
+version = "6.0.0-alpha1"
 rust-version = "1.76"
 
 [workspace.dependencies]

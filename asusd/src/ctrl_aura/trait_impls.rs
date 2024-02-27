@@ -20,7 +20,10 @@ pub const AURA_ZBUS_NAME: &str = "Aura";
 pub const AURA_ZBUS_PATH: &str = "/org/asuslinux/Aura";
 
 #[derive(Clone)]
-pub struct CtrlAuraZbus(pub Arc<Mutex<CtrlKbdLed>>);
+pub struct CtrlAuraZbus(
+    pub Arc<Mutex<CtrlKbdLed>>,
+    pub Option<SignalContext<'static>>,
+);
 
 impl CtrlAuraZbus {
     fn update_config(lock: &mut CtrlKbdLed) -> Result<(), RogError> {
@@ -38,7 +41,7 @@ impl crate::ZbusRun for CtrlAuraZbus {
     }
 }
 
-/// The main interface for changing, reading, or notfying signals
+/// The main interface for changing, reading, or notfying
 ///
 /// LED commands are split between Brightness, Modes, Per-Key
 #[interface(name = "org.asuslinux.Daemon")]
@@ -116,6 +119,10 @@ impl CtrlAuraZbus {
         ctrl.sysfs_node
             .set_brightness(ctrl.config.brightness.into())?;
         ctrl.config.write();
+
+        if let Some(ct) = self.1.as_ref() {
+            self.led_mode_data_invalidate(ct).await.ok();
+        }
         Ok(())
     }
 
@@ -154,6 +161,10 @@ impl CtrlAuraZbus {
             .set_brightness(ctrl.config.brightness.into())?;
         ctrl.config.set_builtin(effect);
         ctrl.config.write();
+
+        if let Some(ct) = self.1.as_ref() {
+            self.led_mode_invalidate(ct).await.ok();
+        }
         Ok(())
     }
 

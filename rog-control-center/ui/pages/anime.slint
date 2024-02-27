@@ -1,49 +1,273 @@
-import { ValueBar } from "../common_widgets.slint";
 import { Theme } from "../globals.slint";
+import { SystemDropdown, SystemToggle } from "../common_widgets.slint";
+import { GroupBox, VerticalBox, Button, HorizontalBox } from "std-widgets.slint";
 
-export component PageAnime inherits VerticalLayout {
-    Rectangle {
-        clip: true;
-        // TODO: slow with border-radius
+export global AnimePageData {
+    in-out property <[string]> brightness_names: [
+        @tr("Anime Brightness" => "Off"),
+        @tr("Anime Brightness" => "Low"),
+        @tr("Anime Brightness" => "Med"),
+        @tr("Anime Brightness" => "High"),
+    ];
+    in-out property <int> brightness;
+    callback set_brightness(int);
+
+    in-out property <bool> builtins_enabled;
+    callback set_builtins_enabled(bool);
+
+    in-out property <bool> enable_display;
+    callback set_enable_display(bool);
+
+    in-out property <bool> off_when_lid_closed;
+    callback set_off_when_lid_closed(bool);
+
+    in-out property <bool> off_when_suspended;
+    callback set_off_when_suspended(bool);
+
+    in-out property <bool> off_when_unplugged;
+    callback set_off_when_unplugged(bool);
+
+    in-out property <[string]> boot_anim_choices: [@tr("Glitch Construction"), @tr("Static Emergence")];
+    in property <int> boot_anim: 0;
+    in-out property <[string]> awake_anim_choices: [@tr("Binary Banner Scroll"), @tr("Rog Logo Glitch")];
+    in property <int> awake_anim: 0;
+    in-out property <[string]> sleep_anim_choices: [@tr("Banner Swipe"), @tr("Starfield")];
+    in property <int> sleep_anim: 0;
+    in-out property <[string]> shutdown_anim_choices: [@tr("Glitch Out"), @tr("See Ya")];
+    in property <int> shutdown_anim: 0;
+    callback set_builtin_animations(int, int, int, int);
+}
+
+export component PageAnime inherits Rectangle {
+    property <bool> show_fade_cover: false;
+    property <bool> show_display_advanced: false;
+    property <bool> show_builtin_advanced: false;
+
+    clip: true;
+    // TODO: slow with border-radius
         padding: 8px;
-        // height: parent.height - infobar.height - mainview.padding - self.padding * 2;
+    // height: parent.height - infobar.height - mainview.padding - self.padding * 2;
         // TODO: border-radius: 8px;
-        mainview := VerticalLayout {
-            padding: 10px;
+        VerticalLayout {
+        padding: 10px;
+        spacing: 10px;
+        HorizontalLayout {
             spacing: 10px;
-            ValueBar {
-                height: 40px;
-                value: 10.5;
-                min: 0.0;
-                max: 100.0;
+            max-height: 32px;
+            SystemDropdown {
+                text: @tr("Anime Brightness" => "Brightness");
+                current_index <=> AnimePageData.brightness;
+                current_value: AnimePageData.brightness_names[AnimePageData.brightness];
+                model <=> AnimePageData.brightness_names;
+                selected => {
+                    self.current_value = AnimePageData.brightness_names[AnimePageData.brightness];
+                    AnimePageData.set_brightness(AnimePageData.brightness)
+                }
+            }
+        }
+
+        HorizontalLayout {
+            spacing: 10px;
+            max-height: 32px;
+            alignment: LayoutAlignment.stretch;
+            SystemToggle {
+                text: @tr("Enable display");
+                checked <=> AnimePageData.enable_display;
+                toggled => {
+                    AnimePageData.set_enable_display(AnimePageData.enable_display)
+                }
             }
 
-            ValueBar {
-                height: 40px;
-                value: -70;
-                min: -100;
-                max: 0;
+            Button {
+                text: @tr("Advanced");
+                width: 20%;
+                enabled <=> AnimePageData.enable_display;
+                clicked => {
+                    root.show_fade_cover = true;
+                    root.show_display_advanced = true;
+                }
+            }
+        }
+
+        HorizontalLayout {
+            spacing: 10px;
+            max-height: 32px;
+            alignment: LayoutAlignment.stretch;
+            SystemToggle {
+                text: @tr("Use built-in animations");
+                checked <=> AnimePageData.builtins_enabled;
+                toggled => {
+                    AnimePageData.set_builtins_enabled(AnimePageData.builtins_enabled)
+                }
             }
 
-            ValueBar {
-                height: 80px;
-                value: 40;
-                min: -50;
-                max: 50;
+            Button {
+                text: @tr("Advanced");
+                width: 20%;
+                enabled <=> AnimePageData.builtins_enabled;
+                clicked => {
+                    root.show_fade_cover = true;
+                    root.show_builtin_advanced = true;
+                }
             }
+        }
+    }
 
-            ValueBar {
-                height: 80px;
-                value: -40;
-                min: -50;
-                max: 50;
+    if root.show_fade_cover: Rectangle {
+        width: 100%;
+        height: 100%;
+        background: Theme.background-color;
+        opacity: 0.8;
+        TouchArea {
+            height: 100%;
+            width: 100%;
+            // clicked => {
+            //     // toolbar-dropdown.close();
+            //     if (root.show_display_advanced) {
+            //         root.show_display_advanced = false;
+            //     }
+            //     if (root.show_builtin_advanced) {
+            //         root.show_builtin_advanced = false;
+            //     }
+            //     root.show_fade_cover = false;
+            // }
+        }
+    }
+
+    if root.show_builtin_advanced: Rectangle {
+        x: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 1;
+        VerticalLayout {
+            padding: 50px;
+            spacing: 10px;
+
+            GroupBox {
+                height: 100px;
+                VerticalBox {
+                    spacing: 10px;
+                    alignment: LayoutAlignment.start;
+                    Text {
+                        font-size: 18px;
+                        color: Theme.text-foreground-color;
+                        horizontal-alignment: TextHorizontalAlignment.center;
+                        text: @tr("Advanced Anime Display : TODO!");
+                    }
+
+                    SystemDropdown {
+                        text: @tr("Anime built-in selection" => "Boot Animation");
+                        current_index <=> AnimePageData.boot_anim;
+                        current_value: AnimePageData.boot_anim_choices[AnimePageData.boot_anim];
+                        model <=> AnimePageData.boot_anim_choices;
+                        selected => {
+                            AnimePageData.set_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
+                        }
+                    }
+
+                    SystemDropdown {
+                        text: @tr("Anime built-in selection" => "Running Animation");
+                        current_index <=> AnimePageData.awake_anim;
+                        current_value: AnimePageData.awake_anim_choices[AnimePageData.awake_anim];
+                        model <=> AnimePageData.awake_anim_choices;
+                        selected => {
+                            AnimePageData.set_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
+                        }
+                    }
+
+                    SystemDropdown {
+                        text: @tr("Anime built-in selection" => "Sleep Animation");
+                        current_index <=> AnimePageData.sleep_anim;
+                        current_value: AnimePageData.sleep_anim_choices[AnimePageData.sleep_anim];
+                        model <=> AnimePageData.sleep_anim_choices;
+                        selected => {
+                            AnimePageData.set_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
+                        }
+                    }
+
+                    SystemDropdown {
+                        text: @tr("Anime built-in selection" => "Shutdown Animation");
+                        current_index <=> AnimePageData.shutdown_anim;
+                        current_value: AnimePageData.shutdown_anim_choices[AnimePageData.shutdown_anim];
+                        model <=> AnimePageData.shutdown_anim_choices;
+                        selected => {
+                            AnimePageData.set_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
+                        }
+                    }
+                }
             }
+        }
 
-            ValueBar {
-                height: 80px;
-                value: -40;
-                min: -50;
-                max: 50;
+        Button {
+            x: root.width - self.width - 6px;
+            y: 6px;
+            text: "X";
+            height: 40px;
+            clicked => {
+                root.show_builtin_advanced = false;
+                root.show_fade_cover = false;
+            }
+        }
+    }
+
+    if root.show_display_advanced: Rectangle {
+        width: 100%;
+        height: 100%;
+        opacity: 1;
+        VerticalLayout {
+            padding: 50px;
+            spacing: 10px;
+
+            GroupBox {
+                height: 100px;
+                VerticalBox {
+                    spacing: 10px;
+                    alignment: LayoutAlignment.start;
+                    Text {
+                        font-size: 18px;
+                        color: Theme.text-foreground-color;
+                        horizontal-alignment: TextHorizontalAlignment.center;
+                        text: @tr("Advanced Display Settings");
+                    }
+
+                    SystemToggle {
+                        max-height: 42px;
+                        text: @tr("Off when lid closed");
+                        checked <=> AnimePageData.off_when_lid_closed;
+                        toggled => {
+                            AnimePageData.set_off_when_lid_closed(AnimePageData.off_when_lid_closed)
+                        }
+                    }
+
+                    SystemToggle {
+                        max-height: 42px;
+                        text: @tr("Off when suspended");
+                        checked <=> AnimePageData.off_when_suspended;
+                        toggled => {
+                            AnimePageData.set_off_when_suspended(AnimePageData.off_when_suspended)
+                        }
+                    }
+
+                    SystemToggle {
+                        max-height: 42px;
+                        text: @tr("Off when on battery");
+                        checked <=> AnimePageData.off_when_unplugged;
+                        toggled => {
+                            AnimePageData.set_off_when_unplugged(AnimePageData.off_when_unplugged)
+                        }
+                    }
+                }
+            }
+        }
+
+        Button {
+            x: root.width - self.width - 6px;
+            y: 6px;
+            text: "X";
+            height: 40px;
+            clicked => {
+                root.show_display_advanced = false;
+                root.show_fade_cover = false;
             }
         }
     }

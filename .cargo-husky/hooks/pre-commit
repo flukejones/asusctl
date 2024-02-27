@@ -2,11 +2,17 @@
 
 set -e
 
+echo 'find -name \*.slint | xargs slint-tr-extractor -o rog-control-center/translations/en/rog-control-center.po'
+find -name \*.slint | xargs slint-tr-extractor -o rog-control-center/translations/en/rog-control-center.po
+
 echo '+cargo +nightly fmt --all -- --check'
 cargo +nightly fmt --all -- --check
+
 echo '+cargo clippy --all -- -D warnings'
 cargo clippy --all -- -D warnings
+
 echo '+cargo test --all'
 cargo test --all
+
 echo '+cargo cranky'
 cargo cranky

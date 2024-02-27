@@ -29,11 +29,11 @@ impl RogPlatform {
 
     attr_bool!("egpu_enable", path);
 
+    attr_u8!("gpu_mux_mode", path);
+
     attr_bool!("panel_od", path);
 
     attr_bool!("mini_led_mode", path);
-
-    attr_u8!("gpu_mux_mode", path);
 
     attr_u8!(
         /// This is technically the same as `platform_profile` since both are
@@ -303,6 +303,12 @@ impl From<u8> for ThrottlePolicy {
     }
 }
 
+impl From<i32> for ThrottlePolicy {
+    fn from(num: i32) -> Self {
+        (num as u8).into()
+    }
+}
+
 impl From<ThrottlePolicy> for u8 {
     fn from(p: ThrottlePolicy) -> Self {
         match p {
@@ -310,6 +316,12 @@ impl From<ThrottlePolicy> for u8 {
             ThrottlePolicy::Performance => 1,
             ThrottlePolicy::Quiet => 2,
         }
+    }
+}
+
+impl From<ThrottlePolicy> for i32 {
+    fn from(p: ThrottlePolicy) -> Self {
+        <u8>::from(p) as i32
     }
 }
 

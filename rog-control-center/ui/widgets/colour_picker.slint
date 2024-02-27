@@ -1,0 +1,282 @@
+import { Slider, HorizontalBox, Button, LineEdit } from "std-widgets.slint";
+
+export component ColourSlider inherits VerticalLayout {
+    spacing: 10px;
+    property <string> hex: "#FF0000";
+    property <color> base_colour: Colors.red;
+    in-out property <color> final_colour: Colors.red;
+    in-out property <brush> colourbox: final_colour;
+
+    callback hex_to_colour(string) -> color;
+    // required
+    callback set_hex_from_colour(color) -> string;
+    /// This callback is required until slint adds direct acces to color channels
+    callback blend_colour(color, color, float) -> color;
+    callback blend_lightness(color, float) -> color;
+
+    property <[color]> base_colours: [
+        Colors.rgb( 255, 0, 0),
+        Colors.rgb( 255, 128, 0),
+        Colors.rgb( 255, 255, 0),
+        Colors.rgb( 128, 255, 0),
+        Colors.rgb( 0, 255, 0),
+        Colors.rgb( 0, 255, 128),
+        Colors.rgb( 0, 255, 255),
+        Colors.rgb( 0, 128, 255),
+        Colors.rgb( 0, 0, 255),
+        Colors.rgb( 127, 0, 255),
+        Colors.rgb( 255, 0, 255),
+        Colors.rgb( 255, 0, 127),
+        Colors.rgb( 128, 128, 128)
+    ];
+    property <[color]> base_shade: [
+        base_colour.with-alpha(100%),
+        base_colour.with-alpha(90%),
+        base_colour.with-alpha(80%),
+        base_colour.with-alpha(70%),
+        base_colour.with-alpha(60%),
+        base_colour.with-alpha(50%),
+        base_colour.with-alpha(40%),
+        base_colour.with-alpha(30%),
+        base_colour.with-alpha(20%),
+        base_colour.with-alpha(10%),
+        base_colour.with-alpha(0%)
+    ];
+
+    function set_base_colour() {
+        // base_colour = base_colours[c1.value].mix(base_colours[c1.value+1], _index_rem);
+        root.base_colour = blend_colour(base_colours[c1.value], base_colours[c1.value + 1], c1.value - Math.floor(c1.value));
+        root.final_colour = blend_lightness(base_colour, (base_shade.length - c2.value) / base_shade.length);
+        root.colourbox = root.final_colour;
+    }
+    Rectangle {
+        height: 32px;
+        // 13 colours
+        background: @linear-gradient(90deg, base_colours[0], base_colours[1], base_colours[2], base_colours[3], base_colours[4], base_colours[5], base_colours[6], base_colours[7], base_colours[8], base_colours[9], base_colours[10], base_colours[11], base_colours[12]);
+        clip: true;
+        border-radius: 6px;
+        c1 := Slider {
+            width: parent.width;
+            height: parent.height;
+            minimum: 0;
+            maximum: 12;
+            changed => {
+                set_base_colour();
+                hex = set_hex_from_colour(final_colour);
+            }
+        }
+    }
+
+    Rectangle {
+        height: 32px;
+        // 11 colours
+        background: @linear-gradient(90deg, base_shade[0], base_shade[1], base_shade[2], base_shade[3], base_shade[4], base_shade[5], base_shade[6], base_shade[7], base_shade[8], base_shade[9], base_shade[10]);
+        clip: true;
+        border-radius: 6px;
+        c2 := Slider {
+            width: parent.width;
+            height: parent.height;
+            minimum: 0;
+            maximum: 11;
+            changed => {
+                set_base_colour();
+                hex = set_hex_from_colour(final_colour);
+            }
+        }
+    }
+
+    HorizontalLayout {
+        LineEdit {
+            // width: 50%;
+            text <=> root.hex;
+            edited => {
+                base_colour = hex_to_colour(self.text);
+                root.colourbox = base_colour;
+            }
+        }
+
+        Rectangle {
+            width: self.height;
+            background <=> root.colourbox;
+
+        }
+    }
+}
+
+component ColorButton {
+    callback select<=>i_touch_area.clicked;
+    in property <brush> color<=> i_container.background;
+    in property <bool> selected;
+
+    height: self.width;
+
+    i_container := Rectangle {
+        border_width: 2px;
+    }
+
+    i_touch_area := TouchArea { }
+
+    states [
+        selected when selected: {
+            i_container.border_color: Colors.black;
+        }
+    ]
+}
+
+export component ColorPicker {
+    height: palette.length * 1px / colors_per_row / 1px * color_size;
+    private property <int> selected_color_index;
+    in-out property <float> colors_per_row: 13.0;
+    private property <length> color_size: self.width / colors_per_row;
+
+    out property <color> selected_color: palette[selected_color_index];
+    callback selected(color);
+
+    in property <[color]> palette: [
+        Colors.rgb(51,0,0),
+        Colors.rgb(51,25,0),
+        Colors.rgb(51,51,0),
+        Colors.rgb(25,51,0),
+        Colors.rgb(0,51,0),
+        Colors.rgb(0,51,25),
+        Colors.rgb(0,51,51),
+        Colors.rgb(0,25,51),
+        Colors.rgb(0,0,51),
+        Colors.rgb(25,0,51),
+        Colors.rgb(51,0,51),
+        Colors.rgb(51,0,25),
+        Colors.rgb(0,0,0),
+        //
+        Colors.rgb(102,0,0),
+        Colors.rgb(102,51,0),
+        Colors.rgb(102,102,0),
+        Colors.rgb(51,102,0),
+        Colors.rgb(0,102,0),
+        Colors.rgb(0,102,51),
+        Colors.rgb(0,102,102),
+        Colors.rgb(0,51,102),
+        Colors.rgb(0,0,102),
+        Colors.rgb(51,0,102),
+        Colors.rgb(102,0,102),
+        Colors.rgb(102,0,51),
+        Colors.rgb(32,32,32),
+        //
+        Colors.rgb(153,0,0),
+        Colors.rgb(153,76,0),
+        Colors.rgb(153,153,0),
+        Colors.rgb(76,153,0),
+        Colors.rgb(0,153,0),
+        Colors.rgb(0,153,76),
+        Colors.rgb(0,153,153),
+        Colors.rgb(0,76,153),
+        Colors.rgb(0,0,153),
+        Colors.rgb(76,0,153),
+        Colors.rgb(153,0,153),
+        Colors.rgb(153,0,76),
+        Colors.rgb(64,64,64),
+        //
+        Colors.rgb(204,0,0),
+        Colors.rgb(204,102,0),
+        Colors.rgb(204,204,0),
+        Colors.rgb(102,204,0),
+        Colors.rgb(0,204,0),
+        Colors.rgb(0,204,102),
+        Colors.rgb(0,204,204),
+        Colors.rgb(0,102,204),
+        Colors.rgb(0,0,204),
+        Colors.rgb(102,0,204),
+        Colors.rgb(204,0,204),
+        Colors.rgb(204,0,102),
+        Colors.rgb(96,96,96),
+        //
+        Colors.rgb(255,0,0),
+        Colors.rgb(255,128,0),
+        Colors.rgb(255,255,0),
+        Colors.rgb(128,255,0),
+        Colors.rgb(0,255,0),
+        Colors.rgb(0,255,128),
+        Colors.rgb(0,255,255),
+        Colors.rgb(0,128,255),
+        Colors.rgb(0,0,255),
+        Colors.rgb(128,0,255),
+        Colors.rgb(255,0,255),
+        Colors.rgb(255,0,128),
+        Colors.rgb(128,128,128),
+        //
+        Colors.rgb(255,51,51),
+        Colors.rgb(255,153,51),
+        Colors.rgb(255,255,51),
+        Colors.rgb(153,255,51),
+        Colors.rgb(51,255,51),
+        Colors.rgb(51,255,153),
+        Colors.rgb(51,255,255),
+        Colors.rgb(51,153,255),
+        Colors.rgb(51,51,255),
+        Colors.rgb(153,51,255),
+        Colors.rgb(255,51,255),
+        Colors.rgb(255,51,153),
+        Colors.rgb(160,160,160),
+        //
+        Colors.rgb(255,102,102),
+        Colors.rgb(255,178,102),
+        Colors.rgb(255,255,102),
+        Colors.rgb(178,255,102),
+        Colors.rgb(102,255,102),
+        Colors.rgb(102,255,178),
+        Colors.rgb(102,255,255),
+        Colors.rgb(102,178,255),
+        Colors.rgb(102,102,255),
+        Colors.rgb(178,102,255),
+        Colors.rgb(255,102,255),
+        Colors.rgb(255,102,178),
+        Colors.rgb(192,192,192),
+        //
+        Colors.rgb(255,153,153),
+        Colors.rgb(255,204,153),
+        Colors.rgb(255,255,153),
+        Colors.rgb(204,255,153),
+        Colors.rgb(153,255,153),
+        Colors.rgb(153,255,204),
+        Colors.rgb(153,255,255),
+        Colors.rgb(153,204,255),
+        Colors.rgb(153,153,255),
+        Colors.rgb(204,153,255),
+        Colors.rgb(255,153,255),
+        Colors.rgb(255,153,204),
+        Colors.rgb(224,224,224),
+        //
+        Colors.rgb(255,204,204),
+        Colors.rgb(255,229,204),
+        Colors.rgb(255,255,204),
+        Colors.rgb(229,255,204),
+        Colors.rgb(204,255,204),
+        Colors.rgb(204,255,229),
+        Colors.rgb(204,255,255),
+        Colors.rgb(204,229,255),
+        Colors.rgb(204,204,255),
+        Colors.rgb(229,204,255),
+        Colors.rgb(255,204,255),
+        Colors.rgb(255,204,229),
+        Colors.rgb(224,224,224),
+    ];
+
+    Rectangle {
+        border_width: 1px;
+        border_color: Colors.black;
+
+        for color[index] in palette: ColorButton {
+            x: color_size * mod(index, colors_per_row);
+            y: color_size * floor(index / colors_per_row);
+            width: color_size;
+            color: color;
+            selected: index == selected_color_index;
+
+            select => {
+                selected_color_index = index;
+                // debug(Math.mod(selected_color_index, colors_per_row)); // X pos
+                // debug(Math.floor(selected_color_index / colors_per_row)); // Y pos
+                return selected(Math.mod(selected_color_index, colors_per_row) == colors_per_row - 1 ? Colors.rgb(255 / (palette.length / colors_per_row - 1) * Math.floor(selected_color_index / colors_per_row),0,0) : selected_color);
+            }
+        }
+    }
+}

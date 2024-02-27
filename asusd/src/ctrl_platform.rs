@@ -385,6 +385,7 @@ impl CtrlPlatform {
         }
         self.power.set_charge_control_end_threshold(limit)?;
         self.config.lock().await.charge_control_end_threshold = limit;
+        self.config.lock().await.write();
         Ok(())
     }
 
@@ -402,12 +403,14 @@ impl CtrlPlatform {
             self.set_gfx_mode(mode.into()).map_err(|err| {
                 warn!("RogPlatform: set_gpu_mux_mode {}", err);
                 FdoErr::Failed(format!("RogPlatform: set_gpu_mux_mode: {err}"))
-            })
+            })?;
+            self.config.lock().await.write();
         } else {
-            Err(FdoErr::NotSupported(
+            return Err(FdoErr::NotSupported(
                 "RogPlatform: set_gpu_mux_mode not supported".to_owned(),
-            ))
+            ));
         }
+        Ok(())
     }
 
     /// Toggle to next platform_profile. Names provided by `Profiles`.
@@ -452,6 +455,7 @@ impl CtrlPlatform {
             let change_epp = self.config.lock().await.throttle_policy_linked_epp;
             let epp = self.get_config_epp_for_throttle(policy).await;
             self.check_and_set_epp(epp, change_epp);
+            self.config.lock().await.write();
             self.platform
                 .set_throttle_thermal_policy(policy.into())
                 .map_err(|err| {
@@ -473,6 +477,7 @@ impl CtrlPlatform {
     #[zbus(property)]
     async fn set_throttle_policy_linked_epp(&self, linked: bool) -> Result<(), zbus::Error> {
         self.config.lock().await.throttle_policy_linked_epp = linked;
+        self.config.lock().await.write();
         Ok(())
     }
 
@@ -488,6 +493,7 @@ impl CtrlPlatform {
     ) -> Result<(), FdoErr> {
         self.config.lock().await.throttle_policy_on_battery = policy;
         self.set_throttle_thermal_policy(policy).await?;
+        self.config.lock().await.write();
         Ok(())
     }
 
@@ -500,6 +506,7 @@ impl CtrlPlatform {
     async fn set_throttle_policy_on_ac(&mut self, policy: ThrottlePolicy) -> Result<(), FdoErr> {
         self.config.lock().await.throttle_policy_on_ac = policy;
         self.set_throttle_thermal_policy(policy).await?;
+        self.config.lock().await.write();
         Ok(())
     }
 
@@ -515,6 +522,7 @@ impl CtrlPlatform {
         let change_pp = self.config.lock().await.throttle_policy_linked_epp;
         self.config.lock().await.throttle_quiet_epp = epp;
         self.check_and_set_epp(epp, change_pp);
+        self.config.lock().await.write();
         Ok(())
     }
 
@@ -530,6 +538,7 @@ impl CtrlPlatform {
         let change_pp = self.config.lock().await.throttle_policy_linked_epp;
         self.config.lock().await.throttle_balanced_epp = epp;
         self.check_and_set_epp(epp, change_pp);
+        self.config.lock().await.write();
         Ok(())
     }
 
@@ -545,6 +554,7 @@ impl CtrlPlatform {
         let change_pp = self.config.lock().await.throttle_policy_linked_epp;
         self.config.lock().await.throttle_performance_epp = epp;
         self.check_and_set_epp(epp, change_pp);
+        self.config.lock().await.write();
         Ok(())
     }
 
@@ -561,12 +571,14 @@ impl CtrlPlatform {
             self.platform.set_post_animation_sound(on).map_err(|err| {
                 warn!("RogPlatform: set_post_animation_sound {}", err);
                 FdoErr::Failed(format!("RogPlatform: set_post_animation_sound: {err}"))
-            })
+            })?;
+            self.config.lock().await.write();
         } else {
-            Err(FdoErr::NotSupported(
+            return Err(FdoErr::NotSupported(
                 "RogPlatform: set_post_animation_sound not supported".to_owned(),
-            ))
+            ));
         }
+        Ok(())
     }
 
     /// Get the `panel_od` value from platform. Updates the stored value in
@@ -578,7 +590,9 @@ impl CtrlPlatform {
 
     #[zbus(property)]
     async fn set_panel_od(&mut self, overdrive: bool) -> Result<(), FdoErr> {
-        platform_set_bool!(self, panel_od, "panel_od", overdrive)
+        platform_set_bool!(self, panel_od, "panel_od", overdrive)?;
+        self.config.lock().await.write();
+        Ok(())
     }
 
     /// Get the `panel_od` value from platform. Updates the stored value in
@@ -590,7 +604,9 @@ impl CtrlPlatform {
 
     #[zbus(property)]
     async fn set_mini_led_mode(&mut self, on: bool) -> Result<(), FdoErr> {
-        platform_set_bool!(self, mini_led_mode, "mini_led_mode", on)
+        platform_set_bool!(self, mini_led_mode, "mini_led_mode", on)?;
+        self.config.lock().await.write();
+        Ok(())
     }
 
     #[zbus(property)]
@@ -614,7 +630,9 @@ impl CtrlPlatform {
 
     #[zbus(property)]
     async fn set_ppt_pl1_spl(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_set_with_min_max!(self, ppt_pl1_spl, "ppt_pl1_spl", value, 5, 250)
+        platform_set_with_min_max!(self, ppt_pl1_spl, "ppt_pl1_spl", value, 5, 250)?;
+        self.config.lock().await.write();
+        Ok(())
     }
 
     /// Set the Slow Package Power Tracking Limit of CPU: PL2 on Intel, SPPT,
@@ -627,7 +645,9 @@ impl CtrlPlatform {
 
     #[zbus(property)]
     async fn set_ppt_pl2_sppt(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_set_with_min_max!(self, ppt_pl2_sppt, "ppt_pl2_sppt", value, 5, 250)
+        platform_set_with_min_max!(self, ppt_pl2_sppt, "ppt_pl2_sppt", value, 5, 250)?;
+        self.config.lock().await.write();
+        Ok(())
     }
 
     /// Set the Fast Package Power Tracking Limit of CPU. AMD+Nvidia only:
@@ -639,7 +659,9 @@ impl CtrlPlatform {
 
     #[zbus(property)]
     async fn set_ppt_fppt(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_set_with_min_max!(self, ppt_fppt, "ppt_fppt", value, 5, 250)
+        platform_set_with_min_max!(self, ppt_fppt, "ppt_fppt", value, 5, 250)?;
+        self.config.lock().await.write();
+        Ok(())
     }
 
     /// Set the APU SPPT limit. Shown on full AMD systems only:
@@ -651,7 +673,9 @@ impl CtrlPlatform {
 
     #[zbus(property)]
     async fn set_ppt_apu_sppt(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_set_with_min_max!(self, ppt_apu_sppt, "ppt_apu_sppt", value, 5, 130)
+        platform_set_with_min_max!(self, ppt_apu_sppt, "ppt_apu_sppt", value, 5, 130)?;
+        self.config.lock().await.write();
+        Ok(())
     }
 
     /// Set the platform SPPT limit. Shown on full AMD systems only:
@@ -663,7 +687,9 @@ impl CtrlPlatform {
 
     #[zbus(property)]
     async fn set_ppt_platform_sppt(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_set_with_min_max!(self, ppt_platform_sppt, "ppt_platform_sppt", value, 5, 130)
+        platform_set_with_min_max!(self, ppt_platform_sppt, "ppt_platform_sppt", value, 5, 130)?;
+        self.config.lock().await.write();
+        Ok(())
     }
 
     /// Set the dynamic boost limit of the Nvidia dGPU:
@@ -675,7 +701,9 @@ impl CtrlPlatform {
 
     #[zbus(property)]
     async fn set_nv_dynamic_boost(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_set_with_min_max!(self, nv_dynamic_boost, "nv_dynamic_boost", value, 5, 25)
+        platform_set_with_min_max!(self, nv_dynamic_boost, "nv_dynamic_boost", value, 5, 25)?;
+        self.config.lock().await.write();
+        Ok(())
     }
 
     /// Set the target temperature limit of the Nvidia dGPU:
@@ -687,7 +715,9 @@ impl CtrlPlatform {
 
     #[zbus(property)]
     async fn set_nv_temp_target(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_set_with_min_max!(self, nv_temp_target, "nv_temp_target", value, 5, 87)
+        platform_set_with_min_max!(self, nv_temp_target, "nv_temp_target", value, 5, 87)?;
+        self.config.lock().await.write();
+        Ok(())
     }
 }
 

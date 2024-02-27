@@ -20,6 +20,7 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
+use rog_platform::cpu::CPUEPP;
 use rog_platform::platform::{GpuMode, Properties, ThrottlePolicy};
 use zbus::proxy;
 
@@ -118,9 +119,45 @@ trait Platform {
     #[zbus(property)]
     fn set_ppt_platform_sppt(&self, value: u8) -> zbus::Result<()>;
 
+    /// ThrottleBalancedEpp property
+    #[zbus(property)]
+    fn throttle_balanced_epp(&self) -> zbus::Result<CPUEPP>;
+    #[zbus(property)]
+    fn set_throttle_balanced_epp(&self, epp: CPUEPP) -> zbus::Result<()>;
+
+    /// ThrottlePerformanceEpp property
+    #[zbus(property)]
+    fn throttle_performance_epp(&self) -> zbus::Result<CPUEPP>;
+    #[zbus(property)]
+    fn set_throttle_performance_epp(&self, epp: CPUEPP) -> zbus::Result<()>;
+
+    /// ThrottlePolicyLinkedEpp property
+    #[zbus(property)]
+    fn throttle_policy_linked_epp(&self) -> zbus::Result<bool>;
+    #[zbus(property)]
+    fn set_throttle_policy_linked_epp(&self, value: bool) -> zbus::Result<()>;
+
+    /// ThrottlePolicyOnAc property
+    #[zbus(property)]
+    fn throttle_policy_on_ac(&self) -> zbus::Result<ThrottlePolicy>;
+    #[zbus(property)]
+    fn set_throttle_policy_on_ac(&self, throttle_policy: ThrottlePolicy) -> zbus::Result<()>;
+
+    /// ThrottlePolicyOnBattery property
+    #[zbus(property)]
+    fn throttle_policy_on_battery(&self) -> zbus::Result<ThrottlePolicy>;
+    #[zbus(property)]
+    fn set_throttle_policy_on_battery(&self, throttle_policy: ThrottlePolicy) -> zbus::Result<()>;
+
+    /// ThrottleQuietEpp property
+    #[zbus(property)]
+    fn throttle_quiet_epp(&self) -> zbus::Result<CPUEPP>;
+    #[zbus(property)]
+    fn set_throttle_quiet_epp(&self, epp: CPUEPP) -> zbus::Result<()>;
+
     /// ThrottlePolicy property
     #[zbus(property)]
     fn throttle_thermal_policy(&self) -> zbus::Result<ThrottlePolicy>;
     #[zbus(property)]
-    fn set_throttle_thermal_policy(&self, value: ThrottlePolicy) -> zbus::Result<()>;
+    fn set_throttle_thermal_policy(&self, throttle_policy: ThrottlePolicy) -> zbus::Result<()>;
 }

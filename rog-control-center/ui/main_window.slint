@@ -1,45 +1,63 @@
 import { Button, VerticalBox } from "std-widgets.slint";
-import { SpinBoxUni, ValueBar, SquareImageButton, RoundImageButton } from "common_widgets.slint";
 import { Theme, AppSize } from "globals.slint";
-import { PageSystem, AvailableSystemProperties, SystemPage } from "pages/system.slint";
+import { PageSystem, AvailableSystemProperties, SystemPageData } from "pages/system.slint";
 import { SideBar } from "widgets/sidebar.slint";
 import { PageAbout } from "pages/about.slint";
-import { PageGpu } from "pages/gpu.slint";
 import { PageFans } from "pages/fans.slint";
-import { PageAnime } from "pages/anime.slint";
-import { PageAura } from "pages/aura.slint";
+import { PageAnime, AnimePageData } from "pages/anime.slint";
+import { PageAura, AuraPageData, AuraEffect } from "pages/aura.slint";
+import { PageAppSettings, AppSettingsPageData } from "pages/app_settings.slint";
 
-export { AppSize, Theme, AvailableSystemProperties, SystemPage }
+export { AppSize, AuraEffect, Theme, AvailableSystemProperties, SystemPageData, AuraPageData, AnimePageData, AppSettingsPageData }
 
 export component MainWindow inherits Window {
     default-font-family: "DejaVu Sans";
+    in property <[bool]> sidebar_items_avilable: [true, true, true, true, true, true];
     private property <bool> show-notif;
     private property <bool> fade-cover;
+
+    private property <bool> toast: false;
+    private property <string> toast_text: "I show when something is waiting";
+    callback show_toast(string);
+    show_toast(text) => {
+        toast = text != "";
+        toast_text = text;
+    }
+
     callback exit-app();
     callback show-notification(bool);
     show-notification(yes) => {
         show-notif = yes;
         fade-cover = yes;
-
     }
 
-    in-out property <bool> charge-available;
-
-    height: AppSize.height;
-    width: AppSize.width;
-    background: Colors.orange;
+    min-height: AppSize.height;
+    min-width: AppSize.width;
+    background: Colors.black;
     HorizontalLayout {
         padding: 0px;
-        side-bar := SideBar {
-            title: @tr("ROG");
-            model: [
-                @tr("Menu" => "System Control"),
-                @tr("Menu" => "Keyboard Aura"),
-                @tr("Menu" => "AniMe Matrix"),
-                @tr("Menu" => "Fan Curves"),
-                @tr("Menu" => "GPU Control"),
-                @tr("Menu" => "About"),
-            ];
+
+        VerticalLayout {
+            side-bar := SideBar {
+                title: @tr("ROG");
+                model: [
+                    @tr("Menu1" => "System Control"),
+                    @tr("Menu2" => "Keyboard Aura"),
+                    @tr("Menu3" => "AniMe Matrix"),
+                    @tr("Menu4" => "Fan Curves"),
+                    @tr("Menu5" => "App Settings"),
+                    @tr("Menu6" => "About"),
+                ];
+                available: root.sidebar_items_avilable;
+            }
+
+            Button {
+                max-height: 20px;
+                text: "Quit";
+                clicked => {
+                    root.exit-app();
+                }
+            }
         }
 
         Rectangle {
@@ -61,7 +79,7 @@ export component MainWindow inherits Window {
                 width: root.width - side-bar.width;
             }
 
-            if(side-bar.current-item == 4): PageGpu {
+            if(side-bar.current-item == 4): PageAppSettings {
                 width: root.width - side-bar.width;
             }
 
@@ -85,10 +103,33 @@ export component MainWindow inherits Window {
                 // toolbar-dropdown.close();
                 if (show-notif) {
                     show-notif = false;
-
                 }
                 fade-cover = false;
+            }
+        }
+    }
 
+    if toast: Rectangle {
+        x: 0px;
+        y: 0px;
+        width: root.width;
+        height: 32px;
+        opacity: 0.8;
+        TouchArea {
+            height: 100%;
+            width: 100%;
+            clicked => {
+                toast = false;
+            }
+        }
+
+        Rectangle {
+            height: 100%;
+            width: 100%;
+            background: #1a043d;
+            Text {
+                color: Theme.text-foreground-color;
+                text: root.toast_text;
             }
         }
     }
@@ -105,7 +146,6 @@ export component MainWindow inherits Window {
             clicked => {
                 show-notif = false;
                 exit-app();
-
             }
         }
 

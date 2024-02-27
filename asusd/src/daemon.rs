@@ -107,7 +107,9 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     // detection first
     match CtrlKbdLed::new(laptop) {
         Ok(ctrl) => {
-            let zbus = CtrlAuraZbus(Arc::new(Mutex::new(ctrl)));
+            let mut zbus = CtrlAuraZbus(Arc::new(Mutex::new(ctrl)), None);
+            let sig_ctx = CtrlAuraZbus::signal_context(&connection)?;
+            zbus.1 = Some(sig_ctx);
             let sig_ctx = CtrlAuraZbus::signal_context(&connection)?;
             start_tasks(zbus, &mut connection, sig_ctx).await?;
         }

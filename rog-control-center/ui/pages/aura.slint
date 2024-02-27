@@ -1,50 +1,290 @@
-import { ValueBar } from "../common_widgets.slint";
+import { SystemDropdown, RogItem } from "../common_widgets.slint";
+import { Button, ComboBox, VerticalBox, GroupBox } from "std-widgets.slint";
+import { StyleMetrics, Slider, HorizontalBox, TextEdit, SpinBox, LineEdit } from "std-widgets.slint";
+import { ColorPicker, ColourSlider } from "../widgets/colour_picker.slint";
 import { Theme } from "../globals.slint";
 
+export struct AuraEffect {
+    /// The effect type
+    mode: int,
+    /// `AuraZone::None` for no zone or zoneless keyboards
+    zone: int,
+    /// Primary colour for all modes
+    colour1: color,
+    /// Secondary colour in some modes like Breathing or Stars
+    colour2: color,
+    /// One of three speeds for modes that support speed (most that animate)
+    speed: int,
+    /// Up, down, left, right. Only Rainbow mode seems to use this
+    direction: int,
+}
+
+export global AuraPageData {
+    in-out property <[string]> brightness_names: [
+        @tr("Aura brightness" => "Off"),
+        @tr("Aura brightness" => "Low"),
+        @tr("Aura brightness" => "Med"),
+        @tr("Aura brightness" => "High"),
+    ];
+    in-out property <int> brightness;
+    callback set_brightness(int);
+
+    in-out property <[string]> mode_names: [
+        @tr("Basic aura mode" => "Static"),
+        @tr("Basic aura mode" => "Breathe"),
+        @tr("Basic aura mode" => "Strobe"),
+        @tr("Basic aura mode" => "Rainbow"),
+        @tr("Basic aura mode" => "Star"),
+        @tr("Basic aura mode" => "Rain"),
+        @tr("Basic aura mode" => "Highlight"),
+        @tr("Basic aura mode" => "Laser"),
+        @tr("Basic aura mode" => "Ripple"),
+        @tr("Basic aura mode" => "Nothing"),
+        @tr("Basic aura mode" => "Pulse"),
+        @tr("Basic aura mode" => "Comet"),
+        @tr("Basic aura mode" => "Flash"),
+    ];
+    in-out property <[string]> available_mode_names: [
+        @tr("Basic aura mode" => "Static"),
+        @tr("Basic aura mode" => "Breathe"),
+        @tr("Basic aura mode" => "Strobe"),
+    ];
+    in-out property <int> current_available_mode: 0;
+
+    in-out property <[int]> supported_basic_modes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12];
+    in-out property <int> led_mode;
+    callback set_led_mode(int);
+
+    in-out property <[string]> zone_names: [
+        @tr("Aura zone" => "None"),
+        @tr("Aura zone" => "Key1"),
+        @tr("Aura zone" => "Key2"),
+        @tr("Aura zone" => "Key3"),
+        @tr("Aura zone" => "Key4"),
+        @tr("Aura zone" => "Logo"),
+        @tr("Aura zone" => "Lightbar Left"),
+        @tr("Aura zone" => "Lightbar Right"),
+    ];
+    in-out property <int> zone;
+
+    in-out property <[string]> direction_names: [
+        @tr("Aura direction" => "Right"),
+        @tr("Aura direction" => "Left"),
+        @tr("Aura direction" => "Up"),
+        @tr("Aura direction" => "Down"),
+    ];
+    in-out property <int> direction;
+
+    in-out property <[string]> speed_names: [
+        @tr("Aura speed" => "Low"),
+        @tr("Aura speed" => "Medium"),
+        @tr("Aura speed" => "High"),
+    ];
+    in-out property <int> speed;
+
+    in-out property <AuraEffect> led_mode_data: {
+        mode: 0,
+        zone: 0,
+        colour1: Colors.aquamarine,
+        colourbox1: Colors.aquamarine,
+        colour2: Colors.hotpink,
+        colourbox2: Colors.hotpink,
+        speed: 0,
+        direction: 0,
+    };
+    callback set_led_mode_data(AuraEffect);
+
+    in-out property <color> color1;
+    in-out property <brush> colorbox1;
+    in-out property <color> color2;
+    in-out property <brush> colorbox2;
+
+    callback update_led_mode_data(AuraEffect);
+    update_led_mode_data(data) => {
+        led_mode_data = data;
+        current_available_mode = data.mode;
+        zone = data.zone;
+        speed = data.speed;
+        direction = data.direction;
+        color1 = data.colour1;
+        color2 = data.colour2;
+        colorbox1 = data.colour1;
+        colorbox2 = data.colour2;
+    }
+
+    callback blend_colour(color, color, float) -> color;
+    callback blend_lightness(color, float) -> color;
+    callback set_hex_from_colour(color) -> string;
+    callback set_hex_to_colour(string) -> color;
+}
+
 export component PageAura inherits VerticalLayout {
-    Rectangle {
-        clip: true;
-        // TODO: slow with border-radius
-        padding: 8px;
-        // height: parent.height - infobar.height - mainview.padding - self.padding * 2;
-        // TODO: border-radius: 8px;
-        mainview := VerticalLayout {
-            padding: 10px;
+    padding: 10px;
+    spacing: 10px;
+    alignment: LayoutAlignment.start;
+    HorizontalLayout {
+        spacing: 10px;
+        SystemDropdown {
+            text: @tr("Brightness");
+            current_index <=> AuraPageData.brightness;
+                    current_value: AuraPageData.brightness_names[self.current-index];
+            model <=> AuraPageData.brightness_names;
+                    selected => {
+                AuraPageData.set_brightness(AuraPageData.brightness)
+            }
+        }
+
+        SystemDropdown {
+            width: parent.width * 1px / 2px;
+            text: @tr("Aura mode");
+            current_index <=> AuraPageData.current_available_mode;
+                    current_value: AuraPageData.available_mode_names[self.current-index];
+            model <=> AuraPageData.available_mode_names;
+                    selected => {
+                AuraPageData.led_mode_data.mode = AuraPageData.current_available_mode;
+                self.current_value = AuraPageData.available_mode_names[self.current-index];
+                AuraPageData.set_led_mode(AuraPageData.current_available_mode);
+            }
+        }
+    }
+
+    RogItem {
+        HorizontalLayout {
             spacing: 10px;
-            ValueBar {
-                height: 40px;
-                value: 10.5;
-                min: 0.0;
-                max: 100.0;
+            VerticalBox {
+                Text {
+                    text: @tr("Colour 1");
+                    vertical-alignment: TextVerticalAlignment.center;
+                    horizontal-alignment: TextHorizontalAlignment.center;
+                }
+
+                HorizontalBox {
+                    ColourSlider {
+                        final_colour <=> AuraPageData.color1;
+                                    colourbox <=> AuraPageData.colorbox1;
+                                    set_hex_from_colour(c1) => {
+                            return AuraPageData.set_hex_from_colour(c1);
+                        }
+                        blend_colour(c1, c2, f) => {
+                            return AuraPageData.blend_colour(c1, c2, f);
+                        }
+                        blend_lightness(c1, f) => {
+                            return AuraPageData.blend_lightness(c1, f);
+                        }
+                        hex_to_colour(s) => {
+                            return AuraPageData.set_hex_to_colour(s);
+                        }
+                        init => {
+                            self.colourbox = AuraPageData.led_mode_data.colour1;
+                            self.final_colour = AuraPageData.led_mode_data.colour1;
+                        }
+                    }
+                }
             }
 
-            ValueBar {
-                height: 40px;
-                value: -70;
-                min: -100;
-                max: 0;
-            }
+            VerticalBox {
+                Text {
+                    text: @tr("Colour 2");
+                    vertical-alignment: TextVerticalAlignment.center;
+                    horizontal-alignment: TextHorizontalAlignment.center;
+                }
 
-            ValueBar {
-                height: 80px;
-                value: 40;
-                min: -50;
-                max: 50;
+                HorizontalBox {
+                    ColourSlider {
+                        final_colour <=> AuraPageData.color2;
+                                    colourbox <=> AuraPageData.colorbox2;
+                                    set_hex_from_colour(c1) => {
+                            return AuraPageData.set_hex_from_colour(c1);
+                        }
+                        blend_colour(c1, c2, f) => {
+                            return AuraPageData.blend_colour(c1, c2, f);
+                        }
+                        blend_lightness(c1, f) => {
+                            return AuraPageData.blend_lightness(c1, f);
+                        }
+                        hex_to_colour(s) => {
+                            return AuraPageData.set_hex_to_colour(s);
+                        }
+                        init => {
+                            self.colourbox = AuraPageData.led_mode_data.colour2;
+                            self.final_colour = AuraPageData.led_mode_data.colour2;
+                        }
+                    }
+                }
             }
+        }
+    }
 
-            ValueBar {
-                height: 80px;
-                value: -40;
-                min: -50;
-                max: 50;
-            }
+    HorizontalLayout {
+        spacing: 10px;
+        RogItem {
+            padding: 0px;
+            VerticalBox {
+                Text {
+                    text: @tr("Zone");
+                    vertical-alignment: TextVerticalAlignment.center;
+                    horizontal-alignment: TextHorizontalAlignment.center;
+                }
 
-            ValueBar {
-                height: 80px;
-                value: -40;
-                min: -50;
-                max: 50;
+                ComboBox {
+                    current_index <=> AuraPageData.zone;
+                                current_value: AuraPageData.zone_names[self.current-index];
+                    model <=> AuraPageData.zone_names;
+                                selected => {
+                        AuraPageData.led_mode_data.zone = self.current-index;
+                    }
+                }
             }
+        }
+
+        RogItem {
+            padding: 0px;
+            VerticalBox {
+                Text {
+                    text: @tr("Direction");
+                    vertical-alignment: TextVerticalAlignment.center;
+                    horizontal-alignment: TextHorizontalAlignment.center;
+                }
+
+                ComboBox {
+                    current_index <=> AuraPageData.direction;
+                                current_value: AuraPageData.direction_names[self.current-index];
+                    model <=> AuraPageData.direction_names;
+                                selected => {
+                        AuraPageData.led_mode_data.direction = self.current-index;
+                    }
+                }
+            }
+        }
+
+        RogItem {
+            padding: 0px;
+            VerticalBox {
+                Text {
+                    text: @tr("Speed");
+                    vertical-alignment: TextVerticalAlignment.center;
+                    horizontal-alignment: TextHorizontalAlignment.center;
+                }
+
+                ComboBox {
+                    current_index <=> AuraPageData.speed;
+                                current_value: AuraPageData.speed_names[self.current-index];
+                    model <=> AuraPageData.speed_names;
+                                selected => {
+                        AuraPageData.led_mode_data.speed = self.current-index;
+                    }
+                }
+            }
+        }
+    }
+
+    Button {
+        text: @tr("Apply");
+        clicked => {
+            AuraPageData.led_mode_data.mode = AuraPageData.led_mode;
+            AuraPageData.led_mode_data.colour1 = AuraPageData.color1;
+            AuraPageData.led_mode_data.colour2 = AuraPageData.color2;
+            AuraPageData.set_led_mode_data(AuraPageData.led_mode_data);
         }
     }
 }
