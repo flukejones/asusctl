@@ -22,11 +22,9 @@ export struct AvailableSystemProperties {
 export global SystemPageData {
     in-out property <float> charge_control_end_threshold: 30;
     callback set_charge_control_end_threshold(/* charge limit */ int);
-
     in-out property <int> throttle_thermal_policy: 0;
     in-out property <[string]> throttle_policy_choices: [@tr("Balanced"), @tr("Performance"), @tr("Quiet")];
     callback set_throttle_thermal_policy(int);
-
     in-out property <[string]> energy_performance_choices: [
         @tr("Default"),
         @tr("Performance"),
@@ -47,34 +45,24 @@ export global SystemPageData {
     callback set_throttle_policy_on_ac(int);
     in-out property <int> throttle_policy_on_battery: 0;
     callback set_throttle_policy_on_battery(int);
-
     in-out property <bool> panel_od;
     callback set_panel_od(bool);
-
     in-out property <bool> mini_led_mode;
     callback set_mini_led_mode(bool);
-
     in-out property <float> ppt_pl1_spl: 5;
     callback set_ppt_pl1_spl(int);
-
     in-out property <float> ppt_pl2_sppt: 5;
     callback set_ppt_pl2_sppt(int);
-
     in-out property <float> ppt_fppt: 5;
     callback set_ppt_fppt(int);
-
     in-out property <float> ppt_apu_sppt: 5;
     callback set_ppt_apu_sppt(int);
-
     in-out property <float> ppt_platform_sppt: 5;
     callback set_ppt_platform_sppt(int);
-
     in-out property <float> nv_dynamic_boost: 5;
     callback set_nv_dynamic_boost(int);
-
     in-out property <float> nv_temp_target: 75;
     callback set_nv_temp_target(int);
-
     in-out property <AvailableSystemProperties> available: {
         charge_control_end_threshold: true,
         panel_od: true,
@@ -102,7 +90,6 @@ export component PageSystem inherits Rectangle {
         VerticalLayout {
             padding: 10px;
             spacing: 10px;
-
             Rectangle {
                 background: Theme.background-color;
                 border-color: Colors.black;
@@ -221,6 +208,7 @@ export component PageSystem inherits Rectangle {
                     SystemPageData.set_ppt_apu_sppt(Math.round(SystemPageData.ppt_apu_sppt))
                 }
             }
+
             if SystemPageData.available.ppt-platform-sppt: SystemSlider {
                 text: @tr("ppt_platform_sppt" => "ppt_platform_sppt");
                 maximum: 130;
@@ -240,6 +228,7 @@ export component PageSystem inherits Rectangle {
                     SystemPageData.set_nv_dynamic_boost(Math.round(SystemPageData.nv_dynamic_boost))
                 }
             }
+
             if SystemPageData.available.nv-temp-target: SystemSlider {
                 text: @tr("nv_temp_target" => "nv_temp_target");
                 minimum: 75;
@@ -279,7 +268,6 @@ export component PageSystem inherits Rectangle {
                 padding: 50px;
                 padding-top: 5px;
                 spacing: 10px;
-
                 GroupBox {
                     VerticalBox {
                         spacing: 10px;

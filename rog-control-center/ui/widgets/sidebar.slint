@@ -106,13 +106,13 @@ export component SideBar inherits Rectangle {
             alignment: start;
             vertical-stretch: 0;
             for item[index] in root.model: SideBarItem {
-                    visible: root.available[index];
-                    clicked => {
-                        root.current-item = index;
-                    }
-                    has-focus: index == root.current-focused;
-                    text: item;
-                    selected: index == root.current-item;
+                visible: root.available[index];
+                clicked => {
+                    root.current-item = index;
+                }
+                has-focus: index == root.current-focused;
+                text: item;
+                selected: index == root.current-item;
             }
         }
 

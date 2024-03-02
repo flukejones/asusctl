@@ -6,14 +6,16 @@ export component ColourSlider inherits VerticalLayout {
     property <color> base_colour: Colors.red;
     in-out property <color> final_colour: Colors.red;
     in-out property <brush> colourbox: final_colour;
-
     callback hex_to_colour(string) -> color;
     // required
     callback set_hex_from_colour(color) -> string;
     /// This callback is required until slint adds direct acces to color channels
     callback blend_colour(color, color, float) -> color;
     callback blend_lightness(color, float) -> color;
-
+    pure callback set_hue(color) -> float;
+    pure callback set_bright(color) -> float;
+    in-out property <float> c1value<=> c1.value;
+    in-out property <float> c2value<=> c2.value;
     property <[color]> base_colours: [
         Colors.rgb( 255, 0, 0),
         Colors.rgb( 255, 128, 0),
@@ -42,12 +44,16 @@ export component ColourSlider inherits VerticalLayout {
         base_colour.with-alpha(10%),
         base_colour.with-alpha(0%)
     ];
-
     function set_base_colour() {
-        // base_colour = base_colours[c1.value].mix(base_colours[c1.value+1], _index_rem);
         root.base_colour = blend_colour(base_colours[c1.value], base_colours[c1.value + 1], c1.value - Math.floor(c1.value));
         root.final_colour = blend_lightness(base_colour, (base_shade.length - c2.value) / base_shade.length);
         root.colourbox = root.final_colour;
+    }
+    callback external_colour_change();
+    external_colour_change => {
+        c1.value = 13 * (root.set_hue(root.final_colour) / 360);
+        c2.value = 12 * (root.set_bright(root.final_colour) / 0.86);
+        root.set_base_colour();
     }
     Rectangle {
         height: 32px;
@@ -63,6 +69,9 @@ export component ColourSlider inherits VerticalLayout {
             changed => {
                 set_base_colour();
                 hex = set_hex_from_colour(final_colour);
+            }
+            init => {
+                self.value = 13 * (root.set_hue(root.final_colour) / 360);
             }
         }
     }
@@ -82,6 +91,10 @@ export component ColourSlider inherits VerticalLayout {
                 set_base_colour();
                 hex = set_hex_from_colour(final_colour);
             }
+            init => {
+                self.value = 12 * (root.set_bright(root.final_colour) / 0.86);
+                root.set_base_colour();
+            }
         }
     }
 
@@ -98,7 +111,6 @@ export component ColourSlider inherits VerticalLayout {
         Rectangle {
             width: self.height;
             background <=> root.colourbox;
-
         }
     }
 }
@@ -107,9 +119,7 @@ component ColorButton {
     callback select<=>i_touch_area.clicked;
     in property <brush> color<=> i_container.background;
     in property <bool> selected;
-
     height: self.width;
-
     i_container := Rectangle {
         border_width: 2px;
     }
@@ -128,10 +138,8 @@ export component ColorPicker {
     private property <int> selected_color_index;
     in-out property <float> colors_per_row: 13.0;
     private property <length> color_size: self.width / colors_per_row;
-
     out property <color> selected_color: palette[selected_color_index];
     callback selected(color);
-
     in property <[color]> palette: [
         Colors.rgb(51,0,0),
         Colors.rgb(51,25,0),
@@ -259,18 +267,15 @@ export component ColorPicker {
         Colors.rgb(255,204,229),
         Colors.rgb(224,224,224),
     ];
-
     Rectangle {
         border_width: 1px;
         border_color: Colors.black;
-
         for color[index] in palette: ColorButton {
             x: color_size * mod(index, colors_per_row);
             y: color_size * floor(index / colors_per_row);
             width: color_size;
             color: color;
             selected: index == selected_color_index;
-
             select => {
                 selected_color_index = index;
                 // debug(Math.mod(selected_color_index, colors_per_row)); // X pos

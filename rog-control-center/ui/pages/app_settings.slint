@@ -4,13 +4,10 @@ import { SystemToggle } from "../common_widgets.slint";
 export global AppSettingsPageData {
     in-out property <bool> run_in_background;
     callback set_run_in_background(bool);
-
     in-out property <bool> startup_in_background;
     callback set_startup_in_background(bool);
-
     in-out property <bool> enable_tray_icon;
     callback set_enable_tray_icon(bool);
-
     in-out property <bool> enable_notifications;
     callback set_enable_notifications(bool);
 }

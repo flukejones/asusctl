@@ -28,7 +28,6 @@ export global AuraPageData {
     ];
     in-out property <int> brightness;
     callback set_brightness(int);
-
     in-out property <[string]> mode_names: [
         @tr("Basic aura mode" => "Static"),
         @tr("Basic aura mode" => "Breathe"),
@@ -50,11 +49,9 @@ export global AuraPageData {
         @tr("Basic aura mode" => "Strobe"),
     ];
     in-out property <int> current_available_mode: 0;
-
     in-out property <[int]> supported_basic_modes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12];
     in-out property <int> led_mode;
     callback set_led_mode(int);
-
     in-out property <[string]> zone_names: [
         @tr("Aura zone" => "None"),
         @tr("Aura zone" => "Key1"),
@@ -66,7 +63,6 @@ export global AuraPageData {
         @tr("Aura zone" => "Lightbar Right"),
     ];
     in-out property <int> zone;
-
     in-out property <[string]> direction_names: [
         @tr("Aura direction" => "Right"),
         @tr("Aura direction" => "Left"),
@@ -74,14 +70,12 @@ export global AuraPageData {
         @tr("Aura direction" => "Down"),
     ];
     in-out property <int> direction;
-
     in-out property <[string]> speed_names: [
         @tr("Aura speed" => "Low"),
         @tr("Aura speed" => "Medium"),
         @tr("Aura speed" => "High"),
     ];
     in-out property <int> speed;
-
     in-out property <AuraEffect> led_mode_data: {
         mode: 0,
         zone: 0,
@@ -93,12 +87,10 @@ export global AuraPageData {
         direction: 0,
     };
     callback set_led_mode_data(AuraEffect);
-
     in-out property <color> color1;
     in-out property <brush> colorbox1;
     in-out property <color> color2;
     in-out property <brush> colorbox2;
-
     callback update_led_mode_data(AuraEffect);
     update_led_mode_data(data) => {
         led_mode_data = data;
@@ -111,11 +103,12 @@ export global AuraPageData {
         colorbox1 = data.colour1;
         colorbox2 = data.colour2;
     }
-
     callback blend_colour(color, color, float) -> color;
     callback blend_lightness(color, float) -> color;
     callback set_hex_from_colour(color) -> string;
     callback set_hex_to_colour(string) -> color;
+    pure callback set_hue(color) -> float;
+    pure callback set_bright(color) -> float;
 }
 
 export component PageAura inherits VerticalLayout {
@@ -159,10 +152,10 @@ export component PageAura inherits VerticalLayout {
                 }
 
                 HorizontalBox {
-                    ColourSlider {
+                    c1 := ColourSlider {
                         final_colour <=> AuraPageData.color1;
-                                    colourbox <=> AuraPageData.colorbox1;
-                                    set_hex_from_colour(c1) => {
+                        colourbox <=> AuraPageData.colorbox1;
+                        set_hex_from_colour(c1) => {
                             return AuraPageData.set_hex_from_colour(c1);
                         }
                         blend_colour(c1, c2, f) => {
@@ -173,6 +166,12 @@ export component PageAura inherits VerticalLayout {
                         }
                         hex_to_colour(s) => {
                             return AuraPageData.set_hex_to_colour(s);
+                        }
+                        set_hue(color) => {
+                            return AuraPageData.set_hue(color);
+                        }
+                        set_bright(color) => {
+                            return AuraPageData.set_bright(color);
                         }
                         init => {
                             self.colourbox = AuraPageData.led_mode_data.colour1;
@@ -190,10 +189,10 @@ export component PageAura inherits VerticalLayout {
                 }
 
                 HorizontalBox {
-                    ColourSlider {
+                    c2 := ColourSlider {
                         final_colour <=> AuraPageData.color2;
-                                    colourbox <=> AuraPageData.colorbox2;
-                                    set_hex_from_colour(c1) => {
+                        colourbox <=> AuraPageData.colorbox2;
+                        set_hex_from_colour(c1) => {
                             return AuraPageData.set_hex_from_colour(c1);
                         }
                         blend_colour(c1, c2, f) => {
@@ -204,6 +203,9 @@ export component PageAura inherits VerticalLayout {
                         }
                         hex_to_colour(s) => {
                             return AuraPageData.set_hex_to_colour(s);
+                        }
+                        set_bright(color) => {
+                            return AuraPageData.set_bright(color);
                         }
                         init => {
                             self.colourbox = AuraPageData.led_mode_data.colour2;

@@ -11,22 +11,16 @@ export global AnimePageData {
     ];
     in-out property <int> brightness;
     callback set_brightness(int);
-
     in-out property <bool> builtins_enabled;
     callback set_builtins_enabled(bool);
-
     in-out property <bool> enable_display;
     callback set_enable_display(bool);
-
     in-out property <bool> off_when_lid_closed;
     callback set_off_when_lid_closed(bool);
-
     in-out property <bool> off_when_suspended;
     callback set_off_when_suspended(bool);
-
     in-out property <bool> off_when_unplugged;
     callback set_off_when_unplugged(bool);
-
     in-out property <[string]> boot_anim_choices: [@tr("Glitch Construction"), @tr("Static Emergence")];
     in property <int> boot_anim: 0;
     in-out property <[string]> awake_anim_choices: [@tr("Binary Banner Scroll"), @tr("Rog Logo Glitch")];
@@ -42,7 +36,6 @@ export component PageAnime inherits Rectangle {
     property <bool> show_fade_cover: false;
     property <bool> show_display_advanced: false;
     property <bool> show_builtin_advanced: false;
-
     clip: true;
     // TODO: slow with border-radius
         padding: 8px;
@@ -142,7 +135,6 @@ export component PageAnime inherits Rectangle {
         VerticalLayout {
             padding: 50px;
             spacing: 10px;
-
             GroupBox {
                 height: 100px;
                 VerticalBox {
@@ -217,7 +209,6 @@ export component PageAnime inherits Rectangle {
         VerticalLayout {
             padding: 50px;
             spacing: 10px;
-
             GroupBox {
                 height: 100px;
                 VerticalBox {

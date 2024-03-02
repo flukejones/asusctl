@@ -402,13 +402,13 @@ fn decode_hex(s: &str) -> RgbaColor<u8> {
         .collect();
     RgbaColor {
         alpha: 255,
-        red: *c.get(0).unwrap_or(&255),
+        red: *c.first().unwrap_or(&255),
         green: *c.get(1).unwrap_or(&128),
         blue: *c.get(2).unwrap_or(&32),
     }
 }
 
-fn _rgb_hi(colour: Color) -> (f32, f32) {
+fn rgb_hi(colour: Color) -> (f32, f32) {
     let c1: RgbaColor<f32> = RgbaColor::from(colour);
     let r = c1.red / 255.0;
     let g = c1.green / 255.0;
@@ -431,7 +431,7 @@ fn _rgb_hi(colour: Color) -> (f32, f32) {
         }
     };
     let h2 = ((h * 60.0) + 360.0) % 360.0;
-    let i = 0.2126 * c1.red + 0.7152 * c1.green + 0.0722 * c1.blue;
+    let i = 0.299 * c1.red + 0.587 * c1.green + 0.114 * c1.blue;
 
     (h2, i)
 }
@@ -468,6 +468,9 @@ fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
 
     ui.global::<AuraPageData>()
         .on_set_hex_to_colour(|s| decode_hex(s.as_str()).into());
+
+    ui.global::<AuraPageData>().on_set_hue(|c| rgb_hi(c).0);
+    ui.global::<AuraPageData>().on_set_bright(|c| rgb_hi(c).1);
 
     let handle = ui.as_weak();
     tokio::spawn(async move {
