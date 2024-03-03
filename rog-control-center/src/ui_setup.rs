@@ -431,8 +431,7 @@ fn rgb_hi(colour: Color) -> (f32, f32) {
         }
     };
     let h2 = ((h * 60.0) + 360.0) % 360.0;
-    let i = 0.299 * c1.red + 0.587 * c1.green + 0.114 * c1.blue;
-
+    let i = (c1.red + c1.green + c1.blue) / 3.0;
     (h2, i)
 }
 
@@ -458,7 +457,6 @@ fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
             green: c1.green * f,
             blue: c1.blue * f,
         };
-        // dbg!(rgb_hi(c.into()));
         c.into()
     });
 

@@ -52,7 +52,7 @@ export component ColourSlider inherits VerticalLayout {
     callback external_colour_change();
     external_colour_change => {
         c1.value = 13 * (root.set_hue(root.final_colour) / 360);
-        c2.value = 12 * (root.set_bright(root.final_colour) / 0.86);
+        c2.value = 11 - (11 * (root.set_bright(root.final_colour) / 0.5));
         root.set_base_colour();
     }
     Rectangle {
@@ -92,7 +92,7 @@ export component ColourSlider inherits VerticalLayout {
                 hex = set_hex_from_colour(final_colour);
             }
             init => {
-                self.value = 12 * (root.set_bright(root.final_colour) / 0.86);
+                self.value = 12 - (12 * (root.set_bright(root.final_colour) / 0.5));
                 root.set_base_colour();
             }
         }

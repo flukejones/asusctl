@@ -152,7 +152,7 @@ export component PageAura inherits VerticalLayout {
                 }
 
                 HorizontalBox {
-                    c1 := ColourSlider {
+                    ColourSlider {
                         final_colour <=> AuraPageData.color1;
                         colourbox <=> AuraPageData.colorbox1;
                         set_hex_from_colour(c1) => {
@@ -189,7 +189,7 @@ export component PageAura inherits VerticalLayout {
                 }
 
                 HorizontalBox {
-                    c2 := ColourSlider {
+                    ColourSlider {
                         final_colour <=> AuraPageData.color2;
                         colourbox <=> AuraPageData.colorbox2;
                         set_hex_from_colour(c1) => {
