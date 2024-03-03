@@ -4,6 +4,7 @@
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::process::exit;
 use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 use std::time::Duration;
@@ -108,7 +109,10 @@ pub fn init_tray(
                 if let TrayEvent::Menu(action) = event {
                     match action {
                         TrayAction::Open => open_app(),
-                        TrayAction::Quit => quit_app(),
+                        TrayAction::Quit => {
+                            quit_app();
+                            exit(0);
+                        }
                     }
                 }
             })

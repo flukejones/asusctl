@@ -167,7 +167,7 @@ fn main() -> Result<()> {
                     if let Ok(lock) = config.lock() {
                         if !lock.run_in_background {
                             slint::quit_event_loop().unwrap();
-                            return;
+                            exit(0);
                         }
                     }
 
