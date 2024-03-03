@@ -11,8 +11,7 @@ edition = "2021"
 
 [dependencies]
 
-libappindicator = "0.9" # Tray icon
-gtk = "0.18"
+betrayer = { git = "https://github.com/flukejones/betrayer.git", features = ["winit"] }
 
 asusd = { path = "../asusd" }
 config-traits = { path = "../config-traits" }

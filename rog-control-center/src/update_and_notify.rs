@@ -383,107 +383,114 @@ pub fn start_notifications(
         }
     });
 
-    if let Ok(lock) = page_states.try_lock() {
-        use supergfxctl::pci_device::Device;
-        let dev = Device::find().unwrap_or_default();
-        let mut found_dgpu = false; // just for logging
-        for dev in dev {
-            if dev.is_dgpu() {
-                let notifs_enabled1 = enabled_notifications.clone();
-                let page_states1 = page_states.clone();
-                // Plain old thread is perfectly fine since most of this is potentially blocking
-                tokio::spawn(async move {
-                    let mut last_status = GfxPower::Unknown;
-                    loop {
-                        if let Ok(status) = dev.get_runtime_status() {
-                            if status != GfxPower::Unknown && status != last_status {
-                                if let Ok(config) = notifs_enabled1.lock() {
-                                    if config.all_enabled && config.receive_notify_gfx_status {
-                                        // Required check because status cycles through
-                                        // active/unknown/suspended
-                                        do_gpu_status_notif("dGPU status changed:", &status).ok();
-                                    }
-                                }
-                                if let Ok(mut lock) = page_states1.lock() {
-                                    lock.set_notified();
+    use supergfxctl::pci_device::Device;
+    let dev = Device::find().unwrap_or_default();
+    let mut found_dgpu = false; // just for logging
+    for dev in dev {
+        if dev.is_dgpu() {
+            let notifs_enabled1 = enabled_notifications.clone();
+            let page_states1 = page_states.clone();
+            // Plain old thread is perfectly fine since most of this is potentially blocking
+            tokio::spawn(async move {
+                let mut last_status = GfxPower::Unknown;
+                loop {
+                    if let Ok(status) = dev.get_runtime_status() {
+                        if status != GfxPower::Unknown && status != last_status {
+                            if let Ok(config) = notifs_enabled1.lock() {
+                                if config.all_enabled && config.receive_notify_gfx_status {
+                                    // Required check because status cycles through
+                                    // active/unknown/suspended
+                                    do_gpu_status_notif("dGPU status changed:", &status).ok();
                                 }
                             }
                             if let Ok(mut lock) = page_states1.lock() {
-                                lock.gfx_state.power_status = status;
+                                lock.set_notified();
                             }
-                            last_status = status;
                         }
-                        sleep(Duration::from_millis(500)).await;
-                    }
-                });
-                found_dgpu = true;
-                break;
-            }
-        }
-        if !found_dgpu {
-            warn!("Did not find a dGPU on this system, dGPU status won't be avilable");
-        }
-
-        if lock.gfx_state.has_supergfx {
-            recv_notif!(
-                SuperProxy,
-                receive_notify_gfx,
-                last_notification,
-                enabled_notifications,
-                page_states,
-                (gfx_state.mode),
-                (mode),
-                "Gfx mode changed to",
-                do_notification
-            );
-
-            let page_states1 = page_states.clone();
-            tokio::spawn(async move {
-                let conn = zbus::Connection::system()
-                    .await
-                    .map_err(|e| {
-                        error!("zbus signal: receive_notify_action: {e}");
-                        e
-                    })
-                    .unwrap();
-                let proxy = SuperProxy::builder(&conn)
-                    .build()
-                    .await
-                    .map_err(|e| {
-                        error!("zbus signal: receive_notify_action: {e}");
-                        e
-                    })
-                    .unwrap();
-                if let Ok(mut p) = proxy.receive_notify_action().await {
-                    info!("Started zbus signal thread: receive_notify_action");
-                    while let Some(e) = p.next().await {
-                        if let Ok(out) = e.args() {
-                            let action = out.action();
-                            let mode = if let Ok(lock) = page_states1.lock() {
-                                convert_gfx_mode(lock.gfx_state.mode)
-                            } else {
-                                GpuMode::Error
-                            };
-                            match action {
-                                supergfxctl::actions::UserActionRequired::Reboot => {
-                                    do_mux_notification(
-                                        "Graphics mode change requires reboot",
-                                        &mode,
-                                    )
-                                }
-                                _ => do_gfx_action_notif(<&str>::from(action), *action, mode),
-                            }
-                            .map_err(|e| {
-                                error!("zbus signal: do_gfx_action_notif: {e}");
-                                e
-                            })
-                            .ok();
+                        if let Ok(mut lock) = page_states1.lock() {
+                            lock.gfx_state.power_status = status;
                         }
+                        last_status = status;
                     }
-                };
+                    sleep(Duration::from_millis(500)).await;
+                }
             });
+            found_dgpu = true;
+            break;
         }
     }
+    if !found_dgpu {
+        warn!("Did not find a dGPU on this system, dGPU status won't be avilable");
+    }
+
+    let page_states1 = page_states.clone();
+    let enabled_notifications1 = enabled_notifications.clone();
+    tokio::spawn(async move {
+        let conn = zbus::Connection::system()
+            .await
+            .map_err(|e| {
+                error!("zbus signal: receive_notify_action: {e}");
+                e
+            })
+            .unwrap();
+        let proxy = SuperProxy::builder(&conn)
+            .build()
+            .await
+            .map_err(|e| {
+                error!("zbus signal: receive_notify_action: {e}");
+                e
+            })
+            .unwrap();
+
+        if let Ok(mode) = proxy.mode().await {
+            dbg!(&mode);
+            if let Ok(mut lock) = page_states1.lock() {
+                lock.gfx_state.mode = mode;
+                lock.gfx_state.has_supergfx = true;
+            }
+        } else {
+            info!("supergfxd not running or not responding");
+            return;
+        }
+
+        let page_states2 = page_states1.clone();
+        recv_notif!(
+            SuperProxy,
+            receive_notify_gfx,
+            last_notification,
+            enabled_notifications1,
+            page_states2,
+            (gfx_state.mode),
+            (mode),
+            "Gfx mode changed to",
+            do_notification
+        );
+
+        if let Ok(mut p) = proxy.receive_notify_action().await {
+            info!("Started zbus signal thread: receive_notify_action");
+            while let Some(e) = p.next().await {
+                if let Ok(out) = e.args() {
+                    let action = out.action();
+                    let mode = if let Ok(lock) = page_states1.lock() {
+                        convert_gfx_mode(lock.gfx_state.mode)
+                    } else {
+                        GpuMode::Error
+                    };
+                    match action {
+                        supergfxctl::actions::UserActionRequired::Reboot => {
+                            do_mux_notification("Graphics mode change requires reboot", &mode)
+                        }
+                        _ => do_gfx_action_notif(<&str>::from(action), *action, mode),
+                    }
+                    .map_err(|e| {
+                        error!("zbus signal: do_gfx_action_notif: {e}");
+                        e
+                    })
+                    .ok();
+                }
+            }
+        };
+    });
 
     Ok(())
 }

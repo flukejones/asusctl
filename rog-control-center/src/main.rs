@@ -2,6 +2,7 @@ use std::borrow::BorrowMut;
 use std::env::args;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::process::exit;
 use std::sync::{Arc, Mutex};
 use std::thread::{self, sleep};
 use std::time::Duration;
@@ -157,25 +158,29 @@ fn main() -> Result<()> {
                     });
                 })
                 .unwrap();
-            } else if buf[1] == QUIT_APP {
-                slint::quit_event_loop().unwrap();
-            } else if buf[0] != SHOWING_GUI {
-                if let Ok(lock) = config.lock() {
-                    if !lock.run_in_background {
-                        slint::quit_event_loop().unwrap();
-                        return;
-                    }
+            } else {
+                if buf[1] == QUIT_APP {
+                    slint::quit_event_loop().unwrap();
+                    exit(0);
                 }
-
-                i_slint_core::api::invoke_from_event_loop(move || {
-                    UI.with(|ui| {
-                        let mut ui = ui.take();
-                        if let Some(ui) = ui.borrow_mut() {
-                            ui.window().hide().unwrap();
+                if buf[0] != SHOWING_GUI {
+                    if let Ok(lock) = config.lock() {
+                        if !lock.run_in_background {
+                            slint::quit_event_loop().unwrap();
+                            return;
                         }
-                    });
-                })
-                .unwrap();
+                    }
+
+                    i_slint_core::api::invoke_from_event_loop(move || {
+                        UI.with(|ui| {
+                            let mut ui = ui.take();
+                            if let Some(ui) = ui.borrow_mut() {
+                                ui.window().hide().unwrap();
+                            }
+                        });
+                    })
+                    .unwrap();
+                }
             }
         }
     });
