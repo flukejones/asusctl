@@ -6,7 +6,7 @@ use rog_dbus::zbus_anime::AnimeProxy;
 use rog_dbus::zbus_aura::AuraProxy;
 use rog_dbus::zbus_platform::{PlatformProxy, PlatformProxyBlocking};
 use rog_platform::platform::Properties;
-use slint::{Color, ComponentHandle, Model, RgbaColor, SharedString, Weak};
+use slint::{ ComponentHandle, Model, RgbaColor, SharedString, Weak};
 use zbus::proxy::CacheProperties;
 
 use crate::config::Config;
@@ -405,70 +405,17 @@ fn decode_hex(s: &str) -> RgbaColor<u8> {
         red: *c.first().unwrap_or(&255),
         green: *c.get(1).unwrap_or(&128),
         blue: *c.get(2).unwrap_or(&32),
+        .. Default::default()
     }
 }
 
-fn rgb_hi(colour: Color) -> (f32, f32) {
-    let c1: RgbaColor<f32> = RgbaColor::from(colour);
-    let r = c1.red / 255.0;
-    let g = c1.green / 255.0;
-    let b = c1.blue / 255.0;
-
-    let min = r.min(g.min(b));
-    let max = r.max(g.max(b));
-    let delta = max - min;
-
-    let h = match delta == 0.0 {
-        true => 0.0,
-        false => {
-            if r == max {
-                (g - b) / delta
-            } else if g == max {
-                2.0 + (b - r) / delta
-            } else {
-                4.0 + (r - g) / delta
-            }
-        }
-    };
-    let h2 = ((h * 60.0) + 360.0) % 360.0;
-    let i = (c1.red + c1.green + c1.blue) / 3.0;
-    (h2, i)
-}
-
 fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
-    ui.global::<AuraPageData>().on_blend_colour(|c1, c2, f| {
-        let c1: RgbaColor<f32> = RgbaColor::from(c1);
-        let c2: RgbaColor<f32> = RgbaColor::from(c2);
-
-        let c1 = RgbaColor {
-            alpha: 1.0,
-            red: c1.red + (c2.red - c1.red) * f,
-            green: c1.green + (c2.green - c1.green) * f,
-            blue: c1.blue + (c2.blue - c1.blue) * f,
-        };
-        c1.into()
-    });
-
-    ui.global::<AuraPageData>().on_blend_lightness(|c1, f| {
-        let c1: RgbaColor<f32> = RgbaColor::from(c1);
-        let c = RgbaColor {
-            alpha: 1.0,
-            red: c1.red * f,
-            green: c1.green * f,
-            blue: c1.blue * f,
-        };
-        c.into()
-    });
-
     ui.global::<AuraPageData>().on_set_hex_from_colour(|c| {
         format!("#{:02X}{:02X}{:02X}", c.red(), c.green(), c.blue()).into()
     });
 
     ui.global::<AuraPageData>()
         .on_set_hex_to_colour(|s| decode_hex(s.as_str()).into());
-
-    ui.global::<AuraPageData>().on_set_hue(|c| rgb_hi(c).0);
-    ui.global::<AuraPageData>().on_set_bright(|c| rgb_hi(c).1);
 
     let handle = ui.as_weak();
     tokio::spawn(async move {
@@ -530,6 +477,8 @@ fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                     "Keyboard LED mode set to {:?}",
                     "Setting keyboard LED mode failed"
                 );
+
+                handle.invoke_external_colour_change();
             })
             .ok();
 
@@ -546,6 +495,8 @@ fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                             handle
                                 .global::<AuraPageData>()
                                 .invoke_update_led_mode_data(out.into());
+                            handle
+                                .invoke_external_colour_change();
                         })
                         .ok();
                 }

@@ -103,18 +103,25 @@ export global AuraPageData {
         colorbox1 = data.colour1;
         colorbox2 = data.colour2;
     }
-    callback blend_colour(color, color, float) -> color;
-    callback blend_lightness(color, float) -> color;
     callback set_hex_from_colour(color) -> string;
     callback set_hex_to_colour(string) -> color;
-    pure callback set_hue(color) -> float;
-    pure callback set_bright(color) -> float;
 }
 
 export component PageAura inherits VerticalLayout {
     padding: 10px;
     spacing: 10px;
     alignment: LayoutAlignment.start;
+    callback external_colour_change();
+    external_colour_change() => {
+        c1.colourbox = AuraPageData.led_mode_data.colour1;
+        c1.final_colour = AuraPageData.led_mode_data.colour1;
+        c1.external_colour_change();
+
+        c2.colourbox = AuraPageData.led_mode_data.colour2;
+        c2.final_colour = AuraPageData.led_mode_data.colour2;
+        c2.external_colour_change();
+    }
+
     HorizontalLayout {
         spacing: 10px;
         SystemDropdown {
@@ -152,30 +159,14 @@ export component PageAura inherits VerticalLayout {
                 }
 
                 HorizontalBox {
-                    ColourSlider {
+                    c1:= ColourSlider {
                         final_colour <=> AuraPageData.color1;
                         colourbox <=> AuraPageData.colorbox1;
                         set_hex_from_colour(c1) => {
                             return AuraPageData.set_hex_from_colour(c1);
                         }
-                        blend_colour(c1, c2, f) => {
-                            return AuraPageData.blend_colour(c1, c2, f);
-                        }
-                        blend_lightness(c1, f) => {
-                            return AuraPageData.blend_lightness(c1, f);
-                        }
                         hex_to_colour(s) => {
                             return AuraPageData.set_hex_to_colour(s);
-                        }
-                        set_hue(color) => {
-                            return AuraPageData.set_hue(color);
-                        }
-                        set_bright(color) => {
-                            return AuraPageData.set_bright(color);
-                        }
-                        init => {
-                            self.colourbox = AuraPageData.led_mode_data.colour1;
-                            self.final_colour = AuraPageData.led_mode_data.colour1;
                         }
                     }
                 }
@@ -189,27 +180,14 @@ export component PageAura inherits VerticalLayout {
                 }
 
                 HorizontalBox {
-                    ColourSlider {
+                    c2:= ColourSlider {
                         final_colour <=> AuraPageData.color2;
                         colourbox <=> AuraPageData.colorbox2;
                         set_hex_from_colour(c1) => {
                             return AuraPageData.set_hex_from_colour(c1);
                         }
-                        blend_colour(c1, c2, f) => {
-                            return AuraPageData.blend_colour(c1, c2, f);
-                        }
-                        blend_lightness(c1, f) => {
-                            return AuraPageData.blend_lightness(c1, f);
-                        }
                         hex_to_colour(s) => {
                             return AuraPageData.set_hex_to_colour(s);
-                        }
-                        set_bright(color) => {
-                            return AuraPageData.set_bright(color);
-                        }
-                        init => {
-                            self.colourbox = AuraPageData.led_mode_data.colour2;
-                            self.final_colour = AuraPageData.led_mode_data.colour2;
                         }
                     }
                 }

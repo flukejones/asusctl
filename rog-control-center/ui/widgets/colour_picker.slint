@@ -9,11 +9,7 @@ export component ColourSlider inherits VerticalLayout {
     callback hex_to_colour(string) -> color;
     // required
     callback set_hex_from_colour(color) -> string;
-    /// This callback is required until slint adds direct acces to color channels
-    callback blend_colour(color, color, float) -> color;
-    callback blend_lightness(color, float) -> color;
-    pure callback set_hue(color) -> float;
-    pure callback set_bright(color) -> float;
+
     in-out property <float> c1value<=> c1.value;
     in-out property <float> c2value<=> c2.value;
     property <[color]> base_colours: [
@@ -29,36 +25,46 @@ export component ColourSlider inherits VerticalLayout {
         Colors.rgb( 127, 0, 255),
         Colors.rgb( 255, 0, 255),
         Colors.rgb( 255, 0, 127),
-        Colors.rgb( 128, 128, 128)
+        // Colors.rgb( 128, 128, 128)
     ];
     property <[color]> base_shade: [
-        base_colour.with-alpha(100%),
-        base_colour.with-alpha(90%),
-        base_colour.with-alpha(80%),
-        base_colour.with-alpha(70%),
-        base_colour.with-alpha(60%),
-        base_colour.with-alpha(50%),
-        base_colour.with-alpha(40%),
-        base_colour.with-alpha(30%),
-        base_colour.with-alpha(20%),
-        base_colour.with-alpha(10%),
-        base_colour.with-alpha(0%)
+        blend_lightness(base_colour, 1.0),
+        blend_lightness(base_colour, 0.9),
+        blend_lightness(base_colour, 0.8),
+        blend_lightness(base_colour, 0.7),
+        blend_lightness(base_colour, 0.6),
+        blend_lightness(base_colour, 0.5),
+        blend_lightness(base_colour, 0.4),
+        blend_lightness(base_colour, 0.3),
+        blend_lightness(base_colour, 0.2),
+        blend_lightness(base_colour, 0.1),
+        blend_lightness(base_colour, 0.0)
     ];
+
+    function blend_lightness(c1: color, f: float) -> color {
+        rgb(c1.red() * f, c1.green() * f, c1.blue() * f)
+     }
+
     function set_base_colour() {
-        root.base_colour = blend_colour(base_colours[c1.value], base_colours[c1.value + 1], c1.value - Math.floor(c1.value));
-        root.final_colour = blend_lightness(base_colour, (base_shade.length - c2.value) / base_shade.length);
+        root.base_colour = base_colours[c1.value].linear-blend(base_colours[c1.value + 1], c1.value - Math.floor(c1.value));
+        root.final_colour = blend_lightness(base_colour, ((base_shade.length - c2.value) / base_shade.length));
         root.colourbox = root.final_colour;
     }
     callback external_colour_change();
     external_colour_change => {
-        c1.value = 13 * (root.set_hue(root.final_colour) / 360);
-        c2.value = 11 - (11 * (root.set_bright(root.final_colour) / 0.5));
+        if (root.final_colour.hue() < 0) {
+            c1.value = (root.base_colours.length) * ((root.final_colour.hue() + 360) / 360);
+        } else {
+            c1.value = (root.base_colours.length) * (root.final_colour.hue() / 360);
+        }
+        c2.value = root.base_shade.length - (root.base_shade.length * root.final_colour.brightness());
         root.set_base_colour();
     }
+
     Rectangle {
         height: 32px;
         // 13 colours
-        background: @linear-gradient(90deg, base_colours[0], base_colours[1], base_colours[2], base_colours[3], base_colours[4], base_colours[5], base_colours[6], base_colours[7], base_colours[8], base_colours[9], base_colours[10], base_colours[11], base_colours[12]);
+        background: @linear-gradient(90deg, base_colours[0], base_colours[1], base_colours[2], base_colours[3], base_colours[4], base_colours[5], base_colours[6], base_colours[7], base_colours[8], base_colours[9], base_colours[10], base_colours[11]); //, base_colours[12]);
         clip: true;
         border-radius: 6px;
         c1 := Slider {
@@ -69,9 +75,6 @@ export component ColourSlider inherits VerticalLayout {
             changed => {
                 set_base_colour();
                 hex = set_hex_from_colour(final_colour);
-            }
-            init => {
-                self.value = 13 * (root.set_hue(root.final_colour) / 360);
             }
         }
     }
@@ -91,10 +94,6 @@ export component ColourSlider inherits VerticalLayout {
                 set_base_colour();
                 hex = set_hex_from_colour(final_colour);
             }
-            init => {
-                self.value = 12 - (12 * (root.set_bright(root.final_colour) / 0.5));
-                root.set_base_colour();
-            }
         }
     }
 
@@ -111,6 +110,7 @@ export component ColourSlider inherits VerticalLayout {
         Rectangle {
             width: self.height;
             background <=> root.colourbox;
+
         }
     }
 }

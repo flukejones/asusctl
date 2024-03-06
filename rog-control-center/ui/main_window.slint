@@ -28,6 +28,11 @@ export component MainWindow inherits Window {
         show-notif = yes;
         fade-cover = yes;
     }
+    callback external_colour_change();
+    external_colour_change() => {
+        aura.external_colour_change();
+        aura.external_colour_change();
+    }
     min-height: AppSize.height;
     min-width: AppSize.width;
     background: Colors.black;
@@ -63,8 +68,9 @@ export component MainWindow inherits Window {
                 height: root.height + 12px;
             }
 
-            if(side-bar.current-item == 1): PageAura {
+            aura := PageAura {
                 width: root.width - side-bar.width;
+                visible: side-bar.current-item == 1;
             }
 
             if(side-bar.current-item == 2): PageAnime {
