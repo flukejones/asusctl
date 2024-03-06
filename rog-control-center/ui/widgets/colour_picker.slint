@@ -25,7 +25,7 @@ export component ColourSlider inherits VerticalLayout {
         Colors.rgb( 127, 0, 255),
         Colors.rgb( 255, 0, 255),
         Colors.rgb( 255, 0, 127),
-        // Colors.rgb( 128, 128, 128)
+        Colors.rgb( 128, 128, 128)
     ];
     property <[color]> base_shade: [
         blend_lightness(base_colour, 1.0),
@@ -53,9 +53,9 @@ export component ColourSlider inherits VerticalLayout {
     callback external_colour_change();
     external_colour_change => {
         if (root.final_colour.hue() < 0) {
-            c1.value = (root.base_colours.length) * ((root.final_colour.hue() + 360) / 360);
+            c1.value = (root.base_colours.length - 1) * ((root.final_colour.hue() + 360) / 360);
         } else {
-            c1.value = (root.base_colours.length) * (root.final_colour.hue() / 360);
+            c1.value = (root.base_colours.length - 1) * (root.final_colour.hue() / 360);
         }
         c2.value = root.base_shade.length - (root.base_shade.length * root.final_colour.brightness());
         root.set_base_colour();
@@ -64,14 +64,14 @@ export component ColourSlider inherits VerticalLayout {
     Rectangle {
         height: 32px;
         // 13 colours
-        background: @linear-gradient(90deg, base_colours[0], base_colours[1], base_colours[2], base_colours[3], base_colours[4], base_colours[5], base_colours[6], base_colours[7], base_colours[8], base_colours[9], base_colours[10], base_colours[11]); //, base_colours[12]);
+        background: @linear-gradient(90deg, base_colours[0], base_colours[1], base_colours[2], base_colours[3], base_colours[4], base_colours[5], base_colours[6], base_colours[7], base_colours[8], base_colours[9], base_colours[10], base_colours[11], base_colours[12]);
         clip: true;
         border-radius: 6px;
         c1 := Slider {
             width: parent.width;
             height: parent.height;
             minimum: 0;
-            maximum: 12;
+            maximum: root.base_colours.length - 1; // One less than the array length
             changed => {
                 set_base_colour();
                 hex = set_hex_from_colour(final_colour);

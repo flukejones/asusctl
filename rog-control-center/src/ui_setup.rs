@@ -6,7 +6,7 @@ use rog_dbus::zbus_anime::AnimeProxy;
 use rog_dbus::zbus_aura::AuraProxy;
 use rog_dbus::zbus_platform::{PlatformProxy, PlatformProxyBlocking};
 use rog_platform::platform::Properties;
-use slint::{ ComponentHandle, Model, RgbaColor, SharedString, Weak};
+use slint::{ComponentHandle, Model, RgbaColor, SharedString, Weak};
 use zbus::proxy::CacheProperties;
 
 use crate::config::Config;
@@ -405,7 +405,7 @@ fn decode_hex(s: &str) -> RgbaColor<u8> {
         red: *c.first().unwrap_or(&255),
         green: *c.get(1).unwrap_or(&128),
         blue: *c.get(2).unwrap_or(&32),
-        .. Default::default()
+        ..Default::default()
     }
 }
 
@@ -495,8 +495,7 @@ fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                             handle
                                 .global::<AuraPageData>()
                                 .invoke_update_led_mode_data(out.into());
-                            handle
-                                .invoke_external_colour_change();
+                            handle.invoke_external_colour_change();
                         })
                         .ok();
                 }

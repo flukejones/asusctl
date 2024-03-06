@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-03-04 00:28+0000\n"
+"POT-Creation-Date: 2024-03-06 09:35+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -11,41 +11,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: \n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-
-#: rog-control-center/ui/main_window.slint:38
-msgctxt "MainWindow"
-msgid "ROG"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:40
-msgctxt "Menu1"
-msgid "System Control"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:41
-msgctxt "Menu2"
-msgid "Keyboard Aura"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:42
-msgctxt "Menu3"
-msgid "AniMe Matrix"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:43
-msgctxt "Menu4"
-msgid "Fan Curves"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:44
-msgctxt "Menu5"
-msgid "App Settings"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:45
-msgctxt "Menu6"
-msgid "About"
-msgstr ""
 
 #: rog-control-center/ui/pages/anime.slint:7
 msgctxt "Anime Brightness"
@@ -352,42 +317,42 @@ msgctxt "Aura speed"
 msgid "High"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:121
+#: rog-control-center/ui/pages/aura.slint:128
 msgctxt "PageAura"
 msgid "Brightness"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:132
+#: rog-control-center/ui/pages/aura.slint:139
 msgctxt "PageAura"
 msgid "Aura mode"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:149
+#: rog-control-center/ui/pages/aura.slint:156
 msgctxt "PageAura"
 msgid "Colour 1"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:186
+#: rog-control-center/ui/pages/aura.slint:177
 msgctxt "PageAura"
 msgid "Colour 2"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:226
+#: rog-control-center/ui/pages/aura.slint:204
 msgctxt "PageAura"
 msgid "Zone"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:246
+#: rog-control-center/ui/pages/aura.slint:224
 msgctxt "PageAura"
 msgid "Direction"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:266
+#: rog-control-center/ui/pages/aura.slint:244
 msgctxt "PageAura"
 msgid "Speed"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:284
+#: rog-control-center/ui/pages/aura.slint:262
 msgctxt "PageAura"
 msgid "Apply"
 msgstr ""
@@ -535,5 +500,40 @@ msgstr ""
 #: rog-control-center/ui/pages/system.slint:342
 msgctxt "PageSystem"
 msgid "Throttle Policy on AC"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:43
+msgctxt "MainWindow"
+msgid "ROG"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:45
+msgctxt "Menu1"
+msgid "System Control"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:46
+msgctxt "Menu2"
+msgid "Keyboard Aura"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:47
+msgctxt "Menu3"
+msgid "AniMe Matrix"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:48
+msgctxt "Menu4"
+msgid "Fan Curves"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:49
+msgctxt "Menu5"
+msgid "App Settings"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:50
+msgctxt "Menu6"
+msgid "About"
 msgstr ""
 
