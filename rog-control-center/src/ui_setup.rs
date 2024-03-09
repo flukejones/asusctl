@@ -251,12 +251,12 @@ impl From<SlintAuraPowerDev> for rog_aura::usb::AuraPowerDev {
         let tuf: Vec<rog_aura::usb::AuraDevTuf> = value
             .tuf
             .iter()
-            .map(|n| rog_aura::usb::AuraDevTuf::from(n))
+            .map(rog_aura::usb::AuraDevTuf::from)
             .collect();
         let old_rog: Vec<rog_aura::usb::AuraDevRog1> = value
             .old_rog
             .iter()
-            .map(|n| rog_aura::usb::AuraDevRog1::from(n))
+            .map(rog_aura::usb::AuraDevRog1::from)
             .collect();
         Self {
             tuf,
@@ -608,7 +608,6 @@ fn decode_hex(s: &str) -> RgbaColor<u8> {
         red: *c.first().unwrap_or(&255),
         green: *c.get(1).unwrap_or(&128),
         blue: *c.get(2).unwrap_or(&32),
-        ..Default::default()
     }
 }
 
@@ -720,7 +719,7 @@ fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                                 "Anime builtin animations changed".into(),
                                 "Failed to set Anime builtin animations".into(),
                                 handle_copy,
-                                proxy_copy.set_led_power(power.into()).await,
+                                proxy_copy.set_led_power(power).await,
                             );
                         });
                     });

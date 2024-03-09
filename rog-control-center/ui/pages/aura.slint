@@ -1,7 +1,7 @@
 import { SystemDropdown, RogItem, SystemToggle, SystemToggleVert } from "../widgets/common.slint";
 import { Button, ComboBox, VerticalBox, GroupBox } from "std-widgets.slint";
 import { StyleMetrics, Slider, HorizontalBox, TextEdit, SpinBox, LineEdit, ScrollView } from "std-widgets.slint";
-import { ColorPicker, ColourSlider } from "../widgets/colour_picker.slint";
+import { ColourSlider } from "../widgets/colour_picker.slint";
 import { Theme } from "../globals.slint";
 import { AuraPageData, AuraDevType, AuraDevTuf, AuraDevRog1, PowerZones, KbAuraPowerState, AuraPowerDev, AuraEffect } from "../types/aura_types.slint";
 import { AuraPowerGroup } from "../widgets/aura_power.slint";
@@ -166,8 +166,6 @@ export component PageAura inherits Rectangle {
                 clicked => {
                     root.show_fade_cover = true;
                     root.show_aura_power = true;
-                    debug(AuraPageData.led_power);
-                    debug(AuraPageData.supported_power_zones);
                 }
             }
 

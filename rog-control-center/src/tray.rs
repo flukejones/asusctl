@@ -173,7 +173,7 @@ pub fn init_tray(
             .with_icon(rog_red.clone())
             .with_tooltip(TRAY_LABEL)
             .with_menu(build_menu())
-            .build(|event| do_action(event))
+            .build(do_action)
             .unwrap();
         info!("Started ROGTray");
         loop {
