@@ -1,270 +1,457 @@
-import { SystemDropdown, RogItem } from "../common_widgets.slint";
+import { SystemDropdown, RogItem, SystemToggle, SystemToggleVert } from "../widgets/common.slint";
 import { Button, ComboBox, VerticalBox, GroupBox } from "std-widgets.slint";
-import { StyleMetrics, Slider, HorizontalBox, TextEdit, SpinBox, LineEdit } from "std-widgets.slint";
+import { StyleMetrics, Slider, HorizontalBox, TextEdit, SpinBox, LineEdit, ScrollView } from "std-widgets.slint";
 import { ColorPicker, ColourSlider } from "../widgets/colour_picker.slint";
 import { Theme } from "../globals.slint";
+import { AuraPageData, AuraDevType, AuraDevTuf, AuraDevRog1, PowerZones, KbAuraPowerState, AuraPowerDev, AuraEffect } from "../types/aura_types.slint";
+import { AuraPowerGroup } from "../widgets/aura_power.slint";
 
-export struct AuraEffect {
-    /// The effect type
-    mode: int,
-    /// `AuraZone::None` for no zone or zoneless keyboards
-    zone: int,
-    /// Primary colour for all modes
-    colour1: color,
-    /// Secondary colour in some modes like Breathing or Stars
-    colour2: color,
-    /// One of three speeds for modes that support speed (most that animate)
-    speed: int,
-    /// Up, down, left, right. Only Rainbow mode seems to use this
-    direction: int,
-}
+export component PageAura inherits Rectangle {
+    property <bool> show_fade_cover: false;
+    property <bool> show_aura_power: false;
 
-export global AuraPageData {
-    in-out property <[string]> brightness_names: [
-        @tr("Aura brightness" => "Off"),
-        @tr("Aura brightness" => "Low"),
-        @tr("Aura brightness" => "Med"),
-        @tr("Aura brightness" => "High"),
-    ];
-    in-out property <int> brightness;
-    callback set_brightness(int);
-    in-out property <[string]> mode_names: [
-        @tr("Basic aura mode" => "Static"),
-        @tr("Basic aura mode" => "Breathe"),
-        @tr("Basic aura mode" => "Strobe"),
-        @tr("Basic aura mode" => "Rainbow"),
-        @tr("Basic aura mode" => "Star"),
-        @tr("Basic aura mode" => "Rain"),
-        @tr("Basic aura mode" => "Highlight"),
-        @tr("Basic aura mode" => "Laser"),
-        @tr("Basic aura mode" => "Ripple"),
-        @tr("Basic aura mode" => "Nothing"),
-        @tr("Basic aura mode" => "Pulse"),
-        @tr("Basic aura mode" => "Comet"),
-        @tr("Basic aura mode" => "Flash"),
-    ];
-    in-out property <[string]> available_mode_names: [
-        @tr("Basic aura mode" => "Static"),
-        @tr("Basic aura mode" => "Breathe"),
-        @tr("Basic aura mode" => "Strobe"),
-    ];
-    in-out property <int> current_available_mode: 0;
-    in-out property <[int]> supported_basic_modes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12];
-    in-out property <int> led_mode;
-    callback set_led_mode(int);
-    in-out property <[string]> zone_names: [
-        @tr("Aura zone" => "None"),
-        @tr("Aura zone" => "Key1"),
-        @tr("Aura zone" => "Key2"),
-        @tr("Aura zone" => "Key3"),
-        @tr("Aura zone" => "Key4"),
-        @tr("Aura zone" => "Logo"),
-        @tr("Aura zone" => "Lightbar Left"),
-        @tr("Aura zone" => "Lightbar Right"),
-    ];
-    in-out property <int> zone;
-    in-out property <[string]> direction_names: [
-        @tr("Aura direction" => "Right"),
-        @tr("Aura direction" => "Left"),
-        @tr("Aura direction" => "Up"),
-        @tr("Aura direction" => "Down"),
-    ];
-    in-out property <int> direction;
-    in-out property <[string]> speed_names: [
-        @tr("Aura speed" => "Low"),
-        @tr("Aura speed" => "Medium"),
-        @tr("Aura speed" => "High"),
-    ];
-    in-out property <int> speed;
-    in-out property <AuraEffect> led_mode_data: {
-        mode: 0,
-        zone: 0,
-        colour1: Colors.aquamarine,
-        colourbox1: Colors.aquamarine,
-        colour2: Colors.hotpink,
-        colourbox2: Colors.hotpink,
-        speed: 0,
-        direction: 0,
-    };
-    callback set_led_mode_data(AuraEffect);
-    in-out property <color> color1;
-    in-out property <brush> colorbox1;
-    in-out property <color> color2;
-    in-out property <brush> colorbox2;
-    callback update_led_mode_data(AuraEffect);
-    update_led_mode_data(data) => {
-        led_mode_data = data;
-        current_available_mode = data.mode;
-        zone = data.zone;
-        speed = data.speed;
-        direction = data.direction;
-        color1 = data.colour1;
-        color2 = data.colour2;
-        colorbox1 = data.colour1;
-        colorbox2 = data.colour2;
-    }
-    callback set_hex_from_colour(color) -> string;
-    callback set_hex_to_colour(string) -> color;
-}
-
-export component PageAura inherits VerticalLayout {
-    padding: 10px;
-    spacing: 10px;
-    alignment: LayoutAlignment.start;
     callback external_colour_change();
     external_colour_change() => {
         c1.colourbox = AuraPageData.led_mode_data.colour1;
         c1.final_colour = AuraPageData.led_mode_data.colour1;
         c1.external_colour_change();
-
         c2.colourbox = AuraPageData.led_mode_data.colour2;
         c2.final_colour = AuraPageData.led_mode_data.colour2;
         c2.external_colour_change();
     }
-
-    HorizontalLayout {
+    VerticalLayout {
+        padding: 10px;
         spacing: 10px;
-        SystemDropdown {
-            text: @tr("Brightness");
-            current_index <=> AuraPageData.brightness;
-                    current_value: AuraPageData.brightness_names[self.current-index];
-            model <=> AuraPageData.brightness_names;
-                    selected => {
-                AuraPageData.set_brightness(AuraPageData.brightness)
-            }
-        }
+        alignment: LayoutAlignment.start;
 
-        SystemDropdown {
-            width: parent.width * 1px / 2px;
-            text: @tr("Aura mode");
-            current_index <=> AuraPageData.current_available_mode;
-                    current_value: AuraPageData.available_mode_names[self.current-index];
-            model <=> AuraPageData.available_mode_names;
-                    selected => {
-                AuraPageData.led_mode_data.mode = AuraPageData.current_available_mode;
-                self.current_value = AuraPageData.available_mode_names[self.current-index];
-                AuraPageData.set_led_mode(AuraPageData.current_available_mode);
-            }
-        }
-    }
-
-    RogItem {
         HorizontalLayout {
             spacing: 10px;
-            VerticalBox {
-                Text {
-                    text: @tr("Colour 1");
-                    vertical-alignment: TextVerticalAlignment.center;
-                    horizontal-alignment: TextHorizontalAlignment.center;
+            SystemDropdown {
+                text: @tr("Brightness");
+                current_index <=> AuraPageData.brightness;
+                    current_value: AuraPageData.brightness_names[self.current-index];
+                model <=> AuraPageData.brightness_names;
+                    selected => {
+                    AuraPageData.set_brightness(AuraPageData.brightness)
                 }
+            }
 
-                HorizontalBox {
-                    c1:= ColourSlider {
-                        final_colour <=> AuraPageData.color1;
+            SystemDropdown {
+                width: parent.width * 1px / 2px;
+                text: @tr("Aura mode");
+                current_index <=> AuraPageData.current_available_mode;
+                    current_value: AuraPageData.available_mode_names[self.current-index];
+                model <=> AuraPageData.available_mode_names;
+                    selected => {
+                    AuraPageData.led_mode_data.mode = AuraPageData.current_available_mode;
+                    self.current_value = AuraPageData.available_mode_names[self.current-index];
+                    AuraPageData.set_led_mode(AuraPageData.current_available_mode);
+                }
+            }
+        }
+
+        RogItem {
+            HorizontalLayout {
+                spacing: 10px;
+                VerticalBox {
+                    Text {
+                        text: @tr("Colour 1");
+                        vertical-alignment: TextVerticalAlignment.center;
+                        horizontal-alignment: TextHorizontalAlignment.center;
+                    }
+
+                    HorizontalBox {
+                        c1 := ColourSlider {
+                            final_colour <=> AuraPageData.color1;
                         colourbox <=> AuraPageData.colorbox1;
                         set_hex_from_colour(c1) => {
-                            return AuraPageData.set_hex_from_colour(c1);
-                        }
-                        hex_to_colour(s) => {
-                            return AuraPageData.set_hex_to_colour(s);
+                                return AuraPageData.set_hex_from_colour(c1);
+                            }
+                            hex_to_colour(s) => {
+                                return AuraPageData.set_hex_to_colour(s);
+                            }
                         }
                     }
                 }
-            }
 
-            VerticalBox {
-                Text {
-                    text: @tr("Colour 2");
-                    vertical-alignment: TextVerticalAlignment.center;
-                    horizontal-alignment: TextHorizontalAlignment.center;
-                }
+                VerticalBox {
+                    Text {
+                        text: @tr("Colour 2");
+                        vertical-alignment: TextVerticalAlignment.center;
+                        horizontal-alignment: TextHorizontalAlignment.center;
+                    }
 
-                HorizontalBox {
-                    c2:= ColourSlider {
-                        final_colour <=> AuraPageData.color2;
+                    HorizontalBox {
+                        c2 := ColourSlider {
+                            final_colour <=> AuraPageData.color2;
                         colourbox <=> AuraPageData.colorbox2;
                         set_hex_from_colour(c1) => {
-                            return AuraPageData.set_hex_from_colour(c1);
-                        }
-                        hex_to_colour(s) => {
-                            return AuraPageData.set_hex_to_colour(s);
+                                return AuraPageData.set_hex_from_colour(c1);
+                            }
+                            hex_to_colour(s) => {
+                                return AuraPageData.set_hex_to_colour(s);
+                            }
                         }
                     }
                 }
             }
         }
-    }
 
-    HorizontalLayout {
-        spacing: 10px;
-        RogItem {
-            padding: 0px;
-            VerticalBox {
-                Text {
-                    text: @tr("Zone");
-                    vertical-alignment: TextVerticalAlignment.center;
-                    horizontal-alignment: TextHorizontalAlignment.center;
-                }
+        HorizontalLayout {
+            spacing: 10px;
+            RogItem {
+                padding: 0px;
+                VerticalBox {
+                    Text {
+                        text: @tr("Zone");
+                        vertical-alignment: TextVerticalAlignment.center;
+                        horizontal-alignment: TextHorizontalAlignment.center;
+                    }
 
-                ComboBox {
-                    current_index <=> AuraPageData.zone;
+                    ComboBox {
+                        current_index <=> AuraPageData.zone;
                                 current_value: AuraPageData.zone_names[self.current-index];
-                    model <=> AuraPageData.zone_names;
+                        model <=> AuraPageData.zone_names;
                                 selected => {
-                        AuraPageData.led_mode_data.zone = self.current-index;
+                            AuraPageData.led_mode_data.zone = self.current-index;
+                        }
                     }
                 }
             }
-        }
 
-        RogItem {
-            padding: 0px;
-            VerticalBox {
-                Text {
-                    text: @tr("Direction");
-                    vertical-alignment: TextVerticalAlignment.center;
-                    horizontal-alignment: TextHorizontalAlignment.center;
-                }
+            RogItem {
+                padding: 0px;
+                VerticalBox {
+                    Text {
+                        text: @tr("Direction");
+                        vertical-alignment: TextVerticalAlignment.center;
+                        horizontal-alignment: TextHorizontalAlignment.center;
+                    }
 
-                ComboBox {
-                    current_index <=> AuraPageData.direction;
+                    ComboBox {
+                        current_index <=> AuraPageData.direction;
                                 current_value: AuraPageData.direction_names[self.current-index];
-                    model <=> AuraPageData.direction_names;
+                        model <=> AuraPageData.direction_names;
                                 selected => {
-                        AuraPageData.led_mode_data.direction = self.current-index;
+                            AuraPageData.led_mode_data.direction = self.current-index;
+                        }
+                    }
+                }
+            }
+
+            RogItem {
+                padding: 0px;
+                VerticalBox {
+                    Text {
+                        text: @tr("Speed");
+                        vertical-alignment: TextVerticalAlignment.center;
+                        horizontal-alignment: TextHorizontalAlignment.center;
+                    }
+
+                    ComboBox {
+                        current_index <=> AuraPageData.speed;
+                                current_value: AuraPageData.speed_names[self.current-index];
+                        model <=> AuraPageData.speed_names;
+                                selected => {
+                            AuraPageData.led_mode_data.speed = self.current-index;
+                        }
                     }
                 }
             }
         }
 
-        RogItem {
-            padding: 0px;
-            VerticalBox {
-                Text {
-                    text: @tr("Speed");
-                    vertical-alignment: TextVerticalAlignment.center;
-                    horizontal-alignment: TextHorizontalAlignment.center;
+        HorizontalBox {
+            Button {
+                text: @tr("Power Settings");
+                clicked => {
+                    root.show_fade_cover = true;
+                    root.show_aura_power = true;
+                    debug(AuraPageData.led_power);
+                    debug(AuraPageData.supported_power_zones);
                 }
+            }
 
-                ComboBox {
-                    current_index <=> AuraPageData.speed;
-                                current_value: AuraPageData.speed_names[self.current-index];
-                    model <=> AuraPageData.speed_names;
-                                selected => {
-                        AuraPageData.led_mode_data.speed = self.current-index;
-                    }
+            Button {
+                text: @tr("Apply Aura");
+                clicked => {
+                    AuraPageData.led_mode_data.mode = AuraPageData.led_mode;
+                    AuraPageData.led_mode_data.colour1 = AuraPageData.color1;
+                    AuraPageData.led_mode_data.colour2 = AuraPageData.color2;
+                    AuraPageData.set_led_mode_data(AuraPageData.led_mode_data);
                 }
             }
         }
     }
 
-    Button {
-        text: @tr("Apply");
-        clicked => {
-            AuraPageData.led_mode_data.mode = AuraPageData.led_mode;
-            AuraPageData.led_mode_data.colour1 = AuraPageData.color1;
-            AuraPageData.led_mode_data.colour2 = AuraPageData.color2;
-            AuraPageData.set_led_mode_data(AuraPageData.led_mode_data);
+    if root.show_fade_cover: Rectangle {
+        width: 100%;
+        height: 100%;
+        background: Theme.background-color;
+        opacity: 0.8;
+        TouchArea {
+            height: 100%;
+            width: 100%;
+        }
+    }
+
+    if root.show_aura_power && AuraPageData.aura_type == AuraDevType.New: Rectangle {
+        width: 100%;
+        height: 100%;
+        opacity: 1;
+        ScrollView {
+            VerticalLayout {
+                padding: 30px;
+                padding-top: 10px;
+                spacing: 10px;
+                for power in AuraPageData.supported_power_zones: gr:= HorizontalLayout {
+                    if power == PowerZones.Keyboard: zone1:= AuraPowerGroup {
+                        title: @tr("Keyboard");
+                        boot_checked: AuraPageData.led_power.rog.keyboard.boot;
+                        boot_toggled => {
+                            AuraPageData.led_power.rog.keyboard.boot = zone1.boot_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                        awake_checked: AuraPageData.led_power.rog.keyboard.awake;
+                        awake_toggled => {
+                            AuraPageData.led_power.rog.keyboard.awake = zone1.awake_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                        sleep_checked: AuraPageData.led_power.rog.keyboard.sleep;
+                        sleep_toggled => {
+                            AuraPageData.led_power.rog.keyboard.sleep = zone1.sleep_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                        shutdown_checked: AuraPageData.led_power.rog.keyboard.shutdown;
+                        shutdown_toggled => {
+                            AuraPageData.led_power.rog.keyboard.shutdown = zone1.shutdown_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                    }
+                    if power == PowerZones.Logo: zone2:= AuraPowerGroup {
+                        title: @tr("Lid Logo");
+                        boot_checked: AuraPageData.led_power.rog.logo.boot;
+                        boot_toggled => {
+                            AuraPageData.led_power.rog.logo.boot = zone2.boot_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                        awake_checked: AuraPageData.led_power.rog.logo.awake;
+                        awake_toggled => {
+                            AuraPageData.led_power.rog.logo.awake = zone2.awake_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                        sleep_checked: AuraPageData.led_power.rog.logo.sleep;
+                        sleep_toggled => {
+                            AuraPageData.led_power.rog.logo.sleep = zone2.sleep_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                        shutdown_checked: AuraPageData.led_power.rog.logo.shutdown;
+                        shutdown_toggled => {
+                            AuraPageData.led_power.rog.logo.shutdown = zone2.shutdown_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                    }
+                    if power == PowerZones.Lightbar: zone3:= AuraPowerGroup {
+                        title: @tr("Lightbar");
+                        boot_checked: AuraPageData.led_power.rog.lightbar.boot;
+                        boot_toggled => {
+                            AuraPageData.led_power.rog.lightbar.boot = zone3.boot_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                        awake_checked: AuraPageData.led_power.rog.lightbar.awake;
+                        awake_toggled => {
+                            AuraPageData.led_power.rog.lightbar.awake = zone3.awake_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                        sleep_checked: AuraPageData.led_power.rog.lightbar.sleep;
+                        sleep_toggled => {
+                            AuraPageData.led_power.rog.lightbar.sleep = zone3.sleep_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                        shutdown_checked: AuraPageData.led_power.rog.lightbar.shutdown;
+                        shutdown_toggled => {
+                            AuraPageData.led_power.rog.lightbar.shutdown = zone3.shutdown_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                    }
+                    if power == PowerZones.Lid: zone4:= AuraPowerGroup {
+                        title: @tr("Lid Zone");
+                        boot_checked: AuraPageData.led_power.rog.lid.boot;
+                        boot_toggled => {
+                            AuraPageData.led_power.rog.lid.boot = zone4.boot_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                        awake_checked: AuraPageData.led_power.rog.lid.awake;
+                        awake_toggled => {
+                            AuraPageData.led_power.rog.lid.awake = zone4.awake_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                        sleep_checked: AuraPageData.led_power.rog.lid.sleep;
+                        sleep_toggled => {
+                            AuraPageData.led_power.rog.lid.sleep = zone4.sleep_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                        shutdown_checked: AuraPageData.led_power.rog.lid.shutdown;
+                        shutdown_toggled => {
+                            AuraPageData.led_power.rog.lid.shutdown = zone4.shutdown_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                    }
+                    if power == PowerZones.RearGlow: zone5:= AuraPowerGroup {
+                        title: @tr("Rear Glow");
+                        boot_checked: AuraPageData.led_power.rog.rear-glow.boot;
+                        boot_toggled => {
+                            AuraPageData.led_power.rog.rear-glow.boot = zone5.boot_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                        awake_checked: AuraPageData.led_power.rog.rear-glow.awake;
+                        awake_toggled => {
+                            AuraPageData.led_power.rog.rear-glow.awake = zone5.awake_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                        sleep_checked: AuraPageData.led_power.rog.rear-glow.sleep;
+                        sleep_toggled => {
+                            AuraPageData.led_power.rog.rear-glow.sleep = zone5.sleep_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                        shutdown_checked: AuraPageData.led_power.rog.rear-glow.shutdown;
+                        shutdown_toggled => {
+                            AuraPageData.led_power.rog.rear-glow.shutdown = zone5.shutdown_checked;
+                            AuraPageData.set_led_power(AuraPageData.led_power);
+                        }
+                    }
+                }
+            }
+        }
+
+        Button {
+            x: root.width - self.width - 6px;
+            y: 6px;
+            text: "X";
+            height: 40px;
+            clicked => {
+                root.show_aura_power = false;
+                root.show_fade_cover = false;
+            }
+        }
+    }
+
+    if root.show_aura_power && AuraPageData.aura_type == AuraDevType.Old: Rectangle {
+        width: 100%;
+        height: 100%;
+        opacity: 1;
+        ScrollView {
+            VerticalLayout {
+                padding: 30px;
+                padding-top: 10px;
+                spacing: 10px;
+                Rectangle {
+                    border-radius: 20px;
+                    background: Theme.window-background;
+                    VerticalBox {
+                        spacing: 10px;
+                        alignment: LayoutAlignment.start;
+                        Text {
+                            font-size: 18px;
+                            color: Theme.text-foreground-color;
+                            horizontal-alignment: TextHorizontalAlignment.center;
+                            text: @tr("Keyboard");
+                        }
+
+                        HorizontalBox {
+                            SystemToggleVert {
+                                max-height: 42px;
+                                text: @tr("Boot");
+                            }
+
+                            SystemToggleVert {
+                                max-height: 42px;
+                                text: @tr("Awake");
+                            }
+
+                            SystemToggleVert {
+                                max-height: 42px;
+                                text: @tr("Sleep");
+                            }
+
+                            SystemToggleVert {
+                                max-height: 42px;
+                                text: @tr("Shutdown");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Button {
+            x: root.width - self.width - 6px;
+            y: 6px;
+            text: "X";
+            height: 40px;
+            clicked => {
+                root.show_aura_power = false;
+                root.show_fade_cover = false;
+            }
+        }
+    }
+
+    if root.show_aura_power && AuraPageData.aura_type == AuraDevType.Tuf: Rectangle {
+        width: 100%;
+        height: 100%;
+        opacity: 1;
+        ScrollView {
+            VerticalLayout {
+                padding: 30px;
+                padding-top: 10px;
+                spacing: 10px;
+                Rectangle {
+                    border-radius: 20px;
+                    background: Theme.window-background;
+                    VerticalBox {
+                        spacing: 10px;
+                        alignment: LayoutAlignment.start;
+                        Text {
+                            font-size: 18px;
+                            color: Theme.text-foreground-color;
+                            horizontal-alignment: TextHorizontalAlignment.center;
+                            text: @tr("Keyboard");
+                        }
+
+                        HorizontalBox {
+                            SystemToggleVert {
+                                max-height: 42px;
+                                text: @tr("Boot");
+                            }
+
+                            SystemToggleVert {
+                                max-height: 42px;
+                                text: @tr("Awake");
+                            }
+
+                            SystemToggleVert {
+                                max-height: 42px;
+                                text: @tr("Sleep");
+                            }
+
+                            SystemToggleVert {
+                                max-height: 42px;
+                                text: @tr("Shutdown");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Button {
+            x: root.width - self.width - 6px;
+            y: 6px;
+            text: "X";
+            height: 40px;
+            clicked => {
+                root.show_aura_power = false;
+                root.show_fade_cover = false;
+            }
         }
     }
 }

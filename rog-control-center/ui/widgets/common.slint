@@ -1,5 +1,5 @@
 import { VerticalBox , StandardButton, Button, HorizontalBox, ComboBox, Switch, Slider} from "std-widgets.slint";
-import { Theme } from "globals.slint";
+import { Theme } from "../globals.slint";
 
 export component RogItem inherits Rectangle {
     background: Theme.background-color;
@@ -66,6 +66,36 @@ export component SystemToggle inherits RogItem {
         HorizontalBox {
             alignment: LayoutAlignment.end;
             padding-right: 20px;
+            Switch {
+                checked <=> root.checked;
+                toggled => {
+                    root.toggled(root.checked)
+                }
+            }
+        }
+    }
+}
+
+export component SystemToggleVert inherits RogItem {
+    in property <string> text;
+    in-out property <bool> checked;
+    callback toggled(bool);
+    VerticalLayout {
+        HorizontalBox {
+            alignment: LayoutAlignment.center;
+            padding-top: 10px;
+            Text {
+                font-size: 16px;
+                vertical-alignment: TextVerticalAlignment.bottom;
+                horizontal-alignment: TextHorizontalAlignment.center;
+                color: Theme.text-foreground-color;
+                text <=> root.text;
+            }
+        }
+
+        HorizontalBox {
+            alignment: LayoutAlignment.center;
+            padding: 10px;
             Switch {
                 checked <=> root.checked;
                 toggled => {

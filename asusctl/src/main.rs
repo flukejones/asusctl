@@ -560,13 +560,7 @@ fn handle_led_power_1_do_1866(
         old_rog: enabled,
         ..Default::default()
     };
-    dbus.proxies().aura().set_led_power((data, true))?;
-
-    let data = AuraPowerDev {
-        old_rog: disabled,
-        ..Default::default()
-    };
-    dbus.proxies().aura().set_led_power((data, false))?;
+    dbus.proxies().aura().set_led_power(data)?; // TODO: verify this
 
     Ok(())
 }
@@ -597,13 +591,7 @@ fn handle_led_power_1_do_tuf(
         tuf: enabled,
         ..Default::default()
     };
-    dbus.proxies().aura().set_led_power((data, true))?;
-
-    let data = AuraPowerDev {
-        tuf: disabled,
-        ..Default::default()
-    };
-    dbus.proxies().aura().set_led_power((data, false))?;
+    dbus.proxies().aura().set_led_power(data)?; // TODO: verify this
 
     Ok(())
 }
@@ -664,7 +652,7 @@ fn handle_led_power2(
             }
         }
 
-        dbus.proxies().aura().set_led_power((enabled, true))?;
+        dbus.proxies().aura().set_led_power(enabled)?;
     }
 
     Ok(())

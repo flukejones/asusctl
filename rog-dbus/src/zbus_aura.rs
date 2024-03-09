@@ -69,7 +69,7 @@ trait Aura {
     #[zbus(property)]
     fn led_power(&self) -> zbus::Result<AuraPowerDev>;
     #[zbus(property)]
-    fn set_led_power(&self, value: (AuraPowerDev, bool)) -> zbus::Result<()>;
+    fn set_led_power(&self, value: AuraPowerDev) -> zbus::Result<()>;
 
     /// SupportedBrightness property
     #[zbus(property)]

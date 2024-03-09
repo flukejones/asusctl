@@ -1,0 +1,67 @@
+import { VerticalBox, HorizontalBox } from "std-widgets.slint";
+import { SystemToggleVert } from "common.slint";
+import { Theme } from "../globals.slint";
+
+export component AuraPowerGroup inherits Rectangle {
+    border-radius: 20px;
+    background: Theme.window-background;
+
+    in-out property <string> title;
+    in-out property <bool> boot_checked;
+    in-out property <bool> awake_checked;
+    in-out property <bool> sleep_checked;
+    in-out property <bool> shutdown_checked;
+    callback boot_toggled(bool);
+    callback awake_toggled(bool);
+    callback sleep_toggled(bool);
+    callback shutdown_toggled(bool);
+
+    VerticalBox {
+        spacing: 10px;
+        alignment: LayoutAlignment.start;
+        Text {
+            font-size: 18px;
+            color: Theme.text-foreground-color;
+            horizontal-alignment: TextHorizontalAlignment.center;
+            text <=> root.title;
+        }
+
+        HorizontalBox {
+            SystemToggleVert {
+                max-height: 42px;
+                text: @tr("Boot");
+                checked <=> root.boot_checked;
+                toggled => {
+                    root.boot_toggled(self.checked);
+                }
+            }
+
+            SystemToggleVert {
+                max-height: 42px;
+                text: @tr("Awake");
+                checked <=> root.awake_checked;
+                toggled => {
+                    root.awake_toggled(self.checked);
+                }
+            }
+
+            SystemToggleVert {
+                max-height: 42px;
+                text: @tr("Sleep");
+                checked <=> root.sleep_checked;
+                toggled => {
+                    root.sleep_toggled(self.checked);
+                }
+            }
+
+            SystemToggleVert {
+                max-height: 42px;
+                text: @tr("Shutdown");
+                checked <=> root.shutdown_checked;
+                toggled => {
+                    root.shutdown_toggled(self.checked);
+                }
+            }
+        }
+    }
+}

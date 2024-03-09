@@ -5,14 +5,16 @@ import { SideBar } from "widgets/sidebar.slint";
 import { PageAbout } from "pages/about.slint";
 import { PageFans } from "pages/fans.slint";
 import { PageAnime, AnimePageData } from "pages/anime.slint";
-import { PageAura, AuraPageData, AuraEffect } from "pages/aura.slint";
+import { PageAura } from "pages/aura.slint";
+import { AuraPageData, AuraDevType, AuraDevTuf, AuraDevRog1, PowerZones, KbAuraPowerState, AuraPowerDev, AuraEffect } from "types/aura_types.slint";
+export { AuraPageData, AuraDevType, AuraDevTuf, AuraDevRog1, PowerZones, KbAuraPowerState, AuraPowerDev, AuraEffect }
 import { PageAppSettings, AppSettingsPageData } from "pages/app_settings.slint";
 
-export { AppSize, AuraEffect, Theme, AvailableSystemProperties, SystemPageData, AuraPageData, AnimePageData, AppSettingsPageData }
+export { AppSize, Theme, AvailableSystemProperties, SystemPageData, AnimePageData, AppSettingsPageData }
 
 export component MainWindow inherits Window {
     default-font-family: "DejaVu Sans";
-    in property <[bool]> sidebar_items_avilable: [true, true, true, true, true, true];
+    in property <[bool]> sidebar_items_avilable: [true, true, false, true, true, true];
     private property <bool> show-notif;
     private property <bool> fade-cover;
     private property <bool> toast: false;

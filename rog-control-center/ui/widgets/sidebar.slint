@@ -4,11 +4,13 @@
 import { StyleMetrics } from "std-widgets.slint";
 
 component SideBarItem inherits Rectangle {
+    padding: 10px;
     in property <bool> selected;
     in property <bool> has-focus;
     in-out property <string> text<=> label.text;
     callback clicked<=>touch.clicked;
-    min-height: self.visible ? l.preferred-height : 0px;
+    min-height: self.visible ? l.preferred-height + 10px : 0px;
+    // min-width: self.visible ? l.preferred-width + 10px : 0px;
     states [
         pressed when touch.pressed: {
             state.opacity: 0.8;
@@ -30,6 +32,7 @@ component SideBarItem inherits Rectangle {
         background: StyleMetrics.window-background;
         animate opacity { duration: 150ms; }
         animate border-width { duration: 150ms; }
+        height: l.preferred-height;
     }
 
     l := HorizontalLayout {
@@ -102,7 +105,7 @@ export component SideBar inherits Rectangle {
         }
 
         navigation := VerticalLayout {
-            spacing: 10px;
+            // spacing: 10px;
             alignment: start;
             vertical-stretch: 0;
             for item[index] in root.model: SideBarItem {

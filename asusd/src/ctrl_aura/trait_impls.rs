@@ -186,16 +186,15 @@ impl CtrlAuraZbus {
     ///
     /// For Modern ROG devices the "enabled" flag is ignored.
     #[zbus(property)]
-    async fn set_led_power(&mut self, options: (AuraPowerDev, bool)) -> Result<(), ZbErr> {
-        let enabled = options.1;
-        let options = options.0;
+    async fn set_led_power(&mut self, options: AuraPowerDev) -> Result<(), ZbErr> {
         let mut ctrl = self.0.lock().await;
-        for p in options.tuf {
-            ctrl.config.enabled.set_tuf(p, enabled);
-        }
-        for p in options.old_rog {
-            ctrl.config.enabled.set_0x1866(p, enabled);
-        }
+        // TODO: set the older devices
+        // for p in options.tuf {
+        //     ctrl.config.enabled.set_tuf(p, enabled);
+        // }
+        // for p in options.old_rog {
+        //     ctrl.config.enabled.set_0x1866(p, enabled);
+        // }
         ctrl.config.enabled.set_0x19b6(options.rog);
         ctrl.config.write();
         Ok(ctrl.set_power_states().map_err(|e| {

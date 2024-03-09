@@ -587,9 +587,9 @@ dependencies = [
 
 [[package]]
 name = "bumpalo"
-version = "3.15.3"
+version = "3.15.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ea184aa71bb362a1157c896979544cc23974e08fd265f29ea96b59f0b4a555b"
+checksum = "7ff69b9dd49fd426c69a0db9fc04dd934cdb6645ff000864d98f7e2af8830eaa"
 
 [[package]]
 name = "by_address"
@@ -663,9 +663,9 @@ checksum = "7b02b629252fe8ef6460461409564e2c21d0c8e77e0944f3d189ff06c4e932ad"
 
 [[package]]
 name = "cc"
-version = "1.0.89"
+version = "1.0.90"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a0ba8f7aaa012f30d5b2861462f6708eccd49c3c39863fe083a308035f63d723"
+checksum = "8cd6604a82acf3039f1144f54b8eb34e91ffba622051189e71b781822d5ee1f5"
 dependencies = [
  "jobserver",
  "libc",
@@ -715,9 +715,9 @@ dependencies = [
 
 [[package]]
 name = "chrono"
-version = "0.4.34"
+version = "0.4.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5bc015644b92d5890fab7489e49d21f879d5c990186827d42ec511919404f38b"
+checksum = "8eaf5903dcbc0a39312feb77df2ff4c76387d591b9fc7b04a238dcf8bb62639a"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
@@ -851,7 +851,7 @@ dependencies = [
 [[package]]
 name = "const-field-offset"
 version = "0.1.4"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#f7ed950652302eca33f33e94a3bc503d710b4127"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
 dependencies = [
  "const-field-offset-macro",
  "field-offset",
@@ -860,7 +860,7 @@ dependencies = [
 [[package]]
 name = "const-field-offset-macro"
 version = "0.1.4"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#f7ed950652302eca33f33e94a3bc503d710b4127"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1928,7 +1928,7 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 [[package]]
 name = "i-slint-backend-linuxkms"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#f7ed950652302eca33f33e94a3bc503d710b4127"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
 dependencies = [
  "calloop",
  "drm",
@@ -1948,7 +1948,7 @@ dependencies = [
 [[package]]
 name = "i-slint-backend-qt"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#f7ed950652302eca33f33e94a3bc503d710b4127"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
 dependencies = [
  "const-field-offset",
  "i-slint-common",
@@ -1960,7 +1960,7 @@ dependencies = [
 [[package]]
 name = "i-slint-backend-selector"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#f7ed950652302eca33f33e94a3bc503d710b4127"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
 dependencies = [
  "cfg-if",
  "i-slint-backend-linuxkms",
@@ -1973,7 +1973,7 @@ dependencies = [
 [[package]]
 name = "i-slint-backend-winit"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#f7ed950652302eca33f33e94a3bc503d710b4127"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
 dependencies = [
  "bytemuck",
  "cfg-if",
@@ -2006,7 +2006,7 @@ dependencies = [
 [[package]]
 name = "i-slint-common"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#f7ed950652302eca33f33e94a3bc503d710b4127"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
 dependencies = [
  "cfg-if",
  "derive_more",
@@ -2017,7 +2017,7 @@ dependencies = [
 [[package]]
 name = "i-slint-compiler"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#f7ed950652302eca33f33e94a3bc503d710b4127"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
 dependencies = [
  "by_address",
  "codemap",
@@ -2046,7 +2046,7 @@ dependencies = [
 [[package]]
 name = "i-slint-core"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#f7ed950652302eca33f33e94a3bc503d710b4127"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
 dependencies = [
  "auto_enums",
  "bytemuck",
@@ -2090,7 +2090,7 @@ dependencies = [
 [[package]]
 name = "i-slint-core-macros"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#f7ed950652302eca33f33e94a3bc503d710b4127"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
 dependencies = [
  "quote",
  "syn 2.0.52",
@@ -2099,7 +2099,7 @@ dependencies = [
 [[package]]
 name = "i-slint-renderer-femtovg"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#f7ed950652302eca33f33e94a3bc503d710b4127"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
 dependencies = [
  "cfg-if",
  "const-field-offset",
@@ -2130,7 +2130,7 @@ dependencies = [
 [[package]]
 name = "i-slint-renderer-skia"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#f7ed950652302eca33f33e94a3bc503d710b4127"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
 dependencies = [
  "bytemuck",
  "cfg-if",
@@ -3883,7 +3883,7 @@ dependencies = [
 [[package]]
 name = "slint"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#f7ed950652302eca33f33e94a3bc503d710b4127"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
 dependencies = [
  "const-field-offset",
  "i-slint-backend-selector",
@@ -3899,7 +3899,7 @@ dependencies = [
 [[package]]
 name = "slint-build"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#f7ed950652302eca33f33e94a3bc503d710b4127"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
 dependencies = [
  "i-slint-compiler",
  "spin_on",
@@ -3910,7 +3910,7 @@ dependencies = [
 [[package]]
 name = "slint-macros"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#f7ed950652302eca33f33e94a3bc503d710b4127"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
 dependencies = [
  "i-slint-compiler",
  "proc-macro2",
@@ -4684,7 +4684,7 @@ dependencies = [
 [[package]]
 name = "vtable"
 version = "0.2.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#f7ed950652302eca33f33e94a3bc503d710b4127"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
 dependencies = [
  "const-field-offset",
  "portable-atomic",
@@ -4695,7 +4695,7 @@ dependencies = [
 [[package]]
 name = "vtable-macro"
 version = "0.2.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#f7ed950652302eca33f33e94a3bc503d710b4127"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5225,9 +5225,9 @@ checksum = "32b752e52a2da0ddfbdbcc6fceadfeede4c939ed16d13e648833a61dfb611ed8"
 
 [[package]]
 name = "winit"
-version = "0.29.13"
+version = "0.29.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b9d7047a2a569d5a81e3be098dcd8153759909b127477f4397e03cf1006d90a"
+checksum = "a7a3db69ffbe53a9babec7804da7a90f21020fcce1f2f5e5291e2311245b993d"
 dependencies = [
  "ahash",
  "android-activity",

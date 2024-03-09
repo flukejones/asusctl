@@ -1,0 +1,158 @@
+export enum AuraDevType {
+    Tuf,
+    Old,
+    New,
+}
+
+export struct AuraEffect {
+    /// The effect type
+    mode: int,
+    /// `AuraZone::None` for no zone or zoneless keyboards
+    zone: int,
+    /// Primary colour for all modes
+    colour1: color,
+    /// Secondary colour in some modes like Breathing or Stars
+    colour2: color,
+    /// One of three speeds for modes that support speed (most that animate)
+    speed: int,
+    /// Up, down, left, right. Only Rainbow mode seems to use this
+    direction: int,
+}
+
+export enum AuraDevTuf {
+    Boot,
+    Awake,
+    Sleep,
+    Keyboard,
+}
+
+export enum AuraDevRog1 {
+    Awake,
+    Keyboard,
+    Lightbar,
+    Boot,
+    Sleep,
+}
+
+export enum PowerZones {
+    Logo,
+    Keyboard,
+    Lightbar,
+    Lid,
+    RearGlow,
+}
+
+export struct KbAuraPowerState {
+    zone: PowerZones,
+    boot: bool,
+    awake: bool,
+    sleep: bool,
+    shutdown: bool,
+}
+
+export struct AuraPower {
+    keyboard: KbAuraPowerState,
+    logo: KbAuraPowerState,
+    lightbar: KbAuraPowerState,
+    lid: KbAuraPowerState,
+    rear_glow: KbAuraPowerState,
+}
+
+export struct AuraPowerDev {
+    tuf: [AuraDevTuf],
+    old_rog: [AuraDevRog1],
+    rog: AuraPower,
+}
+
+export global AuraPageData {
+    in-out property <[string]> brightness_names: [
+        @tr("Aura brightness" => "Off"),
+        @tr("Aura brightness" => "Low"),
+        @tr("Aura brightness" => "Med"),
+        @tr("Aura brightness" => "High"),
+    ];
+    in-out property <int> brightness;
+    callback set_brightness(int);
+    in-out property <[string]> mode_names: [
+        @tr("Basic aura mode" => "Static"),
+        @tr("Basic aura mode" => "Breathe"),
+        @tr("Basic aura mode" => "Strobe"),
+        @tr("Basic aura mode" => "Rainbow"),
+        @tr("Basic aura mode" => "Star"),
+        @tr("Basic aura mode" => "Rain"),
+        @tr("Basic aura mode" => "Highlight"),
+        @tr("Basic aura mode" => "Laser"),
+        @tr("Basic aura mode" => "Ripple"),
+        @tr("Basic aura mode" => "Nothing"),
+        @tr("Basic aura mode" => "Pulse"),
+        @tr("Basic aura mode" => "Comet"),
+        @tr("Basic aura mode" => "Flash"),
+    ];
+    in-out property <[string]> available_mode_names: [
+        @tr("Basic aura mode" => "Static"),
+        @tr("Basic aura mode" => "Breathe"),
+        @tr("Basic aura mode" => "Strobe"),
+    ];
+    in-out property <int> current_available_mode: 0;
+    in-out property <[int]> supported_basic_modes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12];
+    in-out property <int> led_mode;
+    callback set_led_mode(int);
+    in-out property <[string]> zone_names: [
+        @tr("Aura zone" => "None"),
+        @tr("Aura zone" => "Key1"),
+        @tr("Aura zone" => "Key2"),
+        @tr("Aura zone" => "Key3"),
+        @tr("Aura zone" => "Key4"),
+        @tr("Aura zone" => "Logo"),
+        @tr("Aura zone" => "Lightbar Left"),
+        @tr("Aura zone" => "Lightbar Right"),
+    ];
+    in-out property <int> zone;
+    in-out property <[string]> direction_names: [
+        @tr("Aura direction" => "Right"),
+        @tr("Aura direction" => "Left"),
+        @tr("Aura direction" => "Up"),
+        @tr("Aura direction" => "Down"),
+    ];
+    in-out property <int> direction;
+    in-out property <[string]> speed_names: [
+        @tr("Aura speed" => "Low"),
+        @tr("Aura speed" => "Medium"),
+        @tr("Aura speed" => "High"),
+    ];
+    in-out property <int> speed;
+    in-out property <AuraEffect> led_mode_data: {
+        mode: 0,
+        zone: 0,
+        colour1: Colors.aquamarine,
+        colourbox1: Colors.aquamarine,
+        colour2: Colors.hotpink,
+        colourbox2: Colors.hotpink,
+        speed: 0,
+        direction: 0,
+    };
+    callback set_led_mode_data(AuraEffect);
+    in-out property <color> color1;
+    in-out property <brush> colorbox1;
+    in-out property <color> color2;
+    in-out property <brush> colorbox2;
+    callback update_led_mode_data(AuraEffect);
+    update_led_mode_data(data) => {
+        led_mode_data = data;
+        current_available_mode = data.mode;
+        zone = data.zone;
+        speed = data.speed;
+        direction = data.direction;
+        color1 = data.colour1;
+        color2 = data.colour2;
+        colorbox1 = data.colour1;
+        colorbox2 = data.colour2;
+    }
+    callback set_hex_from_colour(color) -> string;
+    callback set_hex_to_colour(string) -> color;
+
+    in-out property <AuraDevType> aura_type: AuraDevType.New;
+    in-out property <[PowerZones]> supported_power_zones: [PowerZones.Keyboard, PowerZones.RearGlow, PowerZones.Lid, PowerZones.Lightbar, PowerZones.Logo];
+    in-out property <AuraPowerDev> led_power;
+    callback set_led_power(AuraPowerDev);
+}
