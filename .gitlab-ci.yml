@@ -17,7 +17,7 @@ image: rust:latest
       - target/release/.cargo-lock
 
 before_script:
-  - apt-get update -qq && apt-get install -y -qq libudev-dev libgtk-3-dev grep llvm clang libclang-dev libsdl2-dev libsdl2-gfx-dev
+  - apt-get update -qq && apt-get install -y -qq libseat-dev libudev-dev libgtk-3-dev grep llvm clang libclang-dev libsdl2-dev libsdl2-gfx-dev
 
 stages:
   - format
@@ -63,8 +63,8 @@ release:
     - make && make vendor
   artifacts:
     paths:
-    - vendor_asusctl*.tar.xz
-    - cargo-config
+      - vendor_asusctl*.tar.xz
+      - cargo-config
 
 pages:
   stage: deploy
