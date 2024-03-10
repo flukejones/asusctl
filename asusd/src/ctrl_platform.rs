@@ -34,28 +34,14 @@ macro_rules! platform_get_value {
                     })
                 })
             } else {
-                info!("RogPlatform: {} not supported", $prop_name);
+                debug!("RogPlatform: getting {} not supported", $prop_name);
                 return Err(FdoErr::NotSupported(format!("RogPlatform: {} not supported", $prop_name)));
             }
         })
     }
 }
 
-macro_rules! platform_get_value_if_some {
-    ($self:ident, $property:tt, $prop_name:literal, $default:expr) => {
-        concat_idents::concat_idents!(has = has_, $property {
-            if $self.platform.has() {
-                let lock = $self.config.lock().await;
-                Ok(lock.$property.unwrap_or($default))
-            } else {
-                info!("RogPlatform: {} not supported", $prop_name);
-                return Err(FdoErr::NotSupported(format!("RogPlatform: {} not supported", $prop_name)));
-            }
-        })
-    }
-}
-
-macro_rules! platform_set_bool {
+macro_rules! platform_set_value {
     ($self:ident, $property:tt, $prop_name:literal, $new_value:expr) => {
         concat_idents::concat_idents!(has = has_, $property {
             if $self.platform.has() {
@@ -70,40 +56,32 @@ macro_rules! platform_set_bool {
                 lock.write();
                 Ok(())
             } else {
-                info!("RogPlatform: {} not supported", $prop_name);
+                debug!("RogPlatform: {} not supported", $prop_name);
                 Err(FdoErr::NotSupported(format!("RogPlatform: {} not supported", $prop_name)))
             }
         })
     }
 }
 
-/// Intended only for setting platform object values where the value isn't
-/// retained across boots
-macro_rules! platform_set_with_min_max {
-    ($self:ident, $property:tt, $prop_name:literal, $new_value:expr, $min_value:expr, $max_value:expr) => {
-        if !($min_value..=$max_value).contains(&$new_value) {
-            Err(FdoErr::Failed(
-                format!("RogPlatform: {} value not in range {}=..={}", $prop_name, $min_value, $max_value)
-            ))
-        } else {
-            concat_idents::concat_idents!(has = has_, $property {
-                if $self.platform.has() {
-                    concat_idents::concat_idents!(set = set_, $property {
-                        $self.platform.set($new_value).map_err(|err| {
-                            error!("RogPlatform: {} {err}", $prop_name);
-                            FdoErr::NotSupported(format!("RogPlatform: {} {err}", $prop_name))
-                        })?;
-                    });
-                    let mut lock = $self.config.lock().await;
-                    lock.$property = Some($new_value);
-                    lock.write();
-                } else {
-                    error!("RogPlatform: {} not supported", $prop_name);
-                    return Err(FdoErr::NotSupported(format!("RogPlatform: {} not supported", $prop_name)));
-                }
-            });
-            Ok(())
-        }
+macro_rules! platform_ppt_set_value {
+    ($self:ident, $property:tt, $prop_name:literal, $new_value:expr) => {
+        concat_idents::concat_idents!(has = has_, $property {
+            if $self.platform.has() {
+                concat_idents::concat_idents!(set = set_, $property {
+                    $self.platform.set($new_value).map_err(|err| {
+                        error!("RogPlatform: {} {err}", $prop_name);
+                        FdoErr::NotSupported(format!("RogPlatform: {} {err}", $prop_name))
+                    })?;
+                });
+                let mut lock = $self.config.lock().await;
+                lock.$property = Some($new_value);
+                lock.write();
+                Ok(())
+            } else {
+                debug!("RogPlatform: ppt: setting {} not supported", $prop_name);
+                Err(FdoErr::NotSupported(format!("RogPlatform: {} not supported", $prop_name)))
+            }
+        })
     }
 }
 
@@ -567,7 +545,7 @@ impl CtrlPlatform {
 
     #[zbus(property)]
     async fn set_panel_od(&mut self, overdrive: bool) -> Result<(), FdoErr> {
-        platform_set_bool!(self, panel_od, "panel_od", overdrive)?;
+        platform_set_value!(self, panel_od, "panel_od", overdrive)?;
         self.config.lock().await.write();
         Ok(())
     }
@@ -581,7 +559,7 @@ impl CtrlPlatform {
 
     #[zbus(property)]
     async fn set_boot_sound(&mut self, on: bool) -> Result<(), FdoErr> {
-        platform_set_bool!(self, boot_sound, "boot_sound", on)?;
+        platform_set_value!(self, boot_sound, "boot_sound", on)?;
         self.config.lock().await.write();
         Ok(())
     }
@@ -595,7 +573,7 @@ impl CtrlPlatform {
 
     #[zbus(property)]
     async fn set_mini_led_mode(&mut self, on: bool) -> Result<(), FdoErr> {
-        platform_set_bool!(self, mini_led_mode, "mini_led_mode", on)?;
+        platform_set_value!(self, mini_led_mode, "mini_led_mode", on)?;
         self.config.lock().await.write();
         Ok(())
     }
@@ -616,12 +594,12 @@ impl CtrlPlatform {
     /// * min=5, max=250
     #[zbus(property)]
     async fn ppt_pl1_spl(&self) -> Result<u8, FdoErr> {
-        platform_get_value_if_some!(self, ppt_pl1_spl, "ppt_pl1_spl", 5)
+        platform_get_value!(self, ppt_pl1_spl, "ppt_pl1_spl")
     }
 
     #[zbus(property)]
     async fn set_ppt_pl1_spl(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_set_with_min_max!(self, ppt_pl1_spl, "ppt_pl1_spl", value, 5, 250)?;
+        platform_ppt_set_value!(self, ppt_pl1_spl, "ppt_pl1_spl", value)?;
         self.config.lock().await.write();
         Ok(())
     }
@@ -631,12 +609,12 @@ impl CtrlPlatform {
     /// * min=5, max=250
     #[zbus(property)]
     async fn ppt_pl2_sppt(&self) -> Result<u8, FdoErr> {
-        platform_get_value_if_some!(self, ppt_pl2_sppt, "ppt_pl2_sppt", 5)
+        platform_get_value!(self, ppt_pl2_sppt, "ppt_pl2_sppt")
     }
 
     #[zbus(property)]
     async fn set_ppt_pl2_sppt(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_set_with_min_max!(self, ppt_pl2_sppt, "ppt_pl2_sppt", value, 5, 250)?;
+        platform_ppt_set_value!(self, ppt_pl2_sppt, "ppt_pl2_sppt", value)?;
         self.config.lock().await.write();
         Ok(())
     }
@@ -645,12 +623,12 @@ impl CtrlPlatform {
     /// * min=5, max=250
     #[zbus(property)]
     async fn ppt_fppt(&self) -> Result<u8, FdoErr> {
-        platform_get_value_if_some!(self, ppt_fppt, "ppt_fppt", 5)
+        platform_get_value!(self, ppt_fppt, "ppt_fppt")
     }
 
     #[zbus(property)]
     async fn set_ppt_fppt(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_set_with_min_max!(self, ppt_fppt, "ppt_fppt", value, 5, 250)?;
+        platform_ppt_set_value!(self, ppt_fppt, "ppt_fppt", value)?;
         self.config.lock().await.write();
         Ok(())
     }
@@ -659,12 +637,12 @@ impl CtrlPlatform {
     /// * min=5, max=130
     #[zbus(property)]
     async fn ppt_apu_sppt(&self) -> Result<u8, FdoErr> {
-        platform_get_value_if_some!(self, ppt_apu_sppt, "ppt_apu_sppt", 5)
+        platform_get_value!(self, ppt_apu_sppt, "ppt_apu_sppt")
     }
 
     #[zbus(property)]
     async fn set_ppt_apu_sppt(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_set_with_min_max!(self, ppt_apu_sppt, "ppt_apu_sppt", value, 5, 130)?;
+        platform_ppt_set_value!(self, ppt_apu_sppt, "ppt_apu_sppt", value)?;
         self.config.lock().await.write();
         Ok(())
     }
@@ -673,12 +651,12 @@ impl CtrlPlatform {
     /// * min=5, max=130
     #[zbus(property)]
     async fn ppt_platform_sppt(&self) -> Result<u8, FdoErr> {
-        platform_get_value_if_some!(self, ppt_platform_sppt, "ppt_platform_sppt", 5)
+        platform_get_value!(self, ppt_platform_sppt, "ppt_platform_sppt")
     }
 
     #[zbus(property)]
     async fn set_ppt_platform_sppt(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_set_with_min_max!(self, ppt_platform_sppt, "ppt_platform_sppt", value, 5, 130)?;
+        platform_ppt_set_value!(self, ppt_platform_sppt, "ppt_platform_sppt", value)?;
         self.config.lock().await.write();
         Ok(())
     }
@@ -687,12 +665,12 @@ impl CtrlPlatform {
     /// * min=5, max=25
     #[zbus(property)]
     async fn nv_dynamic_boost(&self) -> Result<u8, FdoErr> {
-        platform_get_value_if_some!(self, nv_dynamic_boost, "nv_dynamic_boost", 5)
+        platform_get_value!(self, nv_dynamic_boost, "nv_dynamic_boost")
     }
 
     #[zbus(property)]
     async fn set_nv_dynamic_boost(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_set_with_min_max!(self, nv_dynamic_boost, "nv_dynamic_boost", value, 5, 25)?;
+        platform_ppt_set_value!(self, nv_dynamic_boost, "nv_dynamic_boost", value)?;
         self.config.lock().await.write();
         Ok(())
     }
@@ -701,12 +679,12 @@ impl CtrlPlatform {
     /// * min=75, max=87
     #[zbus(property)]
     async fn nv_temp_target(&self) -> Result<u8, FdoErr> {
-        platform_get_value_if_some!(self, nv_temp_target, "nv_temp_target", 5)
+        platform_get_value!(self, nv_temp_target, "nv_temp_target")
     }
 
     #[zbus(property)]
     async fn set_nv_temp_target(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_set_with_min_max!(self, nv_temp_target, "nv_temp_target", value, 5, 87)?;
+        platform_ppt_set_value!(self, nv_temp_target, "nv_temp_target", value)?;
         self.config.lock().await.write();
         Ok(())
     }
@@ -737,26 +715,29 @@ impl ReloadAndNotify for CtrlPlatform {
                     .await?;
             }
 
-            if self.platform.has_panel_od() && config.panel_od != data.panel_od {
-                self.platform.set_panel_od(data.panel_od)?;
-                self.panel_od_changed(signal_context).await?;
-            }
-
-            if self.platform.has_boot_sound() && config.panel_od != data.panel_od {
-                self.platform.set_boot_sound(data.panel_od)?;
-                self.boot_sound_changed(signal_context).await?;
-            }
-
-            if self.platform.has_mini_led_mode() && config.mini_led_mode != data.mini_led_mode {
-                self.platform.set_mini_led_mode(data.mini_led_mode)?;
-                self.mini_led_mode_changed(signal_context).await?;
-            }
-
             if self.platform.has_throttle_thermal_policy()
                 && config.throttle_policy_linked_epp != data.throttle_policy_linked_epp
             {
                 // TODO: extra stuff
             }
+
+            macro_rules! reload_and_notify {
+                ($property:tt, $prop_name:literal) => {
+                    concat_idents::concat_idents!(has = has_, $property {
+                        if self.platform.has() && config.$property != data.$property {
+                            concat_idents::concat_idents!(set = set_, $property {
+                            self.platform
+                                .set(data.$property)?;});
+                            concat_idents::concat_idents!(changed = $property, _changed {
+                            self.changed(signal_context).await?;});
+                        }
+                    })
+                }
+            }
+            reload_and_notify!(mini_led_mode, "mini_led_mode");
+            reload_and_notify!(panel_od, "panel_od");
+            reload_and_notify!(boot_sound, "boot_sound");
+            // reload_and_notify!(throttle_thermal_policy, "throttle_thermal_policy");
 
             macro_rules! ppt_reload_and_notify {
                 ($property:tt, $prop_name:literal) => {
@@ -764,9 +745,9 @@ impl ReloadAndNotify for CtrlPlatform {
                         if self.platform.has() && config.$property != data.$property {
                             concat_idents::concat_idents!(set = set_, $property {
                             self.platform
-                                .set_ppt_pl1_spl(data.$property.unwrap_or_default())?;});
+                                .set(data.$property.unwrap_or_default())?;});
                             concat_idents::concat_idents!(changed = $property, _changed {
-                            self.ppt_pl1_spl_changed(signal_context).await?;});
+                            self.changed(signal_context).await?;});
                         }
                     })
                 }
@@ -788,15 +769,40 @@ impl ReloadAndNotify for CtrlPlatform {
 
 impl crate::Reloadable for CtrlPlatform {
     async fn reload(&mut self) -> Result<(), RogError> {
-        if self.platform.has_panel_od() {
-            self.platform
-                .set_panel_od(self.config.lock().await.panel_od)?;
-        }
+        macro_rules! reload {
+            ($property:tt, $prop_name:literal) => {
+                concat_idents::concat_idents!(has = has_, $property {
+                  if self.platform.has() {
+                        concat_idents::concat_idents!(set = set_, $property {
+                        self.platform
+                            .set(self.config.lock().await.$property)?;});
 
-        if self.platform.has_mini_led_mode() {
-            self.platform
-                .set_mini_led_mode(self.config.lock().await.mini_led_mode)?;
+                    }
+                })
+            }
         }
+        reload!(mini_led_mode, "mini_led_mode");
+        reload!(panel_od, "panel_od");
+        reload!(boot_sound, "boot_sound");
+
+        macro_rules! ppt_reload {
+            ($property:tt, $prop_name:literal) => {
+                concat_idents::concat_idents!(has = has_, $property {
+                    if self.platform.has() {
+                        concat_idents::concat_idents!(set = set_, $property {
+                        self.platform
+                            .set(self.config.lock().await.$property.unwrap_or_default())?;});
+                    }
+                })
+            }
+        }
+        ppt_reload!(ppt_pl1_spl, "ppt_pl1_spl");
+        ppt_reload!(ppt_pl2_sppt, "ppt_pl2_sppt");
+        ppt_reload!(ppt_fppt, "ppt_fppt");
+        ppt_reload!(ppt_apu_sppt, "ppt_apu_sppt");
+        ppt_reload!(ppt_platform_sppt, "ppt_platform_sppt");
+        ppt_reload!(nv_dynamic_boost, "nv_dynamic_boost");
+        ppt_reload!(nv_temp_target, "nv_temp_target");
 
         if self.power.has_charge_control_end_threshold() {
             self.power.set_charge_control_end_threshold(

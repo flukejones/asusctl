@@ -443,7 +443,6 @@ pub fn start_notifications(
             .unwrap();
 
         if let Ok(mode) = proxy.mode().await {
-            dbg!(&mode);
             if let Ok(mut lock) = page_states1.lock() {
                 lock.gfx_state.mode = mode;
                 lock.gfx_state.has_supergfx = true;
