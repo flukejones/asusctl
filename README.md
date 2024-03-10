@@ -76,7 +76,7 @@ Requirements are rust >= 1.75 installed from rustup.io if the distro provided ve
 
 **Ubuntu (unsuported):**
 
-    apt install libgtk-3-dev libpango1.0-dev libgdk-pixbuf-2.0-dev libglib2.0-dev cmake libclang-dev libudev-dev libayatana-appindicator3-1
+    apt install libinput-dev libseat-dev libgtk-3-dev libpango1.0-dev libgdk-pixbuf-2.0-dev libglib2.0-dev cmake libclang-dev libudev-dev libayatana-appindicator3-1
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     source "$HOME/.cargo/env"
     make
@@ -84,7 +84,7 @@ Requirements are rust >= 1.75 installed from rustup.io if the distro provided ve
 
 **popos (unsuported):**
 
-    sudo apt install cmake libclang-dev libudev-dev libgtk-3-dev libclang-dev libglib2.0-dev libatkmm-1.6-dev libpangomm-1.4-dev librust-gdk-pixbuf-dev
+    sudo apt install cmake libinput-dev libseat-dev libclang-dev libudev-dev libgtk-3-dev libclang-dev libglib2.0-dev libatkmm-1.6-dev libpangomm-1.4-dev librust-gdk-pixbuf-dev
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     source "$HOME/.cargo/env"
     make
@@ -93,7 +93,7 @@ Requirements are rust >= 1.75 installed from rustup.io if the distro provided ve
 
 **fedora:**
 
-    dnf install cmake clang-devel systemd-devel glib2-devel cairo-devel atkmm-devel pangomm-devel gdk-pixbuf2-devel gtk3-devel libappindicator-gtk3
+    dnf install cmake clang-devel libinput-devel libseat-devel systemd-devel glib2-devel cairo-devel atkmm-devel pangomm-devel gdk-pixbuf2-devel gtk3-devel libappindicator-gtk3
     make
     sudo make install
 
@@ -102,7 +102,7 @@ Requirements are rust >= 1.75 installed from rustup.io if the distro provided ve
 Works with KDE Plasma (without GTK packages)
 
     zypper in -t pattern devel_basis
-    zypper in rustup make cmake systemd-devel clang-devel llvm-devel gdk-pixbuf-devel cairo-devel pango-devel freetype-devel gtk3-devel libexpat-devel libayatana-indicator3-7
+    zypper in rustup make cmake libinput-devel libseat-devel systemd-devel clang-devel llvm-devel gdk-pixbuf-devel cairo-devel pango-devel freetype-devel gtk3-devel libexpat-devel libayatana-indicator3-7
     make
     sudo make install
 
