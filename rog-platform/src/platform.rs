@@ -101,7 +101,7 @@ impl RogPlatform {
 
     attr_bool!(
         /// Control the POST animation "FWOOoosh" sound
-        "post_animation_sound",
+        "boot_sound",
         path
     );
 

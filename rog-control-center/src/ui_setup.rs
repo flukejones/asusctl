@@ -415,6 +415,7 @@ pub fn setup_system_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
         nv_dynamic_boost: sys_props.contains(&Properties::NvDynamicBoost),
         nv_temp_target: sys_props.contains(&Properties::NvTempTarget),
         panel_od: sys_props.contains(&Properties::PanelOd),
+        boot_sound: sys_props.contains(&Properties::PostAnimationSound),
         ppt_apu_sppt: sys_props.contains(&Properties::PptApuSppt),
         ppt_fppt: sys_props.contains(&Properties::PptFppt),
         ppt_pl1_spl: sys_props.contains(&Properties::PptPl1Spl),
@@ -452,6 +453,7 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
         set_ui_props_async!(handle, platform, SystemPageData, throttle_policy_on_ac);
 
         set_ui_props_async!(handle, platform, SystemPageData, panel_od);
+        set_ui_props_async!(handle, platform, SystemPageData, boot_sound);
         set_ui_props_async!(handle, platform, SystemPageData, mini_led_mode);
         set_ui_props_async!(handle, platform, SystemPageData, ppt_pl1_spl);
         set_ui_props_async!(handle, platform, SystemPageData, ppt_pl2_sppt);
@@ -473,6 +475,7 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
             nv_dynamic_boost: sys_props.contains(&Properties::NvDynamicBoost),
             nv_temp_target: sys_props.contains(&Properties::NvTempTarget),
             panel_od: sys_props.contains(&Properties::PanelOd),
+            boot_sound: sys_props.contains(&Properties::PostAnimationSound),
             ppt_apu_sppt: sys_props.contains(&Properties::PptApuSppt),
             ppt_fppt: sys_props.contains(&Properties::PptFppt),
             ppt_pl1_spl: sys_props.contains(&Properties::PptPl1Spl),
@@ -497,6 +500,13 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                     platform.panel_od(),
                     "Panel OverDrive successfully set to {}",
                     "Setting Panel OverDrive failed"
+                );
+                set_ui_callbacks!(
+                    handle,
+                    SystemPageData(),
+                    platform.boot_sound(),
+                    "POST Animation sound successfully set to {}",
+                    "Setting POST Animation sound failed"
                 );
                 set_ui_callbacks!(
                     handle,

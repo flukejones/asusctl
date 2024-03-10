@@ -85,9 +85,9 @@ trait Platform {
 
     /// PostAnimationSound property
     #[zbus(property)]
-    fn post_animation_sound(&self) -> zbus::Result<bool>;
+    fn boot_sound(&self) -> zbus::Result<bool>;
     #[zbus(property)]
-    fn set_post_animation_sound(&self, value: bool) -> zbus::Result<()>;
+    fn set_boot_sound(&self, value: bool) -> zbus::Result<()>;
 
     /// PptApuSppt property
     #[zbus(property)]

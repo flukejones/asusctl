@@ -5,6 +5,7 @@ import { HorizontalBox , VerticalBox, ScrollView, Slider, Button, Switch, ComboB
 export struct AvailableSystemProperties {
     charge_control_end_threshold: bool,
     panel_od: bool,
+    boot_sound: bool,
     mini_led_mode: bool,
     disable_nvidia_powerd_on_battery: bool,
     ac_command: bool,
@@ -47,6 +48,8 @@ export global SystemPageData {
     callback set_throttle_policy_on_battery(int);
     in-out property <bool> panel_od;
     callback set_panel_od(bool);
+    in-out property <bool> boot_sound;
+    callback set_boot_sound(bool);
     in-out property <bool> mini_led_mode;
     callback set_mini_led_mode(bool);
     in-out property <float> ppt_pl1_spl: 5;
@@ -66,6 +69,7 @@ export global SystemPageData {
     in-out property <AvailableSystemProperties> available: {
         charge_control_end_threshold: true,
         panel_od: true,
+        boot_sound: true,
         mini_led_mode: true,
         disable_nvidia_powerd_on_battery: true,
         ac_command: true,
@@ -151,6 +155,14 @@ export component PageSystem inherits Rectangle {
                     checked <=> SystemPageData.mini_led_mode;
                                     toggled => {
                         SystemPageData.set_mini_led_mode(SystemPageData.mini_led_mode)
+                    }
+                }
+
+                if SystemPageData.available.boot-sound: SystemToggle {
+                    text: @tr("POST boot sound");
+                    checked <=> SystemPageData.boot_sound;
+                                    toggled => {
+                        SystemPageData.set_boot_sound(SystemPageData.boot_sound)
                     }
                 }
             }

@@ -319,7 +319,7 @@ impl CtrlPlatform {
 
         platform_name!(dgpu_disable, Properties::DgpuDisable);
         platform_name!(gpu_mux_mode, Properties::GpuMuxMode);
-        platform_name!(post_animation_sound, Properties::PostAnimationSound);
+        platform_name!(boot_sound, Properties::PostAnimationSound);
         platform_name!(panel_od, Properties::PanelOd);
         platform_name!(mini_led_mode, Properties::MiniLedMode);
         platform_name!(egpu_enable, Properties::EgpuEnable);
@@ -558,29 +558,6 @@ impl CtrlPlatform {
         Ok(())
     }
 
-    /// ***********************************************************************
-
-    #[zbus(property)]
-    fn post_animation_sound(&self) -> Result<bool, FdoErr> {
-        platform_get_value!(self, post_animation_sound, "post_animation_sound")
-    }
-
-    #[zbus(property)]
-    async fn set_post_animation_sound(&mut self, on: bool) -> Result<(), FdoErr> {
-        if self.platform.has_post_animation_sound() {
-            self.platform.set_post_animation_sound(on).map_err(|err| {
-                warn!("RogPlatform: set_post_animation_sound {}", err);
-                FdoErr::Failed(format!("RogPlatform: set_post_animation_sound: {err}"))
-            })?;
-            self.config.lock().await.write();
-        } else {
-            return Err(FdoErr::NotSupported(
-                "RogPlatform: set_post_animation_sound not supported".to_owned(),
-            ));
-        }
-        Ok(())
-    }
-
     /// Get the `panel_od` value from platform. Updates the stored value in
     /// internal config also.
     #[zbus(property)]
@@ -591,6 +568,20 @@ impl CtrlPlatform {
     #[zbus(property)]
     async fn set_panel_od(&mut self, overdrive: bool) -> Result<(), FdoErr> {
         platform_set_bool!(self, panel_od, "panel_od", overdrive)?;
+        self.config.lock().await.write();
+        Ok(())
+    }
+
+    /// Get the `boot_sound` value from platform. Updates the stored value in
+    /// internal config also.
+    #[zbus(property)]
+    fn boot_sound(&self) -> Result<bool, FdoErr> {
+        platform_get_value!(self, boot_sound, "boot_sound")
+    }
+
+    #[zbus(property)]
+    async fn set_boot_sound(&mut self, on: bool) -> Result<(), FdoErr> {
+        platform_set_bool!(self, boot_sound, "boot_sound", on)?;
         self.config.lock().await.write();
         Ok(())
     }
@@ -751,6 +742,11 @@ impl ReloadAndNotify for CtrlPlatform {
                 self.panel_od_changed(signal_context).await?;
             }
 
+            if self.platform.has_boot_sound() && config.panel_od != data.panel_od {
+                self.platform.set_boot_sound(data.panel_od)?;
+                self.boot_sound_changed(signal_context).await?;
+            }
+
             if self.platform.has_mini_led_mode() && config.mini_led_mode != data.mini_led_mode {
                 self.platform.set_mini_led_mode(data.mini_led_mode)?;
                 self.mini_led_mode_changed(signal_context).await?;
@@ -829,7 +825,7 @@ impl CtrlPlatform {
 
     task_watch_item!(charge_control_end_threshold power);
 
-    task_watch_item_notify!(post_animation_sound platform);
+    task_watch_item_notify!(boot_sound platform);
 
     task_watch_item_notify!(dgpu_disable platform);
 
@@ -957,7 +953,7 @@ impl CtrlTask for CtrlPlatform {
         // NOTE: Can't have this as a watch because on a write to it, it reverts back to
         // booted-with value  as it does not actually change until reboot.
         self.watch_gpu_mux_mode(signal_ctxt.clone()).await?;
-        self.watch_post_animation_sound(signal_ctxt.clone()).await?;
+        self.watch_boot_sound(signal_ctxt.clone()).await?;
 
         self.watch_ppt_pl1_spl(signal_ctxt.clone()).await?;
         self.watch_ppt_pl2_sppt(signal_ctxt.clone()).await?;

@@ -813,10 +813,10 @@ fn handle_platform_properties(
         }
 
         if let Some(opt) = cmd.post_sound_set {
-            dbus.proxies().platform().set_post_animation_sound(opt)?;
+            dbus.proxies().platform().set_boot_sound(opt)?;
         }
         if cmd.post_sound_get {
-            let res = dbus.proxies().platform().post_animation_sound()?;
+            let res = dbus.proxies().platform().boot_sound()?;
             println!("Bios POST sound on: {}", res);
         }
 

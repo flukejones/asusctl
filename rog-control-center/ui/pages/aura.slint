@@ -201,8 +201,8 @@ export component PageAura inherits Rectangle {
                 padding: 30px;
                 padding-top: 10px;
                 spacing: 10px;
-                for power in AuraPageData.supported_power_zones: gr:= HorizontalLayout {
-                    if power == PowerZones.Keyboard: zone1:= AuraPowerGroup {
+                for power in AuraPageData.supported_power_zones: gr := HorizontalLayout {
+                    if power == PowerZones.Keyboard: zone1 := AuraPowerGroup {
                         title: @tr("Keyboard");
                         boot_checked: AuraPageData.led_power.rog.keyboard.boot;
                         boot_toggled => {
@@ -225,7 +225,7 @@ export component PageAura inherits Rectangle {
                             AuraPageData.set_led_power(AuraPageData.led_power);
                         }
                     }
-                    if power == PowerZones.Logo: zone2:= AuraPowerGroup {
+                    if power == PowerZones.Logo: zone2 := AuraPowerGroup {
                         title: @tr("Lid Logo");
                         boot_checked: AuraPageData.led_power.rog.logo.boot;
                         boot_toggled => {
@@ -248,7 +248,7 @@ export component PageAura inherits Rectangle {
                             AuraPageData.set_led_power(AuraPageData.led_power);
                         }
                     }
-                    if power == PowerZones.Lightbar: zone3:= AuraPowerGroup {
+                    if power == PowerZones.Lightbar: zone3 := AuraPowerGroup {
                         title: @tr("Lightbar");
                         boot_checked: AuraPageData.led_power.rog.lightbar.boot;
                         boot_toggled => {
@@ -271,7 +271,7 @@ export component PageAura inherits Rectangle {
                             AuraPageData.set_led_power(AuraPageData.led_power);
                         }
                     }
-                    if power == PowerZones.Lid: zone4:= AuraPowerGroup {
+                    if power == PowerZones.Lid: zone4 := AuraPowerGroup {
                         title: @tr("Lid Zone");
                         boot_checked: AuraPageData.led_power.rog.lid.boot;
                         boot_toggled => {
@@ -294,7 +294,7 @@ export component PageAura inherits Rectangle {
                             AuraPageData.set_led_power(AuraPageData.led_power);
                         }
                     }
-                    if power == PowerZones.RearGlow: zone5:= AuraPowerGroup {
+                    if power == PowerZones.RearGlow: zone5 := AuraPowerGroup {
                         title: @tr("Rear Glow");
                         boot_checked: AuraPageData.led_power.rog.rear-glow.boot;
                         boot_toggled => {

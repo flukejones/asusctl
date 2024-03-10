@@ -40,7 +40,7 @@ pub struct PlatformState {
 impl PlatformState {
     pub fn new(dbus: &RogDbusClientBlocking<'_>) -> Result<Self> {
         Ok(Self {
-            post_sound: dbus.proxies().platform().post_animation_sound().ok(),
+            post_sound: dbus.proxies().platform().boot_sound().ok(),
             gpu_mux_mode: dbus
                 .proxies()
                 .platform()

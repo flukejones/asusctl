@@ -10,6 +10,7 @@ pub struct Config {
     /// Save charge limit for restoring on boot/resume
     pub charge_control_end_threshold: u8,
     pub panel_od: bool,
+    pub boot_sound: bool,
     pub mini_led_mode: bool,
     pub disable_nvidia_powerd_on_battery: bool,
     /// An optional command/script to run when power is changed to AC
@@ -53,6 +54,7 @@ impl Default for Config {
         Self {
             charge_control_end_threshold: 100,
             panel_od: false,
+            boot_sound: false,
             mini_led_mode: false,
             disable_nvidia_powerd_on_battery: true,
             ac_command: Default::default(),
@@ -126,6 +128,7 @@ impl From<Config507> for Config {
         Self {
             charge_control_end_threshold: c.charge_control_end_threshold,
             panel_od: c.panel_od,
+            boot_sound: false,
             disable_nvidia_powerd_on_battery: c.disable_nvidia_powerd_on_battery,
             ac_command: c.ac_command,
             bat_command: c.bat_command,
@@ -177,6 +180,7 @@ impl From<Config506> for Config {
         Self {
             charge_control_end_threshold: c.charge_control_end_threshold,
             panel_od: c.panel_od,
+            boot_sound: false,
             disable_nvidia_powerd_on_battery: c.disable_nvidia_powerd_on_battery,
             ac_command: c.ac_command,
             bat_command: c.bat_command,

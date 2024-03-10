@@ -34,7 +34,7 @@ static mut POWER_BAT_CMD: Option<Command> = None;
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(default)]
 pub struct EnabledNotifications {
-    pub receive_post_animation_sound_changed: bool,
+    pub receive_boot_sound_changed: bool,
     pub receive_panel_od_changed: bool,
     pub receive_mini_led_mode_changed: bool,
     pub receive_dgpu_disable_changed: bool,
@@ -54,7 +54,7 @@ pub struct EnabledNotifications {
 impl Default for EnabledNotifications {
     fn default() -> Self {
         Self {
-            receive_post_animation_sound_changed: false,
+            receive_boot_sound_changed: false,
             receive_panel_od_changed: true,
             receive_mini_led_mode_changed: true,
             receive_dgpu_disable_changed: true,
@@ -199,7 +199,7 @@ pub fn start_notifications(
     // BIOS notif
     recv_changed!(
         PlatformProxy,
-        receive_post_animation_sound_changed,
+        receive_boot_sound_changed,
         last_notification,
         enabled_notifications,
         page_states,
