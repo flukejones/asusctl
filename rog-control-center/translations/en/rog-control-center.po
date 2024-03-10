@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-03-09 10:49+0000\n"
+"POT-Creation-Date: 2024-03-10 07:52+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -247,147 +247,152 @@ msgctxt "PageAura"
 msgid "Shutdown"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:26
+#: rog-control-center/ui/pages/system.slint:27
 msgctxt "SystemPageData"
 msgid "Balanced"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:26 rog-control-center/ui/pages/system.slint:30
+#: rog-control-center/ui/pages/system.slint:27 rog-control-center/ui/pages/system.slint:31
 msgctxt "SystemPageData"
 msgid "Performance"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:26
+#: rog-control-center/ui/pages/system.slint:27
 msgctxt "SystemPageData"
 msgid "Quiet"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:29
+#: rog-control-center/ui/pages/system.slint:30
 msgctxt "SystemPageData"
 msgid "Default"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:31
+#: rog-control-center/ui/pages/system.slint:32
 msgctxt "SystemPageData"
 msgid "BalancePerformance"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:32
+#: rog-control-center/ui/pages/system.slint:33
 msgctxt "SystemPageData"
 msgid "BalancePower"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:33
+#: rog-control-center/ui/pages/system.slint:34
 msgctxt "SystemPageData"
 msgid "Power"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:103
+#: rog-control-center/ui/pages/system.slint:107
 msgctxt "PageSystem"
 msgid "Base system settings"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:108
+#: rog-control-center/ui/pages/system.slint:112
 msgctxt "PageSystem"
 msgid "Charge limit"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:120
+#: rog-control-center/ui/pages/system.slint:124
 msgctxt "PageSystem"
 msgid "Throttle Policy"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:130
+#: rog-control-center/ui/pages/system.slint:134
 msgctxt "PageSystem"
 msgid "Advanced"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:142
+#: rog-control-center/ui/pages/system.slint:146
 msgctxt "PageSystem"
 msgid "Panel Overdrive"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:150
+#: rog-control-center/ui/pages/system.slint:154
 msgctxt "PageSystem"
 msgid "MiniLED Mode"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:168
+#: rog-control-center/ui/pages/system.slint:162
+msgctxt "PageSystem"
+msgid "POST boot sound"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:180
 msgctxt "PageSystem"
 msgid "System performance settings"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:173
+#: rog-control-center/ui/pages/system.slint:185
 msgctxt "ppt_pl1_spl"
 msgid "ppt_pl1_spl"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:183
+#: rog-control-center/ui/pages/system.slint:195
 msgctxt "ppt_pl2_sppt"
 msgid "ppt_pl2_sppt"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:193
+#: rog-control-center/ui/pages/system.slint:205
 msgctxt "ppt_fppt"
 msgid "ppt_fppt"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:203
+#: rog-control-center/ui/pages/system.slint:215
 msgctxt "ppt_apu_sppt"
 msgid "ppt_apu_sppt"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:213
+#: rog-control-center/ui/pages/system.slint:225
 msgctxt "ppt_platform_sppt"
 msgid "ppt_platform_sppt"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:223
+#: rog-control-center/ui/pages/system.slint:235
 msgctxt "nv_dynamic_boost"
 msgid "nv_dynamic_boost"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:233
+#: rog-control-center/ui/pages/system.slint:245
 msgctxt "nv_temp_target"
 msgid "nv_temp_target"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:278
+#: rog-control-center/ui/pages/system.slint:290
 msgctxt "PageSystem"
 msgid "Energy Performance Preference linked to Throttle Policy"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:282
+#: rog-control-center/ui/pages/system.slint:294
 msgctxt "PageSystem"
 msgid "Change EPP based on Throttle Policy"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:290
+#: rog-control-center/ui/pages/system.slint:302
 msgctxt "PageSystem"
 msgid "EPP for Balanced Policy"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:300
+#: rog-control-center/ui/pages/system.slint:312
 msgctxt "PageSystem"
 msgid "EPP for Performance Policy"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:310
+#: rog-control-center/ui/pages/system.slint:322
 msgctxt "PageSystem"
 msgid "EPP for Quiet Policy"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:328
+#: rog-control-center/ui/pages/system.slint:340
 msgctxt "PageSystem"
 msgid "Throttle Policy for power state"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:332
+#: rog-control-center/ui/pages/system.slint:344
 msgctxt "PageSystem"
 msgid "Throttle Policy on Battery"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:342
+#: rog-control-center/ui/pages/system.slint:354
 msgctxt "PageSystem"
 msgid "Throttle Policy on AC"
 msgstr ""
