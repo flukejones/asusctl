@@ -1,9 +1,11 @@
 import { Palette, Slider, HorizontalBox, Button, LineEdit } from "std-widgets.slint";
 
 export component ColourSlider inherits VerticalLayout {
-    in-out property <bool> enabled;
     spacing: 10px;
+    in-out property <bool> enabled;
     property <string> hex: "#FF0000";
+    in-out property <float> c1value<=> c1.value;
+    in-out property <float> c2value<=> c2.value;
     property <color> base_colour: Colors.red;
     in-out property <color> final_colour: Colors.red;
     in-out property <brush> colourbox: final_colour;
@@ -11,8 +13,7 @@ export component ColourSlider inherits VerticalLayout {
     // required
     callback set_hex_from_colour(color) -> string;
     callback released();
-    in-out property <float> c1value<=> c1.value;
-    in-out property <float> c2value<=> c2.value;
+
     property <[color]> base_colours: [
         hsv(0, 1, 1),
         hsv(10, 1, 1),
@@ -150,6 +151,7 @@ export component ColourSlider inherits VerticalLayout {
             border-radius: 7px;
             border-color: Palette.border;
             background <=> root.colourbox;
+        
         }
     }
 }
