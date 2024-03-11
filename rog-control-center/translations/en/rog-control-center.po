@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-03-11 09:26+0000\n"
+"POT-Creation-Date: 2024-03-11 10:27+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -167,82 +167,77 @@ msgctxt "PageAura"
 msgid "Aura mode"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:55
+#: rog-control-center/ui/pages/aura.slint:56
 msgctxt "PageAura"
 msgid "Colour 1"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:76
+#: rog-control-center/ui/pages/aura.slint:82
 msgctxt "PageAura"
 msgid "Colour 2"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:103
+#: rog-control-center/ui/pages/aura.slint:114
 msgctxt "PageAura"
 msgid "Zone"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:123
+#: rog-control-center/ui/pages/aura.slint:137
 msgctxt "PageAura"
 msgid "Direction"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:143
+#: rog-control-center/ui/pages/aura.slint:159
 msgctxt "PageAura"
 msgid "Speed"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:162
+#: rog-control-center/ui/pages/aura.slint:180
 msgctxt "PageAura"
 msgid "Power Settings"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:170
-msgctxt "PageAura"
-msgid "Apply Aura"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:203 rog-control-center/ui/pages/aura.slint:356 rog-control-center/ui/pages/aura.slint:416
+#: rog-control-center/ui/pages/aura.slint:211 rog-control-center/ui/pages/aura.slint:364 rog-control-center/ui/pages/aura.slint:424
 msgctxt "PageAura"
 msgid "Keyboard"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:227
+#: rog-control-center/ui/pages/aura.slint:235
 msgctxt "PageAura"
 msgid "Lid Logo"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:251
+#: rog-control-center/ui/pages/aura.slint:259
 msgctxt "PageAura"
 msgid "Lightbar"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:275
+#: rog-control-center/ui/pages/aura.slint:283
 msgctxt "PageAura"
 msgid "Lid Zone"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:299
+#: rog-control-center/ui/pages/aura.slint:307
 msgctxt "PageAura"
 msgid "Rear Glow"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:362 rog-control-center/ui/pages/aura.slint:422
+#: rog-control-center/ui/pages/aura.slint:370 rog-control-center/ui/pages/aura.slint:430
 msgctxt "PageAura"
 msgid "Boot"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:367 rog-control-center/ui/pages/aura.slint:427
+#: rog-control-center/ui/pages/aura.slint:375 rog-control-center/ui/pages/aura.slint:435
 msgctxt "PageAura"
 msgid "Awake"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:372 rog-control-center/ui/pages/aura.slint:432
+#: rog-control-center/ui/pages/aura.slint:380 rog-control-center/ui/pages/aura.slint:440
 msgctxt "PageAura"
 msgid "Sleep"
 msgstr ""
 
-#: rog-control-center/ui/pages/aura.slint:377 rog-control-center/ui/pages/aura.slint:437
+#: rog-control-center/ui/pages/aura.slint:385 rog-control-center/ui/pages/aura.slint:445
 msgctxt "PageAura"
 msgid "Shutdown"
 msgstr ""
@@ -397,37 +392,37 @@ msgctxt "PageSystem"
 msgid "Throttle Policy on AC"
 msgstr ""
 
-#: rog-control-center/ui/widgets/aura_power.slint:32
+#: rog-control-center/ui/widgets/aura_power.slint:33
 msgctxt "AuraPowerGroup"
 msgid "Boot"
 msgstr ""
 
-#: rog-control-center/ui/widgets/aura_power.slint:42
+#: rog-control-center/ui/widgets/aura_power.slint:43
 msgctxt "AuraPowerGroup"
 msgid "Awake"
 msgstr ""
 
-#: rog-control-center/ui/widgets/aura_power.slint:52
+#: rog-control-center/ui/widgets/aura_power.slint:53
 msgctxt "AuraPowerGroup"
 msgid "Sleep"
 msgstr ""
 
-#: rog-control-center/ui/widgets/aura_power.slint:62
+#: rog-control-center/ui/widgets/aura_power.slint:63
 msgctxt "AuraPowerGroup"
 msgid "Shutdown"
 msgstr ""
 
-#: rog-control-center/ui/main_window.slint:48
+#: rog-control-center/ui/main_window.slint:45
 msgctxt "MainWindow"
 msgid "ROG"
 msgstr ""
 
-#: rog-control-center/ui/main_window.slint:49
+#: rog-control-center/ui/main_window.slint:47
 msgctxt "Menu1"
 msgid "System Control"
 msgstr ""
 
-#: rog-control-center/ui/main_window.slint:49
+#: rog-control-center/ui/main_window.slint:48
 msgctxt "Menu2"
 msgid "Keyboard Aura"
 msgstr ""
@@ -437,19 +432,24 @@ msgctxt "Menu3"
 msgid "AniMe Matrix"
 msgstr ""
 
-#: rog-control-center/ui/main_window.slint:49
+#: rog-control-center/ui/main_window.slint:50
 msgctxt "Menu4"
 msgid "Fan Curves"
 msgstr ""
 
-#: rog-control-center/ui/main_window.slint:49
+#: rog-control-center/ui/main_window.slint:51
 msgctxt "Menu5"
 msgid "App Settings"
 msgstr ""
 
-#: rog-control-center/ui/main_window.slint:49
+#: rog-control-center/ui/main_window.slint:52
 msgctxt "Menu6"
 msgid "About"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:64
+msgctxt "MainWindow"
+msgid "Quit"
 msgstr ""
 
 #: rog-control-center/ui/types/aura_types.slint:69

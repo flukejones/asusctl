@@ -69,7 +69,7 @@ export component ColourSlider inherits VerticalLayout {
         rgb(c1.red * f, c1.green * f, c1.blue * f)
     }//
     function set_base_colour() {
-        root.base_colour = base_colours[c1.value].interpolate(base_colours[c1.value + 1], c1.value - Math.floor(c1.value));
+        root.base_colour = base_colours[c1.value].mix(base_colours[c1.value + 1], c1.value - Math.floor(c1.value));
         root.final_colour = blend_lightness(base_colour, ((base_shade.length - c2.value) / base_shade.length));
         root.colourbox = root.final_colour;
     }//
@@ -150,8 +150,6 @@ export component ColourSlider inherits VerticalLayout {
             border-radius: 7px;
             border-color: Palette.border;
             background <=> root.colourbox;
-        
-        
         }
     }
 }
