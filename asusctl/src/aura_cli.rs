@@ -214,29 +214,29 @@ pub struct MultiColourSpeed {
 #[derive(Options)]
 pub enum SetAuraBuiltin {
     #[options(help = "set a single static colour")]
-    Static(SingleColour),
+    Static(SingleColour), // 0
     #[options(help = "pulse between one or two colours")]
-    Breathe(TwoColourSpeed),
+    Breathe(TwoColourSpeed), // 1
     #[options(help = "strobe through all colours")]
-    Strobe(SingleSpeed),
+    Strobe(SingleSpeed), // 2
     #[options(help = "rainbow cycling in one of four directions")]
-    Rainbow(SingleSpeedDirection),
+    Rainbow(SingleSpeedDirection), // 3
     #[options(help = "rain pattern mimicking raindrops")]
-    Stars(TwoColourSpeed),
+    Stars(TwoColourSpeed), // 4
     #[options(help = "rain pattern of three preset colours")]
-    Rain(SingleSpeed),
+    Rain(SingleSpeed), // 5
     #[options(help = "pressed keys are highlighted to fade")]
-    Highlight(SingleColourSpeed),
+    Highlight(SingleColourSpeed), // 6
     #[options(help = "pressed keys generate horizontal laser")]
-    Laser(SingleColourSpeed),
+    Laser(SingleColourSpeed), // 7
     #[options(help = "pressed keys ripple outwards like a splash")]
-    Ripple(SingleColourSpeed),
+    Ripple(SingleColourSpeed), // 8
     #[options(help = "set a rapid pulse")]
-    Pulse(SingleColour),
+    Pulse(SingleColour), // 10
     #[options(help = "set a vertical line zooming from left")]
-    Comet(SingleColour),
+    Comet(SingleColour), // 11
     #[options(help = "set a wide vertical line zooming from left")]
-    Flash(SingleColour),
+    Flash(SingleColour), // 12
 }
 
 impl Default for SetAuraBuiltin {

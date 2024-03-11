@@ -23,20 +23,17 @@ export component MainWindow inherits Window {
     show_toast(text) => {
         toast = text != "";
         toast_text = text;
-    
     }
     callback exit-app();
     callback show-notification(bool);
     show-notification(yes) => {
         show-notif = yes;
         fade-cover = yes;
-    
     }
     callback external_colour_change();
     external_colour_change() => {
         aura.external_colour_change();
         aura.external_colour_change();
-    
     }
     min-height: AppSize.height;
     min-width: AppSize.width;
@@ -46,20 +43,30 @@ export component MainWindow inherits Window {
         VerticalLayout {
             side-bar := SideBar {
                 title: @tr("ROG");
-                model: [@tr("Menu1" => "System Control"), @tr("Menu2" => "Keyboard Aura"), @tr("Menu3" => "AniMe Matrix"), @tr("Menu4" => "Fan Curves"), @tr("Menu5" => "App Settings"), @tr("Menu6" => "About"), ];
+                model: [
+                    @tr("Menu1" => "System Control"),
+                    @tr("Menu2" => "Keyboard Aura"),
+                    @tr("Menu3" => "AniMe Matrix"),
+                    @tr("Menu4" => "Fan Curves"),
+                    @tr("Menu5" => "App Settings"),
+                    @tr("Menu6" => "About"),
+                ];
                 available: root.sidebar_items_avilable;
             }
 
             Rectangle {
-                height: qb.height;
+                max-height: 40px;
                 width: side-bar.width;
                 background: Palette.control-background;
-                qb := Button {
-                    max-height: 20px;
-                    text: "Quit";
+                Text {
+                    vertical-alignment: center;
+                    horizontal-alignment: center;
+                    text: @tr("Quit");
+                }
+
+                TouchArea {
                     clicked => {
                         root.exit-app();
-                    
                     }
                 }
             }
@@ -109,10 +116,8 @@ export component MainWindow inherits Window {
                 // toolbar-dropdown.close();
                 if (show-notif) {
                     show-notif = false;
-                
                 }
                 fade-cover = false;
-            
             }
         }
     }
@@ -128,7 +133,6 @@ export component MainWindow inherits Window {
             width: 100%;
             clicked => {
                 toast = false;
-            
             }
         }
 
@@ -155,7 +159,6 @@ export component MainWindow inherits Window {
             clicked => {
                 show-notif = false;
                 exit-app();
-            
             }
         }
 

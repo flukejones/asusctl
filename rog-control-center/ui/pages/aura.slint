@@ -37,9 +37,10 @@ export component PageAura inherits Rectangle {
                 width: parent.width * 1px / 2px;
                 text: @tr("Aura mode");
                 current_index <=> AuraPageData.current_available_mode;
-                    current_value: AuraPageData.available_mode_names[self.current-index];
+                current_value: AuraPageData.available_mode_names[self.current-index];
                 model <=> AuraPageData.available_mode_names;
-                    selected => {
+                selected => {
+                    AuraPageData.led_mode_data.mode = AuraPageData.led_mode;
                     AuraPageData.led_mode_data.mode = AuraPageData.current_available_mode;
                     self.current_value = AuraPageData.available_mode_names[self.current-index];
                     AuraPageData.set_led_mode(AuraPageData.current_available_mode);
@@ -59,13 +60,18 @@ export component PageAura inherits Rectangle {
 
                     HorizontalBox {
                         c1 := ColourSlider {
+                            enabled: AuraPageData.led_mode == 0 || AuraPageData.led_mode == 1 || AuraPageData.led_mode == 4 || AuraPageData.led_mode == 6 || AuraPageData.led_mode == 7 || AuraPageData.led_mode == 8 || AuraPageData.led_mode == 10 || AuraPageData.led_mode == 11 || AuraPageData.led_mode == 12;
                             final_colour <=> AuraPageData.color1;
-                        colourbox <=> AuraPageData.colorbox1;
-                        set_hex_from_colour(c1) => {
+                            colourbox <=> AuraPageData.colorbox1;
+                            set_hex_from_colour(c1) => {
                                 return AuraPageData.set_hex_from_colour(c1);
                             }
                             hex_to_colour(s) => {
                                 return AuraPageData.set_hex_to_colour(s);
+                            }
+                            released => {
+                                AuraPageData.led_mode_data.colour1 = AuraPageData.color1;
+                                AuraPageData.set_led_mode_data(AuraPageData.led_mode_data);
                             }
                         }
                     }
@@ -80,13 +86,18 @@ export component PageAura inherits Rectangle {
 
                     HorizontalBox {
                         c2 := ColourSlider {
+                            enabled: AuraPageData.led_mode == 1 || AuraPageData.led_mode == 4;
                             final_colour <=> AuraPageData.color2;
-                        colourbox <=> AuraPageData.colorbox2;
-                        set_hex_from_colour(c1) => {
+                            colourbox <=> AuraPageData.colorbox2;
+                            set_hex_from_colour(c1) => {
                                 return AuraPageData.set_hex_from_colour(c1);
                             }
                             hex_to_colour(s) => {
                                 return AuraPageData.set_hex_to_colour(s);
+                            }
+                            released => {
+                                AuraPageData.led_mode_data.colour2 = AuraPageData.color2;
+                                AuraPageData.set_led_mode_data(AuraPageData.led_mode_data);
                             }
                         }
                     }
@@ -106,11 +117,14 @@ export component PageAura inherits Rectangle {
                     }
 
                     ComboBox {
+                        // enabled: AuraPageData.led_mode == ;
+                        enabled: false;
                         current_index <=> AuraPageData.zone;
-                                current_value: AuraPageData.zone_names[self.current-index];
+                        current_value: AuraPageData.zone_names[self.current-index];
                         model <=> AuraPageData.zone_names;
-                                selected => {
+                        selected => {
                             AuraPageData.led_mode_data.zone = self.current-index;
+                            AuraPageData.set_led_mode_data(AuraPageData.led_mode_data);
                         }
                     }
                 }
@@ -126,11 +140,13 @@ export component PageAura inherits Rectangle {
                     }
 
                     ComboBox {
+                        enabled: AuraPageData.led_mode == 3;
                         current_index <=> AuraPageData.direction;
-                                current_value: AuraPageData.direction_names[self.current-index];
+                        current_value: AuraPageData.direction_names[self.current-index];
                         model <=> AuraPageData.direction_names;
-                                selected => {
+                        selected => {
                             AuraPageData.led_mode_data.direction = self.current-index;
+                            AuraPageData.set_led_mode_data(AuraPageData.led_mode_data);
                         }
                     }
                 }
@@ -146,11 +162,13 @@ export component PageAura inherits Rectangle {
                     }
 
                     ComboBox {
+                        enabled: AuraPageData.led_mode == 1 || AuraPageData.led_mode == 2 || AuraPageData.led_mode == 3 || AuraPageData.led_mode == 4 || AuraPageData.led_mode == 5 || AuraPageData.led_mode == 6 || AuraPageData.led_mode == 7 || AuraPageData.led_mode == 8;
                         current_index <=> AuraPageData.speed;
-                                current_value: AuraPageData.speed_names[self.current-index];
+                        current_value: AuraPageData.speed_names[self.current-index];
                         model <=> AuraPageData.speed_names;
-                                selected => {
+                        selected => {
                             AuraPageData.led_mode_data.speed = self.current-index;
+                            AuraPageData.set_led_mode_data(AuraPageData.led_mode_data);
                         }
                     }
                 }
@@ -163,16 +181,6 @@ export component PageAura inherits Rectangle {
                 clicked => {
                     root.show_fade_cover = true;
                     root.show_aura_power = true;
-                }
-            }
-
-            Button {
-                text: @tr("Apply Aura");
-                clicked => {
-                    AuraPageData.led_mode_data.mode = AuraPageData.led_mode;
-                    AuraPageData.led_mode_data.colour1 = AuraPageData.color1;
-                    AuraPageData.led_mode_data.colour2 = AuraPageData.color2;
-                    AuraPageData.set_led_mode_data(AuraPageData.led_mode_data);
                 }
             }
         }
