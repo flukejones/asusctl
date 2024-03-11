@@ -1,6 +1,5 @@
 import { SystemSlider, SystemDropdown, SystemToggle } from "../widgets/common.slint";
-import { Theme } from "../globals.slint";
-import { HorizontalBox , VerticalBox, ScrollView, Slider, Button, Switch, ComboBox, GroupBox} from "std-widgets.slint";
+import { Palette, HorizontalBox , VerticalBox, ScrollView, Slider, Button, Switch, ComboBox, GroupBox} from "std-widgets.slint";
 
 export struct AvailableSystemProperties {
     charge_control_end_threshold: bool,
@@ -95,14 +94,14 @@ export component PageSystem inherits Rectangle {
             padding: 10px;
             spacing: 10px;
             Rectangle {
-                background: Theme.background-color;
-                border-color: Colors.black;
-                border-width: 6px;
+                background: Palette.alternate-background;
+                border-color: Palette.accent-background;
+                border-width: 3px;
                 border-radius: 10px;
                 height: 40px;
                 Text {
                     font-size: 18px;
-                    color: Theme.text-foreground-color;
+                    color: Palette.control-foreground;
                     horizontal-alignment: TextHorizontalAlignment.center;
                     text: @tr("Base system settings");
                 }
@@ -168,14 +167,14 @@ export component PageSystem inherits Rectangle {
             }
 
             Rectangle {
-                background: Theme.background-color;
-                border-color: Colors.black;
-                border-width: 6px;
+                background: Palette.alternate-background;
+                border-color: Palette.accent-background;
+                border-width: 3px;
                 border-radius: 10px;
                 height: 40px;
                 Text {
                     font-size: 18px;
-                    color: Theme.text-foreground-color;
+                    color: Palette.control-foreground;
                     horizontal-alignment: TextHorizontalAlignment.center;
                     text: @tr("System performance settings");
                 }
@@ -256,8 +255,8 @@ export component PageSystem inherits Rectangle {
     if root.show_fade_cover: Rectangle {
         width: 100%;
         height: 100%;
-        background: Theme.background-color;
-        opacity: 0.8;
+        background: Palette.background;
+        opacity: 0.9;
         TouchArea {
             height: 100%;
             width: 100%;

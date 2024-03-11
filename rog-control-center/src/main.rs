@@ -79,6 +79,19 @@ fn main() -> Result<()> {
 
     // Startup
     let mut config = Config::new().load();
+    if cli_parsed.fullscreen {
+        config.start_fullscreen = true;
+        if cli_parsed.width_fullscreen != 0 {
+            config.fullscreen_width = cli_parsed.width_fullscreen;
+        }
+        if cli_parsed.height_fullscreen != 0 {
+            config.fullscreen_height = cli_parsed.height_fullscreen;
+        }
+        config.write();
+    } else if cli_parsed.windowed {
+        config.start_fullscreen = false;
+        config.write();
+    }
 
     if config.startup_in_background {
         config.run_in_background = true;

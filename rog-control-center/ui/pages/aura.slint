@@ -1,15 +1,13 @@
 import { SystemDropdown, RogItem, SystemToggle, SystemToggleVert } from "../widgets/common.slint";
-import { Button, ComboBox, VerticalBox, GroupBox } from "std-widgets.slint";
+import { Palette, Button, ComboBox, VerticalBox, GroupBox } from "std-widgets.slint";
 import { StyleMetrics, Slider, HorizontalBox, TextEdit, SpinBox, LineEdit, ScrollView } from "std-widgets.slint";
 import { ColourSlider } from "../widgets/colour_picker.slint";
-import { Theme } from "../globals.slint";
 import { AuraPageData, AuraDevType, AuraDevTuf, AuraDevRog1, PowerZones, KbAuraPowerState, AuraPowerDev, AuraEffect } from "../types/aura_types.slint";
 import { AuraPowerGroup } from "../widgets/aura_power.slint";
 
 export component PageAura inherits Rectangle {
     property <bool> show_fade_cover: false;
     property <bool> show_aura_power: false;
-
     callback external_colour_change();
     external_colour_change() => {
         c1.colourbox = AuraPageData.led_mode_data.colour1;
@@ -23,7 +21,6 @@ export component PageAura inherits Rectangle {
         padding: 10px;
         spacing: 10px;
         alignment: LayoutAlignment.start;
-
         HorizontalLayout {
             spacing: 10px;
             SystemDropdown {
@@ -184,7 +181,7 @@ export component PageAura inherits Rectangle {
     if root.show_fade_cover: Rectangle {
         width: 100%;
         height: 100%;
-        background: Theme.background-color;
+        background: Palette.background;
         opacity: 0.8;
         TouchArea {
             height: 100%;
@@ -203,7 +200,7 @@ export component PageAura inherits Rectangle {
                 spacing: 10px;
                 for power in AuraPageData.supported_power_zones: gr := HorizontalLayout {
                     if power == PowerZones.Keyboard: zone1 := AuraPowerGroup {
-                        title: @tr("Keyboard");
+                        group-title: @tr("Keyboard");
                         boot_checked: AuraPageData.led_power.rog.keyboard.boot;
                         boot_toggled => {
                             AuraPageData.led_power.rog.keyboard.boot = zone1.boot_checked;
@@ -225,8 +222,9 @@ export component PageAura inherits Rectangle {
                             AuraPageData.set_led_power(AuraPageData.led_power);
                         }
                     }
+
                     if power == PowerZones.Logo: zone2 := AuraPowerGroup {
-                        title: @tr("Lid Logo");
+                        group-title: @tr("Lid Logo");
                         boot_checked: AuraPageData.led_power.rog.logo.boot;
                         boot_toggled => {
                             AuraPageData.led_power.rog.logo.boot = zone2.boot_checked;
@@ -248,8 +246,9 @@ export component PageAura inherits Rectangle {
                             AuraPageData.set_led_power(AuraPageData.led_power);
                         }
                     }
+
                     if power == PowerZones.Lightbar: zone3 := AuraPowerGroup {
-                        title: @tr("Lightbar");
+                        group-title: @tr("Lightbar");
                         boot_checked: AuraPageData.led_power.rog.lightbar.boot;
                         boot_toggled => {
                             AuraPageData.led_power.rog.lightbar.boot = zone3.boot_checked;
@@ -271,8 +270,9 @@ export component PageAura inherits Rectangle {
                             AuraPageData.set_led_power(AuraPageData.led_power);
                         }
                     }
+
                     if power == PowerZones.Lid: zone4 := AuraPowerGroup {
-                        title: @tr("Lid Zone");
+                        group-title: @tr("Lid Zone");
                         boot_checked: AuraPageData.led_power.rog.lid.boot;
                         boot_toggled => {
                             AuraPageData.led_power.rog.lid.boot = zone4.boot_checked;
@@ -294,8 +294,9 @@ export component PageAura inherits Rectangle {
                             AuraPageData.set_led_power(AuraPageData.led_power);
                         }
                     }
+
                     if power == PowerZones.RearGlow: zone5 := AuraPowerGroup {
-                        title: @tr("Rear Glow");
+                        group-title: @tr("Rear Glow");
                         boot_checked: AuraPageData.led_power.rog.rear-glow.boot;
                         boot_toggled => {
                             AuraPageData.led_power.rog.rear-glow.boot = zone5.boot_checked;
@@ -344,13 +345,13 @@ export component PageAura inherits Rectangle {
                 spacing: 10px;
                 Rectangle {
                     border-radius: 20px;
-                    background: Theme.window-background;
+                    background: Palette.control-background;
                     VerticalBox {
                         spacing: 10px;
                         alignment: LayoutAlignment.start;
                         Text {
                             font-size: 18px;
-                            color: Theme.text-foreground-color;
+                            color: Palette.control-foreground;
                             horizontal-alignment: TextHorizontalAlignment.center;
                             text: @tr("Keyboard");
                         }
@@ -404,13 +405,13 @@ export component PageAura inherits Rectangle {
                 spacing: 10px;
                 Rectangle {
                     border-radius: 20px;
-                    background: Theme.window-background;
+                    background: Palette.control-background;
                     VerticalBox {
                         spacing: 10px;
                         alignment: LayoutAlignment.start;
                         Text {
                             font-size: 18px;
-                            color: Theme.text-foreground-color;
+                            color: Palette.control-foreground;
                             horizontal-alignment: TextHorizontalAlignment.center;
                             text: @tr("Keyboard");
                         }

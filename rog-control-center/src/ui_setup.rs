@@ -7,7 +7,7 @@ use rog_dbus::zbus_anime::AnimeProxy;
 use rog_dbus::zbus_aura::AuraProxy;
 use rog_dbus::zbus_platform::{PlatformProxy, PlatformProxyBlocking};
 use rog_platform::platform::Properties;
-use slint::{ComponentHandle, Model, RgbaColor, SharedString, Weak};
+use slint::{ComponentHandle, Model, PhysicalSize, RgbaColor, SharedString, Weak};
 use zbus::proxy::CacheProperties;
 
 use crate::config::Config;
@@ -76,8 +76,17 @@ macro_rules! set_ui_callbacks {
     };
 }
 
-pub fn setup_window(_config: Arc<Mutex<Config>>) -> MainWindow {
+pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
     let ui = MainWindow::new().unwrap();
+    if let Ok(lock) = config.try_lock() {
+        let fullscreen = lock.start_fullscreen;
+        let width = lock.fullscreen_width;
+        let height = lock.fullscreen_height;
+        if fullscreen {
+            ui.window().set_fullscreen(fullscreen);
+            ui.window().set_size(PhysicalSize { width, height });
+        }
+    };
 
     let conn = zbus::blocking::Connection::system().unwrap();
     let platform = PlatformProxyBlocking::new(&conn).unwrap();
@@ -102,11 +111,11 @@ pub fn setup_window(_config: Arc<Mutex<Config>>) -> MainWindow {
         slint::quit_event_loop().unwrap();
     });
 
-    setup_app_settings_page(&ui, _config.clone());
-    setup_system_page(&ui, _config.clone());
-    setup_system_page_callbacks(&ui, _config.clone());
-    setup_aura_page(&ui, _config.clone());
-    setup_anime_page(&ui, _config);
+    setup_app_settings_page(&ui, config.clone());
+    setup_system_page(&ui, config.clone());
+    setup_system_page_callbacks(&ui, config.clone());
+    setup_aura_page(&ui, config.clone());
+    setup_anime_page(&ui, config);
 
     ui
 }

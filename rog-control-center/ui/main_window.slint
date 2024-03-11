@@ -1,5 +1,5 @@
-import { Button, VerticalBox } from "std-widgets.slint";
-import { Theme, AppSize } from "globals.slint";
+import { Palette, Button, VerticalBox } from "std-widgets.slint";
+import { AppSize } from "globals.slint";
 import { PageSystem, AvailableSystemProperties, SystemPageData } from "pages/system.slint";
 import { SideBar } from "widgets/sidebar.slint";
 import { PageAbout } from "pages/about.slint";
@@ -10,11 +10,11 @@ import { AuraPageData, AuraDevType, AuraDevTuf, AuraDevRog1, PowerZones, KbAuraP
 export { AuraPageData, AuraDevType, AuraDevTuf, AuraDevRog1, PowerZones, KbAuraPowerState, AuraPowerDev, AuraEffect }
 import { PageAppSettings, AppSettingsPageData } from "pages/app_settings.slint";
 
-export { AppSize, Theme, AvailableSystemProperties, SystemPageData, AnimePageData, AppSettingsPageData }
+export { AppSize, AvailableSystemProperties, SystemPageData, AnimePageData, AppSettingsPageData }
 
 export component MainWindow inherits Window {
     default-font-family: "DejaVu Sans";
-    in property <[bool]> sidebar_items_avilable: [true, true, false, true, true, true];
+    in property <[bool]> sidebar_items_avilable: [true, true, true, true, true, true];
     private property <bool> show-notif;
     private property <bool> fade-cover;
     private property <bool> toast: false;
@@ -23,17 +23,20 @@ export component MainWindow inherits Window {
     show_toast(text) => {
         toast = text != "";
         toast_text = text;
+    
     }
     callback exit-app();
     callback show-notification(bool);
     show-notification(yes) => {
         show-notif = yes;
         fade-cover = yes;
+    
     }
     callback external_colour_change();
     external_colour_change() => {
         aura.external_colour_change();
         aura.external_colour_change();
+    
     }
     min-height: AppSize.height;
     min-width: AppSize.width;
@@ -43,28 +46,27 @@ export component MainWindow inherits Window {
         VerticalLayout {
             side-bar := SideBar {
                 title: @tr("ROG");
-                model: [
-                    @tr("Menu1" => "System Control"),
-                    @tr("Menu2" => "Keyboard Aura"),
-                    @tr("Menu3" => "AniMe Matrix"),
-                    @tr("Menu4" => "Fan Curves"),
-                    @tr("Menu5" => "App Settings"),
-                    @tr("Menu6" => "About"),
-                ];
+                model: [@tr("Menu1" => "System Control"), @tr("Menu2" => "Keyboard Aura"), @tr("Menu3" => "AniMe Matrix"), @tr("Menu4" => "Fan Curves"), @tr("Menu5" => "App Settings"), @tr("Menu6" => "About"), ];
                 available: root.sidebar_items_avilable;
             }
 
-            Button {
-                max-height: 20px;
-                text: "Quit";
-                clicked => {
-                    root.exit-app();
+            Rectangle {
+                height: qb.height;
+                width: side-bar.width;
+                background: Palette.control-background;
+                qb := Button {
+                    max-height: 20px;
+                    text: "Quit";
+                    clicked => {
+                        root.exit-app();
+                    
+                    }
                 }
             }
         }
 
         Rectangle {
-            background: Colors.purple;
+            background: Palette.background;
             if(side-bar.current-item == 0): page := PageSystem {
                 width: root.width - side-bar.width;
                 height: root.height + 12px;
@@ -107,8 +109,10 @@ export component MainWindow inherits Window {
                 // toolbar-dropdown.close();
                 if (show-notif) {
                     show-notif = false;
+                
                 }
                 fade-cover = false;
+            
             }
         }
     }
@@ -124,15 +128,16 @@ export component MainWindow inherits Window {
             width: 100%;
             clicked => {
                 toast = false;
+            
             }
         }
 
         Rectangle {
             height: 100%;
             width: 100%;
-            background: #1a043d;
+            background: Palette.control-background;
             Text {
-                color: Theme.text-foreground-color;
+                color: Palette.control-foreground;
                 text: root.toast_text;
             }
         }
@@ -150,6 +155,7 @@ export component MainWindow inherits Window {
             clicked => {
                 show-notif = false;
                 exit-app();
+            
             }
         }
 
@@ -157,7 +163,7 @@ export component MainWindow inherits Window {
         Rectangle {
             height: 100%;
             width: 100%;
-            background: Theme.neutral-box;
+            background: Palette.background;
             Text {
                 text: "Click here to exit";
             }

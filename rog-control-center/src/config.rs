@@ -17,6 +17,10 @@ pub struct Config {
     pub bat_command: String,
     pub enable_notifications: bool,
     pub dark_mode: bool,
+    // intended for use with devices like the ROG Ally
+    pub start_fullscreen: bool,
+    pub fullscreen_width: u32,
+    pub fullscreen_height: u32,
     // This field must be last
     pub enabled_notifications: EnabledNotifications,
 }
@@ -29,6 +33,9 @@ impl Default for Config {
             enable_notifications: true,
             enable_tray_icon: true,
             dark_mode: true,
+            start_fullscreen: false,
+            fullscreen_width: 1920,
+            fullscreen_height: 1080,
             enabled_notifications: EnabledNotifications::default(),
             ac_command: String::new(),
             bat_command: String::new(),
@@ -84,6 +91,9 @@ impl From<Config461> for Config {
             ac_command: c.ac_command,
             bat_command: c.bat_command,
             dark_mode: true,
+            start_fullscreen: false,
+            fullscreen_width: 1920,
+            fullscreen_height: 1080,
             enable_notifications: c.enable_notifications,
             enabled_notifications: c.enabled_notifications,
         }

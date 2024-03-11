@@ -1,11 +1,11 @@
-import { VerticalBox , StandardButton, Button, HorizontalBox, ComboBox, Switch, Slider} from "std-widgets.slint";
-import { Theme } from "../globals.slint";
+import { Palette, VerticalBox , StandardButton, Button, HorizontalBox, ComboBox, Switch, Slider} from "std-widgets.slint";
 
 export component RogItem inherits Rectangle {
-    background: Theme.background-color;
-    border-color: Colors.black;
+    background: Palette.control-background;
+    border-color: Palette.border;
     border-width: 3px;
     border-radius: 10px;
+    min-height: 46px;
 }
 
 export component SystemSlider inherits RogItem {
@@ -15,21 +15,22 @@ export component SystemSlider inherits RogItem {
     in-out property <float> maximum;
     callback released(int);
     HorizontalLayout {
-        HorizontalBox {
+        HorizontalLayout {
             width: 30%;
-            alignment: LayoutAlignment.start;
+            alignment: LayoutAlignment.space-between;
+            padding-left: 10px;
             Text {
                 font-size: 16px;
                 vertical-alignment: TextVerticalAlignment.center;
-                color: Theme.text-foreground-color;
+                color: Palette.control-foreground;
                 text <=> root.text;
             }
 
             Text {
                 font-size: 16px;
                 vertical-alignment: TextVerticalAlignment.center;
-                color: Theme.text-foreground-color;
-                text: ": \{Math.round(root.value)}";
+                color: Palette.control-foreground;
+                text: "\{Math.round(root.value)}";
             }
         }
 
@@ -53,17 +54,18 @@ export component SystemToggle inherits RogItem {
     in-out property <bool> checked;
     callback toggled(bool);
     HorizontalLayout {
-        HorizontalBox {
+        HorizontalLayout {
             alignment: LayoutAlignment.start;
+            padding-left: 10px;
             Text {
                 font-size: 16px;
                 vertical-alignment: TextVerticalAlignment.center;
-                color: Theme.text-foreground-color;
+                color: Palette.control-foreground;
                 text <=> root.text;
             }
         }
 
-        HorizontalBox {
+        HorizontalLayout {
             alignment: LayoutAlignment.end;
             padding-right: 20px;
             Switch {
@@ -80,25 +82,24 @@ export component SystemToggleVert inherits RogItem {
     in property <string> text;
     in-out property <bool> checked;
     callback toggled(bool);
+    min-height: 86px;
     VerticalLayout {
-        HorizontalBox {
-            alignment: LayoutAlignment.center;
-            padding-top: 10px;
-            Text {
-                font-size: 16px;
-                vertical-alignment: TextVerticalAlignment.bottom;
-                horizontal-alignment: TextHorizontalAlignment.center;
-                color: Theme.text-foreground-color;
-                text <=> root.text;
-            }
+        alignment: LayoutAlignment.space-around;
+        padding-top: 8px;
+        Text {
+            font-size: 16px;
+            vertical-alignment: TextVerticalAlignment.bottom;
+            horizontal-alignment: TextHorizontalAlignment.center;
+            color: Palette.control-foreground;
+            text <=> root.text;
         }
 
-        HorizontalBox {
+        HorizontalLayout {
             alignment: LayoutAlignment.center;
-            padding: 10px;
+            padding-bottom: 10px;
             Switch {
                 checked <=> root.checked;
-                toggled => {
+                    toggled => {
                     root.toggled(root.checked)
                 }
             }
@@ -113,19 +114,22 @@ export component SystemDropdown inherits RogItem {
     in-out property <[string]> model;
     callback selected(int);
     HorizontalLayout {
-        HorizontalBox {
+        HorizontalLayout {
             alignment: LayoutAlignment.start;
+            padding-left: 10px;
             Text {
                 font-size: 16px;
                 vertical-alignment: TextVerticalAlignment.center;
-                color: Theme.text-foreground-color;
+                color: Palette.control-foreground;
                 text <=> root.text;
             }
         }
 
-        HorizontalBox {
+        HorizontalLayout {
             alignment: LayoutAlignment.end;
             padding-right: 20px;
+            padding-top: 7px;
+            padding-bottom: 7px;
             ComboBox {
                 model <=> root.model;
                 current-index <=> root.current_index;
@@ -134,49 +138,6 @@ export component SystemDropdown inherits RogItem {
                     root.selected(root.current_index)
                 }
             }
-        }
-    }
-}
-
-// A variable bar that can be single or double ended
-export component ValueBar inherits Rectangle {
-    in property <float> value: 0.0;
-    in property <float> min: 0.0;
-    in property <float> max: 1.0;
-    function percentage(min: float, max: float, value: float) -> float {
-        if (min < 0.0 && max > 0.0) {
-            // do a percentage of each half as 0-50%
-            if (value >= max + min) {
-                return (value - (max + min) / 2) / (max - min);
-            }
-            return 0.50 - (value - (min - max) / 2) / (max - min);
-        }
-        return (value - min) / (max - min);
-    }function set_x(min: float, max: float, value: float, width: length) -> length {
-        if (min < 0.0 && max > 0.0) {
-            if (value < max + min) {
-                return width / 2 - width * (percentage(min, max, value));
-            }
-            return width / 2;
-        }
-        return 0;
-    }Rectangle {
-        border-radius: 3px;
-        background: Theme.neutral-box;
-        Rectangle {
-            x: set_x(root.min, root.max, root.value, root.width);
-            width: parent.x + parent.width * percentage(root.min, root.max, root.value);
-            border-radius: parent.border-radius;
-            background: Theme.control-secondary;
-        }
-
-        Text {
-            vertical-alignment: center;
-            horizontal-alignment: center;
-            text: root.value;
-            font-size: root.height;
-            font-weight: 900;
-            color: Theme.control-foreground;
         }
     }
 }
@@ -192,8 +153,8 @@ export component PopupNotification {
         // TODO: add properties to display
         Rectangle {
             border-width: 2px;
-            border-color: Theme.control-outline;
-            background: Theme.notification-background;
+            border-color: Palette.accent-background;
+            background: Palette.background;
             // TODO: drop shadows slow
             // drop-shadow-offset-x: 7px;
             // drop-shadow-offset-y: 7px;
@@ -205,14 +166,14 @@ export component PopupNotification {
                         alignment: start;
                         Text {
                             text: heading;
-                            color: Theme.text-foreground-color;
+                            color: Palette.control-foreground;
                             font-size: 32px;
                             font-weight: 900;
                         }
 
                         Text {
                             text: content;
-                            color: Theme.text-foreground-color;
+                            color: Palette.control-foreground;
                             font-size: 18px;
                         }
                     }

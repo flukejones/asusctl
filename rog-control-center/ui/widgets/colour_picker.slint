@@ -1,4 +1,4 @@
-import { Slider, HorizontalBox, Button, LineEdit } from "std-widgets.slint";
+import { Palette, Slider, HorizontalBox, Button, LineEdit } from "std-widgets.slint";
 
 export component ColourSlider inherits VerticalLayout {
     spacing: 10px;
@@ -9,7 +9,6 @@ export component ColourSlider inherits VerticalLayout {
     callback hex_to_colour(string) -> color;
     // required
     callback set_hex_from_colour(color) -> string;
-
     in-out property <float> c1value<=> c1.value;
     in-out property <float> c2value<=> c2.value;
     property <[color]> base_colours: [
@@ -64,11 +63,9 @@ export component ColourSlider inherits VerticalLayout {
         blend_lightness(base_colour, 0.1),
         blend_lightness(base_colour, 0.0)
     ];
-
     function blend_lightness(c1: color, f: float) -> color {
         rgb(c1.red * f, c1.green * f, c1.blue * f)
-    }
-    function set_base_colour() {
+    }function set_base_colour() {
         root.base_colour = base_colours[c1.value].interpolate(base_colours[c1.value + 1], c1.value - Math.floor(c1.value));
         root.final_colour = blend_lightness(base_colour, ((base_shade.length - c2.value) / base_shade.length));
         root.colourbox = root.final_colour;
@@ -82,13 +79,14 @@ export component ColourSlider inherits VerticalLayout {
         c2.value = root.base_shade.length - (root.base_shade.length * root.final_colour.brightness());
         root.set_base_colour();
     }
-
     Rectangle {
         height: 32px;
+        border-width: 2px;
+        border-radius: 7px;
+        border-color: Palette.border;
         // 13 colours
         background: @linear-gradient(90deg, base_colours[0], base_colours[1], base_colours[2], base_colours[3], base_colours[4], base_colours[5], base_colours[6], base_colours[7], base_colours[8], base_colours[9], base_colours[10], base_colours[11], base_colours[12], base_colours[13], base_colours[14], base_colours[15], base_colours[16], base_colours[17], base_colours[18], base_colours[19], base_colours[20], base_colours[21], base_colours[22], base_colours[23], base_colours[24], base_colours[25], base_colours[26], base_colours[27], base_colours[28], base_colours[29], base_colours[30], base_colours[31], base_colours[32], base_colours[33], base_colours[34], base_colours[35]);
         clip: true;
-        border-radius: 6px;
         c1 := Slider {
             width: parent.width;
             height: parent.height;
@@ -104,10 +102,12 @@ export component ColourSlider inherits VerticalLayout {
 
     Rectangle {
         height: 32px;
+        border-width: 2px;
+        border-radius: 7px;
+        border-color: Palette.border;
         // 11 colours
         background: @linear-gradient(90deg, base_shade[0], base_shade[1], base_shade[2], base_shade[3], base_shade[4], base_shade[5], base_shade[6], base_shade[7], base_shade[8], base_shade[9], base_shade[10]);
         clip: true;
-        border-radius: 6px;
         c2 := Slider {
             width: parent.width;
             height: parent.height;
@@ -132,6 +132,9 @@ export component ColourSlider inherits VerticalLayout {
 
         Rectangle {
             width: self.height;
+            border-width: 2px;
+            border-radius: 7px;
+            border-color: Palette.border;
             background <=> root.colourbox;
         }
     }

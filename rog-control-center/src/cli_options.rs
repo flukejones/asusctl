@@ -4,6 +4,14 @@ use gumdrop::Options;
 pub struct CliStart {
     #[options(help_flag, help = "print help message")]
     pub help: bool,
+    #[options(help = "start fullscreen, if used the option is saved")]
+    pub fullscreen: bool,
+    #[options(help = "fullscreen width")]
+    pub width_fullscreen: u32,
+    #[options(help = "fullscreen height")]
+    pub height_fullscreen: u32,
+    #[options(help = "start windowed, if used the option is saved")]
+    pub windowed: bool,
     #[options(help = "show program version number")]
     pub version: bool,
     #[options(

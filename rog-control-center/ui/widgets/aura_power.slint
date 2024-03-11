@@ -1,12 +1,12 @@
-import { VerticalBox, HorizontalBox } from "std-widgets.slint";
+import { Palette, VerticalBox, HorizontalBox, GroupBox } from "std-widgets.slint";
 import { SystemToggleVert } from "common.slint";
-import { Theme } from "../globals.slint";
 
 export component AuraPowerGroup inherits Rectangle {
+    min-width: row.min-width;
     border-radius: 20px;
-    background: Theme.window-background;
-
-    in-out property <string> title;
+    background: Palette.alternate-background;
+    opacity: 0.9;
+    in-out property <string> group-title;
     in-out property <bool> boot_checked;
     in-out property <bool> awake_checked;
     in-out property <bool> sleep_checked;
@@ -15,19 +15,19 @@ export component AuraPowerGroup inherits Rectangle {
     callback awake_toggled(bool);
     callback sleep_toggled(bool);
     callback shutdown_toggled(bool);
-
     VerticalBox {
         spacing: 10px;
-        alignment: LayoutAlignment.start;
         Text {
             font-size: 18px;
-            color: Theme.text-foreground-color;
+            color: Palette.alternate-foreground;
             horizontal-alignment: TextHorizontalAlignment.center;
-            text <=> root.title;
+            text <=> root.group-title;
         }
 
-        HorizontalBox {
+        row := HorizontalBox {
+            alignment: LayoutAlignment.center;
             SystemToggleVert {
+                min-width: 96px;
                 max-height: 42px;
                 text: @tr("Boot");
                 checked <=> root.boot_checked;
@@ -37,6 +37,7 @@ export component AuraPowerGroup inherits Rectangle {
             }
 
             SystemToggleVert {
+                min-width: 96px;
                 max-height: 42px;
                 text: @tr("Awake");
                 checked <=> root.awake_checked;
@@ -46,6 +47,7 @@ export component AuraPowerGroup inherits Rectangle {
             }
 
             SystemToggleVert {
+                min-width: 96px;
                 max-height: 42px;
                 text: @tr("Sleep");
                 checked <=> root.sleep_checked;
@@ -55,6 +57,7 @@ export component AuraPowerGroup inherits Rectangle {
             }
 
             SystemToggleVert {
+                min-width: 96px;
                 max-height: 42px;
                 text: @tr("Shutdown");
                 checked <=> root.shutdown_checked;

@@ -1,6 +1,4 @@
-import { ValueBar } from "../widgets/common.slint";
-import { Theme } from "../globals.slint";
-import { AboutSlint } from "std-widgets.slint";
+import { AboutSlint, VerticalBox, HorizontalBox } from "std-widgets.slint";
 
 export component PageAbout inherits VerticalLayout {
     padding: 10px;
@@ -10,6 +8,35 @@ export component PageAbout inherits VerticalLayout {
         horizontal-alignment: TextHorizontalAlignment.center;
         text: "A UI for asusctl made with slint";
         font-size: 22px;
+    }
+
+    HorizontalBox {
+        alignment: LayoutAlignment.center;
+        VerticalBox {
+            alignment: LayoutAlignment.center;
+            Text {
+                vertical-alignment: TextVerticalAlignment.center;
+                horizontal-alignment: TextHorizontalAlignment.center;
+                text: "Todo:";
+                font-size: 22px;
+            }
+
+            Text {
+                text: "- [x] Theme the widgets";
+            }
+
+            Text {
+                text: "- [x] Add a cpu/gpu temp/fan speed info bar";
+            }
+
+            Text {
+                text: "- [ ] Supergfx control";
+            }
+
+            Text {
+                text: "- [ ] Include fan speeds, temps in a bottom bar";
+            }
+        }
     }
 
     Text {

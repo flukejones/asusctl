@@ -1,6 +1,5 @@
-import { Theme } from "../globals.slint";
 import { SystemDropdown, SystemToggle } from "../widgets/common.slint";
-import { GroupBox, VerticalBox, Button, HorizontalBox } from "std-widgets.slint";
+import { Palette, GroupBox, VerticalBox, Button, HorizontalBox } from "std-widgets.slint";
 
 export global AnimePageData {
     in-out property <[string]> brightness_names: [
@@ -109,7 +108,7 @@ export component PageAnime inherits Rectangle {
     if root.show_fade_cover: Rectangle {
         width: 100%;
         height: 100%;
-        background: Theme.background-color;
+        background: Palette.background;
         opacity: 0.8;
         TouchArea {
             height: 100%;
@@ -136,15 +135,15 @@ export component PageAnime inherits Rectangle {
             padding: 50px;
             spacing: 10px;
             GroupBox {
-                height: 100px;
+                height: 10px;
                 VerticalBox {
                     spacing: 10px;
                     alignment: LayoutAlignment.start;
                     Text {
                         font-size: 18px;
-                        color: Theme.text-foreground-color;
+                        color: Palette.control-foreground;
                         horizontal-alignment: TextHorizontalAlignment.center;
-                        text: @tr("Advanced Anime Display : TODO!");
+                        text: @tr("Set which builtin animations are played");
                     }
 
                     SystemDropdown {
@@ -216,7 +215,7 @@ export component PageAnime inherits Rectangle {
                     alignment: LayoutAlignment.start;
                     Text {
                         font-size: 18px;
-                        color: Theme.text-foreground-color;
+                        color: Palette.control-foreground;
                         horizontal-alignment: TextHorizontalAlignment.center;
                         text: @tr("Advanced Display Settings");
                     }
