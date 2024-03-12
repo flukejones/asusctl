@@ -3,10 +3,6 @@ import { Palette } from "std-widgets.slint";
 export struct Node { x: length, y: length}
 
 export component Graph inherits Rectangle {
-    Text {
-        text: "WORK IN PROGRESS";
-    }
-
     preferred-height: 100%;
     preferred-width: 100%;
     pure callback verify_positions([Node], length, length) -> [Node];
@@ -56,9 +52,9 @@ export component Graph inherits Rectangle {
                             n.x = nodes[idx - 1].x + pad;
                         }
 
-                        if n.y + self.height / 2 - self.mouse-y - self.pressed-y > nodes[idx + 1].y {
+                        if n.y + self.height - self.mouse-y - self.pressed-y > nodes[idx + 1].y {
                             n.y = nodes[idx + 1].y - pad;
-                        } else if n.y - self.mouse-y - self.pressed-y < nodes[idx - 1].y {
+                        } else if n.y + self.height - self.mouse-y - self.pressed-y < nodes[idx - 1].y {
                             n.y = nodes[idx - 1].y + pad;
                         }
                     } else if idx == 0 {
@@ -68,9 +64,9 @@ export component Graph inherits Rectangle {
                             n.x = nodes[idx + 1].x - pad;
                         }
 
-                        if n.y + self.height / 2 - self.mouse-y - self.pressed-y < 0.0 {
+                        if n.y - self.mouse-y - self.pressed-y < 0.0 {
                             n.y = 1px;
-                        } else if n.y + self.height / 2 - self.mouse-y - self.pressed-y > nodes[idx + 1].y {
+                        } else if n.y + self.height - self.mouse-y - self.pressed-y > nodes[idx + 1].y {
                             n.y = nodes[idx + 1].y - pad;
                         }
                     } else if idx == nodes.length - 1 {
@@ -80,9 +76,9 @@ export component Graph inherits Rectangle {
                             n.x = nodes[idx - 1].x + pad;
                         }
 
-                        if n.y + self.height / 2 - self.mouse-y - self.pressed-y > root.height {
+                        if n.y - self.mouse-y - self.pressed-y > root.height {
                             n.y = root.height - 1px;
-                        } else if n.y + self.height / 2 - self.mouse-y - self.pressed-y < nodes[idx - 1].y {
+                        } else if n.y + self.height - self.mouse-y - self.pressed-y < nodes[idx - 1].y {
                             n.y = nodes[idx - 1].y + pad;
                         }
                     }

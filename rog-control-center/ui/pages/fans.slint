@@ -38,11 +38,16 @@ export component PageFans inherits VerticalLayout {
             y: 150px,
         },
     ];
+    Text {
+        text: "WORK IN PROGRESS";
+    }
+
     HorizontalLayout {
         Graph {
             // width: root.preferred-width;
         // height: root.preferred-height;
         nodes <=> root.nodes;
+        
         }
     }
 }
