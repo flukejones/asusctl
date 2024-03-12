@@ -1,0 +1,105 @@
+import { Palette } from "std-widgets.slint";
+
+export struct Node { x: length, y: length}
+
+export component Graph inherits Rectangle {
+    Text {
+        text: "WORK IN PROGRESS";
+    }
+
+    preferred-height: 100%;
+    preferred-width: 100%;
+    pure callback verify_positions([Node], length, length) -> [Node];
+    in-out property <[Node]> nodes;
+
+    for l[idx] in nodes: path := Rectangle {
+        if idx + 1 != nodes.length: Path {
+            viewbox-width: self.width / 1px;
+            viewbox-height: self.height / 1px;
+            stroke: Palette.control-foreground;
+            stroke-width: 2px;
+            MoveTo {
+                x: nodes[idx].x / 1px;
+                y: root.height / 1px - nodes[idx].y / 1px;
+            }
+
+            LineTo {
+                x: nodes[idx + 1].x / 1px;
+                y: root.height / 1px - nodes[idx + 1].y / 1px;
+            }
+        }
+    }
+
+    for n[idx] in nodes: Rectangle {
+        states [
+            pressed when touch.pressed: {
+                state.background: Palette.selection-background;
+            }
+            hover when touch.has-hover: {
+                state.background: Palette.accent-background;
+            }
+        ]state := Rectangle {
+            background: Palette.control-foreground;
+            x: n.x - self.width / 2;
+            y: root.height - n.y - self.height / 2;
+            width: 18px;
+            height: self.width;
+            border-radius: self.width / 2;
+            property <length> pad: self.border-radius / 2;
+
+            touch := TouchArea {
+                function check() {
+                    if idx + 1 < nodes.length && idx > 0 {
+                        if n.x + self.mouse-x - self.pressed-x > nodes[idx + 1].x {
+                            n.x = nodes[idx + 1].x - pad;
+                        } else if n.x + self.mouse-x - self.pressed-x < nodes[idx - 1].x {
+                            n.x = nodes[idx - 1].x + pad;
+                        }
+
+                        if n.y + self.height / 2 - self.mouse-y - self.pressed-y > nodes[idx + 1].y {
+                            n.y = nodes[idx + 1].y - pad;
+                        } else if n.y - self.mouse-y - self.pressed-y < nodes[idx - 1].y {
+                            n.y = nodes[idx - 1].y + pad;
+                        }
+                    } else if idx == 0 {
+                        if n.x + self.mouse-x - self.pressed-x < 0.0 {
+                            n.x = 1px;
+                        } else if n.x + self.mouse-x - self.pressed-x > nodes[idx + 1].x {
+                            n.x = nodes[idx + 1].x - pad;
+                        }
+
+                        if n.y + self.height / 2 - self.mouse-y - self.pressed-y < 0.0 {
+                            n.y = 1px;
+                        } else if n.y + self.height / 2 - self.mouse-y - self.pressed-y > nodes[idx + 1].y {
+                            n.y = nodes[idx + 1].y - pad;
+                        }
+                    } else if idx == nodes.length - 1 {
+                        if n.x + self.mouse-x - self.pressed-x > root.width {
+                            n.x = root.width - 1px;
+                        } else if n.x + self.mouse-x - self.pressed-x < nodes[idx - 1].x {
+                            n.x = nodes[idx - 1].x + pad;
+                        }
+
+                        if n.y + self.height / 2 - self.mouse-y - self.pressed-y > root.height {
+                            n.y = root.height - 1px;
+                        } else if n.y + self.height / 2 - self.mouse-y - self.pressed-y < nodes[idx - 1].y {
+                            n.y = nodes[idx - 1].y + pad;
+                        }
+                    }
+                }moved => {
+                    if (self.pressed) {
+                        n.x += self.mouse-x - self.pressed-x;
+                        n.y -= self.mouse-y - self.pressed-y;
+                        self.check();
+                        // nodes[idx] = n;
+                    }
+                }
+
+                clicked => {
+                    self.check();
+                }
+                mouse-cursor: move;
+            }
+        }
+    }
+}

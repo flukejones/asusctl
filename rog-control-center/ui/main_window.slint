@@ -3,7 +3,8 @@ import { AppSize } from "globals.slint";
 import { PageSystem, AvailableSystemProperties, SystemPageData } from "pages/system.slint";
 import { SideBar } from "widgets/sidebar.slint";
 import { PageAbout } from "pages/about.slint";
-import { PageFans } from "pages/fans.slint";
+import { PageFans, Node } from "pages/fans.slint";
+export { Node }
 import { PageAnime, AnimePageData } from "pages/anime.slint";
 import { PageAura } from "pages/aura.slint";
 import { AuraPageData, AuraDevType, AuraDevTuf, AuraDevRog1, PowerZones, KbAuraPowerState, AuraPowerDev, AuraEffect } from "types/aura_types.slint";
@@ -35,6 +36,7 @@ export component MainWindow inherits Window {
         aura.external_colour_change();
         aura.external_colour_change();
     }
+    pure callback verify_fan_curves([Node], length, length) -> [Node];
     min-height: AppSize.height;
     min-width: AppSize.width;
     background: Colors.black;
@@ -88,8 +90,9 @@ export component MainWindow inherits Window {
                 width: root.width - side-bar.width;
             }
 
-            if(side-bar.current-item == 3): PageFans {
+            fans := PageFans {
                 width: root.width - side-bar.width;
+                visible: side-bar.current-item == 3;
             }
 
             if(side-bar.current-item == 4): PageAppSettings {
