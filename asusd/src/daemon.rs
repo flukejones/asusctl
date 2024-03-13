@@ -69,6 +69,16 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
 
     // supported.add_to_server(&mut connection).await;
 
+    match CtrlFanCurveZbus::new() {
+        Ok(ctrl) => {
+            let sig_ctx = CtrlFanCurveZbus::signal_context(&connection)?;
+            start_tasks(ctrl, &mut connection, sig_ctx).await?;
+        }
+        Err(err) => {
+            error!("FanCurves: {}", err);
+        }
+    }
+
     match CtrlPlatform::new(
         config.clone(),
         &cfg_path,
@@ -80,16 +90,6 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
         Err(err) => {
             error!("CtrlPlatform: {}", err);
-        }
-    }
-
-    match CtrlFanCurveZbus::new() {
-        Ok(ctrl) => {
-            let sig_ctx = CtrlFanCurveZbus::signal_context(&connection)?;
-            start_tasks(ctrl, &mut connection, sig_ctx).await?;
-        }
-        Err(err) => {
-            error!("FanCurves: {}", err);
         }
     }
 

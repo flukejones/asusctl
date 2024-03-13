@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::thread::sleep;
+use std::time::Duration;
 
 use config_traits::{StdConfig, StdConfigLoad};
 use futures_lite::StreamExt;
@@ -65,27 +67,25 @@ impl CtrlFanCurveZbus {
             if config.profiles.balanced.is_empty() || !config.file_path().exists() {
                 info!("{MOD_NAME}: Fetching default fan curves");
 
+                let current = platform.get_throttle_thermal_policy()?;
                 for this in [
                     ThrottlePolicy::Balanced,
                     ThrottlePolicy::Performance,
                     ThrottlePolicy::Quiet,
                 ] {
+                    let mut dev = find_fan_curve_node()?;
                     // For each profile we need to switch to it before we
                     // can read the existing values from hardware. The ACPI method used
                     // for this is what limits us.
-                    let next = ThrottlePolicy::next(this);
-                    platform.set_throttle_thermal_policy(next.into())?;
+                    platform.set_throttle_thermal_policy(this.into())?;
+                    fan_curves.set_active_curve_to_defaults(this, &mut dev)?;
 
-                    let active = platform
-                        .get_throttle_thermal_policy()
-                        .map_or(ThrottlePolicy::Balanced, |t| t.into());
-                    fan_curves.read_from_dev_profile(active, &find_fan_curve_node()?)?;
-
-                    info!("{MOD_NAME}: {active:?}:");
-                    for curve in fan_curves.get_fan_curves_for(active) {
+                    info!("{MOD_NAME}: {this:?}:");
+                    for curve in fan_curves.get_fan_curves_for(this) {
                         info!("{}", String::from(curve));
                     }
                 }
+                platform.set_throttle_thermal_policy(current)?;
                 config.profiles = fan_curves;
                 config.write();
             } else {
