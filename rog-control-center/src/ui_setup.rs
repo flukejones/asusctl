@@ -5,15 +5,16 @@ use rog_anime::Animations;
 use rog_aura::usb::AuraPowerDev;
 use rog_dbus::zbus_anime::AnimeProxy;
 use rog_dbus::zbus_aura::AuraProxy;
+use rog_dbus::zbus_fan_curves::FanCurvesProxy;
 use rog_dbus::zbus_platform::{PlatformProxy, PlatformProxyBlocking};
-use rog_platform::platform::Properties;
+use rog_platform::platform::{Properties, ThrottlePolicy};
 use slint::{ComponentHandle, Model, PhysicalSize, RgbaColor, SharedString, Weak};
 use zbus::proxy::CacheProperties;
 
 use crate::config::Config;
 use crate::{
-    AnimePageData, AppSettingsPageData, AuraPageData, AvailableSystemProperties, MainWindow,
-    PowerZones as SlintPowerZones, SystemPageData,
+    AnimePageData, AppSettingsPageData, AuraPageData, AvailableSystemProperties, FanPageData,
+    MainWindow, Node, PowerZones as SlintPowerZones, SystemPageData,
 };
 
 // This macro expects are consistent naming between proxy calls and slint
@@ -115,9 +116,94 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
     setup_system_page(&ui, config.clone());
     setup_system_page_callbacks(&ui, config.clone());
     setup_aura_page(&ui, config.clone());
-    setup_anime_page(&ui, config);
+    setup_anime_page(&ui, config.clone());
+    setup_fan_curve_page(&ui, config);
 
     ui
+}
+
+pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
+    let handle = ui.as_weak();
+
+    tokio::spawn(async move {
+        // Create the connections/proxies here to prevent future delays in process
+        let conn = zbus::Connection::system().await.unwrap();
+        let fans = FanCurvesProxy::new(&conn).await.unwrap();
+
+        // Do initial setup
+        let balanced = fans.fan_curve_data(ThrottlePolicy::Balanced).await.unwrap();
+        let perf = fans
+            .fan_curve_data(ThrottlePolicy::Performance)
+            .await
+            .unwrap();
+        let quiet = fans.fan_curve_data(ThrottlePolicy::Quiet).await.unwrap();
+
+        handle
+            .upgrade_in_event_loop(move |handle| {
+                let global = handle.global::<FanPageData>();
+                let collect = |temp: &[u8], pwm: &[u8]| -> slint::ModelRc<Node> {
+                    let tmp: Vec<Node> = temp
+                        .iter()
+                        .zip(pwm.iter())
+                        .map(|(x, y)| Node {
+                            x: *x as f32,
+                            y: *y as f32,
+                        })
+                        .collect();
+                    tmp.as_slice().into()
+                };
+
+                for fan in balanced {
+                    match fan.fan {
+                        rog_profiles::FanCurvePU::CPU => {
+                            global.set_balanced_cpu_available(true);
+                            global.set_balanced_cpu(collect(&fan.temp, &fan.pwm))
+                        }
+                        rog_profiles::FanCurvePU::GPU => {
+                            global.set_balanced_gpu_available(true);
+                            global.set_balanced_gpu(collect(&fan.temp, &fan.pwm))
+                        }
+                        rog_profiles::FanCurvePU::MID => {
+                            global.set_balanced_mid_available(true);
+                            global.set_balanced_mid(collect(&fan.temp, &fan.pwm))
+                        }
+                    }
+                }
+                for fan in perf {
+                    match fan.fan {
+                        rog_profiles::FanCurvePU::CPU => {
+                            global.set_performance_cpu_available(true);
+                            global.set_performance_cpu(collect(&fan.temp, &fan.pwm))
+                        }
+                        rog_profiles::FanCurvePU::GPU => {
+                            global.set_performance_gpu_available(true);
+                            global.set_performance_gpu(collect(&fan.temp, &fan.pwm))
+                        }
+                        rog_profiles::FanCurvePU::MID => {
+                            global.set_performance_mid_available(true);
+                            global.set_performance_mid(collect(&fan.temp, &fan.pwm))
+                        }
+                    }
+                }
+                for fan in quiet {
+                    match fan.fan {
+                        rog_profiles::FanCurvePU::CPU => {
+                            global.set_quiet_cpu_available(true);
+                            global.set_quiet_cpu(collect(&fan.temp, &fan.pwm))
+                        }
+                        rog_profiles::FanCurvePU::GPU => {
+                            global.set_quiet_gpu_available(true);
+                            global.set_quiet_gpu(collect(&fan.temp, &fan.pwm))
+                        }
+                        rog_profiles::FanCurvePU::MID => {
+                            global.set_quiet_mid_available(true);
+                            global.set_quiet_mid(collect(&fan.temp, &fan.pwm))
+                        }
+                    }
+                }
+            })
+            .unwrap();
+    });
 }
 
 pub fn setup_app_settings_page(ui: &MainWindow, config: Arc<Mutex<Config>>) {

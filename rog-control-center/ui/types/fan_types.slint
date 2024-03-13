@@ -13,12 +13,18 @@ export enum FanType {
  }
 
 export global FanPageData {
-    in-out property <[Profile]> avilable_profiles: [Profile.Balanced, Profile.Performance, Profile.Quiet];
-    in-out property <[FanType]> avilable_fans: [FanType.CPU, FanType.Middle, FanType.GPU];
+    in-out property <[Profile]> available_profiles: [Profile.Balanced, Profile.Performance, Profile.Quiet];
+    in-out property <[FanType]> available_fans: [FanType.CPU, FanType.Middle, FanType.GPU];
 
     in-out property <bool> balanced_cpu_available: true;
-    in-out property <bool> balanced_gpu_available: false;
-    in-out property <bool> balanced_mid_available: true;
+    in-out property <bool> balanced_gpu_available: true;
+    in-out property <bool> balanced_mid_available: false;
+    in-out property <bool> performance_cpu_available: true;
+    in-out property <bool> performance_gpu_available: true;
+    in-out property <bool> performance_mid_available: false;
+    in-out property <bool> quiet_cpu_available: true;
+    in-out property <bool> quiet_gpu_available: true;
+    in-out property <bool> quiet_mid_available: false;
 
     in-out property <[Node]> balanced_cpu: [
         {

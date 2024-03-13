@@ -5,7 +5,7 @@ export struct Node { x: length, y: length}
 export component Graph inherits Rectangle {
     in-out property <[Node]> nodes;
     in property <Node> node_min: { x: 0px, y: 0px };
-    in property <Node> node_max: { x: 100px, y: 100px };
+    in property <Node> node_max: { x: 100px, y: 255px };
     property <length> graph_padding: 20px;
     graph := Rectangle {
         width: root.width - root.graph_padding * 2;
