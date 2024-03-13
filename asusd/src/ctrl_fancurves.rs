@@ -1,7 +1,5 @@
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::thread::sleep;
-use std::time::Duration;
 
 use config_traits::{StdConfig, StdConfigLoad};
 use futures_lite::StreamExt;
@@ -73,11 +71,11 @@ impl CtrlFanCurveZbus {
                     ThrottlePolicy::Performance,
                     ThrottlePolicy::Quiet,
                 ] {
-                    let mut dev = find_fan_curve_node()?;
                     // For each profile we need to switch to it before we
                     // can read the existing values from hardware. The ACPI method used
                     // for this is what limits us.
                     platform.set_throttle_thermal_policy(this.into())?;
+                    let mut dev = find_fan_curve_node()?;
                     fan_curves.set_active_curve_to_defaults(this, &mut dev)?;
 
                     info!("{MOD_NAME}: {this:?}:");
