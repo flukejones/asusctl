@@ -66,10 +66,6 @@ and AniMe parts should work regardless of your latop make.
 
 A gui is now in the repo - ROG Control Center. At this time it is still a WIP, but it has almost all features in place already.
 
-![](/extra/system.png)
-![](/extra/fan-curves.png)
-![](/extra/keyboard.png)
-
 # BUILDING
 
 Requirements are rust >= 1.75 installed from rustup.io if the distro provided version is too old, and `make`.
