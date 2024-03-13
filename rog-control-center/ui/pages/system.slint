@@ -112,7 +112,7 @@ export component PageSystem inherits Rectangle {
                 minimum: 20;
                 maximum: 100;
                 value <=> SystemPageData.charge_control_end_threshold;
-                                released => {
+                released => {
                     SystemPageData.set_charge_control_end_threshold(Math.round(SystemPageData.charge_control_end_threshold))
                 }
             }
@@ -124,7 +124,7 @@ export component PageSystem inherits Rectangle {
                     current_index <=> SystemPageData.throttle_thermal_policy;
                     current_value: SystemPageData.throttle_policy_choices[SystemPageData.throttle_thermal_policy];
                     model <=> SystemPageData.throttle_policy_choices;
-                                selected => {
+                    selected => {
                         SystemPageData.set_throttle_thermal_policy(SystemPageData.throttle_thermal_policy)
                     }
                 }
@@ -144,7 +144,7 @@ export component PageSystem inherits Rectangle {
                 if SystemPageData.available.panel-od: SystemToggle {
                     text: @tr("Panel Overdrive");
                     checked <=> SystemPageData.panel_od;
-                                    toggled => {
+                    toggled => {
                         SystemPageData.set_panel_od(SystemPageData.panel_od)
                     }
                 }
@@ -152,7 +152,7 @@ export component PageSystem inherits Rectangle {
                 if SystemPageData.available.mini-led-mode: SystemToggle {
                     text: @tr("MiniLED Mode");
                     checked <=> SystemPageData.mini_led_mode;
-                                    toggled => {
+                    toggled => {
                         SystemPageData.set_mini_led_mode(SystemPageData.mini_led_mode)
                     }
                 }
@@ -160,7 +160,7 @@ export component PageSystem inherits Rectangle {
                 if SystemPageData.available.boot-sound: SystemToggle {
                     text: @tr("POST boot sound");
                     checked <=> SystemPageData.boot_sound;
-                                    toggled => {
+                    toggled => {
                         SystemPageData.set_boot_sound(SystemPageData.boot_sound)
                     }
                 }
@@ -185,7 +185,7 @@ export component PageSystem inherits Rectangle {
                 minimum: 5;
                 maximum: 250;
                 value <=> SystemPageData.ppt_pl1_spl;
-                                released => {
+                released => {
                     SystemPageData.set_ppt_pl1_spl(Math.round(SystemPageData.ppt_pl1_spl))
                 }
             }
@@ -195,7 +195,7 @@ export component PageSystem inherits Rectangle {
                 minimum: 5;
                 maximum: 250;
                 value <=> SystemPageData.ppt_pl2_sppt;
-                                released => {
+                released => {
                     SystemPageData.set_ppt_pl2_sppt(Math.round(SystemPageData.ppt_pl2_sppt))
                 }
             }
@@ -205,7 +205,7 @@ export component PageSystem inherits Rectangle {
                 minimum: 5;
                 maximum: 250;
                 value <=> SystemPageData.ppt_fppt;
-                                released => {
+                released => {
                     SystemPageData.set_ppt_fppt(Math.round(SystemPageData.ppt_fppt))
                 }
             }
@@ -215,7 +215,7 @@ export component PageSystem inherits Rectangle {
                 minimum: 5;
                 maximum: 130;
                 value <=> SystemPageData.ppt_apu_sppt;
-                                released => {
+                released => {
                     SystemPageData.set_ppt_apu_sppt(Math.round(SystemPageData.ppt_apu_sppt))
                 }
             }
@@ -225,7 +225,7 @@ export component PageSystem inherits Rectangle {
                 maximum: 130;
                 minimum: 5;
                 value <=> SystemPageData.ppt_platform_sppt;
-                                released => {
+                released => {
                     SystemPageData.set_ppt_platform_sppt(Math.round(SystemPageData.ppt_platform_sppt))
                 }
             }
@@ -235,7 +235,7 @@ export component PageSystem inherits Rectangle {
                 minimum: 5;
                 maximum: 25;
                 value <=> SystemPageData.nv_dynamic_boost;
-                                released => {
+                released => {
                     SystemPageData.set_nv_dynamic_boost(Math.round(SystemPageData.nv_dynamic_boost))
                 }
             }
@@ -245,7 +245,7 @@ export component PageSystem inherits Rectangle {
                 minimum: 75;
                 maximum: 87;
                 value <=> SystemPageData.nv_temp_target;
-                                released => {
+                released => {
                     SystemPageData.set_nv_temp_target(Math.round(SystemPageData.nv_temp_target))
                 }
             }

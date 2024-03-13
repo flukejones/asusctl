@@ -1,53 +1,154 @@
-import { Palette } from "std-widgets.slint";
-import { Graph } from "../widgets/graph.slint";
+import { Palette, TabWidget, Button, CheckBox } from "std-widgets.slint";
+import { Graph, Node } from "../widgets/graph.slint";
+import { SystemToggle } from "../widgets/common.slint";
+import { Profile, FanType, FanPageData } from "../types/fan_types.slint";
 
-export struct Node { x: length, y: length}
+component FanTab inherits Rectangle {
+    in-out property <bool> enabled: false;
+    in-out property <bool> tab_enabled: false;
+    in property <Profile> profile;
+    in property <FanType> fan_type;
+    callback apply();
+    callback cancel();
+    callback default();
+    callback toggled();
+    in property <string> title;
+    in-out property <[Node]> nodes;
 
-export component PageFans inherits VerticalLayout {
-    in-out property <[Node]> nodes: [
-        {
-            x: 10px,
-            y: 10px,
-        },
-        {
-            x: 40px,
-            y: 30px,
-        },
-        {
-            x: 70px,
-            y: 50px,
-        },
-        {
-            x: 100px,
-            y: 70px,
-        },
-        {
-            x: 130px,
-            y: 90px,
-        },
-        {
-            x: 160px,
-            y: 110px,
-        },
-        {
-            x: 190px,
-            y: 130px,
-        },
-        {
-            x: 220px,
-            y: 150px,
-        },
-    ];
-    Text {
-        text: "WORK IN PROGRESS";
+    if !root.tab_enabled: VerticalLayout {
+        alignment: center;
+        HorizontalLayout {
+            alignment: center;
+            Text {
+                font-size: 24px;
+                text: "WIP: Not enabled yet";
+            }
+        }
     }
 
-    HorizontalLayout {
-        Graph {
-            // width: root.preferred-width;
-        // height: root.preferred-height;
-        nodes <=> root.nodes;
-        
+    VerticalLayout {
+        HorizontalLayout {
+            Graph {
+                nodes <=> root.nodes;
+            }
+        }
+
+        HorizontalLayout {
+            alignment: LayoutAlignment.end;
+            CheckBox {
+                text: @tr("Enabled");
+                checked <=> root.enabled;
+                enabled <=> root.tab_enabled;
+                toggled => {
+                    root.toggled();
+                }
+            }
+
+            Button {
+                text: @tr("Apply");
+                enabled <=> root.tab_enabled;
+                clicked => {
+                    root.apply();
+                }
+            }
+
+            Button {
+                text: @tr("Cancel");
+                enabled <=> root.tab_enabled;
+                clicked => {
+                    root.cancel()
+                }
+            }
+
+            Button {
+                text: @tr("Factory Default");
+                enabled <=> root.tab_enabled;
+                clicked => {
+                    root.default();
+                }
+            }
+        }
+    }
+}
+
+export component PageFans inherits VerticalLayout {
+    TabWidget {
+        Tab {
+            title: @tr("Balanced");
+            TabWidget {
+                Tab {
+                    title: @tr("CPU");
+                    FanTab {
+                        nodes <=> FanPageData.balanced_cpu;
+                    }
+                }
+
+                Tab {
+                    title: @tr("Mid");
+                    FanTab {
+                        nodes <=> FanPageData.balanced_mid;
+                    }
+                }
+
+                Tab {
+                    title: @tr("GPU");
+                    FanTab {
+                        nodes <=> FanPageData.balanced_gpu;
+                    }
+                }
+            }
+        }
+
+        Tab {
+            title: @tr("Performance");
+            TabWidget {
+                Tab {
+                    title: @tr("CPU");
+                    FanTab {
+                        nodes <=> FanPageData.performance_cpu;
+                    }
+                }
+
+                Tab {
+                    title: @tr("Mid");
+                    FanTab {
+                        nodes <=> FanPageData.performance_mid;
+                    }
+                }
+
+                Tab {
+                    title: @tr("GPU");
+                    FanTab {
+                        nodes <=> FanPageData.performance_gpu;
+                    }
+                }
+            }
+        }
+
+        Tab {
+            title: @tr("Quiet");
+            TabWidget {
+                Tab {
+                    title: @tr("CPU");
+                    FanTab {
+                        nodes <=> FanPageData.quiet_cpu;
+                    }
+                }
+
+                Tab {
+                    title: @tr("Mid");
+                    FanTab {
+                        nodes <=> FanPageData.quiet_mid;
+                    }
+                }
+
+                Tab {
+                    title: @tr("GPU");
+                    FanTab {
+                        nodes <=> FanPageData.quiet_gpu;
+                    }
+                }
+            }
         }
     }
 }

@@ -24,7 +24,6 @@ export component SystemSlider inherits RogItem {
                 vertical-alignment: TextVerticalAlignment.center;
                 color: Palette.control-foreground;
                 text <=> root.text;
-            
             }
 
             Text {
@@ -63,7 +62,6 @@ export component SystemToggle inherits RogItem {
                 vertical-alignment: TextVerticalAlignment.center;
                 color: Palette.control-foreground;
                 text <=> root.text;
-            
             }
         }
 
@@ -94,7 +92,6 @@ export component SystemToggleVert inherits RogItem {
             horizontal-alignment: TextHorizontalAlignment.center;
             color: Palette.control-foreground;
             text <=> root.text;
-        
         }
 
         HorizontalLayout {
@@ -102,7 +99,7 @@ export component SystemToggleVert inherits RogItem {
             padding-bottom: 10px;
             Switch {
                 checked <=> root.checked;
-                    toggled => {
+                toggled => {
                     root.toggled(root.checked)
                 }
             }
@@ -125,7 +122,6 @@ export component SystemDropdown inherits RogItem {
                 vertical-alignment: TextVerticalAlignment.center;
                 color: Palette.control-foreground;
                 text <=> root.text;
-            
             }
         }
 

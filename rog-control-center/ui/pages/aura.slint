@@ -26,9 +26,9 @@ export component PageAura inherits Rectangle {
             SystemDropdown {
                 text: @tr("Brightness");
                 current_index <=> AuraPageData.brightness;
-                    current_value: AuraPageData.brightness_names[self.current-index];
+                current_value: AuraPageData.brightness_names[self.current-index];
                 model <=> AuraPageData.brightness_names;
-                    selected => {
+                selected => {
                     AuraPageData.set_brightness(AuraPageData.brightness)
                 }
             }

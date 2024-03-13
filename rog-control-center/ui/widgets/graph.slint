@@ -3,98 +3,111 @@ import { Palette } from "std-widgets.slint";
 export struct Node { x: length, y: length}
 
 export component Graph inherits Rectangle {
-    preferred-height: 100%;
-    preferred-width: 100%;
-    pure callback verify_positions([Node], length, length) -> [Node];
     in-out property <[Node]> nodes;
+    in property <Node> node_min: { x: 0px, y: 0px };
+    in property <Node> node_max: { x: 100px, y: 100px };
+    property <length> graph_padding: 20px;
+    graph := Rectangle {
+        width: root.width - root.graph_padding * 2;
+        height: root.height - root.graph_padding * 2;
+        x: root.graph_padding;
+        y: root.graph_padding;
+        function scale_x_to_graph(x: length) -> length {
+            ((x - node_min.x) / (node_max.x - node_min.x)) * graph.width
+        }function scale_y_to_graph(y: length) -> length {
+            ((y - node_min.y) / (node_max.y - node_min.y)) * graph.height
+        }function scale_x_to_node(x: length) -> length {
+            (x / graph.width) * (node_max.x - node_min.x)
+        }function scale_y_to_node(y: length) -> length {
+            (y / graph.height) * (node_max.y - node_min.y)
+        }for l[idx] in nodes: path := Rectangle {
+            if idx + 1 != nodes.length: Path {
+                viewbox-width: self.width / 1px;
+                viewbox-height: self.height / 1px;
+                stroke: Palette.control-foreground;
+                stroke-width: 2px;
+                MoveTo {
+                    x: scale_x_to_graph(nodes[idx].x) / 1px;
+                    y: graph.height / 1px - scale_y_to_graph(nodes[idx].y) / 1px;
+                }
 
-    for l[idx] in nodes: path := Rectangle {
-        if idx + 1 != nodes.length: Path {
-            viewbox-width: self.width / 1px;
-            viewbox-height: self.height / 1px;
-            stroke: Palette.control-foreground;
-            stroke-width: 2px;
-            MoveTo {
-                x: nodes[idx].x / 1px;
-                y: root.height / 1px - nodes[idx].y / 1px;
-            }
-
-            LineTo {
-                x: nodes[idx + 1].x / 1px;
-                y: root.height / 1px - nodes[idx + 1].y / 1px;
+                LineTo {
+                    x: scale_x_to_graph(nodes[idx + 1].x) / 1px;
+                    y: graph.height / 1px - scale_y_to_graph(nodes[idx + 1].y) / 1px;
+                }
             }
         }
-    }
 
-    for n[idx] in nodes: Rectangle {
-        states [
+        for n[idx] in nodes: Rectangle {
+            states [
             pressed when touch.pressed: {
-                state.background: Palette.selection-background;
-            }
-            hover when touch.has-hover: {
-                state.background: Palette.accent-background;
-            }
-        ]state := Rectangle {
-            background: Palette.control-foreground;
-            x: n.x - self.width / 2;
-            y: root.height - n.y - self.height / 2;
-            width: 18px;
-            height: self.width;
-            border-radius: self.width / 2;
-            property <length> pad: self.border-radius / 2;
+                    state.background: Palette.selection-background;
+                }
+                hover when touch.has-hover: {
+                    state.background: Palette.accent-background;
+                }
+            ]state := Rectangle {
+                background: Palette.control-foreground;
+                x: scale_x_to_graph(n.x) - self.width / 2;
+                y: graph.height - scale_y_to_graph(n.y) - self.height / 2;
+                width: 18px;
+                height: self.width;
+                border-radius: self.width / 2;
+                property <length> pad: 1px;
 
-            touch := TouchArea {
-                function check() {
-                    if idx + 1 < nodes.length && idx > 0 {
-                        if n.x + self.mouse-x - self.pressed-x > nodes[idx + 1].x {
-                            n.x = nodes[idx + 1].x - pad;
-                        } else if n.x + self.mouse-x - self.pressed-x < nodes[idx - 1].x {
-                            n.x = nodes[idx - 1].x + pad;
-                        }
+                touch := TouchArea {
+                    function check() {
+                        if idx + 1 < nodes.length && idx > 0 {
+                            if n.x + scale_x_to_node(self.mouse-x - self.pressed-x) > nodes[idx + 1].x {
+                                n.x = nodes[idx + 1].x - pad;
+                            } else if n.x + scale_x_to_node(self.mouse-x - self.pressed-x) < nodes[idx - 1].x {
+                                n.x = nodes[idx - 1].x + pad;
+                            }
 
-                        if n.y + self.height - self.mouse-y - self.pressed-y > nodes[idx + 1].y {
-                            n.y = nodes[idx + 1].y - pad;
-                        } else if n.y + self.height - self.mouse-y - self.pressed-y < nodes[idx - 1].y {
-                            n.y = nodes[idx - 1].y + pad;
-                        }
-                    } else if idx == 0 {
-                        if n.x + self.mouse-x - self.pressed-x < 0.0 {
-                            n.x = 1px;
-                        } else if n.x + self.mouse-x - self.pressed-x > nodes[idx + 1].x {
-                            n.x = nodes[idx + 1].x - pad;
-                        }
+                            if n.y + scale_y_to_node(self.height - self.mouse-y - self.pressed-y) > nodes[idx + 1].y {
+                                n.y = nodes[idx + 1].y - pad;
+                            } else if n.y + scale_y_to_node(self.height - self.mouse-y - self.pressed-y) < nodes[idx - 1].y {
+                                n.y = nodes[idx - 1].y + pad;
+                            }
+                        } else if idx == 0 {
+                            if n.x + scale_x_to_node(self.mouse-x - self.pressed-x) < 0.0 {
+                                n.x = 1px;
+                            } else if n.x + scale_x_to_node(self.mouse-x - self.pressed-x) > nodes[idx + 1].x {
+                                n.x = nodes[idx + 1].x - pad;
+                            }
 
-                        if n.y - self.mouse-y - self.pressed-y < 0.0 {
-                            n.y = 1px;
-                        } else if n.y + self.height - self.mouse-y - self.pressed-y > nodes[idx + 1].y {
-                            n.y = nodes[idx + 1].y - pad;
-                        }
-                    } else if idx == nodes.length - 1 {
-                        if n.x + self.mouse-x - self.pressed-x > root.width {
-                            n.x = root.width - 1px;
-                        } else if n.x + self.mouse-x - self.pressed-x < nodes[idx - 1].x {
-                            n.x = nodes[idx - 1].x + pad;
-                        }
+                            if n.y - scale_y_to_node(self.mouse-y - self.pressed-y) < 0.0 {
+                                n.y = 1px;
+                            } else if n.y + scale_y_to_node(self.height - self.mouse-y - self.pressed-y) > nodes[idx + 1].y {
+                                n.y = nodes[idx + 1].y - pad;
+                            }
+                        } else if idx == nodes.length - 1 {
+                            if n.x + scale_x_to_node(self.mouse-x - self.pressed-x) > scale_x_to_node(graph.width) {
+                                n.x = scale_x_to_node(graph.width - 1px);
+                            } else if n.x + scale_x_to_node(self.mouse-x - self.pressed-x) < nodes[idx - 1].x {
+                                n.x = nodes[idx - 1].x + pad;
+                            }
 
-                        if n.y - self.mouse-y - self.pressed-y > root.height {
-                            n.y = root.height - 1px;
-                        } else if n.y + self.height - self.mouse-y - self.pressed-y < nodes[idx - 1].y {
-                            n.y = nodes[idx - 1].y + pad;
+                            if n.y - scale_y_to_node(self.mouse-y - self.pressed-y) > scale_y_to_node(graph.height) {
+                                n.y = scale_y_to_node(graph.height - 1px);
+                            } else if n.y + scale_y_to_node(self.height - self.mouse-y - self.pressed-y) < nodes[idx - 1].y {
+                                n.y = nodes[idx - 1].y + pad;
+                            }
                         }
+                    }moved => {
+                        if (self.pressed) {
+                            n.x += scale_x_to_node(self.mouse-x - self.pressed-x);
+                            n.y -= scale_y_to_node(self.mouse-y - self.pressed-y);
+                            self.check();
+                            // nodes[idx] = n;
                     }
-                }moved => {
-                    if (self.pressed) {
-                        n.x += self.mouse-x - self.pressed-x;
-                        n.y -= self.mouse-y - self.pressed-y;
+                    }
+
+                    clicked => {
                         self.check();
-                        // nodes[idx] = n;
                     }
+                    mouse-cursor: move;
                 }
-
-                clicked => {
-                    self.check();
-                }
-                mouse-cursor: move;
             }
         }
     }
