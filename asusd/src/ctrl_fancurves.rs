@@ -62,7 +62,6 @@ impl CtrlFanCurveZbus {
             let mut fan_curves = FanCurveProfiles::default();
 
             // Only do defaults if the config doesn't already exist\
-            dbg!(&config);
             if config.profiles.balanced.is_empty() || !config.file_path().exists() {
                 info!("{MOD_NAME}: Fetching default fan curves");
 
