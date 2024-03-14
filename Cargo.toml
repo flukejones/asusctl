@@ -53,7 +53,7 @@ env_logger = "^0.10.0"
 
 glam = { version = "^0.22", features = ["serde"] }
 gumdrop = "^0.8"
-udev = "^0.7"
+udev = "^0.8"
 rusb = "^0.9"
 inotify = "^0.10.0"
 

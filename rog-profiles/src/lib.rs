@@ -183,7 +183,13 @@ impl FanCurveProfiles {
             ThrottlePolicy::Performance => &mut self.performance,
             ThrottlePolicy::Quiet => &mut self.quiet,
         };
-        for fan in fans {
+        for fan in fans.iter().filter(|f| !f.enabled) {
+            debug!("write_profile_curve_to_platform: writing profile:{profile}, {fan:?}");
+            fan.write_to_device(device)?;
+        }
+        // Write enabled fans last because the kernel currently resets *all* if one is
+        // disabled
+        for fan in fans.iter().filter(|f| f.enabled) {
             debug!("write_profile_curve_to_platform: writing profile:{profile}, {fan:?}");
             fan.write_to_device(device)?;
         }

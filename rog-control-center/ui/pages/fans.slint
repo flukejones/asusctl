@@ -19,6 +19,7 @@ component FanTab inherits Rectangle {
         HorizontalLayout {
             if root.tab_enabled: Graph {
                 nodes <=> root.nodes;
+            
             }
             if !root.tab_enabled: Rectangle {
                 Text {

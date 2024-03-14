@@ -1,6 +1,3 @@
-use std::fs::OpenOptions;
-use std::io::Write;
-
 use log::trace;
 use serde_derive::{Deserialize, Serialize};
 use typeshare::typeshare;
@@ -186,14 +183,9 @@ impl CurveData {
         }
 
         // Enable must be done *after* all points are written pwm3_enable
-        // device.syspath()
-        let mut path = device.syspath().to_path_buf();
-        path.push(format!("pwm{pwm_num}_enable"));
-        let mut f = OpenOptions::new().write(true).open(path).unwrap();
-        f.write_all(&[enable as u8]).unwrap();
-        // device
-        //     .set_attribute_value(format!("pwm{pwm_num}_enable"), enable.to_string())
-        //     .unwrap();
+        device
+            .set_attribute_value(format!("pwm{pwm_num}_enable"), enable.to_string())
+            .unwrap();
         Ok(())
     }
 }

@@ -38,7 +38,7 @@ export component PageAppSettings inherits VerticalLayout {
                     text: @tr("Start app in background (UI closed)");
                     checked <=> AppSettingsPageData.startup_in_background;
                     toggled => {
-                        AppSettingsPageData.set_run_in_background(AppSettingsPageData.startup_in_background)
+                        AppSettingsPageData.set_startup_in_background(AppSettingsPageData.startup_in_background)
                     }
                 }
             }

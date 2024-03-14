@@ -118,7 +118,7 @@ pub struct AuraConfig {
 impl StdConfig for AuraConfig {
     /// Detect the keyboard type and load from default DB if data available
     fn new() -> Self {
-        warn!("AuraConfig: creating new config");
+        warn!("creating new config");
         let mut prod_id = AuraDevice::Unknown;
         for prod in ASUS_KEYBOARD_DEVICES {
             if HidRaw::new(prod.into()).is_ok() {
@@ -171,7 +171,7 @@ impl AuraConfig {
         };
 
         for n in &support_data.basic_modes {
-            debug!("AuraConfig: creating default for {n}");
+            debug!("creating default for {n}");
             config
                 .builtins
                 .insert(*n, AuraEffect::default_with_mode(*n));

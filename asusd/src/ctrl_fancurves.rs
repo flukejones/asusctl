@@ -15,7 +15,6 @@ use zbus::{interface, Connection, SignalContext};
 use crate::error::RogError;
 use crate::{CtrlTask, CONFIG_PATH_BASE};
 
-const MOD_NAME: &str = "FanCurveZbus";
 pub const FAN_CURVE_ZBUS_NAME: &str = "FanCurves";
 pub const FAN_CURVE_ZBUS_PATH: &str = "/org/asuslinux/FanCurves";
 
@@ -55,15 +54,15 @@ impl CtrlFanCurveZbus {
     pub fn new() -> Result<Self, RogError> {
         let platform = RogPlatform::new()?;
         if platform.has_throttle_thermal_policy() {
-            info!("{MOD_NAME}: Device has profile control available");
+            info!("Device has profile control available");
             find_fan_curve_node()?;
-            info!("{MOD_NAME}: Device has fan curves available");
-            let mut config = FanCurveConfig::new();
+            info!("Device has fan curves available");
+            let mut config = FanCurveConfig::new().load();
             let mut fan_curves = FanCurveProfiles::default();
 
             // Only do defaults if the config doesn't already exist\
             if config.profiles.balanced.is_empty() || !config.file_path().exists() {
-                info!("{MOD_NAME}: Fetching default fan curves");
+                info!("Fetching default fan curves");
 
                 let current = platform.get_throttle_thermal_policy()?;
                 for this in [
@@ -78,7 +77,7 @@ impl CtrlFanCurveZbus {
                     let mut dev = find_fan_curve_node()?;
                     fan_curves.set_active_curve_to_defaults(this, &mut dev)?;
 
-                    info!("{MOD_NAME}: {this:?}:");
+                    info!("{this:?}:");
                     for curve in fan_curves.get_fan_curves_for(this) {
                         info!("{}", String::from(curve));
                     }
@@ -87,7 +86,7 @@ impl CtrlFanCurveZbus {
                 config.profiles = fan_curves;
                 config.write();
             } else {
-                info!("{MOD_NAME}: Fan curves previously stored, loading...");
+                info!("Fan curves previously stored, loading...");
                 config = config.load();
             }
 
@@ -244,7 +243,7 @@ impl CtrlTask for CtrlFanCurveZbus {
                 while (stream.next().await).is_some() {
                     debug!("watch_throttle_thermal_policy changed");
                     if let Ok(profile) = platform.get_throttle_thermal_policy().map_err(|e| {
-                        error!("{MOD_NAME}: get_throttle_thermal_policy error: {e}");
+                        error!("get_throttle_thermal_policy error: {e}");
                     }) {
                         if profile != config.lock().await.current {
                             fan_curves
@@ -255,9 +254,7 @@ impl CtrlTask for CtrlFanCurveZbus {
                                     profile.into(),
                                     &mut find_fan_curve_node().unwrap(),
                                 )
-                                .map_err(|e| {
-                                    warn!("{MOD_NAME}: write_profile_curve_to_platform, {}", e)
-                                })
+                                .map_err(|e| warn!("write_profile_curve_to_platform, {}", e))
                                 .ok();
                             config.lock().await.current = profile;
                         }

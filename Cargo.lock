@@ -163,7 +163,7 @@ dependencies = [
  "serde_derive",
  "systemd-zbus",
  "tokio",
- "udev 0.7.0",
+ "udev 0.8.0",
  "zbus 4.0.1",
 ]
 
@@ -292,9 +292,9 @@ dependencies = [
 
 [[package]]
 name = "async-io"
-version = "2.3.1"
+version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f97ab0c5b00a7cdbe5a371b9a782ee7be1316095885c8a4ea1daf490eb0ef65"
+checksum = "dcccb0f599cfa2f8ace422d3555572f47424da5648a4382a9dd0310ff8210884"
 dependencies = [
  "async-lock 3.3.0",
  "cfg-if",
@@ -364,7 +364,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "451e3cf68011bd56771c79db04a9e333095ab6349f7e47592b788e9b98720cc8"
 dependencies = [
  "async-channel 2.2.0",
- "async-io 2.3.1",
+ "async-io 2.3.2",
  "async-lock 3.3.0",
  "async-signal",
  "blocking",
@@ -392,7 +392,7 @@ version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e47d90f65a225c4527103a8d747001fc56e375203592b25ad103e1ca13124c5"
 dependencies = [
- "async-io 2.3.1",
+ "async-io 2.3.2",
  "async-lock 2.8.0",
  "atomic-waker",
  "cfg-if",
@@ -599,18 +599,18 @@ checksum = "bf8dba2868114ed769a1f2590fc9ae5eb331175b44313b6c9b922f8f7ca813d0"
 
 [[package]]
 name = "bytemuck"
-version = "1.14.3"
+version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2ef034f05691a48569bd920a96c81b9d91bbad1ab5ac7c4616c1f6ef36cb79f"
+checksum = "5d6d68c57235a3a081186990eca2867354726650f42f7516ca50c28d6281fd15"
 dependencies = [
  "bytemuck_derive",
 ]
 
 [[package]]
 name = "bytemuck_derive"
-version = "1.5.0"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "965ab7eb5f8f97d2a083c799f3a1b994fc397b2fe2da5d1da1626ce15a39f2b1"
+checksum = "4da9a32f3fed317401fa3c862968128267c3106685286e15d5aaa3d7389c2f60"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -851,7 +851,7 @@ dependencies = [
 [[package]]
 name = "const-field-offset"
 version = "0.1.4"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#7fb37b184fcc62a63b0c71cb096fbd62ef8d533b"
 dependencies = [
  "const-field-offset-macro",
  "field-offset",
@@ -860,7 +860,7 @@ dependencies = [
 [[package]]
 name = "const-field-offset-macro"
 version = "0.1.4"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#7fb37b184fcc62a63b0c71cb096fbd62ef8d533b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1160,7 +1160,7 @@ name = "dmi_id"
 version = "6.0.0-alpha1"
 dependencies = [
  "log",
- "udev 0.7.0",
+ "udev 0.8.0",
 ]
 
 [[package]]
@@ -1928,7 +1928,7 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 [[package]]
 name = "i-slint-backend-linuxkms"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#7fb37b184fcc62a63b0c71cb096fbd62ef8d533b"
 dependencies = [
  "calloop",
  "drm",
@@ -1948,7 +1948,7 @@ dependencies = [
 [[package]]
 name = "i-slint-backend-qt"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#7fb37b184fcc62a63b0c71cb096fbd62ef8d533b"
 dependencies = [
  "const-field-offset",
  "i-slint-common",
@@ -1960,7 +1960,7 @@ dependencies = [
 [[package]]
 name = "i-slint-backend-selector"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#7fb37b184fcc62a63b0c71cb096fbd62ef8d533b"
 dependencies = [
  "cfg-if",
  "i-slint-backend-linuxkms",
@@ -1973,7 +1973,7 @@ dependencies = [
 [[package]]
 name = "i-slint-backend-winit"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#7fb37b184fcc62a63b0c71cb096fbd62ef8d533b"
 dependencies = [
  "bytemuck",
  "cfg-if",
@@ -2006,7 +2006,7 @@ dependencies = [
 [[package]]
 name = "i-slint-common"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#7fb37b184fcc62a63b0c71cb096fbd62ef8d533b"
 dependencies = [
  "cfg-if",
  "derive_more",
@@ -2017,7 +2017,7 @@ dependencies = [
 [[package]]
 name = "i-slint-compiler"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#7fb37b184fcc62a63b0c71cb096fbd62ef8d533b"
 dependencies = [
  "by_address",
  "codemap",
@@ -2046,7 +2046,7 @@ dependencies = [
 [[package]]
 name = "i-slint-core"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#7fb37b184fcc62a63b0c71cb096fbd62ef8d533b"
 dependencies = [
  "auto_enums",
  "bytemuck",
@@ -2090,7 +2090,7 @@ dependencies = [
 [[package]]
 name = "i-slint-core-macros"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#7fb37b184fcc62a63b0c71cb096fbd62ef8d533b"
 dependencies = [
  "quote",
  "syn 2.0.52",
@@ -2099,7 +2099,7 @@ dependencies = [
 [[package]]
 name = "i-slint-renderer-femtovg"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#7fb37b184fcc62a63b0c71cb096fbd62ef8d533b"
 dependencies = [
  "cfg-if",
  "const-field-offset",
@@ -2130,7 +2130,7 @@ dependencies = [
 [[package]]
 name = "i-slint-renderer-skia"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#7fb37b184fcc62a63b0c71cb096fbd62ef8d533b"
 dependencies = [
  "bytemuck",
  "cfg-if",
@@ -3232,9 +3232,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.78"
+version = "1.0.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2422ad645d89c99f8f3e6b88a9fdeca7fabeac836b1002371c4367c8f984aae"
+checksum = "e835ff2298f5721608eb1a980ecaee1aef2c132bf95ecc026a11b7bf3c01c02e"
 dependencies = [
  "unicode-ident",
 ]
@@ -3513,7 +3513,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "typeshare",
- "udev 0.7.0",
+ "udev 0.8.0",
  "zbus 4.0.1",
 ]
 
@@ -3527,7 +3527,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "typeshare",
- "udev 0.7.0",
+ "udev 0.8.0",
  "zbus 4.0.1",
 ]
 
@@ -3856,7 +3856,7 @@ dependencies = [
  "regex",
  "serde_json",
  "tar",
- "toml 0.8.10",
+ "toml 0.8.11",
 ]
 
 [[package]]
@@ -3883,7 +3883,7 @@ dependencies = [
 [[package]]
 name = "slint"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#7fb37b184fcc62a63b0c71cb096fbd62ef8d533b"
 dependencies = [
  "const-field-offset",
  "i-slint-backend-selector",
@@ -3899,18 +3899,18 @@ dependencies = [
 [[package]]
 name = "slint-build"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#7fb37b184fcc62a63b0c71cb096fbd62ef8d533b"
 dependencies = [
  "i-slint-compiler",
  "spin_on",
  "thiserror",
- "toml_edit 0.22.6",
+ "toml_edit 0.22.7",
 ]
 
 [[package]]
 name = "slint-macros"
 version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#7fb37b184fcc62a63b0c71cb096fbd62ef8d533b"
 dependencies = [
  "i-slint-compiler",
  "proc-macro2",
@@ -4086,18 +4086,18 @@ dependencies = [
 
 [[package]]
 name = "strum"
-version = "0.26.1"
+version = "0.26.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "723b93e8addf9aa965ebe2d11da6d7540fa2283fcea14b3371ff055f7ba13f5f"
+checksum = "5d8cec3501a5194c432b2b7976db6b7d10ec95c253208b45f83f7136aa985e29"
 dependencies = [
  "strum_macros",
 ]
 
 [[package]]
 name = "strum_macros"
-version = "0.26.1"
+version = "0.26.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a3417fc93d76740d974a01654a09777cb500428cc874ca9f45edfe0c4d4cd18"
+checksum = "c6cf59daf282c0a494ba14fd21610a0325f9f90ec9d1231dea26bcb1d696c946"
 dependencies = [
  "heck",
  "proc-macro2",
@@ -4219,18 +4219,18 @@ checksum = "f18aa187839b2bdb1ad2fa35ead8c4c2976b64e4363c386d45ac0f7ee85c9233"
 
 [[package]]
 name = "thiserror"
-version = "1.0.57"
+version = "1.0.58"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e45bcbe8ed29775f228095caf2cd67af7a4ccf756ebff23a306bf3e8b47b24b"
+checksum = "03468839009160513471e86a034bb2c5c0e4baae3b43f79ffc55c4a5427b3297"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.57"
+version = "1.0.58"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a953cb265bef375dae3de6663da4d3804eee9682ea80d8e2542529b73c531c81"
+checksum = "c61f3ba182994efc43764a46c018c347bc492c79f024e705f46567b418f6d4f7"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4367,14 +4367,14 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "0.8.10"
+version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a9aad4a3066010876e8dcf5a8a06e70a558751117a145c6ce2b82c2e2054290"
+checksum = "af06656561d28735e9c1cd63dfd57132c8155426aa6af24f36a00a351f88c48e"
 dependencies = [
  "serde",
  "serde_spanned",
  "toml_datetime",
- "toml_edit 0.22.6",
+ "toml_edit 0.22.7",
 ]
 
 [[package]]
@@ -4410,9 +4410,9 @@ dependencies = [
 
 [[package]]
 name = "toml_edit"
-version = "0.22.6"
+version = "0.22.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c1b5fd4128cc8d3e0cb74d4ed9a9cc7c7284becd4df68f5f940e1ad123606f6"
+checksum = "18769cd1cec395d70860ceb4d932812a0b4d06b1a4bb336745a4d21b9496e992"
 dependencies = [
  "indexmap",
  "serde",
@@ -4684,7 +4684,7 @@ dependencies = [
 [[package]]
 name = "vtable"
 version = "0.2.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#7fb37b184fcc62a63b0c71cb096fbd62ef8d533b"
 dependencies = [
  "const-field-offset",
  "portable-atomic",
@@ -4695,7 +4695,7 @@ dependencies = [
 [[package]]
 name = "vtable-macro"
 version = "0.2.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#02ff8f5fcb15c6c7683d976f509cf134cdb3ed45"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#7fb37b184fcc62a63b0c71cb096fbd62ef8d533b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5225,9 +5225,9 @@ checksum = "32b752e52a2da0ddfbdbcc6fceadfeede4c939ed16d13e648833a61dfb611ed8"
 
 [[package]]
 name = "winit"
-version = "0.29.14"
+version = "0.29.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7a3db69ffbe53a9babec7804da7a90f21020fcce1f2f5e5291e2311245b993d"
+checksum = "0d59ad965a635657faf09c8f062badd885748428933dad8e8bdd64064d92e5ca"
 dependencies = [
  "ahash",
  "android-activity",
@@ -5486,7 +5486,7 @@ dependencies = [
  "async-broadcast 0.7.0",
  "async-executor",
  "async-fs 2.1.1",
- "async-io 2.3.1",
+ "async-io 2.3.2",
  "async-lock 3.3.0",
  "async-process 2.1.0",
  "async-recursion",

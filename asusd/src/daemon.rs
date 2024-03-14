@@ -1,6 +1,5 @@
 use std::env;
 use std::error::Error;
-use std::io::Write;
 use std::sync::Arc;
 
 use ::zbus::export::futures_util::lock::Mutex;
@@ -25,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     logger
         .parse_default_env()
         .target(env_logger::Target::Stdout)
-        .format(|buf, record| writeln!(buf, "{}: {}", record.level(), record.args()))
+        .format_timestamp(None)
         .init();
 
     let is_service = match env::var_os("IS_SERVICE") {
