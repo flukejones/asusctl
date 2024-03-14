@@ -17,6 +17,7 @@ import { PageAppSettings, AppSettingsPageData } from "pages/app_settings.slint";
 export { AppSize, AvailableSystemProperties, SystemPageData, AnimePageData, AppSettingsPageData }
 
 export component MainWindow inherits Window {
+    title: "ROG Control";
     default-font-family: "DejaVu Sans";
     in property <[bool]> sidebar_items_avilable: [true, true, true, true, true, true];
     private property <bool> show-notif;

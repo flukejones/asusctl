@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgrade to zbus 4.0.1
 - Switch UI over to slint
 - Add ability to start rog-control-center fullscreen with a width and height. This should be useful for devices like the ROG Ally.
+- Many small changes due to requirements of slint UI
 
 ## [v5.0.8]
 
