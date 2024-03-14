@@ -55,7 +55,7 @@ fn main() -> Result<()> {
         .filter_level(LevelFilter::Warn)
         .parse_default_env()
         .target(env_logger::Target::Stdout)
-        .format(|buf, record| writeln!(buf, "{}: {}", record.level(), record.args()))
+        .format_timestamp(None)
         .init();
 
     // start tokio
