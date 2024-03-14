@@ -746,7 +746,8 @@ fn handle_fan_curve(
     }
 
     if cmd.default {
-        dbus.proxies().fan_curves().set_active_curve_to_defaults()?;
+        let active = dbus.proxies().platform().throttle_thermal_policy()?;
+        dbus.proxies().fan_curves().set_curves_to_defaults(active)?;
     }
 
     if let Some(profile) = cmd.mod_profile {

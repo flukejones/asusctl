@@ -182,18 +182,20 @@ impl CtrlFanCurveZbus {
         Ok(())
     }
 
-    /// Reset the stored (self) and device curve to the defaults of the
+    /// Reset the stored (self) and device curves to the defaults of the
     /// platform.
     ///
-    /// Each platform_profile has a different default and the defualt can be
+    /// Each platform_profile has a different default and the default can be
     /// read only for the currently active profile.
-    async fn set_active_curve_to_defaults(&mut self) -> zbus::fdo::Result<()> {
+    async fn set_curves_to_defaults(&mut self, profile: ThrottlePolicy) -> zbus::fdo::Result<()> {
         let active = self.platform.get_throttle_thermal_policy()?;
+        self.platform.set_throttle_thermal_policy(profile.into())?;
         self.config
             .lock()
             .await
             .profiles
-            .set_active_curve_to_defaults(active.into(), &mut find_fan_curve_node()?)?;
+            .set_active_curve_to_defaults(profile.into(), &mut find_fan_curve_node()?)?;
+        self.platform.set_throttle_thermal_policy(active.into())?;
         self.config.lock().await.write();
         Ok(())
     }

@@ -1,3 +1,6 @@
+use std::fs::OpenOptions;
+use std::io::Write;
+
 use log::trace;
 use serde_derive::{Deserialize, Serialize};
 use typeshare::typeshare;
@@ -168,7 +171,7 @@ impl CurveData {
     /// Write this curve to the device fan specified by `self.fan`
     pub fn write_to_device(&self, device: &mut Device) -> std::io::Result<()> {
         let pwm_num: char = self.fan.into();
-        let enable = if self.enabled { "1" } else { "2" };
+        let enable = if self.enabled { '1' } else { '2' };
 
         for (index, out) in self.pwm.iter().enumerate() {
             let pwm = pwm_str(pwm_num, index);
@@ -182,8 +185,16 @@ impl CurveData {
             device.set_attribute_value(&temp, &out.to_string())?;
         }
 
-        // Enable must be done *after* all points are written
-        device.set_attribute_value(format!("pwm{pwm_num}_enable"), enable)
+        // Enable must be done *after* all points are written pwm3_enable
+        // device.syspath()
+        let mut path = device.syspath().to_path_buf();
+        path.push(format!("pwm{pwm_num}_enable"));
+        let mut f = OpenOptions::new().write(true).open(path).unwrap();
+        f.write_all(&[enable as u8]).unwrap();
+        // device
+        //     .set_attribute_value(format!("pwm{pwm_num}_enable"), enable.to_string())
+        //     .unwrap();
+        Ok(())
     }
 }
 

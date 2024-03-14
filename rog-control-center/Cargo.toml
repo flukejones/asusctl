@@ -11,7 +11,9 @@ edition = "2021"
 
 [dependencies]
 
-betrayer = { git = "https://github.com/flukejones/betrayer.git", features = ["winit"] }
+betrayer = { git = "https://github.com/flukejones/betrayer.git", features = [
+    "winit",
+] }
 
 asusd = { path = "../asusd" }
 config-traits = { path = "../config-traits" }
@@ -52,7 +54,14 @@ winit = "*"
 git = "https://github.com/flukejones/sixtyfps.git"
 branch = "asusctl"
 default-features = false
-features = ["std", "gettext", "compat-1-0", "backend-winit-wayland", "backend-linuxkms", "renderer-femtovg"]
+features = [
+    "std",
+    "gettext",
+    "compat-1-0",
+    "backend-winit-wayland",
+    "backend-linuxkms",
+    "renderer-femtovg",
+]
 
 [build-dependencies.slint-build]
 git = "https://github.com/flukejones/sixtyfps.git"

@@ -42,7 +42,7 @@ trait FanCurves {
     fn reset_profile_curves(&self, profile: ThrottlePolicy) -> zbus::Result<()>;
 
     /// SetActiveCurveToDefaults method
-    fn set_active_curve_to_defaults(&self) -> zbus::Result<()>;
+    fn set_curves_to_defaults(&self, profile: ThrottlePolicy) -> zbus::Result<()>;
 
     /// Set the fan curve for the specified profile, or the profile the user is
     /// currently in if profile == None. Will also activate the fan curve.
