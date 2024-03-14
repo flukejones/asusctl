@@ -172,11 +172,14 @@ impl CtrlFanCurveZbus {
             .await
             .profiles
             .save_fan_curve(curve, profile)?;
-        self.config
-            .lock()
-            .await
-            .profiles
-            .write_profile_curve_to_platform(profile, &mut find_fan_curve_node()?)?;
+        let active: ThrottlePolicy = self.platform.get_throttle_thermal_policy()?.into();
+        if active == profile {
+            self.config
+                .lock()
+                .await
+                .profiles
+                .write_profile_curve_to_platform(profile, &mut find_fan_curve_node()?)?;
+        }
         self.config.lock().await.write();
         Ok(())
     }
