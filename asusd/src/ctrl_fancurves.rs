@@ -196,8 +196,8 @@ impl CtrlFanCurveZbus {
             .lock()
             .await
             .profiles
-            .set_active_curve_to_defaults(profile.into(), &mut find_fan_curve_node()?)?;
-        self.platform.set_throttle_thermal_policy(active.into())?;
+            .set_active_curve_to_defaults(profile, &mut find_fan_curve_node()?)?;
+        self.platform.set_throttle_thermal_policy(active)?;
         self.config.lock().await.write();
         Ok(())
     }
