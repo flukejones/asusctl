@@ -16,7 +16,7 @@ use rog_control_center::error::Result;
 use rog_control_center::slint::ComponentHandle;
 use rog_control_center::system_state::{AuraCreation, SystemState};
 use rog_control_center::tray::init_tray;
-use rog_control_center::ui_setup::setup_window;
+use rog_control_center::ui::setup_window;
 use rog_control_center::update_and_notify::{start_notifications, EnabledNotifications};
 use rog_control_center::{
     get_ipc_file, on_tmp_dir_exists, print_versions, MainWindow, RogDbusClientBlocking, QUIT_APP,

@@ -20,7 +20,7 @@ pub mod mocking;
 pub mod system_state;
 pub mod tray;
 pub mod types;
-pub mod ui_setup;
+pub mod ui;
 pub mod update_and_notify;
 
 #[cfg(feature = "mocking")]
