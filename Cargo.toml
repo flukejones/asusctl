@@ -37,6 +37,7 @@ tokio = { version = "^1.23.0", default-features = false, features = [
 concat-idents = "^1.1"
 dirs = "^4.0"
 smol = "^1.3"
+mio = "0.8.11"
 
 zbus = "~4.0.1"
 logind-zbus = { version = "~4.0.0" } #, default-features = false, features = ["non_blocking"] }
@@ -53,7 +54,7 @@ env_logger = "^0.10.0"
 
 glam = { version = "^0.22", features = ["serde"] }
 gumdrop = "^0.8"
-udev = "^0.8"
+udev = { version = "^0.8", features = ["mio"] }
 rusb = "^0.9"
 inotify = "^0.10.0"
 

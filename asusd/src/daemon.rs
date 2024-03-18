@@ -8,15 +8,13 @@ use asusd::config::Config;
 use asusd::ctrl_anime::config::AnimeConfig;
 use asusd::ctrl_anime::trait_impls::CtrlAnimeZbus;
 use asusd::ctrl_anime::CtrlAnime;
-use asusd::ctrl_aura::controller::CtrlKbdLed;
-use asusd::ctrl_aura::trait_impls::CtrlAuraZbus;
+use asusd::ctrl_aura::manager::AuraManager;
 use asusd::ctrl_fancurves::CtrlFanCurveZbus;
 use asusd::ctrl_platform::CtrlPlatform;
-use asusd::{print_board_info, CtrlTask, Reloadable, ZbusRun, DBUS_NAME};
+use asusd::{print_board_info, start_tasks, CtrlTask, DBUS_NAME};
 use config_traits::{StdConfig, StdConfigLoad2, StdConfigLoad3};
-use log::{error, info, warn};
-use rog_aura::aura_detection::LaptopLedData;
-use zbus::SignalContext;
+use log::{error, info};
+use zbus::fdo::ObjectManager;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -59,6 +57,11 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
 
     // Start zbus server
     let mut connection = Connection::system().await?;
+    connection
+        .object_server()
+        .at("/org", ObjectManager)
+        .await
+        .unwrap();
 
     let config = Config::new().load();
     let cfg_path = config.file_path();
@@ -101,21 +104,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    let laptop = LaptopLedData::get_data();
-    // CtrlKbdLed deviates from the config pattern above due to requiring a keyboard
-    // detection first
-    match CtrlKbdLed::new(laptop) {
-        Ok(ctrl) => {
-            let mut zbus = CtrlAuraZbus(Arc::new(Mutex::new(ctrl)), None);
-            let sig_ctx = CtrlAuraZbus::signal_context(&connection)?;
-            zbus.1 = Some(sig_ctx);
-            let sig_ctx = CtrlAuraZbus::signal_context(&connection)?;
-            start_tasks(zbus, &mut connection, sig_ctx).await?;
-        }
-        Err(err) => {
-            error!("Keyboard control: {}", err);
-        }
-    }
+    let _ = AuraManager::new(connection.clone()).await?;
 
     // Request dbus name after finishing initalizing all functions
     connection.request_name(DBUS_NAME).await?;
@@ -124,23 +113,4 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
         // This is just a blocker to idle and ensure the reator reacts
         connection.executor().tick().await;
     }
-}
-
-async fn start_tasks<T>(
-    mut zbus: T,
-    connection: &mut Connection,
-    signal_ctx: SignalContext<'static>,
-) -> Result<(), Box<dyn Error>>
-where
-    T: ZbusRun + Reloadable + CtrlTask + Clone,
-{
-    let task = zbus.clone();
-
-    zbus.reload()
-        .await
-        .unwrap_or_else(|err| warn!("Controller error: {}", err));
-    zbus.add_to_server(connection).await;
-
-    task.create_tasks(signal_ctx).await.ok();
-    Ok(())
 }

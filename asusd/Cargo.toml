@@ -24,6 +24,7 @@ futures-lite = "*"
 udev.workspace = true
 inotify.workspace = true
 
+mio.workspace = true
 tokio.workspace = true
 
 # cli and logging

@@ -68,7 +68,7 @@ impl CtrlAnime {
         let node = if usb.is_some() {
             unsafe { Node::Usb(usb.unwrap_unchecked()) }
         } else if hid.is_some() {
-            unsafe { Node::Hid(hid.unwrap_unchecked()) }
+            unsafe { Node::Hid(hid.unwrap_unchecked().0) }
         } else {
             return Err(RogError::Anime(AnimeError::NoDevice));
         };

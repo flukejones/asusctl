@@ -298,3 +298,22 @@ pub trait GetSupported {
 
     fn get_supported() -> Self::A;
 }
+
+pub async fn start_tasks<T>(
+    mut zbus: T,
+    connection: &mut Connection,
+    signal_ctx: SignalContext<'static>,
+) -> Result<(), RogError>
+where
+    T: ZbusRun + Reloadable + CtrlTask + Clone,
+{
+    let task = zbus.clone();
+
+    zbus.reload()
+        .await
+        .unwrap_or_else(|err| warn!("Controller error: {}", err));
+    zbus.add_to_server(connection).await;
+
+    task.create_tasks(signal_ctx).await.ok();
+    Ok(())
+}

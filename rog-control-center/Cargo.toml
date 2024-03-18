@@ -23,6 +23,7 @@ rog_aura = { path = "../rog-aura" }
 rog_profiles = { path = "../rog-profiles" }
 rog_platform = { path = "../rog-platform" }
 supergfxctl = { git = "https://gitlab.com/asus-linux/supergfxctl.git", default-features = false }
+dmi_id = { path = "../dmi-id" }
 
 gumdrop.workspace = true
 log.workspace = true

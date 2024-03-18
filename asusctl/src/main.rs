@@ -5,7 +5,6 @@ use std::process::Command;
 use std::thread::sleep;
 
 use anime_cli::{AnimeActions, AnimeCommand};
-use asusd::ctrl_aura::trait_impls::AURA_ZBUS_NAME;
 use asusd::ctrl_fancurves::FAN_CURVE_ZBUS_NAME;
 use aura_cli::{LedPowerCommand1, LedPowerCommand2};
 use dmi_id::DMIID;
@@ -14,10 +13,10 @@ use gumdrop::{Opt, Options};
 use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType, Vec2};
 use rog_aura::power::KbAuraPowerState;
-use rog_aura::usb::{AuraDevRog1, AuraDevTuf, AuraPowerDev};
+use rog_aura::usb::{AuraDevRog1, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_aura::{self, AuraEffect};
+use rog_dbus::zbus_aura::AuraProxyBlocking;
 use rog_dbus::RogDbusClientBlocking;
-use rog_platform::error::PlatformError;
 use rog_platform::platform::{GpuMode, Properties, ThrottlePolicy};
 use rog_profiles::error::ProfileError;
 
@@ -104,6 +103,36 @@ fn check_service(name: &str) -> bool {
     false
 }
 
+fn find_aura_iface() -> Result<AuraProxyBlocking<'static>, Box<dyn std::error::Error>> {
+    let conn = zbus::blocking::Connection::system().unwrap();
+    let f = zbus::blocking::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/org")
+        .unwrap();
+    let interfaces = f.get_managed_objects().unwrap();
+    let mut aura_paths = Vec::new();
+    for v in interfaces.iter() {
+        // let o: Vec<zbus::names::OwnedInterfaceName> = v.1.keys().map(|e|
+        // e.to_owned()).collect(); println!("{}, {:?}", v.0, o);
+        for k in v.1.keys() {
+            if k.as_str() == "org.asuslinux.Aura" {
+                println!("Found aura device at {}, {}", v.0, k);
+                aura_paths.push(v.0.clone());
+            }
+        }
+    }
+    if aura_paths.len() > 1 {
+        println!("Multiple aura devices found: {aura_paths:?}");
+        println!("TODO: enable selection");
+    }
+    if let Some(path) = aura_paths.first() {
+        return Ok(AuraProxyBlocking::builder(&conn)
+            .path(path.clone())?
+            .destination("org.asuslinux.Daemon")?
+            .build()?);
+    }
+
+    Err("No Aura interface".into())
+}
+
 fn do_parsed(
     parsed: &CliStart,
     supported_interfaces: &[String],
@@ -111,9 +140,9 @@ fn do_parsed(
     dbus: &RogDbusClientBlocking<'_>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     match &parsed.command {
-        Some(CliCommand::LedMode(mode)) => handle_led_mode(dbus, supported_interfaces, mode)?,
-        Some(CliCommand::LedPow1(pow)) => handle_led_power1(dbus, supported_interfaces, pow)?,
-        Some(CliCommand::LedPow2(pow)) => handle_led_power2(dbus, supported_interfaces, pow)?,
+        Some(CliCommand::LedMode(mode)) => handle_led_mode(&find_aura_iface()?, mode)?,
+        Some(CliCommand::LedPow1(pow)) => handle_led_power1(&find_aura_iface()?, pow)?,
+        Some(CliCommand::LedPow2(pow)) => handle_led_power2(&find_aura_iface()?, pow)?,
         Some(CliCommand::Profile(cmd)) => handle_throttle_profile(dbus, supported_properties, cmd)?,
         Some(CliCommand::FanCurve(cmd)) => {
             handle_fan_curve(dbus, supported_interfaces, cmd)?;
@@ -132,7 +161,11 @@ fn do_parsed(
                 println!("{}", CliStart::usage());
                 println!();
                 if let Some(cmdlist) = CliStart::command_list() {
-                    let dev_type = dbus.proxies().aura().device_type()?;
+                    let dev_type = if let Ok(proxy) = find_aura_iface() {
+                        proxy.device_type().unwrap_or(AuraDevice::Unknown)
+                    } else {
+                        AuraDevice::Unknown
+                    };
                     let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
                     for command in commands.iter().filter(|command| {
                         if !dev_type.is_old_style()
@@ -158,26 +191,35 @@ fn do_parsed(
     }
 
     if let Some(brightness) = &parsed.kbd_bright {
-        match brightness.level() {
-            None => {
-                let level = dbus.proxies().aura().brightness()?;
-                println!("Current keyboard led brightness: {level:?}");
+        if let Ok(aura) = find_aura_iface() {
+            match brightness.level() {
+                None => {
+                    let level = aura.brightness()?;
+                    println!("Current keyboard led brightness: {level:?}");
+                }
+                Some(level) => aura.set_brightness(rog_aura::LedBrightness::from(level))?,
             }
-            Some(level) => dbus
-                .proxies()
-                .aura()
-                .set_brightness(rog_aura::LedBrightness::from(level))?,
+        } else {
+            println!("No aura interface found");
         }
     }
 
     if parsed.next_kbd_bright {
-        let brightness = dbus.proxies().aura().brightness()?;
-        dbus.proxies().aura().set_brightness(brightness.next())?;
+        if let Ok(aura) = find_aura_iface() {
+            let brightness = aura.brightness()?;
+            aura.set_brightness(brightness.next())?;
+        } else {
+            println!("No aura interface found");
+        }
     }
 
     if parsed.prev_kbd_bright {
-        let brightness = dbus.proxies().aura().brightness()?;
-        dbus.proxies().aura().set_brightness(brightness.prev())?;
+        if let Ok(aura) = find_aura_iface() {
+            let brightness = aura.brightness()?;
+            aura.set_brightness(brightness.prev())?;
+        } else {
+            println!("No aura interface found");
+        }
     }
 
     if parsed.show_supported {
@@ -186,15 +228,17 @@ fn do_parsed(
             "Supported Platform Properties:\n{:#?}",
             supported_properties
         );
-        if supported_interfaces.contains(&"Aura".to_owned()) {
-            let bright = dbus.proxies().aura().supported_brightness()?;
-            let modes = dbus.proxies().aura().supported_basic_modes()?;
-            let zones = dbus.proxies().aura().supported_basic_zones()?;
-            let power = dbus.proxies().aura().supported_power_zones()?;
+        if let Ok(aura) = find_aura_iface() {
+            let bright = aura.supported_brightness()?;
+            let modes = aura.supported_basic_modes()?;
+            let zones = aura.supported_basic_zones()?;
+            let power = aura.supported_power_zones()?;
             println!("Supported Keyboard Brightness:\n{:#?}", bright);
             println!("Supported Aura Modes:\n{:#?}", modes);
             println!("Supported Aura Zones:\n{:#?}", zones);
             println!("Supported Aura Power Zones:\n{:#?}", power);
+        } else {
+            println!("No aura interface found");
         }
     }
 
@@ -415,14 +459,13 @@ fn verify_brightness(brightness: f32) {
 }
 
 fn handle_led_mode(
-    dbus: &RogDbusClientBlocking<'_>,
-    supported: &[String],
+    aura: &AuraProxyBlocking,
     mode: &LedModeCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if !supported.contains(&AURA_ZBUS_NAME.to_string()) {
-        println!("This laptop does not support power options");
-        return Err(PlatformError::NotSupported.into());
-    }
+    // if !supported.contains(&AURA_ZBUS_NAME.to_string()) {
+    //     println!("This laptop does not support power options");
+    //     return Err(PlatformError::NotSupported.into());
+    // }
 
     if mode.command.is_none() && !mode.prev_mode && !mode.next_mode {
         if !mode.help {
@@ -433,7 +476,7 @@ fn handle_led_mode(
 
         if let Some(cmdlist) = LedModeCommand::command_list() {
             let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
-            let modes = dbus.proxies().aura().supported_basic_modes()?;
+            let modes = aura.supported_basic_modes()?;
             for command in commands.iter().filter(|command| {
                 for mode in &modes {
                     if command
@@ -462,46 +505,43 @@ fn handle_led_mode(
         return Ok(());
     }
     if mode.next_mode {
-        let mode = dbus.proxies().aura().led_mode()?;
-        let modes = dbus.proxies().aura().supported_basic_modes()?;
+        let mode = aura.led_mode()?;
+        let modes = aura.supported_basic_modes()?;
         let mut pos = modes.iter().position(|m| *m == mode).unwrap() + 1;
         if pos >= modes.len() {
             pos = 0;
         }
-        dbus.proxies().aura().set_led_mode(modes[pos])?;
+        aura.set_led_mode(modes[pos])?;
     } else if mode.prev_mode {
-        let mode = dbus.proxies().aura().led_mode()?;
-        let modes = dbus.proxies().aura().supported_basic_modes()?;
+        let mode = aura.led_mode()?;
+        let modes = aura.supported_basic_modes()?;
         let mut pos = modes.iter().position(|m| *m == mode).unwrap();
         if pos == 0 {
             pos = modes.len() - 1;
         } else {
             pos -= 1;
         }
-        dbus.proxies().aura().set_led_mode(modes[pos])?;
+        aura.set_led_mode(modes[pos])?;
     } else if let Some(mode) = mode.command.as_ref() {
         if mode.help_requested() {
             println!("{}", mode.self_usage());
             return Ok(());
         }
-        dbus.proxies()
-            .aura()
-            .set_led_mode_data(<AuraEffect>::from(mode))?;
+        aura.set_led_mode_data(<AuraEffect>::from(mode))?;
     }
 
     Ok(())
 }
 
 fn handle_led_power1(
-    dbus: &RogDbusClientBlocking<'_>,
-    supported: &[String],
+    aura: &AuraProxyBlocking,
     power: &LedPowerCommand1,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if !supported.contains(&AURA_ZBUS_NAME.to_string()) {
-        println!("This laptop does not support power options");
-        return Err(PlatformError::NotSupported.into());
-    }
-    let dev_type = dbus.proxies().aura().device_type()?;
+    // if !supported.contains(&AURA_ZBUS_NAME.to_string()) {
+    //     println!("This laptop does not support power options");
+    //     return Err(PlatformError::NotSupported.into());
+    // }
+    let dev_type = aura.device_type()?;
     if !dev_type.is_old_style() && !dev_type.is_tuf_style() {
         println!("This option applies only to keyboards 2021+");
     }
@@ -520,12 +560,12 @@ fn handle_led_power1(
     }
 
     if dev_type.is_old_style() {
-        handle_led_power_1_do_1866(dbus, power)?;
+        handle_led_power_1_do_1866(aura, power)?;
         return Ok(());
     }
 
     if dev_type.is_tuf_style() {
-        handle_led_power_1_do_tuf(dbus, power)?;
+        handle_led_power_1_do_tuf(aura, power)?;
         return Ok(());
     }
 
@@ -534,7 +574,7 @@ fn handle_led_power1(
 }
 
 fn handle_led_power_1_do_1866(
-    dbus: &RogDbusClientBlocking<'_>,
+    aura: &AuraProxyBlocking,
     power: &LedPowerCommand1,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut enabled: Vec<AuraDevRog1> = Vec::new();
@@ -560,13 +600,13 @@ fn handle_led_power_1_do_1866(
         old_rog: enabled,
         ..Default::default()
     };
-    dbus.proxies().aura().set_led_power(data)?; // TODO: verify this
+    aura.set_led_power(data)?; // TODO: verify this
 
     Ok(())
 }
 
 fn handle_led_power_1_do_tuf(
-    dbus: &RogDbusClientBlocking<'_>,
+    aura: &AuraProxyBlocking,
     power: &LedPowerCommand1,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut enabled: Vec<AuraDevTuf> = Vec::new();
@@ -591,21 +631,20 @@ fn handle_led_power_1_do_tuf(
         tuf: enabled,
         ..Default::default()
     };
-    dbus.proxies().aura().set_led_power(data)?; // TODO: verify this
+    aura.set_led_power(data)?; // TODO: verify this
 
     Ok(())
 }
 
 fn handle_led_power2(
-    dbus: &RogDbusClientBlocking<'_>,
-    supported: &[String],
+    aura: &AuraProxyBlocking,
     power: &LedPowerCommand2,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if !supported.contains(&AURA_ZBUS_NAME.to_string()) {
-        println!("This laptop does not support power options");
-        return Err(PlatformError::NotSupported.into());
-    }
-    let dev_type = dbus.proxies().aura().device_type()?;
+    // if !supported.contains(&AURA_ZBUS_NAME.to_string()) {
+    //     println!("This laptop does not support power options");
+    //     return Err(PlatformError::NotSupported.into());
+    // }
+    let dev_type = aura.device_type()?;
     if !dev_type.is_new_style() {
         println!("This option applies only to keyboards 2021+");
     }
@@ -641,7 +680,7 @@ fn handle_led_power2(
             power.shutdown = set_to.shutdown;
         };
 
-        let mut enabled = dbus.proxies().aura().led_power()?;
+        let mut enabled = aura.led_power()?;
         if let Some(cmd) = &power.command {
             match cmd {
                 aura_cli::SetAuraZoneEnabled::Keyboard(k) => set(&mut enabled.rog.keyboard, k),
@@ -652,7 +691,7 @@ fn handle_led_power2(
             }
         }
 
-        dbus.proxies().aura().set_led_power(enabled)?;
+        aura.set_led_power(enabled)?;
     }
 
     Ok(())

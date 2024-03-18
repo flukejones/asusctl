@@ -3,15 +3,15 @@ pub mod setup_aura;
 pub mod setup_fans;
 pub mod setup_system;
 
-use config_traits::StdConfig;
-use rog_dbus::zbus_platform::PlatformProxyBlocking;
 use std::sync::{Arc, Mutex};
 
+use config_traits::StdConfig;
+use rog_dbus::zbus_platform::PlatformProxyBlocking;
 use slint::{ComponentHandle, PhysicalSize, SharedString, Weak};
 
 use crate::config::Config;
 use crate::ui::setup_anime::setup_anime_page;
-use crate::ui::setup_aura::setup_aura_page;
+use crate::ui::setup_aura::{has_aura_iface_blocking, setup_aura_page};
 use crate::ui::setup_fans::setup_fan_curve_page;
 use crate::ui::setup_system::{setup_system_page, setup_system_page_callbacks};
 use crate::{AppSettingsPageData, MainWindow};
@@ -118,7 +118,7 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
         [
             // Needs to match the order of slint sidebar items
             interfaces.contains(&"Platform".into()),
-            interfaces.contains(&"Aura".into()),
+            has_aura_iface_blocking().unwrap_or(false),
             interfaces.contains(&"Anime".into()),
             interfaces.contains(&"FanCurves".into()),
             true,

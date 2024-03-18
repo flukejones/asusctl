@@ -10,24 +10,25 @@ use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness};
 use zbus::export::futures_util::lock::{Mutex, MutexGuard};
 use zbus::export::futures_util::StreamExt;
 use zbus::fdo::Error as ZbErr;
-use zbus::{interface, Connection, SignalContext};
+use zbus::{interface, SignalContext};
 
 use super::controller::CtrlKbdLed;
 use crate::error::RogError;
 use crate::CtrlTask;
 
 pub const AURA_ZBUS_NAME: &str = "Aura";
-pub const AURA_ZBUS_PATH: &str = "/org/asuslinux/Aura";
+pub const AURA_ZBUS_PATH: &str = "/org/asuslinux";
 
 #[derive(Clone)]
-pub struct CtrlAuraZbus(
-    pub Arc<Mutex<CtrlKbdLed>>,
-    pub Option<SignalContext<'static>>,
-);
+pub struct CtrlAuraZbus(Arc<Mutex<CtrlKbdLed>>, SignalContext<'static>);
 
 impl CtrlAuraZbus {
+    pub fn new(controller: CtrlKbdLed, signal: SignalContext<'static>) -> Self {
+        Self(Arc::new(Mutex::new(controller)), signal)
+    }
+
     fn update_config(lock: &mut CtrlKbdLed) -> Result<(), RogError> {
-        let bright = lock.sysfs_node.get_brightness()?;
+        let bright = lock.led_node.get_brightness()?;
         lock.config.read();
         lock.config.brightness = bright.into();
         lock.config.write();
@@ -35,16 +36,10 @@ impl CtrlAuraZbus {
     }
 }
 
-impl crate::ZbusRun for CtrlAuraZbus {
-    async fn add_to_server(self, server: &mut Connection) {
-        Self::add_to_server_helper(self, AURA_ZBUS_PATH, server).await;
-    }
-}
-
 /// The main interface for changing, reading, or notfying
 ///
 /// LED commands are split between Brightness, Modes, Per-Key
-#[interface(name = "org.asuslinux.Daemon")]
+#[interface(name = "org.asuslinux.Aura")]
 impl CtrlAuraZbus {
     /// Return the device type for this Aura keyboard
     #[zbus(property)]
@@ -57,14 +52,14 @@ impl CtrlAuraZbus {
     #[zbus(property)]
     async fn brightness(&self) -> Result<LedBrightness, ZbErr> {
         let ctrl = self.0.lock().await;
-        Ok(ctrl.sysfs_node.get_brightness().map(|n| n.into())?)
+        Ok(ctrl.led_node.get_brightness().map(|n| n.into())?)
     }
 
     /// Set the keyboard brightness level (0-3)
     #[zbus(property)]
     async fn set_brightness(&mut self, brightness: LedBrightness) -> Result<(), ZbErr> {
         let ctrl = self.0.lock().await;
-        Ok(ctrl.sysfs_node.set_brightness(brightness.into())?)
+        Ok(ctrl.led_node.set_brightness(brightness.into())?)
     }
 
     /// Total levels of brightness available
@@ -116,13 +111,11 @@ impl CtrlAuraZbus {
         if ctrl.config.brightness == LedBrightness::Off {
             ctrl.config.brightness = LedBrightness::Med;
         }
-        ctrl.sysfs_node
+        ctrl.led_node
             .set_brightness(ctrl.config.brightness.into())?;
         ctrl.config.write();
 
-        if let Some(ct) = self.1.as_ref() {
-            self.led_mode_data_invalidate(ct).await.ok();
-        }
+        self.led_mode_data_invalidate(&self.1).await.ok();
         Ok(())
     }
 
@@ -157,14 +150,12 @@ impl CtrlAuraZbus {
         if ctrl.config.brightness == LedBrightness::Off {
             ctrl.config.brightness = LedBrightness::Med;
         }
-        ctrl.sysfs_node
+        ctrl.led_node
             .set_brightness(ctrl.config.brightness.into())?;
         ctrl.config.set_builtin(effect);
         ctrl.config.write();
 
-        if let Some(ct) = self.1.as_ref() {
-            self.led_mode_invalidate(ct).await.ok();
-        }
+        self.led_mode_invalidate(&self.1).await.ok();
         Ok(())
     }
 
@@ -215,7 +206,7 @@ impl CtrlAuraZbus {
 
 impl CtrlTask for CtrlAuraZbus {
     fn zbus_path() -> &'static str {
-        AURA_ZBUS_PATH
+        "/org/asuslinux"
     }
 
     async fn create_tasks(&self, _: SignalContext<'static>) -> Result<(), RogError> {
@@ -223,7 +214,7 @@ impl CtrlTask for CtrlAuraZbus {
             // If waking up
             if !start {
                 info!("CtrlKbdLedTask reloading brightness and modes");
-                lock.sysfs_node
+                lock.led_node
                     .set_brightness(lock.config.brightness.into())
                     .map_err(|e| error!("CtrlKbdLedTask: {e}"))
                     .ok();
@@ -267,7 +258,7 @@ impl CtrlTask for CtrlAuraZbus {
 
         let ctrl2 = self.0.clone();
         let ctrl = self.0.lock().await;
-        let watch = ctrl.sysfs_node.monitor_brightness()?;
+        let watch = ctrl.led_node.monitor_brightness()?;
         tokio::spawn(async move {
             let mut buffer = [0; 32];
             watch

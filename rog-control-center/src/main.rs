@@ -8,8 +8,9 @@ use std::thread::{self, sleep};
 use std::time::Duration;
 
 use config_traits::{StdConfig, StdConfigLoad1};
+use dmi_id::DMIID;
 use gumdrop::Options;
-use log::LevelFilter;
+use log::{info, LevelFilter};
 use rog_control_center::cli_options::CliStart;
 use rog_control_center::config::Config;
 use rog_control_center::error::Result;
@@ -27,6 +28,12 @@ use tokio::runtime::Runtime;
 // use winit::window::{Fullscreen, WindowLevel};
 
 fn main() -> Result<()> {
+    let dmi = DMIID::new().unwrap_or_default();
+    let board_name = dmi.board_name;
+    let prod_family = dmi.product_family;
+    info!("Running on {board_name}, product: {prod_family}");
+    let is_rog_ally = prod_family == "RC71L";
+
     // tmp-dir must live to the end of program life
     let _tmp_dir = match tempfile::Builder::new()
         .prefix("rog-gui")

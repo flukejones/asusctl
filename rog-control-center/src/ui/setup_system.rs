@@ -1,7 +1,7 @@
-use rog_dbus::zbus_platform::{PlatformProxy, PlatformProxyBlocking};
-use rog_platform::platform::Properties;
 use std::sync::{Arc, Mutex};
 
+use rog_dbus::zbus_platform::{PlatformProxy, PlatformProxyBlocking};
+use rog_platform::platform::Properties;
 use slint::ComponentHandle;
 
 use super::show_toast;

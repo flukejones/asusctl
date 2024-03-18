@@ -1,14 +1,14 @@
-use rog_aura::usb::AuraPowerDev;
-use rog_dbus::zbus_aura::AuraProxy;
 use std::sync::{Arc, Mutex};
 
+use rog_aura::usb::AuraPowerDev;
+use rog_dbus::zbus_aura::AuraProxy;
 use slint::{ComponentHandle, Model, RgbaColor, SharedString};
-use zbus::proxy::CacheProperties;
 
 use crate::config::Config;
 use crate::ui::show_toast;
-use crate::{set_ui_callbacks, set_ui_props_async};
-use crate::{AuraPageData, MainWindow, PowerZones as SlintPowerZones};
+use crate::{
+    set_ui_callbacks, set_ui_props_async, AuraPageData, MainWindow, PowerZones as SlintPowerZones,
+};
 
 fn decode_hex(s: &str) -> RgbaColor<u8> {
     let s = s.trim_start_matches('#');
@@ -24,6 +24,51 @@ fn decode_hex(s: &str) -> RgbaColor<u8> {
     }
 }
 
+pub fn has_aura_iface_blocking() -> Result<bool, Box<dyn std::error::Error>> {
+    let conn = zbus::blocking::Connection::system()?;
+    let f = zbus::blocking::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/org")?;
+    let interfaces = f.get_managed_objects()?;
+    let mut aura_paths = Vec::new();
+    for v in interfaces.iter() {
+        for k in v.1.keys() {
+            if k.as_str() == "org.asuslinux.Aura" {
+                aura_paths.push(v.0.clone());
+            }
+        }
+    }
+    Ok(!aura_paths.is_empty())
+}
+
+/// Returns the first available Aura interface
+// TODO: return all
+async fn find_aura_iface() -> Result<AuraProxy<'static>, Box<dyn std::error::Error>> {
+    let conn = zbus::Connection::system().await?;
+    let f = zbus::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/org").await?;
+    let interfaces = f.get_managed_objects().await?;
+    let mut aura_paths = Vec::new();
+    for v in interfaces.iter() {
+        for k in v.1.keys() {
+            if k.as_str() == "org.asuslinux.Aura" {
+                println!("Found aura device at {}, {}", v.0, k);
+                aura_paths.push(v.0.clone());
+            }
+        }
+    }
+    if aura_paths.len() > 1 {
+        println!("Multiple aura devices found: {aura_paths:?}");
+        println!("TODO: enable selection");
+    }
+    if let Some(path) = aura_paths.first() {
+        return Ok(AuraProxy::builder(&conn)
+            .path(path.clone())?
+            .destination("org.asuslinux.Daemon")?
+            .build()
+            .await?);
+    }
+
+    Err("No Aura interface".into())
+}
+
 pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
     ui.global::<AuraPageData>().on_set_hex_from_colour(|c| {
         format!("#{:02X}{:02X}{:02X}", c.red(), c.green(), c.blue()).into()
@@ -34,12 +79,7 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
 
     let handle = ui.as_weak();
     tokio::spawn(async move {
-        let conn = zbus::Connection::system().await.unwrap();
-        let aura = AuraProxy::builder(&conn)
-            .cache_properties(CacheProperties::Yes)
-            .build()
-            .await
-            .unwrap();
+        let aura = find_aura_iface().await.unwrap();
 
         set_ui_props_async!(handle, aura, AuraPageData, brightness);
         set_ui_props_async!(handle, aura, AuraPageData, led_mode);

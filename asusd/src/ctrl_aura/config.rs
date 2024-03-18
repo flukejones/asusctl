@@ -1,15 +1,12 @@
 use std::collections::{BTreeMap, HashSet};
 
 use config_traits::{StdConfig, StdConfigLoad};
-use log::{debug, warn};
-use rog_aura::aura_detection::{LaptopLedData, ASUS_KEYBOARD_DEVICES};
+use log::{debug, info};
+use rog_aura::aura_detection::LaptopLedData;
 use rog_aura::power::AuraPower;
 use rog_aura::usb::{AuraDevRog1, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Direction, LedBrightness, Speed, GRADIENT};
-use rog_platform::hid_raw::HidRaw;
 use serde_derive::{Deserialize, Serialize};
-
-const CONFIG_FILE: &str = "aura.ron";
 
 /// Enable/disable LED control in various states such as
 /// when the device is awake, suspended, shutting down or
@@ -107,6 +104,7 @@ impl From<&AuraPowerConfig> for AuraPowerDev {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 // #[serde(default)]
 pub struct AuraConfig {
+    pub config_name: String,
     pub brightness: LedBrightness,
     pub current_mode: AuraModeNum,
     pub builtins: BTreeMap<AuraModeNum, AuraEffect>,
@@ -115,18 +113,18 @@ pub struct AuraConfig {
     pub enabled: AuraPowerConfig,
 }
 
+impl AuraConfig {
+    /// Detect the keyboard type and load from default DB if data available
+    pub fn new_with(prod_id: AuraDevice) -> Self {
+        info!("creating new AuraConfig");
+        Self::from_default_support(prod_id, &LaptopLedData::get_data())
+    }
+}
+
 impl StdConfig for AuraConfig {
     /// Detect the keyboard type and load from default DB if data available
     fn new() -> Self {
-        warn!("creating new config");
-        let mut prod_id = AuraDevice::Unknown;
-        for prod in ASUS_KEYBOARD_DEVICES {
-            if HidRaw::new(prod.into()).is_ok() {
-                prod_id = prod;
-                break;
-            }
-        }
-        Self::from_default_support(prod_id, &LaptopLedData::get_data())
+        panic!("This should not be used");
     }
 
     fn config_dir() -> std::path::PathBuf {
@@ -134,13 +132,20 @@ impl StdConfig for AuraConfig {
     }
 
     fn file_name(&self) -> String {
-        CONFIG_FILE.to_owned()
+        if self.config_name.is_empty() {
+            panic!("Config file name should not be empty");
+        }
+        self.config_name.to_owned()
     }
 }
 
 impl StdConfigLoad for AuraConfig {}
 
 impl AuraConfig {
+    pub fn set_filename(&mut self, prod_id: AuraDevice) {
+        self.config_name = format!("aura_{prod_id:?}.ron");
+    }
+
     pub fn from_default_support(prod_id: AuraDevice, support_data: &LaptopLedData) -> Self {
         // create a default config here
         let enabled = if prod_id.is_new_style() {
@@ -162,6 +167,7 @@ impl AuraConfig {
             ]))
         };
         let mut config = AuraConfig {
+            config_name: format!("aura_{prod_id:?}.ron"),
             brightness: LedBrightness::Med,
             current_mode: AuraModeNum::Static,
             builtins: BTreeMap::new(),

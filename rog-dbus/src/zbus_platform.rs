@@ -25,9 +25,9 @@ use rog_platform::platform::{GpuMode, Properties, ThrottlePolicy};
 use zbus::proxy;
 
 #[proxy(
-    interface = "org.asuslinux.Daemon",
+    interface = "org.asuslinux.Platform",
     default_service = "org.asuslinux.Daemon",
-    default_path = "/org/asuslinux/Platform"
+    default_path = "/org/asuslinux"
 )]
 trait Platform {
     /// NextThrottleThermalPolicy method

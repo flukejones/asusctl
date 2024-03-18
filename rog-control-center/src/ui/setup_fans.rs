@@ -1,8 +1,8 @@
+use std::sync::{Arc, Mutex};
+
 use rog_dbus::zbus_fan_curves::FanCurvesProxy;
 use rog_platform::platform::ThrottlePolicy;
 use rog_profiles::fan_curve_set::CurveData;
-use std::sync::{Arc, Mutex};
-
 use slint::{ComponentHandle, Model, Weak};
 
 use crate::config::Config;

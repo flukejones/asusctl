@@ -17,6 +17,7 @@ dmi_id = { path = "../dmi-id" }
 gumdrop.workspace = true
 toml.workspace = true
 zbus.workspace = true
+tokio.workspace = true
 
 [dev-dependencies]
 gif.workspace = true

@@ -26,9 +26,9 @@ use rog_profiles::FanCurvePU;
 use zbus::proxy;
 
 #[proxy(
-    interface = "org.asuslinux.Daemon",
+    interface = "org.asuslinux.FanCurves",
     default_service = "org.asuslinux.Daemon",
-    default_path = "/org/asuslinux/FanCurves"
+    default_path = "/org/asuslinux"
 )]
 trait FanCurves {
     /// Get the fan-curve data for the currently active PlatformProfile

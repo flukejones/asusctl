@@ -1,6 +1,7 @@
-use crate::{FanType, Profile};
 use rog_platform::platform::ThrottlePolicy;
 use rog_profiles::FanCurvePU;
+
+use crate::{FanType, Profile};
 
 impl From<Profile> for ThrottlePolicy {
     fn from(value: Profile) -> Self {

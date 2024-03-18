@@ -16,7 +16,7 @@ use super::CtrlAnime;
 use crate::error::RogError;
 
 pub const ANIME_ZBUS_NAME: &str = "Anime";
-pub const ANIME_ZBUS_PATH: &str = "/org/asuslinux/Anime";
+pub const ANIME_ZBUS_PATH: &str = "/org/asuslinux";
 
 async fn get_logind_manager<'a>() -> ManagerProxy<'a> {
     let connection = Connection::system()
@@ -43,7 +43,7 @@ impl crate::ZbusRun for CtrlAnimeZbus {
 // None of these calls can be guarnateed to succeed unless we loop until okay
 // If the try_lock *does* succeed then any other thread trying to lock will not
 // grab it until we finish.
-#[interface(name = "org.asuslinux.Daemon")]
+#[interface(name = "org.asuslinux.Anime")]
 impl CtrlAnimeZbus {
     /// Writes a data stream of length. Will force system thread to exit until
     /// it is restarted

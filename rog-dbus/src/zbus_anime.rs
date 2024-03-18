@@ -3,9 +3,9 @@ use rog_anime::{Animations, AnimeDataBuffer, DeviceState as AnimeDeviceState};
 use zbus::proxy;
 
 #[proxy(
-    interface = "org.asuslinux.Daemon",
+    interface = "org.asuslinux.Anime",
     default_service = "org.asuslinux.Daemon",
-    default_path = "/org/asuslinux/Anime"
+    default_path = "/org/asuslinux"
 )]
 trait Anime {
     /// DeviceState method
