@@ -48,9 +48,9 @@ dependencies = [
 
 [[package]]
 name = "aho-corasick"
-version = "1.1.2"
+version = "1.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2969dcb958b36655471fc61f7e416fa76033bdd4bfed0678d8fee1e2d07a1f0"
+checksum = "8e60d3430d3a69478ad0993f19238d2df97c507009a52b3c10addcd7f6bcb916"
 dependencies = [
  "memchr",
 ]
@@ -68,7 +68,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee91c0c2905bae44f84bfa4e044536541df26b7703fd0888deeb9060fcc44289"
 dependencies = [
  "android-properties",
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "cc",
  "cesu8",
  "jni",
@@ -151,7 +151,7 @@ dependencies = [
  "config-traits",
  "dmi_id",
  "env_logger",
- "futures-lite 2.2.0",
+ "futures-lite 2.3.0",
  "inotify",
  "log",
  "logind-zbus",
@@ -244,7 +244,7 @@ dependencies = [
  "async-task",
  "concurrent-queue",
  "fastrand 2.0.1",
- "futures-lite 2.2.0",
+ "futures-lite 2.3.0",
  "slab",
 ]
 
@@ -268,7 +268,7 @@ checksum = "bc19683171f287921f2405677dd2ed2549c3b3bda697a563ebc3a121ace2aba1"
 dependencies = [
  "async-lock 3.3.0",
  "blocking",
- "futures-lite 2.2.0",
+ "futures-lite 2.3.0",
 ]
 
 [[package]]
@@ -301,10 +301,10 @@ dependencies = [
  "cfg-if",
  "concurrent-queue",
  "futures-io",
- "futures-lite 2.2.0",
+ "futures-lite 2.3.0",
  "parking",
  "polling 3.5.0",
- "rustix 0.38.31",
+ "rustix 0.38.32",
  "slab",
  "tracing",
  "windows-sys 0.52.0",
@@ -354,7 +354,7 @@ dependencies = [
  "cfg-if",
  "event-listener 3.1.0",
  "futures-lite 1.13.0",
- "rustix 0.38.31",
+ "rustix 0.38.32",
  "windows-sys 0.48.0",
 ]
 
@@ -371,16 +371,16 @@ dependencies = [
  "blocking",
  "cfg-if",
  "event-listener 5.2.0",
- "futures-lite 2.2.0",
- "rustix 0.38.31",
+ "futures-lite 2.3.0",
+ "rustix 0.38.32",
  "windows-sys 0.52.0",
 ]
 
 [[package]]
 name = "async-recursion"
-version = "1.0.5"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5fd55a5ba1179988837d24ab4c7cc8ed6efdeff578ede0416b4225a5fca35bd0"
+checksum = "30c5ef0ede93efbf733c1a727f3b6b5a1060bbedd5600183e66f6e4be4af0ec5"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -399,7 +399,7 @@ dependencies = [
  "cfg-if",
  "futures-core",
  "futures-io",
- "rustix 0.38.31",
+ "rustix 0.38.32",
  "signal-hook-registry",
  "slab",
  "windows-sys 0.48.0",
@@ -498,7 +498,7 @@ version = "0.69.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a00dc851838a2120612785d195287475a3ac45514741da670b735818822129a0"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "cexpr",
  "clang-sys",
  "itertools 0.12.1",
@@ -529,9 +529,9 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitflags"
-version = "2.4.2"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed570934406eb16438a4e976b1b4500774099c13b8cb96eec99f620f05090ddf"
+checksum = "cf4b9d6a944f767f8e5e0db018570623c85f3d925ac718db4e06d0187adb21c1"
 dependencies = [
  "serde",
 ]
@@ -581,7 +581,7 @@ dependencies = [
  "async-task",
  "fastrand 2.0.1",
  "futures-io",
- "futures-lite 2.2.0",
+ "futures-lite 2.3.0",
  "piper",
  "tracing",
 ]
@@ -636,10 +636,10 @@ version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fba7adb4dd5aa98e5553510223000e7148f621165ec5f9acd7113f6ca4995298"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "log",
  "polling 3.5.0",
- "rustix 0.38.31",
+ "rustix 0.38.32",
  "slab",
  "thiserror",
 ]
@@ -651,7 +651,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0f0ea9b9476c7fad82841a8dbb380e2eae480c21910feba80725b46931ed8f02"
 dependencies = [
  "calloop",
- "rustix 0.38.31",
+ "rustix 0.38.32",
  "wayland-backend",
  "wayland-client",
 ]
@@ -852,7 +852,7 @@ dependencies = [
 [[package]]
 name = "const-field-offset"
 version = "0.1.5"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#0e9797e7ec4c1b8b1f342287072ccfa9712b54db"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#692020898223a29efbb597e18864841c6eb45d77"
 dependencies = [
  "const-field-offset-macro",
  "field-offset",
@@ -861,7 +861,7 @@ dependencies = [
 [[package]]
 name = "const-field-offset-macro"
 version = "0.1.5"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#0e9797e7ec4c1b8b1f342287072ccfa9712b54db"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#692020898223a29efbb597e18864841c6eb45d77"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1421,7 +1421,7 @@ version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ad3cf7e8f8e3c684b418c2640c931afc8bbc7ebe547bed6bf64170f1f51d57c9"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "fnv",
  "glow",
  "image",
@@ -1600,9 +1600,9 @@ dependencies = [
 
 [[package]]
 name = "futures-lite"
-version = "2.2.0"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "445ba825b27408685aaecefd65178908c36c6e96aaf6d8599419d46e624192ba"
+checksum = "52527eb5074e35e9339c6b4e8d12600c7128b68fb25dcb9fa9dec18f7c25f3a5"
 dependencies = [
  "fastrand 2.0.1",
  "futures-core",
@@ -1794,7 +1794,7 @@ version = "0.31.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "18fcd4ae4e86d991ad1300b8f57166e5be0c95ef1f63f3f5b827f8a164548746"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "cfg_aliases 0.1.1",
  "cgl",
  "core-foundation",
@@ -1928,8 +1928,8 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 
 [[package]]
 name = "i-slint-backend-linuxkms"
-version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#0e9797e7ec4c1b8b1f342287072ccfa9712b54db"
+version = "1.5.1"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#692020898223a29efbb597e18864841c6eb45d77"
 dependencies = [
  "calloop",
  "drm",
@@ -1948,8 +1948,8 @@ dependencies = [
 
 [[package]]
 name = "i-slint-backend-qt"
-version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#0e9797e7ec4c1b8b1f342287072ccfa9712b54db"
+version = "1.5.1"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#692020898223a29efbb597e18864841c6eb45d77"
 dependencies = [
  "const-field-offset",
  "i-slint-common",
@@ -1960,8 +1960,8 @@ dependencies = [
 
 [[package]]
 name = "i-slint-backend-selector"
-version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#0e9797e7ec4c1b8b1f342287072ccfa9712b54db"
+version = "1.5.1"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#692020898223a29efbb597e18864841c6eb45d77"
 dependencies = [
  "cfg-if",
  "i-slint-backend-linuxkms",
@@ -1973,8 +1973,8 @@ dependencies = [
 
 [[package]]
 name = "i-slint-backend-winit"
-version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#0e9797e7ec4c1b8b1f342287072ccfa9712b54db"
+version = "1.5.1"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#692020898223a29efbb597e18864841c6eb45d77"
 dependencies = [
  "bytemuck",
  "cfg-if",
@@ -2006,8 +2006,8 @@ dependencies = [
 
 [[package]]
 name = "i-slint-common"
-version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#0e9797e7ec4c1b8b1f342287072ccfa9712b54db"
+version = "1.5.1"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#692020898223a29efbb597e18864841c6eb45d77"
 dependencies = [
  "cfg-if",
  "derive_more",
@@ -2017,8 +2017,8 @@ dependencies = [
 
 [[package]]
 name = "i-slint-compiler"
-version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#0e9797e7ec4c1b8b1f342287072ccfa9712b54db"
+version = "1.5.1"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#692020898223a29efbb597e18864841c6eb45d77"
 dependencies = [
  "by_address",
  "codemap",
@@ -2046,8 +2046,8 @@ dependencies = [
 
 [[package]]
 name = "i-slint-core"
-version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#0e9797e7ec4c1b8b1f342287072ccfa9712b54db"
+version = "1.5.1"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#692020898223a29efbb597e18864841c6eb45d77"
 dependencies = [
  "auto_enums",
  "bytemuck",
@@ -2090,8 +2090,8 @@ dependencies = [
 
 [[package]]
 name = "i-slint-core-macros"
-version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#0e9797e7ec4c1b8b1f342287072ccfa9712b54db"
+version = "1.5.1"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#692020898223a29efbb597e18864841c6eb45d77"
 dependencies = [
  "quote",
  "syn 2.0.53",
@@ -2099,8 +2099,8 @@ dependencies = [
 
 [[package]]
 name = "i-slint-renderer-femtovg"
-version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#0e9797e7ec4c1b8b1f342287072ccfa9712b54db"
+version = "1.5.1"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#692020898223a29efbb597e18864841c6eb45d77"
 dependencies = [
  "cfg-if",
  "const-field-offset",
@@ -2130,8 +2130,8 @@ dependencies = [
 
 [[package]]
 name = "i-slint-renderer-skia"
-version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#0e9797e7ec4c1b8b1f342287072ccfa9712b54db"
+version = "1.5.1"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#692020898223a29efbb597e18864841c6eb45d77"
 dependencies = [
  "bytemuck",
  "cfg-if",
@@ -2487,7 +2487,7 @@ version = "0.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85c833ca1e66078851dba29046874e38f08b2c883700aa29a03ddd3b23814ee8"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "libc",
  "redox_syscall 0.4.1",
 ]
@@ -2498,7 +2498,7 @@ version = "0.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3af92c55d7d839293953fcd0fda5ecfe93297cfde6ffbdec13b41d99c0ba6607"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "libc",
  "redox_syscall 0.4.1",
 ]
@@ -2727,7 +2727,7 @@ version = "0.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c43f73953f8cbe511f021b58f18c3ce1c3d1ae13fe953293e13345bf83217f25"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "block",
  "core-graphics-types",
  "foreign-types",
@@ -2795,7 +2795,7 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2076a31b7010b17a38c01907c45b945e8f11495ee4dd588309718901b1f7a5b7"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "jni-sys",
  "log",
  "ndk-sys",
@@ -2839,7 +2839,7 @@ version = "0.27.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2eb04e9c688eff1c89d72b407f168cf79bb9e867a9d3323ed6c01519eb9cc053"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "cfg-if",
  "libc",
  "memoffset 0.9.0",
@@ -3177,7 +3177,7 @@ dependencies = [
  "cfg-if",
  "concurrent-queue",
  "pin-project-lite",
- "rustix 0.38.31",
+ "rustix 0.38.32",
  "tracing",
  "windows-sys 0.52.0",
 ]
@@ -3552,7 +3552,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b91f7eff05f748767f183df4320a63d6936e9c6107d97c9e6bdd9784f4289c94"
 dependencies = [
  "base64",
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "serde",
  "serde_derive",
 ]
@@ -3623,11 +3623,11 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "0.38.31"
+version = "0.38.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ea3e1a662af26cd7a3ba09c0297a31af215563ecf42817c98df621387f4e949"
+checksum = "65e04861e65f21776e67888bfbea442b3642beaa0138fdb1dd7a84a52dffdb89"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "errno",
  "libc",
  "linux-raw-sys 0.4.13",
@@ -3646,7 +3646,7 @@ version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0ae5692c5beaad6a9e22830deeed7874eae8a4e3ba4076fb48e12c56856222c"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "bytemuck",
  "smallvec",
  "ttf-parser",
@@ -3662,7 +3662,7 @@ version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "88117946aa1bfb53c2ae0643ceac6506337f44887f8c9fbfb43587b1cc52ba49"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "bytemuck",
  "smallvec",
  "ttf-parser",
@@ -3859,7 +3859,7 @@ dependencies = [
  "regex",
  "serde_json",
  "tar",
- "toml 0.8.11",
+ "toml 0.8.12",
 ]
 
 [[package]]
@@ -3868,7 +3868,7 @@ version = "0.71.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19f16277b362e6c6374ac9bb2d4fd561f5f58b80a1729989d5d79b33ccc92ced"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "lazy_static",
  "skia-bindings",
  "windows 0.52.0",
@@ -3885,8 +3885,8 @@ dependencies = [
 
 [[package]]
 name = "slint"
-version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#0e9797e7ec4c1b8b1f342287072ccfa9712b54db"
+version = "1.5.1"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#692020898223a29efbb597e18864841c6eb45d77"
 dependencies = [
  "const-field-offset",
  "i-slint-backend-selector",
@@ -3901,19 +3901,19 @@ dependencies = [
 
 [[package]]
 name = "slint-build"
-version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#0e9797e7ec4c1b8b1f342287072ccfa9712b54db"
+version = "1.5.1"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#692020898223a29efbb597e18864841c6eb45d77"
 dependencies = [
  "i-slint-compiler",
  "spin_on",
  "thiserror",
- "toml_edit 0.22.7",
+ "toml_edit 0.22.8",
 ]
 
 [[package]]
 name = "slint-macros"
-version = "1.5.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#0e9797e7ec4c1b8b1f342287072ccfa9712b54db"
+version = "1.5.1"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#692020898223a29efbb597e18864841c6eb45d77"
 dependencies = [
  "i-slint-compiler",
  "proc-macro2",
@@ -3942,14 +3942,14 @@ version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "922fd3eeab3bd820d76537ce8f582b1cf951eceb5475c28500c7457d9d17f53a"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "calloop",
  "calloop-wayland-source",
  "cursor-icon",
  "libc",
  "log",
  "memmap2 0.9.4",
- "rustix 0.38.31",
+ "rustix 0.38.32",
  "thiserror",
  "wayland-backend",
  "wayland-client",
@@ -4037,7 +4037,7 @@ dependencies = [
  "objc",
  "raw-window-handle 0.5.2",
  "redox_syscall 0.4.1",
- "rustix 0.38.31",
+ "rustix 0.38.32",
  "tiny-xlib",
  "wasm-bindgen",
  "wayland-backend",
@@ -4111,8 +4111,8 @@ dependencies = [
 
 [[package]]
 name = "supergfxctl"
-version = "5.2.1"
-source = "git+https://gitlab.com/asus-linux/supergfxctl.git#508d15e4bc5dc14bac27146d3bc66c31436bcdb5"
+version = "5.2.2"
+source = "git+https://gitlab.com/asus-linux/supergfxctl.git#f3465681ac147821bbd2d50aff2bced2d92d529e"
 dependencies = [
  "log",
  "logind-zbus",
@@ -4201,7 +4201,7 @@ checksum = "85b77fafb263dd9d05cbeac119526425676db3784113aa9295c88498cbf8bff1"
 dependencies = [
  "cfg-if",
  "fastrand 2.0.1",
- "rustix 0.38.31",
+ "rustix 0.38.32",
  "windows-sys 0.52.0",
 ]
 
@@ -4370,14 +4370,14 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "0.8.11"
+version = "0.8.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af06656561d28735e9c1cd63dfd57132c8155426aa6af24f36a00a351f88c48e"
+checksum = "e9dd1545e8208b4a5af1aa9bbd0b4cf7e9ea08fabc5d0a5c67fcaafa17433aa3"
 dependencies = [
  "serde",
  "serde_spanned",
  "toml_datetime",
- "toml_edit 0.22.7",
+ "toml_edit 0.22.8",
 ]
 
 [[package]]
@@ -4413,9 +4413,9 @@ dependencies = [
 
 [[package]]
 name = "toml_edit"
-version = "0.22.7"
+version = "0.22.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18769cd1cec395d70860ceb4d932812a0b4d06b1a4bb336745a4d21b9496e992"
+checksum = "c12219811e0c1ba077867254e5ad62ee2c9c190b0d957110750ac0cda1ae96cd"
 dependencies = [
  "indexmap",
  "serde",
@@ -4688,7 +4688,7 @@ dependencies = [
 [[package]]
 name = "vtable"
 version = "0.2.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#0e9797e7ec4c1b8b1f342287072ccfa9712b54db"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#692020898223a29efbb597e18864841c6eb45d77"
 dependencies = [
  "const-field-offset",
  "portable-atomic",
@@ -4699,7 +4699,7 @@ dependencies = [
 [[package]]
 name = "vtable-macro"
 version = "0.2.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#0e9797e7ec4c1b8b1f342287072ccfa9712b54db"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=asusctl#692020898223a29efbb597e18864841c6eb45d77"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4802,7 +4802,7 @@ checksum = "9d50fa61ce90d76474c87f5fc002828d81b32677340112b4ef08079a9d459a40"
 dependencies = [
  "cc",
  "downcast-rs",
- "rustix 0.38.31",
+ "rustix 0.38.32",
  "scoped-tls",
  "smallvec",
  "wayland-sys",
@@ -4814,8 +4814,8 @@ version = "0.31.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "82fb96ee935c2cea6668ccb470fb7771f6215d1691746c2d896b447a00ad3f1f"
 dependencies = [
- "bitflags 2.4.2",
- "rustix 0.38.31",
+ "bitflags 2.5.0",
+ "rustix 0.38.32",
  "wayland-backend",
  "wayland-scanner",
 ]
@@ -4826,7 +4826,7 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "625c5029dbd43d25e6aa9615e88b829a5cad13b2819c4ae129fdbb7c31ab4c7e"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "cursor-icon",
  "wayland-backend",
 ]
@@ -4837,7 +4837,7 @@ version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "71ce5fa868dd13d11a0d04c5e2e65726d0897be8de247c0c5a65886e283231ba"
 dependencies = [
- "rustix 0.38.31",
+ "rustix 0.38.32",
  "wayland-client",
  "xcursor",
 ]
@@ -4848,7 +4848,7 @@ version = "0.31.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f81f365b8b4a97f422ac0e8737c438024b5951734506b0e1d775c73030561f4"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "wayland-backend",
  "wayland-client",
  "wayland-scanner",
@@ -4860,7 +4860,7 @@ version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "23803551115ff9ea9bce586860c5c5a971e360825a0309264102a9495a5ff479"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "wayland-backend",
  "wayland-client",
  "wayland-protocols",
@@ -4873,7 +4873,7 @@ version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ad1f61b76b6c2d8742e10f9ba5c3737f6530b4c243132c2a2ccc8aa96fe25cd6"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "wayland-backend",
  "wayland-client",
  "wayland-protocols",
@@ -4948,7 +4948,7 @@ dependencies = [
  "either",
  "home",
  "once_cell",
- "rustix 0.38.31",
+ "rustix 0.38.32",
 ]
 
 [[package]]
@@ -5236,7 +5236,7 @@ dependencies = [
  "ahash",
  "android-activity",
  "atomic-waker",
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "bytemuck",
  "calloop",
  "cfg_aliases 0.1.1",
@@ -5257,7 +5257,7 @@ dependencies = [
  "raw-window-handle 0.5.2",
  "raw-window-handle 0.6.0",
  "redox_syscall 0.3.5",
- "rustix 0.38.31",
+ "rustix 0.38.32",
  "sctk-adwaita",
  "smithay-client-toolkit",
  "smol_str",
@@ -5352,7 +5352,7 @@ dependencies = [
  "libc",
  "libloading 0.8.3",
  "once_cell",
- "rustix 0.38.31",
+ "rustix 0.38.32",
  "x11rb-protocol 0.13.0",
 ]
 
@@ -5379,7 +5379,7 @@ checksum = "8da84f1a25939b27f6820d92aed108f83ff920fdf11a7b19366c27c4cda81d4f"
 dependencies = [
  "libc",
  "linux-raw-sys 0.4.13",
- "rustix 0.38.31",
+ "rustix 0.38.32",
 ]
 
 [[package]]
@@ -5415,7 +5415,7 @@ version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d039de8032a9a8856a6be89cea3e5d12fdd82306ab7c94d74e6deab2460651c5"
 dependencies = [
- "bitflags 2.4.2",
+ "bitflags 2.5.0",
  "dlib",
  "log",
  "once_cell",
