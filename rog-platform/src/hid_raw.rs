@@ -1,18 +1,24 @@
-use std::cell::UnsafeCell;
-use std::fs::OpenOptions;
+use std::cell::RefCell;
+use std::fs::{File, OpenOptions};
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use log::{info, warn};
 use udev::Device;
 
 use crate::error::{PlatformError, Result};
 
+/// A USB device that utilizes hidraw for I/O
 #[derive(Debug)]
 pub struct HidRaw {
-    devfs_path: UnsafeCell<PathBuf>,
+    /// The path to the `/dev/<name>` of the device
+    devfs_path: PathBuf,
+    /// The sysfs path
     syspath: PathBuf,
+    /// The product ID. The vendor ID is not kept
     prod_id: String,
+    /// Retaining a handle to the file for the duration of `HidRaw`
+    file: RefCell<File>,
 }
 
 impl HidRaw {
@@ -43,7 +49,10 @@ impl HidRaw {
                             info!("Using device at: {:?} for hidraw control", dev_node);
                             return Ok((
                                 Self {
-                                    devfs_path: UnsafeCell::new(dev_node.to_owned()),
+                                    file: RefCell::new(
+                                        OpenOptions::new().write(true).open(dev_node)?,
+                                    ),
+                                    devfs_path: dev_node.to_owned(),
                                     prod_id: id_product.to_string(),
                                     syspath: endpoint.syspath().into(),
                                 },
@@ -63,7 +72,8 @@ impl HidRaw {
                         );
                         return Ok((
                             Self {
-                                devfs_path: UnsafeCell::new(dev_node.to_owned()),
+                                file: RefCell::new(OpenOptions::new().write(true).open(dev_node)?),
+                                devfs_path: dev_node.to_owned(),
                                 prod_id: id_product.to_string(),
                                 syspath: endpoint.syspath().into(),
                             },
@@ -79,6 +89,7 @@ impl HidRaw {
         )))
     }
 
+    /// Make `HidRaw` device from a udev device
     pub fn from_device(device: Device) -> Result<Self> {
         if let Some(parent) = device
             .parent_with_subsystem_devtype("usb", "usb_device")
@@ -87,7 +98,8 @@ impl HidRaw {
             if let Some(dev_node) = device.devnode() {
                 if let Some(id_product) = parent.attribute_value("idProduct") {
                     return Ok(Self {
-                        devfs_path: UnsafeCell::new(dev_node.to_owned()),
+                        file: RefCell::new(OpenOptions::new().write(true).open(dev_node)?),
+                        devfs_path: dev_node.to_owned(),
                         prod_id: id_product.to_string_lossy().into(),
                         syspath: device.syspath().into(),
                     });
@@ -103,41 +115,22 @@ impl HidRaw {
         &self.prod_id
     }
 
-    pub fn devfs_path(&self) -> PathBuf {
-        unsafe { &*(self.devfs_path.get()) }.clone()
-    }
-
-    pub fn syspath(&self) -> &Path {
-        &self.syspath
-    }
-
+    /// Write an array of raw bytes to the device using the hidraw interface
     pub fn write_bytes(&self, message: &[u8]) -> Result<()> {
-        let mut path = unsafe { &*(self.devfs_path.get()) };
-        let mut file = match OpenOptions::new().write(true).open(path) {
-            Ok(f) => f,
-            Err(e) => {
-                warn!(
-                    "write_bytes failed for {:?}, trying again: {e}",
-                    self.devfs_path
-                );
-                unsafe {
-                    *(self.devfs_path.get()) =
-                        (*(Self::new(&self.prod_id)?.0.devfs_path.get())).clone();
-                    path = &mut *(self.devfs_path.get());
-                }
-                OpenOptions::new()
-                    .write(true)
-                    .open(path)
-                    .map_err(|e| PlatformError::IoPath(path.to_string_lossy().to_string(), e))?
-            }
-        };
-        file.write_all(message)
-            .map_err(|e| PlatformError::IoPath(path.to_string_lossy().to_string(), e))
+        if let Ok(mut file) = self.file.try_borrow_mut() {
+            // let mut file = self.file.borrow_mut();
+            // TODO: re-get the file if error?
+            file.write_all(message).map_err(|e| {
+                PlatformError::IoPath(self.devfs_path.to_string_lossy().to_string(), e)
+            })?;
+        }
+        Ok(())
     }
 
+    /// This method was added for certain devices like AniMe to prevent them
+    /// waking the laptop
     pub fn set_wakeup_disabled(&self) -> Result<()> {
-        let path = unsafe { &*(self.devfs_path.get()) };
-        let mut dev = Device::from_syspath(path)?;
+        let mut dev = Device::from_syspath(&self.syspath)?;
         Ok(dev.set_attribute_value("power/wakeup", "disabled")?)
     }
 }
