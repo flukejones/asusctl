@@ -116,7 +116,7 @@ pub struct AuraConfig {
 impl AuraConfig {
     /// Detect the keyboard type and load from default DB if data available
     pub fn new_with(prod_id: AuraDevice) -> Self {
-        info!("creating new AuraConfig");
+        info!("Setting up AuraConfig for {prod_id:?}");
         Self::from_default_support(prod_id, &LaptopLedData::get_data())
     }
 }

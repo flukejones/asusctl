@@ -2,9 +2,9 @@ use std::collections::BTreeMap;
 
 use config_traits::{StdConfig, StdConfigLoad};
 use inotify::Inotify;
-use log::info;
+use log::{info, warn};
 use rog_aura::advanced::{LedUsbPackets, UsbPackets};
-use rog_aura::aura_detection::{LaptopLedData, ASUS_KEYBOARD_DEVICES};
+use rog_aura::aura_detection::LaptopLedData;
 use rog_aura::usb::{AuraDevice, LED_APPLY, LED_SET};
 use rog_aura::{AuraEffect, Direction, LedBrightness, Speed, GRADIENT, LED_MSG_LEN};
 use rog_platform::hid_raw::HidRaw;
@@ -59,71 +59,61 @@ pub struct CtrlKbdLed {
 }
 
 impl CtrlKbdLed {
-    pub fn new(data: LaptopLedData) -> Result<Self, RogError> {
-        let mut led_prod = AuraDevice::Unknown;
-        let mut usb_node = None;
-        for prod in ASUS_KEYBOARD_DEVICES {
-            match HidRaw::new(prod.into()) {
-                Ok(node) => {
-                    led_prod = prod;
-                    usb_node = Some(node);
-                    info!(
-                        "Looked for keyboard controller 0x{}: Found",
-                        <&str>::from(prod)
-                    );
-                    break;
+    pub fn find_all(data: &LaptopLedData) -> Result<Vec<Self>, RogError> {
+        let mut devices = Vec::new();
+
+        let mut enumerator = udev::Enumerator::new().map_err(|err| {
+            warn!("{}", err);
+            err
+        })?;
+
+        enumerator.match_subsystem("hidraw").map_err(|err| {
+            warn!("{}", err);
+            err
+        })?;
+
+        for end_point in enumerator.scan_devices()? {
+            if let Some(usb_device) =
+                end_point.parent_with_subsystem_devtype("usb", "usb_device")?
+            {
+                // Device is something like 002, while its parent is the MCU
+                // Think of it like the device is an endpoint of the USB device attached
+                if let Some(parent_id) = usb_device.attribute_value("idProduct") {
+                    let prod_id = AuraDevice::from(parent_id.to_str().unwrap());
+                    if prod_id == AuraDevice::Unknown {
+                        log::debug!("Unknown or invalid device: {parent_id:?}, skipping");
+                        continue;
+                    }
                 }
-                Err(err) => info!(
-                    "Looked for keyboard controller 0x{}: {err}",
-                    <&str>::from(prod)
-                ),
+                let dbus_path = dbus_path_for_dev(&usb_device).unwrap_or_default();
+                let dev = HidRaw::from_device(end_point)?;
+                let dev = Self::from_hidraw(dev, dbus_path, data)?;
+                devices.push(dev);
             }
         }
 
-        let mut dbus_path = Default::default();
-        let rgb_led = KeyboardLed::new()?;
-        let led_node = if let Some(rog) = usb_node {
-            info!("Found ROG USB keyboard");
-            dbus_path = dbus_path_for_dev(rog.1).unwrap_or_default();
-            LEDNode::Rog(rgb_led, rog.0)
-        } else if rgb_led.has_kbd_rgb_mode() {
-            info!("Found TUF keyboard");
-            LEDNode::KbdLed(rgb_led.clone())
-        } else {
-            return Err(RogError::NoAuraKeyboard);
-            // LEDNode::None
-        };
-
-        // New loads data from the DB also
-        let config = Self::init_config(led_prod, &data);
-
-        let ctrl = CtrlKbdLed {
-            led_prod,
-            led_node, // on TUF this is the same as rgb_led / kd_brightness
-            supported_data: data,
-            per_key_mode_active: false,
-            config,
-            dbus_path,
-        };
-        Ok(ctrl)
+        Ok(devices)
     }
 
-    pub fn from_device(
+    pub fn from_hidraw(
         device: HidRaw,
         dbus_path: OwnedObjectPath,
-        data: LaptopLedData,
+        data: &LaptopLedData,
     ) -> Result<Self, RogError> {
         let rgb_led = KeyboardLed::new()?;
         let prod_id = AuraDevice::from(device.prod_id());
+        if prod_id == AuraDevice::Unknown {
+            log::error!("{} is AuraDevice::Unknown", device.prod_id());
+            return Err(RogError::NoAuraNode);
+        }
 
         // New loads data from the DB also
-        let config = Self::init_config(prod_id, &data);
+        let config = Self::init_config(prod_id, data);
 
         let ctrl = CtrlKbdLed {
             led_prod: prod_id,
-            led_node: LEDNode::Rog(rgb_led, device), /* on TUF this is the same as rgb_led /
-                                                      * kd_brightness */
-            supported_data: data,
+            led_node: LEDNode::Rog(rgb_led, device),
+            supported_data: data.clone(),
             per_key_mode_active: false,
             config,
             dbus_path,
@@ -348,7 +338,7 @@ mod tests {
         };
         let mut controller = CtrlKbdLed {
             led_prod: AuraDevice::X19b6,
-            led_node: LEDNode::Rog(KeyboardLed::default(), HidRaw::new("id_product").unwrap()),
+            led_node: LEDNode::Rog(KeyboardLed::default(), HidRaw::new("id_product").unwrap().0),
             supported_data: supported_basic_modes,
             per_key_mode_active: false,
             config,
@@ -386,7 +376,7 @@ mod tests {
         };
         let mut controller = CtrlKbdLed {
             led_prod: AuraDevice::X19b6,
-            led_node: LEDNode::Rog(KeyboardLed::default(), HidRaw::new("id_product").unwrap()),
+            led_node: LEDNode::Rog(KeyboardLed::default(), HidRaw::new("id_product").unwrap().0),
             supported_data: supported_basic_modes,
             per_key_mode_active: false,
             config,

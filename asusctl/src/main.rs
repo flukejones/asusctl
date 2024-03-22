@@ -103,7 +103,7 @@ fn check_service(name: &str) -> bool {
     false
 }
 
-fn find_aura_iface() -> Result<AuraProxyBlocking<'static>, Box<dyn std::error::Error>> {
+fn find_aura_iface() -> Result<Vec<AuraProxyBlocking<'static>>, Box<dyn std::error::Error>> {
     let conn = zbus::blocking::Connection::system().unwrap();
     let f = zbus::blocking::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/org")
         .unwrap();
@@ -123,11 +123,17 @@ fn find_aura_iface() -> Result<AuraProxyBlocking<'static>, Box<dyn std::error::E
         println!("Multiple aura devices found: {aura_paths:?}");
         println!("TODO: enable selection");
     }
-    if let Some(path) = aura_paths.first() {
-        return Ok(AuraProxyBlocking::builder(&conn)
-            .path(path.clone())?
-            .destination("org.asuslinux.Daemon")?
-            .build()?);
+    if !aura_paths.is_empty() {
+        let mut ctrl = Vec::new();
+        for path in aura_paths {
+            ctrl.push(
+                AuraProxyBlocking::builder(&conn)
+                    .path(path.clone())?
+                    .destination("org.asuslinux.Daemon")?
+                    .build()?,
+            );
+        }
+        return Ok(ctrl);
     }
 
     Err("No Aura interface".into())
@@ -162,7 +168,12 @@ fn do_parsed(
                 println!();
                 if let Some(cmdlist) = CliStart::command_list() {
                     let dev_type = if let Ok(proxy) = find_aura_iface() {
-                        proxy.device_type().unwrap_or(AuraDevice::Unknown)
+                        // TODO: commands on all?
+                        proxy
+                            .first()
+                            .unwrap()
+                            .device_type()
+                            .unwrap_or(AuraDevice::Unknown)
                     } else {
                         AuraDevice::Unknown
                     };
@@ -192,12 +203,14 @@ fn do_parsed(
 
     if let Some(brightness) = &parsed.kbd_bright {
         if let Ok(aura) = find_aura_iface() {
-            match brightness.level() {
-                None => {
-                    let level = aura.brightness()?;
-                    println!("Current keyboard led brightness: {level:?}");
+            for aura in aura.iter() {
+                match brightness.level() {
+                    None => {
+                        let level = aura.brightness()?;
+                        println!("Current keyboard led brightness: {level:?}");
+                    }
+                    Some(level) => aura.set_brightness(rog_aura::LedBrightness::from(level))?,
                 }
-                Some(level) => aura.set_brightness(rog_aura::LedBrightness::from(level))?,
             }
         } else {
             println!("No aura interface found");
@@ -206,8 +219,10 @@ fn do_parsed(
 
     if parsed.next_kbd_bright {
         if let Ok(aura) = find_aura_iface() {
-            let brightness = aura.brightness()?;
-            aura.set_brightness(brightness.next())?;
+            for aura in aura.iter() {
+                let brightness = aura.brightness()?;
+                aura.set_brightness(brightness.next())?;
+            }
         } else {
             println!("No aura interface found");
         }
@@ -215,8 +230,10 @@ fn do_parsed(
 
     if parsed.prev_kbd_bright {
         if let Ok(aura) = find_aura_iface() {
-            let brightness = aura.brightness()?;
-            aura.set_brightness(brightness.prev())?;
+            for aura in aura.iter() {
+                let brightness = aura.brightness()?;
+                aura.set_brightness(brightness.prev())?;
+            }
         } else {
             println!("No aura interface found");
         }
@@ -229,10 +246,11 @@ fn do_parsed(
             supported_properties
         );
         if let Ok(aura) = find_aura_iface() {
-            let bright = aura.supported_brightness()?;
-            let modes = aura.supported_basic_modes()?;
-            let zones = aura.supported_basic_zones()?;
-            let power = aura.supported_power_zones()?;
+            // TODO: multiple RGB check
+            let bright = aura.first().unwrap().supported_brightness()?;
+            let modes = aura.first().unwrap().supported_basic_modes()?;
+            let zones = aura.first().unwrap().supported_basic_zones()?;
+            let power = aura.first().unwrap().supported_power_zones()?;
             println!("Supported Keyboard Brightness:\n{:#?}", bright);
             println!("Supported Aura Modes:\n{:#?}", modes);
             println!("Supported Aura Zones:\n{:#?}", zones);
@@ -459,14 +477,9 @@ fn verify_brightness(brightness: f32) {
 }
 
 fn handle_led_mode(
-    aura: &AuraProxyBlocking,
+    aura: &[AuraProxyBlocking],
     mode: &LedModeCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // if !supported.contains(&AURA_ZBUS_NAME.to_string()) {
-    //     println!("This laptop does not support power options");
-    //     return Err(PlatformError::NotSupported.into());
-    // }
-
     if mode.command.is_none() && !mode.prev_mode && !mode.next_mode {
         if !mode.help {
             println!("Missing arg or command\n");
@@ -476,7 +489,8 @@ fn handle_led_mode(
 
         if let Some(cmdlist) = LedModeCommand::command_list() {
             let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
-            let modes = aura.supported_basic_modes()?;
+            // TODO: multiple rgb check
+            let modes = aura.first().unwrap().supported_basic_modes()?;
             for command in commands.iter().filter(|command| {
                 for mode in &modes {
                     if command
@@ -505,68 +519,72 @@ fn handle_led_mode(
         return Ok(());
     }
     if mode.next_mode {
-        let mode = aura.led_mode()?;
-        let modes = aura.supported_basic_modes()?;
-        let mut pos = modes.iter().position(|m| *m == mode).unwrap() + 1;
-        if pos >= modes.len() {
-            pos = 0;
+        for aura in aura {
+            let mode = aura.led_mode()?;
+            let modes = aura.supported_basic_modes()?;
+            let mut pos = modes.iter().position(|m| *m == mode).unwrap() + 1;
+            if pos >= modes.len() {
+                pos = 0;
+            }
+            aura.set_led_mode(modes[pos])?;
         }
-        aura.set_led_mode(modes[pos])?;
     } else if mode.prev_mode {
-        let mode = aura.led_mode()?;
-        let modes = aura.supported_basic_modes()?;
-        let mut pos = modes.iter().position(|m| *m == mode).unwrap();
-        if pos == 0 {
-            pos = modes.len() - 1;
-        } else {
-            pos -= 1;
+        for aura in aura {
+            let mode = aura.led_mode()?;
+            let modes = aura.supported_basic_modes()?;
+            let mut pos = modes.iter().position(|m| *m == mode).unwrap();
+            if pos == 0 {
+                pos = modes.len() - 1;
+            } else {
+                pos -= 1;
+            }
+            aura.set_led_mode(modes[pos])?;
         }
-        aura.set_led_mode(modes[pos])?;
     } else if let Some(mode) = mode.command.as_ref() {
         if mode.help_requested() {
             println!("{}", mode.self_usage());
             return Ok(());
         }
-        aura.set_led_mode_data(<AuraEffect>::from(mode))?;
+        for aura in aura {
+            aura.set_led_mode_data(<AuraEffect>::from(mode))?;
+        }
     }
 
     Ok(())
 }
 
 fn handle_led_power1(
-    aura: &AuraProxyBlocking,
+    aura: &[AuraProxyBlocking],
     power: &LedPowerCommand1,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // if !supported.contains(&AURA_ZBUS_NAME.to_string()) {
-    //     println!("This laptop does not support power options");
-    //     return Err(PlatformError::NotSupported.into());
-    // }
-    let dev_type = aura.device_type()?;
-    if !dev_type.is_old_style() && !dev_type.is_tuf_style() {
-        println!("This option applies only to keyboards 2021+");
-    }
-
-    if power.awake.is_none()
-        && power.sleep.is_none()
-        && power.boot.is_none()
-        && power.keyboard.is_none()
-        && power.lightbar.is_none()
-    {
-        if !power.help {
-            println!("Missing arg or command\n");
+    for aura in aura {
+        let dev_type = aura.device_type()?;
+        if !dev_type.is_old_style() && !dev_type.is_tuf_style() {
+            println!("This option applies only to keyboards 2021+");
         }
-        println!("{}\n", power.self_usage());
-        return Ok(());
-    }
 
-    if dev_type.is_old_style() {
-        handle_led_power_1_do_1866(aura, power)?;
-        return Ok(());
-    }
+        if power.awake.is_none()
+            && power.sleep.is_none()
+            && power.boot.is_none()
+            && power.keyboard.is_none()
+            && power.lightbar.is_none()
+        {
+            if !power.help {
+                println!("Missing arg or command\n");
+            }
+            println!("{}\n", power.self_usage());
+            return Ok(());
+        }
 
-    if dev_type.is_tuf_style() {
-        handle_led_power_1_do_tuf(aura, power)?;
-        return Ok(());
+        if dev_type.is_old_style() {
+            handle_led_power_1_do_1866(aura, power)?;
+            return Ok(());
+        }
+
+        if dev_type.is_tuf_style() {
+            handle_led_power_1_do_tuf(aura, power)?;
+            return Ok(());
+        }
     }
 
     println!("These options are for keyboards of product ID 0x1866 or TUF only");
@@ -600,7 +618,8 @@ fn handle_led_power_1_do_1866(
         old_rog: enabled,
         ..Default::default()
     };
-    aura.set_led_power(data)?; // TODO: verify this
+
+    aura.set_led_power(data.clone())?; // TODO: verify this
 
     Ok(())
 }
@@ -631,67 +650,66 @@ fn handle_led_power_1_do_tuf(
         tuf: enabled,
         ..Default::default()
     };
-    aura.set_led_power(data)?; // TODO: verify this
+    aura.set_led_power(data.clone())?; // TODO: verify this
 
     Ok(())
 }
 
 fn handle_led_power2(
-    aura: &AuraProxyBlocking,
+    aura: &[AuraProxyBlocking],
     power: &LedPowerCommand2,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // if !supported.contains(&AURA_ZBUS_NAME.to_string()) {
-    //     println!("This laptop does not support power options");
-    //     return Err(PlatformError::NotSupported.into());
-    // }
-    let dev_type = aura.device_type()?;
-    if !dev_type.is_new_style() {
-        println!("This option applies only to keyboards 2021+");
-    }
-
-    if power.command().is_none() {
-        if !power.help {
-            println!("Missing arg or command\n");
+    for aura in aura {
+        let dev_type = aura.device_type()?;
+        if !dev_type.is_new_style() {
+            println!("This option applies only to keyboards 2021+");
+            continue;
         }
-        println!("{}\n", power.self_usage());
-        println!("Commands available");
 
-        if let Some(cmdlist) = LedPowerCommand2::command_list() {
-            let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
-            for command in &commands {
-                println!("{}", command);
+        if power.command().is_none() {
+            if !power.help {
+                println!("Missing arg or command\n");
             }
-        }
+            println!("{}\n", power.self_usage());
+            println!("Commands available");
 
-        println!("\nHelp can also be requested on commands, e.g: boot --help");
-        return Ok(());
-    }
+            if let Some(cmdlist) = LedPowerCommand2::command_list() {
+                let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
+                for command in &commands {
+                    println!("{}", command);
+                }
+            }
 
-    if let Some(pow) = power.command.as_ref() {
-        if pow.help_requested() {
-            println!("{}", pow.self_usage());
+            println!("\nHelp can also be requested on commands, e.g: boot --help");
             return Ok(());
         }
 
-        let set = |power: &mut KbAuraPowerState, set_to: &AuraPowerStates| {
-            power.boot = set_to.boot;
-            power.awake = set_to.awake;
-            power.sleep = set_to.sleep;
-            power.shutdown = set_to.shutdown;
-        };
-
-        let mut enabled = aura.led_power()?;
-        if let Some(cmd) = &power.command {
-            match cmd {
-                aura_cli::SetAuraZoneEnabled::Keyboard(k) => set(&mut enabled.rog.keyboard, k),
-                aura_cli::SetAuraZoneEnabled::Logo(l) => set(&mut enabled.rog.logo, l),
-                aura_cli::SetAuraZoneEnabled::Lightbar(l) => set(&mut enabled.rog.lightbar, l),
-                aura_cli::SetAuraZoneEnabled::Lid(l) => set(&mut enabled.rog.lid, l),
-                aura_cli::SetAuraZoneEnabled::RearGlow(r) => set(&mut enabled.rog.rear_glow, r),
+        if let Some(pow) = power.command.as_ref() {
+            if pow.help_requested() {
+                println!("{}", pow.self_usage());
+                return Ok(());
             }
-        }
 
-        aura.set_led_power(enabled)?;
+            let set = |power: &mut KbAuraPowerState, set_to: &AuraPowerStates| {
+                power.boot = set_to.boot;
+                power.awake = set_to.awake;
+                power.sleep = set_to.sleep;
+                power.shutdown = set_to.shutdown;
+            };
+
+            let mut enabled = aura.led_power()?;
+            if let Some(cmd) = &power.command {
+                match cmd {
+                    aura_cli::SetAuraZoneEnabled::Keyboard(k) => set(&mut enabled.rog.keyboard, k),
+                    aura_cli::SetAuraZoneEnabled::Logo(l) => set(&mut enabled.rog.logo, l),
+                    aura_cli::SetAuraZoneEnabled::Lightbar(l) => set(&mut enabled.rog.lightbar, l),
+                    aura_cli::SetAuraZoneEnabled::Lid(l) => set(&mut enabled.rog.lid, l),
+                    aura_cli::SetAuraZoneEnabled::RearGlow(r) => set(&mut enabled.rog.rear_glow, r),
+                }
+            }
+
+            aura.set_led_power(enabled)?;
+        }
     }
 
     Ok(())

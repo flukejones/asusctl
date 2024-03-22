@@ -24,7 +24,7 @@ pub fn main() -> Result<(), Box<dyn Error>> {
         return Err("RogError::NoAuraKeyboard".into());
     }
 
-    let node = usb_node.unwrap();
+    let node = usb_node.unwrap().0;
 
     let mut packet: [u8; 64] = [
         0x5a, 0xd1, 0x0d, 0x0e, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

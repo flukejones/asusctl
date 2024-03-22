@@ -4,7 +4,7 @@
 // - Add it to Zbus server
 // - If udev sees device removed then remove the zbus path
 
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use log::{error, info, warn};
@@ -26,7 +26,7 @@ use crate::{CtrlTask, Reloadable};
 
 pub struct AuraManager {
     _connection: Connection,
-    _interfaces: Arc<Mutex<HashSet<OwnedObjectPath>>>,
+    interfaces: Arc<Mutex<HashMap<String, OwnedObjectPath>>>,
 }
 
 impl AuraManager {
@@ -35,17 +35,13 @@ impl AuraManager {
         let data = LaptopLedData::get_data();
 
         // Do the initial keyboard detection:
-        match CtrlKbdLed::new(data.clone()) {
-            Ok(ctrl) => {
-                let path = ctrl.dbus_path.clone();
-                let sig_ctx = CtrlAuraZbus::signal_context(&connection)?;
-                let sig_ctx2 = sig_ctx.clone();
-                let zbus = CtrlAuraZbus::new(ctrl, sig_ctx);
-                start_tasks(zbus, &mut connection, sig_ctx2, &path).await?;
-            }
-            Err(err) => {
-                error!("Keyboard control: {}", err);
-            }
+        let all = CtrlKbdLed::find_all(&data)?;
+        for ctrl in all {
+            let path = ctrl.dbus_path.clone();
+            let sig_ctx = CtrlAuraZbus::signal_context(&connection)?;
+            let sig_ctx2 = sig_ctx.clone();
+            let zbus = CtrlAuraZbus::new(ctrl, sig_ctx);
+            start_tasks(zbus, &mut connection, sig_ctx2, &path).await?;
         }
 
         // connection.object_server().at("/org/asuslinux",
@@ -53,9 +49,10 @@ impl AuraManager {
 
         let manager = Self {
             _connection: connection,
-            _interfaces: Default::default(),
+            interfaces: Default::default(),
         };
 
+        let interfaces_copy = manager.interfaces.clone();
         // detect all plugged in aura devices (eventually)
         tokio::spawn(async move {
             let mut monitor = MonitorBuilder::new()?.match_subsystem("hidraw")?.listen()?;
@@ -77,19 +74,24 @@ impl AuraManager {
                         };
 
                         if action == "remove" {
-                            if let Some(path) = dbus_path_for_dev(parent.clone()) {
-                                info!("AuraManager removing: {path:?}");
+                            if let Some(id_product) = parent.attribute_value("idProduct") {
+                                let id_product = id_product.to_string_lossy().to_string();
+                                let interfaces_copy = interfaces_copy.clone();
                                 let conn_copy = conn_copy.clone();
                                 tokio::spawn(async move {
-                                    let res = conn_copy
-                                        .object_server()
-                                        .remove::<CtrlAuraZbus, _>(&path)
-                                        .await
-                                        .map_err(|e| {
-                                            error!("Failed to remove {path:?}, {e:?}");
-                                            e
-                                        })?;
-                                    info!("AuraManager removed: {path:?}, {res}");
+                                    let mut interfaces = interfaces_copy.lock().await;
+                                    if let Some(path) = interfaces.remove(&id_product) {
+                                        info!("AuraManager removing: {path:?}");
+                                        let res = conn_copy
+                                            .object_server()
+                                            .remove::<CtrlAuraZbus, _>(&path)
+                                            .await
+                                            .map_err(|e| {
+                                                error!("Failed to remove {path:?}, {e:?}");
+                                                e
+                                            })?;
+                                        info!("AuraManager removed: {path:?}, {res}");
+                                    }
                                     Ok::<(), RogError>(())
                                 });
                             }
@@ -97,7 +99,7 @@ impl AuraManager {
 
                         let id_product =
                             if let Some(id_product) = parent.attribute_value("idProduct") {
-                                id_product
+                                id_product.to_string_lossy().to_string()
                             } else {
                                 continue;
                             };
@@ -113,7 +115,7 @@ impl AuraManager {
                         }
 
                         // try conversion to known idProduct
-                        let aura_device = AuraDevice::from(id_product.to_str().unwrap());
+                        let aura_device = AuraDevice::from(id_product.as_str());
                         if aura_device != AuraDevice::Unknown {
                             if action == "add" {
                                 let dev_node = if let Some(dev_node) = event.devnode() {
@@ -125,18 +127,21 @@ impl AuraManager {
                                 if let Ok(raw) = HidRaw::from_device(event.device())
                                     .map_err(|e| error!("device path error: {e:?}"))
                                 {
-                                    let path = if let Some(path) = dbus_path_for_dev(parent) {
+                                    let path = if let Some(path) = dbus_path_for_dev(&parent) {
                                         path
                                     } else {
                                         continue;
                                     };
                                     if let Ok(ctrl) =
-                                        CtrlKbdLed::from_device(raw, path.clone(), data.clone())
+                                        CtrlKbdLed::from_hidraw(raw, path.clone(), &data)
                                     {
                                         info!("AuraManager found device at: {:?}", dev_node);
                                         let mut conn_copy = conn_copy.clone();
+                                        let interfaces_copy = interfaces_copy.clone();
                                         //
                                         tokio::spawn(async move {
+                                            let mut interfaces = interfaces_copy.lock().await;
+                                            interfaces.insert(id_product, path.clone());
                                             let sig_ctx = CtrlAuraZbus::signal_context(&conn_copy)?;
                                             let zbus = CtrlAuraZbus::new(ctrl, sig_ctx);
                                             // Now add it to device list
@@ -163,7 +168,7 @@ impl AuraManager {
     }
 }
 
-pub(crate) fn dbus_path_for_dev(parent: Device) -> Option<OwnedObjectPath> {
+pub(crate) fn dbus_path_for_dev(parent: &Device) -> Option<OwnedObjectPath> {
     if let Some(id_product) = parent.attribute_value("idProduct") {
         let id_product = id_product.to_string_lossy();
         let path = if let Some(devnum) = parent.attribute_value("devnum") {

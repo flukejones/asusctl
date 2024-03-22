@@ -27,35 +27,36 @@ impl HidRaw {
             PlatformError::Udev("match_subsystem failed".into(), err)
         })?;
 
-        for device in enumerator
+        for endpoint in enumerator
             .scan_devices()
             .map_err(|e| PlatformError::IoPath("enumerator".to_owned(), e))?
         {
-            if let Some(parent_device) = device
+            if let Some(usb_device) = endpoint
                 .parent_with_subsystem_devtype("usb", "usb_device")
                 .map_err(|e| {
-                PlatformError::IoPath(device.devpath().to_string_lossy().to_string(), e)
-            })? {
-                if let Some(parent) = parent_device.attribute_value("idProduct") {
-                    if parent == id_product {
-                        if let Some(dev_node) = device.devnode() {
+                    PlatformError::IoPath(endpoint.devpath().to_string_lossy().to_string(), e)
+                })?
+            {
+                if let Some(parent_id) = usb_device.attribute_value("idProduct") {
+                    if parent_id == id_product {
+                        if let Some(dev_node) = endpoint.devnode() {
                             info!("Using device at: {:?} for hidraw control", dev_node);
                             return Ok((
                                 Self {
                                     devfs_path: UnsafeCell::new(dev_node.to_owned()),
                                     prod_id: id_product.to_string(),
-                                    syspath: device.syspath().into(),
+                                    syspath: endpoint.syspath().into(),
                                 },
-                                parent_device,
+                                usb_device,
                             ));
                         }
                     }
                 }
             } else {
                 // Try to see if there is a virtual device created with uhid for testing
-                let dev_path = device.devpath().to_string_lossy();
+                let dev_path = endpoint.devpath().to_string_lossy();
                 if dev_path.contains("virtual") && dev_path.contains(&id_product.to_uppercase()) {
-                    if let Some(dev_node) = device.devnode() {
+                    if let Some(dev_node) = endpoint.devnode() {
                         info!(
                             "Using device at: {:?} for <TODO: label control> control",
                             dev_node
@@ -64,9 +65,9 @@ impl HidRaw {
                             Self {
                                 devfs_path: UnsafeCell::new(dev_node.to_owned()),
                                 prod_id: id_product.to_string(),
-                                syspath: device.syspath().into(),
+                                syspath: endpoint.syspath().into(),
                             },
-                            device,
+                            endpoint,
                         ));
                     }
                 }
