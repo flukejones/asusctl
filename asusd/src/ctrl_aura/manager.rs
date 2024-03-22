@@ -7,7 +7,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use mio::{Events, Interest, Poll, Token};
 use rog_aura::aura_detection::LaptopLedData;
 use rog_aura::usb::AuraDevice;
@@ -146,6 +146,7 @@ impl AuraManager {
                                             let zbus = CtrlAuraZbus::new(ctrl, sig_ctx);
                                             // Now add it to device list
                                             let sig_ctx = CtrlAuraZbus::signal_context(&conn_copy)?;
+                                            debug!("Starting Aura at {path}");
                                             start_tasks(zbus, &mut conn_copy, sig_ctx, &path)
                                                 .await?;
                                             Ok::<(), RogError>(())

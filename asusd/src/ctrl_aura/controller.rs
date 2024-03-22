@@ -60,6 +60,7 @@ pub struct CtrlKbdLed {
 
 impl CtrlKbdLed {
     pub fn find_all(data: &LaptopLedData) -> Result<Vec<Self>, RogError> {
+        info!("Searching for all Aura devices");
         let mut devices = Vec::new();
 
         let mut enumerator = udev::Enumerator::new().map_err(|err| {
@@ -91,6 +92,7 @@ impl CtrlKbdLed {
                 devices.push(dev);
             }
         }
+        info!("Found {} Aura devices", devices.len());
 
         Ok(devices)
     }
@@ -126,7 +128,6 @@ impl CtrlKbdLed {
         let mut config_init = AuraConfig::new_with(prod_id);
         // config_init.set_filename(prod_id);
         let mut config_loaded = config_init.clone().load();
-        config_loaded.set_filename(prod_id);
         // update the initialised data with what we loaded from disk
         for mode in &mut config_init.builtins {
             // update init values from loaded values if they exist

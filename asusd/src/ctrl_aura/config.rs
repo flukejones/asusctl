@@ -142,10 +142,6 @@ impl StdConfig for AuraConfig {
 impl StdConfigLoad for AuraConfig {}
 
 impl AuraConfig {
-    pub fn set_filename(&mut self, prod_id: AuraDevice) {
-        self.config_name = format!("aura_{prod_id:?}.ron");
-    }
-
     pub fn from_default_support(prod_id: AuraDevice, support_data: &LaptopLedData) -> Self {
         // create a default config here
         let enabled = if prod_id.is_new_style() {
