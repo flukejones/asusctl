@@ -2,7 +2,100 @@
 <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
  "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
-  <interface name="org.asuslinux.Daemon">
+  <interface name="org.freedesktop.DBus.Introspectable">
+    <method name="Introspect">
+      <arg type="s" direction="out"/>
+    </method>
+  </interface>
+  <interface name="org.freedesktop.DBus.Properties">
+    <method name="Get">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg name="property_name" type="s" direction="in"/>
+      <arg type="v" direction="out"/>
+    </method>
+    <method name="Set">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg name="property_name" type="s" direction="in"/>
+      <arg name="value" type="v" direction="in"/>
+    </method>
+    <method name="GetAll">
+      <arg name="interface_name" type="s" direction="in"/>
+      <arg type="a{sv}" direction="out"/>
+    </method>
+    <!--
+     Emits the `org.freedesktop.DBus.Properties.PropertiesChanged` signal.
+     -->
+    <signal name="PropertiesChanged">
+      <arg name="interface_name" type="s"/>
+      <arg name="changed_properties" type="a{sv}"/>
+      <arg name="invalidated_properties" type="as"/>
+    </signal>
+  </interface>
+  <interface name="org.asuslinux.FanCurves">
+    <!--
+     Set all fan curves for a profile to enabled status. Will also activate a
+     fan curve if in the same profile mode
+     -->
+    <method name="SetFanCurvesEnabled">
+      <arg name="profile" type="u" direction="in"/>
+      <arg name="enabled" type="b" direction="in"/>
+    </method>
+    <!--
+     Set a single fan curve for a profile to enabled status. Will also
+     activate a fan curve if in the same profile mode
+     -->
+    <method name="SetProfileFanCurveEnabled">
+      <arg name="profile" type="u" direction="in"/>
+      <arg name="fan" type="s" direction="in"/>
+      <arg name="enabled" type="b" direction="in"/>
+    </method>
+    <!--
+     Get the fan-curve data for the currently active ThrottlePolicy
+     -->
+    <method name="FanCurveData">
+      <arg name="profile" type="u" direction="in"/>
+      <arg type="a(s(yyyyyyyy)(yyyyyyyy)b)" direction="out"/>
+    </method>
+    <!--
+     Set the fan curve for the specified profile.
+     Will also activate the fan curve if the user is in the same mode.
+     -->
+    <method name="SetFanCurve">
+      <arg name="profile" type="u" direction="in"/>
+      <arg name="curve" type="(s(yyyyyyyy)(yyyyyyyy)b)" direction="in"/>
+    </method>
+    <!--
+     Reset the stored (self) and device curves to the defaults of the
+     platform.
+
+     Each platform_profile has a different default and the default can be
+     read only for the currently active profile.
+     -->
+    <method name="SetCurvesToDefaults">
+      <arg name="profile" type="u" direction="in"/>
+    </method>
+    <!--
+     Reset the stored (self) and device curve to the defaults of the
+     platform.
+
+     Each platform_profile has a different default and the defualt can be
+     read only for the currently active profile.
+     -->
+    <method name="ResetProfileCurves">
+      <arg name="profile" type="u" direction="in"/>
+    </method>
+  </interface>
+  <interface name="org.freedesktop.DBus.Peer">
+    <method name="Ping">
+    </method>
+    <method name="GetMachineId">
+      <arg type="s" direction="out"/>
+    </method>
+  </interface>
+  <interface name="org.asuslinux.Platform">
+    <method name="Version">
+      <arg type="s" direction="out"/>
+    </method>
     <!--
      Returns a list of property names that this system supports
      -->
@@ -18,6 +111,11 @@
      -->
     <method name="NextThrottleThermalPolicy">
     </method>
+    <!--
+     Get the `boot_sound` value from platform. Updates the stored value in
+     internal config also.
+     -->
+    <property name="BootSound" type="b" access="readwrite"/>
     <property name="ChargeControlEndThreshold" type="y" access="readwrite"/>
     <property name="DgpuDisable" type="b" access="read"/>
     <property name="EgpuEnable" type="b" access="read"/>
@@ -42,10 +140,6 @@
      internal config also.
      -->
     <property name="PanelOd" type="b" access="readwrite"/>
-    <!--
-     ***********************************************************************
-     -->
-    <property name="PostAnimationSound" type="b" access="readwrite"/>
     <!--
      Set the APU SPPT limit. Shown on full AMD systems only:
      * min=5, max=130
@@ -94,40 +188,160 @@
     <property name="ThrottleQuietEpp" type="u" access="readwrite"/>
     <property name="ThrottleThermalPolicy" type="u" access="readwrite"/>
   </interface>
-  <interface name="org.freedesktop.DBus.Properties">
-    <method name="Get">
-      <arg name="interface_name" type="s" direction="in"/>
-      <arg name="property_name" type="s" direction="in"/>
-      <arg type="v" direction="out"/>
-    </method>
-    <method name="Set">
-      <arg name="interface_name" type="s" direction="in"/>
-      <arg name="property_name" type="s" direction="in"/>
-      <arg name="value" type="v" direction="in"/>
-    </method>
-    <method name="GetAll">
-      <arg name="interface_name" type="s" direction="in"/>
-      <arg type="a{sv}" direction="out"/>
+  <interface name="org.asuslinux.Anime">
+    <!--
+     Writes a data stream of length. Will force system thread to exit until
+     it is restarted
+     -->
+    <method name="Write">
+      <arg name="input" type="(ays)" direction="in"/>
     </method>
     <!--
-     Emits the `org.freedesktop.DBus.Properties.PropertiesChanged` signal.
+     The main loop is the base system set action if the user isn't running
+     the user daemon
      -->
-    <signal name="PropertiesChanged">
-      <arg name="interface_name" type="s"/>
-      <arg name="changed_properties" type="a{sv}"/>
-      <arg name="invalidated_properties" type="as"/>
-    </signal>
-  </interface>
-  <interface name="org.freedesktop.DBus.Introspectable">
-    <method name="Introspect">
-      <arg type="s" direction="out"/>
+    <method name="RunMainLoop">
+      <arg name="start" type="b" direction="in"/>
     </method>
-  </interface>
-  <interface name="org.freedesktop.DBus.Peer">
-    <method name="Ping">
+    <!--
+     Get the device state as stored by asusd
+     -->
+    <method name="DeviceState">
+      <arg type="(bub(ssss)bbbu)" direction="out"/>
     </method>
-    <method name="GetMachineId">
-      <arg type="s" direction="out"/>
-    </method>
+    <!--
+     Set base brightness level
+     -->
+    <!--
+     Set base brightness level
+     -->
+    <property name="Brightness" type="u" access="readwrite"/>
+    <!--
+     Set which builtin animation is used for each stage
+     -->
+    <property name="BuiltinAnimations" type="(ssss)" access="readwrite"/>
+    <!--
+     Enable the builtin animations or not. This is quivalent to "Powersave
+     animations" in Armory crate
+     -->
+    <property name="BuiltinsEnabled" type="b" access="readwrite"/>
+    <!--
+     Set whether the AniMe is enabled at all
+     -->
+    <property name="EnableDisplay" type="b" access="readwrite"/>
+    <!--
+     Set if to turn the AniMe Matrix off when the lid is closed
+     -->
+    <property name="OffWhenLidClosed" type="b" access="readwrite"/>
+    <!--
+     Set if to turn the AniMe Matrix off when the laptop is suspended
+     -->
+    <property name="OffWhenSuspended" type="b" access="readwrite"/>
+    <!--
+     Set if to turn the AniMe Matrix off when external power is unplugged
+     -->
+    <property name="OffWhenUnplugged" type="b" access="readwrite"/>
   </interface>
+  <node name="19b6_4_4">
+    <interface name="org.asuslinux.Aura">
+      <!--
+       Get the data set for every mode available
+       -->
+      <method name="AllModeData">
+        <arg type="a{u(uu(yyy)(yyy)ss)}" direction="out"/>
+      </method>
+      <!--
+       On machine that have some form of either per-key keyboard or per-zone
+       this can be used to write custom effects over dbus. The input is a
+       nested `Vec<Vec<8>>` where `Vec<u8>` is a raw USB packet
+       -->
+      <method name="DirectAddressingRaw">
+        <arg name="data" type="aay" direction="in"/>
+      </method>
+      <!--
+       Return the current LED brightness
+       -->
+      <!--
+       Set the keyboard brightness level (0-3)
+       -->
+      <property name="Brightness" type="u" access="readwrite"/>
+      <!--
+       Return the device type for this Aura keyboard
+       -->
+      <property name="DeviceType" type="s" access="read"/>
+      <!--
+       The current mode data
+       -->
+      <!--
+       Set an Aura effect if the effect mode or zone is supported.
+
+       On success the aura config file is read to refresh cached values, then
+       the effect is stored and config written to disk.
+       -->
+      <property name="LedMode" type="u" access="readwrite"/>
+      <!--
+       The current mode data
+       -->
+      <!--
+       Set an Aura effect if the effect mode or zone is supported.
+
+       On success the aura config file is read to refresh cached values, then
+       the effect is stored and config written to disk.
+       -->
+      <property name="LedModeData" type="(uu(yyy)(yyy)ss)" access="readwrite"/>
+      <!--
+       Set a variety of states, input is array of enum.
+       `enabled` sets if the sent array should be disabled or enabled
+
+       For Modern ROG devices the "enabled" flag is ignored.
+       -->
+      <property name="LedPower" type="(auau((ubbbb)(ubbbb)(ubbbb)(ubbbb)(ubbbb)))" access="readwrite"/>
+      <!--
+       The total available modes
+       -->
+      <property name="SupportedBasicModes" type="au" access="read"/>
+      <property name="SupportedBasicZones" type="au" access="read"/>
+      <!--
+       Total levels of brightness available
+       -->
+      <property name="SupportedBrightness" type="au" access="read"/>
+      <property name="SupportedPowerZones" type="au" access="read"/>
+    </interface>
+    <interface name="org.freedesktop.DBus.Introspectable">
+      <method name="Introspect">
+        <arg type="s" direction="out"/>
+      </method>
+    </interface>
+    <interface name="org.freedesktop.DBus.Properties">
+      <method name="Get">
+        <arg name="interface_name" type="s" direction="in"/>
+        <arg name="property_name" type="s" direction="in"/>
+        <arg type="v" direction="out"/>
+      </method>
+      <method name="Set">
+        <arg name="interface_name" type="s" direction="in"/>
+        <arg name="property_name" type="s" direction="in"/>
+        <arg name="value" type="v" direction="in"/>
+      </method>
+      <method name="GetAll">
+        <arg name="interface_name" type="s" direction="in"/>
+        <arg type="a{sv}" direction="out"/>
+      </method>
+      <!--
+       Emits the `org.freedesktop.DBus.Properties.PropertiesChanged` signal.
+       -->
+      <signal name="PropertiesChanged">
+        <arg name="interface_name" type="s"/>
+        <arg name="changed_properties" type="a{sv}"/>
+        <arg name="invalidated_properties" type="as"/>
+      </signal>
+    </interface>
+    <interface name="org.freedesktop.DBus.Peer">
+      <method name="Ping">
+      </method>
+      <method name="GetMachineId">
+        <arg type="s" direction="out"/>
+      </method>
+    </interface>
+  </node>
 </node>

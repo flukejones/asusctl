@@ -50,7 +50,7 @@ pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";
 ///     task_watch_item!(panel_od platform);
 ///     task_watch_item!(gpu_mux_mode platform);
 /// }
-/// ```
+/// ```\
 /// // TODO: this is kind of useless if it can't trigger some action
 #[macro_export]
 macro_rules! task_watch_item {
