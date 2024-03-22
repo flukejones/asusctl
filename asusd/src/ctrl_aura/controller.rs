@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use config_traits::{StdConfig, StdConfigLoad};
 use inotify::Inotify;
-use log::{info, warn};
+use log::{debug, info, warn};
 use rog_aura::advanced::{LedUsbPackets, UsbPackets};
 use rog_aura::aura_detection::LaptopLedData;
 use rog_aura::usb::{AuraDevice, LED_APPLY, LED_SET};
@@ -86,6 +86,13 @@ impl CtrlKbdLed {
                         continue;
                     }
                 }
+                let dev_node = if let Some(dev_node) = usb_device.devnode() {
+                    dev_node
+                } else {
+                    debug!("Device has no devnode, skipping");
+                    continue;
+                };
+                info!("AuraControl found device at: {:?}", dev_node);
                 let dbus_path = dbus_path_for_dev(&usb_device).unwrap_or_default();
                 let dev = HidRaw::from_device(end_point)?;
                 let dev = Self::from_hidraw(dev, dbus_path, data)?;
