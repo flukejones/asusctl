@@ -54,6 +54,7 @@ impl AuraManager {
 
         // detect all plugged in aura devices (eventually)
         let interfaces = Arc::new(Mutex::new(interfaces));
+        let mut count = 0;
         tokio::spawn(async move {
             let mut monitor = MonitorBuilder::new()?.match_subsystem("hidraw")?.listen()?;
             let mut poll = Poll::new()?;
@@ -65,10 +66,20 @@ impl AuraManager {
                 if poll.poll(&mut events, None).is_err() {
                     continue;
                 }
+                // collect and sort so remove events are first
+                // let mut events: Vec<udev::Event> = monitor.iter().filter(|e|
+                // &*e.action().unwrap_or_default() == "remove").collect();
+                // let mut adds: Vec<udev::Event> = monitor.iter().filter(|e|
+                // &*e.action().unwrap_or_default() == "add").collect();
+                // events.append(&mut adds);
+
+                dbg!("LOOPED", count);
+                count += 1;
                 for event in monitor.iter() {
                     if event.parent_with_subsystem("hidraw").is_err() {
                         continue;
                     }
+
                     if let Some(parent) =
                         event.parent_with_subsystem_devtype("usb", "usb_device")?
                     {
@@ -78,20 +89,33 @@ impl AuraManager {
                             continue;
                         };
 
+                        let id_product =
+                            if let Some(id_product) = parent.attribute_value("idProduct") {
+                                id_product.to_string_lossy()
+                            } else {
+                                continue;
+                            };
+                        let aura_device = AuraDevice::from(&*id_product);
+                        if aura_device == AuraDevice::Unknown {
+                            warn!("idProduct:{id_product:?} is unknown, not using");
+                            continue;
+                        }
+
                         let path = if let Some(path) = dbus_path_for_dev(&parent) {
                             path
                         } else {
                             continue;
                         };
 
+                        dbg!(action, &aura_device, &path);
                         if action == "remove" {
-                            if let Some(_) = parent.attribute_value("idProduct") {
-                                info!("AuraManager removing: {path:?}");
-                                let conn_copy = conn_copy.clone();
-                                let interfaces_copy = interfaces.clone();
-                                tokio::spawn(async move {
-                                    let mut interfaces = interfaces_copy.lock().await; // hold until completed
-                                    interfaces.remove(&path);
+                            info!("AuraManager removing: {path:?}");
+                            let conn_copy = conn_copy.clone();
+                            let interfaces_copy = interfaces.clone();
+                            tokio::spawn(async move {
+                                let mut interfaces = interfaces_copy.lock().await; // hold until completed
+                                dbg!(&interfaces);
+                                if interfaces.remove(&path) {
                                     let res = conn_copy
                                         .object_server()
                                         .remove::<CtrlAuraZbus, _>(&path)
@@ -101,21 +125,16 @@ impl AuraManager {
                                             e
                                         })?;
                                     info!("AuraManager removed: {path:?}, {res}");
-                                    debug!("Removed {path:?}");
-                                    Ok::<(), RogError>(())
-                                });
-                            }
+                                }
+                                dbg!(&interfaces);
+                                Ok::<(), RogError>(())
+                            });
                         } else if action == "add" {
-                            let id_product =
-                                if let Some(id_product) = parent.attribute_value("idProduct") {
-                                    id_product.to_string_lossy().to_string()
-                                } else {
-                                    continue;
-                                };
                             if let Some(p2) = event.parent() {
                                 if let Some(driver) = p2.driver() {
                                     // There is a tree of devices added so filter by driver
                                     if driver != "asus" {
+                                        debug!("{id_product:?} driver was not asus, skipping");
                                         continue;
                                     }
                                 } else {
@@ -123,60 +142,53 @@ impl AuraManager {
                                 }
                             }
 
-                            // try conversion to known idProduct
-                            let aura_device = AuraDevice::from(id_product.as_str());
-                            if aura_device != AuraDevice::Unknown {
-                                let path = if let Some(path) = dbus_path_for_dev(&parent) {
-                                    path
-                                } else {
-                                    continue;
-                                };
-
-                                let dev_node = if let Some(dev_node) = event.devnode() {
-                                    dev_node.to_owned()
-                                } else {
-                                    continue;
-                                };
-
-                                if let Ok(raw) = HidRaw::from_device(event.device())
-                                    .map_err(|e| error!("device path error: {e:?}"))
-                                {
-                                    // bah... shitty clone TODO: fix
-                                    let data_clone = data.clone();
-                                    let mut conn_copy = conn_copy.clone();
-                                    let interfaces_copy = interfaces.clone();
-                                    //
-                                    tokio::spawn(async move {
-                                        let mut interfaces = interfaces_copy.lock().await;
-                                        if interfaces.contains(&path) {
-                                            debug!("Already a ctrl at {path:?}");
-                                            return Ok(());
-                                        }
-                                        if let Ok(mut ctrl) =
-                                            CtrlKbdLed::from_hidraw(raw, path.clone(), &data_clone)
-                                        {
-                                            info!(
-                                                "AuraManager found device at: {dev_node:?}, \
-                                                 {path:?}"
-                                            );
-
-                                            debug!("Starting Aura at {path}");
-                                            interfaces.insert(path.clone());
-                                            let sig_ctx = CtrlAuraZbus::signal_context(&conn_copy)?;
-                                            ctrl.config =
-                                                CtrlKbdLed::init_config(aura_device, &data_clone);
-                                            let zbus = CtrlAuraZbus::new(ctrl, sig_ctx);
-                                            // Now add it to device list
-                                            let sig_ctx = CtrlAuraZbus::signal_context(&conn_copy)?;
-                                            start_tasks(zbus, &mut conn_copy, sig_ctx, &path)
-                                                .await?;
-                                        }
-                                        Ok::<(), RogError>(())
-                                    }); // Can't get result from here due to
-                                        // MonitorSocket
-                                }
+                            let path = if let Some(path) = dbus_path_for_dev(&parent) {
+                                path
                             } else {
-                                warn!("idProduct:{id_product:?} is unknown, not using")
+                                continue;
+                            };
+
+                            let dev_node = if let Some(dev_node) = event.devnode() {
+                                dev_node.to_owned()
+                            } else {
+                                continue;
+                            };
+
+                            if let Ok(raw) = HidRaw::from_device(event.device())
+                                .map_err(|e| error!("device path error: {e:?}"))
+                            {
+                                // bah... shitty clone TODO: fix
+                                let data_clone = data.clone();
+                                let mut conn_copy = conn_copy.clone();
+                                let interfaces_copy = interfaces.clone();
+                                //
+                                tokio::spawn(async move {
+                                    let mut interfaces = interfaces_copy.lock().await;
+                                    dbg!(&interfaces);
+                                    if interfaces.contains(&path) {
+                                        debug!("Already a ctrl at {path:?}");
+                                        return Ok(());
+                                    }
+                                    if let Ok(mut ctrl) =
+                                        CtrlKbdLed::from_hidraw(raw, path.clone(), &data_clone)
+                                    {
+                                        info!(
+                                            "AuraManager found device at: {dev_node:?}, {path:?}"
+                                        );
+                                        debug!("Starting Aura at {path}");
+                                        interfaces.insert(path.clone());
+                                        let sig_ctx = CtrlAuraZbus::signal_context(&conn_copy)?;
+                                        ctrl.config =
+                                            CtrlKbdLed::init_config(aura_device, &data_clone);
+                                        let zbus = CtrlAuraZbus::new(ctrl, sig_ctx);
+                                        // Now add it to device list
+                                        let sig_ctx = CtrlAuraZbus::signal_context(&conn_copy)?;
+                                        start_tasks(zbus, &mut conn_copy, sig_ctx, &path).await?;
+                                    }
+                                    dbg!(&interfaces);
+                                    Ok::<(), RogError>(())
+                                }); // Can't get result from here due to
+                                    // MonitorSocket
                             }
                         }
                     }
