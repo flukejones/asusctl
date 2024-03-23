@@ -22,7 +22,7 @@ pub struct HidRaw {
 }
 
 impl HidRaw {
-    pub fn new(id_product: &str) -> Result<(Self, Device)> {
+    pub fn new(id_product: &str) -> Result<Self> {
         let mut enumerator = udev::Enumerator::new().map_err(|err| {
             warn!("{}", err);
             PlatformError::Udev("enumerator failed".into(), err)
@@ -47,17 +47,12 @@ impl HidRaw {
                     if parent_id == id_product {
                         if let Some(dev_node) = endpoint.devnode() {
                             info!("Using device at: {:?} for hidraw control", dev_node);
-                            return Ok((
-                                Self {
-                                    file: RefCell::new(
-                                        OpenOptions::new().write(true).open(dev_node)?,
-                                    ),
-                                    devfs_path: dev_node.to_owned(),
-                                    prod_id: id_product.to_string(),
-                                    syspath: endpoint.syspath().into(),
-                                },
-                                usb_device,
-                            ));
+                            return Ok(Self {
+                                file: RefCell::new(OpenOptions::new().write(true).open(dev_node)?),
+                                devfs_path: dev_node.to_owned(),
+                                prod_id: id_product.to_string(),
+                                syspath: endpoint.syspath().into(),
+                            });
                         }
                     }
                 }
@@ -70,15 +65,12 @@ impl HidRaw {
                             "Using device at: {:?} for <TODO: label control> control",
                             dev_node
                         );
-                        return Ok((
-                            Self {
-                                file: RefCell::new(OpenOptions::new().write(true).open(dev_node)?),
-                                devfs_path: dev_node.to_owned(),
-                                prod_id: id_product.to_string(),
-                                syspath: endpoint.syspath().into(),
-                            },
-                            endpoint,
-                        ));
+                        return Ok(Self {
+                            file: RefCell::new(OpenOptions::new().write(true).open(dev_node)?),
+                            devfs_path: dev_node.to_owned(),
+                            prod_id: id_product.to_string(),
+                            syspath: endpoint.syspath().into(),
+                        });
                     }
                 }
             }

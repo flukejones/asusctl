@@ -85,13 +85,13 @@ impl AuraManager {
                         };
 
                         if action == "remove" {
-                            dbg!("REMOVING");
                             if let Some(_) = parent.attribute_value("idProduct") {
                                 info!("AuraManager removing: {path:?}");
                                 let conn_copy = conn_copy.clone();
                                 let interfaces_copy = interfaces.clone();
                                 tokio::spawn(async move {
-                                    let mut interfaces = interfaces_copy.lock().await;
+                                    let mut interfaces = interfaces_copy.lock().await; // hold until completed
+                                    interfaces.remove(&path);
                                     let res = conn_copy
                                         .object_server()
                                         .remove::<CtrlAuraZbus, _>(&path)
@@ -101,13 +101,11 @@ impl AuraManager {
                                             e
                                         })?;
                                     info!("AuraManager removed: {path:?}, {res}");
-                                    interfaces.remove(&path);
                                     debug!("Removed {path:?}");
                                     Ok::<(), RogError>(())
                                 });
                             }
                         } else if action == "add" {
-                            dbg!("ADDING");
                             let id_product =
                                 if let Some(id_product) = parent.attribute_value("idProduct") {
                                     id_product.to_string_lossy().to_string()
@@ -135,7 +133,7 @@ impl AuraManager {
                                 };
 
                                 let dev_node = if let Some(dev_node) = event.devnode() {
-                                    dev_node
+                                    dev_node.to_owned()
                                 } else {
                                     continue;
                                 };
@@ -145,21 +143,23 @@ impl AuraManager {
                                 {
                                     // bah... shitty clone TODO: fix
                                     let data_clone = data.clone();
-                                    if let Ok(mut ctrl) =
-                                        CtrlKbdLed::from_hidraw(raw, path.clone(), &data)
-                                    {
-                                        info!(
-                                            "AuraManager found device at: {dev_node:?}, {path:?}"
-                                        );
-                                        let mut conn_copy = conn_copy.clone();
-                                        let interfaces_copy = interfaces.clone();
-                                        //
-                                        tokio::spawn(async move {
-                                            let mut interfaces = interfaces_copy.lock().await;
-                                            if interfaces.contains(&path) {
-                                                debug!("Already a ctrl at {path:?}");
-                                                return Ok(());
-                                            }
+                                    let mut conn_copy = conn_copy.clone();
+                                    let interfaces_copy = interfaces.clone();
+                                    //
+                                    tokio::spawn(async move {
+                                        let mut interfaces = interfaces_copy.lock().await;
+                                        if interfaces.contains(&path) {
+                                            debug!("Already a ctrl at {path:?}");
+                                            return Ok(());
+                                        }
+                                        if let Ok(mut ctrl) =
+                                            CtrlKbdLed::from_hidraw(raw, path.clone(), &data_clone)
+                                        {
+                                            info!(
+                                                "AuraManager found device at: {dev_node:?}, \
+                                                 {path:?}"
+                                            );
+
                                             debug!("Starting Aura at {path}");
                                             interfaces.insert(path.clone());
                                             let sig_ctx = CtrlAuraZbus::signal_context(&conn_copy)?;
@@ -170,10 +170,10 @@ impl AuraManager {
                                             let sig_ctx = CtrlAuraZbus::signal_context(&conn_copy)?;
                                             start_tasks(zbus, &mut conn_copy, sig_ctx, &path)
                                                 .await?;
-                                            Ok::<(), RogError>(())
-                                        }); // Can't get result from here due to
-                                            // MonitorSocket
-                                    }
+                                        }
+                                        Ok::<(), RogError>(())
+                                    }); // Can't get result from here due to
+                                        // MonitorSocket
                                 }
                             } else {
                                 warn!("idProduct:{id_product:?} is unknown, not using")
