@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 
 use config_traits::{StdConfig, StdConfigLoad};
 use inotify::Inotify;
@@ -62,6 +62,7 @@ impl CtrlKbdLed {
     pub fn find_all(data: &LaptopLedData) -> Result<Vec<Self>, RogError> {
         info!("Searching for all Aura devices");
         let mut devices = Vec::new();
+        let mut found = HashSet::new();
 
         let mut enumerator = udev::Enumerator::new().map_err(|err| {
             warn!("{}", err);
@@ -74,18 +75,32 @@ impl CtrlKbdLed {
         })?;
 
         for end_point in enumerator.scan_devices()? {
+            // usb_device gives us a product and vendor ID
             if let Some(usb_device) =
                 end_point.parent_with_subsystem_devtype("usb", "usb_device")?
             {
-                // Device is something like 002, while its parent is the MCU
-                // Think of it like the device is an endpoint of the USB device attached
-                if let Some(parent_id) = usb_device.attribute_value("idProduct") {
-                    let prod_id = AuraDevice::from(parent_id.to_str().unwrap());
-                    if prod_id == AuraDevice::Unknown {
-                        log::debug!("Unknown or invalid device: {parent_id:?}, skipping");
+                // The asus_wmi driver latches MCU that controls the USB endpoints
+                if let Some(parent) = end_point.parent() {
+                    if let Some(driver) = parent.driver() {
+                        // There is a tree of devices added so filter by driver
+                        if driver != "asus" {
+                            continue;
+                        }
+                    } else {
                         continue;
                     }
                 }
+                // Device is something like 002, while its parent is the MCU
+                // Think of it like the device is an endpoint of the USB device attached
+                if let Some(usb_id) = usb_device.attribute_value("idProduct") {
+                    let prod_id = AuraDevice::from(usb_id.to_str().unwrap());
+                    if prod_id == AuraDevice::Unknown || found.contains(&prod_id) {
+                        log::debug!("Unknown or invalid device: {usb_id:?}, skipping");
+                        continue;
+                    }
+                    found.insert(prod_id);
+                }
+
                 let dev_node = if let Some(dev_node) = usb_device.devnode() {
                     dev_node
                 } else {
