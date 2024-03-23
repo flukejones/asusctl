@@ -31,7 +31,7 @@ pub const fn aura_brightness_bytes(brightness: u8) -> [u8; 17] {
     derive(Type, Value, OwnedValue),
     zvariant(signature = "s")
 )]
-#[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 pub enum AuraDevice {
     Tuf = 0,
     X1854 = 1,

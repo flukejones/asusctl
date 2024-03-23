@@ -26,18 +26,20 @@ use crate::{CtrlTask, Reloadable};
 
 pub struct AuraManager {
     _connection: Connection,
-    interfaces: Arc<Mutex<HashMap<String, OwnedObjectPath>>>,
+    interfaces: Arc<Mutex<HashMap<AuraDevice, OwnedObjectPath>>>,
 }
 
 impl AuraManager {
     pub async fn new(mut connection: Connection) -> Result<Self, RogError> {
         let conn_copy = connection.clone();
         let data = LaptopLedData::get_data();
+        let mut interfaces = HashMap::new();
 
         // Do the initial keyboard detection:
         let all = CtrlKbdLed::find_all(&data)?;
         for ctrl in all {
             let path = ctrl.dbus_path.clone();
+            interfaces.insert(ctrl.led_prod, path.clone()); // ensure we record the initial stuff
             let sig_ctx = CtrlAuraZbus::signal_context(&connection)?;
             let sig_ctx2 = sig_ctx.clone();
             let zbus = CtrlAuraZbus::new(ctrl, sig_ctx);
@@ -49,7 +51,7 @@ impl AuraManager {
 
         let manager = Self {
             _connection: connection,
-            interfaces: Default::default(),
+            interfaces: Arc::new(Mutex::new(interfaces)),
         };
 
         let interfaces_copy = manager.interfaces.clone();
@@ -75,7 +77,7 @@ impl AuraManager {
 
                         if action == "remove" {
                             if let Some(id_product) = parent.attribute_value("idProduct") {
-                                let id_product = id_product.to_string_lossy().to_string();
+                                let id_product = AuraDevice::from(id_product.to_str().unwrap());
                                 let interfaces_copy = interfaces_copy.clone();
                                 let conn_copy = conn_copy.clone();
                                 tokio::spawn(async move {
@@ -141,7 +143,7 @@ impl AuraManager {
                                         //
                                         tokio::spawn(async move {
                                             let mut interfaces = interfaces_copy.lock().await;
-                                            interfaces.insert(id_product, path.clone());
+                                            interfaces.insert(aura_device, path.clone());
                                             let sig_ctx = CtrlAuraZbus::signal_context(&conn_copy)?;
                                             let zbus = CtrlAuraZbus::new(ctrl, sig_ctx);
                                             // Now add it to device list
