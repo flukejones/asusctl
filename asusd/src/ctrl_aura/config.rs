@@ -18,6 +18,12 @@ pub enum AuraPowerConfig {
     AuraDevRog2(AuraPower),
 }
 
+impl Default for AuraPowerConfig {
+    fn default() -> Self {
+        Self::AuraDevTuf(HashSet::default())
+    }
+}
+
 impl AuraPowerConfig {
     /// Invalid for TUF laptops
     pub fn to_bytes(control: &Self) -> [u8; 4] {
@@ -101,7 +107,7 @@ impl From<&AuraPowerConfig> for AuraPowerDev {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Default, Debug, Clone)]
 // #[serde(default)]
 pub struct AuraConfig {
     pub config_name: String,

@@ -62,7 +62,7 @@ impl CtrlKbdLed {
     pub fn find_all(data: &LaptopLedData) -> Result<Vec<Self>, RogError> {
         info!("Searching for all Aura devices");
         let mut devices = Vec::new();
-        let mut found = HashSet::new();
+        let mut found = HashSet::new(); // track and ensure we use only one hidraw per prod_id
 
         let mut enumerator = udev::Enumerator::new().map_err(|err| {
             warn!("{}", err);
@@ -92,13 +92,14 @@ impl CtrlKbdLed {
                 }
                 // Device is something like 002, while its parent is the MCU
                 // Think of it like the device is an endpoint of the USB device attached
+                let mut aura_dev = AuraDevice::Unknown;
                 if let Some(usb_id) = usb_device.attribute_value("idProduct") {
-                    let prod_id = AuraDevice::from(usb_id.to_str().unwrap());
-                    if prod_id == AuraDevice::Unknown || found.contains(&prod_id) {
+                    aura_dev = AuraDevice::from(usb_id.to_str().unwrap());
+                    if aura_dev == AuraDevice::Unknown || found.contains(&aura_dev) {
                         log::debug!("Unknown or invalid device: {usb_id:?}, skipping");
                         continue;
                     }
-                    found.insert(prod_id);
+                    found.insert(aura_dev);
                 }
 
                 let dev_node = if let Some(dev_node) = usb_device.devnode() {
@@ -110,7 +111,8 @@ impl CtrlKbdLed {
                 info!("AuraControl found device at: {:?}", dev_node);
                 let dbus_path = dbus_path_for_dev(&usb_device).unwrap_or_default();
                 let dev = HidRaw::from_device(end_point)?;
-                let dev = Self::from_hidraw(dev, dbus_path, data)?;
+                let mut dev = Self::from_hidraw(dev, dbus_path, data)?;
+                dev.config = Self::init_config(aura_dev, data);
                 devices.push(dev);
             }
         }
@@ -119,6 +121,9 @@ impl CtrlKbdLed {
         Ok(devices)
     }
 
+    /// The generated data from this function has a default config. This config
+    /// should be overwritten. The reason for the default config is because
+    /// of async issues between this and udev/hidraw
     pub fn from_hidraw(
         device: HidRaw,
         dbus_path: OwnedObjectPath,
@@ -132,20 +137,20 @@ impl CtrlKbdLed {
         }
 
         // New loads data from the DB also
-        let config = Self::init_config(prod_id, data);
+        // let config = Self::init_config(prod_id, data);
 
         let ctrl = CtrlKbdLed {
             led_prod: prod_id,
             led_node: LEDNode::Rog(rgb_led, device),
             supported_data: data.clone(),
             per_key_mode_active: false,
-            config,
+            config: AuraConfig::default(),
             dbus_path,
         };
         Ok(ctrl)
     }
 
-    fn init_config(prod_id: AuraDevice, supported_basic_modes: &LaptopLedData) -> AuraConfig {
+    pub fn init_config(prod_id: AuraDevice, supported_basic_modes: &LaptopLedData) -> AuraConfig {
         // New loads data from the DB also
         let mut config_init = AuraConfig::new_with(prod_id);
         // config_init.set_filename(prod_id);
