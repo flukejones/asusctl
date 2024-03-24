@@ -26,6 +26,7 @@ inotify.workspace = true
 
 mio.workspace = true
 tokio.workspace = true
+# console-subscriber = "0.2.0"
 
 # cli and logging
 log.workspace = true

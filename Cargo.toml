@@ -28,11 +28,11 @@ version = "6.0.0-alpha1"
 rust-version = "1.76"
 
 [workspace.dependencies]
-tokio = { version = "^1.23.0", default-features = false, features = [
+tokio = { version = "^1.36.0", default-features = false, features = [
     "macros",
     "sync",
     "time",
-    "rt",
+    "rt-multi-thread",
 ] }
 concat-idents = "^1.1"
 dirs = "^4.0"
