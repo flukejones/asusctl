@@ -1,345 +1,129 @@
-//! Utils for writing to the `AniMe` USB device
+//! Utils for writing to the `Slash` USB device
 //!
 //! Use of the device requires a few steps:
 //! 1. Initialise the device by writing the two packets from
-//! `get_init_packets()` 2. Write data from `AnimePacketType`
+//! `get_init_packets()` 2. Write data from `SLashPacketType`
 //! 3. Write the packet from `get_flush_packet()`, which tells the device to
 //! display the data from step 2
 //!
-//! Step 1 need to applied only on fresh system boot.
-
-use std::str::FromStr;
+//! Step 1 needs to be applied only on fresh system boot.
 
 use dmi_id::DMIID;
-use serde_derive::{Deserialize, Serialize};
-use typeshare::typeshare;
 #[cfg(feature = "dbus")]
-use zbus::zvariant::{OwnedValue, Type, Value};
+use crate::error::SlashError;
+use crate::SlashType;
 
-use crate::error::AnimeError;
-use crate::AnimeType;
-
-const PACKET_SIZE: usize = 640;
+const PACKET_SIZE: usize = 128;
 const DEV_PAGE: u8 = 0x5e;
-pub const VENDOR_ID: u16 = 0x0b05;
-pub const PROD_ID: u16 = 0x193b;
+pub const VENDOR_ID: u16 = 0x0B05;
+pub const PROD_ID: u16 = 0x193B;
+pub const PROD_ID_STR: &str = "193B";
 
-#[cfg_attr(
-feature = "dbus",
-derive(Type, Value, OwnedValue),
-zvariant(signature = "u")
-)]
-#[typeshare]
-#[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
-/// Base LED brightness of the display
-pub enum Brightness {
-    Off = 0,
-    Low = 1,
-    #[default]
-    Med = 2,
-    High = 3,
-}
+pub type SlashUsbPacket = [u8;PACKET_SIZE];
 
-impl FromStr for Brightness {
-    type Err = AnimeError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(match s {
-            "Off" | "off" => Brightness::Off,
-            "Low" | "low" => Brightness::Low,
-            "Med" | "med" => Brightness::Med,
-            "High" | "high" => Brightness::High,
-            _ => Brightness::Med,
-        })
-    }
-}
-
-impl From<u8> for Brightness {
-    fn from(v: u8) -> Brightness {
-        match v {
-            0 => Brightness::Off,
-            1 => Brightness::Low,
-            3 => Brightness::High,
-            _ => Brightness::Med,
-        }
-    }
-}
-
-impl From<i32> for Brightness {
-    fn from(v: i32) -> Brightness {
-        (v as u8).into()
-    }
-}
-
-impl From<Brightness> for i32 {
-    fn from(v: Brightness) -> i32 {
-        v as i32
-    }
-}
-
-#[cfg_attr(
-feature = "dbus",
-derive(Type, Value, OwnedValue),
-zvariant(signature = "s")
-)]
-#[typeshare]
-#[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
-pub enum AnimBooting {
-    #[default]
-    GlitchConstruction = 0,
-    StaticEmergence = 1,
-}
-
-impl FromStr for AnimBooting {
-    type Err = AnimeError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "GlitchConstruction" => Ok(Self::GlitchConstruction),
-            "StaticEmergence" => Ok(Self::StaticEmergence),
-            _ => Err(AnimeError::ParseError(s.to_owned())),
-        }
-    }
-}
-
-impl From<i32> for AnimBooting {
-    fn from(value: i32) -> Self {
-        match value {
-            0 => Self::GlitchConstruction,
-            1 => Self::StaticEmergence,
-            _ => Self::default(),
-        }
-    }
-}
-
-impl From<AnimBooting> for i32 {
-    fn from(value: AnimBooting) -> Self {
-        value as i32
-    }
-}
-
-#[cfg_attr(
-feature = "dbus",
-derive(Type, Value, OwnedValue),
-zvariant(signature = "s")
-)]
-#[typeshare]
-#[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
-pub enum AnimAwake {
-    #[default]
-    BinaryBannerScroll = 0,
-    RogLogoGlitch = 1,
-}
-
-impl FromStr for AnimAwake {
-    type Err = AnimeError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "BinaryBannerScroll" => Ok(Self::BinaryBannerScroll),
-            "RogLogoGlitch" => Ok(Self::RogLogoGlitch),
-            _ => Err(AnimeError::ParseError(s.to_owned())),
-        }
-    }
-}
-
-impl From<i32> for AnimAwake {
-    fn from(value: i32) -> Self {
-        match value {
-            0 => Self::BinaryBannerScroll,
-            1 => Self::RogLogoGlitch,
-            _ => Self::default(),
-        }
-    }
-}
-
-impl From<AnimAwake> for i32 {
-    fn from(value: AnimAwake) -> Self {
-        value as i32
-    }
-}
-
-#[cfg_attr(
-feature = "dbus",
-derive(Type, Value, OwnedValue),
-zvariant(signature = "s")
-)]
-#[typeshare]
-#[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
-pub enum AnimSleeping {
-    #[default]
-    BannerSwipe = 0,
-    Starfield = 1,
-}
-
-impl FromStr for AnimSleeping {
-    type Err = AnimeError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "BannerSwipe" => Ok(Self::BannerSwipe),
-            "Starfield" => Ok(Self::Starfield),
-            _ => Err(AnimeError::ParseError(s.to_owned())),
-        }
-    }
-}
-
-impl From<i32> for AnimSleeping {
-    fn from(value: i32) -> Self {
-        match value {
-            0 => Self::BannerSwipe,
-            1 => Self::Starfield,
-            _ => Self::default(),
-        }
-    }
-}
-
-impl From<AnimSleeping> for i32 {
-    fn from(value: AnimSleeping) -> Self {
-        value as i32
-    }
-}
-
-#[cfg_attr(
-feature = "dbus",
-derive(Type, Value, OwnedValue),
-zvariant(signature = "s")
-)]
-#[typeshare]
-#[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
-pub enum AnimShutdown {
-    #[default]
-    GlitchOut = 0,
-    SeeYa = 1,
-}
-
-impl FromStr for AnimShutdown {
-    type Err = AnimeError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "GlitchOut" => Ok(Self::GlitchOut),
-            "SeeYa" => Ok(Self::SeeYa),
-            _ => Err(AnimeError::ParseError(s.to_owned())),
-        }
-    }
-}
-
-impl From<i32> for AnimShutdown {
-    fn from(value: i32) -> Self {
-        match value {
-            0 => Self::GlitchOut,
-            1 => Self::SeeYa,
-            _ => Self::default(),
-        }
-    }
-}
-
-impl From<AnimShutdown> for i32 {
-    fn from(value: AnimShutdown) -> Self {
-        value as i32
-    }
-}
 
 /// `get_anime_type` is very broad, matching on part of the laptop board name
 /// only. For this reason `find_node()` must be used also to verify if the USB
 /// device is available.
 ///
-/// The currently known USB device is `19b6`.
+/// The currently known USB device is `193B`.
 #[inline]
-pub fn get_anime_type() -> Result<AnimeType, AnimeError> {
-    let dmi = DMIID::new().map_err(|_| AnimeError::NoDevice)?; // TODO: better error
+pub fn get_slash_type() -> Result<SlashType, SlashError> {
+    let dmi = DMIID::new().map_err(|_| SlashError::NoDevice)?; // TODO: better error
     let board_name = dmi.board_name;
 
-    if board_name.contains("GA401I") || board_name.contains("GA401Q") {
-        return Ok(AnimeType::GA401);
-    } else if board_name.contains("GA402R") {
-        return Ok(AnimeType::GA402);
-    } else if board_name.contains("GU604V") {
-        return Ok(AnimeType::GU604);
+    if board_name.contains("GA403") {
+        return Ok(SlashType::GA403);
     }
-    log::warn!("AniMe Matrix device found but not yet supported, will default to a GA402 layout");
-    Ok(AnimeType::Unknown)
+    log::warn!("AniMe Slash device found but not yet supported, will default to a GA403 layout");
+    Ok(SlashType::Unknown)
 }
 
 /// Get the two device initialization packets. These are required for device
 /// start after the laptop boots.
 #[inline]
-pub const fn pkts_for_init() -> [[u8; PACKET_SIZE]; 2] {
-    let mut packets = [[0; PACKET_SIZE]; 2];
-    packets[0][0] = DEV_PAGE; // This is the USB page we're using throughout
-    let mut count = 0;
-    // TODO: memcpy or slice copy
-    let bytes = "ASUS Tech.Inc.".as_bytes();
-    while count < bytes.len() {
-        packets[0][count + 1] = bytes[count];
-        count += 1;
-    }
-    //
-    packets[1][0] = DEV_PAGE;
-    packets[1][1] = 0xc2;
-    packets
+pub const fn pkts_for_init() -> [SlashUsbPacket; 2] {
+    let mut pkt1 = [0;PACKET_SIZE];
+    pkt1[0] = DEV_PAGE;
+    pkt1[1] = 0xD7;
+    pkt1[2] = 0x00;
+    pkt1[3] = 0x00;
+    pkt1[4] = 0x01;
+    pkt1[5] = 0xAC;
+
+    let mut pkt2 = [0;PACKET_SIZE];
+    pkt2[0] = DEV_PAGE;
+    pkt2[1] = 0xD2;
+    pkt2[2] = 0x02;
+    pkt2[3] = 0x01;
+    pkt2[4] = 0x08;
+    pkt2[5] = 0xAB;
+
+    [pkt1, pkt2]
 }
 
-/// Should be written to the device after writing the two main data packets that
-/// make up the display data packet
 #[inline]
-pub const fn pkt_flush() -> [u8; PACKET_SIZE] {
-    let mut pkt = [0; PACKET_SIZE];
+pub const fn pkt_save() -> SlashUsbPacket {
+    let mut pkt = [0;PACKET_SIZE];
     pkt[0] = DEV_PAGE;
-    pkt[1] = 0xc0;
+    pkt[1] = 0xD4;
+    pkt[2] = 0x00;
+    pkt[3] = 0x00;
+    pkt[4] = 0x01;
+    pkt[5] = 0xAB;
+
+    pkt
+}
+
+#[inline]
+pub const fn pkt_set_mode(mode: u8) -> [SlashUsbPacket; 2] {
+    let mut pkt1 = [0;PACKET_SIZE];
+    pkt1[0] = DEV_PAGE;
+    pkt1[1] = 0x02;
+    pkt1[2] = 0x03;
+    pkt1[3] = 0x00;
+    pkt1[4] = 0x0C;
+
+    let mut pkt2 = [0;PACKET_SIZE];
+    pkt2[0] = DEV_PAGE;
+    pkt2[1] = 0xD3;
+    pkt2[2] = 0x04;
+    pkt2[3] = 0x00;
+    pkt2[4] = 0x0C;
+    pkt2[5] = 0x01;
+    pkt2[6] = mode;
+    pkt2[7] = 0x02;
+    pkt2[8] = 0x19;
+    pkt2[9] = 0x03;
+    pkt2[10] = 0x13;
+    pkt2[11] = 0x04;
+    pkt2[12] = 0x11;
+    pkt2[13] = 0x05;
+    pkt2[14] = 0x12;
+    pkt2[15] = 0x06;
+    pkt2[16] = 0x13;
+
+    [pkt1, pkt2]
+}
+
+#[inline]
+pub const fn pkt_set_options(enabled: bool, brightness: u8, interval: u8) -> SlashUsbPacket {
+    let status_byte = if enabled { 0x01 } else { 0x00 };
+
+    let mut pkt = [0;PACKET_SIZE];
+    pkt[0] = DEV_PAGE;
+    pkt[1] = 0xD3;
     pkt[2] = 0x03;
-    pkt
-}
+    pkt[3] = 0x01;
+    pkt[4] = 0x08;
+    pkt[5] = 0xAB;
+    pkt[6] = 0xFF;
+    pkt[7] = 0x01;
+    pkt[8] = status_byte;
+    pkt[9] = 0x06;
+    pkt[10] = brightness;
+    pkt[11] = 0xFF;
+    pkt[12] = interval;
 
-/// Packet for setting the brightness (0-3). Requires
-/// `pkt_for_apply()` to be written after.
-#[inline]
-pub const fn pkt_set_brightness(brightness: Brightness) -> [u8; PACKET_SIZE] {
-    let mut pkt = [0; PACKET_SIZE];
-    pkt[0] = DEV_PAGE;
-    pkt[1] = 0xc0;
-    pkt[2] = 0x04;
-    pkt[3] = brightness as u8;
-    pkt
-}
-
-/// Enable the display?
-#[inline]
-pub const fn pkt_set_enable_display(status: bool) -> [u8; PACKET_SIZE] {
-    let mut pkt = [0; PACKET_SIZE];
-    pkt[0] = DEV_PAGE;
-    pkt[1] = 0xc3;
-    pkt[2] = 0x01;
-    pkt[3] = if status { 0x00 } else { 0x80 };
-    pkt
-}
-
-/// Enable builtin animations?
-#[inline]
-pub const fn pkt_set_enable_powersave_anim(status: bool) -> [u8; PACKET_SIZE] {
-    let mut pkt = [0; PACKET_SIZE];
-    pkt[0] = DEV_PAGE;
-    pkt[1] = 0xc4;
-    pkt[2] = 0x01;
-    pkt[3] = if status { 0x00 } else { 0x80 };
-    pkt
-}
-
-/// Set which animations are shown for each stage
-#[inline]
-pub const fn pkt_set_builtin_animations(
-    boot: AnimBooting,
-    awake: AnimAwake,
-    sleep: AnimSleeping,
-    shutdown: AnimShutdown,
-) -> [u8; PACKET_SIZE] {
-    let mut pkt = [0; PACKET_SIZE];
-    pkt[0] = DEV_PAGE;
-    pkt[1] = 0xc5;
-    pkt[2] = (awake as u8)
-        | ((sleep as u8) << 0x01)
-        | ((shutdown as u8) << 0x02)
-        | ((boot as u8) << 0x03);
     pkt
 }

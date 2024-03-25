@@ -2,28 +2,39 @@
 name = "rog_slash"
 license = "MPL-2.0"
 version.workspace = true
-readme = "README.md"
 authors = ["Luke <luke@ljones.dev>"]
 repository = "https://gitlab.com/asus-linux/asus-nb-ctrl"
 homepage = "https://gitlab.com/asus-linux/asus-nb-ctrl"
-documentation = "https://docs.rs/rog-anime"
+documentation = "https://docs.rs/rog-slash"
 description = "ASUS Slash display"
 keywords = ["ROG", "ASUS", "AniMe", "Slash"]
-edition = "2024"
+edition = "2021"
 exclude = ["data"]
 
+[features]
+default = ["dbus", "detect"]
+dbus = ["zbus"]
+detect = ["dmi_id"]
+
+[lib]
+name = "rog_slash"
+path = "src/lib.rs"
+
 [dependencies]
+png_pong.workspace = true
+pix.workspace = true
+gif.workspace = true
 log.workspace = true
+
 serde.workspace = true
 serde_derive.workspace = true
-zbus.workspace = true
-concat-idents.workspace = true
-udev.workspace = true
-inotify.workspace = true
+
+glam.workspace = true
 typeshare.workspace = true
 
-rusb.workspace = true
+zbus = { workspace = true, optional = true }
+
+dmi_id = { path = "../dmi-id", optional = true }
 
 [dev-dependencies]
 cargo-husky.workspace = true
-rog_aura = { path = "../rog-aura" }

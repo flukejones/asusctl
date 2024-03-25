@@ -90,12 +90,12 @@ impl StdConfig for Config {
         }
     }
 
-    fn config_dir() -> std::path::PathBuf {
-        std::path::PathBuf::from(crate::CONFIG_PATH_BASE)
-    }
-
     fn file_name(&self) -> String {
         CONFIG_FILE.to_owned()
+    }
+
+    fn config_dir() -> std::path::PathBuf {
+        std::path::PathBuf::from(crate::CONFIG_PATH_BASE)
     }
 }
 

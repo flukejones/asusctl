@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "asusctl",
+    "slashctl",
     "asusd",
     "asusd-user",
     "config-traits",
@@ -12,10 +13,12 @@ members = [
     "rog-aura",
     "rog-profiles",
     "rog-control-center",
+    "rog-slash",
     "simulators",
 ]
 default-members = [
     "asusctl",
+    "slashctl",
     "asusd",
     "asusd-user",
     "cpuctl",

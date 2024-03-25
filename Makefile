@@ -13,6 +13,7 @@ zshcpl = $(datarootdir)/zsh/site-functions
 
 BIN_ROG := rog-control-center
 BIN_C := asusctl
+BIN_S := slashctl
 BIN_D := asusd
 BIN_U := asusd-user
 LEDCFG := aura_support.ron
@@ -47,6 +48,7 @@ install-program:
 	$(INSTALL_PROGRAM) "./target/$(TARGET)/$(BIN_ROG)" "$(DESTDIR)$(bindir)/$(BIN_ROG)"
 
 	$(INSTALL_PROGRAM) "./target/$(TARGET)/$(BIN_C)" "$(DESTDIR)$(bindir)/$(BIN_C)"
+	$(INSTALL_PROGRAM) "./target/$(TARGET)/$(BIN_S)" "$(DESTDIR)$(bindir)/$(BIN_S)"
 	$(INSTALL_PROGRAM) "./target/$(TARGET)/$(BIN_D)" "$(DESTDIR)$(bindir)/$(BIN_D)"
 	$(INSTALL_PROGRAM) "./target/$(TARGET)/$(BIN_U)" "$(DESTDIR)$(bindir)/$(BIN_U)"
 
@@ -86,6 +88,7 @@ uninstall:
 	rm -r "$(DESTDIR)$(datarootdir)/icons/hicolor/512x512/apps/$(BIN_ROG).png"
 
 	rm -f "$(DESTDIR)$(bindir)/$(BIN_C)"
+	rm -f "$(DESTDIR)$(bindir)/$(BIN_S)"
 	rm -f "$(DESTDIR)$(bindir)/$(BIN_D)"
 	rm -f "$(DESTDIR)$(libdir)/udev/rules.d/99-$(BIN_D).rules"
 	rm -f "$(DESTDIR)/etc/asusd/$(LEDCFG)"
@@ -142,6 +145,7 @@ endif
 	cargo build $(ARGS)
 ifneq ($(STRIP_BINARIES),0)
 	strip -s ./target/$(TARGET)/$(BIN_C)
+	strip -s ./target/$(TARGET)/$(BIN_S)
 	strip -s ./target/$(TARGET)/$(BIN_D)
 	strip -s ./target/$(TARGET)/$(BIN_U)
 	strip -s ./target/$(TARGET)/$(BIN_ROG)

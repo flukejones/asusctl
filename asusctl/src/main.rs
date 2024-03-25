@@ -19,14 +19,17 @@ use rog_dbus::zbus_aura::AuraProxyBlocking;
 use rog_dbus::RogDbusClientBlocking;
 use rog_platform::platform::{GpuMode, Properties, ThrottlePolicy};
 use rog_profiles::error::ProfileError;
+use rog_slash::SlashMode;
 
 use crate::aura_cli::{AuraPowerStates, LedBrightness};
 use crate::cli_opts::*;
+use crate::slash_cli::{SlashCommand};
 
 mod anime_cli;
 mod aura_cli;
 mod cli_opts;
 mod fan_curve_cli;
+mod slash_cli;
 
 fn main() {
     let args: Vec<String> = args().skip(1).collect();
@@ -149,6 +152,7 @@ fn do_parsed(
         }
         Some(CliCommand::Graphics(_)) => do_gfx(),
         Some(CliCommand::Anime(cmd)) => handle_anime(dbus, cmd)?,
+        Some(CliCommand::Slash(cmd)) => handle_slash(dbus, cmd)?,
         Some(CliCommand::Bios(cmd)) => handle_platform_properties(dbus, supported_properties, cmd)?,
         None => {
             if (!parsed.show_supported
@@ -456,6 +460,49 @@ fn verify_brightness(brightness: f32) {
             brightness
         );
     }
+}
+
+fn handle_slash(
+    dbus: &RogDbusClientBlocking<'_>,
+    cmd: &SlashCommand,
+) -> Result<(), Box<dyn std::error::Error>> {
+    if (
+        cmd.enable_display.is_none() &&
+        cmd.brightness.is_none() &&
+        cmd.interval.is_none() &&
+        !cmd.list &&
+        !cmd.next &&
+        !cmd.prev
+    ) || cmd.help
+    {
+        println!("Missing arg or command\n\n{}", cmd.self_usage());
+        if let Some(lst) = cmd.self_command_list() {
+            println!("\n{}", lst);
+        }
+    }
+    if let Some(enable) = cmd.enable_display {
+        dbus.proxies().slash().set_enable_display(enable)?;
+    }
+    if let Some(brightness) = cmd.brightness {
+        dbus.proxies().slash().set_brightness(brightness)?;
+    }
+    if let Some(interval) = cmd.interval {
+        dbus.proxies().slash().set_interval(interval)?;
+    }
+    if cmd.next {
+        dbus.proxies().slash().set_current_mode(SlashMode::Bounce as u8)?;
+    }
+    if cmd.prev {
+        dbus.proxies().slash().set_current_mode(SlashMode::Flow as u8)?;
+    }
+    if cmd.list {
+        let res = SlashMode::list();
+        for p in &res {
+            println!("{:?}", p);
+        }
+    }
+
+    Ok(())
 }
 
 fn handle_led_mode(

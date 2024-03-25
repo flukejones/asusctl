@@ -3,6 +3,8 @@
 pub mod config;
 /// Control of anime matrix display
 pub mod ctrl_anime;
+/// Control of anime slash led bar
+pub mod ctrl_slash;
 /// Keyboard LED brightness control, RGB, and LED display modes
 pub mod ctrl_aura;
 /// Control platform profiles + fan-curves if available

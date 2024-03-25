@@ -4,6 +4,7 @@ use rog_platform::platform::ThrottlePolicy;
 use crate::anime_cli::AnimeCommand;
 use crate::aura_cli::{LedBrightness, LedPowerCommand1, LedPowerCommand2, SetAuraBuiltin};
 use crate::fan_curve_cli::FanCurveCommand;
+use crate::slash_cli::SlashCommand;
 
 #[derive(Default, Options)]
 pub struct CliStart {
@@ -41,6 +42,8 @@ pub enum CliCommand {
     Graphics(GraphicsCommand),
     #[options(name = "anime", help = "Manage AniMe Matrix")]
     Anime(AnimeCommand),
+    #[options(name = "slash", help = "Manage Slash Ledbar")]
+    Slash(SlashCommand),
     #[options(help = "Change bios settings")]
     Bios(BiosCommand),
 }

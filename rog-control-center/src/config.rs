@@ -50,6 +50,10 @@ impl StdConfig for Config {
         }
     }
 
+    fn file_name(&self) -> String {
+        CFG_FILE_NAME.to_owned()
+    }
+
     fn config_dir() -> std::path::PathBuf {
         let mut path = dirs::config_dir().unwrap_or_default();
 
@@ -61,10 +65,6 @@ impl StdConfig for Config {
             log::info!("Created {path:?}");
         }
         path
-    }
-
-    fn file_name(&self) -> String {
-        CFG_FILE_NAME.to_owned()
     }
 }
 

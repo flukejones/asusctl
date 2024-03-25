@@ -35,14 +35,10 @@ fn main() -> Result<()> {
     let is_rog_ally = prod_family == "RC71L";
 
     // tmp-dir must live to the end of program life
-    let _tmp_dir = match tempfile::Builder::new()
+    let _tmp_dir = tempfile::Builder::new()
         .prefix("rog-gui")
         .rand_bytes(0)
-        .tempdir()
-    {
-        Ok(tmp) => tmp,
-        Err(_) => on_tmp_dir_exists().unwrap(),
-    };
+        .tempdir().unwrap_or_else(|_| on_tmp_dir_exists().unwrap());
 
     let args: Vec<String> = args().skip(1).collect();
 
@@ -76,13 +72,10 @@ fn main() -> Result<()> {
         })
         .unwrap();
 
-    let supported_properties = match dbus.proxies().platform().supported_properties() {
-        Ok(s) => s,
-        Err(_e) => {
-            // TODO: show an error window
-            Vec::default()
-        }
-    };
+    let supported_properties = dbus.proxies().platform().supported_properties().unwrap_or_else(|_e| {
+        // TODO: show an error window
+        Vec::default()
+    });
 
     // Startup
     let mut config = Config::new().load();

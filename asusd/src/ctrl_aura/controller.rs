@@ -348,7 +348,7 @@ mod tests {
         };
         let mut controller = CtrlKbdLed {
             led_prod: AuraDevice::X19b6,
-            led_node: LEDNode::Rog(KeyboardLed::default(), HidRaw::new("id_product").unwrap()),
+            led_node: LEDNode::Rog(KeyboardLed::default(), HidRaw::new("id_product").unwrap().0),
             supported_data: supported_basic_modes,
             per_key_mode_active: false,
             config,
@@ -386,7 +386,7 @@ mod tests {
         };
         let mut controller = CtrlKbdLed {
             led_prod: AuraDevice::X19b6,
-            led_node: LEDNode::Rog(KeyboardLed::default(), HidRaw::new("id_product").unwrap()),
+            led_node: LEDNode::Rog(KeyboardLed::default(), HidRaw::new("id_product").unwrap().0),
             supported_data: supported_basic_modes,
             per_key_mode_active: false,
             config,

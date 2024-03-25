@@ -12,9 +12,12 @@ use asusd::ctrl_aura::manager::AuraManager;
 use asusd::ctrl_fancurves::CtrlFanCurveZbus;
 use asusd::ctrl_platform::CtrlPlatform;
 use asusd::{print_board_info, start_tasks, CtrlTask, DBUS_NAME};
-use config_traits::{StdConfig, StdConfigLoad2, StdConfigLoad3};
+use config_traits::{StdConfig, StdConfigLoad, StdConfigLoad2, StdConfigLoad3};
 use log::{error, info};
 use zbus::fdo::ObjectManager;
+use asusd::ctrl_slash::config::SlashConfig;
+use asusd::ctrl_slash::CtrlSlash;
+use asusd::ctrl_slash::trait_impls::CtrlSlashZbus;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -41,6 +44,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     info!("       daemon v{}", asusd::VERSION);
     info!("    rog-anime v{}", rog_anime::VERSION);
+    info!("    rog-slash v{}", rog_slash::VERSION);
     info!("     rog-aura v{}", rog_aura::VERSION);
     info!(" rog-profiles v{}", rog_profiles::VERSION);
     info!("rog-platform v{}", rog_platform::VERSION);
@@ -101,6 +105,16 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
         Err(err) => {
             info!("AniMe control: {}", err);
+        }
+    }
+
+    match CtrlSlash::new(SlashConfig::new().load()) {
+        Ok(ctrl) => {
+            let sig_ctx = CtrlPlatform::signal_context(&connection)?;
+            start_tasks(ctrl, &mut connection, sig_ctx).await?;
+        }
+        Err(err) => {
+            info!("Slash control: {}", err);
         }
     }
 
