@@ -62,10 +62,6 @@ impl AuraManager {
                     continue;
                 }
                 for event in monitor.iter() {
-                    if event.parent_with_subsystem("hidraw").is_err() {
-                        continue;
-                    }
-
                     let parent = if let Some(parent) =
                         event.parent_with_subsystem_devtype("usb", "usb_device")?
                     {
@@ -149,11 +145,7 @@ impl AuraManager {
                                     let sig_ctx = CtrlAuraZbus::signal_context(&conn_copy)?;
                                     let conn_copy = conn_copy.clone();
                                     tokio::spawn(async move {
-                                        return tokio::time::timeout(
-                                            Duration::from_millis(1000),
-                                            start_tasks(zbus, conn_copy.clone(), sig_ctx, path),
-                                        )
-                                        .await;
+                                        start_tasks(zbus, conn_copy.clone(), sig_ctx, path).await
                                     });
                                 }
                             }
