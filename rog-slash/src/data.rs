@@ -1,3 +1,5 @@
+use std::any::Any;
+use std::fmt::Display;
 use std::str::FromStr;
 
 use serde_derive::{Deserialize, Serialize};
@@ -51,51 +53,58 @@ impl Default for SlashMode {
     }
 }
 
-impl SlashMode {
-    pub const fn to_string(&self) -> &str
-    {
-        match &self {
-            SlashMode::Bounce => "Bounce",
-            SlashMode::Slash => "Slash",
-            SlashMode::Loading => "Loading",
-            SlashMode::BitStream => "BitStream",
-            SlashMode::Transmission => "Transmission",
-            SlashMode::Flow => "Flow",
-            SlashMode::Flux => "Flux",
-            SlashMode::Phantom => "Phantom",
-            SlashMode::Spectrum => "Spectrum",
-            SlashMode::Hazard => "Hazard",
-            SlashMode::Interfacing => "Interfacing",
-            SlashMode::Ramp => "Ramp",
-            SlashMode::GameOver => "GameOver",
-            SlashMode::Start => "Start",
-            SlashMode::Buzzer => "Buzzer",
-        }
-    }
-    
-    pub fn from_string(value: &str) -> Self
-    {
-        match value {
-            "Bounce" => SlashMode::Bounce,
-            "Slash" => SlashMode::Slash,
-            "Loading" => SlashMode::Loading,
-            "BitStream" => SlashMode::BitStream,
-            "Transmission" => SlashMode::Transmission,
-            "Flow" => SlashMode::Flow,
-            "Flux" => SlashMode::Flux,
-            "Phantom" => SlashMode::Phantom,
-            "Spectrum" => SlashMode::Spectrum,
-            "Hazard" => SlashMode::Hazard,
-            "Interfacing" => SlashMode::Interfacing,
-            "Ramp" => SlashMode::Ramp,
-            "GameOver" => SlashMode::GameOver,
-            "Start" => SlashMode::Start,
-            "Buzzer" => SlashMode::Buzzer,
-            _ => SlashMode::Bounce
-        }
-    }
+impl FromStr for SlashMode {
+    type Err = SlashError;
 
-    pub const fn list() -> [&'static str; 15] {
+    fn from_str(s: &str) -> Result<Self, SlashError> {
+        match s {
+            "Bounce" => Ok(SlashMode::Bounce),
+            "Slash" => Ok(SlashMode::Slash),
+            "Loading" => Ok(SlashMode::Loading),
+            "BitStream" => Ok(SlashMode::BitStream),
+            "Transmission" => Ok(SlashMode::Transmission),
+            "Flow" => Ok(SlashMode::Flow),
+            "Flux" => Ok(SlashMode::Flux),
+            "Phantom" => Ok(SlashMode::Phantom),
+            "Spectrum" => Ok(SlashMode::Spectrum),
+            "Hazard" => Ok(SlashMode::Hazard),
+            "Interfacing" => Ok(SlashMode::Interfacing),
+            "Ramp" => Ok(SlashMode::Ramp),
+            "GameOver" => Ok(SlashMode::GameOver),
+            "Start" => Ok(SlashMode::Start),
+            "Buzzer" => Ok(SlashMode::Buzzer),
+            _ => Ok(SlashMode::Bounce),
+        }
+    }
+}
+
+
+impl Display for SlashMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = match &self {
+            SlashMode::Bounce => String::from("Bounce"),
+            SlashMode::Slash => String::from("Slash"),
+            SlashMode::Loading => String::from("Loading"),
+            SlashMode::BitStream => String::from("BitStream"),
+            SlashMode::Transmission => String::from("Transmission"),
+            SlashMode::Flow => String::from("Flow"),
+            SlashMode::Flux => String::from("Flux"),
+            SlashMode::Phantom => String::from("Phantom"),
+            SlashMode::Spectrum => String::from("Spectrum"),
+            SlashMode::Hazard => String::from("Hazard"),
+            SlashMode::Interfacing => String::from("Interfacing"),
+            SlashMode::Ramp => String::from("Ramp"),
+            SlashMode::GameOver => String::from("GameOver"),
+            SlashMode::Start => String::from("Start"),
+            SlashMode::Buzzer => String::from("Buzzer"),
+        };
+        write!(f, "{}", str)
+    }
+}
+
+impl SlashMode {
+
+    pub fn list() -> [String; 15] {
         [
             SlashMode::Bounce.to_string(),
             SlashMode::Slash.to_string(),
