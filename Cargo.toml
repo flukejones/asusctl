@@ -1,7 +1,6 @@
 [workspace]
 members = [
     "asusctl",
-    "slashctl",
     "asusd",
     "asusd-user",
     "config-traits",
@@ -18,7 +17,6 @@ members = [
 ]
 default-members = [
     "asusctl",
-    "slashctl",
     "asusd",
     "asusd-user",
     "cpuctl",

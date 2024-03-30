@@ -96,9 +96,7 @@ impl<'a> DbusProxies<'a> {
         ))
     }
 
-    pub fn anime(&self) -> &zbus_anime::AnimeProxy<'a> {
-        &self.anime
-    }
+    pub fn anime(&self) -> &zbus_anime::AnimeProxy<'a> { &self.anime }
     pub fn slash(&self) -> &zbus_slash::SlashProxy<'a> { &self.slash }
 
     pub fn led(&self) -> &zbus_aura::AuraProxy<'a> {

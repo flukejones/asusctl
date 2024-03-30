@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-03-14 08:10+0000\n"
+"POT-Creation-Date: 2024-03-30 17:12+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -11,481 +11,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: \n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-
-#: rog-control-center/ui/main_window.slint:49
-msgctxt "MainWindow"
-msgid "ROG"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:51
-msgctxt "Menu1"
-msgid "System Control"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:52
-msgctxt "Menu2"
-msgid "Keyboard Aura"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:53
-msgctxt "Menu3"
-msgid "AniMe Matrix"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:54
-msgctxt "Menu4"
-msgid "Fan Curves"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:55
-msgctxt "Menu5"
-msgid "App Settings"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:56
-msgctxt "Menu6"
-msgid "About"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:68
-msgctxt "MainWindow"
-msgid "Quit"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:6
-msgctxt "Anime Brightness"
-msgid "Off"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:7
-msgctxt "Anime Brightness"
-msgid "Low"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:8
-msgctxt "Anime Brightness"
-msgid "Med"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:9
-msgctxt "Anime Brightness"
-msgid "High"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:23
-msgctxt "AnimePageData"
-msgid "Glitch Construction"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:23
-msgctxt "AnimePageData"
-msgid "Static Emergence"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:25
-msgctxt "AnimePageData"
-msgid "Binary Banner Scroll"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:25
-msgctxt "AnimePageData"
-msgid "Rog Logo Glitch"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:27
-msgctxt "AnimePageData"
-msgid "Banner Swipe"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:27
-msgctxt "AnimePageData"
-msgid "Starfield"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:29
-msgctxt "AnimePageData"
-msgid "Glitch Out"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:29
-msgctxt "AnimePageData"
-msgid "See Ya"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:50
-msgctxt "Anime Brightness"
-msgid "Brightness"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:66
-msgctxt "PageAnime"
-msgid "Enable display"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:74 rog-control-center/ui/pages/anime.slint:97
-msgctxt "PageAnime"
-msgid "Advanced"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:89
-msgctxt "PageAnime"
-msgid "Use built-in animations"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:146
-msgctxt "PageAnime"
-msgid "Set which builtin animations are played"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:150
-msgctxt "Anime built-in selection"
-msgid "Boot Animation"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:160
-msgctxt "Anime built-in selection"
-msgid "Running Animation"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:170
-msgctxt "Anime built-in selection"
-msgid "Sleep Animation"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:180
-msgctxt "Anime built-in selection"
-msgid "Shutdown Animation"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:220
-msgctxt "PageAnime"
-msgid "Advanced Display Settings"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:225
-msgctxt "PageAnime"
-msgid "Off when lid closed"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:234
-msgctxt "PageAnime"
-msgid "Off when suspended"
-msgstr ""
-
-#: rog-control-center/ui/pages/anime.slint:243
-msgctxt "PageAnime"
-msgid "Off when on battery"
-msgstr ""
-
-#: rog-control-center/ui/pages/app_settings.slint:29
-msgctxt "PageAppSettings"
-msgid "Run in background after closing"
-msgstr ""
-
-#: rog-control-center/ui/pages/app_settings.slint:38
-msgctxt "PageAppSettings"
-msgid "Start app in background (UI closed)"
-msgstr ""
-
-#: rog-control-center/ui/pages/app_settings.slint:50
-msgctxt "PageAppSettings"
-msgid "Enable system tray icon"
-msgstr ""
-
-#: rog-control-center/ui/pages/app_settings.slint:59
-msgctxt "PageAppSettings"
-msgid "Enable change notifications"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:27
-msgctxt "PageAura"
-msgid "Brightness"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:38
-msgctxt "PageAura"
-msgid "Aura mode"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:56
-msgctxt "PageAura"
-msgid "Colour 1"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:82
-msgctxt "PageAura"
-msgid "Colour 2"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:114
-msgctxt "PageAura"
-msgid "Zone"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:137
-msgctxt "PageAura"
-msgid "Direction"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:159
-msgctxt "PageAura"
-msgid "Speed"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:180
-msgctxt "PageAura"
-msgid "Power Settings"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:211 rog-control-center/ui/pages/aura.slint:364 rog-control-center/ui/pages/aura.slint:424
-msgctxt "PageAura"
-msgid "Keyboard"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:235
-msgctxt "PageAura"
-msgid "Lid Logo"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:259
-msgctxt "PageAura"
-msgid "Lightbar"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:283
-msgctxt "PageAura"
-msgid "Lid Zone"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:307
-msgctxt "PageAura"
-msgid "Rear Glow"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:370 rog-control-center/ui/pages/aura.slint:430
-msgctxt "PageAura"
-msgid "Boot"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:375 rog-control-center/ui/pages/aura.slint:435
-msgctxt "PageAura"
-msgid "Awake"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:380 rog-control-center/ui/pages/aura.slint:440
-msgctxt "PageAura"
-msgid "Sleep"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:385 rog-control-center/ui/pages/aura.slint:445
-msgctxt "PageAura"
-msgid "Shutdown"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:27
-msgctxt "FanTab"
-msgid "This fan is not avilable on this machine"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:35
-msgctxt "FanTab"
-msgid "Enabled"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:44
-msgctxt "FanTab"
-msgid "Apply"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:52
-msgctxt "FanTab"
-msgid "Cancel"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:60
-msgctxt "FanTab"
-msgid "Factory Default (all fans)"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:73
-msgctxt "PageFans"
-msgid "Balanced"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:76 rog-control-center/ui/pages/fans.slint:135 rog-control-center/ui/pages/fans.slint:194
-msgctxt "PageFans"
-msgid "CPU"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:94 rog-control-center/ui/pages/fans.slint:153 rog-control-center/ui/pages/fans.slint:212
-msgctxt "PageFans"
-msgid "Mid"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:112 rog-control-center/ui/pages/fans.slint:171 rog-control-center/ui/pages/fans.slint:230
-msgctxt "PageFans"
-msgid "GPU"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:132
-msgctxt "PageFans"
-msgid "Performance"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:191
-msgctxt "PageFans"
-msgid "Quiet"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:26
-msgctxt "SystemPageData"
-msgid "Balanced"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:26 rog-control-center/ui/pages/system.slint:30
-msgctxt "SystemPageData"
-msgid "Performance"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:26
-msgctxt "SystemPageData"
-msgid "Quiet"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:29
-msgctxt "SystemPageData"
-msgid "Default"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:31
-msgctxt "SystemPageData"
-msgid "BalancePerformance"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:32
-msgctxt "SystemPageData"
-msgid "BalancePower"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:33
-msgctxt "SystemPageData"
-msgid "Power"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:106
-msgctxt "PageSystem"
-msgid "Base system settings"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:111
-msgctxt "PageSystem"
-msgid "Charge limit"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:123
-msgctxt "PageSystem"
-msgid "Throttle Policy"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:133
-msgctxt "PageSystem"
-msgid "Advanced"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:145
-msgctxt "PageSystem"
-msgid "Panel Overdrive"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:153
-msgctxt "PageSystem"
-msgid "MiniLED Mode"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:161
-msgctxt "PageSystem"
-msgid "POST boot sound"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:179
-msgctxt "PageSystem"
-msgid "System performance settings"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:184
-msgctxt "ppt_pl1_spl"
-msgid "ppt_pl1_spl"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:194
-msgctxt "ppt_pl2_sppt"
-msgid "ppt_pl2_sppt"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:204
-msgctxt "ppt_fppt"
-msgid "ppt_fppt"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:214
-msgctxt "ppt_apu_sppt"
-msgid "ppt_apu_sppt"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:224
-msgctxt "ppt_platform_sppt"
-msgid "ppt_platform_sppt"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:234
-msgctxt "nv_dynamic_boost"
-msgid "nv_dynamic_boost"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:244
-msgctxt "nv_temp_target"
-msgid "nv_temp_target"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:289
-msgctxt "PageSystem"
-msgid "Energy Performance Preference linked to Throttle Policy"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:293
-msgctxt "PageSystem"
-msgid "Change EPP based on Throttle Policy"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:301
-msgctxt "PageSystem"
-msgid "EPP for Balanced Policy"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:311
-msgctxt "PageSystem"
-msgid "EPP for Performance Policy"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:321
-msgctxt "PageSystem"
-msgid "EPP for Quiet Policy"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:339
-msgctxt "PageSystem"
-msgid "Throttle Policy for power state"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:343
-msgctxt "PageSystem"
-msgid "Throttle Policy on Battery"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:353
-msgctxt "PageSystem"
-msgid "Throttle Policy on AC"
-msgstr ""
 
 #: rog-control-center/ui/types/aura_types.slint:69
 msgctxt "Aura brightness"
@@ -665,5 +190,480 @@ msgstr ""
 #: rog-control-center/ui/widgets/aura_power.slint:62
 msgctxt "AuraPowerGroup"
 msgid "Shutdown"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:6
+msgctxt "Anime Brightness"
+msgid "Off"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:7
+msgctxt "Anime Brightness"
+msgid "Low"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:8
+msgctxt "Anime Brightness"
+msgid "Med"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:9
+msgctxt "Anime Brightness"
+msgid "High"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:23
+msgctxt "AnimePageData"
+msgid "Glitch Construction"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:23
+msgctxt "AnimePageData"
+msgid "Static Emergence"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:25
+msgctxt "AnimePageData"
+msgid "Binary Banner Scroll"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:25
+msgctxt "AnimePageData"
+msgid "Rog Logo Glitch"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:27
+msgctxt "AnimePageData"
+msgid "Banner Swipe"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:27
+msgctxt "AnimePageData"
+msgid "Starfield"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:29
+msgctxt "AnimePageData"
+msgid "Glitch Out"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:29
+msgctxt "AnimePageData"
+msgid "See Ya"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:50
+msgctxt "Anime Brightness"
+msgid "Brightness"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:66
+msgctxt "PageAnime"
+msgid "Enable display"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:74 rog-control-center/ui/pages/anime.slint:97
+msgctxt "PageAnime"
+msgid "Advanced"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:89
+msgctxt "PageAnime"
+msgid "Use built-in animations"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:146
+msgctxt "PageAnime"
+msgid "Set which builtin animations are played"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:150
+msgctxt "Anime built-in selection"
+msgid "Boot Animation"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:160
+msgctxt "Anime built-in selection"
+msgid "Running Animation"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:170
+msgctxt "Anime built-in selection"
+msgid "Sleep Animation"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:180
+msgctxt "Anime built-in selection"
+msgid "Shutdown Animation"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:220
+msgctxt "PageAnime"
+msgid "Advanced Display Settings"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:225
+msgctxt "PageAnime"
+msgid "Off when lid closed"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:234
+msgctxt "PageAnime"
+msgid "Off when suspended"
+msgstr ""
+
+#: rog-control-center/ui/pages/anime.slint:243
+msgctxt "PageAnime"
+msgid "Off when on battery"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:27
+msgctxt "PageAura"
+msgid "Brightness"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:38
+msgctxt "PageAura"
+msgid "Aura mode"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:56
+msgctxt "PageAura"
+msgid "Colour 1"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:82
+msgctxt "PageAura"
+msgid "Colour 2"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:114
+msgctxt "PageAura"
+msgid "Zone"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:137
+msgctxt "PageAura"
+msgid "Direction"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:159
+msgctxt "PageAura"
+msgid "Speed"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:180
+msgctxt "PageAura"
+msgid "Power Settings"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:211 rog-control-center/ui/pages/aura.slint:369 rog-control-center/ui/pages/aura.slint:434
+msgctxt "PageAura"
+msgid "Keyboard"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:235
+msgctxt "PageAura"
+msgid "Lid Logo"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:259
+msgctxt "PageAura"
+msgid "Lightbar"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:283
+msgctxt "PageAura"
+msgid "Lid Zone"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:307
+msgctxt "PageAura"
+msgid "Rear Glow"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:375 rog-control-center/ui/pages/aura.slint:440
+msgctxt "PageAura"
+msgid "Boot"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:380 rog-control-center/ui/pages/aura.slint:445
+msgctxt "PageAura"
+msgid "Awake"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:385 rog-control-center/ui/pages/aura.slint:450
+msgctxt "PageAura"
+msgid "Sleep"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:390 rog-control-center/ui/pages/aura.slint:455
+msgctxt "PageAura"
+msgid "Shutdown"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:27
+msgctxt "FanTab"
+msgid "This fan is not avilable on this machine"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:35
+msgctxt "FanTab"
+msgid "Enabled"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:44
+msgctxt "FanTab"
+msgid "Apply"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:52
+msgctxt "FanTab"
+msgid "Cancel"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:60
+msgctxt "FanTab"
+msgid "Factory Default (all fans)"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:73
+msgctxt "PageFans"
+msgid "Balanced"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:76 rog-control-center/ui/pages/fans.slint:135 rog-control-center/ui/pages/fans.slint:194
+msgctxt "PageFans"
+msgid "CPU"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:94 rog-control-center/ui/pages/fans.slint:153 rog-control-center/ui/pages/fans.slint:212
+msgctxt "PageFans"
+msgid "Mid"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:112 rog-control-center/ui/pages/fans.slint:171 rog-control-center/ui/pages/fans.slint:230
+msgctxt "PageFans"
+msgid "GPU"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:132
+msgctxt "PageFans"
+msgid "Performance"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:191
+msgctxt "PageFans"
+msgid "Quiet"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:26
+msgctxt "SystemPageData"
+msgid "Balanced"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:26 rog-control-center/ui/pages/system.slint:30
+msgctxt "SystemPageData"
+msgid "Performance"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:26
+msgctxt "SystemPageData"
+msgid "Quiet"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:29
+msgctxt "SystemPageData"
+msgid "Default"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:31
+msgctxt "SystemPageData"
+msgid "BalancePerformance"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:32
+msgctxt "SystemPageData"
+msgid "BalancePower"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:33
+msgctxt "SystemPageData"
+msgid "Power"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:106
+msgctxt "PageSystem"
+msgid "Base system settings"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:111
+msgctxt "PageSystem"
+msgid "Charge limit"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:123
+msgctxt "PageSystem"
+msgid "Throttle Policy"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:133
+msgctxt "PageSystem"
+msgid "Advanced"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:145
+msgctxt "PageSystem"
+msgid "Panel Overdrive"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:153
+msgctxt "PageSystem"
+msgid "MiniLED Mode"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:161
+msgctxt "PageSystem"
+msgid "POST boot sound"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:179
+msgctxt "PageSystem"
+msgid "System performance settings"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:184
+msgctxt "ppt_pl1_spl"
+msgid "ppt_pl1_spl"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:194
+msgctxt "ppt_pl2_sppt"
+msgid "ppt_pl2_sppt"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:204
+msgctxt "ppt_fppt"
+msgid "ppt_fppt"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:214
+msgctxt "ppt_apu_sppt"
+msgid "ppt_apu_sppt"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:224
+msgctxt "ppt_platform_sppt"
+msgid "ppt_platform_sppt"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:234
+msgctxt "nv_dynamic_boost"
+msgid "nv_dynamic_boost"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:244
+msgctxt "nv_temp_target"
+msgid "nv_temp_target"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:290
+msgctxt "PageSystem"
+msgid "Energy Performance Preference linked to Throttle Policy"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:294
+msgctxt "PageSystem"
+msgid "Change EPP based on Throttle Policy"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:302
+msgctxt "PageSystem"
+msgid "EPP for Balanced Policy"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:312
+msgctxt "PageSystem"
+msgid "EPP for Performance Policy"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:322
+msgctxt "PageSystem"
+msgid "EPP for Quiet Policy"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:340
+msgctxt "PageSystem"
+msgid "Throttle Policy for power state"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:344
+msgctxt "PageSystem"
+msgid "Throttle Policy on Battery"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:354
+msgctxt "PageSystem"
+msgid "Throttle Policy on AC"
+msgstr ""
+
+#: rog-control-center/ui/pages/app_settings.slint:29
+msgctxt "PageAppSettings"
+msgid "Run in background after closing"
+msgstr ""
+
+#: rog-control-center/ui/pages/app_settings.slint:38
+msgctxt "PageAppSettings"
+msgid "Start app in background (UI closed)"
+msgstr ""
+
+#: rog-control-center/ui/pages/app_settings.slint:50
+msgctxt "PageAppSettings"
+msgid "Enable system tray icon"
+msgstr ""
+
+#: rog-control-center/ui/pages/app_settings.slint:59
+msgctxt "PageAppSettings"
+msgid "Enable change notifications"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:50
+msgctxt "MainWindow"
+msgid "ROG"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:52
+msgctxt "Menu1"
+msgid "System Control"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:53
+msgctxt "Menu2"
+msgid "Keyboard Aura"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:54
+msgctxt "Menu3"
+msgid "AniMe Matrix"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:55
+msgctxt "Menu4"
+msgid "Fan Curves"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:56
+msgctxt "Menu5"
+msgid "App Settings"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:57
+msgctxt "Menu6"
+msgid "About"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:69
+msgctxt "MainWindow"
+msgid "Quit"
 msgstr ""
 

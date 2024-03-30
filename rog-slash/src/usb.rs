@@ -11,7 +11,7 @@
 use dmi_id::DMIID;
 #[cfg(feature = "dbus")]
 use crate::error::SlashError;
-use crate::SlashType;
+use crate::{SlashMode, SlashType};
 
 const PACKET_SIZE: usize = 128;
 const DEV_PAGE: u8 = 0x5e;
@@ -76,7 +76,7 @@ pub const fn pkt_save() -> SlashUsbPacket {
 }
 
 #[inline]
-pub const fn pkt_set_mode(mode: u8) -> [SlashUsbPacket; 2] {
+pub const fn pkt_set_mode(mode: SlashMode) -> [SlashUsbPacket; 2] {
     let mut pkt1 = [0;PACKET_SIZE];
     pkt1[0] = DEV_PAGE;
     pkt1[1] = 0x02;
@@ -91,7 +91,7 @@ pub const fn pkt_set_mode(mode: u8) -> [SlashUsbPacket; 2] {
     pkt2[3] = 0x00;
     pkt2[4] = 0x0C;
     pkt2[5] = 0x01;
-    pkt2[6] = mode;
+    pkt2[6] = mode as u8;
     pkt2[7] = 0x02;
     pkt2[8] = 0x19;
     pkt2[9] = 0x03;

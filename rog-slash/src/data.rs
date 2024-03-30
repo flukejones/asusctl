@@ -4,11 +4,10 @@ use serde_derive::{Deserialize, Serialize};
 use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
+use zbus::zvariant::{OwnedValue, Value};
 
 use crate::error::SlashError;
 
-#[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum SlashType {
     GA403,
@@ -26,8 +25,8 @@ impl FromStr for SlashType {
 }
 
 #[typeshare]
-// #[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub enum SlashMode {
     Bounce = 0x10,
     Slash = 0x12,
@@ -44,6 +43,12 @@ pub enum SlashMode {
     GameOver = 0x42,
     Start = 0x43,
     Buzzer = 0x44,
+}
+
+impl Default for SlashMode {
+    fn default() -> Self {
+        SlashMode::Flow
+    }
 }
 
 impl SlashMode {
@@ -65,6 +70,28 @@ impl SlashMode {
             SlashMode::GameOver => "GameOver",
             SlashMode::Start => "Start",
             SlashMode::Buzzer => "Buzzer",
+        }
+    }
+    
+    pub fn from_string(value: &str) -> Self
+    {
+        match value {
+            "Bounce" => SlashMode::Bounce,
+            "Slash" => SlashMode::Slash,
+            "Loading" => SlashMode::Loading,
+            "BitStream" => SlashMode::BitStream,
+            "Transmission" => SlashMode::Transmission,
+            "Flow" => SlashMode::Flow,
+            "Flux" => SlashMode::Flux,
+            "Phantom" => SlashMode::Phantom,
+            "Spectrum" => SlashMode::Spectrum,
+            "Hazard" => SlashMode::Hazard,
+            "Interfacing" => SlashMode::Interfacing,
+            "Ramp" => SlashMode::Ramp,
+            "GameOver" => SlashMode::GameOver,
+            "Start" => SlashMode::Start,
+            "Buzzer" => SlashMode::Buzzer,
+            _ => SlashMode::Bounce
         }
     }
 
@@ -89,9 +116,6 @@ impl SlashMode {
     }
 }
 
-
-
-// TODO: move this out
 #[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[typeshare]
@@ -100,6 +124,6 @@ pub struct DeviceState {
     pub slash_enabled: bool,
     pub slash_brightness: u8,
     pub slash_interval: u8,
-    pub slash_mode: u8,
+    pub slash_mode: SlashMode,
 }
 

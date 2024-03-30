@@ -3,8 +3,9 @@ pub mod trait_impls;
 
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::usb_raw::USBRaw;
-use rog_slash::{SlashMode};
-use rog_slash::usb::{pkt_set_mode, pkt_set_options, pkts_for_init};
+use rog_slash::{SlashMode, SlashType};
+use rog_slash::error::SlashError;
+use rog_slash::usb::{get_slash_type, pkt_set_mode, pkt_set_options, pkts_for_init};
 use crate::ctrl_slash::config::SlashConfig;
 use crate::error::RogError;
 
@@ -36,12 +37,11 @@ impl Node {
     // }
 }
 
-#[derive(Clone)]
 pub struct CtrlSlash {
     // node: HidRaw,
     node: Node,
     config: SlashConfig,
-    // slash_type: SlashType,
+    slash_type: SlashType,
     // // set to force thread to exit
     // thread_exit: Arc<AtomicBool>,
     // // Set to false when the thread exits
@@ -62,12 +62,15 @@ impl CtrlSlash {
         };
 
         // Maybe, detecting the slash-type may become necessary
-        // let slash_type = get_slash_type()?;
+        let slash_type = get_slash_type()?;
+        if slash_type == SlashType::Unknown  {
+            return Err(RogError::Slash(SlashError::NoDevice));
+        }
 
         let ctrl = CtrlSlash {
             node,
             config,
-            // slash_type,
+            slash_type,
             // thread_exit: Arc::new(AtomicBool::new(false)),
             // thread_running: Arc::new(AtomicBool::new(false)),
         };
@@ -92,7 +95,7 @@ impl CtrlSlash {
     }
 
     pub fn set_slash_mode(&self, slash_mode: SlashMode) -> Result<(), RogError> {
-        let command_packets = pkt_set_mode(slash_mode as u8);
+        let command_packets = pkt_set_mode(slash_mode);
         self.node.write_bytes(&command_packets[0])?;
         self.node.write_bytes(&command_packets[1])?;
         Ok(())

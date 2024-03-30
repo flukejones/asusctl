@@ -467,12 +467,10 @@ fn handle_slash(
     cmd: &SlashCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if (
-        cmd.enable_display.is_none() &&
+        cmd.enabled.is_none() &&
         cmd.brightness.is_none() &&
         cmd.interval.is_none() &&
-        !cmd.list &&
-        !cmd.next &&
-        !cmd.prev
+        !cmd.list
     ) || cmd.help
     {
         println!("Missing arg or command\n\n{}", cmd.self_usage());
@@ -480,8 +478,8 @@ fn handle_slash(
             println!("\n{}", lst);
         }
     }
-    if let Some(enable) = cmd.enable_display {
-        dbus.proxies().slash().set_enable_display(enable)?;
+    if let Some(enabled) = cmd.enabled {
+        dbus.proxies().slash().set_enabled(enabled)?;
     }
     if let Some(brightness) = cmd.brightness {
         dbus.proxies().slash().set_brightness(brightness)?;
@@ -489,11 +487,8 @@ fn handle_slash(
     if let Some(interval) = cmd.interval {
         dbus.proxies().slash().set_interval(interval)?;
     }
-    if cmd.next {
-        dbus.proxies().slash().set_current_mode(SlashMode::Bounce as u8)?;
-    }
-    if cmd.prev {
-        dbus.proxies().slash().set_current_mode(SlashMode::Flow as u8)?;
+    if let Some(slash_mode) = cmd.slash_mode {
+        dbus.proxies().slash().set_slash_mode(slash_mode)?;
     }
     if cmd.list {
         let res = SlashMode::list();

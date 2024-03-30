@@ -110,11 +110,15 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
 
     match CtrlSlash::new(SlashConfig::new().load()) {
         Ok(ctrl) => {
-            let sig_ctx = CtrlPlatform::signal_context(&connection)?;
-            start_tasks(ctrl, &mut connection, sig_ctx).await?;
+            let zbus = CtrlSlashZbus(Arc::new(Mutex::new(ctrl)));
+            // Currently, the Slash has no need for a loop watching power events, however,
+            // it could be cool to have the slash do some power-on/off animation
+            // (It has a built-in power on animation which plays when u plug in the power supply)
+            let sig_ctx = CtrlSlashZbus::signal_context(&connection)?;
+            start_tasks(zbus, &mut connection, sig_ctx).await?;
         }
         Err(err) => {
-            info!("Slash control: {}", err);
+            info!("AniMe control: {}", err);
         }
     }
 

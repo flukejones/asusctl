@@ -1,7 +1,6 @@
 use serde_derive::{Deserialize, Serialize};
-use config_traits::{StdConfig, StdConfigLoad, StdConfigLoad2};
+use config_traits::{StdConfig, StdConfigLoad};
 use rog_slash::{DeviceState, SlashMode};
-use crate::ctrl_anime::config::{AnimeConfig, AnimeConfigV460, AnimeConfigV472};
 
 const CONFIG_FILE: &str = "slash.ron";
 
@@ -11,7 +10,7 @@ pub struct SlashConfig {
     pub slash_enabled: bool,
     pub slash_brightness: u8,
     pub slash_interval: u8,
-    pub slash_mode: u8,
+    pub slash_mode: SlashMode,
 }
 
 impl Default for SlashConfig {
@@ -20,7 +19,7 @@ impl Default for SlashConfig {
             slash_enabled: true,
             slash_brightness: 255,
             slash_interval: 0,
-            slash_mode: SlashMode::Bounce as u8,
+            slash_mode: SlashMode::Bounce,
         }
     }
 }
