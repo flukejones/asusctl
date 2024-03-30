@@ -5,7 +5,6 @@
 // - If udev sees device removed then remove the zbus path
 
 use std::collections::HashSet;
-use std::time::Duration;
 
 use log::{debug, error, info, warn};
 use mio::{Events, Interest, Poll, Token};

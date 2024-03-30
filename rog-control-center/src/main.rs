@@ -32,7 +32,7 @@ fn main() -> Result<()> {
     let board_name = dmi.board_name;
     let prod_family = dmi.product_family;
     info!("Running on {board_name}, product: {prod_family}");
-    let is_rog_ally = prod_family == "RC71L";
+    // let is_rog_ally = prod_family == "RC71L";
 
     // tmp-dir must live to the end of program life
     let _tmp_dir = tempfile::Builder::new()

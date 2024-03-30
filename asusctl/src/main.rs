@@ -485,11 +485,12 @@ fn handle_slash(
     cmd: &SlashCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if (
-        cmd.enabled.is_none() &&
         cmd.brightness.is_none() &&
         cmd.interval.is_none() &&
         cmd.slash_mode.is_none() &&
-        !cmd.list
+        !cmd.list &&
+        !cmd.enable &&
+        !cmd.disable
     ) || cmd.help
     {
         println!("Missing arg or command\n\n{}", cmd.self_usage());
@@ -497,8 +498,11 @@ fn handle_slash(
             println!("\n{}", lst);
         }
     }
-    if let Some(enabled) = cmd.enabled {
-        dbus.proxies().slash().set_enabled(enabled)?;
+    if cmd.enable {
+        dbus.proxies().slash().set_enabled(true)?;
+    }
+    if cmd.disable {
+        dbus.proxies().slash().set_enabled(false)?;
     }
     if let Some(brightness) = cmd.brightness {
         dbus.proxies().slash().set_brightness(brightness)?;

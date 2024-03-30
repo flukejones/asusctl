@@ -5,13 +5,15 @@ use rog_slash::SlashMode;
 pub struct SlashCommand {
     #[options(help = "print help message")]
     pub help: bool,
-    #[options(meta = "", help = "enable/disable the display")]
-    pub enabled: Option<bool>,
-    #[options(meta = "", help = "set brightness value <0-255>")]
+    #[options(help = "Enable the Slash Ledbar")]
+    pub enable: bool,
+    #[options(help = "Ddisable the Slash Ledbar")]
+    pub disable: bool,
+    #[options(meta = "", help = "Set brightness value <0-255>")]
     pub brightness: Option<u8>,
-    #[options(meta = "", help = "set interval value <0-255>")]
+    #[options(meta = "", help = "Set interval value <0-255>")]
     pub interval: Option<u8>,
-    #[options(help = "Set the SlashMode")]
+    #[options(help = "Set SlashMode (so 'list' for all options)")]
     pub slash_mode: Option<SlashMode>,
     #[options(help = "list available animations")]
     pub list: bool,

@@ -33,7 +33,7 @@ pub struct CtrlSlash {
     // node: HidRaw,
     node: Node,
     config: SlashConfig,
-    slash_type: SlashType,
+    // slash_type: SlashType,
     // // set to force thread to exit
     // thread_exit: Arc<AtomicBool>,
     // // Set to false when the thread exits
@@ -53,7 +53,6 @@ impl CtrlSlash {
             return Err(RogError::NotSupported);
         };
 
-        // Maybe, detecting the slash-type may become necessary
         let slash_type = get_slash_type()?;
         if slash_type == SlashType::Unknown  {
             return Err(RogError::Slash(SlashError::NoDevice));
@@ -62,7 +61,7 @@ impl CtrlSlash {
         let ctrl = CtrlSlash {
             node,
             config,
-            slash_type,
+            // slash_type,
             // thread_exit: Arc::new(AtomicBool::new(false)),
             // thread_running: Arc::new(AtomicBool::new(false)),
         };
