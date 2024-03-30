@@ -488,6 +488,7 @@ fn handle_slash(
         cmd.enabled.is_none() &&
         cmd.brightness.is_none() &&
         cmd.interval.is_none() &&
+        cmd.slash_mode.is_none() &&
         !cmd.list
     ) || cmd.help
     {
