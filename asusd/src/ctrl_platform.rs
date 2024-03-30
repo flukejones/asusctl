@@ -30,7 +30,7 @@ macro_rules! platform_get_value {
                     $self.platform
                     .get()
                     .map_err(|err| {
-                        warn!("RogPlatform: {}: {}", $prop_name, err);
+                        warn!("{}: {}", $prop_name, err);
                         FdoErr::Failed(format!("RogPlatform: {}: {}", $prop_name, err))
                     })
                 })
@@ -381,7 +381,7 @@ impl CtrlPlatform {
     #[zbus(property)]
     fn gpu_mux_mode(&self) -> Result<u8, FdoErr> {
         self.platform.get_gpu_mux_mode().map_err(|err| {
-            warn!("RogPlatform: set_gpu_mux_mode {err}");
+            warn!("get_gpu_mux_mode {err}");
             FdoErr::NotSupported("RogPlatform: set_gpu_mux_mode not supported".to_owned())
         })
     }
@@ -390,7 +390,7 @@ impl CtrlPlatform {
     async fn set_gpu_mux_mode(&mut self, mode: u8) -> Result<(), FdoErr> {
         if self.platform.has_gpu_mux_mode() {
             self.set_gfx_mode(mode.into()).map_err(|err| {
-                warn!("RogPlatform: set_gpu_mux_mode {}", err);
+                warn!("set_gpu_mux_mode {}", err);
                 FdoErr::Failed(format!("RogPlatform: set_gpu_mux_mode: {err}"))
             })?;
             self.config.lock().await.write();
@@ -420,7 +420,7 @@ impl CtrlPlatform {
             self.platform
                 .set_throttle_thermal_policy(policy.into())
                 .map_err(|err| {
-                    warn!("RogPlatform: throttle_thermal_policy {}", err);
+                    warn!("throttle_thermal_policy {}", err);
                     FdoErr::Failed(format!("RogPlatform: throttle_thermal_policy: {err}"))
                 })?;
             Ok(self.throttle_thermal_policy_changed(&ctxt).await?)
@@ -448,7 +448,7 @@ impl CtrlPlatform {
             self.platform
                 .set_throttle_thermal_policy(policy.into())
                 .map_err(|err| {
-                    warn!("RogPlatform: throttle_thermal_policy {}", err);
+                    warn!("throttle_thermal_policy {}", err);
                     FdoErr::Failed(format!("RogPlatform: throttle_thermal_policy: {err}"))
                 })
         } else {

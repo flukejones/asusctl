@@ -210,23 +210,29 @@ impl CtrlTask for CtrlAuraZbus {
     }
 
     async fn create_tasks(&self, _: SignalContext<'static>) -> Result<(), RogError> {
-        let load_save = |start: bool, mut lock: MutexGuard<'_, CtrlKbdLed>| {
-            // If waking up
-            if !start {
-                info!("CtrlKbdLedTask reloading brightness and modes");
-                lock.led_node
-                    .set_brightness(lock.config.brightness.into())
-                    .map_err(|e| error!("CtrlKbdLedTask: {e}"))
-                    .ok();
-                lock.write_current_config_mode()
-                    .map_err(|e| error!("CtrlKbdLedTask: {e}"))
-                    .ok();
-            } else if start {
-                Self::update_config(&mut lock)
-                    .map_err(|e| error!("CtrlKbdLedTask: {e}"))
-                    .ok();
-            }
-        };
+        let load_save =
+            |start: bool, mut lock: MutexGuard<'_, CtrlKbdLed>| -> Result<(), RogError> {
+                // If waking up
+                if !start {
+                    info!("CtrlKbdLedTask reloading brightness and modes");
+                    lock.led_node
+                        .set_brightness(lock.config.brightness.into())
+                        .map_err(|e| {
+                            error!("CtrlKbdLedTask: {e}");
+                            e
+                        })?;
+                    lock.write_current_config_mode().map_err(|e| {
+                        error!("CtrlKbdLedTask: {e}");
+                        e
+                    })?;
+                } else if start {
+                    Self::update_config(&mut lock).map_err(|e| {
+                        error!("CtrlKbdLedTask: {e}");
+                        e
+                    })?;
+                }
+                Ok(())
+            };
 
         let inner1 = self.0.clone();
         let inner3 = self.0.clone();
@@ -235,14 +241,16 @@ impl CtrlTask for CtrlAuraZbus {
                 let inner1 = inner1.clone();
                 async move {
                     let lock = inner1.lock().await;
-                    load_save(sleeping, lock);
+                    load_save(sleeping, lock).unwrap(); // unwrap as we want to
+                                                        // bomb out of the task
                 }
             },
             move |_shutting_down| {
                 let inner3 = inner3.clone();
                 async move {
                     let lock = inner3.lock().await;
-                    load_save(false, lock);
+                    load_save(false, lock).unwrap(); // unwrap as we want to
+                                                     // bomb out of the task
                 }
             },
             move |_lid_closed| {
@@ -266,7 +274,8 @@ impl CtrlTask for CtrlAuraZbus {
                 .unwrap()
                 .for_each(|_| async {
                     if let Some(lock) = ctrl2.try_lock() {
-                        load_save(true, lock);
+                        load_save(true, lock).unwrap(); // unwrap as we want to
+                                                        // bomb out of the task
                     }
                 })
                 .await;

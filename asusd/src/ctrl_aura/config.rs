@@ -18,6 +18,12 @@ pub enum AuraPowerConfig {
     AuraDevRog2(AuraPower),
 }
 
+impl Default for AuraPowerConfig {
+    fn default() -> Self {
+        Self::AuraDevTuf(HashSet::default())
+    }
+}
+
 impl AuraPowerConfig {
     /// Invalid for TUF laptops
     pub fn to_bytes(control: &Self) -> [u8; 4] {
@@ -101,7 +107,7 @@ impl From<&AuraPowerConfig> for AuraPowerDev {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Default, Debug, Clone)]
 // #[serde(default)]
 pub struct AuraConfig {
     pub config_name: String,
@@ -116,7 +122,7 @@ pub struct AuraConfig {
 impl AuraConfig {
     /// Detect the keyboard type and load from default DB if data available
     pub fn new_with(prod_id: AuraDevice) -> Self {
-        info!("creating new AuraConfig");
+        info!("Setting up AuraConfig for {prod_id:?}");
         Self::from_default_support(prod_id, &LaptopLedData::get_data())
     }
 }
@@ -142,10 +148,6 @@ impl StdConfig for AuraConfig {
 impl StdConfigLoad for AuraConfig {}
 
 impl AuraConfig {
-    pub fn set_filename(&mut self, prod_id: AuraDevice) {
-        self.config_name = format!("aura_{prod_id:?}.ron");
-    }
-
     pub fn from_default_support(prod_id: AuraDevice, support_data: &LaptopLedData) -> Self {
         // create a default config here
         let enabled = if prod_id.is_new_style() {

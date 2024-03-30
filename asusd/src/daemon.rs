@@ -21,6 +21,7 @@ use asusd::ctrl_slash::trait_impls::CtrlSlashZbus;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // console_subscriber::init();
     let mut logger = env_logger::Builder::new();
     logger
         .parse_default_env()

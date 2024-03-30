@@ -46,14 +46,14 @@ versions.workspace = true
 nix = "^0.26.1"
 tempfile = "3.3.0"
 
-i-slint-backend-selector = { git = "https://github.com/flukejones/sixtyfps.git", branch = "asusctl" }
-i-slint-core = { git = "https://github.com/flukejones/sixtyfps.git", branch = "asusctl" }
-i-slint-backend-winit = { git = "https://github.com/flukejones/sixtyfps.git", branch = "asusctl" }
+i-slint-backend-selector = { git = "https://github.com/flukejones/sixtyfps.git", branch = "feat/color_hsv" }
+i-slint-core = { git = "https://github.com/flukejones/sixtyfps.git", branch = "feat/color_hsv" }
+i-slint-backend-winit = { git = "https://github.com/flukejones/sixtyfps.git", branch = "feat/color_hsv" }
 winit = "*"
 
 [dependencies.slint]
 git = "https://github.com/flukejones/sixtyfps.git"
-branch = "asusctl"
+branch = "feat/color_hsv"
 default-features = false
 features = [
     "std",
@@ -66,7 +66,7 @@ features = [
 
 [build-dependencies.slint-build]
 git = "https://github.com/flukejones/sixtyfps.git"
-branch = "asusctl"
+branch = "feat/color_hsv"
 
 [dev-dependencies]
 cargo-husky.workspace = true
