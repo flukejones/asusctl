@@ -27,14 +27,6 @@ impl Node {
         }
         Ok(())
     }
-
-    // pub fn set_builtins_enabled(&self, enabled: bool) -> Result<(), SlashCtlError> {
-        // self.write_bytes(&pkt_set_enable_powersave_anim(enabled))?;
-        // self.write_bytes(&pkt_set_enable_display(enabled))?;
-        // self.write_bytes(&pkt_set_brightness(bright))?;
-        // self.write_bytes(&pkt_set_enable_powersave_anim(enabled))
-        // Ok(())
-    // }
 }
 
 pub struct CtrlSlash {
@@ -56,7 +48,7 @@ impl CtrlSlash {
         let node = if usb.is_some() {
             unsafe { Node::Usb(usb.unwrap_unchecked()) }
         } else if hid.is_some() {
-            unsafe { Node::Hid(hid.unwrap_unchecked().0) }
+            unsafe { Node::Hid(hid.unwrap_unchecked()) }
         } else {
             return Err(RogError::NotSupported);
         };
