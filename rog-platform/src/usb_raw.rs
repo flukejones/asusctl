@@ -26,6 +26,7 @@ impl USBRaw {
     fn get_dev_handle(
         device: &Device<rusb::GlobalContext>,
     ) -> Result<DeviceHandle<rusb::GlobalContext>> {
+        // We don't expect this ID to ever change
         let mut device = device.open()?;
         device.reset()?;
         device.set_auto_detach_kernel_driver(true)?;
