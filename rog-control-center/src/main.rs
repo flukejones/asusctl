@@ -72,10 +72,14 @@ fn main() -> Result<()> {
         })
         .unwrap();
 
-    let supported_properties = dbus.proxies().platform().supported_properties().unwrap_or_else(|_e| {
-        // TODO: show an error window
-        Vec::default()
-    });
+    let supported_properties = dbus
+        .proxies()
+        .platform()
+        .supported_properties()
+        .unwrap_or_else(|_e| {
+            // TODO: show an error window
+            Vec::default()
+        });
 
     // Startup
     let mut config = Config::new().load();
@@ -113,7 +117,8 @@ fn main() -> Result<()> {
         init_tray(supported_properties, states.clone(), config.clone());
     }
 
-    thread_local! { pub static UI: std::cell::RefCell<Option<MainWindow>> = Default::default()};
+    thread_local! { pub static UI: std::cell::RefCell<Option<MainWindow>> = Default::default()}
+    ;
     i_slint_backend_selector::with_platform(|_| Ok(())).unwrap();
 
     let mut do_once = !startup_in_background;
@@ -170,7 +175,7 @@ fn main() -> Result<()> {
                         }
                     });
                 })
-                .unwrap();
+                    .unwrap();
             } else {
                 if buf[1] == QUIT_APP {
                     slint::quit_event_loop().unwrap();
@@ -192,7 +197,7 @@ fn main() -> Result<()> {
                             }
                         });
                     })
-                    .unwrap();
+                        .unwrap();
                 }
             }
         }

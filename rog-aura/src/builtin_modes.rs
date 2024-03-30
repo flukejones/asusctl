@@ -486,7 +486,7 @@ impl Default for AuraEffect {
         Self {
             mode: AuraModeNum::Static,
             zone: AuraZone::None,
-            colour1: Colour { r: 166, g: 166, b: 166 },
+            colour1: Colour { r: 166, g: 0, b: 0 },
             colour2: Colour { r: 0, g: 0, b: 0 },
             speed: Speed::Med,
             direction: Direction::Right,

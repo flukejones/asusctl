@@ -34,7 +34,7 @@ const BLOCKING_TIME: u64 = 33; // 100ms = 10 FPS, max 50ms = 20 FPS, 40ms = 25 F
 #[proxy(
     interface = "org.asuslinux.Aura",
     default_service = "org.asuslinux.Daemon",
-    default_path = "/org/asuslinux/19b6_4_4"
+    default_path = "/org/asuslinux/Aura"
 )]
 trait Aura {
     /// AllModeData method
