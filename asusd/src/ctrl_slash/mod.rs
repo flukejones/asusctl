@@ -76,6 +76,14 @@ impl CtrlSlash {
         self.node.write_bytes(&init_packets[0])?;
         self.node.write_bytes(&init_packets[1])?;
 
+        // Apply config upon initialization
+        let option_packets = pkt_set_options(self.config.slash_enabled, self.config.slash_brightness, self.config.slash_interval);
+        self.node.write_bytes(&option_packets)?;
+
+        let mode_packets = pkt_set_mode(self.config.slash_mode);
+        self.node.write_bytes(&mode_packets[0])?;
+        self.node.write_bytes(&mode_packets[1])?;
+
         Ok(())
     }
 
