@@ -89,7 +89,7 @@ pub fn on_tmp_dir_exists() -> Result<TempDir, std::io::Error> {
     ipc_file.write_all(&[SHOW_GUI, 0])?;
     // tiny sleep to give the app a chance to respond
     sleep(Duration::from_millis(10));
-    ipc_file.read(&mut buf).ok();
+    ipc_file.read_exact(&mut buf).ok();
 
     // First entry is the actual state
     if buf[0] == SHOWING_GUI {

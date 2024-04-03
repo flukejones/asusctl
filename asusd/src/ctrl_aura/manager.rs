@@ -5,7 +5,6 @@
 // - If udev sees device removed then remove the zbus path
 
 use std::collections::HashSet;
-use std::time::Duration;
 
 use log::{debug, error, info, warn};
 use mio::{Events, Interest, Poll, Token};
@@ -14,7 +13,6 @@ use rog_aura::usb::AuraDevice;
 use rog_platform::hid_raw::HidRaw;
 use tokio::task::spawn_blocking;
 use udev::{Device, MonitorBuilder};
-// use zbus::fdo::ObjectManager;
 use zbus::object_server::SignalContext;
 use zbus::zvariant::{ObjectPath, OwnedObjectPath};
 use zbus::Connection;

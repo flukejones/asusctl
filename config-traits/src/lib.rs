@@ -92,6 +92,7 @@ where
             .read(true)
             .write(true)
             .create(true)
+            .truncate(false)
             .open(self.file_path())
             .unwrap_or_else(|e| panic!("Could not open {:?} {e}", self.file_path()))
     }
