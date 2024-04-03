@@ -68,7 +68,7 @@ A gui is now in the repo - ROG Control Center. At this time it is still a WIP, b
 
 # BUILDING
 
-Requirements are rust >= 1.75 installed from rustup.io if the distro provided version is too old, and `make`.
+Rust and cargo are required, they can be installed from [rustup.rs](https://rustup.rs/) or from the distro repos if newer than 1.75.
 
 **Ubuntu (unsuported):**
 
