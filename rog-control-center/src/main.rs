@@ -94,18 +94,23 @@ fn main() -> Result<()> {
         if cli_parsed.height_fullscreen != 0 {
             config.fullscreen_height = cli_parsed.height_fullscreen;
         }
-        config.write();
     } else if cli_parsed.windowed {
         config.start_fullscreen = false;
-        config.write();
+    }
+
+    if is_rog_ally {
+        config.enable_notifications = false;
+        config.enable_tray_icon = false;
+        config.run_in_background = false;
+        config.startup_in_background = false;
     }
 
     if config.startup_in_background {
         config.run_in_background = true;
-        config.write();
     } else {
         get_ipc_file().unwrap().write_all(&[SHOW_GUI, 0]).unwrap();
     }
+    config.write();
 
     let enabled_notifications = EnabledNotifications::tokio_mutex(&config);
     let aura_creation = AuraCreation::new(cli_parsed.board_name, cli_parsed.layout_viewing)?;

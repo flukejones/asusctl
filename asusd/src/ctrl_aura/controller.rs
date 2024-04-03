@@ -353,6 +353,7 @@ mod tests {
     use crate::ctrl_aura::controller::LEDNode;
 
     #[test]
+    #[ignore = "Unable to run in CI as the HIDRAW device is required"]
     fn create_multizone_if_no_config() {
         // Checking to ensure set_mode errors when unsupported modes are tried
         let config = AuraConfig::from_default_support(AuraDevice::X19b6, &LaptopLedData::default());
@@ -366,7 +367,10 @@ mod tests {
         };
         let mut controller = CtrlKbdLed {
             led_prod: AuraDevice::X19b6,
-            led_node: LEDNode::Rog(KeyboardLed::default(), HidRaw::new("id_product").unwrap()),
+            led_node: LEDNode::Rog(
+                KeyboardLed::default(),
+                HidRaw::new(AuraDevice::X19b6.into()).unwrap(),
+            ),
             supported_data: supported_basic_modes,
             per_key_mode_active: false,
             config,
@@ -391,6 +395,8 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "Unable to run in CI as the HIDRAW device is required"]
+    // TODO: use sim device
     fn next_mode_create_multizone_if_no_config() {
         // Checking to ensure set_mode errors when unsupported modes are tried
         let config = AuraConfig::from_default_support(AuraDevice::X19b6, &LaptopLedData::default());
@@ -404,7 +410,10 @@ mod tests {
         };
         let mut controller = CtrlKbdLed {
             led_prod: AuraDevice::X19b6,
-            led_node: LEDNode::Rog(KeyboardLed::default(), HidRaw::new("id_product").unwrap()),
+            led_node: LEDNode::Rog(
+                KeyboardLed::default(),
+                HidRaw::new(AuraDevice::X19b6.into()).unwrap(),
+            ),
             supported_data: supported_basic_modes,
             per_key_mode_active: false,
             config,
