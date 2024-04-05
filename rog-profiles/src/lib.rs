@@ -14,6 +14,8 @@ use zbus::zvariant::{OwnedValue, Value};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+/// Use udev system to find the fan curve path/node which is labelled with
+/// "asus_custom_fan_curve" in the kernel
 pub fn find_fan_curve_node() -> Result<Device, ProfileError> {
     let mut enumerator = udev::Enumerator::new()?;
     enumerator.match_subsystem("hwmon")?;
@@ -170,9 +172,7 @@ impl FanCurveProfiles {
     }
 
     /// Write the curves for the selected profile to the device. If the curve is
-    /// in the enabled list it will become active. If the curve is zeroed it
-    /// will be initialised to a default read from the system.
-    // TODO: Make this return an error if curve is zeroed
+    /// in the enabled list it will become active.
     pub fn write_profile_curve_to_platform(
         &mut self,
         profile: ThrottlePolicy,

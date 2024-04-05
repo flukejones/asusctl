@@ -15,10 +15,13 @@ use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, 
 use rog_aura::power::KbAuraPowerState;
 use rog_aura::usb::{AuraDevRog1, AuraDevTuf, AuraDevice, AuraPowerDev};
 use rog_aura::{self, AuraEffect};
+use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use rog_dbus::zbus_aura::AuraProxyBlocking;
-use rog_dbus::RogDbusClientBlocking;
+use rog_dbus::zbus_fan_curves::FanCurvesProxyBlocking;
+use rog_dbus::zbus_platform::PlatformProxyBlocking;
 use rog_platform::platform::{GpuMode, Properties, ThrottlePolicy};
 use rog_profiles::error::ProfileError;
+use zbus::blocking::Connection;
 
 use crate::aura_cli::{AuraPowerStates, LedBrightness};
 use crate::cli_opts::*;
@@ -44,13 +47,21 @@ fn main() {
         }
     };
 
-    if let Ok((dbus, _)) = RogDbusClientBlocking::new().map_err(|e| {
+    let conn = Connection::system().unwrap();
+    if let Ok(platform_proxy) = PlatformProxyBlocking::new(&conn).map_err(|e| {
         check_service("asusd");
         println!("\nError: {e}\n");
         print_info();
     }) {
-        let supported_properties = dbus.proxies().platform().supported_properties().unwrap();
-        let supported_interfaces = dbus.proxies().platform().supported_interfaces().unwrap();
+        let self_version = env!("CARGO_PKG_VERSION");
+        let asusd_version = platform_proxy.version().unwrap();
+        if asusd_version != self_version {
+            println!("Version mismatch: asusctl = {self_version}, asusd = {asusd_version}");
+            return;
+        }
+
+        let supported_properties = platform_proxy.supported_properties().unwrap();
+        let supported_interfaces = platform_proxy.supported_interfaces().unwrap();
 
         if parsed.version {
             println!("asusctl v{}", env!("CARGO_PKG_VERSION"));
@@ -58,7 +69,7 @@ fn main() {
             print_info();
         }
 
-        if let Err(err) = do_parsed(&parsed, &supported_interfaces, &supported_properties, &dbus) {
+        if let Err(err) = do_parsed(&parsed, &supported_interfaces, &supported_properties, conn) {
             print_error_help(&*err, &supported_interfaces, &supported_properties);
         }
     }
@@ -143,19 +154,23 @@ fn do_parsed(
     parsed: &CliStart,
     supported_interfaces: &[String],
     supported_properties: &[Properties],
-    dbus: &RogDbusClientBlocking<'_>,
+    conn: Connection,
 ) -> Result<(), Box<dyn std::error::Error>> {
     match &parsed.command {
         Some(CliCommand::LedMode(mode)) => handle_led_mode(&find_aura_iface()?, mode)?,
         Some(CliCommand::LedPow1(pow)) => handle_led_power1(&find_aura_iface()?, pow)?,
         Some(CliCommand::LedPow2(pow)) => handle_led_power2(&find_aura_iface()?, pow)?,
-        Some(CliCommand::Profile(cmd)) => handle_throttle_profile(dbus, supported_properties, cmd)?,
+        Some(CliCommand::Profile(cmd)) => {
+            handle_throttle_profile(&conn, supported_properties, cmd)?
+        }
         Some(CliCommand::FanCurve(cmd)) => {
-            handle_fan_curve(dbus, supported_interfaces, cmd)?;
+            handle_fan_curve(&conn, supported_interfaces, cmd)?;
         }
         Some(CliCommand::Graphics(_)) => do_gfx(),
-        Some(CliCommand::Anime(cmd)) => handle_anime(dbus, cmd)?,
-        Some(CliCommand::Bios(cmd)) => handle_platform_properties(dbus, supported_properties, cmd)?,
+        Some(CliCommand::Anime(cmd)) => handle_anime(&conn, cmd)?,
+        Some(CliCommand::Bios(cmd)) => {
+            handle_platform_properties(&conn, supported_properties, cmd)?
+        }
         None => {
             if (!parsed.show_supported
                 && parsed.kbd_bright.is_none()
@@ -261,9 +276,8 @@ fn do_parsed(
     }
 
     if let Some(chg_limit) = parsed.chg_limit {
-        dbus.proxies()
-            .platform()
-            .set_charge_control_end_threshold(chg_limit)?;
+        let proxy = PlatformProxyBlocking::new(&conn)?;
+        proxy.set_charge_control_end_threshold(chg_limit)?;
     }
 
     Ok(())
@@ -277,10 +291,7 @@ fn do_gfx() {
     println!("This command will be removed in future");
 }
 
-fn handle_anime(
-    dbus: &RogDbusClientBlocking<'_>,
-    cmd: &AnimeCommand,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn handle_anime(conn: &Connection, cmd: &AnimeCommand) -> Result<(), Box<dyn std::error::Error>> {
     if (cmd.command.is_none()
         && cmd.enable_display.is_none()
         && cmd.enable_powersave_anim.is_none()
@@ -297,23 +308,24 @@ fn handle_anime(
             println!("\n{}", lst);
         }
     }
+    let proxy = AnimeProxyBlocking::new(conn)?;
     if let Some(enable) = cmd.enable_display {
-        dbus.proxies().anime().set_enable_display(enable)?;
+        proxy.set_enable_display(enable)?;
     }
     if let Some(enable) = cmd.enable_powersave_anim {
-        dbus.proxies().anime().set_builtins_enabled(enable)?;
+        proxy.set_builtins_enabled(enable)?;
     }
     if let Some(bright) = cmd.brightness {
-        dbus.proxies().anime().set_brightness(bright)?;
+        proxy.set_brightness(bright)?;
     }
     if let Some(enable) = cmd.off_when_lid_closed {
-        dbus.proxies().anime().set_off_when_lid_closed(enable)?;
+        proxy.set_off_when_lid_closed(enable)?;
     }
     if let Some(enable) = cmd.off_when_suspended {
-        dbus.proxies().anime().set_off_when_suspended(enable)?;
+        proxy.set_off_when_suspended(enable)?;
     }
     if let Some(enable) = cmd.off_when_unplugged {
-        dbus.proxies().anime().set_off_when_unplugged(enable)?;
+        proxy.set_off_when_unplugged(enable)?;
     }
     if cmd.off_with_his_head.is_some() {
         println!("Did Alice _really_ make it back from Wonderland?");
@@ -329,7 +341,7 @@ fn handle_anime(
     if cmd.clear {
         let data = vec![255u8; anime_type.data_length()];
         let tmp = AnimeDataBuffer::from_vec(anime_type, data)?;
-        dbus.proxies().anime().write(tmp)?;
+        proxy.write(tmp)?;
     }
 
     if let Some(action) = cmd.command.as_ref() {
@@ -353,9 +365,7 @@ fn handle_anime(
                     anime_type,
                 )?;
 
-                dbus.proxies()
-                    .anime()
-                    .write(<AnimeDataBuffer>::try_from(&matrix)?)?;
+                proxy.write(<AnimeDataBuffer>::try_from(&matrix)?)?;
             }
             AnimeActions::PixelImage(image) => {
                 if image.help_requested() || image.path.is_empty() {
@@ -374,9 +384,7 @@ fn handle_anime(
                     anime_type,
                 )?;
 
-                dbus.proxies()
-                    .anime()
-                    .write(matrix.into_data_buffer(anime_type)?)?;
+                proxy.write(matrix.into_data_buffer(anime_type)?)?;
             }
             AnimeActions::Gif(gif) => {
                 if gif.help_requested() || gif.path.is_empty() {
@@ -401,7 +409,7 @@ fn handle_anime(
                 let mut loops = gif.loops as i32;
                 loop {
                     for frame in matrix.frames() {
-                        dbus.proxies().anime().write(frame.frame().clone())?;
+                        proxy.write(frame.frame().clone())?;
                         sleep(frame.delay());
                     }
                     if loops >= 0 {
@@ -432,7 +440,7 @@ fn handle_anime(
                 let mut loops = gif.loops as i32;
                 loop {
                     for frame in matrix.frames() {
-                        dbus.proxies().anime().write(frame.frame().clone())?;
+                        proxy.write(frame.frame().clone())?;
                         sleep(frame.delay());
                     }
                     if loops >= 0 {
@@ -453,14 +461,12 @@ fn handle_anime(
                     return Ok(());
                 }
 
-                dbus.proxies()
-                    .anime()
-                    .set_builtin_animations(rog_anime::Animations {
-                        boot: builtins.boot,
-                        awake: builtins.awake,
-                        sleep: builtins.sleep,
-                        shutdown: builtins.shutdown,
-                    })?;
+                proxy.set_builtin_animations(rog_anime::Animations {
+                    boot: builtins.boot,
+                    awake: builtins.awake,
+                    sleep: builtins.sleep,
+                    shutdown: builtins.shutdown,
+                })?;
             }
         }
     }
@@ -716,7 +722,7 @@ fn handle_led_power2(
 }
 
 fn handle_throttle_profile(
-    dbus: &RogDbusClientBlocking<'_>,
+    conn: &Connection,
     supported: &[Properties],
     cmd: &ProfileCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -736,16 +742,14 @@ fn handle_throttle_profile(
         }
         return Ok(());
     }
-    let current = dbus.proxies().platform().throttle_thermal_policy()?;
+
+    let proxy = PlatformProxyBlocking::new(conn)?;
+    let current = proxy.throttle_thermal_policy()?;
 
     if cmd.next {
-        dbus.proxies()
-            .platform()
-            .set_throttle_thermal_policy(current.next())?;
+        proxy.set_throttle_thermal_policy(current.next())?;
     } else if let Some(profile) = cmd.profile_set {
-        dbus.proxies()
-            .platform()
-            .set_throttle_thermal_policy(profile)?;
+        proxy.set_throttle_thermal_policy(profile)?;
     }
 
     if cmd.list {
@@ -763,7 +767,7 @@ fn handle_throttle_profile(
 }
 
 fn handle_fan_curve(
-    dbus: &RogDbusClientBlocking<'_>,
+    conn: &Connection,
     supported: &[String],
     cmd: &FanCurveCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -794,37 +798,35 @@ fn handle_fan_curve(
         return Ok(());
     }
 
+    let plat_proxy = PlatformProxyBlocking::new(conn)?;
+    let fan_proxy = FanCurvesProxyBlocking::new(conn)?;
     if cmd.get_enabled {
-        let profile = dbus.proxies().platform().throttle_thermal_policy()?;
-        let curves = dbus.proxies().fan_curves().fan_curve_data(profile)?;
+        let profile = plat_proxy.throttle_thermal_policy()?;
+        let curves = fan_proxy.fan_curve_data(profile)?;
         for curve in curves.iter() {
             println!("{}", String::from(curve));
         }
     }
 
     if cmd.default {
-        let active = dbus.proxies().platform().throttle_thermal_policy()?;
-        dbus.proxies().fan_curves().set_curves_to_defaults(active)?;
+        let active = plat_proxy.throttle_thermal_policy()?;
+        fan_proxy.set_curves_to_defaults(active)?;
     }
 
     if let Some(profile) = cmd.mod_profile {
         if cmd.enable_fan_curves.is_none() && cmd.data.is_none() {
-            let data = dbus.proxies().fan_curves().fan_curve_data(profile)?;
+            let data = fan_proxy.fan_curve_data(profile)?;
             let data = toml::to_string(&data)?;
             println!("\nFan curves for {:?}\n\n{}", profile, data);
         }
 
         if let Some(enabled) = cmd.enable_fan_curves {
-            dbus.proxies()
-                .fan_curves()
-                .set_fan_curves_enabled(profile, enabled)?;
+            fan_proxy.set_fan_curves_enabled(profile, enabled)?;
         }
 
         if let Some(enabled) = cmd.enable_fan_curve {
             if let Some(fan) = cmd.fan {
-                dbus.proxies()
-                    .fan_curves()
-                    .set_profile_fan_curve_enabled(profile, fan, enabled)?;
+                fan_proxy.set_profile_fan_curve_enabled(profile, fan, enabled)?;
             } else {
                 println!(
                     "--enable-fan-curves, --enable-fan-curve, --fan, and --data options require \
@@ -836,7 +838,7 @@ fn handle_fan_curve(
         if let Some(mut curve) = cmd.data.clone() {
             let fan = cmd.fan.unwrap_or_default();
             curve.set_fan(fan);
-            dbus.proxies().fan_curves().set_fan_curve(profile, curve)?;
+            fan_proxy.set_fan_curve(profile, curve)?;
         }
     }
 
@@ -844,7 +846,7 @@ fn handle_fan_curve(
 }
 
 fn handle_platform_properties(
-    dbus: &RogDbusClientBlocking<'_>,
+    conn: &Connection,
     supported: &[Properties],
     cmd: &BiosCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -870,34 +872,34 @@ fn handle_platform_properties(
             }
         }
 
+        let proxy = PlatformProxyBlocking::new(conn)?;
+
         if let Some(opt) = cmd.post_sound_set {
-            dbus.proxies().platform().set_boot_sound(opt)?;
+            proxy.set_boot_sound(opt)?;
         }
         if cmd.post_sound_get {
-            let res = dbus.proxies().platform().boot_sound()?;
+            let res = proxy.boot_sound()?;
             println!("Bios POST sound on: {}", res);
         }
 
         if let Some(opt) = cmd.gpu_mux_mode_set {
             println!("Rebuilding initrd to include drivers");
-            dbus.proxies()
-                .platform()
-                .set_gpu_mux_mode(GpuMode::from_mux(opt))?;
+            proxy.set_gpu_mux_mode(GpuMode::from_mux(opt))?;
             println!(
                 "The mode change is not active until you reboot, on boot the bios will make the \
                  required change"
             );
         }
         if cmd.gpu_mux_mode_get {
-            let res = dbus.proxies().platform().gpu_mux_mode()?;
+            let res = proxy.gpu_mux_mode()?;
             println!("Bios GPU MUX: {:?}", res);
         }
 
         if let Some(opt) = cmd.panel_overdrive_set {
-            dbus.proxies().platform().set_panel_od(opt)?;
+            proxy.set_panel_od(opt)?;
         }
         if cmd.panel_overdrive_get {
-            let res = dbus.proxies().platform().panel_od()?;
+            let res = proxy.panel_od()?;
             println!("Panel overdrive on: {}", res);
         }
     }

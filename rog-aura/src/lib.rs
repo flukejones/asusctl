@@ -1,3 +1,7 @@
+// TODO: Generic builtin modes
+// TODO: Traits for finding device + writing generic modes
+// TODO: Traits for writing aura_sync
+
 mod builtin_modes;
 use advanced::LedCode;
 pub use builtin_modes::*;

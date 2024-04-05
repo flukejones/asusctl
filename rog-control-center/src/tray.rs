@@ -11,7 +11,7 @@ use std::time::Duration;
 
 use betrayer::{Icon, Menu, MenuItem, TrayEvent, TrayIcon, TrayIconBuilder};
 use log::{debug, error, info, warn};
-use rog_platform::platform::{GpuMode, Properties};
+use rog_platform::platform::Properties;
 use supergfxctl::pci_device::{GfxMode, GfxPower};
 use supergfxctl::zbus_proxy::DaemonProxyBlocking as GfxProxy;
 use versions::Versioning;
@@ -113,16 +113,7 @@ fn set_tray_icon_and_tip(lock: &SystemState, tray: &TrayIcon<TrayAction>, superg
             }
         };
 
-        let current_gpu_mode = if supergfx_active {
-            lock.gfx_state.mode
-        } else if let Some(mode) = lock.bios.gpu_mux_mode {
-            match mode {
-                GpuMode::Discrete => GfxMode::AsusMuxDgpu,
-                _ => GfxMode::Hybrid,
-            }
-        } else {
-            GfxMode::Hybrid
-        };
+        let current_gpu_mode = lock.gfx_state.mode;
 
         tray.set_tooltip(format!(
             "ROG: gpu mode = {current_gpu_mode:?}, gpu power = {gpu_status:?}"

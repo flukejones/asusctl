@@ -175,7 +175,7 @@ impl CtrlPlatform {
     fn set_gfx_mode(&self, mode: GpuMode) -> Result<(), RogError> {
         self.platform.set_gpu_mux_mode(mode.to_mux_attr())?;
         // self.update_initramfs(enable)?;
-        if mode == GpuMode::Discrete {
+        if mode == GpuMode::Ultimate {
             info!("Set system-level graphics mode: Dedicated Nvidia");
         } else {
             info!("Set system-level graphics mode: Optimus");
@@ -264,6 +264,7 @@ impl CtrlPlatform {
 
 #[interface(name = "org.asuslinux.Platform")]
 impl CtrlPlatform {
+    #[zbus(property)]
     async fn version(&self) -> String {
         crate::VERSION.to_string()
     }

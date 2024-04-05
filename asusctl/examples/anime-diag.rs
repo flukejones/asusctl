@@ -3,7 +3,8 @@ use std::time::Duration;
 
 use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimeDiagonal, AnimeType};
-use rog_dbus::RogDbusClientBlocking;
+use rog_dbus::zbus_anime::AnimeProxyBlocking;
+use zbus::blocking::Connection;
 
 // In usable data:
 // Top row start at 1, ends at 32
@@ -11,7 +12,8 @@ use rog_dbus::RogDbusClientBlocking;
 // 74w x 36h diagonal used by the windows app
 
 fn main() {
-    let (client, _) = RogDbusClientBlocking::new().unwrap();
+    let conn = Connection::system().unwrap();
+    let proxy = AnimeProxyBlocking::new(&conn).unwrap();
 
     for step in (2..50).rev() {
         let mut matrix = AnimeDiagonal::new(AnimeType::GA401, None);
@@ -28,9 +30,7 @@ fn main() {
         }
 
         let anime_type = get_anime_type().unwrap();
-        client
-            .proxies()
-            .anime()
+        proxy
             .write(matrix.into_data_buffer(anime_type).unwrap())
             .unwrap();
         sleep(Duration::from_millis(300));

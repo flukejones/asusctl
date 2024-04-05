@@ -154,27 +154,25 @@ impl Default for RogPlatform {
     Serialize, Deserialize, Default, Type, Value, OwnedValue, Debug, PartialEq, Eq, Clone, Copy,
 )]
 pub enum GpuMode {
-    Discrete = 0,
-    Optimus = 1,
-    Integrated = 2,
-    Egpu = 3,
-    Vfio = 4,
-    Ultimate = 5,
+    Optimus = 0,
+    Integrated = 1,
+    Egpu = 2,
+    Vfio = 3,
+    Ultimate = 4,
     #[default]
-    Error = 6,
-    NotSupported = 7,
+    Error = 254,
+    NotSupported = 255,
 }
 
 impl From<u8> for GpuMode {
     fn from(v: u8) -> Self {
         match v {
-            0 => GpuMode::Discrete,
-            1 => GpuMode::Optimus,
-            2 => GpuMode::Integrated,
-            3 => GpuMode::Egpu,
-            4 => GpuMode::Vfio,
-            5 => GpuMode::Ultimate,
-            6 => GpuMode::Error,
+            0 => GpuMode::Optimus,
+            1 => GpuMode::Integrated,
+            2 => GpuMode::Egpu,
+            3 => GpuMode::Vfio,
+            4 => GpuMode::Ultimate,
+            5 => GpuMode::Error,
             _ => GpuMode::NotSupported,
         }
     }
@@ -189,7 +187,7 @@ impl From<GpuMode> for u8 {
 impl GpuMode {
     /// For writing to `gpu_mux_mode` attribute
     pub fn to_mux_attr(&self) -> u8 {
-        if *self == Self::Discrete {
+        if *self == Self::Ultimate {
             return 0;
         }
         1
@@ -211,7 +209,7 @@ impl GpuMode {
 
     pub fn from_mux(num: u8) -> Self {
         if num == 0 {
-            return Self::Discrete;
+            return Self::Ultimate;
         }
         Self::Optimus
     }
@@ -236,7 +234,6 @@ impl GpuMode {
 impl Display for GpuMode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            GpuMode::Discrete => write!(f, "Discrete"),
             GpuMode::Optimus => write!(f, "Optimus"),
             GpuMode::Integrated => write!(f, "Integrated"),
             GpuMode::Egpu => write!(f, "eGPU"),

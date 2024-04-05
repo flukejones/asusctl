@@ -15,19 +15,28 @@ use rog_control_center::cli_options::CliStart;
 use rog_control_center::config::Config;
 use rog_control_center::error::Result;
 use rog_control_center::slint::ComponentHandle;
-use rog_control_center::system_state::{AuraCreation, SystemState};
+use rog_control_center::system_state::SystemState;
 use rog_control_center::tray::init_tray;
 use rog_control_center::ui::setup_window;
 use rog_control_center::update_and_notify::{start_notifications, EnabledNotifications};
 use rog_control_center::{
-    get_ipc_file, on_tmp_dir_exists, print_versions, MainWindow, RogDbusClientBlocking, QUIT_APP,
-    SHOWING_GUI, SHOW_GUI,
+    get_ipc_file, on_tmp_dir_exists, print_versions, MainWindow, QUIT_APP, SHOWING_GUI, SHOW_GUI,
 };
 use tokio::runtime::Runtime;
 // use winit::monitor::VideoMode;
 // use winit::window::{Fullscreen, WindowLevel};
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
+    let self_version = env!("CARGO_PKG_VERSION");
+    let conn = zbus::blocking::Connection::system()?;
+    let proxy = rog_dbus::zbus_platform::PlatformProxyBlocking::new(&conn)?;
+    let asusd_version = proxy.version().unwrap();
+    if asusd_version != self_version {
+        println!("Version mismatch: asusctl = {self_version}, asusd = {asusd_version}");
+        return Ok(());
+    }
+
     let dmi = DMIID::new().unwrap_or_default();
     let board_name = dmi.board_name;
     let prod_family = dmi.product_family;
@@ -70,13 +79,7 @@ fn main() -> Result<()> {
     // Enter the runtime so that `tokio::spawn` is available immediately.
     let _enter = rt.enter();
 
-    let (dbus, _) = RogDbusClientBlocking::new()
-        .map_err(|_| {
-            // TODO: show an error window
-        })
-        .unwrap();
-
-    let supported_properties = match dbus.proxies().platform().supported_properties() {
+    let supported_properties = match proxy.supported_properties() {
         Ok(s) => s,
         Err(_e) => {
             // TODO: show an error window
@@ -113,10 +116,9 @@ fn main() -> Result<()> {
     config.write();
 
     let enabled_notifications = EnabledNotifications::tokio_mutex(&config);
-    let aura_creation = AuraCreation::new(cli_parsed.board_name, cli_parsed.layout_viewing)?;
 
     // TODO: config mutex to share config in various places
-    let states = setup_page_state_and_notifs(aura_creation, &enabled_notifications, &config)?;
+    let states = setup_page_state_and_notifs(&enabled_notifications, &config).await?;
 
     let enable_tray_icon = config.enable_tray_icon;
     let startup_in_background = config.startup_in_background;
@@ -214,17 +216,18 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn setup_page_state_and_notifs(
-    aura_creation: AuraCreation,
+async fn setup_page_state_and_notifs(
     enabled_notifications: &Arc<Mutex<EnabledNotifications>>,
     config: &Config,
 ) -> Result<Arc<Mutex<SystemState>>> {
-    let page_states = Arc::new(Mutex::new(SystemState::new(
-        aura_creation,
-        enabled_notifications.clone(),
-        config.enable_tray_icon,
-        config.run_in_background,
-    )?));
+    let page_states = Arc::new(Mutex::new(
+        SystemState::new(
+            enabled_notifications.clone(),
+            config.enable_tray_icon,
+            config.run_in_background,
+        )
+        .await?,
+    ));
 
     start_notifications(config, &page_states, enabled_notifications)?;
 
@@ -261,8 +264,10 @@ fn setup_page_state_and_notifs(
 //     IconData {
 //         height,
 //         width,
-//         rgba,
-//     }
+//         rgba
+//
+//
+// /     }
 // }
 
 fn do_cli_help(parsed: &CliStart) -> bool {

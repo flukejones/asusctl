@@ -23,22 +23,12 @@ pub mod types;
 pub mod ui;
 pub mod update_and_notify;
 
-#[cfg(feature = "mocking")]
-pub use mocking::RogDbusClientBlocking;
 use nix::sys::stat;
 use nix::unistd;
-#[cfg(not(feature = "mocking"))]
-pub use rog_dbus::RogDbusClientBlocking;
 use tempfile::TempDir;
 // use log::{error, info, warn};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-#[cfg(not(feature = "mocking"))]
-const DATA_DIR: &str = "/usr/share/rog-gui/";
-#[cfg(feature = "mocking")]
-const DATA_DIR: &str = env!("CARGO_MANIFEST_DIR");
-const BOARD_NAME: &str = "/sys/class/dmi/id/board_name";
 pub const APP_ICON_PATH: &str = "/usr/share/icons/hicolor/512x512/apps/rog-control-center.png";
 
 pub fn print_versions() {
