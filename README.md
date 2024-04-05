@@ -51,6 +51,8 @@ and AniMe parts should work regardless of your latop make.
 
 ## Implemented
 
+The list is a bit outdated as many features have been enabled in the Linux kernel with upstream patches and then supported in asusctl suite.
+
 - [X] System daemon
 - [X] GUI app (includes tray and notifications)
 - [X] Setting/modifying built-in LED modes
@@ -70,26 +72,10 @@ A gui is now in the repo - ROG Control Center. At this time it is still a WIP, b
 
 Rust and cargo are required, they can be installed from [rustup.rs](https://rustup.rs/) or from the distro repos if newer than 1.75.
 
-**Ubuntu (unsuported):**
-
-    apt install libinput-dev libseat-dev  libpango1.0-dev libgdk-pixbuf-2.0-dev libglib2.0-dev cmake libclang-dev libudev-dev libayatana-appindicator3-1
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-    source "$HOME/.cargo/env"
-    make
-    sudo make install
-
-**popos (unsuported):**
-
-    sudo apt install cmake libinput-dev libseat-dev libclang-dev libudev-dev libclang-dev libglib2.0-dev libatkmm-1.6-dev libpangomm-1.4-dev librust-gdk-pixbuf-dev
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-    source "$HOME/.cargo/env"
-    make
-    sudo make install
-
-
 **fedora:**
 
-    dnf install cmake clang-devel libinput-devel libseat-devel systemd-devel glib2-devel cairo-devel atkmm-devel pangomm-devel gdk-pixbuf2-devel  libappindicator-gtk3
+    dnf install cmake clang-devel libinput-devel libseat-devel libgbm-devel libxkbcommon-devel systemd-devel \
+    libdrm-devel expat-devel pcre2-devel libzstd-devellibappindicator-gtk3
     make
     sudo make install
 
@@ -98,27 +84,32 @@ Rust and cargo are required, they can be installed from [rustup.rs](https://rust
 Works with KDE Plasma (without GTK packages)
 
     zypper in -t pattern devel_basis
-    zypper in rustup make cmake libinput-devel libseat-devel systemd-devel clang-devel llvm-devel gdk-pixbuf-devel cairo-devel pango-devel freetype-devel libexpat-devel libayatana-indicator3-7
+    zypper in rustup make cmake libinput-devel libseat-devel libgbm-devel systemd-devel clang-devel llvm-devel gdk-pixbuf-devel cairo-devel pango-devel freetype-devel libexpat-devel libayatana-indicator3-7
     make
     sudo make install
+
+**Ubuntu, Popos (unsuported):**
+
+instructions removed as outdated
 
 ## Installing
 - Fedora copr = https://copr.fedorainfracloud.org/coprs/lukenukem/asus-linux/
 - openSUSE = https://download.opensuse.org/repositories/home:/luke_nukem:/asus/
-- Ubuntu = not supported due to packaging woes, but you can build and install on your own.
 
 =======
 
 The default init method is to use the udev rule, this ensures that the service is
 started when the device is initialised and ready.
 
+You may also need to activate the service for debian install. If running Pop!_OS, I suggest disabling `system76-power` gnome-shell extension and systemd service.
+
+## Upgrading
+
 If you are upgrading from a previous installed version, you will need to restart the service or reboot.
 
 ```
 $ systemctl daemon-reload && systemctl restart asusd
 ```
-
-You may also need to activate the service for debian install. If running Pop!_OS, I suggest disabling `system76-power` gnome-shell extension and systemd service.
 
 ## Uninstalling
 

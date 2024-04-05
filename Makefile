@@ -132,6 +132,9 @@ introspect:
 	xmlstarlet ed -L -O -d '//interface[@name="org.freedesktop.DBus.Properties"]' bindings/dbus-xml/org-asuslinux-*
 	xmlstarlet ed -L -O -d '//interface[@name="org.freedesktop.DBus.Peer"]' bindings/dbus-xml/org-asuslinux-*
 
+translate:
+	find -name \*.slint | xargs slint-tr-extractor -o rog-control-center/translations/en/rog-control-center.po
+
 build:
 ifeq ($(VENDORED),1)
 	cargo vendor

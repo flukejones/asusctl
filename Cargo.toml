@@ -24,7 +24,7 @@ default-members = [
 resolver = "2"
 
 [workspace.package]
-version = "6.0.0-alpha1"
+version = "6.0.0-alpha2"
 rust-version = "1.76"
 
 [workspace.dependencies]
@@ -76,7 +76,7 @@ lto = "fat"
 debug = false
 opt-level = 3
 panic = "abort"
-#codegen-units = 1
+codegen-units = 1
 
 [profile.dev]
 debug = true

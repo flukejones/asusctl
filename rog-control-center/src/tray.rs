@@ -137,59 +137,61 @@ pub fn init_tray(
     config: Arc<Mutex<Config>>,
 ) {
     std::thread::spawn(move || {
-        debug!("init_tray");
-        let rog_blue = read_icon(&PathBuf::from("asus_notif_blue.png"));
         let rog_red = read_icon(&PathBuf::from("asus_notif_red.png"));
-        let rog_green = read_icon(&PathBuf::from("asus_notif_green.png"));
-        let rog_white = read_icon(&PathBuf::from("asus_notif_white.png"));
-        let gpu_integrated = read_icon(&PathBuf::from("rog-control-center.png"));
-        ICONS.get_or_init(|| Icons {
-            rog_blue,
-            rog_red: rog_red.clone(),
-            rog_green,
-            rog_white,
-            gpu_integrated,
-        });
 
-        let conn = zbus::blocking::Connection::system().unwrap();
-        let gfx_proxy = GfxProxy::new(&conn).unwrap();
-        let mut supergfx_active = false;
-        if gfx_proxy.mode().is_ok() {
-            supergfx_active = true;
-            if let Ok(version) = gfx_proxy.version() {
-                if let Some(version) = Versioning::new(&version) {
-                    let curr_gfx = Versioning::new("5.0.3-RC4").unwrap();
-                    warn!("supergfxd version = {version}");
-                    if version < curr_gfx {
-                        // Don't allow mode changing if too old a version
-                        warn!("supergfxd found but is too old to use");
-                        // tray.gfx_proxy_is_active = false;
-                    }
-                }
-            }
-        };
-
-        let tray = TrayIconBuilder::<TrayAction>::new()
+        if let Ok(tray) = TrayIconBuilder::<TrayAction>::new()
             .with_icon(rog_red.clone())
             .with_tooltip(TRAY_LABEL)
             .with_menu(build_menu())
             .build(do_action)
-            .unwrap();
-        info!("Started ROGTray");
-        loop {
-            // let states = states.clone();
-            if let Ok(mut lock) = states.lock() {
-                if lock.tray_should_update {
-                    set_tray_icon_and_tip(&lock, &tray, supergfx_active);
-                    lock.tray_should_update = false;
-                    if let Ok(lock) = config.try_lock() {
-                        if !lock.enable_tray_icon {
-                            return;
+            .map_err(|e| log::error!("Tray unable to be initialised: {e:?}"))
+        {
+            info!("Tray started");
+            let rog_blue = read_icon(&PathBuf::from("asus_notif_blue.png"));
+            let rog_green = read_icon(&PathBuf::from("asus_notif_green.png"));
+            let rog_white = read_icon(&PathBuf::from("asus_notif_white.png"));
+            let gpu_integrated = read_icon(&PathBuf::from("rog-control-center.png"));
+            ICONS.get_or_init(|| Icons {
+                rog_blue,
+                rog_red: rog_red.clone(),
+                rog_green,
+                rog_white,
+                gpu_integrated,
+            });
+
+            let conn = zbus::blocking::Connection::system().unwrap();
+            let gfx_proxy = GfxProxy::new(&conn).unwrap();
+            let mut supergfx_active = false;
+            if gfx_proxy.mode().is_ok() {
+                supergfx_active = true;
+                if let Ok(version) = gfx_proxy.version() {
+                    if let Some(version) = Versioning::new(&version) {
+                        let curr_gfx = Versioning::new("5.0.3-RC4").unwrap();
+                        warn!("supergfxd version = {version}");
+                        if version < curr_gfx {
+                            // Don't allow mode changing if too old a version
+                            warn!("supergfxd found but is too old to use");
+                            // tray.gfx_proxy_is_active = false;
                         }
                     }
                 }
+            };
+
+            info!("Started ROGTray");
+            loop {
+                if let Ok(mut lock) = states.lock() {
+                    if lock.tray_should_update {
+                        set_tray_icon_and_tip(&lock, &tray, supergfx_active);
+                        lock.tray_should_update = false;
+                        if let Ok(lock) = config.try_lock() {
+                            if !lock.enable_tray_icon {
+                                return;
+                            }
+                        }
+                    }
+                }
+                sleep(Duration::from_millis(50));
             }
-            sleep(Duration::from_millis(50));
         }
     });
 }
