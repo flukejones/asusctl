@@ -1,18 +1,11 @@
 use std::fmt::Debug;
-use std::ops::{BitAnd, BitOr};
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::{OwnedValue, Type, Value};
 
-use crate::power::AuraPower;
-
-pub const LED_INIT1: [u8; 2] = [0x5d, 0xb9];
-pub const LED_INIT2: &str = "]ASUS Tech.Inc."; // ] == 0x5d
-pub const LED_INIT3: [u8; 6] = [0x5d, 0x05, 0x20, 0x31, 0, 0x08];
-pub const LED_INIT4: &str = "^ASUS Tech.Inc."; // ^ == 0x5e
-pub const LED_INIT5: [u8; 6] = [0x5e, 0x05, 0x20, 0x31, 0, 0x08];
+use crate::keyboard::{LaptopAuraPower, LaptopOldAuraPower, LaptopTufAuraPower};
 
 // Only these two packets must be 17 bytes
 pub const LED_APPLY: [u8; 17] = [0x5d, 0xb4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -36,11 +29,15 @@ pub enum AuraDevice {
     Tuf = 0,
     X1854 = 1,
     X1869 = 2,
+    /// Pre-2020 laptops
     X1866 = 3,
+    /// Z13 lightbar
     X18c6 = 4,
+    /// Most modern laptops
     #[default]
     X19b6 = 5,
     X1a30 = 6,
+    /// The ROG Ally
     X1abe = 7,
     Unknown = 99,
 }
@@ -51,22 +48,14 @@ impl AuraDevice {
     }
 
     pub fn is_old_style(&self) -> bool {
-        !matches!(
+        matches!(
             self,
-            AuraDevice::Unknown
-                | AuraDevice::Tuf
-                | AuraDevice::X19b6
-                | AuraDevice::X18c6
-                | AuraDevice::X1a30
-                | AuraDevice::X1abe
+            AuraDevice::X1854 | AuraDevice::X1869 | AuraDevice::X1866 | AuraDevice::X1abe
         )
     }
 
     pub fn is_new_style(&self) -> bool {
-        matches!(
-            self,
-            AuraDevice::X19b6 | AuraDevice::X18c6 | AuraDevice::X1a30 | AuraDevice::X1abe
-        )
+        !self.is_old_style() && !self.is_tuf_style()
     }
 }
 
@@ -125,142 +114,10 @@ impl Debug for AuraDevice {
 pub struct AuraPowerDev {
     /// TUF laptops use a similar style of control to the older ROG devices but
     /// through WMI
-    pub tuf: Vec<AuraDevTuf>,
+    pub tuf: Vec<LaptopTufAuraPower>,
     /// Pre-0x19b6 devices use a different smaller scheme to the newer ROG
     /// devices
-    pub old_rog: Vec<AuraDevRog1>,
+    pub old_rog: Vec<LaptopOldAuraPower>,
     /// ASUS standardised control scheme from 2020 onwards
-    pub rog: AuraPower,
-}
-
-#[typeshare]
-#[cfg_attr(
-    feature = "dbus",
-    derive(Type, Value, OwnedValue),
-    zvariant(signature = "u")
-)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[repr(u32)]
-pub enum AuraDevTuf {
-    Boot = 0,
-    Awake = 1,
-    Sleep = 2,
-    Keyboard = 3,
-}
-
-impl AuraDevTuf {
-    pub const fn dev_id() -> &'static str {
-        "tuf"
-    }
-}
-
-/// # Bits for older 0x1866 keyboard model
-///
-/// Keybord and Lightbar require Awake, Boot and Sleep apply to both
-/// Keybord and Lightbar regardless of if either are enabled (or Awake is
-/// enabled)
-///
-/// |   Byte 1   |   Byte 2   |   Byte 3   | function |   hex    |
-/// |------------|------------|------------|----------|----------|
-/// | 0000, 0000 | 0000, 0000 | 0000, 0010 | Awake    | 00,00,02 |
-/// | 0000, 1000 | 0000, 0000 | 0000, 0000 | Keyboard | 08,00,00 |
-/// | 0000, 0100 | 0000, 0101 | 0000, 0000 | Lightbar | 04,05,00 |
-/// | 1100, 0011 | 0001, 0010 | 0000, 1001 | Boot/Sht | c3,12,09 |
-/// | 0011, 0000 | 0000, 1000 | 0000, 0100 | Sleep    | 30,08,04 |
-/// | 1111, 1111 | 0001, 1111 | 0000, 1111 | all on   |          |
-#[typeshare]
-#[cfg_attr(
-    feature = "dbus",
-    derive(Type, Value, OwnedValue),
-    zvariant(signature = "u")
-)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[repr(u32)]
-pub enum AuraDevRog1 {
-    Awake = 0x000002,
-    Keyboard = 0x080000,
-    Lightbar = 0x040500,
-    Boot = 0xc31209,
-    Sleep = 0x300804,
-}
-
-impl From<AuraDevRog1> for u32 {
-    fn from(a: AuraDevRog1) -> Self {
-        a as u32
-    }
-}
-
-impl AuraDevRog1 {
-    pub fn to_bytes(control: &[Self]) -> [u8; 4] {
-        let mut a: u32 = 0;
-        for n in control {
-            a |= *n as u32;
-        }
-        [
-            ((a & 0xff0000) >> 16) as u8,
-            ((a & 0xff00) >> 8) as u8,
-            (a & 0xff) as u8,
-            0x00,
-        ]
-    }
-
-    pub const fn dev_id() -> &'static str {
-        "0x1866"
-    }
-}
-
-impl BitOr<AuraDevRog1> for AuraDevRog1 {
-    type Output = u32;
-
-    fn bitor(self, rhs: AuraDevRog1) -> Self::Output {
-        self as u32 | rhs as u32
-    }
-}
-
-impl BitAnd<AuraDevRog1> for AuraDevRog1 {
-    type Output = u32;
-
-    fn bitand(self, rhs: AuraDevRog1) -> Self::Output {
-        self as u32 & rhs as u32
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::AuraDevRog1;
-
-    #[test]
-    fn check_0x1866_control_bytes() {
-        let bytes = [AuraDevRog1::Keyboard, AuraDevRog1::Awake];
-        let bytes = AuraDevRog1::to_bytes(&bytes);
-        println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes, [0x08, 0x00, 0x02, 0x00]);
-
-        let bytes = [AuraDevRog1::Lightbar, AuraDevRog1::Awake];
-        let bytes = AuraDevRog1::to_bytes(&bytes);
-        println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes, [0x04, 0x05, 0x02, 0x00]);
-
-        let bytes = [AuraDevRog1::Sleep];
-        let bytes = AuraDevRog1::to_bytes(&bytes);
-        println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes, [0x30, 0x08, 0x04, 0x00]);
-
-        let bytes = [AuraDevRog1::Boot];
-        let bytes = AuraDevRog1::to_bytes(&bytes);
-        println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes, [0xc3, 0x12, 0x09, 0x00]);
-
-        let bytes = [
-            AuraDevRog1::Keyboard,
-            AuraDevRog1::Lightbar,
-            AuraDevRog1::Awake,
-            AuraDevRog1::Sleep,
-            AuraDevRog1::Boot,
-        ];
-
-        let bytes = AuraDevRog1::to_bytes(&bytes);
-        println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes, [0xff, 0x1f, 0x000f, 0x00]);
-    }
+    pub rog: LaptopAuraPower,
 }

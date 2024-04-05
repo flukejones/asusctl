@@ -3,8 +3,8 @@ use std::sync::Arc;
 
 use config_traits::StdConfig;
 use log::{debug, error, info, warn};
-use rog_aura::advanced::UsbPackets;
 use rog_aura::aura_detection::PowerZones;
+use rog_aura::keyboard::UsbPackets;
 use rog_aura::usb::{AuraDevice, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness};
 use zbus::export::futures_util::lock::{Mutex, MutexGuard};

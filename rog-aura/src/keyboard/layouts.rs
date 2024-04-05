@@ -8,10 +8,10 @@ use std::slice::Iter;
 use log::warn;
 use serde::{Deserialize, Serialize};
 
-use crate::advanced::LedCode;
 use crate::aura_detection::LaptopLedData;
 use crate::error::Error;
-use crate::{AdvancedAuraType, AuraModeNum, AuraZone};
+use crate::keyboard::{AdvancedAuraType, LedCode};
+use crate::{AuraModeNum, AuraZone};
 
 /// The `key_type` plays a role in effects (eventually). You could for example
 /// add a `ShapeType::Spacing` to pad out an effect, such as a laserbeam across
@@ -459,7 +459,7 @@ mod tests {
     use std::path::PathBuf;
 
     use crate::aura_detection::LedSupportFile;
-    use crate::layouts::KeyLayout;
+    use crate::keyboard::KeyLayout;
 
     #[test]
     fn check_parse_all() {

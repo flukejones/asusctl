@@ -22,8 +22,8 @@
 
 use std::collections::BTreeMap;
 
-use rog_aura::advanced::UsbPackets;
 use rog_aura::aura_detection::PowerZones;
+use rog_aura::keyboard::UsbPackets;
 use rog_aura::usb::{AuraDevice, AuraPowerDev};
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness};
 use zbus::blocking::Connection;

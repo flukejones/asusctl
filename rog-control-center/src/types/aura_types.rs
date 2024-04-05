@@ -46,53 +46,54 @@ impl From<crate::slint_generatedMainWindow::AuraEffect> for rog_aura::AuraEffect
     }
 }
 
-use rog_aura::power::KbAuraPowerState;
+use rog_aura::keyboard::{AuraPowerState, LaptopOldAuraPower, LaptopTufAuraPower};
+use rog_aura::usb::AuraPowerDev;
 use slint::{Model, ModelRc, RgbaColor};
 
 use crate::slint_generatedMainWindow::AuraDevTuf as SlintAuraDevTuf;
-impl From<rog_aura::usb::AuraDevTuf> for SlintAuraDevTuf {
-    fn from(value: rog_aura::usb::AuraDevTuf) -> Self {
+impl From<LaptopTufAuraPower> for SlintAuraDevTuf {
+    fn from(value: LaptopTufAuraPower) -> Self {
         match value {
-            rog_aura::usb::AuraDevTuf::Boot => SlintAuraDevTuf::Boot,
-            rog_aura::usb::AuraDevTuf::Awake => SlintAuraDevTuf::Awake,
-            rog_aura::usb::AuraDevTuf::Sleep => SlintAuraDevTuf::Sleep,
-            rog_aura::usb::AuraDevTuf::Keyboard => SlintAuraDevTuf::Keyboard,
+            LaptopTufAuraPower::Boot => SlintAuraDevTuf::Boot,
+            LaptopTufAuraPower::Awake => SlintAuraDevTuf::Awake,
+            LaptopTufAuraPower::Sleep => SlintAuraDevTuf::Sleep,
+            LaptopTufAuraPower::Keyboard => SlintAuraDevTuf::Keyboard,
         }
     }
 }
 
-impl From<SlintAuraDevTuf> for rog_aura::usb::AuraDevTuf {
+impl From<SlintAuraDevTuf> for LaptopTufAuraPower {
     fn from(value: SlintAuraDevTuf) -> Self {
         match value {
-            SlintAuraDevTuf::Boot => rog_aura::usb::AuraDevTuf::Boot,
-            SlintAuraDevTuf::Awake => rog_aura::usb::AuraDevTuf::Awake,
-            SlintAuraDevTuf::Sleep => rog_aura::usb::AuraDevTuf::Sleep,
-            SlintAuraDevTuf::Keyboard => rog_aura::usb::AuraDevTuf::Keyboard,
+            SlintAuraDevTuf::Boot => LaptopTufAuraPower::Boot,
+            SlintAuraDevTuf::Awake => LaptopTufAuraPower::Awake,
+            SlintAuraDevTuf::Sleep => LaptopTufAuraPower::Sleep,
+            SlintAuraDevTuf::Keyboard => LaptopTufAuraPower::Keyboard,
         }
     }
 }
 
 use crate::slint_generatedMainWindow::AuraDevRog1 as SlintAuraDevRog1;
-impl From<rog_aura::usb::AuraDevRog1> for SlintAuraDevRog1 {
-    fn from(value: rog_aura::usb::AuraDevRog1) -> Self {
+impl From<LaptopOldAuraPower> for SlintAuraDevRog1 {
+    fn from(value: LaptopOldAuraPower) -> Self {
         match value {
-            rog_aura::usb::AuraDevRog1::Awake => SlintAuraDevRog1::Awake,
-            rog_aura::usb::AuraDevRog1::Keyboard => SlintAuraDevRog1::Keyboard,
-            rog_aura::usb::AuraDevRog1::Lightbar => SlintAuraDevRog1::Lightbar,
-            rog_aura::usb::AuraDevRog1::Boot => SlintAuraDevRog1::Boot,
-            rog_aura::usb::AuraDevRog1::Sleep => SlintAuraDevRog1::Sleep,
+            LaptopOldAuraPower::Awake => SlintAuraDevRog1::Awake,
+            LaptopOldAuraPower::Keyboard => SlintAuraDevRog1::Keyboard,
+            LaptopOldAuraPower::Lightbar => SlintAuraDevRog1::Lightbar,
+            LaptopOldAuraPower::Boot => SlintAuraDevRog1::Boot,
+            LaptopOldAuraPower::Sleep => SlintAuraDevRog1::Sleep,
         }
     }
 }
 
-impl From<SlintAuraDevRog1> for rog_aura::usb::AuraDevRog1 {
+impl From<SlintAuraDevRog1> for LaptopOldAuraPower {
     fn from(value: SlintAuraDevRog1) -> Self {
         match value {
-            SlintAuraDevRog1::Awake => rog_aura::usb::AuraDevRog1::Awake,
-            SlintAuraDevRog1::Keyboard => rog_aura::usb::AuraDevRog1::Keyboard,
-            SlintAuraDevRog1::Lightbar => rog_aura::usb::AuraDevRog1::Lightbar,
-            SlintAuraDevRog1::Boot => rog_aura::usb::AuraDevRog1::Boot,
-            SlintAuraDevRog1::Sleep => rog_aura::usb::AuraDevRog1::Sleep,
+            SlintAuraDevRog1::Awake => LaptopOldAuraPower::Awake,
+            SlintAuraDevRog1::Keyboard => LaptopOldAuraPower::Keyboard,
+            SlintAuraDevRog1::Lightbar => LaptopOldAuraPower::Lightbar,
+            SlintAuraDevRog1::Boot => LaptopOldAuraPower::Boot,
+            SlintAuraDevRog1::Sleep => LaptopOldAuraPower::Sleep,
         }
     }
 }
@@ -125,93 +126,83 @@ impl From<SlintPowerZones> for rog_aura::aura_detection::PowerZones {
 use crate::slint_generatedMainWindow::{
     AuraPower as SlintAuraPower, KbAuraPowerState as SlintKbAuraPowerState,
 };
-impl From<rog_aura::power::AuraPower> for SlintAuraPower {
-    fn from(value: rog_aura::power::AuraPower) -> Self {
+impl From<rog_aura::keyboard::LaptopAuraPower> for SlintAuraPower {
+    fn from(value: rog_aura::keyboard::LaptopAuraPower) -> Self {
         Self {
             keyboard: SlintKbAuraPowerState {
                 awake: value.keyboard.awake,
                 boot: value.keyboard.boot,
                 shutdown: value.keyboard.shutdown,
                 sleep: value.keyboard.sleep,
-                zone: value.keyboard.zone.into(),
             },
             lid: SlintKbAuraPowerState {
                 awake: value.lid.awake,
                 boot: value.lid.boot,
                 shutdown: value.lid.shutdown,
                 sleep: value.lid.sleep,
-                zone: value.lid.zone.into(),
             },
             lightbar: SlintKbAuraPowerState {
                 awake: value.lightbar.awake,
                 boot: value.lightbar.boot,
                 shutdown: value.lightbar.shutdown,
                 sleep: value.lightbar.sleep,
-                zone: value.lightbar.zone.into(),
             },
             logo: SlintKbAuraPowerState {
                 awake: value.logo.awake,
                 boot: value.logo.boot,
                 shutdown: value.logo.shutdown,
                 sleep: value.logo.sleep,
-                zone: value.logo.zone.into(),
             },
             rear_glow: SlintKbAuraPowerState {
                 awake: value.rear_glow.awake,
                 boot: value.rear_glow.boot,
                 shutdown: value.rear_glow.shutdown,
                 sleep: value.rear_glow.sleep,
-                zone: value.rear_glow.zone.into(),
             },
         }
     }
 }
 
-impl From<SlintAuraPower> for rog_aura::power::AuraPower {
+impl From<SlintAuraPower> for rog_aura::keyboard::LaptopAuraPower {
     fn from(value: SlintAuraPower) -> Self {
         Self {
-            keyboard: KbAuraPowerState {
+            keyboard: AuraPowerState {
                 awake: value.keyboard.awake,
                 boot: value.keyboard.boot,
                 shutdown: value.keyboard.shutdown,
                 sleep: value.keyboard.sleep,
-                zone: value.keyboard.zone.into(),
             },
-            lid: KbAuraPowerState {
+            lid: AuraPowerState {
                 awake: value.lid.awake,
                 boot: value.lid.boot,
                 shutdown: value.lid.shutdown,
                 sleep: value.lid.sleep,
-                zone: value.lid.zone.into(),
             },
-            lightbar: KbAuraPowerState {
+            lightbar: AuraPowerState {
                 awake: value.lightbar.awake,
                 boot: value.lightbar.boot,
                 shutdown: value.lightbar.shutdown,
                 sleep: value.lightbar.sleep,
-                zone: value.lightbar.zone.into(),
             },
-            logo: KbAuraPowerState {
+            logo: AuraPowerState {
                 awake: value.logo.awake,
                 boot: value.logo.boot,
                 shutdown: value.logo.shutdown,
                 sleep: value.logo.sleep,
-                zone: value.logo.zone.into(),
             },
-            rear_glow: KbAuraPowerState {
+            rear_glow: AuraPowerState {
                 awake: value.rear_glow.awake,
                 boot: value.rear_glow.boot,
                 shutdown: value.rear_glow.shutdown,
                 sleep: value.rear_glow.sleep,
-                zone: value.rear_glow.zone.into(),
             },
         }
     }
 }
 
 use crate::slint_generatedMainWindow::AuraPowerDev as SlintAuraPowerDev;
-impl From<rog_aura::usb::AuraPowerDev> for SlintAuraPowerDev {
-    fn from(value: rog_aura::usb::AuraPowerDev) -> Self {
+impl From<AuraPowerDev> for SlintAuraPowerDev {
+    fn from(value: AuraPowerDev) -> Self {
         let tuf: Vec<SlintAuraDevTuf> = value
             .tuf
             .iter()
@@ -230,18 +221,11 @@ impl From<rog_aura::usb::AuraPowerDev> for SlintAuraPowerDev {
     }
 }
 
-impl From<SlintAuraPowerDev> for rog_aura::usb::AuraPowerDev {
+impl From<SlintAuraPowerDev> for AuraPowerDev {
     fn from(value: SlintAuraPowerDev) -> Self {
-        let tuf: Vec<rog_aura::usb::AuraDevTuf> = value
-            .tuf
-            .iter()
-            .map(rog_aura::usb::AuraDevTuf::from)
-            .collect();
-        let old_rog: Vec<rog_aura::usb::AuraDevRog1> = value
-            .old_rog
-            .iter()
-            .map(rog_aura::usb::AuraDevRog1::from)
-            .collect();
+        let tuf: Vec<LaptopTufAuraPower> = value.tuf.iter().map(LaptopTufAuraPower::from).collect();
+        let old_rog: Vec<LaptopOldAuraPower> =
+            value.old_rog.iter().map(LaptopOldAuraPower::from).collect();
         Self {
             tuf,
             old_rog,

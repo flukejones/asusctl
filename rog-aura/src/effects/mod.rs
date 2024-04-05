@@ -12,8 +12,7 @@ pub use breathe::*;
 mod static_;
 pub use static_::*;
 
-use crate::advanced::{LedCode, LedUsbPackets, UsbPackets};
-use crate::layouts::KeyLayout;
+use crate::keyboard::{KeyLayout, LedCode, LedUsbPackets, UsbPackets};
 use crate::Colour;
 
 // static mut RNDINDEX: usize = 0;
@@ -132,12 +131,12 @@ macro_rules! effect_state_impl {
             self.colour
         }
 
-        fn get_led(&self) -> $crate::advanced::LedCode {
+        fn get_led(&self) -> $crate::keyboard::LedCode {
             self.led.clone()
         }
 
         /// Change the led type
-        fn set_led(&mut self, address: $crate::advanced::LedCode) {
+        fn set_led(&mut self, address: $crate::keyboard::LedCode) {
             self.led = address;
         }
     };
@@ -148,14 +147,14 @@ macro_rules! effect_impl {
     ($($effect:ident),*) => {
         impl Effect {
             /// Get the type of LED set
-            pub fn led(&self) -> $crate::advanced::LedCode {
+            pub fn led(&self) -> $crate::keyboard::LedCode {
                 match self {
                     $(Effect::$effect(c) => c.get_led(),)*
                 }
             }
 
             /// Change the led type (can be used to change location of the effect)
-            pub fn set_led(&mut self, address: $crate::advanced::LedCode) {
+            pub fn set_led(&mut self, address: $crate::keyboard::LedCode) {
                 match self {
                     $(Effect::$effect(c) => c.set_led(address),)*
                 }
@@ -200,9 +199,8 @@ effect_impl!(Static, Breathe, DoomFlicker, DoomLightFlash);
 
 #[cfg(test)]
 mod tests {
-    use crate::advanced::LedCode;
     use crate::effects::{AdvancedEffects, Breathe, DoomFlicker, Effect, Static};
-    use crate::layouts::KeyLayout;
+    use crate::keyboard::{KeyLayout, LedCode};
     use crate::{Colour, Speed};
 
     #[test]

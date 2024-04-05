@@ -1,9 +1,3 @@
-pub const LED_INIT1: [u8; 2] = [0x5d, 0xb9];
-pub const LED_INIT2: &str = "]ASUS Tech.Inc."; // ] == 0x5d
-pub const LED_INIT3: [u8; 6] = [0x5d, 0x05, 0x20, 0x31, 0, 0x08];
-pub const LED_INIT4: &str = "^ASUS Tech.Inc."; // ^ == 0x5e
-pub const LED_INIT5: [u8; 6] = [0x5e, 0x05, 0x20, 0x31, 0, 0x08];
-
 use std::fmt::Display;
 use std::str::FromStr;
 

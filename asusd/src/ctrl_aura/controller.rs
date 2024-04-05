@@ -3,8 +3,8 @@ use std::collections::{BTreeMap, HashSet};
 use config_traits::{StdConfig, StdConfigLoad};
 use inotify::Inotify;
 use log::{debug, info, warn};
-use rog_aura::advanced::{LedUsbPackets, UsbPackets};
 use rog_aura::aura_detection::LaptopLedData;
+use rog_aura::keyboard::{LedUsbPackets, UsbPackets};
 use rog_aura::usb::{AuraDevice, LED_APPLY, LED_SET};
 use rog_aura::{AuraEffect, Direction, LedBrightness, Speed, GRADIENT, LED_MSG_LEN};
 use rog_platform::hid_raw::HidRaw;
@@ -362,7 +362,7 @@ mod tests {
             layout_name: "ga401".to_owned(),
             basic_modes: vec![AuraModeNum::Static],
             basic_zones: vec![],
-            advanced_type: rog_aura::AdvancedAuraType::None,
+            advanced_type: rog_aura::keyboard::AdvancedAuraType::None,
             power_zones: vec![PowerZones::Keyboard, PowerZones::RearGlow],
         };
         let mut controller = CtrlKbdLed {
@@ -405,7 +405,7 @@ mod tests {
             layout_name: "ga401".to_owned(),
             basic_modes: vec![AuraModeNum::Static],
             basic_zones: vec![AuraZone::Key1, AuraZone::Key2],
-            advanced_type: rog_aura::AdvancedAuraType::None,
+            advanced_type: rog_aura::keyboard::AdvancedAuraType::None,
             power_zones: vec![PowerZones::Keyboard, PowerZones::RearGlow],
         };
         let mut controller = CtrlKbdLed {

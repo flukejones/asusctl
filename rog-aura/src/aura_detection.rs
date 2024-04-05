@@ -4,8 +4,9 @@ use serde_derive::{Deserialize, Serialize};
 use typeshare::typeshare;
 use zbus::zvariant::{OwnedValue, Type, Value};
 
+use crate::keyboard::AdvancedAuraType;
 use crate::usb::AuraDevice;
-use crate::{AdvancedAuraType, AuraModeNum, AuraZone};
+use crate::{AuraModeNum, AuraZone};
 
 pub const ASUS_LED_MODE_CONF: &str = "/usr/share/asusd/aura_support.ron";
 pub const ASUS_LED_MODE_USER_CONF: &str = "/etc/asusd/asusd_user_ledmodes.ron";
@@ -153,10 +154,10 @@ mod tests {
     use ron::ser::PrettyConfig;
 
     use super::LaptopLedData;
-    use crate::advanced::LedCode;
     use crate::aura_detection::{LedSupportFile, PowerZones};
+    use crate::keyboard::{AdvancedAuraType, LedCode};
     // use crate::zoned::Zone;
-    use crate::{AdvancedAuraType, AuraModeNum, AuraZone};
+    use crate::{AuraModeNum, AuraZone};
 
     #[test]
     fn check_data_parse() {

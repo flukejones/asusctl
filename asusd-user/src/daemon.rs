@@ -8,7 +8,7 @@ use asusd_user::ctrl_anime::{CtrlAnime, CtrlAnimeInner};
 use config_traits::{StdConfig, StdConfigLoad};
 use rog_anime::usb::get_anime_type;
 use rog_aura::aura_detection::LaptopLedData;
-use rog_aura::layouts::KeyLayout;
+use rog_aura::keyboard::KeyLayout;
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use rog_dbus::zbus_aura::AuraProxyBlocking;
 use rog_dbus::zbus_platform::PlatformProxyBlocking;

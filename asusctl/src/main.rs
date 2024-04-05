@@ -12,8 +12,8 @@ use fan_curve_cli::FanCurveCommand;
 use gumdrop::{Opt, Options};
 use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType, Vec2};
-use rog_aura::power::KbAuraPowerState;
-use rog_aura::usb::{AuraDevRog1, AuraDevTuf, AuraDevice, AuraPowerDev};
+use rog_aura::keyboard::{AuraPowerState, LaptopOldAuraPower, LaptopTufAuraPower};
+use rog_aura::usb::{AuraDevice, AuraPowerDev};
 use rog_aura::{self, AuraEffect};
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use rog_dbus::zbus_aura::AuraProxyBlocking;
@@ -601,10 +601,10 @@ fn handle_led_power_1_do_1866(
     aura: &AuraProxyBlocking,
     power: &LedPowerCommand1,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let mut enabled: Vec<AuraDevRog1> = Vec::new();
-    let mut disabled: Vec<AuraDevRog1> = Vec::new();
+    let mut enabled: Vec<LaptopOldAuraPower> = Vec::new();
+    let mut disabled: Vec<LaptopOldAuraPower> = Vec::new();
 
-    let mut check = |e: Option<bool>, a: AuraDevRog1| {
+    let mut check = |e: Option<bool>, a: LaptopOldAuraPower| {
         if let Some(arg) = e {
             if arg {
                 enabled.push(a);
@@ -614,11 +614,11 @@ fn handle_led_power_1_do_1866(
         }
     };
 
-    check(power.awake, AuraDevRog1::Awake);
-    check(power.boot, AuraDevRog1::Boot);
-    check(power.sleep, AuraDevRog1::Sleep);
-    check(power.keyboard, AuraDevRog1::Keyboard);
-    check(power.lightbar, AuraDevRog1::Lightbar);
+    check(power.awake, LaptopOldAuraPower::Awake);
+    check(power.boot, LaptopOldAuraPower::Boot);
+    check(power.sleep, LaptopOldAuraPower::Sleep);
+    check(power.keyboard, LaptopOldAuraPower::Keyboard);
+    check(power.lightbar, LaptopOldAuraPower::Lightbar);
 
     let data = AuraPowerDev {
         old_rog: enabled,
@@ -634,10 +634,10 @@ fn handle_led_power_1_do_tuf(
     aura: &AuraProxyBlocking,
     power: &LedPowerCommand1,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let mut enabled: Vec<AuraDevTuf> = Vec::new();
-    let mut disabled: Vec<AuraDevTuf> = Vec::new();
+    let mut enabled: Vec<LaptopTufAuraPower> = Vec::new();
+    let mut disabled: Vec<LaptopTufAuraPower> = Vec::new();
 
-    let mut check = |e: Option<bool>, a: AuraDevTuf| {
+    let mut check = |e: Option<bool>, a: LaptopTufAuraPower| {
         if let Some(arg) = e {
             if arg {
                 enabled.push(a);
@@ -647,10 +647,10 @@ fn handle_led_power_1_do_tuf(
         }
     };
 
-    check(power.awake, AuraDevTuf::Awake);
-    check(power.boot, AuraDevTuf::Boot);
-    check(power.sleep, AuraDevTuf::Sleep);
-    check(power.keyboard, AuraDevTuf::Keyboard);
+    check(power.awake, LaptopTufAuraPower::Awake);
+    check(power.boot, LaptopTufAuraPower::Boot);
+    check(power.sleep, LaptopTufAuraPower::Sleep);
+    check(power.keyboard, LaptopTufAuraPower::Keyboard);
 
     let data = AuraPowerDev {
         tuf: enabled,
@@ -696,7 +696,7 @@ fn handle_led_power2(
                 return Ok(());
             }
 
-            let set = |power: &mut KbAuraPowerState, set_to: &AuraPowerStates| {
+            let set = |power: &mut AuraPowerState, set_to: &AuraPowerStates| {
                 power.boot = set_to.boot;
                 power.awake = set_to.awake;
                 power.sleep = set_to.sleep;
