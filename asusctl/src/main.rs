@@ -12,8 +12,9 @@ use fan_curve_cli::FanCurveCommand;
 use gumdrop::{Opt, Options};
 use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType, Vec2};
-use rog_aura::keyboard::{AuraPowerState, LaptopOldAuraPower, LaptopTufAuraPower};
-use rog_aura::usb::{AuraDevice, AuraPowerDev};
+use rog_aura::aura_detection::PowerZones;
+use rog_aura::keyboard::{AuraPowerState, LaptopAuraPower};
+use rog_aura::usb::AuraDevice;
 use rog_aura::{self, AuraEffect};
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use rog_dbus::zbus_aura::AuraProxyBlocking;
@@ -572,8 +573,8 @@ fn handle_led_power1(
         if power.awake.is_none()
             && power.sleep.is_none()
             && power.boot.is_none()
-            && power.keyboard.is_none()
-            && power.lightbar.is_none()
+            && !power.keyboard
+            && !power.lightbar
         {
             if !power.help {
                 println!("Missing arg or command\n");
@@ -582,13 +583,8 @@ fn handle_led_power1(
             return Ok(());
         }
 
-        if dev_type.is_old_style() {
+        if dev_type.is_old_style() || dev_type.is_tuf_style() {
             handle_led_power_1_do_1866(aura, power)?;
-            return Ok(());
-        }
-
-        if dev_type.is_tuf_style() {
-            handle_led_power_1_do_tuf(aura, power)?;
             return Ok(());
         }
     }
@@ -601,62 +597,24 @@ fn handle_led_power_1_do_1866(
     aura: &AuraProxyBlocking,
     power: &LedPowerCommand1,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let mut enabled: Vec<LaptopOldAuraPower> = Vec::new();
-    let mut disabled: Vec<LaptopOldAuraPower> = Vec::new();
-
-    let mut check = |e: Option<bool>, a: LaptopOldAuraPower| {
-        if let Some(arg) = e {
-            if arg {
-                enabled.push(a);
-            } else {
-                disabled.push(a);
-            }
-        }
+    let zone = if power.keyboard && power.lightbar {
+        PowerZones::KeyboardAndLightbar
+    } else if power.lightbar {
+        PowerZones::Lightbar
+    } else {
+        PowerZones::Keyboard
+    };
+    let states = LaptopAuraPower {
+        states: vec![AuraPowerState {
+            zone,
+            boot: power.boot.unwrap_or_default(),
+            awake: power.awake.unwrap_or_default(),
+            sleep: power.sleep.unwrap_or_default(),
+            shutdown: false,
+        }],
     };
 
-    check(power.awake, LaptopOldAuraPower::Awake);
-    check(power.boot, LaptopOldAuraPower::Boot);
-    check(power.sleep, LaptopOldAuraPower::Sleep);
-    check(power.keyboard, LaptopOldAuraPower::Keyboard);
-    check(power.lightbar, LaptopOldAuraPower::Lightbar);
-
-    let data = AuraPowerDev {
-        old_rog: enabled,
-        ..Default::default()
-    };
-
-    aura.set_led_power(data.clone())?; // TODO: verify this
-
-    Ok(())
-}
-
-fn handle_led_power_1_do_tuf(
-    aura: &AuraProxyBlocking,
-    power: &LedPowerCommand1,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let mut enabled: Vec<LaptopTufAuraPower> = Vec::new();
-    let mut disabled: Vec<LaptopTufAuraPower> = Vec::new();
-
-    let mut check = |e: Option<bool>, a: LaptopTufAuraPower| {
-        if let Some(arg) = e {
-            if arg {
-                enabled.push(a);
-            } else {
-                disabled.push(a);
-            }
-        }
-    };
-
-    check(power.awake, LaptopTufAuraPower::Awake);
-    check(power.boot, LaptopTufAuraPower::Boot);
-    check(power.sleep, LaptopTufAuraPower::Sleep);
-    check(power.keyboard, LaptopTufAuraPower::Keyboard);
-
-    let data = AuraPowerDev {
-        tuf: enabled,
-        ..Default::default()
-    };
-    aura.set_led_power(data.clone())?; // TODO: verify this
+    aura.set_led_power(states)?;
 
     Ok(())
 }
@@ -696,25 +654,30 @@ fn handle_led_power2(
                 return Ok(());
             }
 
-            let set = |power: &mut AuraPowerState, set_to: &AuraPowerStates| {
-                power.boot = set_to.boot;
-                power.awake = set_to.awake;
-                power.sleep = set_to.sleep;
-                power.shutdown = set_to.shutdown;
+            let mut states = aura.led_power()?;
+            let mut set = |zone: PowerZones, set_to: &AuraPowerStates| {
+                for state in states.states.iter_mut() {
+                    if state.zone == zone {
+                        state.boot = set_to.boot;
+                        state.awake = set_to.awake;
+                        state.sleep = set_to.sleep;
+                        state.shutdown = set_to.shutdown;
+                        break;
+                    }
+                }
             };
 
-            let mut enabled = aura.led_power()?;
             if let Some(cmd) = &power.command {
                 match cmd {
-                    aura_cli::SetAuraZoneEnabled::Keyboard(k) => set(&mut enabled.rog.keyboard, k),
-                    aura_cli::SetAuraZoneEnabled::Logo(l) => set(&mut enabled.rog.logo, l),
-                    aura_cli::SetAuraZoneEnabled::Lightbar(l) => set(&mut enabled.rog.lightbar, l),
-                    aura_cli::SetAuraZoneEnabled::Lid(l) => set(&mut enabled.rog.lid, l),
-                    aura_cli::SetAuraZoneEnabled::RearGlow(r) => set(&mut enabled.rog.rear_glow, r),
+                    aura_cli::SetAuraZoneEnabled::Keyboard(k) => set(PowerZones::Keyboard, k),
+                    aura_cli::SetAuraZoneEnabled::Logo(l) => set(PowerZones::Logo, l),
+                    aura_cli::SetAuraZoneEnabled::Lightbar(l) => set(PowerZones::Lightbar, l),
+                    aura_cli::SetAuraZoneEnabled::Lid(l) => set(PowerZones::Lid, l),
+                    aura_cli::SetAuraZoneEnabled::RearGlow(r) => set(PowerZones::RearGlow, r),
                 }
             }
 
-            aura.set_led_power(enabled)?;
+            aura.set_led_power(states)?;
         }
     }
 

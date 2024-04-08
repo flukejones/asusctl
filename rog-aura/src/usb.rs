@@ -5,8 +5,6 @@ use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::{OwnedValue, Type, Value};
 
-use crate::keyboard::{LaptopAuraPower, LaptopOldAuraPower, LaptopTufAuraPower};
-
 // Only these two packets must be 17 bytes
 pub const LED_APPLY: [u8; 17] = [0x5d, 0xb4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 pub const LED_SET: [u8; 17] = [0x5d, 0xb5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -105,19 +103,4 @@ impl Debug for AuraDevice {
             Self::Unknown => write!(f, "Unknown"),
         }
     }
-}
-
-/// This struct is intended as a helper to pass args to generic dbus interface
-#[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
-#[derive(Clone, Default, Debug, Serialize, Deserialize)]
-pub struct AuraPowerDev {
-    /// TUF laptops use a similar style of control to the older ROG devices but
-    /// through WMI
-    pub tuf: Vec<LaptopTufAuraPower>,
-    /// Pre-0x19b6 devices use a different smaller scheme to the newer ROG
-    /// devices
-    pub old_rog: Vec<LaptopOldAuraPower>,
-    /// ASUS standardised control scheme from 2020 onwards
-    pub rog: LaptopAuraPower,
 }

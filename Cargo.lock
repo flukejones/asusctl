@@ -236,9 +236,9 @@ dependencies = [
 
 [[package]]
 name = "async-executor"
-version = "1.9.1"
+version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10b3e585719c2358d2660232671ca8ca4ddb4be4ce8a1842d6c2dc8685303316"
+checksum = "5f98c37cf288e302c16ef6c8472aad1e034c6c84ce5ea7b8101c98eb4a802fee"
 dependencies = [
  "async-lock 3.3.0",
  "async-task",
@@ -666,9 +666,9 @@ checksum = "7b02b629252fe8ef6460461409564e2c21d0c8e77e0944f3d189ff06c4e932ad"
 
 [[package]]
 name = "cc"
-version = "1.0.90"
+version = "1.0.91"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8cd6604a82acf3039f1144f54b8eb34e91ffba622051189e71b781822d5ee1f5"
+checksum = "1fd97381a8cc6493395a5afc4c691c1084b3768db713b73aa215217aa245d153"
 dependencies = [
  "jobserver",
  "libc",
@@ -854,7 +854,7 @@ dependencies = [
 [[package]]
 name = "const-field-offset"
 version = "0.1.5"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#44cee9c31ea256c381f59b9e93d9579a3a8423e9"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#490f571f6c3242516bf2067f0e02cfd02ae76223"
 dependencies = [
  "const-field-offset-macro",
  "field-offset",
@@ -863,7 +863,7 @@ dependencies = [
 [[package]]
 name = "const-field-offset-macro"
 version = "0.1.5"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#44cee9c31ea256c381f59b9e93d9579a3a8423e9"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#490f571f6c3242516bf2067f0e02cfd02ae76223"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1168,9 +1168,9 @@ dependencies = [
 
 [[package]]
 name = "downcast-rs"
-version = "1.2.0"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
+checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
 
 [[package]]
 name = "drm"
@@ -1877,9 +1877,9 @@ dependencies = [
 
 [[package]]
 name = "half"
-version = "2.4.0"
+version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5eceaaeec696539ddaf7b333340f1af35a5aa87ae3e4f3ead0532f72affab2e"
+checksum = "6dd08c532ae367adf81c312a4580bc67f1d0fe8bc9c460520283f4c0ff277888"
 dependencies = [
  "cfg-if",
  "crunchy",
@@ -1931,7 +1931,7 @@ checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 [[package]]
 name = "i-slint-backend-linuxkms"
 version = "1.6.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#44cee9c31ea256c381f59b9e93d9579a3a8423e9"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#490f571f6c3242516bf2067f0e02cfd02ae76223"
 dependencies = [
  "calloop",
  "drm",
@@ -1951,7 +1951,7 @@ dependencies = [
 [[package]]
 name = "i-slint-backend-qt"
 version = "1.6.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#44cee9c31ea256c381f59b9e93d9579a3a8423e9"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#490f571f6c3242516bf2067f0e02cfd02ae76223"
 dependencies = [
  "const-field-offset",
  "i-slint-common",
@@ -1963,7 +1963,7 @@ dependencies = [
 [[package]]
 name = "i-slint-backend-selector"
 version = "1.6.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#44cee9c31ea256c381f59b9e93d9579a3a8423e9"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#490f571f6c3242516bf2067f0e02cfd02ae76223"
 dependencies = [
  "cfg-if",
  "i-slint-backend-linuxkms",
@@ -1976,7 +1976,7 @@ dependencies = [
 [[package]]
 name = "i-slint-backend-winit"
 version = "1.6.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#44cee9c31ea256c381f59b9e93d9579a3a8423e9"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#490f571f6c3242516bf2067f0e02cfd02ae76223"
 dependencies = [
  "bytemuck",
  "cfg-if",
@@ -2009,7 +2009,7 @@ dependencies = [
 [[package]]
 name = "i-slint-common"
 version = "1.6.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#44cee9c31ea256c381f59b9e93d9579a3a8423e9"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#490f571f6c3242516bf2067f0e02cfd02ae76223"
 dependencies = [
  "cfg-if",
  "derive_more",
@@ -2020,7 +2020,7 @@ dependencies = [
 [[package]]
 name = "i-slint-compiler"
 version = "1.6.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#44cee9c31ea256c381f59b9e93d9579a3a8423e9"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#490f571f6c3242516bf2067f0e02cfd02ae76223"
 dependencies = [
  "by_address",
  "codemap",
@@ -2049,7 +2049,7 @@ dependencies = [
 [[package]]
 name = "i-slint-core"
 version = "1.6.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#44cee9c31ea256c381f59b9e93d9579a3a8423e9"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#490f571f6c3242516bf2067f0e02cfd02ae76223"
 dependencies = [
  "auto_enums",
  "bytemuck",
@@ -2094,7 +2094,7 @@ dependencies = [
 [[package]]
 name = "i-slint-core-macros"
 version = "1.6.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#44cee9c31ea256c381f59b9e93d9579a3a8423e9"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#490f571f6c3242516bf2067f0e02cfd02ae76223"
 dependencies = [
  "quote",
  "syn 2.0.58",
@@ -2103,7 +2103,7 @@ dependencies = [
 [[package]]
 name = "i-slint-renderer-femtovg"
 version = "1.6.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#44cee9c31ea256c381f59b9e93d9579a3a8423e9"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#490f571f6c3242516bf2067f0e02cfd02ae76223"
 dependencies = [
  "cfg-if",
  "const-field-offset",
@@ -2134,7 +2134,7 @@ dependencies = [
 [[package]]
 name = "i-slint-renderer-skia"
 version = "1.6.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#44cee9c31ea256c381f59b9e93d9579a3a8423e9"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#490f571f6c3242516bf2067f0e02cfd02ae76223"
 dependencies = [
  "bytemuck",
  "cfg-if",
@@ -3651,9 +3651,9 @@ dependencies = [
 
 [[package]]
 name = "rustversion"
-version = "1.0.14"
+version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ffc183a10b4478d04cbbbfc96d0873219d962dd5accaff2ffbd4ceb7df837f4"
+checksum = "80af6f9131f277a45a3fba6ce8e2258037bb0477a67e610d3c1fe046ab31de47"
 
 [[package]]
 name = "rustybuzz"
@@ -3901,7 +3901,7 @@ dependencies = [
 [[package]]
 name = "slint"
 version = "1.6.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#44cee9c31ea256c381f59b9e93d9579a3a8423e9"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#490f571f6c3242516bf2067f0e02cfd02ae76223"
 dependencies = [
  "const-field-offset",
  "i-slint-backend-selector",
@@ -3917,7 +3917,7 @@ dependencies = [
 [[package]]
 name = "slint-build"
 version = "1.6.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#44cee9c31ea256c381f59b9e93d9579a3a8423e9"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#490f571f6c3242516bf2067f0e02cfd02ae76223"
 dependencies = [
  "i-slint-compiler",
  "spin_on",
@@ -3928,7 +3928,7 @@ dependencies = [
 [[package]]
 name = "slint-macros"
 version = "1.6.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#44cee9c31ea256c381f59b9e93d9579a3a8423e9"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#490f571f6c3242516bf2067f0e02cfd02ae76223"
 dependencies = [
  "i-slint-compiler",
  "proc-macro2",
@@ -4703,7 +4703,7 @@ dependencies = [
 [[package]]
 name = "vtable"
 version = "0.2.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#44cee9c31ea256c381f59b9e93d9579a3a8423e9"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#490f571f6c3242516bf2067f0e02cfd02ae76223"
 dependencies = [
  "const-field-offset",
  "portable-atomic",
@@ -4714,7 +4714,7 @@ dependencies = [
 [[package]]
 name = "vtable-macro"
 version = "0.2.0"
-source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#44cee9c31ea256c381f59b9e93d9579a3a8423e9"
+source = "git+https://github.com/flukejones/sixtyfps.git?branch=feat/color_hsv#490f571f6c3242516bf2067f0e02cfd02ae76223"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4993,9 +4993,9 @@ dependencies = [
 
 [[package]]
 name = "winapi-wsapoll"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44c17110f57155602a80dca10be03852116403c9ff3cd25b079d666f2aa3df6e"
+checksum = "1eafc5f679c576995526e81635d0cf9695841736712b4e892f87abbe6fed3f28"
 dependencies = [
  "winapi",
 ]

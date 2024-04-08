@@ -77,12 +77,12 @@ export component ColourSlider inherits VerticalLayout {
     callback external_colour_change();
 
     external_colour_change => {
-        if (root.final_colour.hue() < 0) {
-            c1.value = (root.base_colours.length - 1) * ((root.final_colour.hue() + 360) / 360);
+        if (root.final_colour.hue < 0) {
+            c1.value = (root.base_colours.length - 1) * ((root.final_colour.hue + 360) / 360);
         } else {
-            c1.value = (root.base_colours.length - 1) * (root.final_colour.hue() / 360);
+            c1.value = (root.base_colours.length - 1) * (root.final_colour.hue / 360);
         }
-        c2.value = root.base_shade.length - (root.base_shade.length * root.final_colour.brightness());
+        c2.value = root.base_shade.length - (root.base_shade.length * root.final_colour.value);
         root.set_base_colour();
     }
     Rectangle {

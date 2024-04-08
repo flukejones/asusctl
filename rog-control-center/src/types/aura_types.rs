@@ -46,6 +46,7 @@ impl From<crate::slint_generatedMainWindow::AuraEffect> for rog_aura::AuraEffect
     }
 }
 
+use rog_aura::aura_detection::PowerZones;
 use rog_aura::keyboard::{AuraPowerState, LaptopOldAuraPower, LaptopTufAuraPower};
 use rog_aura::usb::AuraPowerDev;
 use slint::{Model, ModelRc, RgbaColor};
@@ -102,11 +103,12 @@ use crate::slint_generatedMainWindow::PowerZones as SlintPowerZones;
 impl From<rog_aura::aura_detection::PowerZones> for SlintPowerZones {
     fn from(value: rog_aura::aura_detection::PowerZones) -> Self {
         match value {
-            rog_aura::aura_detection::PowerZones::Logo => SlintPowerZones::Logo,
-            rog_aura::aura_detection::PowerZones::Keyboard => SlintPowerZones::Keyboard,
-            rog_aura::aura_detection::PowerZones::Lightbar => SlintPowerZones::Lightbar,
-            rog_aura::aura_detection::PowerZones::Lid => SlintPowerZones::Lid,
-            rog_aura::aura_detection::PowerZones::RearGlow => SlintPowerZones::RearGlow,
+            PowerZones::Logo => SlintPowerZones::Logo,
+            PowerZones::Keyboard => SlintPowerZones::Keyboard,
+            PowerZones::Lightbar => SlintPowerZones::Lightbar,
+            PowerZones::Lid => SlintPowerZones::Lid,
+            PowerZones::RearGlow => SlintPowerZones::RearGlow,
+            PowerZones::KeyboardAndLightbar => todo!(),
         }
     }
 }

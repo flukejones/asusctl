@@ -11,7 +11,7 @@ use rog_platform::hid_raw::HidRaw;
 use rog_platform::keyboard_led::KeyboardLed;
 use zbus::zvariant::OwnedObjectPath;
 
-use super::config::{AuraConfig, AuraPowerConfig};
+use super::config::AuraConfig;
 use crate::ctrl_aura::manager::dbus_path_for_dev;
 use crate::error::RogError;
 
@@ -191,12 +191,14 @@ impl CtrlKbdLed {
     /// leds/side leds LED active
     pub(super) fn set_power_states(&mut self) -> Result<(), RogError> {
         if let LEDNode::KbdLed(platform) = &mut self.led_node {
-            if let Some(pwr) = AuraPowerConfig::to_tuf_bool_array(&self.config.enabled) {
-                let buf = [1, pwr[1] as u8, pwr[2] as u8, pwr[3] as u8, pwr[4] as u8];
-                platform.set_kbd_rgb_state(&buf)?;
-            }
+            // TODO: tuf bool array
+            // if let Some(pwr) =
+            // AuraPowerConfig::to_tuf_bool_array(&self.config.enabled) {
+            //     let buf = [1, pwr[1] as u8, pwr[2] as u8, pwr[3] as u8,
+            // pwr[4] as u8];     platform.set_kbd_rgb_state(&buf)?;
+            // }
         } else if let LEDNode::Rog(_, hid_raw) = &self.led_node {
-            let bytes = AuraPowerConfig::to_bytes(&self.config.enabled);
+            let bytes = self.config.enabled.to_bytes(self.led_prod.into());
             let message = [0x5d, 0xbd, 0x01, bytes[0], bytes[1], bytes[2], bytes[3]];
 
             hid_raw.write_bytes(&message)?;

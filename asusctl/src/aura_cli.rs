@@ -10,10 +10,10 @@ pub struct LedPowerCommand1 {
     pub help: bool,
     #[options(meta = "", help = "Control if LEDs enabled while awake <true/false>")]
     pub awake: Option<bool>,
-    #[options(meta = "", help = "Use with awake option <true/false>")]
-    pub keyboard: Option<bool>,
-    #[options(meta = "", help = "Use with awake option <true/false>")]
-    pub lightbar: Option<bool>,
+    #[options(help = "Use with awake option, if excluded defaults to false")]
+    pub keyboard: bool,
+    #[options(help = "Use with awake option, if excluded defaults to false")]
+    pub lightbar: bool,
     #[options(meta = "", help = "Control boot animations <true/false>")]
     pub boot: Option<bool>,
     #[options(meta = "", help = "Control suspend animations <true/false>")]

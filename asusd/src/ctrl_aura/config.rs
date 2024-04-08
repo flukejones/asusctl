@@ -1,111 +1,12 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 
 use config_traits::{StdConfig, StdConfigLoad};
 use log::{debug, info};
 use rog_aura::aura_detection::LaptopLedData;
-use rog_aura::keyboard::{LaptopAuraPower, LaptopOldAuraPower, LaptopTufAuraPower};
-use rog_aura::usb::{AuraDevice, AuraPowerDev};
+use rog_aura::keyboard::{LaptopAuraPower, LaptopAuraType};
+use rog_aura::usb::AuraDevice;
 use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Direction, LedBrightness, Speed, GRADIENT};
 use serde_derive::{Deserialize, Serialize};
-
-/// Enable/disable LED control in various states such as
-/// when the device is awake, suspended, shutting down or
-/// booting.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum AuraPowerConfig {
-    AuraDevTuf(HashSet<LaptopTufAuraPower>),
-    AuraDevRog1(HashSet<LaptopOldAuraPower>),
-    AuraDevRog2(LaptopAuraPower),
-}
-
-impl Default for AuraPowerConfig {
-    fn default() -> Self {
-        Self::AuraDevTuf(HashSet::default())
-    }
-}
-
-impl AuraPowerConfig {
-    /// Invalid for TUF laptops
-    pub fn to_bytes(control: &Self) -> [u8; 4] {
-        match control {
-            AuraPowerConfig::AuraDevTuf(_) => [0, 0, 0, 0],
-            AuraPowerConfig::AuraDevRog1(c) => {
-                let c: Vec<LaptopOldAuraPower> = c.iter().copied().collect();
-                LaptopOldAuraPower::to_bytes(&c)
-            }
-            AuraPowerConfig::AuraDevRog2(c) => c.to_bytes(),
-        }
-    }
-
-    pub fn to_tuf_bool_array(control: &Self) -> Option<[bool; 5]> {
-        if let Self::AuraDevTuf(c) = control {
-            return Some([
-                true,
-                c.contains(&LaptopTufAuraPower::Boot),
-                c.contains(&LaptopTufAuraPower::Awake),
-                c.contains(&LaptopTufAuraPower::Sleep),
-                c.contains(&LaptopTufAuraPower::Keyboard),
-            ]);
-        }
-
-        if let Self::AuraDevRog1(c) = control {
-            return Some([
-                true,
-                c.contains(&LaptopOldAuraPower::Boot),
-                c.contains(&LaptopOldAuraPower::Awake),
-                c.contains(&LaptopOldAuraPower::Sleep),
-                c.contains(&LaptopOldAuraPower::Keyboard),
-            ]);
-        }
-
-        None
-    }
-
-    pub fn set_tuf(&mut self, power: LaptopTufAuraPower, on: bool) {
-        if let Self::AuraDevTuf(p) = self {
-            if on {
-                p.insert(power);
-            } else {
-                p.remove(&power);
-            }
-        }
-    }
-
-    pub fn set_0x1866(&mut self, power: LaptopOldAuraPower, on: bool) {
-        if let Self::AuraDevRog1(p) = self {
-            if on {
-                p.insert(power);
-            } else {
-                p.remove(&power);
-            }
-        }
-    }
-
-    pub fn set_0x19b6(&mut self, power: LaptopAuraPower) {
-        if let Self::AuraDevRog2(p) = self {
-            *p = power;
-        }
-    }
-}
-
-impl From<&AuraPowerConfig> for AuraPowerDev {
-    fn from(config: &AuraPowerConfig) -> Self {
-        match config {
-            AuraPowerConfig::AuraDevTuf(d) => AuraPowerDev {
-                tuf: d.iter().copied().collect(),
-                ..Default::default()
-            },
-            AuraPowerConfig::AuraDevRog1(d) => AuraPowerDev {
-                old_rog: d.iter().copied().collect(),
-                ..Default::default()
-            },
-            AuraPowerConfig::AuraDevRog2(d) => AuraPowerDev {
-                rog: d.clone(),
-                ..Default::default()
-            },
-        }
-    }
-}
 
 #[derive(Deserialize, Serialize, Default, Debug, Clone)]
 // #[serde(default)]
@@ -116,7 +17,7 @@ pub struct AuraConfig {
     pub builtins: BTreeMap<AuraModeNum, AuraEffect>,
     pub multizone: Option<BTreeMap<AuraModeNum, Vec<AuraEffect>>>,
     pub multizone_on: bool,
-    pub enabled: AuraPowerConfig,
+    pub enabled: LaptopAuraPower,
 }
 
 impl AuraConfig {
@@ -151,22 +52,11 @@ impl AuraConfig {
     pub fn from_default_support(prod_id: AuraDevice, support_data: &LaptopLedData) -> Self {
         // create a default config here
         let enabled = if prod_id.is_new_style() {
-            AuraPowerConfig::AuraDevRog2(LaptopAuraPower::new_all_on())
+            LaptopAuraPower::new(LaptopAuraType::New, support_data)
         } else if prod_id.is_tuf_style() {
-            AuraPowerConfig::AuraDevTuf(HashSet::from([
-                LaptopTufAuraPower::Awake,
-                LaptopTufAuraPower::Boot,
-                LaptopTufAuraPower::Sleep,
-                LaptopTufAuraPower::Keyboard,
-            ]))
+            LaptopAuraPower::new(LaptopAuraType::Tuf, support_data)
         } else {
-            AuraPowerConfig::AuraDevRog1(HashSet::from([
-                LaptopOldAuraPower::Awake,
-                LaptopOldAuraPower::Boot,
-                LaptopOldAuraPower::Sleep,
-                LaptopOldAuraPower::Keyboard,
-                LaptopOldAuraPower::Lightbar,
-            ]))
+            LaptopAuraPower::new(LaptopAuraType::Old, support_data)
         };
         let mut config = AuraConfig {
             config_name: format!("aura_{prod_id:?}.ron"),
