@@ -79,8 +79,8 @@ panic = "abort"
 codegen-units = 1
 
 [profile.dev]
-debug = true
 opt-level = 1
+codegen-units = 16
 
 [profile.bench]
 debug = false

@@ -5,8 +5,10 @@ use inotify::Inotify;
 use log::{debug, info, warn};
 use rog_aura::aura_detection::LaptopLedData;
 use rog_aura::keyboard::{LedUsbPackets, UsbPackets};
-use rog_aura::usb::{AuraDevice, LED_APPLY, LED_SET};
-use rog_aura::{AuraEffect, Direction, LedBrightness, Speed, GRADIENT, LED_MSG_LEN};
+use rog_aura::usb::{LED_APPLY, LED_SET};
+use rog_aura::{
+    AuraDeviceType, AuraEffect, Direction, LedBrightness, Speed, GRADIENT, LED_MSG_LEN,
+};
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::keyboard_led::KeyboardLed;
 use zbus::zvariant::OwnedObjectPath;
@@ -50,7 +52,7 @@ impl LEDNode {
 
 /// Individual controller for one Aura device
 pub struct CtrlKbdLed {
-    pub led_prod: AuraDevice,
+    pub led_type: AuraDeviceType,
     pub led_node: LEDNode,
     pub supported_data: LaptopLedData, // TODO: is storing this really required?
     pub per_key_mode_active: bool,
@@ -92,10 +94,11 @@ impl CtrlKbdLed {
                 }
                 // Device is something like 002, while its parent is the MCU
                 // Think of it like the device is an endpoint of the USB device attached
-                let mut aura_dev = AuraDevice::Unknown;
+                let mut prod_id = String::new();
                 if let Some(usb_id) = usb_device.attribute_value("idProduct") {
-                    aura_dev = AuraDevice::from(usb_id.to_str().unwrap());
-                    if aura_dev == AuraDevice::Unknown || found.contains(&aura_dev) {
+                    prod_id = usb_id.to_string_lossy().to_string();
+                    let aura_dev = AuraDeviceType::from(prod_id.as_str());
+                    if aura_dev == AuraDeviceType::Unknown || found.contains(&aura_dev) {
                         log::debug!("Unknown or invalid device: {usb_id:?}, skipping");
                         continue;
                     }
@@ -112,7 +115,7 @@ impl CtrlKbdLed {
                 let dbus_path = dbus_path_for_dev(&usb_device).unwrap_or_default();
                 let dev = HidRaw::from_device(end_point)?;
                 let mut dev = Self::from_hidraw(dev, dbus_path, data)?;
-                dev.config = Self::init_config(aura_dev, data);
+                dev.config = Self::init_config(&prod_id, data);
                 devices.push(dev);
             }
         }
@@ -130,8 +133,8 @@ impl CtrlKbdLed {
         data: &LaptopLedData,
     ) -> Result<Self, RogError> {
         let rgb_led = KeyboardLed::new()?;
-        let prod_id = AuraDevice::from(device.prod_id());
-        if prod_id == AuraDevice::Unknown {
+        let prod_id = AuraDeviceType::from(device.prod_id());
+        if prod_id == AuraDeviceType::Unknown {
             log::error!("{} is AuraDevice::Unknown", device.prod_id());
             return Err(RogError::NoAuraNode);
         }
@@ -140,7 +143,7 @@ impl CtrlKbdLed {
         // let config = Self::init_config(prod_id, data);
 
         let ctrl = CtrlKbdLed {
-            led_prod: prod_id,
+            led_type: prod_id,
             led_node: LEDNode::Rog(rgb_led, device),
             supported_data: data.clone(),
             per_key_mode_active: false,
@@ -150,9 +153,9 @@ impl CtrlKbdLed {
         Ok(ctrl)
     }
 
-    pub fn init_config(prod_id: AuraDevice, supported_basic_modes: &LaptopLedData) -> AuraConfig {
+    pub fn init_config(prod_id: &str, supported_basic_modes: &LaptopLedData) -> AuraConfig {
         // New loads data from the DB also
-        let mut config_init = AuraConfig::new_with(prod_id);
+        let mut config_init = AuraConfig::new(prod_id);
         // config_init.set_filename(prod_id);
         let mut config_loaded = config_init.clone().load();
         // update the initialised data with what we loaded from disk
@@ -198,7 +201,7 @@ impl CtrlKbdLed {
             // pwr[4] as u8];     platform.set_kbd_rgb_state(&buf)?;
             // }
         } else if let LEDNode::Rog(_, hid_raw) = &self.led_node {
-            let bytes = self.config.enabled.to_bytes(self.led_prod.into());
+            let bytes = self.config.enabled.to_bytes(self.led_type.into());
             let message = [0x5d, 0xbd, 0x01, bytes[0], bytes[1], bytes[2], bytes[3]];
 
             hid_raw.write_bytes(&message)?;
@@ -344,8 +347,7 @@ impl CtrlKbdLed {
 #[cfg(test)]
 mod tests {
     use rog_aura::aura_detection::{LaptopLedData, PowerZones};
-    use rog_aura::usb::AuraDevice;
-    use rog_aura::{AuraModeNum, AuraZone};
+    use rog_aura::{AuraDeviceType, AuraModeNum, AuraZone};
     use rog_platform::hid_raw::HidRaw;
     use rog_platform::keyboard_led::KeyboardLed;
     use zbus::zvariant::OwnedObjectPath;
@@ -358,7 +360,7 @@ mod tests {
     #[ignore = "Unable to run in CI as the HIDRAW device is required"]
     fn create_multizone_if_no_config() {
         // Checking to ensure set_mode errors when unsupported modes are tried
-        let config = AuraConfig::from_default_support(AuraDevice::X19b6, &LaptopLedData::default());
+        let config = AuraConfig::new("19b6");
         let supported_basic_modes = LaptopLedData {
             board_name: String::new(),
             layout_name: "ga401".to_owned(),
@@ -368,11 +370,8 @@ mod tests {
             power_zones: vec![PowerZones::Keyboard, PowerZones::RearGlow],
         };
         let mut controller = CtrlKbdLed {
-            led_prod: AuraDevice::X19b6,
-            led_node: LEDNode::Rog(
-                KeyboardLed::default(),
-                HidRaw::new(AuraDevice::X19b6.into()).unwrap(),
-            ),
+            led_type: AuraDeviceType::LaptopPost2021,
+            led_node: LEDNode::Rog(KeyboardLed::default(), HidRaw::new("19b6").unwrap()),
             supported_data: supported_basic_modes,
             per_key_mode_active: false,
             config,
@@ -401,7 +400,7 @@ mod tests {
     // TODO: use sim device
     fn next_mode_create_multizone_if_no_config() {
         // Checking to ensure set_mode errors when unsupported modes are tried
-        let config = AuraConfig::from_default_support(AuraDevice::X19b6, &LaptopLedData::default());
+        let config = AuraConfig::new("19b6");
         let supported_basic_modes = LaptopLedData {
             board_name: String::new(),
             layout_name: "ga401".to_owned(),
@@ -411,11 +410,8 @@ mod tests {
             power_zones: vec![PowerZones::Keyboard, PowerZones::RearGlow],
         };
         let mut controller = CtrlKbdLed {
-            led_prod: AuraDevice::X19b6,
-            led_node: LEDNode::Rog(
-                KeyboardLed::default(),
-                HidRaw::new(AuraDevice::X19b6.into()).unwrap(),
-            ),
+            led_type: AuraDeviceType::LaptopPost2021,
+            led_node: LEDNode::Rog(KeyboardLed::default(), HidRaw::new("19b6").unwrap()),
             supported_data: supported_basic_modes,
             per_key_mode_active: false,
             config,

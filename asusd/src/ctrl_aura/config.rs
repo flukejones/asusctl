@@ -1,11 +1,12 @@
 use std::collections::BTreeMap;
 
 use config_traits::{StdConfig, StdConfigLoad};
-use log::{debug, info};
+use log::{debug, info, warn};
 use rog_aura::aura_detection::LaptopLedData;
-use rog_aura::keyboard::{LaptopAuraPower, LaptopAuraType};
-use rog_aura::usb::AuraDevice;
-use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Direction, LedBrightness, Speed, GRADIENT};
+use rog_aura::keyboard::LaptopAuraPower;
+use rog_aura::{
+    AuraDeviceType, AuraEffect, AuraModeNum, AuraZone, Direction, LedBrightness, Speed, GRADIENT,
+};
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Default, Debug, Clone)]
@@ -18,14 +19,6 @@ pub struct AuraConfig {
     pub multizone: Option<BTreeMap<AuraModeNum, Vec<AuraEffect>>>,
     pub multizone_on: bool,
     pub enabled: LaptopAuraPower,
-}
-
-impl AuraConfig {
-    /// Detect the keyboard type and load from default DB if data available
-    pub fn new_with(prod_id: AuraDevice) -> Self {
-        info!("Setting up AuraConfig for {prod_id:?}");
-        Self::from_default_support(prod_id, &LaptopLedData::get_data())
-    }
 }
 
 impl StdConfig for AuraConfig {
@@ -49,17 +42,18 @@ impl StdConfig for AuraConfig {
 impl StdConfigLoad for AuraConfig {}
 
 impl AuraConfig {
-    pub fn from_default_support(prod_id: AuraDevice, support_data: &LaptopLedData) -> Self {
+    /// Detect the keyboard type and load from default DB if data available
+    pub fn new(prod_id: &str) -> Self {
+        info!("Setting up AuraConfig for {prod_id:?}");
         // create a default config here
-        let enabled = if prod_id.is_new_style() {
-            LaptopAuraPower::new(LaptopAuraType::New, support_data)
-        } else if prod_id.is_tuf_style() {
-            LaptopAuraPower::new(LaptopAuraType::Tuf, support_data)
-        } else {
-            LaptopAuraPower::new(LaptopAuraType::Old, support_data)
-        };
+        let device_type = AuraDeviceType::from(&*prod_id);
+        if device_type == AuraDeviceType::Unknown {
+            warn!("idProduct:{prod_id:?} is unknown");
+        }
+        let support_data = LaptopLedData::get_data();
+        let enabled = LaptopAuraPower::new(device_type, &support_data);
         let mut config = AuraConfig {
-            config_name: format!("aura_{prod_id:?}.ron"),
+            config_name: format!("aura_{prod_id}.ron"),
             brightness: LedBrightness::Med,
             current_mode: AuraModeNum::Static,
             builtins: BTreeMap::new(),
@@ -139,16 +133,13 @@ impl AuraConfig {
 
 #[cfg(test)]
 mod tests {
-    use rog_aura::aura_detection::LaptopLedData;
-    use rog_aura::usb::AuraDevice;
     use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour};
 
     use super::AuraConfig;
 
     #[test]
     fn set_multizone_4key_config() {
-        let mut config =
-            AuraConfig::from_default_support(AuraDevice::X19b6, &LaptopLedData::default());
+        let mut config = AuraConfig::new("19b6");
 
         let effect = AuraEffect {
             colour1: Colour {
@@ -238,8 +229,7 @@ mod tests {
 
     #[test]
     fn set_multizone_multimode_config() {
-        let mut config =
-            AuraConfig::from_default_support(AuraDevice::X19b6, &LaptopLedData::default());
+        let mut config = AuraConfig::new("19b6");
 
         let effect = AuraEffect {
             zone: AuraZone::Key1,

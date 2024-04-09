@@ -169,8 +169,8 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                         let power: LaptopAuraPower = power.into();
                         tokio::spawn(async move {
                             show_toast(
-                                "Anime builtin animations changed".into(),
-                                "Failed to set Anime builtin animations".into(),
+                                "Aura power settings changed".into(),
+                                "Failed to set Aura power settings".into(),
                                 handle_copy,
                                 proxy_copy.set_led_power(power).await,
                             );

@@ -5,8 +5,7 @@ use config_traits::StdConfig;
 use log::{debug, error, info, warn};
 use rog_aura::aura_detection::PowerZones;
 use rog_aura::keyboard::{LaptopAuraPower, UsbPackets};
-use rog_aura::usb::AuraDevice;
-use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness};
+use rog_aura::{AuraDeviceType, AuraEffect, AuraModeNum, AuraZone, LedBrightness};
 use zbus::export::futures_util::lock::{Mutex, MutexGuard};
 use zbus::export::futures_util::StreamExt;
 use zbus::fdo::Error as ZbErr;
@@ -43,9 +42,9 @@ impl CtrlAuraZbus {
 impl CtrlAuraZbus {
     /// Return the device type for this Aura keyboard
     #[zbus(property)]
-    async fn device_type(&self) -> AuraDevice {
+    async fn device_type(&self) -> AuraDeviceType {
         let ctrl = self.0.lock().await;
-        ctrl.led_prod
+        ctrl.led_type
     }
 
     /// Return the current LED brightness

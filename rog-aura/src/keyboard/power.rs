@@ -3,55 +3,14 @@
 use std::fmt::Debug;
 use std::ops::{BitAnd, BitOr};
 
+use log::warn;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::aura_detection::{LaptopLedData, PowerZones};
-use crate::usb::AuraDevice;
-
-// Possible API:
-// # Common parts:
-// - boot
-// - awake
-// - sleep
-// ## New only
-// - shutdown
-//
-// ## Only only
-// - keyboard
-// - lightbar
-// ## TUF only
-// - keyboard
-//
-// # New has parts:
-// - keyboard
-// - lightbar
-// - logo
-// - lid
-// - rear_glow
-
-#[typeshare]
-#[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum LaptopAuraType {
-    New = 0,
-    Old = 1,
-    Tuf = 2,
-}
-
-impl From<AuraDevice> for LaptopAuraType {
-    fn from(value: AuraDevice) -> Self {
-        if value.is_old_style() {
-            Self::Old
-        } else if value.is_tuf_style() {
-            Self::Tuf
-        } else {
-            Self::New
-        }
-    }
-}
+use crate::AuraDeviceType;
 
 /// Meaning of this struct depends on the laptop generation.
 /// - 2021+, the struct is a single zone with 4 states
@@ -225,45 +184,53 @@ impl LaptopAuraPower {
     }
 
     // TODO: use support data to setup correct zones
-    pub fn new(aura_type: LaptopAuraType, _support_data: &LaptopLedData) -> Self {
+    pub fn new(aura_type: AuraDeviceType, support_data: &LaptopLedData) -> Self {
         match aura_type {
-            LaptopAuraType::New => {
+            AuraDeviceType::Unknown | AuraDeviceType::LaptopPost2021 => {
                 let mut states = Vec::new();
-                for zone in [
-                    PowerZones::Keyboard,
-                    PowerZones::Lid,
-                    PowerZones::Lightbar,
-                    PowerZones::Logo,
-                    PowerZones::RearGlow,
-                ] {
-                    states.push(AuraPowerState::default_for(zone))
+                for zone in support_data.power_zones.iter() {
+                    states.push(AuraPowerState::default_for(*zone))
                 }
                 Self { states }
             }
-            LaptopAuraType::Old => Self {
-                states: vec![AuraPowerState::default_for(PowerZones::KeyboardAndLightbar)],
-            },
-            LaptopAuraType::Tuf => Self {
+            AuraDeviceType::LaptopPre2021 => {
+                if support_data.power_zones.contains(&PowerZones::Lightbar) {
+                    Self {
+                        states: vec![AuraPowerState::default_for(PowerZones::KeyboardAndLightbar)],
+                    }
+                } else {
+                    Self {
+                        states: vec![AuraPowerState::default_for(PowerZones::Keyboard)],
+                    }
+                }
+            }
+            AuraDeviceType::LaptopTuf => Self {
                 states: vec![AuraPowerState::default_for(PowerZones::Keyboard)],
             },
+            AuraDeviceType::ScsiExtDisk => todo!(),
         }
     }
 
-    pub fn to_bytes(&self, aura_type: LaptopAuraType) -> Vec<u8> {
+    pub fn to_bytes(&self, aura_type: AuraDeviceType) -> Vec<u8> {
         match aura_type {
-            LaptopAuraType::New => self.new_to_bytes(),
-            LaptopAuraType::Old => self
+            AuraDeviceType::LaptopPost2021 => self.new_to_bytes(),
+            AuraDeviceType::LaptopPre2021 => self
                 .states
                 .first()
                 .cloned()
                 .unwrap_or_default()
                 .old_to_bytes(),
-            LaptopAuraType::Tuf => self
+            AuraDeviceType::LaptopTuf => self
                 .states
                 .first()
                 .cloned()
                 .unwrap_or_default()
                 .tuf_to_bytes(),
+            AuraDeviceType::Unknown => {
+                warn!("Trying to create bytes for an unknown device");
+                self.new_to_bytes()
+            }
+            AuraDeviceType::ScsiExtDisk => todo!(),
         }
     }
 }
@@ -310,7 +277,8 @@ impl From<OldAuraPower> for u32 {
 #[cfg(test)]
 mod test {
     use crate::aura_detection::{LaptopLedData, PowerZones};
-    use crate::keyboard::{AuraPowerState, LaptopAuraPower, LaptopAuraType};
+    use crate::keyboard::{AuraPowerState, LaptopAuraPower};
+    use crate::AuraDeviceType;
 
     #[test]
     fn check_0x1866_control_bytes() {
@@ -374,7 +342,7 @@ mod test {
     #[test]
     fn check_0x19b6_control_bytes_binary_rep() {
         fn to_binary_string(power: &LaptopAuraPower) -> String {
-            let bytes = power.to_bytes(LaptopAuraType::New);
+            let bytes = power.to_bytes(AuraDeviceType::LaptopPost2021);
             format!(
                 "{:08b}, {:08b}, {:08b}, {:08b}",
                 bytes[0], bytes[1], bytes[2], bytes[3]
@@ -547,7 +515,7 @@ mod test {
         assert_eq!(shut_rear_, "00000000, 00000000, 00000000, 00001000");
 
         // All on
-        let byte1 = LaptopAuraPower::new(LaptopAuraType::New, &LaptopLedData::default());
+        let byte1 = LaptopAuraPower::new(AuraDeviceType::LaptopPost2021, &LaptopLedData::default());
         let out = to_binary_string(&byte1);
         assert_eq!(out, "11111111, 00011110, 00001111, 00001111");
     }

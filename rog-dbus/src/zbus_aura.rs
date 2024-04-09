@@ -24,8 +24,7 @@ use std::collections::BTreeMap;
 
 use rog_aura::aura_detection::PowerZones;
 use rog_aura::keyboard::{LaptopAuraPower, UsbPackets};
-use rog_aura::usb::AuraDevice;
-use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness};
+use rog_aura::{AuraDeviceType, AuraEffect, AuraModeNum, AuraZone, LedBrightness};
 use zbus::blocking::Connection;
 use zbus::{proxy, Result};
 
@@ -51,7 +50,7 @@ trait Aura {
 
     /// DeviceType property
     #[zbus(property)]
-    fn device_type(&self) -> zbus::Result<AuraDevice>;
+    fn device_type(&self) -> zbus::Result<AuraDeviceType>;
 
     /// LedMode property
     #[zbus(property)]

@@ -3,6 +3,13 @@
 // TODO: Traits for writing aura_sync
 // TODO: separate keyboard and laptop parts?
 
+use std::fmt::Debug;
+
+use serde::{Deserialize, Serialize};
+use typeshare::typeshare;
+#[cfg(feature = "dbus")]
+use zbus::zvariant::{OwnedValue, Type, Value};
+
 /// A container of images/grids/gifs/pauses which can be iterated over to
 /// generate cool effects
 pub mod effects;
@@ -56,3 +63,45 @@ pub const ORANGE: Colour = Colour {
     b: 0x00,
 };
 pub const GRADIENT: [Colour; 7] = [RED, VIOLET, BLUE, TEAL, GREEN, YELLOW, ORANGE];
+
+#[typeshare]
+#[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum AuraDeviceType {
+    /// Most new laptops
+    #[default]
+    LaptopPost2021 = 0,
+    LaptopPre2021 = 1,
+    LaptopTuf = 2,
+    ScsiExtDisk = 3,
+    Unknown = 255,
+}
+
+impl AuraDeviceType {
+    pub fn is_old_laptop(&self) -> bool {
+        *self == Self::LaptopPre2021
+    }
+
+    pub fn is_tuf_laptop(&self) -> bool {
+        *self == Self::LaptopTuf
+    }
+
+    pub fn is_new_laptop(&self) -> bool {
+        *self == Self::LaptopPost2021
+    }
+
+    pub fn is_scsi(&self) -> bool {
+        *self == Self::ScsiExtDisk
+    }
+}
+
+impl From<&str> for AuraDeviceType {
+    fn from(s: &str) -> Self {
+        match s.to_lowercase().trim_start_matches("0x") {
+            "tuf" => AuraDeviceType::LaptopTuf,
+            "1932" => AuraDeviceType::ScsiExtDisk,
+            "1866" | "18c6" | "1869" | "1854" => Self::LaptopPre2021,
+            _ => Self::LaptopPost2021,
+        }
+    }
+}

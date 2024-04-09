@@ -14,8 +14,7 @@ use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType, Vec2};
 use rog_aura::aura_detection::PowerZones;
 use rog_aura::keyboard::{AuraPowerState, LaptopAuraPower};
-use rog_aura::usb::AuraDevice;
-use rog_aura::{self, AuraEffect};
+use rog_aura::{self, AuraDeviceType, AuraEffect};
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use rog_dbus::zbus_aura::AuraProxyBlocking;
 use rog_dbus::zbus_fan_curves::FanCurvesProxyBlocking;
@@ -189,19 +188,19 @@ fn do_parsed(
                             .first()
                             .unwrap()
                             .device_type()
-                            .unwrap_or(AuraDevice::Unknown)
+                            .unwrap_or(AuraDeviceType::Unknown)
                     } else {
-                        AuraDevice::Unknown
+                        AuraDeviceType::Unknown
                     };
                     let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
                     for command in commands.iter().filter(|command| {
-                        if !dev_type.is_old_style()
-                            && !dev_type.is_tuf_style()
+                        if !dev_type.is_old_laptop()
+                            && !dev_type.is_tuf_laptop()
                             && command.trim().starts_with("led-pow-1")
                         {
                             return false;
                         }
-                        if !dev_type.is_new_style() && command.trim().starts_with("led-pow-2") {
+                        if !dev_type.is_new_laptop() && command.trim().starts_with("led-pow-2") {
                             return false;
                         }
                         true
@@ -566,7 +565,7 @@ fn handle_led_power1(
 ) -> Result<(), Box<dyn std::error::Error>> {
     for aura in aura {
         let dev_type = aura.device_type()?;
-        if !dev_type.is_old_style() && !dev_type.is_tuf_style() {
+        if !dev_type.is_old_laptop() && !dev_type.is_tuf_laptop() {
             println!("This option applies only to keyboards 2021+");
         }
 
@@ -583,7 +582,7 @@ fn handle_led_power1(
             return Ok(());
         }
 
-        if dev_type.is_old_style() || dev_type.is_tuf_style() {
+        if dev_type.is_old_laptop() || dev_type.is_tuf_laptop() {
             handle_led_power_1_do_1866(aura, power)?;
             return Ok(());
         }
@@ -625,7 +624,7 @@ fn handle_led_power2(
 ) -> Result<(), Box<dyn std::error::Error>> {
     for aura in aura {
         let dev_type = aura.device_type()?;
-        if !dev_type.is_new_style() {
+        if !dev_type.is_new_laptop() {
             println!("This option applies only to keyboards 2021+");
             continue;
         }

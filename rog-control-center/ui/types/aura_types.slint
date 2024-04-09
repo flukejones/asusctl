@@ -1,7 +1,7 @@
 export enum AuraDevType {
-    Tuf,
-    Old,
     New,
+    Old,
+    Tuf,
 }
 
 export struct AuraEffect {
@@ -19,51 +19,37 @@ export struct AuraEffect {
     direction: int,
 }
 
-export enum AuraDevTuf {
-    Boot,
-    Awake,
-    Sleep,
-    Keyboard,
-}
-
-export enum AuraDevRog1 {
-    Awake,
-    Keyboard,
-    Lightbar,
-    Boot,
-    Sleep,
-}
-
 export enum PowerZones {
     Logo,
     Keyboard,
     Lightbar,
     Lid,
     RearGlow,
+    KeyboardAndLightbar
 }
 
-export struct KbAuraPowerState {
+export struct AuraPowerState {
+    zone: PowerZones,
+    zone_name_idx: int,
     boot: bool,
     awake: bool,
     sleep: bool,
     shutdown: bool,
 }
 
-export struct AuraPower {
-    keyboard: KbAuraPowerState,
-    logo: KbAuraPowerState,
-    lightbar: KbAuraPowerState,
-    lid: KbAuraPowerState,
-    rear_glow: KbAuraPowerState,
-}
-
-export struct AuraPowerDev {
-    tuf: [AuraDevTuf],
-    old_rog: [AuraDevRog1],
-    rog: AuraPower,
+export struct LaptopAuraPower {
+    states: [AuraPowerState],
 }
 
 export global AuraPageData {
+    in-out property <[string]> power_zone_names: [
+        @tr("Aura power zone" => "Logo"),
+        @tr("Aura power zone" => "Keyboard"),
+        @tr("Aura power zone" => "Lightbar"),
+        @tr("Aura power zone" => "Lid"),
+        @tr("Aura power zone" => "Rear Glow"),
+        @tr("Aura power zone" => "Keyboard and Lightbar"),
+    ];
     in-out property <[string]> brightness_names: [
         @tr("Aura brightness" => "Off"),
         @tr("Aura brightness" => "Low"),
@@ -157,6 +143,14 @@ export global AuraPageData {
         PowerZones.Lightbar,
         PowerZones.Logo
     ];
-    in-out property <AuraPowerDev> led_power;
-    callback set_led_power(AuraPowerDev);
+    in-out property <LaptopAuraPower> led_power: {
+        states: [{
+            zone: PowerZones.Keyboard,
+            boot: true,
+            awake: true,
+            sleep: true,
+            shutdown: true,
+        }]
+    };
+    callback set_led_power(LaptopAuraPower);
 }
