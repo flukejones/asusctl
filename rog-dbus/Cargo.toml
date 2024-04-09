@@ -12,6 +12,7 @@ edition = "2021"
 [dependencies]
 asusd = { path = "../asusd" }
 rog_anime = { path = "../rog-anime", features = ["dbus"] }
+rog_slash = { path = "../rog-slash", features = ["dbus"] }
 rog_aura = { path = "../rog-aura" }
 rog_profiles = { path = "../rog-profiles" }
 rog_platform = { path = "../rog-platform" }

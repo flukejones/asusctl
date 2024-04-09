@@ -12,6 +12,7 @@ members = [
     "rog-aura",
     "rog-profiles",
     "rog-control-center",
+    "rog-slash",
     "simulators",
 ]
 default-members = [

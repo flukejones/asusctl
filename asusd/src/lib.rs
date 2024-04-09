@@ -3,6 +3,8 @@
 pub mod config;
 /// Control of anime matrix display
 pub mod ctrl_anime;
+/// Control of Slash led bar
+pub mod ctrl_slash;
 /// Keyboard LED brightness control, RGB, and LED display modes
 pub mod ctrl_aura;
 /// Control platform profiles + fan-curves if available
@@ -50,7 +52,7 @@ pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";
 ///     task_watch_item!(panel_od platform);
 ///     task_watch_item!(gpu_mux_mode platform);
 /// }
-/// ```
+/// ```\
 /// // TODO: this is kind of useless if it can't trigger some action
 #[macro_export]
 macro_rules! task_watch_item {
@@ -130,7 +132,7 @@ pub fn print_board_info() {
 }
 
 pub trait Reloadable {
-    fn reload(&mut self) -> impl std::future::Future<Output = Result<(), RogError>> + Send;
+    fn reload(&mut self) -> impl Future<Output = Result<(), RogError>> + Send;
 }
 
 pub trait ReloadAndNotify {
@@ -140,18 +142,18 @@ pub trait ReloadAndNotify {
         &mut self,
         signal_context: &SignalContext<'static>,
         data: Self::Data,
-    ) -> impl std::future::Future<Output = Result<(), RogError>> + Send;
+    ) -> impl Future<Output = Result<(), RogError>> + Send;
 }
 
 pub trait ZbusRun {
     fn add_to_server(self, server: &mut Connection)
-        -> impl std::future::Future<Output = ()> + Send;
+        -> impl Future<Output = ()> + Send;
 
     fn add_to_server_helper(
         iface: impl zbus::Interface,
         path: &str,
         server: &mut Connection,
-    ) -> impl std::future::Future<Output = ()> + Send {
+    ) -> impl Future<Output = ()> + Send {
         async move {
             server
                 .object_server()
@@ -180,7 +182,7 @@ pub trait CtrlTask {
     fn create_tasks(
         &self,
         signal: SignalContext<'static>,
-    ) -> impl std::future::Future<Output = Result<(), RogError>> + Send;
+    ) -> impl Future<Output = Result<(), RogError>> + Send;
 
     // /// Create a timed repeating task
     // async fn repeating_task(&self, millis: u64, mut task: impl FnMut() + Send +
@@ -213,7 +215,7 @@ pub trait CtrlTask {
         mut on_prepare_for_shutdown: F2,
         mut on_lid_change: F3,
         mut on_external_power_change: F4,
-    ) -> impl std::future::Future<Output = ()> + Send
+    ) -> impl Future<Output = ()> + Send
     where
         F1: FnMut(bool) -> Fut1,
         F2: FnMut(bool) -> Fut2,
@@ -307,13 +309,13 @@ pub async fn start_tasks<T>(
 where
     T: ZbusRun + Reloadable + CtrlTask + Clone,
 {
-    let task = zbus.clone();
+    let zbus_clone = zbus.clone();
 
     zbus.reload()
         .await
         .unwrap_or_else(|err| warn!("Controller error: {}", err));
     zbus.add_to_server(connection).await;
 
-    task.create_tasks(signal_ctx).await.ok();
+    zbus_clone.create_tasks(signal_ctx).await.ok();
     Ok(())
 }

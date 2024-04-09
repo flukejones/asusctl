@@ -17,6 +17,7 @@ use crate::ctrl_aura::trait_impls::{CtrlAuraZbus, AURA_ZBUS_NAME, AURA_ZBUS_PATH
 use crate::ctrl_fancurves::{CtrlFanCurveZbus, FAN_CURVE_ZBUS_NAME, FAN_CURVE_ZBUS_PATH};
 use crate::error::RogError;
 use crate::{task_watch_item, task_watch_item_notify, CtrlTask, ReloadAndNotify};
+use crate::ctrl_slash::trait_impls::{CtrlSlashZbus, SLASH_ZBUS_NAME, SLASH_ZBUS_PATH};
 
 const PLATFORM_ZBUS_NAME: &str = "Platform";
 const PLATFORM_ZBUS_PATH: &str = "/org/asuslinux";
@@ -350,6 +351,13 @@ impl CtrlPlatform {
             .is_ok()
         {
             interfaces.push(PLATFORM_ZBUS_NAME.to_owned());
+        }
+        if server
+            .interface::<_, CtrlSlashZbus>(SLASH_ZBUS_PATH)
+            .await
+            .is_ok()
+        {
+            interfaces.push(SLASH_ZBUS_NAME.to_owned());
         }
         interfaces
     }

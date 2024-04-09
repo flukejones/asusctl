@@ -27,15 +27,15 @@ impl StdConfig for AuraConfig {
         panic!("This should not be used");
     }
 
-    fn config_dir() -> std::path::PathBuf {
-        std::path::PathBuf::from(crate::CONFIG_PATH_BASE)
-    }
-
     fn file_name(&self) -> String {
         if self.config_name.is_empty() {
             panic!("Config file name should not be empty");
         }
         self.config_name.to_owned()
+    }
+
+    fn config_dir() -> std::path::PathBuf {
+        std::path::PathBuf::from(crate::CONFIG_PATH_BASE)
     }
 }
 

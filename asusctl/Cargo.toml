@@ -7,6 +7,7 @@ version.workspace = true
 
 [dependencies]
 rog_anime = { path = "../rog-anime" }
+rog_slash = { path = "../rog-slash" }
 rog_aura = { path = "../rog-aura" }
 rog_dbus = { path = "../rog-dbus" }
 rog_profiles = { path = "../rog-profiles" }

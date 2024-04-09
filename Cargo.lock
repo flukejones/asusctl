@@ -136,6 +136,7 @@ dependencies = [
  "rog_dbus",
  "rog_platform",
  "rog_profiles",
+ "rog_slash",
  "tinybmp",
  "tokio",
  "toml 0.5.11",
@@ -160,6 +161,7 @@ dependencies = [
  "rog_aura",
  "rog_platform",
  "rog_profiles",
+ "rog_slash",
  "serde",
  "serde_derive",
  "systemd-zbus",
@@ -3558,6 +3560,23 @@ dependencies = [
  "rog_anime",
  "sdl2",
  "uhid-virt",
+]
+
+[[package]]
+name = "rog_slash"
+version = "6.0.0-alpha1"
+dependencies = [
+ "cargo-husky",
+ "dmi_id",
+ "gif 0.12.0",
+ "glam",
+ "log",
+ "pix",
+ "png_pong",
+ "serde",
+ "serde_derive",
+ "typeshare",
+ "zbus 4.0.1",
 ]
 
 [[package]]
