@@ -5,10 +5,12 @@ use std::process::exit;
 
 use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimeDiagonal, AnimeType};
-use rog_dbus::RogDbusClientBlocking;
+use rog_dbus::zbus_anime::AnimeProxyBlocking;
+use zbus::blocking::Connection;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let (client, _) = RogDbusClientBlocking::new().unwrap();
+    let conn = Connection::system().unwrap();
+    let proxy = AnimeProxyBlocking::new(&conn).unwrap();
 
     let args: Vec<String> = env::args().collect();
     if args.len() != 3 {
@@ -26,11 +28,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let anime_type = get_anime_type()?;
 
-    client
-        .proxies()
-        .anime()
-        .write(matrix.into_data_buffer(anime_type)?)
-        .unwrap();
+    proxy.write(matrix.into_data_buffer(anime_type)?).unwrap();
 
     Ok(())
 }

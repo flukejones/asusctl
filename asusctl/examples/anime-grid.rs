@@ -2,7 +2,8 @@ use std::convert::TryFrom;
 
 use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimeDataBuffer, AnimeGrid};
-use rog_dbus::RogDbusClientBlocking;
+use rog_dbus::zbus_anime::AnimeProxyBlocking;
+use zbus::blocking::Connection;
 
 // In usable data:
 // Top row start at 1, ends at 32
@@ -10,7 +11,9 @@ use rog_dbus::RogDbusClientBlocking;
 // 74w x 36h diagonal used by the windows app
 
 fn main() {
-    let (client, _) = RogDbusClientBlocking::new().unwrap();
+    let conn = Connection::system().unwrap();
+    let proxy = AnimeProxyBlocking::new(&conn).unwrap();
+
     let anime_type = get_anime_type().unwrap();
     let mut matrix = AnimeGrid::new(anime_type);
     let tmp = matrix.get_mut();
@@ -43,5 +46,5 @@ fn main() {
 
     let matrix = <AnimeDataBuffer>::try_from(matrix).unwrap();
 
-    client.proxies().anime().write(matrix).unwrap();
+    proxy.write(matrix).unwrap();
 }

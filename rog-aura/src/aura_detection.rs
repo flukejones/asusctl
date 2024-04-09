@@ -4,21 +4,11 @@ use serde_derive::{Deserialize, Serialize};
 use typeshare::typeshare;
 use zbus::zvariant::{OwnedValue, Type, Value};
 
-use crate::usb::AuraDevice;
-use crate::{AdvancedAuraType, AuraModeNum, AuraZone};
+use crate::keyboard::AdvancedAuraType;
+use crate::{AuraModeNum, AuraZone};
 
 pub const ASUS_LED_MODE_CONF: &str = "/usr/share/asusd/aura_support.ron";
 pub const ASUS_LED_MODE_USER_CONF: &str = "/etc/asusd/asusd_user_ledmodes.ron";
-pub const ASUS_KEYBOARD_DEVICES: [AuraDevice; 8] = [
-    AuraDevice::Tuf,
-    AuraDevice::X1854,
-    AuraDevice::X1869,
-    AuraDevice::X1866,
-    AuraDevice::X18c6,
-    AuraDevice::X19b6,
-    AuraDevice::X1a30,
-    AuraDevice::X1abe,
-];
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct LedSupportFile(Vec<LaptopLedData>);
@@ -30,7 +20,7 @@ pub struct LedSupportFile(Vec<LaptopLedData>);
     derive(Type, Value, OwnedValue),
     zvariant(signature = "u")
 )]
-#[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Default, Copy, Clone)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Default, Copy, Clone)]
 pub enum PowerZones {
     /// The logo on some laptop lids
     #[default]
@@ -43,6 +33,8 @@ pub enum PowerZones {
     Lid = 3,
     /// The led strip on the rear of some laptops
     RearGlow = 4,
+    /// On pre-2021 laptops there is either 1 or 2 zones used
+    KeyboardAndLightbar = 5,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize, Serialize)]
@@ -153,10 +145,10 @@ mod tests {
     use ron::ser::PrettyConfig;
 
     use super::LaptopLedData;
-    use crate::advanced::LedCode;
     use crate::aura_detection::{LedSupportFile, PowerZones};
+    use crate::keyboard::{AdvancedAuraType, LedCode};
     // use crate::zoned::Zone;
-    use crate::{AdvancedAuraType, AuraModeNum, AuraZone};
+    use crate::{AuraModeNum, AuraZone};
 
     #[test]
     fn check_data_parse() {

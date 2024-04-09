@@ -8,8 +8,11 @@ use asusd_user::ctrl_anime::{CtrlAnime, CtrlAnimeInner};
 use config_traits::{StdConfig, StdConfigLoad};
 use rog_anime::usb::get_anime_type;
 use rog_aura::aura_detection::LaptopLedData;
-use rog_aura::layouts::KeyLayout;
-use rog_dbus::{RogDbusClientBlocking, DBUS_NAME};
+use rog_aura::keyboard::KeyLayout;
+use rog_dbus::zbus_anime::AnimeProxyBlocking;
+use rog_dbus::zbus_aura::AuraProxyBlocking;
+use rog_dbus::zbus_platform::PlatformProxyBlocking;
+use rog_dbus::DBUS_NAME;
 use smol::Executor;
 use zbus::Connection;
 
@@ -32,10 +35,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("     rog-dbus v{}", rog_dbus::VERSION);
     println!("rog-platform v{}", rog_platform::VERSION);
 
-    let (client, _) = RogDbusClientBlocking::new()?;
-    let supported = client
-        .proxies()
-        .platform()
+    let conn = zbus::blocking::Connection::system().unwrap();
+    let platform_proxy = PlatformProxyBlocking::new(&conn).unwrap();
+
+    let supported = platform_proxy
         .supported_interfaces()
         .unwrap_or_default()
         .contains(&"Anime".to_string());
@@ -51,6 +54,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let anime = anime_config.create(anime_type)?;
             let anime_config = Arc::new(Mutex::new(anime_config));
 
+            let anime_proxy_blocking = AnimeProxyBlocking::new(&conn).unwrap();
             executor
                 .spawn(async move {
                     // Create server
@@ -59,12 +63,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                     // Inner behind mutex required for thread safety
                     let inner = Arc::new(Mutex::new(
-                        CtrlAnimeInner::new(anime, client, early_return.clone()).unwrap(),
+                        CtrlAnimeInner::new(
+                            anime,
+                            anime_proxy_blocking.clone(),
+                            early_return.clone(),
+                        )
+                        .unwrap(),
                     ));
                     // Need new client object for dbus control part
-                    let (client, _) = RogDbusClientBlocking::new().unwrap();
-                    let anime_control =
-                        CtrlAnime::new(anime_config, inner.clone(), client, early_return).unwrap();
+                    let anime_control = CtrlAnime::new(
+                        anime_config,
+                        inner.clone(),
+                        anime_proxy_blocking,
+                        early_return,
+                    )
+                    .unwrap();
                     anime_control.add_to_server(&mut connection).await;
                     loop {
                         if let Ok(inner) = inner.clone().try_lock() {
@@ -89,22 +102,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             })
             .unwrap_or_else(|_| KeyLayout::default_layout());
 
+        let aura_proxy_blocking = AuraProxyBlocking::new(&conn).unwrap();
         executor
             .spawn(async move {
-                // Create server
-                let (client, _) = RogDbusClientBlocking::new().unwrap();
-                // let connection = Connection::session().await.unwrap();
-                // connection.request_name(DBUS_NAME).await.unwrap();
-
                 loop {
                     aura_config.aura.next_state(&layout);
                     let packets = aura_config.aura.create_packets();
 
-                    client
-                        .proxies()
-                        .aura()
-                        .direct_addressing_raw(packets)
-                        .unwrap();
+                    aura_proxy_blocking.direct_addressing_raw(packets).unwrap();
                     std::thread::sleep(std::time::Duration::from_millis(33));
                 }
             })

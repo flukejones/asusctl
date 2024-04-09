@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::EffectState;
-use crate::advanced::LedCode;
-use crate::layouts::KeyLayout;
+use crate::keyboard::{KeyLayout, LedCode};
 use crate::{effect_state_impl, Colour, Speed};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

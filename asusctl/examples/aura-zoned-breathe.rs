@@ -1,16 +1,17 @@
 //! Using a combination of key-colour array plus a key layout to generate
 //! outputs.
 
-use rog_aura::advanced::LedCode;
 use rog_aura::effects::{AdvancedEffects, Effect};
-use rog_aura::layouts::KeyLayout;
+use rog_aura::keyboard::{KeyLayout, LedCode};
 use rog_aura::Colour;
-use rog_dbus::RogDbusClientBlocking;
+use rog_dbus::zbus_aura::AuraProxyBlocking;
+use zbus::blocking::Connection;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let layout = KeyLayout::default_layout();
 
-    let (client, _) = RogDbusClientBlocking::new().unwrap();
+    let conn = Connection::system().unwrap();
+    let proxy = AuraProxyBlocking::new(&conn).unwrap();
 
     let mut seq = AdvancedEffects::new(true);
 
@@ -62,7 +63,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         seq.next_state(&layout);
         let packets = seq.create_packets();
 
-        client.proxies().aura().direct_addressing_raw(packets)?;
+        proxy.direct_addressing_raw(packets)?;
         std::thread::sleep(std::time::Duration::from_millis(33));
     }
 }

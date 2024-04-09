@@ -1,12 +1,14 @@
 use rog_anime::usb::get_anime_type;
 use rog_anime::AnimeDataBuffer;
-use rog_dbus::RogDbusClientBlocking;
+use rog_dbus::zbus_anime::AnimeProxyBlocking;
+use zbus::blocking::Connection;
 
 // In usable data:
 // Top row start at 1, ends at 32
 
 fn main() {
-    let (client, _) = RogDbusClientBlocking::new().unwrap();
+    let conn = Connection::system().unwrap();
+    let proxy = AnimeProxyBlocking::new(&conn).unwrap();
     let anime_type = get_anime_type().unwrap();
     let mut matrix = AnimeDataBuffer::new(anime_type);
     matrix.data_mut()[1] = 100; // start = 1
@@ -127,5 +129,5 @@ fn main() {
     matrix.data_mut()[1244] = 100; // end
     println!("{:?}", &matrix);
 
-    client.proxies().anime().write(matrix).unwrap();
+    proxy.write(matrix).unwrap();
 }

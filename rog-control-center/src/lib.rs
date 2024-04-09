@@ -23,22 +23,12 @@ pub mod types;
 pub mod ui;
 pub mod update_and_notify;
 
-#[cfg(feature = "mocking")]
-pub use mocking::RogDbusClientBlocking;
 use nix::sys::stat;
 use nix::unistd;
-#[cfg(not(feature = "mocking"))]
-pub use rog_dbus::RogDbusClientBlocking;
 use tempfile::TempDir;
 // use log::{error, info, warn};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-#[cfg(not(feature = "mocking"))]
-const DATA_DIR: &str = "/usr/share/rog-gui/";
-#[cfg(feature = "mocking")]
-const DATA_DIR: &str = env!("CARGO_MANIFEST_DIR");
-const BOARD_NAME: &str = "/sys/class/dmi/id/board_name";
 pub const APP_ICON_PATH: &str = "/usr/share/icons/hicolor/512x512/apps/rog-control-center.png";
 
 pub fn print_versions() {
@@ -89,7 +79,7 @@ pub fn on_tmp_dir_exists() -> Result<TempDir, std::io::Error> {
     ipc_file.write_all(&[SHOW_GUI, 0])?;
     // tiny sleep to give the app a chance to respond
     sleep(Duration::from_millis(10));
-    ipc_file.read(&mut buf).ok();
+    ipc_file.read_exact(&mut buf).ok();
 
     // First entry is the actual state
     if buf[0] == SHOWING_GUI {

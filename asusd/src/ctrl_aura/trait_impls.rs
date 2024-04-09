@@ -3,10 +3,9 @@ use std::sync::Arc;
 
 use config_traits::StdConfig;
 use log::{debug, error, info, warn};
-use rog_aura::advanced::UsbPackets;
 use rog_aura::aura_detection::PowerZones;
-use rog_aura::usb::{AuraDevice, AuraPowerDev};
-use rog_aura::{AuraEffect, AuraModeNum, AuraZone, LedBrightness};
+use rog_aura::keyboard::{LaptopAuraPower, UsbPackets};
+use rog_aura::{AuraDeviceType, AuraEffect, AuraModeNum, AuraZone, LedBrightness};
 use zbus::export::futures_util::lock::{Mutex, MutexGuard};
 use zbus::export::futures_util::StreamExt;
 use zbus::fdo::Error as ZbErr;
@@ -43,9 +42,9 @@ impl CtrlAuraZbus {
 impl CtrlAuraZbus {
     /// Return the device type for this Aura keyboard
     #[zbus(property)]
-    async fn device_type(&self) -> AuraDevice {
+    async fn device_type(&self) -> AuraDeviceType {
         let ctrl = self.0.lock().await;
-        ctrl.led_prod
+        ctrl.led_type
     }
 
     /// Return the current LED brightness
@@ -167,9 +166,9 @@ impl CtrlAuraZbus {
 
     // As property doesn't work for AuraPowerDev (complexity of serialization?)
     #[zbus(property)]
-    async fn led_power(&self) -> AuraPowerDev {
+    async fn led_power(&self) -> LaptopAuraPower {
         let ctrl = self.0.lock().await;
-        AuraPowerDev::from(&ctrl.config.enabled)
+        ctrl.config.enabled.clone()
     }
 
     /// Set a variety of states, input is array of enum.
@@ -177,16 +176,16 @@ impl CtrlAuraZbus {
     ///
     /// For Modern ROG devices the "enabled" flag is ignored.
     #[zbus(property)]
-    async fn set_led_power(&mut self, options: AuraPowerDev) -> Result<(), ZbErr> {
+    async fn set_led_power(&mut self, options: LaptopAuraPower) -> Result<(), ZbErr> {
         let mut ctrl = self.0.lock().await;
-        // TODO: set the older devices
-        // for p in options.tuf {
-        //     ctrl.config.enabled.set_tuf(p, enabled);
-        // }
-        // for p in options.old_rog {
-        //     ctrl.config.enabled.set_0x1866(p, enabled);
-        // }
-        ctrl.config.enabled.set_0x19b6(options.rog);
+        for opt in options.states {
+            let zone = opt.zone;
+            for config in ctrl.config.enabled.states.iter_mut() {
+                if config.zone == zone {
+                    *config = opt;
+                }
+            }
+        }
         ctrl.config.write();
         Ok(ctrl.set_power_states().map_err(|e| {
             warn!("{}", e);

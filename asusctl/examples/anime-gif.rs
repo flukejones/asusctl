@@ -4,10 +4,12 @@ use std::thread::sleep;
 
 use rog_anime::usb::get_anime_type;
 use rog_anime::{ActionData, ActionLoader, Sequences};
-use rog_dbus::RogDbusClientBlocking;
+use rog_dbus::zbus_anime::AnimeProxyBlocking;
+use zbus::blocking::Connection;
 
 fn main() {
-    let (client, _) = RogDbusClientBlocking::new().unwrap();
+    let conn = Connection::system().unwrap();
+    let proxy = AnimeProxyBlocking::new(&conn).unwrap();
 
     let args: Vec<String> = env::args().collect();
     if args.len() != 3 {
@@ -33,11 +35,7 @@ fn main() {
         for action in seq.iter() {
             if let ActionData::Animation(frames) = action {
                 for frame in frames.frames() {
-                    client
-                        .proxies()
-                        .anime()
-                        .write(frame.frame().clone())
-                        .unwrap();
+                    proxy.write(frame.frame().clone()).unwrap();
                     sleep(frame.delay());
                 }
             }

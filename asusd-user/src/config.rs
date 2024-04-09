@@ -3,8 +3,8 @@ use std::time::Duration;
 
 use config_traits::{StdConfig, StdConfigLoad};
 use rog_anime::{ActionLoader, AnimTime, AnimeType, Fade, Sequences as AnimeSequences, Vec2};
-use rog_aura::advanced::LedCode;
 use rog_aura::effects::{AdvancedEffects as AuraSequences, Breathe, DoomFlicker, Effect, Static};
+use rog_aura::keyboard::LedCode;
 use rog_aura::{Colour, Speed};
 use serde_derive::{Deserialize, Serialize};
 

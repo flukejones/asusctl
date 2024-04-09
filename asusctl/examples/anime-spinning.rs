@@ -9,10 +9,12 @@ use std::time::Duration;
 
 use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2};
-use rog_dbus::RogDbusClientBlocking;
+use rog_dbus::zbus_anime::AnimeProxyBlocking;
+use zbus::blocking::Connection;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let (client, _) = RogDbusClientBlocking::new().unwrap();
+    let conn = Connection::system().unwrap();
+    let proxy = AnimeProxyBlocking::new(&conn).unwrap();
 
     let args: Vec<String> = env::args().collect();
     if args.len() != 7 {
@@ -41,11 +43,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
         matrix.update();
 
-        client
-            .proxies()
-            .anime()
-            .write(<AnimeDataBuffer>::try_from(&matrix)?)
-            .unwrap();
+        proxy.write(<AnimeDataBuffer>::try_from(&matrix)?).unwrap();
         sleep(Duration::from_micros(500));
     }
 }

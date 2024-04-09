@@ -274,19 +274,13 @@ impl crate::Reloadable for CtrlFanCurveZbus {
     /// Fetch the active profile and use that to set all related components up
     async fn reload(&mut self) -> Result<(), RogError> {
         let active = self.platform.get_throttle_thermal_policy()?.into();
+        let mut config = self.config.lock().await;
         if let Ok(mut device) = find_fan_curve_node() {
-            // There is a possibility that the curve was default zeroed, so this call
-            // initialises the data from system read and we need to save it
-            // after
-            loop {
-                if let Ok(mut config) = self.config.try_lock() {
-                    config
-                        .profiles
-                        .write_profile_curve_to_platform(active, &mut device)?;
-                    break;
-                }
-            }
+            config
+                .profiles
+                .write_profile_curve_to_platform(active, &mut device)?;
         }
+
         Ok(())
     }
 }

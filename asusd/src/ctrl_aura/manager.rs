@@ -9,11 +9,10 @@ use std::collections::HashSet;
 use log::{debug, error, info, warn};
 use mio::{Events, Interest, Poll, Token};
 use rog_aura::aura_detection::LaptopLedData;
-use rog_aura::usb::AuraDevice;
+use rog_aura::AuraDeviceType;
 use rog_platform::hid_raw::HidRaw;
 use tokio::task::spawn_blocking;
 use udev::{Device, MonitorBuilder};
-// use zbus::fdo::ObjectManager;
 use zbus::object_server::SignalContext;
 use zbus::zvariant::{ObjectPath, OwnedObjectPath};
 use zbus::Connection;
@@ -87,8 +86,8 @@ impl AuraManager {
                         continue;
                     };
 
-                    let aura_device = AuraDevice::from(&*id_product);
-                    if aura_device == AuraDevice::Unknown {
+                    let aura_device = AuraDeviceType::from(&*id_product);
+                    if aura_device == AuraDeviceType::Unknown {
                         warn!("idProduct:{id_product:?} is unknown, not using");
                         continue;
                     }
@@ -136,7 +135,7 @@ impl AuraManager {
                                 if let Ok(mut ctrl) =
                                     CtrlKbdLed::from_hidraw(raw, path.clone(), &data)
                                 {
-                                    ctrl.config = CtrlKbdLed::init_config(aura_device, &data);
+                                    ctrl.config = CtrlKbdLed::init_config(&id_product, &data);
                                     interfaces.insert(path.clone());
                                     info!("AuraManager starting device at: {dev_node:?}, {path:?}");
                                     let sig_ctx = CtrlAuraZbus::signal_context(&conn_copy)?;

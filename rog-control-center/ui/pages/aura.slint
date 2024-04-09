@@ -2,7 +2,7 @@ import { SystemDropdown, RogItem, SystemToggle, SystemToggleVert } from "../widg
 import { Palette, Button, ComboBox, VerticalBox, GroupBox } from "std-widgets.slint";
 import { StyleMetrics, Slider, HorizontalBox, TextEdit, SpinBox, LineEdit, ScrollView } from "std-widgets.slint";
 import { ColourSlider } from "../widgets/colour_picker.slint";
-import { AuraPageData, AuraDevType, AuraDevTuf, AuraDevRog1, PowerZones, KbAuraPowerState, AuraPowerDev, AuraEffect } from "../types/aura_types.slint";
+import { AuraPageData, AuraDevType, PowerZones, LaptopAuraPower, AuraEffect } from "../types/aura_types.slint";
 import { AuraPowerGroup } from "../widgets/aura_power.slint";
 
 export component PageAura inherits Rectangle {
@@ -206,268 +206,42 @@ export component PageAura inherits Rectangle {
                 padding: 30px;
                 padding-top: 10px;
                 spacing: 10px;
-                for power in AuraPageData.supported_power_zones: gr := HorizontalLayout {
-                    if power == PowerZones.Keyboard: zone1 := AuraPowerGroup {
-                        group-title: @tr("Keyboard");
-                        boot_checked: AuraPageData.led_power.rog.keyboard.boot;
-                        boot_toggled => {
-                            AuraPageData.led_power.rog.keyboard.boot = zone1.boot_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
-                        awake_checked: AuraPageData.led_power.rog.keyboard.awake;
-                        awake_toggled => {
-                            AuraPageData.led_power.rog.keyboard.awake = zone1.awake_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
-                        sleep_checked: AuraPageData.led_power.rog.keyboard.sleep;
-                        sleep_toggled => {
-                            AuraPageData.led_power.rog.keyboard.sleep = zone1.sleep_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
-                        shutdown_checked: AuraPageData.led_power.rog.keyboard.shutdown;
-                        shutdown_toggled => {
-                            AuraPageData.led_power.rog.keyboard.shutdown = zone1.shutdown_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
-                    }
 
-                    if power == PowerZones.Logo: zone2 := AuraPowerGroup {
-                        group-title: @tr("Lid Logo");
-                        boot_checked: AuraPageData.led_power.rog.logo.boot;
-                        boot_toggled => {
-                            AuraPageData.led_power.rog.logo.boot = zone2.boot_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
-                        awake_checked: AuraPageData.led_power.rog.logo.awake;
-                        awake_toggled => {
-                            AuraPageData.led_power.rog.logo.awake = zone2.awake_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
-                        sleep_checked: AuraPageData.led_power.rog.logo.sleep;
-                        sleep_toggled => {
-                            AuraPageData.led_power.rog.logo.sleep = zone2.sleep_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
-                        shutdown_checked: AuraPageData.led_power.rog.logo.shutdown;
-                        shutdown_toggled => {
-                            AuraPageData.led_power.rog.logo.shutdown = zone2.shutdown_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
+                for state[idx] in AuraPageData.led_power.states: zone := AuraPowerGroup {
+                    group-title: AuraPageData.power_zone_names[state.zone_name_idx];
+                    // TODO: use the zone name
+                        boot_checked: state.boot;
+                    boot_toggled => {
+                        AuraPageData.led_power.states[idx].boot = zone.boot_checked;
+                        AuraPageData.set_led_power(AuraPageData.led_power);
                     }
-
-                    if power == PowerZones.Lightbar: zone3 := AuraPowerGroup {
-                        group-title: @tr("Lightbar");
-                        boot_checked: AuraPageData.led_power.rog.lightbar.boot;
-                        boot_toggled => {
-                            AuraPageData.led_power.rog.lightbar.boot = zone3.boot_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
-                        awake_checked: AuraPageData.led_power.rog.lightbar.awake;
-                        awake_toggled => {
-                            AuraPageData.led_power.rog.lightbar.awake = zone3.awake_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
-                        sleep_checked: AuraPageData.led_power.rog.lightbar.sleep;
-                        sleep_toggled => {
-                            AuraPageData.led_power.rog.lightbar.sleep = zone3.sleep_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
-                        shutdown_checked: AuraPageData.led_power.rog.lightbar.shutdown;
-                        shutdown_toggled => {
-                            AuraPageData.led_power.rog.lightbar.shutdown = zone3.shutdown_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
+                    awake_checked: state.awake;
+                    awake_toggled => {
+                        AuraPageData.led_power.states[idx].awake = zone.awake_checked;
+                        AuraPageData.set_led_power(AuraPageData.led_power);
                     }
-
-                    if power == PowerZones.Lid: zone4 := AuraPowerGroup {
-                        group-title: @tr("Lid Zone");
-                        boot_checked: AuraPageData.led_power.rog.lid.boot;
-                        boot_toggled => {
-                            AuraPageData.led_power.rog.lid.boot = zone4.boot_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
-                        awake_checked: AuraPageData.led_power.rog.lid.awake;
-                        awake_toggled => {
-                            AuraPageData.led_power.rog.lid.awake = zone4.awake_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
-                        sleep_checked: AuraPageData.led_power.rog.lid.sleep;
-                        sleep_toggled => {
-                            AuraPageData.led_power.rog.lid.sleep = zone4.sleep_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
-                        shutdown_checked: AuraPageData.led_power.rog.lid.shutdown;
-                        shutdown_toggled => {
-                            AuraPageData.led_power.rog.lid.shutdown = zone4.shutdown_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
+                    sleep_checked: state.sleep;
+                    sleep_toggled => {
+                        AuraPageData.led_power.states[idx].sleep = zone.sleep_checked;
+                        AuraPageData.set_led_power(AuraPageData.led_power);
                     }
-
-                    if power == PowerZones.RearGlow: zone5 := AuraPowerGroup {
-                        group-title: @tr("Rear Glow");
-                        boot_checked: AuraPageData.led_power.rog.rear-glow.boot;
-                        boot_toggled => {
-                            AuraPageData.led_power.rog.rear-glow.boot = zone5.boot_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
-                        awake_checked: AuraPageData.led_power.rog.rear-glow.awake;
-                        awake_toggled => {
-                            AuraPageData.led_power.rog.rear-glow.awake = zone5.awake_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
-                        sleep_checked: AuraPageData.led_power.rog.rear-glow.sleep;
-                        sleep_toggled => {
-                            AuraPageData.led_power.rog.rear-glow.sleep = zone5.sleep_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
-                        shutdown_checked: AuraPageData.led_power.rog.rear-glow.shutdown;
-                        shutdown_toggled => {
-                            AuraPageData.led_power.rog.rear-glow.shutdown = zone5.shutdown_checked;
-                            AuraPageData.set_led_power(AuraPageData.led_power);
-                        }
+                    shutdown_checked: state.shutdown;
+                    shutdown_toggled => {
+                        AuraPageData.led_power.states[idx].shutdown = zone.shutdown_checked;
+                        AuraPageData.set_led_power(AuraPageData.led_power);
                     }
                 }
             }
-        }
 
-        Button {
-            x: root.width - self.width - 6px;
-            y: 6px;
-            text: "X";
-            height: 40px;
-            clicked => {
-                root.show_aura_power = false;
-                root.show_fade_cover = false;
-            }
-        }
-    }
-
-    if root.show_aura_power && AuraPageData.aura_type == AuraDevType.Old: Rectangle {
-        width: 100%;
-        height: 100%;
-        opacity: 1;
-        ScrollView {
-            VerticalLayout {
-                padding: 30px;
-                padding-top: 10px;
-                spacing: 10px;
-
-                Text {
-                    text: "WIP: this is not complete and won't change keyboard state";
+            Button {
+                x: root.width - self.width - 6px;
+                y: 6px;
+                text: "X";
+                height: 40px;
+                clicked => {
+                    root.show_aura_power = false;
+                    root.show_fade_cover = false;
                 }
-
-                Rectangle {
-                    border-radius: 20px;
-                    background: Palette.control-background;
-                    VerticalBox {
-                        spacing: 10px;
-                        alignment: LayoutAlignment.start;
-                        Text {
-                            font-size: 18px;
-                            color: Palette.control-foreground;
-                            horizontal-alignment: TextHorizontalAlignment.center;
-                            text: @tr("Keyboard");
-                        }
-
-                        HorizontalBox {
-                            SystemToggleVert {
-                                max-height: 42px;
-                                text: @tr("Boot");
-                            }
-
-                            SystemToggleVert {
-                                max-height: 42px;
-                                text: @tr("Awake");
-                            }
-
-                            SystemToggleVert {
-                                max-height: 42px;
-                                text: @tr("Sleep");
-                            }
-
-                            SystemToggleVert {
-                                max-height: 42px;
-                                text: @tr("Shutdown");
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        Button {
-            x: root.width - self.width - 6px;
-            y: 6px;
-            text: "X";
-            height: 40px;
-            clicked => {
-                root.show_aura_power = false;
-                root.show_fade_cover = false;
-            }
-        }
-    }
-
-    if root.show_aura_power && AuraPageData.aura_type == AuraDevType.Tuf: Rectangle {
-        width: 100%;
-        height: 100%;
-        opacity: 1;
-        ScrollView {
-            VerticalLayout {
-                padding: 30px;
-                padding-top: 10px;
-                spacing: 10px;
-
-                Text {
-                    text: "WIP: this is not complete and won't change keyboard state";
-                }
-
-                Rectangle {
-                    border-radius: 20px;
-                    background: Palette.control-background;
-                    VerticalBox {
-                        spacing: 10px;
-                        alignment: LayoutAlignment.start;
-                        Text {
-                            font-size: 18px;
-                            color: Palette.control-foreground;
-                            horizontal-alignment: TextHorizontalAlignment.center;
-                            text: @tr("Keyboard");
-                        }
-
-                        HorizontalBox {
-                            SystemToggleVert {
-                                max-height: 42px;
-                                text: @tr("Boot");
-                            }
-
-                            SystemToggleVert {
-                                max-height: 42px;
-                                text: @tr("Awake");
-                            }
-
-                            SystemToggleVert {
-                                max-height: 42px;
-                                text: @tr("Sleep");
-                            }
-
-                            SystemToggleVert {
-                                max-height: 42px;
-                                text: @tr("Shutdown");
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        Button {
-            x: root.width - self.width - 6px;
-            y: 6px;
-            text: "X";
-            height: 40px;
-            clicked => {
-                root.show_aura_power = false;
-                root.show_fade_cover = false;
             }
         }
     }

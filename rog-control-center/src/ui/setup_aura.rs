@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use rog_aura::usb::AuraPowerDev;
+use rog_aura::keyboard::LaptopAuraPower;
 use rog_dbus::zbus_aura::AuraProxy;
 use slint::{ComponentHandle, Model, RgbaColor, SharedString};
 
@@ -166,11 +166,11 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                     .on_set_led_power(move |power| {
                         let handle_copy = handle_copy.clone();
                         let proxy_copy = aura.clone();
-                        let power: AuraPowerDev = power.into();
+                        let power: LaptopAuraPower = power.into();
                         tokio::spawn(async move {
                             show_toast(
-                                "Anime builtin animations changed".into(),
-                                "Failed to set Anime builtin animations".into(),
+                                "Aura power settings changed".into(),
+                                "Failed to set Aura power settings".into(),
                                 handle_copy,
                                 proxy_copy.set_led_power(power).await,
                             );

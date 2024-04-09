@@ -30,6 +30,9 @@ use zbus::proxy;
     default_path = "/org/asuslinux"
 )]
 trait Platform {
+    #[zbus(property)]
+    fn version(&self) -> zbus::Result<String>;
+
     /// NextThrottleThermalPolicy method
     fn next_throttle_thermal_policy(&self) -> zbus::Result<()>;
 

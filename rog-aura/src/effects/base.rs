@@ -1,5 +1,5 @@
 use super::{EffectState, InputForEffect};
-use crate::advanced::LedCode;
+use crate::keyboard::{KeyLayout, LedCode};
 use crate::Colour;
 
 pub struct InputBased {
@@ -14,7 +14,7 @@ pub struct InputBased {
 }
 
 impl EffectState for InputBased {
-    fn next_colour_state(&mut self, _layout: &crate::layouts::KeyLayout) {
+    fn next_colour_state(&mut self, _layout: &KeyLayout) {
         self.input.next_colour_state();
         self.colour = self.input.get_colour();
     }

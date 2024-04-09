@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 use config_traits::StdConfig;
 use rog_anime::error::AnimeError;
 use rog_anime::{ActionData, ActionLoader, AnimTime, Fade, Sequences, Vec2};
-use rog_dbus::RogDbusClientBlocking;
+use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use serde_derive::{Deserialize, Serialize};
 use zbus::interface;
 use zbus::zvariant::{ObjectPath, Type};
@@ -61,14 +61,14 @@ pub enum TimeType {
 /// thread and a zbus server behind `Arc<Mutex<T>>`
 pub struct CtrlAnimeInner<'a> {
     sequences: Sequences,
-    client: RogDbusClientBlocking<'a>,
+    client: AnimeProxyBlocking<'a>,
     do_early_return: Arc<AtomicBool>,
 }
 
 impl<'a> CtrlAnimeInner<'static> {
     pub fn new(
         sequences: Sequences,
-        client: RogDbusClientBlocking<'static>,
+        client: AnimeProxyBlocking<'static>,
         do_early_return: Arc<AtomicBool>,
     ) -> Result<Self, Error> {
         Ok(Self {
@@ -93,19 +93,13 @@ impl<'a> CtrlAnimeInner<'static> {
                             return Ok(true); // Do safe exit
                         }
                         self.client
-                            .proxies()
-                            .anime()
                             .write(output)
                             .map_err(|e| AnimeError::Dbus(format!("{}", e)))
                             .map(|_| false)
                     });
                 }
                 ActionData::Image(image) => {
-                    self.client
-                        .proxies()
-                        .anime()
-                        .write(image.as_ref().clone())
-                        .ok();
+                    self.client.write(image.as_ref().clone()).ok();
                 }
                 ActionData::Pause(duration) => {
                     let start = Instant::now();
@@ -132,7 +126,7 @@ impl<'a> CtrlAnimeInner<'static> {
 
 pub struct CtrlAnime<'a> {
     config: Arc<Mutex<ConfigAnime>>,
-    client: RogDbusClientBlocking<'a>,
+    client: AnimeProxyBlocking<'a>,
     inner: Arc<Mutex<CtrlAnimeInner<'a>>>,
     /// Must be the same Atomic as in CtrlAnimeInner
     inner_early_return: Arc<AtomicBool>,
@@ -142,7 +136,7 @@ impl CtrlAnime<'static> {
     pub fn new(
         config: Arc<Mutex<ConfigAnime>>,
         inner: Arc<Mutex<CtrlAnimeInner<'static>>>,
-        client: RogDbusClientBlocking<'static>,
+        client: AnimeProxyBlocking<'static>,
         inner_early_return: Arc<AtomicBool>,
     ) -> Result<Self, Error> {
         Ok(CtrlAnime {
@@ -356,13 +350,13 @@ impl CtrlAnime<'static> {
     pub fn set_state(&mut self, on: bool) -> zbus::fdo::Result<()> {
         // Operations here need to be in specific order
         if on {
-            self.client.proxies().anime().set_enable_display(on).ok();
+            self.client.set_enable_display(on).ok();
             // Let the inner loop run
             self.inner_early_return.store(false, Ordering::SeqCst);
         } else {
             // Must make the inner run loop return early
             self.inner_early_return.store(true, Ordering::SeqCst);
-            self.client.proxies().anime().set_enable_display(on).ok();
+            self.client.set_enable_display(on).ok();
         }
         Ok(())
     }

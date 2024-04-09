@@ -16,7 +16,7 @@
 
 ## Relevant logs and/or screenshots
 
-(run `journalctl -b -u supergfxd > ~/supergfxd.log` and attach `~/supergfxd.log`)
+(run `journalctl -b -u asusd > ~/asusd.log` and attach `~/asusd.log`)
 
 (Paste any relevant logs - use code blocks (```) to format console output, logs, and code, as
 it's very hard to read otherwise.)

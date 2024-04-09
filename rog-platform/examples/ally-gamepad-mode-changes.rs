@@ -2,24 +2,17 @@ use std::error::Error;
 use std::thread::sleep;
 use std::time::Duration;
 
-use rog_aura::usb::AuraDevice;
 use rog_platform::hid_raw::HidRaw;
 
 pub fn main() -> Result<(), Box<dyn Error>> {
     let mut usb_node = None;
-    let prod = AuraDevice::X1abe;
-    match HidRaw::new(prod.into()) {
+    match HidRaw::new("1abe") {
         Ok(node) => {
+            let id = node.prod_id().to_owned();
             usb_node = Some(node);
-            println!(
-                "Looked for keyboard controller 0x{}: Found",
-                <&str>::from(prod)
-            );
+            println!("Looked for keyboard controller 0x{}: Found", id);
         }
-        Err(err) => println!(
-            "Looked for keyboard controller 0x{}: {err}",
-            <&str>::from(prod)
-        ),
+        Err(err) => println!("Looked for keyboard controller: {err}"),
     }
 
     if usb_node.is_none() {
