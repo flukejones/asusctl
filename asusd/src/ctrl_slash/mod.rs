@@ -3,9 +3,10 @@ pub mod trait_impls;
 
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::usb_raw::USBRaw;
-use rog_slash::{SlashMode, SlashType};
 use rog_slash::error::SlashError;
 use rog_slash::usb::{get_slash_type, pkt_set_mode, pkt_set_options, pkts_for_init};
+use rog_slash::{SlashMode, SlashType};
+
 use crate::ctrl_slash::config::SlashConfig;
 use crate::error::RogError;
 
@@ -54,7 +55,7 @@ impl CtrlSlash {
         };
 
         let slash_type = get_slash_type()?;
-        if slash_type == SlashType::Unknown  {
+        if slash_type == SlashType::Unknown {
             return Err(RogError::Slash(SlashError::NoDevice));
         }
 
@@ -71,13 +72,16 @@ impl CtrlSlash {
     }
 
     fn do_initialization(&self) -> Result<(), RogError> {
-
         let init_packets = pkts_for_init();
         self.node.write_bytes(&init_packets[0])?;
         self.node.write_bytes(&init_packets[1])?;
 
         // Apply config upon initialization
-        let option_packets = pkt_set_options(self.config.slash_enabled, self.config.slash_brightness, self.config.slash_interval);
+        let option_packets = pkt_set_options(
+            self.config.slash_enabled,
+            self.config.slash_brightness,
+            self.config.slash_interval,
+        );
         self.node.write_bytes(&option_packets)?;
 
         let mode_packets = pkt_set_mode(self.config.slash_mode);

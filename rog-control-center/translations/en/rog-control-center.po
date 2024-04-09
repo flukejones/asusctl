@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-04-09 09:23+0000\n"
+"POT-Creation-Date: 2024-04-09 21:13+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -11,46 +11,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Language: \n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-
-#: rog-control-center/ui/main_window.slint:50
-msgctxt "MainWindow"
-msgid "ROG"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:52
-msgctxt "Menu1"
-msgid "System Control"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:53
-msgctxt "Menu2"
-msgid "Keyboard Aura"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:54
-msgctxt "Menu3"
-msgid "AniMe Matrix"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:55
-msgctxt "Menu4"
-msgid "Fan Curves"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:56
-msgctxt "Menu5"
-msgid "App Settings"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:57
-msgctxt "Menu6"
-msgid "About"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:69
-msgctxt "MainWindow"
-msgid "Quit"
-msgstr ""
 
 #: rog-control-center/ui/pages/anime.slint:6
 msgctxt "Anime Brightness"
@@ -195,46 +155,6 @@ msgstr ""
 #: rog-control-center/ui/pages/app_settings.slint:59
 msgctxt "PageAppSettings"
 msgid "Enable change notifications"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:27
-msgctxt "PageAura"
-msgid "Brightness"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:38
-msgctxt "PageAura"
-msgid "Aura mode"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:56
-msgctxt "PageAura"
-msgid "Colour 1"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:82
-msgctxt "PageAura"
-msgid "Colour 2"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:114
-msgctxt "PageAura"
-msgid "Zone"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:137
-msgctxt "PageAura"
-msgid "Direction"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:159
-msgctxt "PageAura"
-msgid "Speed"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:180
-msgctxt "PageAura"
-msgid "Power Settings"
 msgstr ""
 
 #: rog-control-center/ui/pages/fans.slint:27
@@ -440,6 +360,46 @@ msgstr ""
 #: rog-control-center/ui/pages/system.slint:354
 msgctxt "PageSystem"
 msgid "Throttle Policy on AC"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:27
+msgctxt "PageAura"
+msgid "Brightness"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:38
+msgctxt "PageAura"
+msgid "Aura mode"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:56
+msgctxt "PageAura"
+msgid "Colour 1"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:82
+msgctxt "PageAura"
+msgid "Colour 2"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:114
+msgctxt "PageAura"
+msgid "Zone"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:137
+msgctxt "PageAura"
+msgid "Direction"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:159
+msgctxt "PageAura"
+msgid "Speed"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:180
+msgctxt "PageAura"
+msgid "Power Settings"
 msgstr ""
 
 #: rog-control-center/ui/types/aura_types.slint:46
@@ -650,5 +610,45 @@ msgstr ""
 #: rog-control-center/ui/widgets/aura_power.slint:62
 msgctxt "AuraPowerGroup"
 msgid "Shutdown"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:50
+msgctxt "MainWindow"
+msgid "ROG"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:52
+msgctxt "Menu1"
+msgid "System Control"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:53
+msgctxt "Menu2"
+msgid "Keyboard Aura"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:54
+msgctxt "Menu3"
+msgid "AniMe Matrix"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:55
+msgctxt "Menu4"
+msgid "Fan Curves"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:56
+msgctxt "Menu5"
+msgid "App Settings"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:57
+msgctxt "Menu6"
+msgid "About"
+msgstr ""
+
+#: rog-control-center/ui/main_window.slint:69
+msgctxt "MainWindow"
+msgid "Quit"
 msgstr ""
 

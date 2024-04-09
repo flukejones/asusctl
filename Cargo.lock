@@ -3517,6 +3517,7 @@ dependencies = [
  "rog_aura",
  "rog_platform",
  "rog_profiles",
+ "rog_slash",
  "zbus 4.1.2",
 ]
 
@@ -3564,7 +3565,7 @@ dependencies = [
 
 [[package]]
 name = "rog_slash"
-version = "6.0.0-alpha1"
+version = "6.0.0-alpha3"
 dependencies = [
  "cargo-husky",
  "dmi_id",
@@ -3576,7 +3577,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "typeshare",
- "zbus 4.0.1",
+ "zbus 4.1.2",
 ]
 
 [[package]]

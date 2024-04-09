@@ -1,6 +1,6 @@
-use serde_derive::{Deserialize, Serialize};
 use config_traits::{StdConfig, StdConfigLoad};
 use rog_slash::{DeviceState, SlashMode};
+use serde_derive::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "slash.ron";
 

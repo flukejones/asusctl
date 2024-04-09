@@ -41,13 +41,17 @@ async fn main() -> Result<()> {
     let board_name = dmi.board_name;
     let prod_family = dmi.product_family;
     info!("Running on {board_name}, product: {prod_family}");
-    // let is_rog_ally = prod_family == "RC71L";
+    let is_rog_ally = prod_family == "RC71L";
 
     // tmp-dir must live to the end of program life
-    let _tmp_dir = tempfile::Builder::new()
+    let _tmp_dir = match tempfile::Builder::new()
         .prefix("rog-gui")
         .rand_bytes(0)
-        .tempdir().unwrap_or_else(|_| on_tmp_dir_exists().unwrap());
+        .tempdir()
+    {
+        Ok(tmp) => tmp,
+        Err(_) => on_tmp_dir_exists().unwrap(),
+    };
 
     let args: Vec<String> = args().skip(1).collect();
 
@@ -80,7 +84,8 @@ async fn main() -> Result<()> {
         Err(_e) => {
             // TODO: show an error window
             Vec::default()
-        });
+        }
+    };
 
     // Startup
     let mut config = Config::new().load();
@@ -122,8 +127,7 @@ async fn main() -> Result<()> {
         init_tray(supported_properties, states.clone(), config.clone());
     }
 
-    thread_local! { pub static UI: std::cell::RefCell<Option<MainWindow>> = Default::default()}
-    ;
+    thread_local! { pub static UI: std::cell::RefCell<Option<MainWindow>> = Default::default()};
     i_slint_backend_selector::with_platform(|_| Ok(())).unwrap();
 
     let mut do_once = !startup_in_background;
@@ -180,7 +184,7 @@ async fn main() -> Result<()> {
                         }
                     });
                 })
-                    .unwrap();
+                .unwrap();
             } else {
                 if buf[1] == QUIT_APP {
                     slint::quit_event_loop().unwrap();
@@ -202,7 +206,7 @@ async fn main() -> Result<()> {
                             }
                         });
                     })
-                        .unwrap();
+                    .unwrap();
                 }
             }
         }

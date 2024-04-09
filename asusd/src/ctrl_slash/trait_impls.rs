@@ -1,13 +1,14 @@
 use std::sync::Arc;
-use log::warn;
-use zbus::{Connection, interface, SignalContext};
-use zbus::export::futures_util::lock::Mutex;
+
 use config_traits::StdConfig;
-use rog_slash::{DeviceState, SlashMode};
+use log::warn;
 use rog_slash::usb::{pkt_set_mode, pkt_set_options};
+use rog_slash::{DeviceState, SlashMode};
+use zbus::export::futures_util::lock::Mutex;
+use zbus::{interface, Connection, SignalContext};
+
 use crate::ctrl_slash::CtrlSlash;
 use crate::error::RogError;
-
 
 pub const SLASH_ZBUS_NAME: &str = "Slash";
 pub const SLASH_ZBUS_PATH: &str = "/org/asuslinux";
@@ -24,7 +25,6 @@ impl crate::ZbusRun for CtrlSlashZbus {
 
 #[interface(name = "org.asuslinux.Slash")]
 impl CtrlSlashZbus {
-
     /// Get enabled or not
     #[zbus(property)]
     async fn enabled(&self) -> bool {
@@ -35,9 +35,17 @@ impl CtrlSlashZbus {
     /// Set enabled true or false
     async fn set_enabled(&self, enabled: bool) {
         let mut lock = self.0.lock().await;
-        let brightness = if enabled && lock.config.slash_brightness == 0 { 0x88 } else { lock.config.slash_brightness };
+        let brightness = if enabled && lock.config.slash_brightness == 0 {
+            0x88
+        } else {
+            lock.config.slash_brightness
+        };
         lock.node
-            .write_bytes(&pkt_set_options(enabled, brightness, lock.config.slash_interval))
+            .write_bytes(&pkt_set_options(
+                enabled,
+                brightness,
+                lock.config.slash_interval,
+            ))
             .map_err(|err| {
                 warn!("ctrl_slash::set_options {}", err);
             })
@@ -60,7 +68,11 @@ impl CtrlSlashZbus {
         let mut lock = self.0.lock().await;
         let enabled = brightness > 0;
         lock.node
-            .write_bytes(&pkt_set_options(enabled, brightness, lock.config.slash_interval))
+            .write_bytes(&pkt_set_options(
+                enabled,
+                brightness,
+                lock.config.slash_interval,
+            ))
             .map_err(|err| {
                 warn!("ctrl_slash::set_options {}", err);
             })
@@ -81,7 +93,11 @@ impl CtrlSlashZbus {
     async fn set_interval(&self, interval: u8) {
         let mut lock = self.0.lock().await;
         lock.node
-            .write_bytes(&pkt_set_options(lock.config.slash_enabled, lock.config.slash_brightness, interval))
+            .write_bytes(&pkt_set_options(
+                lock.config.slash_enabled,
+                lock.config.slash_brightness,
+                interval,
+            ))
             .map_err(|err| {
                 warn!("ctrl_slash::set_options {}", err);
             })

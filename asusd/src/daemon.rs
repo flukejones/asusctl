@@ -11,13 +11,13 @@ use asusd::ctrl_anime::CtrlAnime;
 use asusd::ctrl_aura::manager::AuraManager;
 use asusd::ctrl_fancurves::CtrlFanCurveZbus;
 use asusd::ctrl_platform::CtrlPlatform;
+use asusd::ctrl_slash::config::SlashConfig;
+use asusd::ctrl_slash::trait_impls::CtrlSlashZbus;
+use asusd::ctrl_slash::CtrlSlash;
 use asusd::{print_board_info, start_tasks, CtrlTask, DBUS_NAME};
 use config_traits::{StdConfig, StdConfigLoad, StdConfigLoad2, StdConfigLoad3};
 use log::{error, info};
 use zbus::fdo::ObjectManager;
-use asusd::ctrl_slash::config::SlashConfig;
-use asusd::ctrl_slash::CtrlSlash;
-use asusd::ctrl_slash::trait_impls::CtrlSlashZbus;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -114,7 +114,8 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
             let zbus = CtrlSlashZbus(Arc::new(Mutex::new(ctrl)));
             // Currently, the Slash has no need for a loop watching power events, however,
             // it could be cool to have the slash do some power-on/off animation
-            // (It has a built-in power on animation which plays when u plug in the power supply)
+            // (It has a built-in power on animation which plays when u plug in the power
+            // supply)
             let sig_ctx = CtrlSlashZbus::signal_context(&connection)?;
             start_tasks(zbus, &mut connection, sig_ctx).await?;
         }

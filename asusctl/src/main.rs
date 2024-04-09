@@ -19,6 +19,7 @@ use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use rog_dbus::zbus_aura::AuraProxyBlocking;
 use rog_dbus::zbus_fan_curves::FanCurvesProxyBlocking;
 use rog_dbus::zbus_platform::PlatformProxyBlocking;
+use rog_dbus::zbus_slash::SlashProxyBlocking;
 use rog_platform::platform::{GpuMode, Properties, ThrottlePolicy};
 use rog_profiles::error::ProfileError;
 use rog_slash::SlashMode;
@@ -26,7 +27,7 @@ use zbus::blocking::Connection;
 
 use crate::aura_cli::{AuraPowerStates, LedBrightness};
 use crate::cli_opts::*;
-use crate::slash_cli::{SlashCommand};
+use crate::slash_cli::SlashCommand;
 
 mod anime_cli;
 mod aura_cli;
@@ -486,38 +487,35 @@ fn verify_brightness(brightness: f32) {
     }
 }
 
-fn handle_slash(
-    dbus: &RogDbusClientBlocking<'_>,
-    cmd: &SlashCommand,
-) -> Result<(), Box<dyn std::error::Error>> {
-    if (
-        cmd.brightness.is_none() &&
-        cmd.interval.is_none() &&
-        cmd.slash_mode.is_none() &&
-        !cmd.list &&
-        !cmd.enable &&
-        !cmd.disable
-    ) || cmd.help
+fn handle_slash(conn: &Connection, cmd: &SlashCommand) -> Result<(), Box<dyn std::error::Error>> {
+    if (cmd.brightness.is_none()
+        && cmd.interval.is_none()
+        && cmd.slash_mode.is_none()
+        && !cmd.list
+        && !cmd.enable
+        && !cmd.disable)
+        || cmd.help
     {
         println!("Missing arg or command\n\n{}", cmd.self_usage());
         if let Some(lst) = cmd.self_command_list() {
             println!("\n{}", lst);
         }
     }
+    let proxy = SlashProxyBlocking::new(conn)?;
     if cmd.enable {
-        dbus.proxies().slash().set_enabled(true)?;
+        proxy.set_enabled(true)?;
     }
     if cmd.disable {
-        dbus.proxies().slash().set_enabled(false)?;
+        proxy.set_enabled(false)?;
     }
     if let Some(brightness) = cmd.brightness {
-        dbus.proxies().slash().set_brightness(brightness)?;
+        proxy.set_brightness(brightness)?;
     }
     if let Some(interval) = cmd.interval {
-        dbus.proxies().slash().set_interval(interval)?;
+        proxy.set_interval(interval)?;
     }
     if let Some(slash_mode) = cmd.slash_mode {
-        dbus.proxies().slash().set_slash_mode(slash_mode)?;
+        proxy.set_slash_mode(slash_mode)?;
     }
     if cmd.list {
         let res = SlashMode::list();

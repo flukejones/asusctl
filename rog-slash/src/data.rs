@@ -17,6 +17,7 @@ pub enum SlashType {
 
 impl FromStr for SlashType {
     type Err = SlashError;
+
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         Ok(match s {
             "ga403" | "GA403" => Self::GA403,
@@ -32,8 +33,8 @@ pub enum SlashMode {
     Bounce = 0x10,
     Slash = 0x12,
     Loading = 0x13,
-    BitStream = 0x1D,
-    Transmission = 0x1A,
+    BitStream = 0x1d,
+    Transmission = 0x1a,
     Flow = 0x19,
     Flux = 0x25,
     Phantom = 0x24,
@@ -77,7 +78,6 @@ impl FromStr for SlashMode {
     }
 }
 
-
 impl Display for SlashMode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = match &self {
@@ -102,7 +102,6 @@ impl Display for SlashMode {
 }
 
 impl SlashMode {
-
     pub fn list() -> [String; 15] {
         [
             SlashMode::Bounce.to_string(),
@@ -134,4 +133,3 @@ pub struct DeviceState {
     pub slash_interval: u8,
     pub slash_mode: SlashMode,
 }
-
