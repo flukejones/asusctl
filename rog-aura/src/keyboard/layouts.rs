@@ -8,7 +8,7 @@ use std::slice::Iter;
 use log::warn;
 use serde::{Deserialize, Serialize};
 
-use crate::aura_detection::LaptopLedData;
+use crate::aura_detection::LedSupportData;
 use crate::error::Error;
 use crate::keyboard::{AdvancedAuraType, LedCode};
 use crate::{AuraModeNum, AuraZone};
@@ -278,7 +278,7 @@ impl KeyLayout {
     }
 
     /// Find a layout matching the name in `LaptopLedData` in the provided dir
-    pub fn find_layout(led_data: LaptopLedData, mut data_path: PathBuf) -> Result<Self, Error> {
+    pub fn find_layout(led_data: LedSupportData, mut data_path: PathBuf) -> Result<Self, Error> {
         // TODO: locales
         let layout_name = if led_data.layout_name.is_empty() {
             "ga401q".to_owned() // Need some sort of default here due to ROGCC
@@ -543,7 +543,7 @@ mod tests {
                 .map_err(|e| {
                     panic!(
                         "Error checking {data_path:?} for {} : {e:?}",
-                        config.board_name
+                        config.device_name
                     )
                 })
                 .unwrap();
@@ -551,7 +551,7 @@ mod tests {
             if let Err(e) = file.read_to_string(&mut buf) {
                 panic!(
                     "Error checking {data_path:?} for {} : {e:?}",
-                    config.board_name
+                    config.device_name
                 )
             }
             if let Err(e) = ron::from_str::<KeyLayout>(&buf) {

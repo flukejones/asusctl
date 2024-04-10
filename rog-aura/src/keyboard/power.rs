@@ -9,8 +9,8 @@ use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::{OwnedValue, Type, Value};
 
-use crate::aura_detection::{LaptopLedData, PowerZones};
-use crate::AuraDeviceType;
+use crate::aura_detection::LedSupportData;
+use crate::{AuraDeviceType, PowerZones};
 
 /// Meaning of this struct depends on the laptop generation.
 /// - 2021+, the struct is a single zone with 4 states
@@ -133,7 +133,7 @@ impl AuraPowerState {
                     | (self.sleep as u32) << (23 + 3)
                     | (self.shutdown as u32) << (23 + 4)
             }
-            PowerZones::KeyboardAndLightbar => 0,
+            PowerZones::KeyboardAndLightbar | PowerZones::None => 0,
         }
     }
 }
@@ -184,7 +184,7 @@ impl LaptopAuraPower {
     }
 
     // TODO: use support data to setup correct zones
-    pub fn new(aura_type: AuraDeviceType, support_data: &LaptopLedData) -> Self {
+    pub fn new(aura_type: AuraDeviceType, support_data: &LedSupportData) -> Self {
         match aura_type {
             AuraDeviceType::Unknown | AuraDeviceType::LaptopPost2021 => {
                 let mut states = Vec::new();
@@ -276,9 +276,9 @@ impl From<OldAuraPower> for u32 {
 
 #[cfg(test)]
 mod test {
-    use crate::aura_detection::{LaptopLedData, PowerZones};
+    use crate::aura_detection::LedSupportData;
     use crate::keyboard::{AuraPowerState, LaptopAuraPower};
-    use crate::AuraDeviceType;
+    use crate::{AuraDeviceType, PowerZones};
 
     #[test]
     fn check_0x1866_control_bytes() {
@@ -515,7 +515,8 @@ mod test {
         assert_eq!(shut_rear_, "00000000, 00000000, 00000000, 00001000");
 
         // All on
-        let byte1 = LaptopAuraPower::new(AuraDeviceType::LaptopPost2021, &LaptopLedData::default());
+        let byte1 =
+            LaptopAuraPower::new(AuraDeviceType::LaptopPost2021, &LedSupportData::default());
         let out = to_binary_string(&byte1);
         assert_eq!(out, "11111111, 00011110, 00001111, 00001111");
     }

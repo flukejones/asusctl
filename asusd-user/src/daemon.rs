@@ -7,7 +7,7 @@ use asusd_user::config::*;
 use asusd_user::ctrl_anime::{CtrlAnime, CtrlAnimeInner};
 use config_traits::{StdConfig, StdConfigLoad};
 use rog_anime::usb::get_anime_type;
-use rog_aura::aura_detection::LaptopLedData;
+use rog_aura::aura_detection::LedSupportData;
 use rog_aura::keyboard::KeyLayout;
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use rog_dbus::zbus_aura::AuraProxyBlocking;
@@ -94,7 +94,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut aura_config = ConfigAura::new().set_name(cfg).load();
         // let baord_name = std::fs::read_to_string(BOARD_NAME)?;
 
-        let led_support = LaptopLedData::get_data();
+        let led_support = LedSupportData::get_data("");
 
         let layout = KeyLayout::find_layout(led_support, PathBuf::from(DATA_DIR))
             .map_err(|e| {

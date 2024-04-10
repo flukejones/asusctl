@@ -3,9 +3,8 @@ use std::sync::Arc;
 
 use config_traits::StdConfig;
 use log::{debug, error, info, warn};
-use rog_aura::aura_detection::PowerZones;
 use rog_aura::keyboard::{LaptopAuraPower, UsbPackets};
-use rog_aura::{AuraDeviceType, AuraEffect, AuraModeNum, AuraZone, LedBrightness};
+use rog_aura::{AuraDeviceType, AuraEffect, AuraModeNum, AuraZone, LedBrightness, PowerZones};
 use zbus::export::futures_util::lock::{Mutex, MutexGuard};
 use zbus::export::futures_util::StreamExt;
 use zbus::fdo::Error as ZbErr;

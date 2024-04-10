@@ -1,86 +1,89 @@
 use dmi_id::DMIID;
 use log::{error, info, warn};
 use serde_derive::{Deserialize, Serialize};
-use typeshare::typeshare;
-use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::keyboard::AdvancedAuraType;
-use crate::{AuraModeNum, AuraZone};
+use crate::{AuraModeNum, AuraZone, PowerZones};
 
 pub const ASUS_LED_MODE_CONF: &str = "/usr/share/asusd/aura_support.ron";
 pub const ASUS_LED_MODE_USER_CONF: &str = "/etc/asusd/asusd_user_ledmodes.ron";
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct LedSupportFile(Vec<LaptopLedData>);
-
-/// The powerr zones this laptop supports
-#[typeshare]
-#[cfg_attr(
-    feature = "dbus",
-    derive(Type, Value, OwnedValue),
-    zvariant(signature = "u")
-)]
-#[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Default, Copy, Clone)]
-pub enum PowerZones {
-    /// The logo on some laptop lids
-    #[default]
-    Logo = 0,
-    /// The full keyboard (not zones)
-    Keyboard = 1,
-    /// The lightbar, typically on the front of the laptop
-    Lightbar = 2,
-    /// The leds that may be placed around the edge of the laptop lid
-    Lid = 3,
-    /// The led strip on the rear of some laptops
-    RearGlow = 4,
-    /// On pre-2021 laptops there is either 1 or 2 zones used
-    KeyboardAndLightbar = 5,
-}
-
 #[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize, Serialize)]
-pub struct LaptopLedData {
-    /// Found via `cat /sys/class/dmi/id/board_name`, e.g `GU603ZW`.
-    /// The match doesn't have to be the complete model number as it is
-    /// typically broken down such:
+pub struct LedSupportData {
+    /// This can be many different types of name:
+    /// - `/sys/class/dmi/id/board_name` (must use for laptops)
+    /// - The device name from `lsusb`
+    /// - The product ID (usb only)
+    ///
+    /// The laptop board_name is found via `cat /sys/class/dmi/id/board_name`,
+    /// e.g `GU603ZW`. The match doesn't have to be the complete model
+    /// number as it is typically broken down such:
     /// - GU = product
     /// - 603 = model/platform
     /// - Z = variant/year or perhaps dGPU model (such as RTX 3xxx)
     /// - W = possibly dGPU model (such as RTX 3060Ti)
-    pub board_name: String,
+    ///
+    /// If using a device name the match is similar to the above where it can be
+    /// partial, so `ASUSTek Computer, Inc. ROG STRIX Arion` can be `STRIX
+    /// Arion` for short. Case insensitive.
+    ///
+    /// Example of using a product ID is:
+    /// ```
+    /// $ lsusb
+    /// $ Bus 003 Device 003: ID 0b05:19b6 ASUSTek Computer, Inc. N-KEY Device
+    /// ```
+    /// here `19b6` is all that is required. Case insensitive.
+    pub device_name: String,
+    /// Keyboard or device LED layout, this is the name of the externally
+    /// defined layout file. Optional, can be an empty string
     pub layout_name: String,
+    /// If empty will default to `Static` mode
     pub basic_modes: Vec<AuraModeNum>,
+    /// Available on some laptops. This is where the keyboard may be split in to
+    /// 4 zones and may have a logo and lightbar.
+    ///
+    /// Ignored if empty.
     pub basic_zones: Vec<AuraZone>,
+    /// `Zoned` or `PerKey`.
+    // TODO: remove and use layouts only
     pub advanced_type: AdvancedAuraType,
+    /// If empty will default to `Keyboard` power zone
     pub power_zones: Vec<PowerZones>,
 }
 
-impl LaptopLedData {
-    pub fn get_data() -> Self {
+impl LedSupportData {
+    /// Find the data for the device. This function will check DMI info for
+    /// matches against laptops first, then will proceed with matching the
+    /// `device_name` if there are no DMI matches.
+    pub fn get_data(_device_name: &str) -> Self {
         let dmi = DMIID::new().unwrap_or_default();
         // let prod_family = dmi.product_family().expect("Could not get
         // product_family");
 
-        if let Some(modes) = LedSupportFile::load_from_supoprt_db() {
-            if let Some(data) = modes.matcher(&dmi.board_name) {
+        if let Some(data) = LedSupportFile::load_from_supoprt_db() {
+            if let Some(data) = data.match_device(&dmi.board_name) {
                 return data;
             }
         }
         info!("Using generic LED control for keyboard brightness only");
-        LaptopLedData::default()
+        LedSupportData::default()
     }
 }
 
+#[derive(Debug, Default, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct LedSupportFile(Vec<LedSupportData>);
+
 impl LedSupportFile {
-    pub fn get(&self) -> &[LaptopLedData] {
+    pub fn get(&self) -> &[LedSupportData] {
         &self.0
     }
 
     /// The list is stored in ordered format, so the iterator must be reversed
     /// to ensure we match to *whole names* first before doing a glob match
-    pub fn matcher(self, board_name: &str) -> Option<LaptopLedData> {
+    fn match_device(&self, device_name: &str) -> Option<LedSupportData> {
         for config in self.0.iter().rev() {
-            if board_name.contains(&config.board_name) {
-                info!("LedSupport: Matched to {}", config.board_name);
+            if device_name.contains(&config.device_name) {
+                info!("LedSupport: Matched to {}", config.device_name);
                 return Some(config.clone());
             }
         }
@@ -125,7 +128,7 @@ impl LedSupportFile {
                 );
             }
         }
-        data.0.sort_by(|a, b| a.board_name.cmp(&b.board_name));
+        data.0.sort_by(|a, b| a.device_name.cmp(&b.device_name));
 
         if loaded {
             return Some(data);
@@ -144,7 +147,7 @@ mod tests {
 
     use ron::ser::PrettyConfig;
 
-    use super::LaptopLedData;
+    use super::LedSupportData;
     use crate::aura_detection::{LedSupportFile, PowerZones};
     use crate::keyboard::{AdvancedAuraType, LedCode};
     // use crate::zoned::Zone;
@@ -152,8 +155,8 @@ mod tests {
 
     #[test]
     fn check_data_parse() {
-        let led = LaptopLedData {
-            board_name: "Test".to_owned(),
+        let led = LedSupportData {
+            device_name: "Test".to_owned(),
             layout_name: "ga401".to_owned(),
             basic_modes: vec![AuraModeNum::Static],
             basic_zones: vec![AuraZone::Key1, AuraZone::Logo, AuraZone::BarLeft],
@@ -176,7 +179,7 @@ mod tests {
 
         // Ensure the data is sorted
         let mut tmp_sort = tmp.clone();
-        tmp_sort.0.sort_by(|a, b| a.board_name.cmp(&b.board_name));
+        tmp_sort.0.sort_by(|a, b| a.device_name.cmp(&b.device_name));
         if tmp != tmp_sort {
             let sorted =
                 ron::ser::to_string_pretty(&tmp_sort, PrettyConfig::new().depth_limit(2)).unwrap();

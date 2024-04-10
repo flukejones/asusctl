@@ -105,3 +105,28 @@ impl From<&str> for AuraDeviceType {
         }
     }
 }
+
+/// The powerr zones this laptop supports
+#[typeshare]
+#[cfg_attr(
+    feature = "dbus",
+    derive(Type, Value, OwnedValue),
+    zvariant(signature = "u")
+)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Debug, Default, Copy, Clone)]
+pub enum PowerZones {
+    /// The logo on some laptop lids
+    Logo = 0,
+    /// The full keyboard (not zones)
+    #[default]
+    Keyboard = 1,
+    /// The lightbar, typically on the front of the laptop
+    Lightbar = 2,
+    /// The leds that may be placed around the edge of the laptop lid
+    Lid = 3,
+    /// The led strip on the rear of some laptops
+    RearGlow = 4,
+    /// On pre-2021 laptops there is either 1 or 2 zones used
+    KeyboardAndLightbar = 5,
+    None = 255,
+}

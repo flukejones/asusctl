@@ -50,13 +50,13 @@ impl From<crate::slint_generatedMainWindow::AuraEffect> for rog_aura::AuraEffect
     }
 }
 
-use rog_aura::aura_detection::PowerZones;
 use rog_aura::keyboard::{AuraPowerState, LaptopAuraPower};
+use rog_aura::PowerZones;
 use slint::{Model, ModelRc, RgbaColor};
 
 use crate::slint_generatedMainWindow::PowerZones as SlintPowerZones;
-impl From<rog_aura::aura_detection::PowerZones> for SlintPowerZones {
-    fn from(value: rog_aura::aura_detection::PowerZones) -> Self {
+impl From<PowerZones> for SlintPowerZones {
+    fn from(value: PowerZones) -> Self {
         match value {
             PowerZones::Logo => SlintPowerZones::Logo,
             PowerZones::Keyboard => SlintPowerZones::Keyboard,
@@ -64,21 +64,20 @@ impl From<rog_aura::aura_detection::PowerZones> for SlintPowerZones {
             PowerZones::Lid => SlintPowerZones::Lid,
             PowerZones::RearGlow => SlintPowerZones::RearGlow,
             PowerZones::KeyboardAndLightbar => todo!(),
+            PowerZones::None => todo!(),
         }
     }
 }
 
-impl From<SlintPowerZones> for rog_aura::aura_detection::PowerZones {
+impl From<SlintPowerZones> for PowerZones {
     fn from(value: SlintPowerZones) -> Self {
         match value {
-            SlintPowerZones::Logo => rog_aura::aura_detection::PowerZones::Logo,
-            SlintPowerZones::Keyboard => rog_aura::aura_detection::PowerZones::Keyboard,
-            SlintPowerZones::Lightbar => rog_aura::aura_detection::PowerZones::Lightbar,
-            SlintPowerZones::Lid => rog_aura::aura_detection::PowerZones::Lid,
-            SlintPowerZones::RearGlow => rog_aura::aura_detection::PowerZones::RearGlow,
-            SlintPowerZones::KeyboardAndLightbar => {
-                rog_aura::aura_detection::PowerZones::KeyboardAndLightbar
-            }
+            SlintPowerZones::Logo => PowerZones::Logo,
+            SlintPowerZones::Keyboard => PowerZones::Keyboard,
+            SlintPowerZones::Lightbar => PowerZones::Lightbar,
+            SlintPowerZones::Lid => PowerZones::Lid,
+            SlintPowerZones::RearGlow => PowerZones::RearGlow,
+            SlintPowerZones::KeyboardAndLightbar => PowerZones::KeyboardAndLightbar,
         }
     }
 }

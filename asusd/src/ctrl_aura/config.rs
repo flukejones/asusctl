@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use config_traits::{StdConfig, StdConfigLoad};
 use log::{debug, info, warn};
-use rog_aura::aura_detection::LaptopLedData;
+use rog_aura::aura_detection::LedSupportData;
 use rog_aura::keyboard::LaptopAuraPower;
 use rog_aura::{
     AuraDeviceType, AuraEffect, AuraModeNum, AuraZone, Direction, LedBrightness, Speed, GRADIENT,
@@ -46,11 +46,11 @@ impl AuraConfig {
     pub fn new(prod_id: &str) -> Self {
         info!("Setting up AuraConfig for {prod_id:?}");
         // create a default config here
-        let device_type = AuraDeviceType::from(&*prod_id);
+        let device_type = AuraDeviceType::from(prod_id);
         if device_type == AuraDeviceType::Unknown {
             warn!("idProduct:{prod_id:?} is unknown");
         }
-        let support_data = LaptopLedData::get_data();
+        let support_data = LedSupportData::get_data(prod_id);
         let enabled = LaptopAuraPower::new(device_type, &support_data);
         let mut config = AuraConfig {
             config_name: format!("aura_{prod_id}.ron"),

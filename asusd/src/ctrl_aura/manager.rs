@@ -8,7 +8,6 @@ use std::collections::HashSet;
 
 use log::{debug, error, info, warn};
 use mio::{Events, Interest, Poll, Token};
-use rog_aura::aura_detection::LaptopLedData;
 use rog_aura::AuraDeviceType;
 use rog_platform::hid_raw::HidRaw;
 use tokio::task::spawn_blocking;
@@ -29,11 +28,10 @@ pub struct AuraManager {
 impl AuraManager {
     pub async fn new(connection: Connection) -> Result<Self, RogError> {
         let conn_copy = connection.clone();
-        let data = LaptopLedData::get_data();
         let mut interfaces = HashSet::new();
 
         // Do the initial keyboard detection:
-        let all = CtrlKbdLed::find_all(&data)?;
+        let all = CtrlKbdLed::find_all()?;
         for ctrl in all {
             let path = ctrl.dbus_path.clone();
             interfaces.insert(path.clone()); // ensure we record the initial stuff
@@ -132,10 +130,8 @@ impl AuraManager {
                             if let Ok(raw) = HidRaw::from_device(event.device())
                                 .map_err(|e| error!("device path error: {e:?}"))
                             {
-                                if let Ok(mut ctrl) =
-                                    CtrlKbdLed::from_hidraw(raw, path.clone(), &data)
-                                {
-                                    ctrl.config = CtrlKbdLed::init_config(&id_product, &data);
+                                if let Ok(mut ctrl) = CtrlKbdLed::from_hidraw(raw, path.clone()) {
+                                    ctrl.config = CtrlKbdLed::init_config(&id_product);
                                     interfaces.insert(path.clone());
                                     info!("AuraManager starting device at: {dev_node:?}, {path:?}");
                                     let sig_ctx = CtrlAuraZbus::signal_context(&conn_copy)?;

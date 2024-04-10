@@ -28,13 +28,14 @@ impl FromStr for SlashType {
 
 #[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
-#[derive(Debug, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
+#[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub enum SlashMode {
     Bounce = 0x10,
     Slash = 0x12,
     Loading = 0x13,
     BitStream = 0x1d,
     Transmission = 0x1a,
+    #[default]
     Flow = 0x19,
     Flux = 0x25,
     Phantom = 0x24,
@@ -45,12 +46,6 @@ pub enum SlashMode {
     GameOver = 0x42,
     Start = 0x43,
     Buzzer = 0x44,
-}
-
-impl Default for SlashMode {
-    fn default() -> Self {
-        SlashMode::Flow
-    }
 }
 
 impl FromStr for SlashMode {

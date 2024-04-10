@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, HashSet};
 use config_traits::{StdConfig, StdConfigLoad};
 use inotify::Inotify;
 use log::{debug, info, warn};
-use rog_aura::aura_detection::LaptopLedData;
+use rog_aura::aura_detection::LedSupportData;
 use rog_aura::keyboard::{LedUsbPackets, UsbPackets};
 use rog_aura::usb::{LED_APPLY, LED_SET};
 use rog_aura::{
@@ -54,14 +54,14 @@ impl LEDNode {
 pub struct CtrlKbdLed {
     pub led_type: AuraDeviceType,
     pub led_node: LEDNode,
-    pub supported_data: LaptopLedData, // TODO: is storing this really required?
+    pub supported_data: LedSupportData, // TODO: is storing this really required?
     pub per_key_mode_active: bool,
     pub config: AuraConfig,
     pub dbus_path: OwnedObjectPath,
 }
 
 impl CtrlKbdLed {
-    pub fn find_all(data: &LaptopLedData) -> Result<Vec<Self>, RogError> {
+    pub fn find_all() -> Result<Vec<Self>, RogError> {
         info!("Searching for all Aura devices");
         let mut devices = Vec::new();
         let mut found = HashSet::new(); // track and ensure we use only one hidraw per prod_id
@@ -114,8 +114,8 @@ impl CtrlKbdLed {
                 info!("AuraControl found device at: {:?}", dev_node);
                 let dbus_path = dbus_path_for_dev(&usb_device).unwrap_or_default();
                 let dev = HidRaw::from_device(end_point)?;
-                let mut dev = Self::from_hidraw(dev, dbus_path, data)?;
-                dev.config = Self::init_config(&prod_id, data);
+                let mut dev = Self::from_hidraw(dev, dbus_path)?;
+                dev.config = Self::init_config(&prod_id);
                 devices.push(dev);
             }
         }
@@ -127,11 +127,7 @@ impl CtrlKbdLed {
     /// The generated data from this function has a default config. This config
     /// should be overwritten. The reason for the default config is because
     /// of async issues between this and udev/hidraw
-    pub fn from_hidraw(
-        device: HidRaw,
-        dbus_path: OwnedObjectPath,
-        data: &LaptopLedData,
-    ) -> Result<Self, RogError> {
+    pub fn from_hidraw(device: HidRaw, dbus_path: OwnedObjectPath) -> Result<Self, RogError> {
         let rgb_led = KeyboardLed::new()?;
         let prod_id = AuraDeviceType::from(device.prod_id());
         if prod_id == AuraDeviceType::Unknown {
@@ -142,6 +138,7 @@ impl CtrlKbdLed {
         // New loads data from the DB also
         // let config = Self::init_config(prod_id, data);
 
+        let data = LedSupportData::get_data(device.prod_id());
         let ctrl = CtrlKbdLed {
             led_type: prod_id,
             led_node: LEDNode::Rog(rgb_led, device),
@@ -153,7 +150,7 @@ impl CtrlKbdLed {
         Ok(ctrl)
     }
 
-    pub fn init_config(prod_id: &str, supported_basic_modes: &LaptopLedData) -> AuraConfig {
+    pub fn init_config(prod_id: &str) -> AuraConfig {
         // New loads data from the DB also
         let mut config_init = AuraConfig::new(prod_id);
         // config_init.set_filename(prod_id);
@@ -175,9 +172,10 @@ impl CtrlKbdLed {
                 // update init values from loaded values if they exist
                 if let Some(loaded) = multizone_loaded.get(mode.0) {
                     let mut new_set = Vec::new();
+                    let data = LedSupportData::get_data(prod_id);
                     // only reuse a zone mode if the mode is supported
                     for mode in loaded {
-                        if supported_basic_modes.basic_modes.contains(&mode.mode) {
+                        if data.basic_modes.contains(&mode.mode) {
                             new_set.push(mode.clone());
                         }
                     }
@@ -201,7 +199,7 @@ impl CtrlKbdLed {
             // pwr[4] as u8];     platform.set_kbd_rgb_state(&buf)?;
             // }
         } else if let LEDNode::Rog(_, hid_raw) = &self.led_node {
-            let bytes = self.config.enabled.to_bytes(self.led_type.into());
+            let bytes = self.config.enabled.to_bytes(self.led_type);
             let message = [0x5d, 0xbd, 0x01, bytes[0], bytes[1], bytes[2], bytes[3]];
 
             hid_raw.write_bytes(&message)?;
@@ -346,8 +344,8 @@ impl CtrlKbdLed {
 
 #[cfg(test)]
 mod tests {
-    use rog_aura::aura_detection::{LaptopLedData, PowerZones};
-    use rog_aura::{AuraDeviceType, AuraModeNum, AuraZone};
+    use rog_aura::aura_detection::LedSupportData;
+    use rog_aura::{AuraDeviceType, AuraModeNum, AuraZone, PowerZones};
     use rog_platform::hid_raw::HidRaw;
     use rog_platform::keyboard_led::KeyboardLed;
     use zbus::zvariant::OwnedObjectPath;
@@ -361,8 +359,8 @@ mod tests {
     fn create_multizone_if_no_config() {
         // Checking to ensure set_mode errors when unsupported modes are tried
         let config = AuraConfig::new("19b6");
-        let supported_basic_modes = LaptopLedData {
-            board_name: String::new(),
+        let supported_basic_modes = LedSupportData {
+            device_name: String::new(),
             layout_name: "ga401".to_owned(),
             basic_modes: vec![AuraModeNum::Static],
             basic_zones: vec![],
@@ -401,8 +399,8 @@ mod tests {
     fn next_mode_create_multizone_if_no_config() {
         // Checking to ensure set_mode errors when unsupported modes are tried
         let config = AuraConfig::new("19b6");
-        let supported_basic_modes = LaptopLedData {
-            board_name: String::new(),
+        let supported_basic_modes = LedSupportData {
+            device_name: String::new(),
             layout_name: "ga401".to_owned(),
             basic_modes: vec![AuraModeNum::Static],
             basic_zones: vec![AuraZone::Key1, AuraZone::Key2],
