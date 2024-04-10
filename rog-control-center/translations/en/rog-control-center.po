@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-04-09 21:13+0000\n"
+"POT-Creation-Date: 2024-04-10 05:04+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -402,6 +402,26 @@ msgctxt "PageAura"
 msgid "Power Settings"
 msgstr ""
 
+#: rog-control-center/ui/widgets/aura_power.slint:32
+msgctxt "AuraPowerGroup"
+msgid "Boot"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:42
+msgctxt "AuraPowerGroup"
+msgid "Awake"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:52
+msgctxt "AuraPowerGroup"
+msgid "Sleep"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:62
+msgctxt "AuraPowerGroup"
+msgid "Shutdown"
+msgstr ""
+
 #: rog-control-center/ui/types/aura_types.slint:46
 msgctxt "Aura power zone"
 msgid "Logo"
@@ -590,26 +610,6 @@ msgstr ""
 #: rog-control-center/ui/types/aura_types.slint:106
 msgctxt "Aura speed"
 msgid "High"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:32
-msgctxt "AuraPowerGroup"
-msgid "Boot"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:42
-msgctxt "AuraPowerGroup"
-msgid "Awake"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:52
-msgctxt "AuraPowerGroup"
-msgid "Sleep"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:62
-msgctxt "AuraPowerGroup"
-msgid "Shutdown"
 msgstr ""
 
 #: rog-control-center/ui/main_window.slint:50
