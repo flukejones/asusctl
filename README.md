@@ -31,7 +31,7 @@ See the [rog-aura readme](./rog-aura/README.md) for more details.
 
 ## Discord
 
-[Discord server link](https://discord.gg/WTHnqabm)
+[Discord server link](https://discord.gg/z8y99XqPb7)
 
 ## SUPPORTED LAPTOPS
 
