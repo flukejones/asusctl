@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add ability to start rog-control-center fullscreen with a width and height. This should be useful for devices like the ROG Ally.
 - Many small changes due to requirements of slint UI
 
+## Added
+
+- Support GA402N keyboard
+
 ## [v5.0.8]
 
 ### Changed
@@ -96,7 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - SetOffWhenLidClosed, also add asusctl CLI option
 - Anime: add brightness_on_battery config option
 - Platform: add `post_animation_sound`, kernel 6.7+ requires patch
-- Add changing of CPU energy perfromance preference in relation to throttle_thermal_policy. This means that the CPU correctly behaves according to throttle_thermal_policy (and platform profile use is _removed_)
+- Add changing of CPU energy perfromance preference in relation to throttle*thermal_policy. This means that the CPU correctly behaves according to throttle_thermal_policy (and platform profile use is \_removed*)
 - Add setting of throttle_thermal_policy on power plug/unplug
 
 ### Changed
