@@ -531,6 +531,10 @@ mod tests {
         data_path.push("loop_prep");
 
         for config in data.get().iter().rev() {
+            if config.layout_name.is_empty() {
+                continue;
+            }
+
             buf.clear();
 
             let layout_file = format!("{}_US.ron", config.layout_name);

@@ -13,7 +13,6 @@ pub struct LedSupportData {
     /// This can be many different types of name:
     /// - `/sys/class/dmi/id/board_name` (must use for laptops)
     /// - The device name from `lsusb`
-    /// - The product ID (usb only)
     ///
     /// The laptop board_name is found via `cat /sys/class/dmi/id/board_name`,
     /// e.g `GU603ZW`. The match doesn't have to be the complete model
@@ -26,16 +25,19 @@ pub struct LedSupportData {
     /// If using a device name the match is similar to the above where it can be
     /// partial, so `ASUSTek Computer, Inc. ROG STRIX Arion` can be `STRIX
     /// Arion` for short. Case insensitive.
-    ///
+    pub device_name: String,
+    /// The product ID (usb only)
     /// Example of using a product ID is:
-    /// ```
+    /// ```ignore
     /// $ lsusb
     /// $ Bus 003 Device 003: ID 0b05:19b6 ASUSTek Computer, Inc. N-KEY Device
     /// ```
     /// here `19b6` is all that is required. Case insensitive.
-    pub device_name: String,
+    #[serde(default)]
+    pub product_id: String,
     /// Keyboard or device LED layout, this is the name of the externally
     /// defined layout file. Optional, can be an empty string
+    #[serde(default)]
     pub layout_name: String,
     /// If empty will default to `Static` mode
     pub basic_modes: Vec<AuraModeNum>,
@@ -43,9 +45,11 @@ pub struct LedSupportData {
     /// 4 zones and may have a logo and lightbar.
     ///
     /// Ignored if empty.
+    #[serde(default)]
     pub basic_zones: Vec<AuraZone>,
     /// `Zoned` or `PerKey`.
     // TODO: remove and use layouts only
+    #[serde(default)]
     pub advanced_type: AdvancedAuraType,
     /// If empty will default to `Keyboard` power zone
     pub power_zones: Vec<PowerZones>,
@@ -55,13 +59,13 @@ impl LedSupportData {
     /// Find the data for the device. This function will check DMI info for
     /// matches against laptops first, then will proceed with matching the
     /// `device_name` if there are no DMI matches.
-    pub fn get_data(_device_name: &str) -> Self {
+    pub fn get_data(product_id: &str) -> Self {
         let dmi = DMIID::new().unwrap_or_default();
         // let prod_family = dmi.product_family().expect("Could not get
         // product_family");
 
         if let Some(data) = LedSupportFile::load_from_supoprt_db() {
-            if let Some(data) = data.match_device(&dmi.board_name) {
+            if let Some(data) = data.match_device(&dmi.board_name, product_id) {
                 return data;
             }
         }
@@ -80,10 +84,18 @@ impl LedSupportFile {
 
     /// The list is stored in ordered format, so the iterator must be reversed
     /// to ensure we match to *whole names* first before doing a glob match
-    fn match_device(&self, device_name: &str) -> Option<LedSupportData> {
+    fn match_device(&self, device_name: &str, product_id: &str) -> Option<LedSupportData> {
         for config in self.0.iter().rev() {
             if device_name.contains(&config.device_name) {
-                info!("LedSupport: Matched to {}", config.device_name);
+                info!("Matched to {}", config.device_name);
+                if !config.product_id.is_empty() {
+                    info!("Checking product ID");
+                    if config.product_id == product_id {
+                        return Some(config.clone());
+                    } else {
+                        continue;
+                    }
+                }
                 return Some(config.clone());
             }
         }
@@ -157,6 +169,7 @@ mod tests {
     fn check_data_parse() {
         let led = LedSupportData {
             device_name: "Test".to_owned(),
+            product_id: String::new(),
             layout_name: "ga401".to_owned(),
             basic_modes: vec![AuraModeNum::Static],
             basic_zones: vec![AuraZone::Key1, AuraZone::Logo, AuraZone::BarLeft],

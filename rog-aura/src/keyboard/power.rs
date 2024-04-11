@@ -305,7 +305,7 @@ mod test {
         assert_eq!(bytes, [0x04, 0x05, 0x02, 0x00]);
 
         let bytes = AuraPowerState {
-            zone: PowerZones::Keyboard,
+            zone: PowerZones::None,
             awake: false,
             boot: false,
             sleep: true,
@@ -316,7 +316,7 @@ mod test {
         assert_eq!(bytes, [0x30, 0x08, 0x04, 0x00]);
 
         let bytes = AuraPowerState {
-            zone: PowerZones::Keyboard,
+            zone: PowerZones::None,
             awake: false,
             boot: true,
             sleep: false,
@@ -353,140 +353,180 @@ mod test {
             states: vec![AuraPowerState {
                 zone: PowerZones::Logo,
                 boot: true,
-                ..Default::default()
+                awake: false,
+                sleep: false,
+                shutdown: false,
             }],
         });
         let boot_keyb_ = to_binary_string(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Keyboard,
                 boot: true,
-                ..Default::default()
+                awake: false,
+                sleep: false,
+                shutdown: false,
             }],
         });
         let sleep_logo = to_binary_string(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Logo,
+                boot: false,
+                awake: false,
                 sleep: true,
-                ..Default::default()
+                shutdown: false,
             }],
         });
         let sleep_keyb = to_binary_string(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Keyboard,
+                boot: false,
+                awake: false,
                 sleep: true,
-                ..Default::default()
+                shutdown: false,
             }],
         });
         let awake_logo = to_binary_string(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Logo,
+                boot: false,
                 awake: true,
-                ..Default::default()
+                sleep: false,
+                shutdown: false,
             }],
         });
         let awake_keyb = to_binary_string(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Keyboard,
+                boot: false,
                 awake: true,
-                ..Default::default()
+                sleep: false,
+                shutdown: false,
             }],
         });
         let shut_logo_ = to_binary_string(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Logo,
+                boot: false,
+                awake: false,
+                sleep: false,
                 shutdown: true,
-                ..Default::default()
             }],
         });
         let shut_keyb_ = to_binary_string(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Keyboard,
+                boot: false,
+                awake: false,
+                sleep: false,
                 shutdown: true,
-                ..Default::default()
             }],
         });
         let boot_bar__ = to_binary_string(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Lightbar,
                 boot: true,
-                ..Default::default()
+                awake: false,
+                sleep: false,
+                shutdown: false,
             }],
         });
         let awake_bar_ = to_binary_string(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Lightbar,
+                boot: false,
                 awake: true,
-                ..Default::default()
+                sleep: false,
+                shutdown: false,
             }],
         });
         let sleep_bar_ = to_binary_string(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Lightbar,
+                boot: false,
+                awake: false,
                 sleep: true,
-                ..Default::default()
+                shutdown: false,
             }],
         });
         let shut_bar__ = to_binary_string(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Lightbar,
+                boot: false,
+                awake: false,
+                sleep: false,
                 shutdown: true,
-                ..Default::default()
             }],
         });
         let boot_lid__ = to_binary_string(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Lid,
                 boot: true,
-                ..Default::default()
+                awake: false,
+                sleep: false,
+                shutdown: false,
             }],
         });
         let awake_lid_ = to_binary_string(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Lid,
+                boot: false,
                 awake: true,
-                ..Default::default()
+                sleep: false,
+                shutdown: false,
             }],
         });
         let sleep_lid_ = to_binary_string(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Lid,
+                boot: false,
+                awake: false,
                 sleep: true,
-                ..Default::default()
+                shutdown: false,
             }],
         });
         let shut_lid__ = to_binary_string(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Lid,
+                boot: false,
+                awake: false,
+                sleep: false,
                 shutdown: true,
-                ..Default::default()
             }],
         });
         let boot_rear_ = to_binary_string(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::RearGlow,
                 boot: true,
-                ..Default::default()
+                awake: false,
+                sleep: false,
+                shutdown: false,
             }],
         });
         let awake_rear = to_binary_string(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::RearGlow,
+                boot: false,
                 awake: true,
-                ..Default::default()
+                sleep: false,
+                shutdown: false,
             }],
         });
         let sleep_rear = to_binary_string(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::RearGlow,
+                boot: false,
+                awake: false,
                 sleep: true,
-                ..Default::default()
+                shutdown: false,
             }],
         });
         let shut_rear_ = to_binary_string(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::RearGlow,
+                boot: false,
+                awake: false,
+                sleep: false,
                 shutdown: true,
-                ..Default::default()
             }],
         });
 
@@ -515,9 +555,30 @@ mod test {
         assert_eq!(shut_rear_, "00000000, 00000000, 00000000, 00001000");
 
         // All on
-        let byte1 =
-            LaptopAuraPower::new(AuraDeviceType::LaptopPost2021, &LedSupportData::default());
-        let out = to_binary_string(&byte1);
-        assert_eq!(out, "11111111, 00011110, 00001111, 00001111");
+        let byte1 = to_binary_string(&LaptopAuraPower {
+            states: vec![
+                AuraPowerState {
+                    zone: PowerZones::Keyboard,
+                    ..Default::default()
+                },
+                AuraPowerState {
+                    zone: PowerZones::Lid,
+                    ..Default::default()
+                },
+                AuraPowerState {
+                    zone: PowerZones::Logo,
+                    ..Default::default()
+                },
+                AuraPowerState {
+                    zone: PowerZones::Lightbar,
+                    ..Default::default()
+                },
+                AuraPowerState {
+                    zone: PowerZones::RearGlow,
+                    ..Default::default()
+                },
+            ],
+        });
+        assert_eq!(byte1, "11111111, 00011110, 00001111, 00001111");
     }
 }

@@ -361,6 +361,7 @@ mod tests {
         let config = AuraConfig::new("19b6");
         let supported_basic_modes = LedSupportData {
             device_name: String::new(),
+            product_id: String::new(),
             layout_name: "ga401".to_owned(),
             basic_modes: vec![AuraModeNum::Static],
             basic_zones: vec![],
@@ -401,6 +402,7 @@ mod tests {
         let config = AuraConfig::new("19b6");
         let supported_basic_modes = LedSupportData {
             device_name: String::new(),
+            product_id: String::new(),
             layout_name: "ga401".to_owned(),
             basic_modes: vec![AuraModeNum::Static],
             basic_zones: vec![AuraZone::Key1, AuraZone::Key2],

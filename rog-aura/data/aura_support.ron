@@ -1,6 +1,7 @@
 ([
     (
         device_name: "FA506I",
+        product_id: "",
         layout_name: "fa506i",
         basic_modes: [Static, Breathe, Strobe, Pulse],
         basic_zones: [],
@@ -9,6 +10,7 @@
     ),
     (
         device_name: "FA506Q",
+        product_id: "",
         layout_name: "fa506i",
         basic_modes: [Static, Breathe, Strobe, Rainbow],
         basic_zones: [],
@@ -17,6 +19,7 @@
     ),
     (
         device_name: "FA507",
+        product_id: "",
         layout_name: "fa507",
         basic_modes: [Static, Breathe, Strobe, Pulse],
         basic_zones: [],
@@ -25,6 +28,7 @@
     ),
     (
         device_name: "FX505D",
+        product_id: "",
         layout_name: "fx505d",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
@@ -33,6 +37,7 @@
     ),
     (
         device_name: "FX505G",
+        product_id: "",
         layout_name: "fx505d",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
@@ -41,6 +46,7 @@
     ),
     (
         device_name: "FX506H",
+        product_id: "",
         layout_name: "fa506i",
         basic_modes: [Static, Breathe, Strobe, Pulse],
         basic_zones: [],
@@ -49,6 +55,7 @@
     ),
     (
         device_name: "FX506L",
+        product_id: "",
         layout_name: "fa506i",
         basic_modes: [Static, Breathe, Strobe, Pulse],
         basic_zones: [],
@@ -57,6 +64,7 @@
     ),
     (
         device_name: "FX507Z",
+        product_id: "",
         layout_name: "fa506i",
         basic_modes: [Static, Breathe, Strobe, Pulse],
         basic_zones: [],
@@ -65,6 +73,7 @@
     ),
     (
         device_name: "FX516P",
+        product_id: "",
         layout_name: "fa506i",
         basic_modes: [Static, Breathe, Strobe],
         basic_zones: [],
@@ -73,6 +82,7 @@
     ),
     (
         device_name: "FX705D",
+        product_id: "",
         layout_name: "fx505d",
         basic_modes: [Static, Breathe, Strobe, Pulse],
         basic_zones: [],
@@ -81,6 +91,7 @@
     ),
     (
         device_name: "G512",
+        product_id: "",
         layout_name: "g512",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -89,6 +100,7 @@
     ),
     (
         device_name: "G512LV",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -97,6 +109,7 @@
     ),
     (
         device_name: "G513I",
+        product_id: "",
         layout_name: "g513i",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -105,6 +118,7 @@
     ),
     (
         device_name: "G513QE",
+        product_id: "",
         layout_name: "g513i",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -113,6 +127,7 @@
     ),
     (
         device_name: "G513QM",
+        product_id: "",
         layout_name: "g513i",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -121,6 +136,7 @@
     ),
     (
         device_name: "G513QR",
+        product_id: "",
         layout_name: "g513i-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -129,6 +145,7 @@
     ),
     (
         device_name: "G513QY",
+        product_id: "",
         layout_name: "g513i-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -137,6 +154,7 @@
     ),
     (
         device_name: "G513RC",
+        product_id: "",
         layout_name: "g513i",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
@@ -145,6 +163,7 @@
     ),
     (
         device_name: "G513RM",
+        product_id: "",
         layout_name: "g513i",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
@@ -153,6 +172,7 @@
     ),
     (
         device_name: "G513RW",
+        product_id: "",
         layout_name: "g513i-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -161,6 +181,7 @@
     ),
     (
         device_name: "G531",
+        product_id: "",
         layout_name: "g513i-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -169,6 +190,7 @@
     ),
     (
         device_name: "G531",
+        product_id: "",
         layout_name: "g513i-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -177,6 +199,7 @@
     ),
     (
         device_name: "G531GD",
+        product_id: "",
         layout_name: "gx502",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
@@ -185,6 +208,7 @@
     ),
     (
         device_name: "G531GT",
+        product_id: "",
         layout_name: "gx502",
         basic_modes: [Static, Breathe, Strobe, Rainbow],
         basic_zones: [],
@@ -193,6 +217,7 @@
     ),
     (
         device_name: "G531GU",
+        product_id: "",
         layout_name: "gx502",
         basic_modes: [Static, Breathe, Strobe, Rainbow],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -201,6 +226,7 @@
     ),
     (
         device_name: "G531GV",
+        product_id: "",
         layout_name: "gx502",
         basic_modes: [Static, Breathe, Strobe, Rainbow],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -209,6 +235,7 @@
     ),
     (
         device_name: "G531GW",
+        product_id: "",
         layout_name: "gx502",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -217,6 +244,7 @@
     ),
     (
         device_name: "G532",
+        product_id: "",
         layout_name: "gx502",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -225,6 +253,7 @@
     ),
     (
         device_name: "G533Q",
+        product_id: "",
         layout_name: "g533q-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -233,6 +262,7 @@
     ),
     (
         device_name: "G533Z",
+        product_id: "",
         layout_name: "g533q-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -241,6 +271,7 @@
     ),
     (
         device_name: "G614J",
+        product_id: "",
         layout_name: "g634j-per-key",
         basic_modes: [Static, Breathe, Pulse, Strobe, Rainbow],
         basic_zones: [],
@@ -249,6 +280,7 @@
     ),
     (
         device_name: "G634J",
+        product_id: "",
         layout_name: "g634j-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -257,6 +289,7 @@
     ),
     (
         device_name: "G712LI",
+        product_id: "",
         layout_name: "gl503",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
@@ -265,6 +298,7 @@
     ),
     (
         device_name: "G712LV",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -273,6 +307,7 @@
     ),
     (
         device_name: "G712LW",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -281,6 +316,7 @@
     ),
     (
         device_name: "G713IC",
+        product_id: "",
         layout_name: "gx502",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -289,6 +325,7 @@
     ),
     (
         device_name: "G713QM",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -297,6 +334,7 @@
     ),
     (
         device_name: "G713QR",
+        product_id: "",
         layout_name: "gx502",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -305,6 +343,7 @@
     ),
     (
         device_name: "G713RC",
+        product_id: "",
         layout_name: "gx502",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
@@ -313,6 +352,7 @@
     ),
     (
         device_name: "G713RM",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -321,6 +361,7 @@
     ),
     (
         device_name: "G713RS",
+        product_id: "",
         layout_name: "gx502",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -329,6 +370,7 @@
     ),
     (
         device_name: "G713RW",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -337,6 +379,7 @@
     ),
     (
         device_name: "G731",
+        product_id: "",
         layout_name: "g533q",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -345,6 +388,7 @@
     ),
     (
         device_name: "G731GT",
+        product_id: "",
         layout_name: "g533q",
         basic_modes: [Static, Breathe, Strobe, Rainbow],
         basic_zones: [],
@@ -353,6 +397,7 @@
     ),
     (
         device_name: "G731GU",
+        product_id: "",
         layout_name: "g533q",
         basic_modes: [Static, Breathe, Strobe, Rainbow],
         basic_zones: [],
@@ -361,6 +406,7 @@
     ),
     (
         device_name: "G731GV",
+        product_id: "",
         layout_name: "g533q",
         basic_modes: [Static, Breathe, Strobe, Rainbow],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -369,6 +415,7 @@
     ),
     (
         device_name: "G731GW",
+        product_id: "",
         layout_name: "g533q",
         basic_modes: [Static, Breathe, Strobe, Rainbow],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -377,6 +424,7 @@
     ),
     (
         device_name: "G733C",
+        product_id: "",
         layout_name: "g513i-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [Logo, BarLeft, BarRight],
@@ -385,6 +433,7 @@
     ),
     (
         device_name: "G733PZ",
+        product_id: "",
         layout_name: "g733pz-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -393,6 +442,7 @@
     ),
     (
         device_name: "G733Q",
+        product_id: "",
         layout_name: "gx502",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -401,6 +451,7 @@
     ),
     (
         device_name: "G733Z",
+        product_id: "",
         layout_name: "g513i-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -409,6 +460,7 @@
     ),
     (
         device_name: "G814JI",
+        product_id: "",
         layout_name: "g814ji-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -417,6 +469,7 @@
     ),
     (
         device_name: "G814JZ",
+        product_id: "",
         layout_name: "g814ji-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -425,6 +478,7 @@
     ),
     (
         device_name: "G834JZ",
+        product_id: "",
         layout_name: "g814ji-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -433,6 +487,7 @@
     ),
     (
         device_name: "GA401Q",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],
@@ -441,6 +496,7 @@
     ),
     (
         device_name: "GA402N",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse, Rainbow, Strobe],
         basic_zones: [],
@@ -449,6 +505,7 @@
     ),
     (
         device_name: "GA402R",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse, Rainbow],
         basic_zones: [],
@@ -457,6 +514,7 @@
     ),
     (
         device_name: "GA402X",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse, Rainbow],
         basic_zones: [],
@@ -464,7 +522,17 @@
         power_zones: [Keyboard],
     ),
     (
+        device_name: "GA403UI",
+        product_id: "",
+        layout_name: "ga401q",
+        basic_modes: [Static, Breathe, Pulse],
+        basic_zones: [],
+        advanced_type: None,
+        power_zones: [Keyboard],
+    ),
+    (
         device_name: "GA503Q",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse, Rainbow, Strobe],
         basic_zones: [],
@@ -473,6 +541,7 @@
     ),
     (
         device_name: "GA503QE",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],
@@ -481,6 +550,7 @@
     ),
     (
         device_name: "GA503R",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse, Rainbow, Strobe],
         basic_zones: [],
@@ -489,6 +559,7 @@
     ),
     (
         device_name: "GL503",
+        product_id: "",
         layout_name: "gl503",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -497,6 +568,7 @@
     ),
     (
         device_name: "GL503V",
+        product_id: "",
         layout_name: "gl503",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -505,6 +577,7 @@
     ),
     (
         device_name: "GL504G",
+        product_id: "",
         layout_name: "gl503",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4, Logo, BarLeft, BarRight],
@@ -513,6 +586,7 @@
     ),
     (
         device_name: "GL531",
+        product_id: "",
         layout_name: "g512",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -521,6 +595,7 @@
     ),
     (
         device_name: "GL553VE",
+        product_id: "",
         layout_name: "g533q",
         basic_modes: [Static, Breathe, Strobe],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -529,6 +604,7 @@
     ),
     (
         device_name: "GL703G",
+        product_id: "",
         layout_name: "gl503",
         basic_modes: [Static, Breathe, Strobe, Rainbow],
         basic_zones: [],
@@ -537,6 +613,7 @@
     ),
     (
         device_name: "GM501G",
+        product_id: "",
         layout_name: "fa507",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -545,6 +622,7 @@
     ),
     (
         device_name: "GU502",
+        product_id: "",
         layout_name: "gx502",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -553,6 +631,7 @@
     ),
     (
         device_name: "GU502G",
+        product_id: "",
         layout_name: "gx502",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -561,6 +640,7 @@
     ),
     (
         device_name: "GU502L",
+        product_id: "",
         layout_name: "gx502",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -569,6 +649,7 @@
     ),
     (
         device_name: "GU502LU",
+        product_id: "",
         layout_name: "gx502",
         basic_modes: [Static, Breathe, Strobe, Pulse],
         basic_zones: [],
@@ -577,6 +658,7 @@
     ),
     (
         device_name: "GU603H",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
@@ -585,6 +667,7 @@
     ),
     (
         device_name: "GU603VV",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
@@ -593,6 +676,7 @@
     ),
     (
         device_name: "GU603Z",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
@@ -601,6 +685,7 @@
     ),
     (
         device_name: "GU604V",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
@@ -609,6 +694,7 @@
     ),
     (
         device_name: "GV301Q",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],
@@ -617,6 +703,7 @@
     ),
     (
         device_name: "GV301V",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],
@@ -625,6 +712,7 @@
     ),
     (
         device_name: "GV301VIC",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],
@@ -633,6 +721,7 @@
     ),
     (
         device_name: "GV601R",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Strobe, Pulse],
         basic_zones: [],
@@ -641,6 +730,7 @@
     ),
     (
         device_name: "GV601V",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],
@@ -649,6 +739,7 @@
     ),
     (
         device_name: "GV604V",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Strobe, Pulse],
         basic_zones: [],
@@ -657,6 +748,7 @@
     ),
     (
         device_name: "GX502",
+        product_id: "",
         layout_name: "gx502",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -665,6 +757,7 @@
     ),
     (
         device_name: "GX531",
+        product_id: "",
         layout_name: "gx531-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
@@ -673,6 +766,7 @@
     ),
     (
         device_name: "GX550L",
+        product_id: "",
         layout_name: "gx531-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -681,6 +775,7 @@
     ),
     (
         device_name: "GX551Q",
+        product_id: "",
         layout_name: "gx531-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
         basic_zones: [],
@@ -689,6 +784,7 @@
     ),
     (
         device_name: "GX650P",
+        product_id: "",
         layout_name: "gx531-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -697,6 +793,7 @@
     ),
     (
         device_name: "GX701",
+        product_id: "",
         layout_name: "gx531-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -705,6 +802,7 @@
     ),
     (
         device_name: "GX703H",
+        product_id: "",
         layout_name: "gx531-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
@@ -713,6 +811,7 @@
     ),
     (
         device_name: "GZ301V",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],
@@ -721,6 +820,7 @@
     ),
     (
         device_name: "GZ301VIC",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],
@@ -729,22 +829,25 @@
     ),
     (
         device_name: "GZ301Z",
+        product_id: "1a30",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],
         advanced_type: None,
         power_zones: [Keyboard],
+    ),
+    (
+        device_name: "GZ301Z",
+        product_id: "18c6",
+        layout_name: "",
+        basic_modes: [Static, Breathe, Pulse],
+        basic_zones: [],
+        advanced_type: None,
+        power_zones: [None],
     ),
     (
         device_name: "RC71L",
-        layout_name: "ga401q",
-        basic_modes: [Static, Breathe, Pulse],
-        basic_zones: [],
-        advanced_type: None,
-        power_zones: [Keyboard],
-    ),
-    (
-        device_name: "GA403UI",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],

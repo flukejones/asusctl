@@ -4,6 +4,9 @@ use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
 
+// TODO: GZ301Z
+// 5dbcd0010300000a00ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000ff0000
+
 /// The `LedCode` used in setting up keyboard layouts is important because it
 /// determines the idexing for an RGB value in the final USB packets (for
 /// per-key addressable keyboards).
