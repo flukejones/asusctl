@@ -86,10 +86,10 @@ impl From<SlintAuraPowerState> for AuraPowerState {
     fn from(value: SlintAuraPowerState) -> Self {
         Self {
             zone: value.zone.into(),
-            boot: value.boot.into(),
-            awake: value.awake.into(),
-            sleep: value.sleep.into(),
-            shutdown: value.shutdown.into(),
+            boot: value.boot,
+            awake: value.awake,
+            sleep: value.sleep,
+            shutdown: value.shutdown,
         }
     }
 }
@@ -98,10 +98,10 @@ impl From<AuraPowerState> for SlintAuraPowerState {
     fn from(value: AuraPowerState) -> Self {
         let zone = value.zone.into();
         SlintAuraPowerState {
-            boot: value.boot.into(),
-            awake: value.awake.into(),
-            sleep: value.sleep.into(),
-            shutdown: value.shutdown.into(),
+            boot: value.boot,
+            awake: value.awake,
+            sleep: value.sleep,
+            shutdown: value.shutdown,
             zone,
             zone_name_idx: zone as i32,
         }
@@ -112,10 +112,10 @@ impl From<&AuraPowerState> for SlintAuraPowerState {
     fn from(value: &AuraPowerState) -> Self {
         let zone = value.zone.into();
         SlintAuraPowerState {
-            boot: value.boot.into(),
-            awake: value.awake.into(),
-            sleep: value.sleep.into(),
-            shutdown: value.shutdown.into(),
+            boot: value.boot,
+            awake: value.awake,
+            sleep: value.sleep,
+            shutdown: value.shutdown,
             zone,
             zone_name_idx: zone as i32,
         }
@@ -134,11 +134,8 @@ impl From<SlintLaptopAuraPower> for rog_aura::keyboard::LaptopAuraPower {
 
 impl From<LaptopAuraPower> for SlintLaptopAuraPower {
     fn from(value: LaptopAuraPower) -> Self {
-        let converted: Vec<SlintAuraPowerState> = value
-            .states
-            .iter()
-            .map(|s| SlintAuraPowerState::from(s))
-            .collect();
+        let converted: Vec<SlintAuraPowerState> =
+            value.states.iter().map(SlintAuraPowerState::from).collect();
         Self {
             states: ModelRc::from(converted.as_slice()),
         }

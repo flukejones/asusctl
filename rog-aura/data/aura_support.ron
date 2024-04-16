@@ -594,7 +594,7 @@
         power_zones: [Keyboard],
     ),
     (
-        device_name: "GL553VE",
+        device_name: "GL553V",
         product_id: "",
         layout_name: "g533q",
         basic_modes: [Static, Breathe, Strobe],
@@ -829,7 +829,7 @@
     ),
     (
         device_name: "GZ301Z",
-        product_id: "1a30",
+        product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Pulse],
         basic_zones: [],
@@ -844,6 +844,15 @@
         basic_zones: [],
         advanced_type: None,
         power_zones: [None],
+    ),
+    (
+        device_name: "GZ301Z",
+        product_id: "1a30",
+        layout_name: "ga401q",
+        basic_modes: [Static, Breathe, Pulse],
+        basic_zones: [],
+        advanced_type: None,
+        power_zones: [Keyboard],
     ),
     (
         device_name: "RC71L",

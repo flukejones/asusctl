@@ -191,7 +191,7 @@ impl CtrlKbdLed {
     /// Set combination state for boot animation/sleep animation/all leds/keys
     /// leds/side leds LED active
     pub(super) fn set_power_states(&mut self) -> Result<(), RogError> {
-        if let LEDNode::KbdLed(platform) = &mut self.led_node {
+        if let LEDNode::KbdLed(_platform) = &mut self.led_node {
             // TODO: tuf bool array
             // if let Some(pwr) =
             // AuraPowerConfig::to_tuf_bool_array(&self.config.enabled) {

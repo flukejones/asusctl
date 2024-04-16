@@ -276,7 +276,6 @@ impl From<OldAuraPower> for u32 {
 
 #[cfg(test)]
 mod test {
-    use crate::aura_detection::LedSupportData;
     use crate::keyboard::{AuraPowerState, LaptopAuraPower};
     use crate::{AuraDeviceType, PowerZones};
 

@@ -91,6 +91,7 @@ impl LedSupportFile {
                 if !config.product_id.is_empty() {
                     info!("Checking product ID");
                     if config.product_id == product_id {
+                        info!("Matched to {}", config.product_id);
                         return Some(config.clone());
                     } else {
                         continue;
@@ -192,6 +193,7 @@ mod tests {
 
         // Ensure the data is sorted
         let mut tmp_sort = tmp.clone();
+        tmp_sort.0.sort_by(|a, b| a.product_id.cmp(&b.product_id));
         tmp_sort.0.sort_by(|a, b| a.device_name.cmp(&b.device_name));
         if tmp != tmp_sort {
             let sorted =

@@ -1,7 +1,7 @@
 // Copyright © SixtyFPS GmbH <info@slint.dev>
 // SPDX-License-Identifier: MIT
 
-import { StyleMetrics, Palette } from "std-widgets.slint";
+import { Palette, HorizontalBox, VerticalBox } from "std-widgets.slint";
 
 component SideBarItem inherits Rectangle {
     padding: 10px;
@@ -24,23 +24,23 @@ component SideBarItem inherits Rectangle {
         focused when root.has-focus: {
             state.opacity: 0.8;
         }
-    ]state := Rectangle {
+    ]
+    state := Rectangle {
         opacity: 0;
         border-width: 2px;
         border-radius: 10px;
-        border-color: StyleMetrics.default-text-color;
-        background: StyleMetrics.window-background;
+        border-color: Palette.accent-background;
+        background: Palette.alternate-background;
         animate opacity { duration: 150ms; }
         animate border-width { duration: 150ms; }
         height: l.preferred-height;
     }
 
-    l := HorizontalLayout {
+    l := HorizontalBox {
         y: (parent.height - self.height) / 2;
-        padding: StyleMetrics.layout-padding;
         spacing: 0px;
         label := Text {
-            color: StyleMetrics.default-text-color;
+            color: Palette.foreground;
             vertical-alignment: center;
         }
     }
@@ -57,14 +57,17 @@ export component SideBar inherits Rectangle {
     in property <string> title <=> label.text;
     out property <int> current-item: 0;
     out property <int> current-focused: fs.has-focus ? fs.focused-tab : -1;
-    // The currently focused tab
 
-    width: 180px;
+    // The currently focused tab
+    width: 160px;
     forward-focus: fs;
     accessible-role: tab;
     accessible-delegate-focus: root.current-focused >= 0 ? root.current-focused : root.current-item;
     Rectangle {
-        background: StyleMetrics.window-background.darker(0.2);
+        border-width: 2px;
+        border-color: Palette.accent-background;
+        border-radius: 0px;
+        background: Palette.background.darker(0.2);
         fs := FocusScope {
             key-pressed(event) => {
                 if (event.text == "\n") {
@@ -95,9 +98,8 @@ export component SideBar inherits Rectangle {
         }
     }
 
-    VerticalLayout {
-        padding: StyleMetrics.layout-padding;
-        spacing: StyleMetrics.layout-spacing;
+    VerticalBox {
+        spacing: 4px;
         alignment: start;
         label := Text {
             font-size: 16px;
@@ -105,7 +107,7 @@ export component SideBar inherits Rectangle {
         }
 
         navigation := VerticalLayout {
-            // spacing: 10px;
+            spacing: -6px;
             alignment: start;
             vertical-stretch: 0;
             for item[index] in root.model: SideBarItem {
@@ -120,9 +122,10 @@ export component SideBar inherits Rectangle {
         }
 
         VerticalLayout {
-            bottom := VerticalLayout {
-                padding-left: StyleMetrics.layout-padding;
-                padding-right: StyleMetrics.layout-padding;
+            bottom := VerticalBox {
+                padding-left: 0px;
+                padding-top: 0px;
+                padding-bottom: 0px;
                 @children
             }
         }

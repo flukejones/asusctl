@@ -233,7 +233,16 @@ impl CtrlPlatform {
                     cpu.set_epp(enegy_pref).ok();
                 } else if let Ok(gov) = cpu.get_governor() {
                     if gov != CPUGovernor::Powersave {
-                        warn!("powersave governor is not is use, you should use it.");
+                        warn!("powersave governor is not is use, trying to set.");
+                        cpu.set_governor(CPUGovernor::Powersave)
+                            .map_err(|e| error!("couldn't set powersave: {e:?}"))
+                            .ok();
+                        if epp.contains(&enegy_pref) {
+                            debug!("Setting {enegy_pref:?}");
+                            cpu.set_epp(enegy_pref)
+                                .map_err(|e| error!("couldn't set EPP: {e:?}"))
+                                .ok();
+                        }
                     }
                 }
             }

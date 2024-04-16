@@ -68,21 +68,23 @@ export component ColourSlider inherits VerticalLayout {
     ];
     function blend_lightness(c1: color, f: float) -> color {
         rgb(c1.red * f, c1.green * f, c1.blue * f)
-    }//
+    }
+    //
     function set_base_colour() {
         root.base_colour = base_colours[c1.value].mix(base_colours[c1.value + 1], c1.value - Math.floor(c1.value));
         root.final_colour = blend_lightness(base_colour, ((base_shade.length - c2.value) / base_shade.length));
         root.colourbox = root.final_colour;
-    }//
+    }
+    //
     callback external_colour_change();
 
     external_colour_change => {
-        if (root.final_colour.hue < 0) {
-            c1.value = (root.base_colours.length - 1) * ((root.final_colour.hue + 360) / 360);
+        if (root.final_colour.to-hsv().hue < 0) {
+            c1.value = (root.base_colours.length - 1) * ((root.final_colour.to-hsv().hue + 360) / 360);
         } else {
-            c1.value = (root.base_colours.length - 1) * (root.final_colour.hue / 360);
+            c1.value = (root.base_colours.length - 1) * (root.final_colour.to-hsv().hue / 360);
         }
-        c2.value = root.base_shade.length - (root.base_shade.length * root.final_colour.value);
+        c2.value = root.base_shade.length - (root.base_shade.length * root.final_colour.to-hsv().value);
         root.set_base_colour();
     }
     Rectangle {

@@ -7,7 +7,7 @@ After=nvidia-powerd.service systemd-udevd.service
 [Service]
 Environment=IS_SERVICE=1
 Environment=RUST_LOG="info"
-# ExecStartPre=/bin/sleep 2 # was required only for slow devices
+ExecStartPre=/bin/sleep 2 # required to prevent init issues with hid_asus and MCU
 ExecStart=/usr/bin/asusd
 Restart=on-failure
 RestartSec=1

@@ -156,20 +156,10 @@ impl AuraManager {
 }
 
 pub(crate) fn dbus_path_for_dev(parent: &Device) -> Option<OwnedObjectPath> {
-    if let Some(id_product) = parent.attribute_value("idProduct") {
-        let id_product = id_product.to_string_lossy();
-        let path = if let Some(devnum) = parent.attribute_value("devnum") {
-            let devnum = devnum.to_string_lossy();
-            if let Some(devpath) = parent.attribute_value("devpath") {
-                let devpath = devpath.to_string_lossy();
-                format!("{AURA_ZBUS_PATH}/{id_product}_{devnum}_{devpath}")
-            } else {
-                format!("{AURA_ZBUS_PATH}/{id_product}_{devnum}")
-            }
-        } else {
-            format!("{AURA_ZBUS_PATH}/{id_product}")
-        };
-        return Some(ObjectPath::from_str_unchecked(&path).into());
+    if let Some(filename) = super::filename_partial(parent) {
+        return Some(
+            ObjectPath::from_str_unchecked(&format!("{AURA_ZBUS_PATH}/{filename}")).into(),
+        );
     }
     None
 }
