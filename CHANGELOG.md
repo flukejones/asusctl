@@ -18,7 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support GA402N keyboard
 - Support GL553V keyboard
+- Support GU605M keyboard
 - Support Z13 lightbar (with kernel patch)
+- Resupport the TUF keyboard
 
 ## [v5.0.8]
 
