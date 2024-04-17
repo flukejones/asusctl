@@ -14,7 +14,7 @@ use rog_platform::keyboard_led::KeyboardLed;
 use zbus::zvariant::OwnedObjectPath;
 
 use super::config::AuraConfig;
-use crate::ctrl_aura::manager::dbus_path_for_dev;
+use crate::ctrl_aura::manager::{dbus_path_for_dev, dbus_path_for_tuf};
 use crate::error::RogError;
 
 #[derive(Debug)]
@@ -119,6 +119,23 @@ impl CtrlKbdLed {
                 devices.push(dev);
             }
         }
+
+        // Check for a TUF laptop LED. Assume there is only ever one.
+        if let Ok(tuf_kbd) = KeyboardLed::new() {
+            if tuf_kbd.has_kbd_rgb_mode() {
+                info!("AuraControl found a TUF laptop keyboard");
+                let ctrl = CtrlKbdLed {
+                    led_type: AuraDeviceType::LaptopTuf,
+                    led_node: LEDNode::KbdLed(tuf_kbd),
+                    supported_data: LedSupportData::get_data("tuf"),
+                    per_key_mode_active: false,
+                    config: Self::init_config("tuf"),
+                    dbus_path: dbus_path_for_tuf(),
+                };
+                devices.push(ctrl);
+            }
+        }
+
         info!("Found {} Aura devices", devices.len());
 
         Ok(devices)

@@ -46,6 +46,7 @@ impl AuraManager {
         };
 
         // detect all plugged in aura devices (eventually)
+        // only USB devices are detected for here
         spawn_blocking(move || {
             let mut monitor = MonitorBuilder::new()?.match_subsystem("hidraw")?.listen()?;
             let mut poll = Poll::new()?;
@@ -162,6 +163,10 @@ pub(crate) fn dbus_path_for_dev(parent: &Device) -> Option<OwnedObjectPath> {
         );
     }
     None
+}
+
+pub(crate) fn dbus_path_for_tuf() -> OwnedObjectPath {
+    ObjectPath::from_str_unchecked(&format!("{AURA_ZBUS_PATH}/tuf")).into()
 }
 
 async fn start_tasks(
