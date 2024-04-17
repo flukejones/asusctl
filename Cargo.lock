@@ -152,7 +152,7 @@ checksum = "175571dd1d178ced59193a6fc02dde1b972eb0bc56c892cde9beeceac5bf0f6b"
 
 [[package]]
 name = "asusctl"
-version = "6.0.0-alpha3"
+version = "6.0.0-alpha4"
 dependencies = [
  "asusd",
  "cargo-husky",
@@ -174,14 +174,14 @@ dependencies = [
 
 [[package]]
 name = "asusd"
-version = "6.0.0-alpha3"
+version = "6.0.0-alpha4"
 dependencies = [
  "cargo-husky",
  "concat-idents",
  "config-traits",
  "dmi_id",
  "env_logger",
- "futures-lite 2.3.0",
+ "futures-lite 1.13.0",
  "inotify",
  "log",
  "logind-zbus",
@@ -201,7 +201,7 @@ dependencies = [
 
 [[package]]
 name = "asusd-user"
-version = "6.0.0-alpha3"
+version = "6.0.0-alpha4"
 dependencies = [
  "cargo-husky",
  "config-traits",
@@ -916,7 +916,7 @@ dependencies = [
 
 [[package]]
 name = "config-traits"
-version = "6.0.0-alpha3"
+version = "6.0.0-alpha4"
 dependencies = [
  "cargo-husky",
  "log",
@@ -1026,7 +1026,7 @@ checksum = "7704b5fdd17b18ae31c4c1da5a2e0305a2bf17b5249300a9ee9ed7b72114c636"
 
 [[package]]
 name = "cpuctl"
-version = "6.0.0-alpha3"
+version = "6.0.0-alpha4"
 
 [[package]]
 name = "cpufeatures"
@@ -1236,7 +1236,7 @@ dependencies = [
 
 [[package]]
 name = "dmi_id"
-version = "6.0.0-alpha3"
+version = "6.0.0-alpha4"
 dependencies = [
  "log",
  "udev 0.8.0",
@@ -3714,7 +3714,7 @@ dependencies = [
 
 [[package]]
 name = "rog-control-center"
-version = "6.0.0-alpha3"
+version = "6.0.0-alpha4"
 dependencies = [
  "asusd",
  "betrayer",
@@ -3753,7 +3753,7 @@ dependencies = [
 
 [[package]]
 name = "rog_anime"
-version = "6.0.0-alpha3"
+version = "6.0.0-alpha4"
 dependencies = [
  "cargo-husky",
  "dmi_id",
@@ -3770,7 +3770,7 @@ dependencies = [
 
 [[package]]
 name = "rog_aura"
-version = "6.0.0-alpha3"
+version = "6.0.0-alpha4"
 dependencies = [
  "cargo-husky",
  "dmi_id",
@@ -3784,7 +3784,7 @@ dependencies = [
 
 [[package]]
 name = "rog_dbus"
-version = "6.0.0-alpha3"
+version = "6.0.0-alpha4"
 dependencies = [
  "asusd",
  "cargo-husky",
@@ -3798,7 +3798,7 @@ dependencies = [
 
 [[package]]
 name = "rog_platform"
-version = "6.0.0-alpha3"
+version = "6.0.0-alpha4"
 dependencies = [
  "cargo-husky",
  "concat-idents",
@@ -3815,7 +3815,7 @@ dependencies = [
 
 [[package]]
 name = "rog_profiles"
-version = "6.0.0-alpha3"
+version = "6.0.0-alpha4"
 dependencies = [
  "cargo-husky",
  "log",
@@ -3829,7 +3829,7 @@ dependencies = [
 
 [[package]]
 name = "rog_simulators"
-version = "6.0.0-alpha3"
+version = "6.0.0-alpha4"
 dependencies = [
  "glam",
  "log",
@@ -3840,7 +3840,7 @@ dependencies = [
 
 [[package]]
 name = "rog_slash"
-version = "6.0.0-alpha3"
+version = "6.0.0-alpha4"
 dependencies = [
  "cargo-husky",
  "dmi_id",

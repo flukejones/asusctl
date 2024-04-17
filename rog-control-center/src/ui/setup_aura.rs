@@ -12,6 +12,14 @@ use crate::{
 
 fn decode_hex(s: &str) -> RgbaColor<u8> {
     let s = s.trim_start_matches('#');
+    if s.len() < 6 {
+        return RgbaColor {
+            alpha: 255,
+            red: 0,
+            green: 0,
+            blue: 0,
+        };
+    }
     let c: Vec<u8> = (0..s.len())
         .step_by(2)
         .map(|i| u8::from_str_radix(&s[i..i + 2], 16).unwrap_or(164))

@@ -66,11 +66,11 @@ export component ColourSlider inherits VerticalLayout {
         blend_lightness(base_colour, 0.1),
         blend_lightness(base_colour, 0.0)
     ];
-    function blend_lightness(c1: color, f: float) -> color {
+    function blend_lightness(c1: color,f: float) -> color {
         rgb(c1.red * f, c1.green * f, c1.blue * f)
     }
     //
-    function set_base_colour() {
+    function set_base_colour(){
         root.base_colour = base_colours[c1.value].mix(base_colours[c1.value + 1], c1.value - Math.floor(c1.value));
         root.final_colour = blend_lightness(base_colour, ((base_shade.length - c2.value) / base_shade.length));
         root.colourbox = root.final_colour;
@@ -141,9 +141,13 @@ export component ColourSlider inherits VerticalLayout {
             enabled <=> root.enabled;
             // width: 50%;
             text <=> root.hex;
-            edited => {
+            accepted => {
                 base_colour = hex_to_colour(self.text);
                 root.colourbox = base_colour;
+                root.final_colour = base_colour;
+                root.colourbox = root.final_colour;
+                root.external_colour_change();
+                root.released();
             }
         }
 
