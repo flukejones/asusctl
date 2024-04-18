@@ -75,7 +75,7 @@ Rust and cargo are required, they can be installed from [rustup.rs](https://rust
 **fedora:**
 
     dnf install cmake clang-devel libinput-devel libseat-devel libgbm-devel libxkbcommon-devel systemd-devel \
-    libdrm-devel expat-devel pcre2-devel libzstd-devellibappindicator-gtk3
+    libdrm-devel expat-devel pcre2-devel libzstd-devel libappindicator-gtk3
     make
     sudo make install
 
