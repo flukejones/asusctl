@@ -150,7 +150,7 @@ pub fn start_notifications(config: Arc<Mutex<Config>>) -> Result<()> {
                         if status != GfxPower::Unknown && status != last_status {
                             if let Ok(config) = enabled_notifications_copy.lock() {
                                 if !config.notifications.receive_notify_gfx_status
-                                    && !config.notifications.enabled
+                                    || !config.notifications.enabled
                                 {
                                     continue;
                                 }
