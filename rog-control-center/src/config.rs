@@ -3,7 +3,7 @@ use std::fs::create_dir;
 use config_traits::{StdConfig, StdConfigLoad1};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::update_and_notify::EnabledNotifications;
+use crate::notify::EnabledNotifications;
 
 const CFG_DIR: &str = "rog";
 const CFG_FILE_NAME: &str = "rog-control-center.cfg";
@@ -15,14 +15,13 @@ pub struct Config {
     pub enable_tray_icon: bool,
     pub ac_command: String,
     pub bat_command: String,
-    pub enable_notifications: bool,
     pub dark_mode: bool,
     // intended for use with devices like the ROG Ally
     pub start_fullscreen: bool,
     pub fullscreen_width: u32,
     pub fullscreen_height: u32,
     // This field must be last
-    pub enabled_notifications: EnabledNotifications,
+    pub notifications: EnabledNotifications,
 }
 
 impl Default for Config {
@@ -30,13 +29,12 @@ impl Default for Config {
         Self {
             run_in_background: true,
             startup_in_background: false,
-            enable_notifications: true,
             enable_tray_icon: true,
             dark_mode: true,
             start_fullscreen: false,
             fullscreen_width: 1920,
             fullscreen_height: 1080,
-            enabled_notifications: EnabledNotifications::default(),
+            notifications: EnabledNotifications::default(),
             ac_command: String::new(),
             bat_command: String::new(),
         }
@@ -94,8 +92,7 @@ impl From<Config461> for Config {
             start_fullscreen: false,
             fullscreen_width: 1920,
             fullscreen_height: 1080,
-            enable_notifications: c.enable_notifications,
-            enabled_notifications: c.enabled_notifications,
+            notifications: c.enabled_notifications,
         }
     }
 }

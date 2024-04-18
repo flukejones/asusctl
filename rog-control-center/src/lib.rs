@@ -17,11 +17,10 @@ pub mod config;
 pub mod error;
 #[cfg(feature = "mocking")]
 pub mod mocking;
-pub mod system_state;
+pub mod notify;
 pub mod tray;
 pub mod types;
 pub mod ui;
-pub mod update_and_notify;
 
 use nix::sys::stat;
 use nix::unistd;

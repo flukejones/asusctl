@@ -14,11 +14,10 @@ use log::{info, LevelFilter};
 use rog_control_center::cli_options::CliStart;
 use rog_control_center::config::Config;
 use rog_control_center::error::Result;
+use rog_control_center::notify::start_notifications;
 use rog_control_center::slint::ComponentHandle;
-use rog_control_center::system_state::SystemState;
 use rog_control_center::tray::init_tray;
 use rog_control_center::ui::setup_window;
-use rog_control_center::update_and_notify::{start_notifications, EnabledNotifications};
 use rog_control_center::{
     get_ipc_file, on_tmp_dir_exists, print_versions, MainWindow, QUIT_APP, SHOWING_GUI, SHOW_GUI,
 };
@@ -102,7 +101,7 @@ async fn main() -> Result<()> {
     }
 
     if is_rog_ally {
-        config.enable_notifications = false;
+        config.notifications.enabled = false;
         config.enable_tray_icon = false;
         config.run_in_background = false;
         config.startup_in_background = false;
@@ -115,16 +114,12 @@ async fn main() -> Result<()> {
     }
     config.write();
 
-    let enabled_notifications = EnabledNotifications::tokio_mutex(&config);
-
-    // TODO: config mutex to share config in various places
-    let states = setup_page_state_and_notifs(&enabled_notifications, &config).await?;
-
     let enable_tray_icon = config.enable_tray_icon;
     let startup_in_background = config.startup_in_background;
     let config = Arc::new(Mutex::new(config));
+    start_notifications(config.clone())?;
     if enable_tray_icon {
-        init_tray(supported_properties, states.clone(), config.clone());
+        init_tray(supported_properties, config.clone());
     }
 
     thread_local! { pub static UI: std::cell::RefCell<Option<MainWindow>> = Default::default()};
@@ -214,24 +209,6 @@ async fn main() -> Result<()> {
 
     slint::run_event_loop_until_quit().unwrap();
     Ok(())
-}
-
-async fn setup_page_state_and_notifs(
-    enabled_notifications: &Arc<Mutex<EnabledNotifications>>,
-    config: &Config,
-) -> Result<Arc<Mutex<SystemState>>> {
-    let page_states = Arc::new(Mutex::new(
-        SystemState::new(
-            enabled_notifications.clone(),
-            config.enable_tray_icon,
-            config.run_in_background,
-        )
-        .await?,
-    ));
-
-    start_notifications(config, &page_states, enabled_notifications)?;
-
-    Ok(page_states)
 }
 
 // /// Bah.. the icon dosn't work on wayland anyway, but we'll leave it in for

@@ -166,7 +166,7 @@ pub fn setup_app_settings_page(ui: &MainWindow, config: Arc<Mutex<Config>>) {
     let config_copy = config.clone();
     global.on_set_enable_notifications(move |enable| {
         if let Ok(mut lock) = config_copy.try_lock() {
-            lock.enable_notifications = enable;
+            lock.notifications.enabled = enable;
             lock.write();
         }
     });
@@ -175,6 +175,6 @@ pub fn setup_app_settings_page(ui: &MainWindow, config: Arc<Mutex<Config>>) {
         global.set_run_in_background(lock.run_in_background);
         global.set_startup_in_background(lock.startup_in_background);
         global.set_enable_tray_icon(lock.enable_tray_icon);
-        global.set_enable_notifications(lock.enable_notifications);
+        global.set_enable_notifications(lock.notifications.enabled);
     }
 }

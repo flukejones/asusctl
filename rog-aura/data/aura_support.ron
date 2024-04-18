@@ -702,7 +702,7 @@
         power_zones: [Keyboard],
     ),
     (
-        board_name: "GU605M",
+        device_name: "GU605M",
         product_id: "",
         layout_name: "ga401q",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],

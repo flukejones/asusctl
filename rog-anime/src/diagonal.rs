@@ -9,7 +9,7 @@ use crate::AnimeType;
 
 /// Mostly intended to be used with ASUS gifs, but can be used for other
 /// purposes (like images)
-#[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct AnimeDiagonal(AnimeType, Vec<Vec<u8>>, Option<Duration>);
 
 impl AnimeDiagonal {

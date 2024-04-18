@@ -17,7 +17,6 @@ use supergfxctl::zbus_proxy::DaemonProxyBlocking as GfxProxy;
 use versions::Versioning;
 
 use crate::config::Config;
-use crate::system_state::SystemState;
 use crate::{get_ipc_file, QUIT_APP, SHOW_GUI};
 
 const TRAY_LABEL: &str = "ROG Control Center";
@@ -88,13 +87,17 @@ fn do_action(event: TrayEvent<TrayAction>) {
     }
 }
 
-fn set_tray_icon_and_tip(lock: &SystemState, tray: &TrayIcon<TrayAction>, supergfx_active: bool) {
+fn set_tray_icon_and_tip(
+    mode: GfxMode,
+    power: GfxPower,
+    tray: &mut TrayIcon<TrayAction>,
+    supergfx_active: bool,
+) {
     if let Some(icons) = ICONS.get() {
-        let gpu_status = lock.gfx_state.power_status;
-        match gpu_status {
+        match power {
             GfxPower::Suspended => tray.set_icon(Some(icons.rog_blue.clone())),
             GfxPower::Off => {
-                if lock.gfx_state.mode == GfxMode::Vfio {
+                if mode == GfxMode::Vfio {
                     tray.set_icon(Some(icons.rog_red.clone()))
                 } else {
                     tray.set_icon(Some(icons.rog_green.clone()))
@@ -113,24 +116,16 @@ fn set_tray_icon_and_tip(lock: &SystemState, tray: &TrayIcon<TrayAction>, superg
             }
         };
 
-        let current_gpu_mode = lock.gfx_state.mode;
-
-        tray.set_tooltip(format!(
-            "ROG: gpu mode = {current_gpu_mode:?}, gpu power = {gpu_status:?}"
-        ));
+        tray.set_tooltip(format!("ROG: gpu mode = {mode:?}, gpu power = {power:?}"));
     }
 }
 
 /// The tray is controlled somewhat by `Arc<Mutex<SystemState>>`
-pub fn init_tray(
-    _supported_properties: Vec<Properties>,
-    states: Arc<Mutex<SystemState>>,
-    config: Arc<Mutex<Config>>,
-) {
+pub fn init_tray(_supported_properties: Vec<Properties>, config: Arc<Mutex<Config>>) {
     std::thread::spawn(move || {
         let rog_red = read_icon(&PathBuf::from("asus_notif_red.png"));
 
-        if let Ok(tray) = TrayIconBuilder::<TrayAction>::new()
+        if let Ok(mut tray) = TrayIconBuilder::<TrayAction>::new()
             .with_icon(rog_red.clone())
             .with_tooltip(TRAY_LABEL)
             .with_menu(build_menu())
@@ -170,15 +165,14 @@ pub fn init_tray(
 
             info!("Started ROGTray");
             loop {
-                if let Ok(mut lock) = states.lock() {
-                    if lock.tray_should_update {
-                        set_tray_icon_and_tip(&lock, &tray, supergfx_active);
-                        lock.tray_should_update = false;
-                        if let Ok(lock) = config.try_lock() {
-                            if !lock.enable_tray_icon {
-                                return;
-                            }
-                        }
+                if let Ok(lock) = config.try_lock() {
+                    if !lock.enable_tray_icon {
+                        return;
+                    }
+                }
+                if let Ok(mode) = gfx_proxy.mode() {
+                    if let Ok(power) = gfx_proxy.power() {
+                        set_tray_icon_and_tip(mode, power, &mut tray, supergfx_active);
                     }
                 }
                 sleep(Duration::from_millis(50));
