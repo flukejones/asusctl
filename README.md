@@ -29,10 +29,6 @@ The level of support for laptops is dependent on folks submitting data to includ
 
 See the [rog-aura readme](./rog-aura/README.md) for more details.
 
-## Discord
-
-[Discord server link](https://discord.gg/z8y99XqPb7)
-
 ## SUPPORTED LAPTOPS
 
 Most ASUS gaming laptops that have a USB keyboard. If `lsusb` shows something similar
@@ -122,6 +118,10 @@ See `CONTRIBUTING.md`. Additionally, also do `cargo clean` and `cargo test` on f
 Generation of the bindings with `make bindings` requires `typeshare` to be installed.
 
 Dbus introsepction XML requires with `make introspection` requires `anime_sim` to be running before starting `asusd`.
+
+# Join the Community
+
+[![Discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/z8y99XqPb7)
 
 # OTHER
 
