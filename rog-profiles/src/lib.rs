@@ -122,7 +122,6 @@ impl FanCurveProfiles {
         Ok(FanCurvePU::which_fans(&device))
     }
 
-    ///
     pub fn read_from_dev_profile(
         &mut self,
         profile: ThrottlePolicy,

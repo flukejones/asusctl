@@ -199,16 +199,7 @@ pub trait CtrlTask {
     ///
     /// The closures can potentially block, so execution time should be the
     /// minimal possible such as save a variable.
-    fn create_sys_event_tasks<
-        Fut1,
-        Fut2,
-        Fut3,
-        Fut4,
-        F1: Send + 'static,
-        F2: Send + 'static,
-        F3: Send + 'static,
-        F4: Send + 'static,
-    >(
+    fn create_sys_event_tasks<Fut1, Fut2, Fut3, Fut4, F1, F2, F3, F4>(
         &self,
         mut on_prepare_for_sleep: F1,
         mut on_prepare_for_shutdown: F2,
@@ -216,10 +207,10 @@ pub trait CtrlTask {
         mut on_external_power_change: F4,
     ) -> impl Future<Output = ()> + Send
     where
-        F1: FnMut(bool) -> Fut1,
-        F2: FnMut(bool) -> Fut2,
-        F3: FnMut(bool) -> Fut3,
-        F4: FnMut(bool) -> Fut4,
+        F1: FnMut(bool) -> Fut1 + Send + 'static,
+        F2: FnMut(bool) -> Fut2 + Send + 'static,
+        F3: FnMut(bool) -> Fut3 + Send + 'static,
+        F4: FnMut(bool) -> Fut4 + Send + 'static,
         Fut1: Future<Output = ()> + Send,
         Fut2: Future<Output = ()> + Send,
         Fut3: Future<Output = ()> + Send,

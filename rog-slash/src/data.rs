@@ -13,6 +13,7 @@ use crate::error::SlashError;
 pub enum SlashType {
     GA403,
     Unknown,
+    Unsupported,
 }
 
 impl FromStr for SlashType {

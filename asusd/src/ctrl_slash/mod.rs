@@ -44,6 +44,11 @@ pub struct CtrlSlash {
 impl CtrlSlash {
     #[inline]
     pub fn new(config: SlashConfig) -> Result<CtrlSlash, RogError> {
+        let slash_type = get_slash_type()?;
+        if matches!(slash_type, SlashType::Unknown | SlashType::Unsupported) {
+            return Err(RogError::Slash(SlashError::NoDevice));
+        }
+
         let usb = USBRaw::new(rog_slash::usb::PROD_ID).ok();
         let hid = HidRaw::new(rog_slash::usb::PROD_ID_STR).ok();
         let node = if usb.is_some() {
@@ -53,11 +58,6 @@ impl CtrlSlash {
         } else {
             return Err(RogError::NotSupported);
         };
-
-        let slash_type = get_slash_type()?;
-        if slash_type == SlashType::Unknown {
-            return Err(RogError::Slash(SlashError::NoDevice));
-        }
 
         let ctrl = CtrlSlash {
             node,

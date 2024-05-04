@@ -66,26 +66,28 @@ impl CtrlAnime {
         let usb = USBRaw::new(0x193b).ok();
         let hid = HidRaw::new("193b").ok();
         let node = if usb.is_some() {
+            info!("Anime using the USB interface");
             unsafe { Node::Usb(usb.unwrap_unchecked()) }
         } else if hid.is_some() {
+            info!("Anime using the HID interface");
             unsafe { Node::Hid(hid.unwrap_unchecked()) }
         } else {
             return Err(RogError::Anime(AnimeError::NoDevice));
         };
 
         // TODO: something better to set wakeups disabled
-        if matches!(node, Node::Usb(_)) {
-            if let Ok(mut enumerator) = udev::Enumerator::new() {
-                enumerator.match_subsystem("usb").ok();
-                enumerator.match_attribute("idProduct", "193b").ok();
+        // if matches!(node, Node::Usb(_)) {
+        //     if let Ok(mut enumerator) = udev::Enumerator::new() {
+        //         enumerator.match_subsystem("usb").ok();
+        //         enumerator.match_attribute("idProduct", "193b").ok();
 
-                if let Ok(mut enumer) = enumerator.scan_devices() {
-                    if let Some(mut dev) = enumer.next() {
-                        dev.set_attribute_value("power/wakeup", "disabled").ok();
-                    }
-                }
-            }
-        }
+        //         if let Ok(mut enumer) = enumerator.scan_devices() {
+        //             if let Some(mut dev) = enumer.next() {
+        //                 dev.set_attribute_value("power/wakeup", "disabled").ok();
+        //             }
+        //         }
+        //     }
+        // }
 
         let mut anime_type = get_anime_type()?;
         if let AnimeType::Unknown = anime_type {

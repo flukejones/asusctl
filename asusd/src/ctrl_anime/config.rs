@@ -106,7 +106,7 @@ impl AnimeConfigCached {
 }
 
 /// Config for base system actions for the anime display
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct AnimeConfig {
     pub model_override: Option<AnimeType>,
     pub system: Vec<ActionLoader>,

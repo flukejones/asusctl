@@ -35,8 +35,7 @@ pub fn get_slash_type() -> Result<SlashType, SlashError> {
     if board_name.contains("GA403") {
         return Ok(SlashType::GA403);
     }
-    log::warn!("AniMe Slash device found but not yet supported, will default to a GA403 layout");
-    Ok(SlashType::Unknown)
+    Ok(SlashType::Unsupported)
 }
 
 /// Get the two device initialization packets. These are required for device
