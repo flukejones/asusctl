@@ -123,7 +123,7 @@ async fn main() -> Result<()> {
     }
 
     thread_local! { pub static UI: std::cell::RefCell<Option<MainWindow>> = Default::default()};
-    i_slint_backend_selector::with_platform(|_| Ok(())).unwrap();
+    // i_slint_backend_selector::with_platform(|_| Ok(())).unwrap();
 
     let mut do_once = !startup_in_background;
 
@@ -159,7 +159,7 @@ async fn main() -> Result<()> {
                 sleep(Duration::from_millis(50));
 
                 let config_copy = config.clone();
-                i_slint_core::api::invoke_from_event_loop(move || {
+                slint::invoke_from_event_loop(move || {
                     UI.with(|ui| {
                         let mut ui = ui.borrow_mut();
                         if let Some(ui) = ui.as_mut() {
@@ -193,7 +193,7 @@ async fn main() -> Result<()> {
                         }
                     }
 
-                    i_slint_core::api::invoke_from_event_loop(move || {
+                    slint::invoke_from_event_loop(move || {
                         UI.with(|ui| {
                             let mut ui = ui.take();
                             if let Some(ui) = ui.borrow_mut() {

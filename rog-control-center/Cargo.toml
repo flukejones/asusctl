@@ -13,10 +13,9 @@ edition.workspace = true
 #mocking = []
 
 [dependencies]
-
-betrayer = { git = "https://github.com/flukejones/betrayer.git", features = [
-    "winit",
-] }
+nix = "^0.26.1"
+tempfile = "3.3.0"
+betrayer = { version = "0.2.0", features = ["winit"] }
 
 asusd = { path = "../asusd" }
 config-traits = { path = "../config-traits" }
@@ -43,16 +42,7 @@ notify-rust.workspace = true
 concat-idents.workspace = true
 
 png_pong.workspace = true
-
 versions.workspace = true
-
-nix = "^0.26.1"
-tempfile = "3.3.0"
-
-i-slint-backend-selector = { git = "https://github.com/slint-ui/slint.git" }
-i-slint-core = { git = "https://github.com/slint-ui/slint.git" }
-i-slint-backend-winit = { git = "https://github.com/slint-ui/slint.git" }
-winit = "*"
 
 [dependencies.slint]
 git = "https://github.com/slint-ui/slint.git"
@@ -60,10 +50,10 @@ default-features = false
 features = [
     "std",
     "gettext",
-    "compat-1-0",
+    "compat-1-2",
     "backend-winit-wayland",
     "backend-linuxkms",
-    "renderer-femtovg",
+    "renderer-winit-femtovg",
 ]
 
 [build-dependencies.slint-build]
