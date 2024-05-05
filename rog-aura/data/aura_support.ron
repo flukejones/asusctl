@@ -324,6 +324,15 @@
         power_zones: [Keyboard],
     ),
     (
+        device_name: "G713P",
+        product_id: "",
+        layout_name: "ga401q",
+        basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
+        basic_zones: [Key1, Key2, Key3, Key4],
+        advanced_type: None,
+        power_zones: [Keyboard],
+    ),
+    (
         device_name: "G713QM",
         product_id: "",
         layout_name: "ga401q",

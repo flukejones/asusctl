@@ -1,9 +1,12 @@
 [package]
 name = "rog_profiles"
-license = "MPL-2.0"
+license.workspace = true
 version.workspace = true
-authors = ["Luke D. Jones <luke@ljones.dev>"]
-edition = "2021"
+readme.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
 
 [features]
 default = ["dbus"]

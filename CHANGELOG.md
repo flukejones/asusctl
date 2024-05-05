@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support the G713P keyboard
+
+### Changed
+
+- Update all `Cargo.toml`
+
 ## [v6.0.0]
 
 ### Important note

@@ -61,8 +61,8 @@ pub fn start_notifications(config: Arc<Mutex<Config>>) -> Result<()> {
                 let mut ac = String::new();
                 let mut bat = String::new();
                 if let Ok(config) = config_copy.lock() {
-                    ac = config.ac_command.clone();
-                    bat = config.bat_command.clone();
+                    ac.clone_from(&config.ac_command);
+                    bat.clone_from(&config.bat_command);
                 }
 
                 if p == 0 && p != last_state {

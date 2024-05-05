@@ -1,8 +1,12 @@
 [package]
 name = "rog_platform"
-license = "MPL-2.0"
+license.workspace = true
 version.workspace = true
-edition = "2021"
+readme.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
 
 [dependencies]
 log.workspace = true

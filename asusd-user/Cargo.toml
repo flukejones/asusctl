@@ -1,10 +1,12 @@
 [package]
 name = "asusd-user"
-license = "MPL-2.0"
+license.workspace = true
 version.workspace = true
-authors = ["Luke D Jones <luke@ljones.dev>"]
-edition = "2021"
-description = "Usermode daemon for user settings, anime, per-key lighting"
+readme.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
 
 [[bin]]
 name = "asusd-user"

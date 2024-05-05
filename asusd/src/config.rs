@@ -31,18 +31,25 @@ pub struct Config {
     /// The energy_performance_preference for this throttle/platform profile
     pub throttle_performance_epp: CPUEPP,
     /// Defaults to `None` if not supported
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub ppt_pl1_spl: Option<u8>,
     /// Defaults to `None` if not supported
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub ppt_pl2_sppt: Option<u8>,
     /// Defaults to `None` if not supported
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub ppt_fppt: Option<u8>,
     /// Defaults to `None` if not supported
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub ppt_apu_sppt: Option<u8>,
     /// Defaults to `None` if not supported
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub ppt_platform_sppt: Option<u8>,
     /// Defaults to `None` if not supported
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub nv_dynamic_boost: Option<u8>,
     /// Defaults to `None` if not supported
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub nv_temp_target: Option<u8>,
     /// Temporary state for AC/Batt
     #[serde(skip)]

@@ -1,13 +1,13 @@
 [package]
 name = "asusd"
-license = "MPL-2.0"
+license.workspace = true
 version.workspace = true
-readme = "README.md"
-authors = ["Luke <luke@ljones.dev>"]
-repository = "https://gitlab.com/asus-linux/asus-nb-ctrl"
-homepage = "https://gitlab.com/asus-linux/asus-nb-ctrl"
-description = "A daemon app for ASUS GX502 and similar laptops to control missing features"
-edition = "2021"
+readme.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description.workspace = true
+edition.workspace = true
 
 [[bin]]
 name = "asusd"

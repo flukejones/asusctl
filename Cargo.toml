@@ -27,6 +27,13 @@ resolver = "2"
 [workspace.package]
 version = "6.0.0"
 rust-version = "1.77"
+license = "MPL-2.0"
+readme = "README.md"
+authors = ["Luke <luke@ljones.dev>"]
+repository = "https://gitlab.com/asus-linux/asusctl"
+homepage = "https://gitlab.com/asus-linux/asusctl"
+description = "Laptop feature control for ASUS ROG laptops and others"
+edition = "2021"
 
 [workspace.dependencies]
 tokio = { version = "^1.36.0", default-features = false, features = [
@@ -77,11 +84,13 @@ lto = "fat"
 debug = false
 opt-level = 3
 panic = "abort"
-codegen-units = 1
+#codegen-units = 1
 
 [profile.dev]
 opt-level = 1
-codegen-units = 16
+
+[profile.dev.package."*"]
+opt-level = 1
 
 [profile.bench]
 debug = false

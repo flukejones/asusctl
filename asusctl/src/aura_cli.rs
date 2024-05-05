@@ -87,6 +87,7 @@ impl FromStr for LedBrightness {
         }
     }
 }
+#[allow(clippy::to_string_trait_impl)]
 impl ToString for LedBrightness {
     fn to_string(&self) -> String {
         let s = match self.level {
