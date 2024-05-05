@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-05-04 22:54+0000\n"
+"POT-Creation-Date: 2024-05-05 08:22+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -154,7 +154,7 @@ msgstr ""
 
 #: rog-control-center/ui/pages/app_settings.slint:59
 msgctxt "PageAppSettings"
-msgid "Enable change notifications"
+msgid "Enable dGPU notifications"
 msgstr ""
 
 #: rog-control-center/ui/pages/fans.slint:27

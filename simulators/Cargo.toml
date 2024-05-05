@@ -20,11 +20,11 @@ log.workspace = true
 
 glam.workspace = true
 
-uhid-virt = "^0.0.6"
+uhid-virt = "^0.0.7"
 
 rog_anime = { path = "../rog-anime", features = ["dbus"] }
 
 [dependencies.sdl2]
-version = "0.35"
+version = "0.36"
 default-features = false
 # features = ["gfx"]

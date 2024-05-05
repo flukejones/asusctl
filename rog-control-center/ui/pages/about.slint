@@ -16,6 +16,11 @@ export component PageAbout inherits VerticalLayout {
             alignment: LayoutAlignment.center;
 
             Text {
+                wrap: TextWrap.word-wrap;
+                text: "You will require these patches: https://lore.kernel.org/platform-driver-x86/20240404001652.86207-1-luke@ljones.dev/, they have been merged upstream for kernel 6.10. The main thing is that the PPT settings will apply without them, but the read/back will fail";
+            }
+
+            Text {
                 vertical-alignment: TextVerticalAlignment.center;
                 horizontal-alignment: TextHorizontalAlignment.center;
                 text: "Todo:";

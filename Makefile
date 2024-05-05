@@ -123,15 +123,6 @@ bindings:
 	typeshare ./rog-profiles/src/ --lang=typescript --output-file=bindings/ts/profiles.ts
 	typeshare ./rog-platform/src/ --lang=typescript --output-file=bindings/ts/platform.ts
 
-introspect:
-	gdbus introspect --system -d org.asuslinux.Daemon -o /org/asuslinux/Platform -x > bindings/dbus-xml/org-asuslinux-platform-4.xml
-	gdbus introspect --system -d org.asuslinux.Daemon -o /org/asuslinux/Aura -x > bindings/dbus-xml/org-asuslinux-aura-4.xml
-	gdbus introspect --system -d org.asuslinux.Daemon -o /org/asuslinux/Anime -x > bindings/dbus-xml/org-asuslinux-anime-4.xml
-	gdbus introspect --system -d org.asuslinux.Daemon -o /org/asuslinux/FanCurves -x > bindings/dbus-xml/org-asuslinux-fan-curves-4.xml
-	xmlstarlet ed -L -O -d '//interface[@name="org.freedesktop.DBus.Introspectable"]' bindings/dbus-xml/org-asuslinux-*
-	xmlstarlet ed -L -O -d '//interface[@name="org.freedesktop.DBus.Properties"]' bindings/dbus-xml/org-asuslinux-*
-	xmlstarlet ed -L -O -d '//interface[@name="org.freedesktop.DBus.Peer"]' bindings/dbus-xml/org-asuslinux-*
-
 translate:
 	find -name \*.slint | xargs slint-tr-extractor -o rog-control-center/translations/en/rog-control-center.po
 

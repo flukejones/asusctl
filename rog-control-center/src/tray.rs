@@ -94,28 +94,34 @@ fn set_tray_icon_and_tip(
     supergfx_active: bool,
 ) {
     if let Some(icons) = ICONS.get() {
-        match power {
-            GfxPower::Suspended => tray.set_icon(Some(icons.rog_blue.clone())),
+        let icon = match power {
+            GfxPower::Suspended => icons.rog_blue.clone(),
             GfxPower::Off => {
                 if mode == GfxMode::Vfio {
-                    tray.set_icon(Some(icons.rog_red.clone()))
+                    icons.rog_red.clone()
                 } else {
-                    tray.set_icon(Some(icons.rog_green.clone()))
+                    icons.rog_green.clone()
                 }
             }
-            GfxPower::AsusDisabled => tray.set_icon(Some(icons.rog_white.clone())),
-            GfxPower::AsusMuxDiscreet | GfxPower::Active => {
-                tray.set_icon(Some(icons.rog_red.clone()));
-            }
+            GfxPower::AsusDisabled => icons.rog_white.clone(),
+            GfxPower::AsusMuxDiscreet | GfxPower::Active => icons.rog_red.clone(),
             GfxPower::Unknown => {
                 if supergfx_active {
-                    tray.set_icon(Some(icons.gpu_integrated.clone()));
+                    icons.gpu_integrated.clone()
                 } else {
-                    tray.set_icon(Some(icons.rog_red.clone()));
+                    icons.rog_red.clone()
                 }
             }
         };
+        // *tray = TrayIconBuilder::<TrayAction>::new()
+        //     .with_icon(icon)
+        //     .with_tooltip(format!("ROG: gpu mode = {mode:?}, gpu power = {power:?}"))
+        //     .with_menu(build_menu())
+        //     .build(do_action)
+        //     .map_err(|e| log::error!("Tray unable to be initialised: {e:?}"))
+        //     .unwrap();
 
+        tray.set_icon(Some(icon));
         tray.set_tooltip(format!("ROG: gpu mode = {mode:?}, gpu power = {power:?}"));
     }
 }
@@ -164,6 +170,7 @@ pub fn init_tray(_supported_properties: Vec<Properties>, config: Arc<Mutex<Confi
             };
 
             info!("Started ROGTray");
+            let mut last_power = GfxPower::Unknown;
             loop {
                 if let Ok(lock) = config.try_lock() {
                     if !lock.enable_tray_icon {
@@ -172,10 +179,13 @@ pub fn init_tray(_supported_properties: Vec<Properties>, config: Arc<Mutex<Confi
                 }
                 if let Ok(mode) = gfx_proxy.mode() {
                     if let Ok(power) = gfx_proxy.power() {
-                        set_tray_icon_and_tip(mode, power, &mut tray, supergfx_active);
+                        if last_power != power {
+                            set_tray_icon_and_tip(mode, power, &mut tray, supergfx_active);
+                            last_power = power;
+                        }
                     }
                 }
-                sleep(Duration::from_millis(50));
+                sleep(Duration::from_millis(500));
             }
         }
     });

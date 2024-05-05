@@ -8,8 +8,8 @@ export global AppSettingsPageData {
     callback set_startup_in_background(bool);
     in-out property <bool> enable_tray_icon;
     callback set_enable_tray_icon(bool);
-    in-out property <bool> enable_notifications;
-    callback set_enable_notifications(bool);
+    in-out property <bool> enable_dgpu_notifications;
+    callback set_enable_dgpu_notifications(bool);
 }
 
 export component PageAppSettings inherits VerticalLayout {
@@ -56,10 +56,10 @@ export component PageAppSettings inherits VerticalLayout {
 
                 SystemToggle {
                     width: parent.width * 1px / 2px;
-                    text: @tr("Enable change notifications");
-                    checked <=> AppSettingsPageData.enable_notifications;
+                    text: @tr("Enable dGPU notifications");
+                    checked <=> AppSettingsPageData.enable_dgpu_notifications;
                     toggled => {
-                        AppSettingsPageData.set_enable_notifications(AppSettingsPageData.enable_notifications)
+                        AppSettingsPageData.set_enable_dgpu_notifications(AppSettingsPageData.enable_dgpu_notifications)
                     }
                 }
             }

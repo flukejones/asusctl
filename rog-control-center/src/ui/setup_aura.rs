@@ -34,7 +34,11 @@ fn decode_hex(s: &str) -> RgbaColor<u8> {
 
 pub fn has_aura_iface_blocking() -> Result<bool, Box<dyn std::error::Error>> {
     let conn = zbus::blocking::Connection::system()?;
-    let f = zbus::blocking::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/org")?;
+    let f = zbus::blocking::fdo::ObjectManagerProxy::new(
+        &conn,
+        "org.asuslinux.Daemon",
+        "/org/asuslinux",
+    )?;
     let interfaces = f.get_managed_objects()?;
     let mut aura_paths = Vec::new();
     for v in interfaces.iter() {
@@ -51,7 +55,8 @@ pub fn has_aura_iface_blocking() -> Result<bool, Box<dyn std::error::Error>> {
 // TODO: return all
 async fn find_aura_iface() -> Result<AuraProxy<'static>, Box<dyn std::error::Error>> {
     let conn = zbus::Connection::system().await?;
-    let f = zbus::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/org").await?;
+    let f =
+        zbus::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/org/asuslinux").await?;
     let interfaces = f.get_managed_objects().await?;
     let mut aura_paths = Vec::new();
     for v in interfaces.iter() {

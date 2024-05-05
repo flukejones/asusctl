@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Important note
+
+- The kernel patches from [here](https://lore.kernel.org/platform-driver-x86/20240404001652.86207-1-luke@ljones.dev/) are required. The ppt settings _will_ still apply without the patches but will be called a fail due to the read-back not being implemented (solved with kernel patch). These patches have been upstreamed for kernel 6.10
+- Z13 devices will need these Z13 devices will need [these](https://lore.kernel.org/linux-input/20240416090402.31057-1-luke@ljones.dev/T/#t)
+
 ### Changed
 
 - Upgrade to zbus 4.0.1
@@ -14,13 +19,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add ability to start rog-control-center fullscreen with a width and height. This should be useful for devices like the ROG Ally.
 - Many small changes due to requirements of slint UI
 
-## Added
+### Added
 
 - Support GA402N keyboard
 - Support GL553V keyboard
 - Support GU605M keyboard
 - Support Z13 lightbar (with kernel patch)
 - Resupport the TUF keyboard
+
+### BREAKING
+
+- The aura dbus interface, and well pretty much all dbus interfaces have been changed. The Aura interface in particular works differently to begin implementing _multiple_ aura device support, including _hot-plug_ of devices (USB Aura keybords and others).
+- All dbus interfaces except Aura are now in the `/org/asuslinux/` path
+- Aura dbus now appear under `/org/asuslinux/<device>` and there may be multiple devices. To find these device you use the `ObjectManager` interface under the `/org/asuslinux` path.
 
 ## [v5.0.8]
 

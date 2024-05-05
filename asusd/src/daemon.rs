@@ -64,7 +64,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     let mut connection = Connection::system().await?;
     connection
         .object_server()
-        .at("/org", ObjectManager)
+        .at("/org/asuslinux", ObjectManager)
         .await
         .unwrap();
 

@@ -119,8 +119,12 @@ fn check_service(name: &str) -> bool {
 
 fn find_aura_iface() -> Result<Vec<AuraProxyBlocking<'static>>, Box<dyn std::error::Error>> {
     let conn = zbus::blocking::Connection::system().unwrap();
-    let f = zbus::blocking::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/org")
-        .unwrap();
+    let f = zbus::blocking::fdo::ObjectManagerProxy::new(
+        &conn,
+        "org.asuslinux.Daemon",
+        "/org/asuslinux",
+    )
+    .unwrap();
     let interfaces = f.get_managed_objects().unwrap();
     let mut aura_paths = Vec::new();
     for v in interfaces.iter() {

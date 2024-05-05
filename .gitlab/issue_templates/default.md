@@ -1,5 +1,6 @@
 ## Issue description
 
+(** I can not support distros which are outdated by default. This includes Ubuntu at least 50% of the time, and definitely includes Mint. **)
 (Summarize the bug encountered)
 
 ## Steps to reproduce
@@ -20,5 +21,12 @@
 
 (Paste any relevant logs - use code blocks (```) to format console output, logs, and code, as
 it's very hard to read otherwise.)
+
+## System details
+
+- Distro:
+- Kernel: (`uname -r`)
+- Desktop:
+- Xorg or wayland: ??
 
 /label ~bug ~reproducable ~needs-investigation
