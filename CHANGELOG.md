@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v6.0.0]
+
 ### Important note
 
 - The kernel patches from [here](https://lore.kernel.org/platform-driver-x86/20240404001652.86207-1-luke@ljones.dev/) are required. The ppt settings _will_ still apply without the patches but will be called a fail due to the read-back not being implemented (solved with kernel patch). These patches have been upstreamed for kernel 6.10
