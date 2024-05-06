@@ -1,17 +1,26 @@
 use std::path::PathBuf;
 use std::str::FromStr;
 
-use slint_build::CompilerConfiguration;
+use slint_build::{CompilerConfiguration, EmbedResourcesKind};
 
 fn main() {
     // write_locales();
 
     let root = env!("CARGO_MANIFEST_DIR");
-    let mut path = PathBuf::from_str(root).unwrap();
-    path.push("ui/main_window.slint");
+    let mut main = PathBuf::from_str(root).unwrap();
+    main.push("ui/main_window.slint");
+
+    let mut include = PathBuf::from_str(root).unwrap();
+    include.push("ui");
+
+    slint_build::print_rustc_flags().unwrap();
+    // slint_build::compile("ui/main_window.slint").unwrap();
     slint_build::compile_with_config(
-        path,
-        CompilerConfiguration::new().with_style("cosmic-dark".into()),
+        main,
+        CompilerConfiguration::new()
+            .embed_resources(EmbedResourcesKind::EmbedFiles)
+            .with_include_paths(vec![include])
+            .with_style("fluent-dark".into()),
     )
     .unwrap();
 }

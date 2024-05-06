@@ -21,4 +21,3 @@ rusb.workspace = true
 
 [dev-dependencies]
 cargo-husky.workspace = true
-rog_aura = { path = "../rog-aura" }
