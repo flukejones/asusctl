@@ -18,10 +18,9 @@ rog_platform = { path = "../rog-platform" }
 asusd = { path = "../asusd" }
 dmi_id = { path = "../dmi-id" }
 
+ron.workspace = true
 gumdrop.workspace = true
-toml.workspace = true
 zbus.workspace = true
-tokio.workspace = true
 
 [dev-dependencies]
 gif.workspace = true

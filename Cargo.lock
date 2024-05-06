@@ -137,9 +137,9 @@ dependencies = [
  "rog_platform",
  "rog_profiles",
  "rog_slash",
+ "ron",
  "tinybmp",
  "tokio",
- "toml 0.5.11",
  "zbus",
 ]
 
@@ -164,7 +164,6 @@ dependencies = [
  "rog_slash",
  "serde",
  "serde_derive",
- "systemd-zbus",
  "tokio",
  "udev 0.8.0",
  "zbus",
@@ -178,14 +177,13 @@ dependencies = [
  "config-traits",
  "dirs",
  "env_logger",
- "log",
  "rog_anime",
  "rog_aura",
  "rog_dbus",
  "rog_platform",
+ "ron",
  "serde",
  "serde_derive",
- "serde_json",
  "smol",
  "zbus",
 ]
@@ -501,7 +499,7 @@ dependencies = [
  "bitflags 2.5.0",
  "cexpr",
  "clang-sys",
- "itertools 0.12.1",
+ "itertools",
  "lazy_static",
  "lazycell",
  "log",
@@ -853,9 +851,6 @@ dependencies = [
  "log",
  "ron",
  "serde",
- "serde_derive",
- "serde_json",
- "toml 0.5.11",
 ]
 
 [[package]]
@@ -1441,7 +1436,7 @@ version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "38e2275cc4e4fc009b0669731a1e5ab7ebf11f469eaede2bab9309a5b4d6057f"
 dependencies = [
- "memoffset 0.9.1",
+ "memoffset",
  "rustc_version",
 ]
 
@@ -1988,7 +1983,7 @@ dependencies = [
  "fontdue",
  "i-slint-common",
  "image",
- "itertools 0.12.1",
+ "itertools",
  "linked_hash_set",
  "lyon_extra",
  "lyon_path",
@@ -2294,15 +2289,6 @@ dependencies = [
  "hermit-abi",
  "libc",
  "windows-sys 0.52.0",
-]
-
-[[package]]
-name = "itertools"
-version = "0.10.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0fd2260e829bddf4cb6ea802289de2f86d6a7a690192fbe91b3f46e0f2c8473"
-dependencies = [
- "either",
 ]
 
 [[package]]
@@ -2655,15 +2641,6 @@ dependencies = [
 
 [[package]]
 name = "memoffset"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5de893c32cde5f383baa4c04c5d6dbdd735cfd4a794b0debdb2bb1b421da5ff4"
-dependencies = [
- "autocfg",
-]
-
-[[package]]
-name = "memoffset"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "488016bfae457b036d996092f6cb448677611ce4449e970ceaf42695203f218a"
@@ -2779,8 +2756,6 @@ dependencies = [
  "bitflags 1.3.2",
  "cfg-if",
  "libc",
- "memoffset 0.7.1",
- "pin-utils",
 ]
 
 [[package]]
@@ -2804,7 +2779,7 @@ dependencies = [
  "cfg-if",
  "cfg_aliases 0.1.1",
  "libc",
- "memoffset 0.9.1",
+ "memoffset",
 ]
 
 [[package]]
@@ -3412,18 +3387,15 @@ dependencies = [
  "env_logger",
  "gumdrop",
  "log",
- "nix 0.26.4",
+ "nix 0.28.0",
  "notify-rust",
- "png_pong",
  "rog_anime",
  "rog_aura",
  "rog_dbus",
  "rog_platform",
  "rog_profiles",
- "ron",
  "serde",
  "serde_derive",
- "serde_json",
  "slint",
  "slint-build",
  "supergfxctl",
@@ -3489,7 +3461,6 @@ dependencies = [
  "rog_aura",
  "rusb",
  "serde",
- "serde_derive",
  "typeshare",
  "udev 0.8.0",
  "zbus",
@@ -3513,7 +3484,6 @@ dependencies = [
 name = "rog_simulators"
 version = "6.0.0"
 dependencies = [
- "glam",
  "log",
  "rog_anime",
  "sdl2",
@@ -3526,11 +3496,6 @@ version = "6.0.0"
 dependencies = [
  "cargo-husky",
  "dmi_id",
- "gif 0.12.0",
- "glam",
- "log",
- "pix",
- "png_pong",
  "serde",
  "serde_derive",
  "typeshare",
@@ -3557,7 +3522,7 @@ checksum = "32a58fa8a7ccff2aec4f39cc45bf5f985cec7125ab271cf681c279fd00192b49"
 dependencies = [
  "countme",
  "hashbrown",
- "memoffset 0.9.1",
+ "memoffset",
  "rustc-hash",
  "text-size",
 ]
@@ -3835,7 +3800,7 @@ dependencies = [
  "regex",
  "serde_json",
  "tar",
- "toml 0.8.12",
+ "toml",
 ]
 
 [[package]]
@@ -4130,16 +4095,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "systemd-zbus"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a98ac0c9c7b08a92b01576551942fbfc80c64e7f2354e04b57264d9349fd2b2e"
-dependencies = [
- "serde",
- "zbus",
-]
-
-[[package]]
 name = "tar"
 version = "0.4.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4322,15 +4277,6 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "0.5.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4f7f0dd8d50a853a531c426359045b1998f04219d88799810762cd4ad314234"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "toml"
 version = "0.8.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e9dd1545e8208b4a5af1aa9bbd0b4cf7e9ea08fabc5d0a5c67fcaafa17433aa3"
@@ -4469,7 +4415,7 @@ version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "89daebc3e6fd160ac4aa9fc8b3bf71e1f74fbf92367ae71fb83a037e8bf164b9"
 dependencies = [
- "memoffset 0.9.1",
+ "memoffset",
  "tempfile",
  "winapi",
 ]
@@ -4615,11 +4561,11 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "versions"
-version = "4.1.0"
+version = "6.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee97e1d97bd593fb513912a07691b742361b3dd64ad56f2c694ea2dbfe0665d3"
+checksum = "38a8931f8d167b6448076020e70b9de46dcf5ea1731212481a092d0071c4ac5b"
 dependencies = [
- "itertools 0.10.5",
+ "itertools",
  "nom",
 ]
 

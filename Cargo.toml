@@ -52,8 +52,6 @@ logind-zbus = { version = "~4.0.2" } #, default-features = false, features = ["n
 
 serde = "^1.0"
 serde_derive = "^1.0"
-serde_json = "^1.0"
-toml = "^0.5.10"
 ron = "*"
 typeshare = "1.0.0"
 
@@ -71,7 +69,7 @@ pix = "^0.13"
 tinybmp = "^0.4.0"
 gif = "^0.12.0"
 
-versions = "4.1"
+versions = "6.2"
 
 notify-rust = { git = "https://github.com/flukejones/notify-rust.git", rev = "54176413b81189a3e4edbdc20a0b4f7e2e35c063", default-features = false, features = [
     "z",
@@ -84,13 +82,15 @@ lto = "fat"
 debug = false
 opt-level = 3
 panic = "abort"
-#codegen-units = 1
+codegen-units = 1
 
 [profile.dev]
 opt-level = 1
+codegen-units = 16
 
 [profile.dev.package."*"]
 opt-level = 1
+codegen-units = 16
 
 [profile.bench]
 debug = false

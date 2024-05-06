@@ -22,6 +22,7 @@ use rog_dbus::zbus_slash::SlashProxyBlocking;
 use rog_platform::platform::{GpuMode, Properties, ThrottlePolicy};
 use rog_profiles::error::ProfileError;
 use rog_slash::SlashMode;
+use ron::ser::PrettyConfig;
 use zbus::blocking::Connection;
 
 use crate::aura_cli::{AuraPowerStates, LedBrightness};
@@ -826,8 +827,8 @@ fn handle_fan_curve(
     if let Some(profile) = cmd.mod_profile {
         if cmd.enable_fan_curves.is_none() && cmd.data.is_none() {
             let data = fan_proxy.fan_curve_data(profile)?;
-            let data = toml::to_string(&data)?;
-            println!("\nFan curves for {:?}\n\n{}", profile, data);
+            let ron = ron::ser::to_string_pretty(&data, PrettyConfig::new().depth_limit(4))?;
+            println!("\nFan curves for {:?}\n\n{}", profile, ron);
         }
 
         if let Some(enabled) = cmd.enable_fan_curves {

@@ -18,8 +18,8 @@ smol.workspace = true
 
 # serialisation
 serde.workspace = true
-serde_json.workspace = true
 serde_derive.workspace = true
+ron.workspace = true
 
 rog_anime = { path = "../rog-anime" }
 rog_aura = { path = "../rog-aura" }
@@ -28,10 +28,10 @@ rog_platform = { path = "../rog-platform" }
 config-traits = { path = "../config-traits" }
 
 zbus.workspace = true
-
-# cli and logging
-log.workspace = true
 env_logger.workspace = true
 
 [dev-dependencies]
 cargo-husky.workspace = true
+
+[package.metadata.cargo-machete]
+ignored = ["serde"]

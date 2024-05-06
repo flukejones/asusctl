@@ -10,9 +10,6 @@ edition.workspace = true
 
 [dependencies]
 serde.workspace = true
-serde_derive.workspace = true
-serde_json.workspace = true
-toml.workspace = true
 ron.workspace = true
 
 log.workspace = true

@@ -13,7 +13,7 @@ edition.workspace = true
 #mocking = []
 
 [dependencies]
-nix = "^0.26.1"
+nix = { version = "^0.28.0", features = ["fs"] }
 tempfile = "3.3.0"
 betrayer = { version = "0.2.0", features = ["winit"] }
 
@@ -33,15 +33,12 @@ env_logger.workspace = true
 
 tokio.workspace = true
 serde.workspace = true
-ron.workspace = true
-serde_json.workspace = true
 serde_derive.workspace = true
 zbus.workspace = true
 dirs.workspace = true
 notify-rust.workspace = true
 concat-idents.workspace = true
 
-png_pong.workspace = true
 versions.workspace = true
 
 [dependencies.slint]

@@ -42,7 +42,8 @@ serde_derive.workspace = true
 
 concat-idents.workspace = true
 
-systemd-zbus = "*"
-
 [dev-dependencies]
 cargo-husky.workspace = true
+
+[package.metadata.cargo-machete]
+ignored = ["serde"]
