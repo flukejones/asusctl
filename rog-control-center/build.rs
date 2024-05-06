@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::str::FromStr;
 
-use slint_build::{CompilerConfiguration, EmbedResourcesKind};
+use slint_build::CompilerConfiguration;
 
 fn main() {
     // write_locales();
@@ -18,7 +18,7 @@ fn main() {
     slint_build::compile_with_config(
         main,
         CompilerConfiguration::new()
-            .embed_resources(EmbedResourcesKind::EmbedFiles)
+            // .embed_resources(EmbedResourcesKind::EmbedFiles)
             .with_include_paths(vec![include])
             .with_style("fluent-dark".into()),
     )

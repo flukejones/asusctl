@@ -185,7 +185,7 @@ pub fn init_tray(_supported_properties: Vec<Properties>, config: Arc<Mutex<Confi
                         }
                     }
                 }
-                sleep(Duration::from_millis(500));
+                sleep(Duration::from_millis(1000));
             }
         }
     });
