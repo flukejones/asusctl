@@ -172,6 +172,7 @@ pub fn init_tray(_supported_properties: Vec<Properties>, config: Arc<Mutex<Confi
             info!("Started ROGTray");
             let mut last_power = GfxPower::Unknown;
             loop {
+                sleep(Duration::from_millis(1000));
                 if let Ok(lock) = config.try_lock() {
                     if !lock.enable_tray_icon {
                         return;
@@ -185,7 +186,6 @@ pub fn init_tray(_supported_properties: Vec<Properties>, config: Arc<Mutex<Confi
                         }
                     }
                 }
-                sleep(Duration::from_millis(1000));
             }
         }
     });
