@@ -7,13 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v6.0.1]
+
 ### Added
 
 - Support the G713P keyboard
 
 ### Changed
 
-- Update all `Cargo.toml`
+- Update all `Cargo.toml` to use workspace deps and remove unused features
+- Update dependencies where possible
+- Switch the UI to use fluent-dark instead of cosmic-dark due to extremely long compile time
 
 ## [v6.0.0]
 
