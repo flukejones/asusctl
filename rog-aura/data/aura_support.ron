@@ -199,7 +199,7 @@
     ),
     (
         device_name: "G533Q",
-        product_id: "",
+        product_id: "1866",
         layout_name: "g533q-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],

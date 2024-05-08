@@ -143,6 +143,9 @@ impl CtrlKbdLed {
                     devices.push(ctrl);
                 }
             }
+        } else {
+            let dmi = DMIID::new().unwrap_or_default();
+            warn!("No asus::kbd_backlight found for {} ??", dmi.product_family);
         }
 
         info!("Found {} Aura devices", devices.len());

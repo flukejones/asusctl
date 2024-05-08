@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Remove some `todo()` in rogcc
 - Add missing `#[zbus(property)]` derive to Slash dbus properties
+- Match G533Q laptop explicitly to the 0x8166 PID
 
 ## [v6.0.3]
 
