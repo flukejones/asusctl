@@ -22,8 +22,6 @@ use rog_control_center::{
     get_ipc_file, on_tmp_dir_exists, print_versions, MainWindow, QUIT_APP, SHOWING_GUI, SHOW_GUI,
 };
 use tokio::runtime::Runtime;
-// use winit::monitor::VideoMode;
-// use winit::window::{Fullscreen, WindowLevel};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -73,11 +71,6 @@ async fn main() -> Result<()> {
         .format_timestamp(None)
         .init();
 
-    // start tokio
-    let rt = Runtime::new().expect("Unable to create Runtime");
-    // Enter the runtime so that `tokio::spawn` is available immediately.
-    let _enter = rt.enter();
-
     let supported_properties = match proxy.supported_properties() {
         Ok(s) => s,
         Err(_e) => {
@@ -117,7 +110,13 @@ async fn main() -> Result<()> {
     let enable_tray_icon = config.enable_tray_icon;
     let startup_in_background = config.startup_in_background;
     let config = Arc::new(Mutex::new(config));
-    start_notifications(config.clone())?;
+
+    // start tokio
+    let rt = Runtime::new().expect("Unable to create Runtime");
+    // Enter the runtime so that `tokio::spawn` is available immediately.
+    let _enter = rt.enter();
+    start_notifications(config.clone(), &rt)?;
+
     if enable_tray_icon {
         init_tray(supported_properties, config.clone());
     }
@@ -208,6 +207,7 @@ async fn main() -> Result<()> {
     });
 
     slint::run_event_loop_until_quit().unwrap();
+    rt.shutdown_background();
     Ok(())
 }
 

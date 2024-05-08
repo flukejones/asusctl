@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, HashSet};
 
 use config_traits::{StdConfig, StdConfigLoad};
+use dmi_id::DMIID;
 use inotify::Inotify;
 use log::{debug, info, warn};
 use rog_aura::aura_detection::LedSupportData;
@@ -123,16 +124,24 @@ impl CtrlKbdLed {
         // Check for a TUF laptop LED. Assume there is only ever one.
         if let Ok(kbd_backlight) = KeyboardLed::new() {
             if kbd_backlight.has_kbd_rgb_mode() {
-                info!("AuraControl found a TUF laptop keyboard");
-                let ctrl = CtrlKbdLed {
-                    led_type: AuraDeviceType::LaptopTuf,
-                    led_node: LEDNode::KbdLed(kbd_backlight),
-                    supported_data: LedSupportData::get_data("tuf"),
-                    per_key_mode_active: false,
-                    config: Self::init_config("tuf"),
-                    dbus_path: dbus_path_for_tuf(),
-                };
-                devices.push(ctrl);
+                // Extra sure double-check that this isn't a laptop with crap
+                // ACPI with borked return on the TUF rgb methods
+                let dmi = DMIID::new().unwrap_or_default();
+                info!("Found a TUF with product family: {}", dmi.product_family);
+                info!("and board name: {}", dmi.board_name);
+
+                if dmi.product_family.contains("TUF") {
+                    info!("AuraControl found a TUF laptop keyboard");
+                    let ctrl = CtrlKbdLed {
+                        led_type: AuraDeviceType::LaptopTuf,
+                        led_node: LEDNode::KbdLed(kbd_backlight),
+                        supported_data: LedSupportData::get_data("tuf"),
+                        per_key_mode_active: false,
+                        config: Self::init_config("tuf"),
+                        dbus_path: dbus_path_for_tuf(),
+                    };
+                    devices.push(ctrl);
+                }
             }
         }
 

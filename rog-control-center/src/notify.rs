@@ -18,6 +18,8 @@ use serde::{Deserialize, Serialize};
 use supergfxctl::actions::UserActionRequired as GfxUserAction;
 use supergfxctl::pci_device::{GfxMode, GfxPower};
 use supergfxctl::zbus_proxy::DaemonProxy as SuperProxy;
+use tokio::runtime::Runtime;
+use tokio::task::JoinHandle;
 use tokio::time::sleep;
 use zbus::export::futures_util::StreamExt;
 
@@ -44,10 +46,13 @@ impl Default for EnabledNotifications {
     }
 }
 
-pub fn start_notifications(config: Arc<Mutex<Config>>) -> Result<()> {
+pub fn start_notifications(
+    config: Arc<Mutex<Config>>,
+    rt: &Runtime,
+) -> Result<Vec<JoinHandle<()>>> {
     // Setup the AC/BAT commands that will run on power status change
     let config_copy = config.clone();
-    tokio::task::spawn_blocking(move || {
+    let blocking = rt.spawn_blocking(move || {
         let power = AsusPower::new()
             .map_err(|e| {
                 error!("AsusPower: {e}");
@@ -217,7 +222,7 @@ pub fn start_notifications(config: Arc<Mutex<Config>>) -> Result<()> {
         };
     });
 
-    Ok(())
+    Ok(vec![blocking])
 }
 
 fn convert_gfx_mode(gfx: GfxMode) -> GpuMode {

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v6.0.3]
+
+### NOTE
+
+- Xorg is not supported any longer. All major desktops and distros are Wayland.
+
+### Changed
+
+- Add a check to prevent non-TUF laptops with screwed up method return from TUF acpi methods from trying to add a TUF aura device without actually being a TUF laptop.
+- Make the G834JZ entry in aura db generic for all G834J
+
 ## [v6.0.2]
 
 ### Changed
