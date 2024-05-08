@@ -382,9 +382,9 @@
         product_id: "",
         layout_name: "g513i-per-key",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
-        basic_zones: [Logo, BarLeft, BarRight],
+        basic_zones: [],
         advanced_type: PerKey,
-        power_zones: [Keyboard],
+        power_zones: [Keyboard, Lightbar, Logo, Lid],
     ),
     (
         device_name: "G733PZ",
