@@ -1,5 +1,6 @@
 use std::sync::{Arc, Mutex};
 
+use log::info;
 use rog_aura::keyboard::LaptopAuraPower;
 use rog_dbus::zbus_aura::AuraProxy;
 use slint::{ComponentHandle, Model, RgbaColor, SharedString};
@@ -92,7 +93,12 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
 
     let handle = ui.as_weak();
     tokio::spawn(async move {
-        let aura = find_aura_iface().await.unwrap();
+        let aura = if let Ok(aura) = find_aura_iface().await {
+            aura
+        } else {
+            info!("This device appears to have no aura interfaces");
+            return;
+        };
 
         set_ui_props_async!(handle, aura, AuraPageData, brightness);
         set_ui_props_async!(handle, aura, AuraPageData, led_mode);

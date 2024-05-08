@@ -136,7 +136,11 @@ pub fn init_tray(_supported_properties: Vec<Properties>, config: Arc<Mutex<Confi
             .with_tooltip(TRAY_LABEL)
             .with_menu(build_menu())
             .build(do_action)
-            .map_err(|e| log::error!("Tray unable to be initialised: {e:?}"))
+            .map_err(|e| {
+                log::error!(
+                    "Tray unable to be initialised: {e:?}. Do you have a system tray enabled?"
+                )
+            })
         {
             info!("Tray started");
             let rog_blue = read_icon(&PathBuf::from("asus_notif_blue.png"));
@@ -151,38 +155,42 @@ pub fn init_tray(_supported_properties: Vec<Properties>, config: Arc<Mutex<Confi
                 gpu_integrated,
             });
 
+            let mut has_supergfx = true;
             let conn = zbus::blocking::Connection::system().unwrap();
-            let gfx_proxy = GfxProxy::new(&conn).unwrap();
-            let mut supergfx_active = false;
-            if gfx_proxy.mode().is_ok() {
-                supergfx_active = true;
-                if let Ok(version) = gfx_proxy.version() {
-                    if let Some(version) = Versioning::new(&version) {
-                        let curr_gfx = Versioning::new("5.0.3-RC4").unwrap();
-                        warn!("supergfxd version = {version}");
-                        if version < curr_gfx {
-                            // Don't allow mode changing if too old a version
-                            warn!("supergfxd found but is too old to use");
-                            // tray.gfx_proxy_is_active = false;
+            if let Ok(gfx_proxy) = GfxProxy::new(&conn) {
+                let mut supergfx_active = false;
+                if gfx_proxy.mode().is_ok() {
+                    supergfx_active = true;
+                    if let Ok(version) = gfx_proxy.version() {
+                        if let Some(version) = Versioning::new(&version) {
+                            let curr_gfx = Versioning::new("5.2.0").unwrap();
+                            warn!("supergfxd version = {version}");
+                            if version < curr_gfx {
+                                // Don't allow mode changing if too old a version
+                                warn!("supergfxd found but is too old to use");
+                                has_supergfx = false;
+                            }
                         }
                     }
-                }
-            };
+                };
 
-            info!("Started ROGTray");
-            let mut last_power = GfxPower::Unknown;
-            loop {
-                sleep(Duration::from_millis(1000));
-                if let Ok(lock) = config.try_lock() {
-                    if !lock.enable_tray_icon {
-                        return;
+                info!("Started ROGTray");
+                let mut last_power = GfxPower::Unknown;
+                loop {
+                    sleep(Duration::from_millis(1000));
+                    if let Ok(lock) = config.try_lock() {
+                        if !lock.enable_tray_icon {
+                            return;
+                        }
                     }
-                }
-                if let Ok(mode) = gfx_proxy.mode() {
-                    if let Ok(power) = gfx_proxy.power() {
-                        if last_power != power {
-                            set_tray_icon_and_tip(mode, power, &mut tray, supergfx_active);
-                            last_power = power;
+                    if has_supergfx {
+                        if let Ok(mode) = gfx_proxy.mode() {
+                            if let Ok(power) = gfx_proxy.power() {
+                                if last_power != power {
+                                    set_tray_icon_and_tip(mode, power, &mut tray, supergfx_active);
+                                    last_power = power;
+                                }
+                            }
                         }
                     }
                 }

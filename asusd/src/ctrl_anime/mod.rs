@@ -8,6 +8,7 @@ use std::sync::Arc;
 use std::thread::sleep;
 
 use ::zbus::export::futures_util::lock::Mutex;
+use config_traits::{StdConfig, StdConfigLoad2};
 use log::{error, info, warn};
 use rog_anime::error::AnimeError;
 use rog_anime::usb::{
@@ -62,7 +63,7 @@ pub struct CtrlAnime {
 
 impl CtrlAnime {
     #[inline]
-    pub fn new(config: AnimeConfig) -> Result<CtrlAnime, RogError> {
+    pub fn new() -> Result<CtrlAnime, RogError> {
         let usb = USBRaw::new(0x193b).ok();
         let hid = HidRaw::new("193b").ok();
         let node = if usb.is_some() {
@@ -89,6 +90,7 @@ impl CtrlAnime {
         //     }
         // }
 
+        let config = AnimeConfig::new().load();
         let mut anime_type = get_anime_type()?;
         if let AnimeType::Unknown = anime_type {
             if let Some(model) = config.model_override {

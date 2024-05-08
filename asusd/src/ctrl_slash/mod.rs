@@ -1,6 +1,7 @@
 pub mod config;
 pub mod trait_impls;
 
+use config_traits::{StdConfig, StdConfigLoad};
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::usb_raw::USBRaw;
 use rog_slash::error::SlashError;
@@ -31,19 +32,13 @@ impl Node {
 }
 
 pub struct CtrlSlash {
-    // node: HidRaw,
     node: Node,
     config: SlashConfig,
-    // slash_type: SlashType,
-    // // set to force thread to exit
-    // thread_exit: Arc<AtomicBool>,
-    // // Set to false when the thread exits
-    // thread_running: Arc<AtomicBool>,
 }
 
 impl CtrlSlash {
     #[inline]
-    pub fn new(config: SlashConfig) -> Result<CtrlSlash, RogError> {
+    pub fn new() -> Result<CtrlSlash, RogError> {
         let slash_type = get_slash_type()?;
         if matches!(slash_type, SlashType::Unknown | SlashType::Unsupported) {
             return Err(RogError::Slash(SlashError::NoDevice));
@@ -61,10 +56,7 @@ impl CtrlSlash {
 
         let ctrl = CtrlSlash {
             node,
-            config,
-            // slash_type,
-            // thread_exit: Arc::new(AtomicBool::new(false)),
-            // thread_running: Arc::new(AtomicBool::new(false)),
+            config: SlashConfig::new().load(),
         };
         ctrl.do_initialization()?;
 

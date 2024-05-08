@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v6.0.2]
+
+### Changed
+
+- Clean up code
+- Don't panic if no aura device in ROGCC
+- Try to prevent an errorenous tuf keyboard detection
+
 ## [v6.0.1]
 
 ### Added

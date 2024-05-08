@@ -121,12 +121,12 @@ impl CtrlKbdLed {
         }
 
         // Check for a TUF laptop LED. Assume there is only ever one.
-        if let Ok(tuf_kbd) = KeyboardLed::new() {
-            if tuf_kbd.has_kbd_rgb_mode() {
+        if let Ok(kbd_backlight) = KeyboardLed::new() {
+            if kbd_backlight.has_kbd_rgb_mode() {
                 info!("AuraControl found a TUF laptop keyboard");
                 let ctrl = CtrlKbdLed {
                     led_type: AuraDeviceType::LaptopTuf,
-                    led_node: LEDNode::KbdLed(tuf_kbd),
+                    led_node: LEDNode::KbdLed(kbd_backlight),
                     supported_data: LedSupportData::get_data("tuf"),
                     per_key_mode_active: false,
                     config: Self::init_config("tuf"),

@@ -5,17 +5,15 @@ use std::sync::Arc;
 use ::zbus::export::futures_util::lock::Mutex;
 use ::zbus::Connection;
 use asusd::config::Config;
-use asusd::ctrl_anime::config::AnimeConfig;
 use asusd::ctrl_anime::trait_impls::CtrlAnimeZbus;
 use asusd::ctrl_anime::CtrlAnime;
 use asusd::ctrl_aura::manager::AuraManager;
 use asusd::ctrl_fancurves::CtrlFanCurveZbus;
 use asusd::ctrl_platform::CtrlPlatform;
-use asusd::ctrl_slash::config::SlashConfig;
 use asusd::ctrl_slash::trait_impls::CtrlSlashZbus;
 use asusd::ctrl_slash::CtrlSlash;
 use asusd::{print_board_info, start_tasks, CtrlTask, DBUS_NAME};
-use config_traits::{StdConfig, StdConfigLoad, StdConfigLoad2, StdConfigLoad3};
+use config_traits::{StdConfig, StdConfigLoad3};
 use log::{error, info};
 use zbus::fdo::ObjectManager;
 
@@ -98,7 +96,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    match CtrlAnime::new(AnimeConfig::new().load()) {
+    match CtrlAnime::new() {
         Ok(ctrl) => {
             let zbus = CtrlAnimeZbus(Arc::new(Mutex::new(ctrl)));
             let sig_ctx = CtrlAnimeZbus::signal_context(&connection)?;
@@ -109,7 +107,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    match CtrlSlash::new(SlashConfig::new().load()) {
+    match CtrlSlash::new() {
         Ok(ctrl) => {
             let zbus = CtrlSlashZbus(Arc::new(Mutex::new(ctrl)));
             // Currently, the Slash has no need for a loop watching power events, however,

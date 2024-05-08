@@ -720,6 +720,7 @@ impl crate::ZbusRun for CtrlPlatform {
 impl ReloadAndNotify for CtrlPlatform {
     type Data = Config;
 
+    /// Called on config file changed externally
     async fn reload_and_notify(
         &mut self,
         signal_context: &SignalContext<'static>,
