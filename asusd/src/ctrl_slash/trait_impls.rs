@@ -33,6 +33,7 @@ impl CtrlSlashZbus {
     }
 
     /// Set enabled true or false
+    #[zbus(property)]
     async fn set_enabled(&self, enabled: bool) {
         let mut lock = self.0.lock().await;
         let brightness = if enabled && lock.config.slash_brightness == 0 {
@@ -64,6 +65,7 @@ impl CtrlSlashZbus {
     }
 
     /// Set brightness level
+    #[zbus(property)]
     async fn set_brightness(&self, brightness: u8) {
         let mut lock = self.0.lock().await;
         let enabled = brightness > 0;
@@ -90,6 +92,7 @@ impl CtrlSlashZbus {
     }
 
     /// Set interval between slash animations (0-255)
+    #[zbus(property)]
     async fn set_interval(&self, interval: u8) {
         let mut lock = self.0.lock().await;
         lock.node
@@ -114,6 +117,7 @@ impl CtrlSlashZbus {
     }
 
     /// Set interval between slash animations (0-255)
+    #[zbus(property)]
     async fn set_slash_mode(&self, slash_mode: SlashMode) {
         let mut lock = self.0.lock().await;
 

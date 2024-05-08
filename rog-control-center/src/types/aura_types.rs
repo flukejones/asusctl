@@ -63,8 +63,8 @@ impl From<PowerZones> for SlintPowerZones {
             PowerZones::Lightbar => SlintPowerZones::Lightbar,
             PowerZones::Lid => SlintPowerZones::Lid,
             PowerZones::RearGlow => SlintPowerZones::RearGlow,
-            PowerZones::KeyboardAndLightbar => todo!(),
-            PowerZones::None => todo!(),
+            PowerZones::KeyboardAndLightbar => SlintPowerZones::KeyboardAndLightbar,
+            PowerZones::None => SlintPowerZones::Keyboard,
         }
     }
 }
