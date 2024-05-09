@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v6.0.5]
+
+### Changed
+
+- Better more robust error handling in ROGCC
+- Try to better handle pre-2021 laptops with lightbar
+
 ## [v6.0.4]
 
 ### Changed

@@ -81,16 +81,10 @@ impl AuraPowerState {
         if self.sleep {
             a |= OldAuraPower::Sleep as u32;
         }
-        if matches!(
-            self.zone,
-            PowerZones::Keyboard | PowerZones::KeyboardAndLightbar
-        ) {
+        if matches!(self.zone, PowerZones::Keyboard) {
             a |= OldAuraPower::Keyboard as u32;
         }
-        if matches!(
-            self.zone,
-            PowerZones::Lightbar | PowerZones::KeyboardAndLightbar
-        ) {
+        if matches!(self.zone, PowerZones::Lightbar) {
             a |= OldAuraPower::Lightbar as u32;
         }
         vec![
@@ -133,7 +127,7 @@ impl AuraPowerState {
                     | (self.sleep as u32) << (23 + 3)
                     | (self.shutdown as u32) << (23 + 4)
             }
-            PowerZones::KeyboardAndLightbar | PowerZones::None => 0,
+            PowerZones::None => 0,
         }
     }
 }
@@ -196,7 +190,7 @@ impl LaptopAuraPower {
             AuraDeviceType::LaptopPre2021 => {
                 if support_data.power_zones.contains(&PowerZones::Lightbar) {
                     Self {
-                        states: vec![AuraPowerState::default_for(PowerZones::KeyboardAndLightbar)],
+                        states: vec![AuraPowerState::default_for(PowerZones::Lightbar)],
                     }
                 } else {
                     Self {
@@ -326,7 +320,7 @@ mod test {
         assert_eq!(bytes, [0xc3, 0x12, 0x09, 0x00]);
 
         let power = AuraPowerState {
-            zone: PowerZones::KeyboardAndLightbar,
+            zone: PowerZones::Keyboard,
             awake: true,
             boot: true,
             sleep: true,

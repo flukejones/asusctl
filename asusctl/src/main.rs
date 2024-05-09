@@ -645,25 +645,28 @@ fn handle_led_power_1_do_1866(
     aura: &AuraProxyBlocking,
     power: &LedPowerCommand1,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let zone = if power.keyboard && power.lightbar {
-        PowerZones::KeyboardAndLightbar
-    } else if power.lightbar {
-        PowerZones::Lightbar
-    } else {
-        PowerZones::Keyboard
-    };
-    let states = LaptopAuraPower {
-        states: vec![AuraPowerState {
-            zone,
+    let mut states = Vec::new();
+    if power.keyboard {
+        states.push(AuraPowerState {
+            zone: PowerZones::Keyboard,
             boot: power.boot.unwrap_or_default(),
             awake: power.awake.unwrap_or_default(),
             sleep: power.sleep.unwrap_or_default(),
             shutdown: false,
-        }],
-    };
+        });
+    }
+    if power.lightbar {
+        states.push(AuraPowerState {
+            zone: PowerZones::Lightbar,
+            boot: power.boot.unwrap_or_default(),
+            awake: power.awake.unwrap_or_default(),
+            sleep: power.sleep.unwrap_or_default(),
+            shutdown: false,
+        });
+    }
 
+    let states = LaptopAuraPower { states };
     aura.set_led_power(states)?;
-
     Ok(())
 }
 
