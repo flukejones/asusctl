@@ -731,8 +731,9 @@ impl ReloadAndNotify for CtrlPlatform {
             info!("asusd.ron updated externally, reloading and updating internal copy");
 
             if self.power.has_charge_control_end_threshold() {
-                self.power
-                    .set_charge_control_end_threshold(data.charge_control_end_threshold)?;
+                let limit = data.charge_control_end_threshold;
+                warn!("setting charge_control_end_threshold to {limit}");
+                self.power.set_charge_control_end_threshold(limit)?;
                 self.charge_control_end_threshold_changed(signal_context)
                     .await?;
             }
@@ -827,9 +828,9 @@ impl crate::Reloadable for CtrlPlatform {
         ppt_reload!(nv_temp_target, "nv_temp_target");
 
         if self.power.has_charge_control_end_threshold() {
-            self.power.set_charge_control_end_threshold(
-                self.config.lock().await.charge_control_end_threshold,
-            )?;
+            let limit = self.config.lock().await.charge_control_end_threshold;
+            info!("reloading charge_control_end_threshold to {limit}");
+            self.power.set_charge_control_end_threshold(limit)?;
         }
 
         if let Ok(power_plugged) = self.power.get_online() {
@@ -847,11 +848,11 @@ impl crate::Reloadable for CtrlPlatform {
 }
 
 impl CtrlPlatform {
-    task_watch_item!(panel_od platform);
+    task_watch_item!(panel_od "panel_od" platform);
 
-    task_watch_item!(mini_led_mode platform);
+    task_watch_item!(mini_led_mode "mini_led_mode" platform);
 
-    task_watch_item!(charge_control_end_threshold power);
+    task_watch_item!(charge_control_end_threshold "charge_control_end_threshold" power);
 
     task_watch_item_notify!(boot_sound platform);
 
@@ -901,12 +902,14 @@ impl CtrlTask for CtrlPlatform {
                             })
                             .ok();
                     }
-                    if sleeping && platform1.power.has_charge_control_end_threshold() {
-                        platform1.config.lock().await.charge_control_end_threshold = platform1
-                            .power
-                            .get_charge_control_end_threshold()
-                            .unwrap_or(100);
-                    } else if !sleeping && platform1.power.has_charge_control_end_threshold() {
+                    // Don't store it on suspend, assume that the current config setting is desired
+                    // if sleeping && platform1.power.has_charge_control_end_threshold() {
+                    //     platform1.config.lock().await.charge_control_end_threshold = platform1
+                    //         .power
+                    //         .get_charge_control_end_threshold()
+                    //         .unwrap_or(100);
+                    // } else
+                    if !sleeping && platform1.power.has_charge_control_end_threshold() {
                         platform1
                             .power
                             .set_charge_control_end_threshold(

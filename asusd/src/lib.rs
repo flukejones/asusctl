@@ -56,7 +56,7 @@ pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";
 /// // TODO: this is kind of useless if it can't trigger some action
 #[macro_export]
 macro_rules! task_watch_item {
-    ($name:ident $self_inner:ident) => {
+    ($name:ident $name_str:literal $self_inner:ident) => {
         concat_idents::concat_idents!(fn_name = watch_, $name {
         async fn fn_name(
             &self,
@@ -72,12 +72,15 @@ macro_rules! task_watch_item {
                             let mut buffer = [0; 32];
                             watch.into_event_stream(&mut buffer).unwrap().for_each(|_| async {
                                 if let Ok(value) = ctrl.$name() { // get new value from zbus method
-                                    concat_idents::concat_idents!(notif_fn = $name, _changed {
-                                        ctrl.notif_fn(&signal_ctxt).await.ok();
-                                    });
-                                    let mut lock = ctrl.config.lock().await;
-                                    lock.$name = value;
-                                    lock.write();
+                                    if ctrl.config.lock().await.$name != value {
+                                        log::debug!("{} was changed to {} externally", $name_str, value);
+                                        concat_idents::concat_idents!(notif_fn = $name, _changed {
+                                            ctrl.notif_fn(&signal_ctxt).await.ok();
+                                        });
+                                        let mut lock = ctrl.config.lock().await;
+                                        lock.$name = value;
+                                        lock.write();
+                                    }
                                 }
                             }).await;
                         });

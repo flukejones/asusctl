@@ -13,7 +13,7 @@ use asusd::ctrl_platform::CtrlPlatform;
 use asusd::ctrl_slash::trait_impls::CtrlSlashZbus;
 use asusd::ctrl_slash::CtrlSlash;
 use asusd::{print_board_info, start_tasks, CtrlTask, DBUS_NAME};
-use config_traits::{StdConfig, StdConfigLoad3};
+use config_traits::{StdConfig, StdConfigLoad1};
 use log::{error, info};
 use zbus::fdo::ObjectManager;
 
