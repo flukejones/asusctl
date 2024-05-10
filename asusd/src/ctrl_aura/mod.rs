@@ -1,3 +1,4 @@
+use log::warn;
 use udev::Device;
 use zbus::zvariant::{ObjectPath, OwnedObjectPath};
 
@@ -23,7 +24,10 @@ pub(super) fn filename_partial(parent: &Device) -> Option<OwnedObjectPath> {
         } else {
             format!("{id_product}")
         };
-        return Some(ObjectPath::from_str_unchecked(&path).into());
+        if path.contains('.') {
+            warn!("dbus path for {id_product} contains `.`, removing");
+        }
+        return Some(ObjectPath::from_str_unchecked(path.trim_matches('.')).into());
     }
     None
 }

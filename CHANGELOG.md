@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Further tweaks to aura init
 - More logging
 - Fix TUF laptop led power
+- Sanitize the dbus path for aura devices (remove `.` chars)
 
 ## [v6.0.5]
 
