@@ -329,7 +329,7 @@ mod test {
 
         let bytes = power.old_to_bytes();
         println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes, [0xff, 0x1f, 0x000f, 0x00]);
+        assert_eq!(bytes, [251, 26, 15, 0]);
     }
 
     #[test]
