@@ -6,7 +6,7 @@ pub mod setup_system;
 use std::sync::{Arc, Mutex};
 
 use config_traits::StdConfig;
-use rog_dbus::has_iface_blocking;
+use rog_dbus::list_iface_blocking;
 use slint::{ComponentHandle, PhysicalSize, SharedString, Weak};
 
 use crate::config::Config;
@@ -108,13 +108,14 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
         }
     };
 
+    let available = list_iface_blocking().unwrap_or_default();
     ui.set_sidebar_items_avilable(
         [
             // Needs to match the order of slint sidebar items
-            has_iface_blocking("org.asuslinux.Platform").unwrap_or(false),
-            has_iface_blocking("org.asuslinux.Aura").unwrap_or(false),
-            has_iface_blocking("org.asuslinux.Anime").unwrap_or(false),
-            has_iface_blocking("org.asuslinux.FanCurves").unwrap_or(false),
+            available.contains(&"org.asuslinux.Platform".to_string()),
+            available.contains(&"org.asuslinux.Aura".to_string()),
+            available.contains(&"org.asuslinux.Anime".to_string()),
+            available.contains(&"org.asuslinux.FanCurves".to_string()),
             true,
             true,
         ]
@@ -126,11 +127,19 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
     });
 
     setup_app_settings_page(&ui, config.clone());
-    setup_system_page(&ui, config.clone());
-    setup_system_page_callbacks(&ui, config.clone());
-    setup_aura_page(&ui, config.clone());
-    setup_anime_page(&ui, config.clone());
-    setup_fan_curve_page(&ui, config);
+    if available.contains(&"org.asuslinux.Platform".to_string()) {
+        setup_system_page(&ui, config.clone());
+        setup_system_page_callbacks(&ui, config.clone());
+    }
+    if available.contains(&"org.asuslinux.Aura".to_string()) {
+        setup_aura_page(&ui, config.clone());
+    }
+    if available.contains(&"org.asuslinux.Anime".to_string()) {
+        setup_anime_page(&ui, config.clone());
+    }
+    if available.contains(&"org.asuslinux.FanCurves".to_string()) {
+        setup_fan_curve_page(&ui, config);
+    }
     ui
 }
 
