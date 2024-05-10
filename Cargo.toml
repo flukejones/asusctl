@@ -1,3 +1,14 @@
+[workspace.package]
+version = "6.0.5"
+rust-version = "1.77"
+license = "MPL-2.0"
+readme = "README.md"
+authors = ["Luke <luke@ljones.dev>"]
+repository = "https://gitlab.com/asus-linux/asusctl"
+homepage = "https://gitlab.com/asus-linux/asusctl"
+description = "Laptop feature control for ASUS ROG laptops and others"
+edition = "2021"
+
 [workspace]
 members = [
     "asusctl",
@@ -23,17 +34,6 @@ default-members = [
     "rog-control-center",
 ]
 resolver = "2"
-
-[workspace.package]
-version = "6.0.4"
-rust-version = "1.77"
-license = "MPL-2.0"
-readme = "README.md"
-authors = ["Luke <luke@ljones.dev>"]
-repository = "https://gitlab.com/asus-linux/asusctl"
-homepage = "https://gitlab.com/asus-linux/asusctl"
-description = "Laptop feature control for ASUS ROG laptops and others"
-edition = "2021"
 
 [workspace.dependencies]
 tokio = { version = "^1.36.0", default-features = false, features = [
