@@ -109,7 +109,7 @@ impl CtrlKbdLed {
         conn: Connection,
     ) -> Result<(), RogError> {
         let dbus_path = self.dbus_path.clone();
-        interfaces.insert(dbus_path.clone());
+        let dbus_path_cpy = self.dbus_path.clone();
         info!(
             "AuraManager starting device at: {:?}, {:?}",
             dbus_path, self.led_type
@@ -121,6 +121,7 @@ impl CtrlKbdLed {
         tokio::spawn(
             async move { start_tasks(zbus, conn_copy.clone(), sig_ctx2, dbus_path).await },
         );
+        interfaces.insert(dbus_path_cpy);
         Ok(())
     }
 
@@ -134,7 +135,7 @@ impl CtrlKbdLed {
         if let Some(usb_device) = device.parent_with_subsystem_devtype("usb", "usb_device")? {
             let dbus_path = dbus_path_for_dev(&usb_device).unwrap_or_default();
             if interfaces.contains(&dbus_path) {
-                debug!("Already a ctrl at {dbus_path:?}");
+                debug!("Already a ctrl at {dbus_path:?}, ignoring this end-point");
                 return Ok(None);
             }
 
