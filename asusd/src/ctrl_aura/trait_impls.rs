@@ -26,7 +26,7 @@ impl CtrlAuraZbus {
     }
 
     fn update_config(lock: &mut CtrlKbdLed) -> Result<(), RogError> {
-        let bright = lock.led_node.get_brightness()?;
+        let bright = lock.led_node.get_brightness().unwrap_or_default();
         lock.config.read();
         lock.config.brightness = bright.into();
         lock.config.write();
@@ -109,8 +109,10 @@ impl CtrlAuraZbus {
         if ctrl.config.brightness == LedBrightness::Off {
             ctrl.config.brightness = LedBrightness::Med;
         }
-        ctrl.led_node
-            .set_brightness(ctrl.config.brightness.into())?;
+        if ctrl.led_node.has_brightness_control() {
+            ctrl.led_node
+                .set_brightness(ctrl.config.brightness.into())?;
+        }
         ctrl.config.write();
 
         self.led_mode_data_invalidate(&self.1).await.ok();
@@ -148,8 +150,10 @@ impl CtrlAuraZbus {
         if ctrl.config.brightness == LedBrightness::Off {
             ctrl.config.brightness = LedBrightness::Med;
         }
-        ctrl.led_node
-            .set_brightness(ctrl.config.brightness.into())?;
+        if ctrl.led_node.has_brightness_control() {
+            ctrl.led_node
+                .set_brightness(ctrl.config.brightness.into())?;
+        }
         ctrl.config.set_builtin(effect);
         ctrl.config.write();
 
@@ -213,12 +217,14 @@ impl CtrlTask for CtrlAuraZbus {
                 // If waking up
                 if !start {
                     info!("CtrlKbdLedTask reloading brightness and modes");
-                    lock.led_node
-                        .set_brightness(lock.config.brightness.into())
-                        .map_err(|e| {
-                            error!("CtrlKbdLedTask: {e}");
-                            e
-                        })?;
+                    if lock.led_node.has_brightness_control() {
+                        lock.led_node
+                            .set_brightness(lock.config.brightness.into())
+                            .map_err(|e| {
+                                error!("CtrlKbdLedTask: {e}");
+                                e
+                            })?;
+                    }
                     lock.write_current_config_mode().map_err(|e| {
                         error!("CtrlKbdLedTask: {e}");
                         e
@@ -264,20 +270,22 @@ impl CtrlTask for CtrlAuraZbus {
 
         let ctrl2 = self.0.clone();
         let ctrl = self.0.lock().await;
-        let watch = ctrl.led_node.monitor_brightness()?;
-        tokio::spawn(async move {
-            let mut buffer = [0; 32];
-            watch
-                .into_event_stream(&mut buffer)
-                .unwrap()
-                .for_each(|_| async {
-                    if let Some(lock) = ctrl2.try_lock() {
-                        load_save(true, lock).unwrap(); // unwrap as we want to
-                                                        // bomb out of the task
-                    }
-                })
-                .await;
-        });
+        if ctrl.led_node.has_brightness_control() {
+            let watch = ctrl.led_node.monitor_brightness()?;
+            tokio::spawn(async move {
+                let mut buffer = [0; 32];
+                watch
+                    .into_event_stream(&mut buffer)
+                    .unwrap()
+                    .for_each(|_| async {
+                        if let Some(lock) = ctrl2.try_lock() {
+                            load_save(true, lock).unwrap(); // unwrap as we want to
+                                                            // bomb out of the task
+                        }
+                    })
+                    .await;
+            });
+        }
 
         Ok(())
     }

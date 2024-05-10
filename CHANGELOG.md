@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better more robust error handling in ROGCC
 - Try to better handle pre-2021 laptops with lightbar
 - Add more logging to try and trace the charge_control_end_threshold issue
+- Make `kbd_brightness` optional to work around issues on some laptops that seem to lack it. Likely this will all need a refactor *again* if work proceeds in kernel for better RGB support.
 
 ## [v6.0.4]
 

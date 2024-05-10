@@ -5,12 +5,15 @@ use log::{info, warn};
 use crate::error::{PlatformError, Result};
 use crate::{attr_u8, has_attr, set_attr_u8_array, to_device};
 
+/// The sysfs control for backlight levels. This is only for the 3-step
+/// backlight setting, and for TUF laptops. It is not a hard requirement
+/// for Aura keyboards
 #[derive(Debug, Default, PartialEq, Eq, PartialOrd, Clone)]
-pub struct KeyboardLed {
+pub struct KeyboardBacklight {
     path: PathBuf,
 }
 
-impl KeyboardLed {
+impl KeyboardBacklight {
     attr_u8!("brightness", path);
 
     has_attr!("kbd_rgb_mode" path);
@@ -59,7 +62,7 @@ impl KeyboardLed {
             });
         }
         Err(PlatformError::MissingFunction(
-            "asus::kbd_backlight not found".into(),
+            "KeyboardLed:new(), asus::kbd_backlight not found".into(),
         ))
     }
 }

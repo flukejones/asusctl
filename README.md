@@ -72,6 +72,8 @@ The list is a bit outdated as many features have been enabled in the Linux kerne
 
 A gui is now in the repo - ROG Control Center. At this time it is still a WIP, but it has almost all features in place already.
 
+**NOTE**: Xorg is not supported.
+
 # BUILDING
 
 Rust and cargo are required, they can be installed from [rustup.rs](https://rustup.rs/) or from the distro repos if newer than 1.75.

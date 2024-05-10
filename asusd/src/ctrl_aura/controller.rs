@@ -11,7 +11,7 @@ use rog_aura::{
     AuraDeviceType, AuraEffect, Direction, LedBrightness, Speed, GRADIENT, LED_MSG_LEN,
 };
 use rog_platform::hid_raw::HidRaw;
-use rog_platform::keyboard_led::KeyboardLed;
+use rog_platform::keyboard_led::KeyboardBacklight;
 use zbus::zvariant::OwnedObjectPath;
 
 use super::config::AuraConfig;
@@ -21,9 +21,9 @@ use crate::error::RogError;
 #[derive(Debug)]
 pub enum LEDNode {
     /// Brightness and/or TUF RGB controls
-    KbdLed(KeyboardLed),
+    KbdLed(KeyboardBacklight),
     /// Raw HID handle
-    Rog(KeyboardLed, HidRaw),
+    Rog(Option<KeyboardBacklight>, HidRaw),
 }
 
 impl LEDNode {
@@ -31,7 +31,13 @@ impl LEDNode {
     pub fn set_brightness(&self, value: u8) -> Result<(), RogError> {
         match self {
             LEDNode::KbdLed(k) => k.set_brightness(value)?,
-            LEDNode::Rog(k, _) => k.set_brightness(value)?,
+            LEDNode::Rog(k, _) => {
+                if let Some(k) = k {
+                    k.set_brightness(value)?
+                } else {
+                    debug!("No brightness control found");
+                }
+            }
         }
         Ok(())
     }
@@ -39,15 +45,46 @@ impl LEDNode {
     pub fn get_brightness(&self) -> Result<u8, RogError> {
         Ok(match self {
             LEDNode::KbdLed(k) => k.get_brightness()?,
-            LEDNode::Rog(k, _) => k.get_brightness()?,
+            LEDNode::Rog(k, _) => {
+                if let Some(k) = k {
+                    k.get_brightness()?
+                } else {
+                    debug!("No brightness control found");
+                    return Err(RogError::MissingFunction(
+                        "No keyboard brightness control found".to_string(),
+                    ));
+                }
+            }
         })
     }
 
     pub fn monitor_brightness(&self) -> Result<Inotify, RogError> {
         Ok(match self {
             LEDNode::KbdLed(k) => k.monitor_brightness()?,
-            LEDNode::Rog(k, _) => k.monitor_brightness()?,
+            LEDNode::Rog(k, _) => {
+                if let Some(k) = k {
+                    k.monitor_brightness()?
+                } else {
+                    debug!("No brightness control found");
+                    return Err(RogError::MissingFunction(
+                        "No keyboard brightness control found".to_string(),
+                    ));
+                }
+            }
         })
+    }
+
+    pub fn has_brightness_control(&self) -> bool {
+        match self {
+            LEDNode::KbdLed(k) => k.has_brightness(),
+            LEDNode::Rog(k, _) => {
+                if let Some(k) = k {
+                    k.has_brightness()
+                } else {
+                    false
+                }
+            }
+        }
     }
 }
 
@@ -122,7 +159,7 @@ impl CtrlKbdLed {
         }
 
         // Check for a TUF laptop LED. Assume there is only ever one.
-        if let Ok(kbd_backlight) = KeyboardLed::new() {
+        if let Ok(kbd_backlight) = KeyboardBacklight::new() {
             if kbd_backlight.has_kbd_rgb_mode() {
                 // Extra sure double-check that this isn't a laptop with crap
                 // ACPI with borked return on the TUF rgb methods
@@ -157,7 +194,14 @@ impl CtrlKbdLed {
     /// should be overwritten. The reason for the default config is because
     /// of async issues between this and udev/hidraw
     pub fn from_hidraw(device: HidRaw, dbus_path: OwnedObjectPath) -> Result<Self, RogError> {
-        let rgb_led = KeyboardLed::new()?;
+        let rgb_led = KeyboardBacklight::new()
+            .map_err(|e| {
+                log::error!(
+                    "{} is missing a keyboard backlight brightness control: {e:?}",
+                    device.prod_id()
+                );
+            })
+            .ok();
         let prod_id = AuraDeviceType::from(device.prod_id());
         if prod_id == AuraDeviceType::Unknown {
             log::error!("{} is AuraDevice::Unknown", device.prod_id());
@@ -376,7 +420,7 @@ mod tests {
     use rog_aura::aura_detection::LedSupportData;
     use rog_aura::{AuraDeviceType, AuraModeNum, AuraZone, PowerZones};
     use rog_platform::hid_raw::HidRaw;
-    use rog_platform::keyboard_led::KeyboardLed;
+    use rog_platform::keyboard_led::KeyboardBacklight;
     use zbus::zvariant::OwnedObjectPath;
 
     use super::CtrlKbdLed;
@@ -399,7 +443,10 @@ mod tests {
         };
         let mut controller = CtrlKbdLed {
             led_type: AuraDeviceType::LaptopPost2021,
-            led_node: LEDNode::Rog(KeyboardLed::default(), HidRaw::new("19b6").unwrap()),
+            led_node: LEDNode::Rog(
+                Some(KeyboardBacklight::default()),
+                HidRaw::new("19b6").unwrap(),
+            ),
             supported_data: supported_basic_modes,
             per_key_mode_active: false,
             config,
@@ -440,7 +487,10 @@ mod tests {
         };
         let mut controller = CtrlKbdLed {
             led_type: AuraDeviceType::LaptopPost2021,
-            led_node: LEDNode::Rog(KeyboardLed::default(), HidRaw::new("19b6").unwrap()),
+            led_node: LEDNode::Rog(
+                Some(KeyboardBacklight::default()),
+                HidRaw::new("19b6").unwrap(),
+            ),
             supported_data: supported_basic_modes,
             per_key_mode_active: false,
             config,
