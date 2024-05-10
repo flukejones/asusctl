@@ -6,12 +6,12 @@ pub mod setup_system;
 use std::sync::{Arc, Mutex};
 
 use config_traits::StdConfig;
-use rog_dbus::zbus_platform::PlatformProxyBlocking;
+use rog_dbus::has_iface_blocking;
 use slint::{ComponentHandle, PhysicalSize, SharedString, Weak};
 
 use crate::config::Config;
 use crate::ui::setup_anime::setup_anime_page;
-use crate::ui::setup_aura::{has_aura_iface_blocking, setup_aura_page};
+use crate::ui::setup_aura::setup_aura_page;
 use crate::ui::setup_fans::setup_fan_curve_page;
 use crate::ui::setup_system::{setup_system_page, setup_system_page_callbacks};
 use crate::{AppSettingsPageData, MainWindow};
@@ -108,19 +108,13 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
         }
     };
 
-    let conn = zbus::blocking::Connection::system().unwrap();
-    let platform = PlatformProxyBlocking::new(&conn).unwrap();
-
-    let interfaces = platform.supported_interfaces().unwrap();
-    log::debug!("Available interfaces: {interfaces:?}");
-    // "Anime", "Aura", "FanCurves", "Platform"
     ui.set_sidebar_items_avilable(
         [
             // Needs to match the order of slint sidebar items
-            interfaces.contains(&"Platform".into()),
-            has_aura_iface_blocking().unwrap_or(false),
-            interfaces.contains(&"Anime".into()),
-            interfaces.contains(&"FanCurves".into()),
+            has_iface_blocking("org.asuslinux.Platform").unwrap_or(false),
+            has_iface_blocking("org.asuslinux.Aura").unwrap_or(false),
+            has_iface_blocking("org.asuslinux.Anime").unwrap_or(false),
+            has_iface_blocking("org.asuslinux.FanCurves").unwrap_or(false),
             true,
             true,
         ]

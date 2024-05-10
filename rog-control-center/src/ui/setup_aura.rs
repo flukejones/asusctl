@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use log::info;
+use log::{error, info};
 use rog_aura::keyboard::LaptopAuraPower;
 use rog_dbus::zbus_aura::AuraProxy;
 use slint::{ComponentHandle, Model, RgbaColor, SharedString};
@@ -33,31 +33,11 @@ fn decode_hex(s: &str) -> RgbaColor<u8> {
     }
 }
 
-pub fn has_aura_iface_blocking() -> Result<bool, Box<dyn std::error::Error>> {
-    let conn = zbus::blocking::Connection::system()?;
-    let f = zbus::blocking::fdo::ObjectManagerProxy::new(
-        &conn,
-        "org.asuslinux.Daemon",
-        "/org/asuslinux",
-    )?;
-    let interfaces = f.get_managed_objects()?;
-    let mut aura_paths = Vec::new();
-    for v in interfaces.iter() {
-        for k in v.1.keys() {
-            if k.as_str() == "org.asuslinux.Aura" {
-                aura_paths.push(v.0.clone());
-            }
-        }
-    }
-    Ok(!aura_paths.is_empty())
-}
-
 /// Returns the first available Aura interface
 // TODO: return all
 async fn find_aura_iface() -> Result<AuraProxy<'static>, Box<dyn std::error::Error>> {
     let conn = zbus::Connection::system().await?;
-    let f =
-        zbus::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/org/asuslinux").await?;
+    let f = zbus::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/").await?;
     let interfaces = f.get_managed_objects().await?;
     let mut aura_paths = Vec::new();
     for v in interfaces.iter() {
@@ -93,9 +73,7 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
 
     let handle = ui.as_weak();
     tokio::spawn(async move {
-        let aura = if let Ok(aura) = find_aura_iface().await {
-            aura
-        } else {
+        let Ok(aura) = find_aura_iface().await else {
             info!("This device appears to have no aura interfaces");
             return;
         };
@@ -138,6 +116,7 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                         .global::<AuraPageData>()
                         .set_available_mode_names(res.as_slice().into());
                 })
+                .map_err(|e| error!("{e:}"))
                 .ok();
         }
 
@@ -196,7 +175,8 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                         });
                     });
             })
-            .unwrap();
+            .map_err(|e| error!("{e:}"))
+            .ok();
 
         // Need to update the UI if the mode changes
         let handle_copy = handle.clone();
@@ -213,6 +193,7 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                                 .invoke_update_led_mode_data(out.into());
                             handle.invoke_external_colour_change();
                         })
+                        .map_err(|e| error!("{e:}"))
                         .ok();
                 }
             }

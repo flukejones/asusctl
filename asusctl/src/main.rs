@@ -14,6 +14,7 @@ use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType, Vec2};
 use rog_aura::keyboard::{AuraPowerState, LaptopAuraPower};
 use rog_aura::{self, AuraDeviceType, AuraEffect, PowerZones};
+use rog_dbus::list_iface_blocking;
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use rog_dbus::zbus_aura::AuraProxyBlocking;
 use rog_dbus::zbus_fan_curves::FanCurvesProxyBlocking;
@@ -65,7 +66,7 @@ fn main() {
         }
 
         let supported_properties = platform_proxy.supported_properties().unwrap();
-        let supported_interfaces = platform_proxy.supported_interfaces().unwrap();
+        let supported_interfaces = list_iface_blocking().unwrap();
 
         if parsed.version {
             println!("asusctl v{}", env!("CARGO_PKG_VERSION"));
@@ -89,7 +90,10 @@ fn print_error_help(
     print_info();
     println!();
     println!("Supported interfaces:\n\n{:#?}\n", supported_interfaces);
-    println!("Supported properties:\n\n{:#?}\n", supported_properties);
+    println!(
+        "Supported properties on Platform:\n\n{:#?}\n",
+        supported_properties
+    );
 }
 
 fn print_info() {
@@ -120,12 +124,8 @@ fn check_service(name: &str) -> bool {
 
 fn find_aura_iface() -> Result<Vec<AuraProxyBlocking<'static>>, Box<dyn std::error::Error>> {
     let conn = zbus::blocking::Connection::system().unwrap();
-    let f = zbus::blocking::fdo::ObjectManagerProxy::new(
-        &conn,
-        "org.asuslinux.Daemon",
-        "/org/asuslinux",
-    )
-    .unwrap();
+    let f =
+        zbus::blocking::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/").unwrap();
     let interfaces = f.get_managed_objects().unwrap();
     let mut aura_paths = Vec::new();
     for v in interfaces.iter() {
@@ -203,6 +203,31 @@ fn do_parsed(
                     };
                     let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
                     for command in commands.iter().filter(|command| {
+                        if command.trim().starts_with("fan-curve")
+                            && !supported_interfaces
+                                .contains(&"org.asuslinux.FanCurves".to_string())
+                        {
+                            return false;
+                        }
+
+                        if command.trim().starts_with("anime")
+                            && !supported_interfaces.contains(&"org.asuslinux.Anime".to_string())
+                        {
+                            return false;
+                        }
+
+                        if command.trim().starts_with("slash")
+                            && !supported_interfaces.contains(&"org.asuslinux.Slash".to_string())
+                        {
+                            return false;
+                        }
+
+                        if command.trim().starts_with("bios")
+                            && !supported_interfaces.contains(&"org.asuslinux.Platform".to_string())
+                        {
+                            return false;
+                        }
+
                         if !dev_type.is_old_laptop()
                             && !dev_type.is_tuf_laptop()
                             && command.trim().starts_with("led-pow-1")

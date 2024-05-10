@@ -36,9 +36,6 @@ trait Platform {
     /// NextThrottleThermalPolicy method
     fn next_throttle_thermal_policy(&self) -> zbus::Result<()>;
 
-    /// SupportedInterfaces method
-    fn supported_interfaces(&self) -> zbus::Result<Vec<String>>;
-
     /// SupportedProperties method
     fn supported_properties(&self) -> zbus::Result<Vec<Properties>>;
 

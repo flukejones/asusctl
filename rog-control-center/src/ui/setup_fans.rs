@@ -1,5 +1,6 @@
 use std::sync::{Arc, Mutex};
 
+use log::{error, info};
 use rog_dbus::zbus_fan_curves::FanCurvesProxy;
 use rog_platform::platform::ThrottlePolicy;
 use rog_profiles::fan_curve_set::CurveData;
@@ -81,7 +82,8 @@ pub fn update_fan_data(
                 }
             }
         })
-        .unwrap();
+        .map_err(|e| error!("update_fan_data: upgrade_in_event_loop: {e:?}"))
+        .ok();
 }
 
 pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
@@ -89,17 +91,44 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
 
     tokio::spawn(async move {
         // Create the connections/proxies here to prevent future delays in process
-        let conn = zbus::Connection::system().await.unwrap();
-        let fans = FanCurvesProxy::new(&conn).await.unwrap();
+        let conn = if let Ok(conn) = zbus::Connection::system().await.map_err(|e| error!("{e:}")) {
+            conn
+        } else {
+            return;
+        };
+        let fans = if let Ok(fans) = FanCurvesProxy::new(&conn).await.map_err(|e| error!("{e:}")) {
+            fans
+        } else {
+            info!(
+                "This device may not have an Fan Curve control. If not then the error can be \
+                 ignored"
+            );
+            return;
+        };
 
         let handle_copy = handle.clone();
         // Do initial setup
-        let balanced = fans.fan_curve_data(ThrottlePolicy::Balanced).await.unwrap();
-        let perf = fans
+        let Ok(balanced) = fans
+            .fan_curve_data(ThrottlePolicy::Balanced)
+            .await
+            .map_err(|e| error!("{e:}"))
+        else {
+            return;
+        };
+        let Ok(perf) = fans
             .fan_curve_data(ThrottlePolicy::Performance)
             .await
-            .unwrap();
-        let quiet = fans.fan_curve_data(ThrottlePolicy::Quiet).await.unwrap();
+            .map_err(|e| error!("{e:}"))
+        else {
+            return;
+        };
+        let Ok(quiet) = fans
+            .fan_curve_data(ThrottlePolicy::Quiet)
+            .await
+            .map_err(|e| error!("{e:}"))
+        else {
+            return;
+        };
         update_fan_data(handle, balanced, perf, quiet);
 
         let handle_next1 = handle_copy.clone();
@@ -111,14 +140,30 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
                     let fans = fans1.clone();
                     let handle_next = handle_next1.clone();
                     tokio::spawn(async move {
-                        fans.set_curves_to_defaults(profile.into()).await.unwrap();
-
-                        let balanced = fans.fan_curve_data(ThrottlePolicy::Balanced).await.unwrap();
-                        let perf = fans
+                        if fans.set_curves_to_defaults(profile.into()).await.is_err() {
+                            return;
+                        }
+                        let Ok(balanced) = fans
+                            .fan_curve_data(ThrottlePolicy::Balanced)
+                            .await
+                            .map_err(|e| error!("{e:}"))
+                        else {
+                            return;
+                        };
+                        let Ok(perf) = fans
                             .fan_curve_data(ThrottlePolicy::Performance)
                             .await
-                            .unwrap();
-                        let quiet = fans.fan_curve_data(ThrottlePolicy::Quiet).await.unwrap();
+                            .map_err(|e| error!("{e:}"))
+                        else {
+                            return;
+                        };
+                        let Ok(quiet) = fans
+                            .fan_curve_data(ThrottlePolicy::Quiet)
+                            .await
+                            .map_err(|e| error!("{e:}"))
+                        else {
+                            return;
+                        };
                         update_fan_data(handle_next, balanced, perf, quiet);
                     });
                 });
@@ -127,11 +172,15 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
                     let data: Vec<Node> = data.iter().collect();
                     let data = fan_data_for(fan, enabled, data);
                     tokio::spawn(async move {
-                        fans.set_fan_curve(profile.into(), data).await.unwrap();
+                        fans.set_fan_curve(profile.into(), data)
+                            .await
+                            .map_err(|e| error!("{e:}"))
+                            .ok()
                     });
                 });
             })
-            .unwrap();
+            .map_err(|e| error!("setup_fan_curve_page: upgrade_in_event_loop: {e:?}"))
+            .ok();
     });
 }
 
