@@ -792,6 +792,15 @@ impl ReloadAndNotify for CtrlPlatform {
 
 impl crate::Reloadable for CtrlPlatform {
     async fn reload(&mut self) -> Result<(), RogError> {
+        info!("Begin Platform settings restore");
+        if self.power.has_charge_control_end_threshold() {
+            let limit = self.config.lock().await.charge_control_end_threshold;
+            info!("reloading charge_control_end_threshold to {limit}");
+            self.power.set_charge_control_end_threshold(limit)?;
+        } else {
+            warn!("No charge_control_end_threshold found")
+        }
+
         macro_rules! reload {
             ($property:tt, $prop_name:literal) => {
                 concat_idents::concat_idents!(has = has_, $property {
@@ -826,12 +835,6 @@ impl crate::Reloadable for CtrlPlatform {
         ppt_reload!(ppt_platform_sppt, "ppt_platform_sppt");
         ppt_reload!(nv_dynamic_boost, "nv_dynamic_boost");
         ppt_reload!(nv_temp_target, "nv_temp_target");
-
-        if self.power.has_charge_control_end_threshold() {
-            let limit = self.config.lock().await.charge_control_end_threshold;
-            info!("reloading charge_control_end_threshold to {limit}");
-            self.power.set_charge_control_end_threshold(limit)?;
-        }
 
         if let Ok(power_plugged) = self.power.get_online() {
             self.config.lock().await.last_power_plugged = power_plugged;

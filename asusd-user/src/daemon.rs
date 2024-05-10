@@ -11,8 +11,7 @@ use rog_aura::aura_detection::LedSupportData;
 use rog_aura::keyboard::KeyLayout;
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use rog_dbus::zbus_aura::AuraProxyBlocking;
-use rog_dbus::zbus_platform::PlatformProxyBlocking;
-use rog_dbus::DBUS_NAME;
+use rog_dbus::{list_iface_blocking, DBUS_NAME};
 use smol::Executor;
 use zbus::Connection;
 
@@ -36,18 +35,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("rog-platform v{}", rog_platform::VERSION);
 
     let conn = zbus::blocking::Connection::system().unwrap();
-    let platform_proxy = PlatformProxyBlocking::new(&conn).unwrap();
 
-    let supported = platform_proxy
-        .supported_interfaces()
-        .unwrap_or_default()
-        .contains(&"Anime".to_string());
+    let supported = list_iface_blocking()?;
     let config = ConfigBase::new().load();
     let executor = Executor::new();
 
     let early_return = Arc::new(AtomicBool::new(false));
     // Set up the anime data and run loop/thread
-    if supported {
+    if supported.contains(&"org.asuslinux.Anime".to_string()) {
         if let Some(cfg) = config.active_anime {
             let anime_type = get_anime_type()?;
             let anime_config = ConfigAnime::new().set_name(cfg).load();
