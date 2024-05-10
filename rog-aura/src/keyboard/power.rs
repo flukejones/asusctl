@@ -53,7 +53,8 @@ impl AuraPowerState {
     }
 
     fn tuf_to_bytes(&self) -> Vec<u8> {
-        todo!("0s and 1s for bool array")
+        // &cmd, &boot, &awake, &sleep, &keyboard
+        vec![1, self.boot as u8, self.awake as u8, self.sleep as u8, 1]
     }
 
     /// # Bits for older 0x1866 keyboard model

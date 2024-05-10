@@ -279,8 +279,10 @@ impl CtrlTask for CtrlAuraZbus {
                     .unwrap()
                     .for_each(|_| async {
                         if let Some(lock) = ctrl2.try_lock() {
-                            load_save(true, lock).unwrap(); // unwrap as we want to
-                                                            // bomb out of the task
+                            load_save(true, lock).unwrap(); // unwrap as we want
+                                                            // to
+                                                            // bomb out of the
+                                                            // task
                         }
                     })
                     .await;

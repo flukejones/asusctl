@@ -70,7 +70,9 @@ impl LedSupportData {
             }
         }
         info!("Using generic LED control for keyboard brightness only");
-        LedSupportData::default()
+        let mut data = LedSupportData::default();
+        data.power_zones.push(PowerZones::Keyboard);
+        data
     }
 }
 

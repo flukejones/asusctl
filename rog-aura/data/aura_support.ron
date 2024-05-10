@@ -747,6 +747,15 @@
         power_zones: [Keyboard],
     ),
     (
+        device_name: "GX650R",
+        product_id: "",
+        layout_name: "gx531-per-key",
+        basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
+        basic_zones: [],
+        advanced_type: PerKey,
+        power_zones: [Keyboard],
+    ),
+    (
         device_name: "GX701",
         product_id: "",
         layout_name: "gx531-per-key",

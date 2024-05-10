@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v6.0.6]
+
+### Added
+- Add GX650R laptop to aura DB
+
+### Changed
+- Further tweaks to aura init
+- More logging
+- Fix TUF laptop led power
+
 ## [v6.0.5]
 
 ### Changed

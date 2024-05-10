@@ -12,11 +12,15 @@ use rog_aura::{
 };
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::keyboard_led::KeyboardBacklight;
+use udev::Device;
 use zbus::zvariant::OwnedObjectPath;
+use zbus::Connection;
 
 use super::config::AuraConfig;
-use crate::ctrl_aura::manager::{dbus_path_for_dev, dbus_path_for_tuf};
+use crate::ctrl_aura::manager::{dbus_path_for_dev, dbus_path_for_tuf, start_tasks};
+use crate::ctrl_aura::trait_impls::CtrlAuraZbus;
 use crate::error::RogError;
+use crate::CtrlTask;
 
 #[derive(Debug)]
 pub enum LEDNode {
@@ -99,10 +103,84 @@ pub struct CtrlKbdLed {
 }
 
 impl CtrlKbdLed {
+    pub fn add_to_dbus_and_start(
+        self,
+        interfaces: &mut HashSet<OwnedObjectPath>,
+        conn: Connection,
+    ) -> Result<(), RogError> {
+        let dbus_path = self.dbus_path.clone();
+        interfaces.insert(dbus_path.clone());
+        info!(
+            "AuraManager starting device at: {:?}, {:?}",
+            dbus_path, self.led_type
+        );
+        let conn_copy = conn.clone();
+        let sig_ctx1 = CtrlAuraZbus::signal_context(&conn_copy)?;
+        let sig_ctx2 = CtrlAuraZbus::signal_context(&conn_copy)?;
+        let zbus = CtrlAuraZbus::new(self, sig_ctx1);
+        tokio::spawn(
+            async move { start_tasks(zbus, conn_copy.clone(), sig_ctx2, dbus_path).await },
+        );
+        Ok(())
+    }
+
+    /// Build and init a `CtrlKbdLed` from a udev device. Maybe.
+    /// This will initialise the config also.
+    pub fn maybe_device(
+        device: Device,
+        interfaces: &mut HashSet<OwnedObjectPath>,
+    ) -> Result<Option<Self>, RogError> {
+        // usb_device gives us a product and vendor ID
+        if let Some(usb_device) = device.parent_with_subsystem_devtype("usb", "usb_device")? {
+            let dbus_path = dbus_path_for_dev(&usb_device).unwrap_or_default();
+            if interfaces.contains(&dbus_path) {
+                debug!("Already a ctrl at {dbus_path:?}");
+                return Ok(None);
+            }
+
+            // The asus_wmi driver latches MCU that controls the USB endpoints
+            if let Some(parent) = device.parent() {
+                if let Some(driver) = parent.driver() {
+                    // There is a tree of devices added so filter by driver
+                    if driver != "asus" {
+                        return Ok(None);
+                    }
+                } else {
+                    return Ok(None);
+                }
+            }
+            // Device is something like 002, while its parent is the MCU
+            // Think of it like the device is an endpoint of the USB device attached
+            let mut prod_id = String::new();
+            if let Some(usb_id) = usb_device.attribute_value("idProduct") {
+                prod_id = usb_id.to_string_lossy().to_string();
+                let aura_device = AuraDeviceType::from(prod_id.as_str());
+                if aura_device == AuraDeviceType::Unknown {
+                    log::debug!("Unknown or invalid device: {usb_id:?}, skipping");
+                    return Ok(None);
+                }
+            }
+
+            let dev_node = if let Some(dev_node) = usb_device.devnode() {
+                dev_node
+            } else {
+                debug!("Device has no devnode, skipping");
+                return Ok(None);
+            };
+            info!("AuraControl found device at: {:?}", dev_node);
+            let dev = HidRaw::from_device(device)?;
+            let mut controller = Self::from_hidraw(dev, dbus_path.clone())?;
+            controller.config = Self::init_config(&prod_id);
+            interfaces.insert(dbus_path);
+            return Ok(Some(controller));
+        }
+        Ok(None)
+    }
+
     pub fn find_all() -> Result<Vec<Self>, RogError> {
         info!("Searching for all Aura devices");
         let mut devices = Vec::new();
-        let mut found = HashSet::new(); // track and ensure we use only one hidraw per prod_id
+        let mut interfaces = HashSet::new(); // track and ensure we use only one hidraw per prod_id
 
         let mut enumerator = udev::Enumerator::new().map_err(|err| {
             warn!("{}", err);
@@ -115,46 +193,9 @@ impl CtrlKbdLed {
         })?;
 
         for end_point in enumerator.scan_devices()? {
-            // usb_device gives us a product and vendor ID
-            if let Some(usb_device) =
-                end_point.parent_with_subsystem_devtype("usb", "usb_device")?
-            {
-                // The asus_wmi driver latches MCU that controls the USB endpoints
-                if let Some(parent) = end_point.parent() {
-                    if let Some(driver) = parent.driver() {
-                        // There is a tree of devices added so filter by driver
-                        if driver != "asus" {
-                            continue;
-                        }
-                    } else {
-                        continue;
-                    }
-                }
-                // Device is something like 002, while its parent is the MCU
-                // Think of it like the device is an endpoint of the USB device attached
-                let mut prod_id = String::new();
-                if let Some(usb_id) = usb_device.attribute_value("idProduct") {
-                    prod_id = usb_id.to_string_lossy().to_string();
-                    let aura_dev = AuraDeviceType::from(prod_id.as_str());
-                    if aura_dev == AuraDeviceType::Unknown || found.contains(&aura_dev) {
-                        log::debug!("Unknown or invalid device: {usb_id:?}, skipping");
-                        continue;
-                    }
-                    found.insert(aura_dev);
-                }
-
-                let dev_node = if let Some(dev_node) = usb_device.devnode() {
-                    dev_node
-                } else {
-                    debug!("Device has no devnode, skipping");
-                    continue;
-                };
-                info!("AuraControl found device at: {:?}", dev_node);
-                let dbus_path = dbus_path_for_dev(&usb_device).unwrap_or_default();
-                let dev = HidRaw::from_device(end_point)?;
-                let mut dev = Self::from_hidraw(dev, dbus_path)?;
-                dev.config = Self::init_config(&prod_id);
-                devices.push(dev);
+            // maybe?
+            if let Some(device) = Self::maybe_device(end_point, &mut interfaces)? {
+                devices.push(device);
             }
         }
 
@@ -264,13 +305,10 @@ impl CtrlKbdLed {
     /// Set combination state for boot animation/sleep animation/all leds/keys
     /// leds/side leds LED active
     pub(super) fn set_power_states(&mut self) -> Result<(), RogError> {
-        if let LEDNode::KbdLed(_platform) = &mut self.led_node {
+        if let LEDNode::KbdLed(platform) = &mut self.led_node {
             // TODO: tuf bool array
-            // if let Some(pwr) =
-            // AuraPowerConfig::to_tuf_bool_array(&self.config.enabled) {
-            //     let buf = [1, pwr[1] as u8, pwr[2] as u8, pwr[3] as u8,
-            // pwr[4] as u8];     platform.set_kbd_rgb_state(&buf)?;
-            // }
+            let buf = self.config.enabled.to_bytes(self.led_type);
+            platform.set_kbd_rgb_state(&buf)?;
         } else if let LEDNode::Rog(_, hid_raw) = &self.led_node {
             let bytes = self.config.enabled.to_bytes(self.led_type);
             let message = [0x5d, 0xbd, 0x01, bytes[0], bytes[1], bytes[2], bytes[3]];
