@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Add a config option to set if throttle policy is changed on ac/bat change (UI only)
+
 ## [v6.0.6]
 
 ### Added

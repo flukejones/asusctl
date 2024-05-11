@@ -43,8 +43,12 @@ export global SystemPageData {
     callback set_throttle_policy_linked_epp(bool);
     in-out property <int> throttle_policy_on_ac: 0;
     callback set_throttle_policy_on_ac(int);
+    in-out property <bool> change_throttle_policy_on_ac: true;
+    callback set_change_throttle_policy_on_ac(bool);
     in-out property <int> throttle_policy_on_battery: 0;
     callback set_throttle_policy_on_battery(int);
+    in-out property <bool> change_throttle_policy_on_battery: true;
+    callback set_change_throttle_policy_on_battery(bool);
     in-out property <bool> panel_od;
     callback set_panel_od(bool);
     in-out property <bool> boot_sound;
@@ -340,23 +344,45 @@ export component PageSystem inherits Rectangle {
                             text: @tr("Throttle Policy for power state");
                         }
 
-                        SystemDropdown {
-                            text: @tr("Throttle Policy on Battery");
-                            current_index <=> SystemPageData.throttle_policy_on_battery;
-                            current_value: SystemPageData.throttle_policy_choices[SystemPageData.throttle_policy_on_battery];
-                            model <=> SystemPageData.throttle_policy_choices;
-                            selected => {
-                                SystemPageData.set_throttle_policy_on_battery(SystemPageData.throttle_policy_on_battery)
+                        HorizontalLayout {
+                            spacing: 10px;
+                            SystemDropdown {
+                                text: @tr("Throttle Policy on Battery");
+                                current_index <=> SystemPageData.throttle_policy_on_battery;
+                                current_value: SystemPageData.throttle_policy_choices[SystemPageData.throttle_policy_on_battery];
+                                model <=> SystemPageData.throttle_policy_choices;
+                                selected => {
+                                    SystemPageData.set_throttle_policy_on_battery(SystemPageData.throttle_policy_on_battery)
+                                }
+                            }
+
+                            SystemToggle {
+                                text: @tr("Enabled");
+                                checked <=> SystemPageData.change_throttle_policy_on_battery;
+                                toggled => {
+                                    SystemPageData.set_change_throttle_policy_on_battery(SystemPageData.change_throttle_policy_on_battery);
+                                }
                             }
                         }
 
-                        SystemDropdown {
-                            text: @tr("Throttle Policy on AC");
-                            current_index <=> SystemPageData.throttle_policy_on_ac;
-                            current_value: SystemPageData.throttle_policy_choices[SystemPageData.throttle_policy_on_ac];
-                            model <=> SystemPageData.throttle_policy_choices;
-                            selected => {
-                                SystemPageData.set_throttle_policy_on_ac(SystemPageData.throttle_policy_on_ac)
+                        HorizontalLayout {
+                            spacing: 10px;
+                            SystemDropdown {
+                                text: @tr("Throttle Policy on AC");
+                                current_index <=> SystemPageData.throttle_policy_on_ac;
+                                current_value: SystemPageData.throttle_policy_choices[SystemPageData.throttle_policy_on_ac];
+                                model <=> SystemPageData.throttle_policy_choices;
+                                selected => {
+                                    SystemPageData.set_throttle_policy_on_ac(SystemPageData.throttle_policy_on_ac)
+                                }
+                            }
+
+                            SystemToggle {
+                                text: @tr("Enabled");
+                                checked <=> SystemPageData.change_throttle_policy_on_ac;
+                                toggled => {
+                                    SystemPageData.set_change_throttle_policy_on_ac(SystemPageData.change_throttle_policy_on_ac);
+                                }
                             }
                         }
                     }

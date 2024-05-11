@@ -143,11 +143,23 @@ trait Platform {
     #[zbus(property)]
     fn set_throttle_policy_on_ac(&self, throttle_policy: ThrottlePolicy) -> zbus::Result<()>;
 
+    /// ChangeThrottlePolicyOnAc property
+    #[zbus(property)]
+    fn change_throttle_policy_on_ac(&self) -> zbus::Result<bool>;
+    #[zbus(property)]
+    fn set_change_throttle_policy_on_ac(&self, change: bool) -> zbus::Result<()>;
+
     /// ThrottlePolicyOnBattery property
     #[zbus(property)]
     fn throttle_policy_on_battery(&self) -> zbus::Result<ThrottlePolicy>;
     #[zbus(property)]
     fn set_throttle_policy_on_battery(&self, throttle_policy: ThrottlePolicy) -> zbus::Result<()>;
+
+    /// ChangeThrottlePolicyOnAc property
+    #[zbus(property)]
+    fn change_throttle_policy_on_battery(&self) -> zbus::Result<bool>;
+    #[zbus(property)]
+    fn set_change_throttle_policy_on_battery(&self, change: bool) -> zbus::Result<()>;
 
     /// ThrottleQuietEpp property
     #[zbus(property)]

@@ -22,8 +22,12 @@ pub struct Config {
     pub throttle_policy_linked_epp: bool,
     /// Which throttle/profile to use on battery power
     pub throttle_policy_on_battery: ThrottlePolicy,
+    /// Should the throttle policy be set on bat/ac change?
+    pub change_throttle_policy_on_battery: bool,
     /// Which throttle/profile to use on AC power
     pub throttle_policy_on_ac: ThrottlePolicy,
+    /// Should the throttle policy be set on bat/ac change?
+    pub change_throttle_policy_on_ac: bool,
     /// The energy_performance_preference for this throttle/platform profile
     pub throttle_quiet_epp: CPUEPP,
     /// The energy_performance_preference for this throttle/platform profile
@@ -68,7 +72,9 @@ impl Default for Config {
             bat_command: Default::default(),
             throttle_policy_linked_epp: true,
             throttle_policy_on_battery: ThrottlePolicy::Quiet,
+            change_throttle_policy_on_battery: true,
             throttle_policy_on_ac: ThrottlePolicy::Performance,
+            change_throttle_policy_on_ac: true,
             throttle_quiet_epp: CPUEPP::Power,
             throttle_balanced_epp: CPUEPP::BalancePower,
             throttle_performance_epp: CPUEPP::Performance,
@@ -142,7 +148,9 @@ impl From<Config507> for Config {
             mini_led_mode: c.mini_led_mode,
             throttle_policy_linked_epp: true,
             throttle_policy_on_battery: c.platform_policy_on_battery,
+            change_throttle_policy_on_battery: true,
             throttle_policy_on_ac: c.platform_policy_on_ac,
+            change_throttle_policy_on_ac: true,
             throttle_quiet_epp: CPUEPP::Power,
             throttle_balanced_epp: CPUEPP::BalancePower,
             throttle_performance_epp: CPUEPP::Performance,

@@ -60,7 +60,19 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
         set_ui_props_async!(handle, platform, SystemPageData, throttle_performance_epp);
         set_ui_props_async!(handle, platform, SystemPageData, throttle_quiet_epp);
         set_ui_props_async!(handle, platform, SystemPageData, throttle_policy_on_battery);
+        set_ui_props_async!(
+            handle,
+            platform,
+            SystemPageData,
+            change_throttle_policy_on_battery
+        );
         set_ui_props_async!(handle, platform, SystemPageData, throttle_policy_on_ac);
+        set_ui_props_async!(
+            handle,
+            platform,
+            SystemPageData,
+            change_throttle_policy_on_ac
+        );
 
         set_ui_props_async!(handle, platform, SystemPageData, panel_od);
         set_ui_props_async!(handle, platform, SystemPageData, boot_sound);
@@ -94,6 +106,7 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
             throttle_thermal_policy: sys_props.contains(&Properties::ThrottlePolicy),
         };
 
+        // TODO: move the fail/sucess messages to slint
         handle
             .upgrade_in_event_loop(move |handle| {
                 handle.global::<SystemPageData>().set_available(props);
@@ -164,12 +177,23 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                     "Setting Throttle policy on AC failed"
                 );
                 set_ui_callbacks!(handle,
+                    SystemPageData(as bool),
+                    platform.change_throttle_policy_on_ac(.into()),
+                    "Throttle policy on AC enabled: {}",
+                    "Setting Throttle policy on AC failed"
+                );
+                set_ui_callbacks!(handle,
                     SystemPageData(as i32),
                     platform.throttle_policy_on_battery(.into()),
                     "Throttle policy on abttery set to {}",
                     "Setting Throttle policy on battery failed"
                 );
-
+                set_ui_callbacks!(handle,
+                    SystemPageData(as bool),
+                    platform.change_throttle_policy_on_battery(.into()),
+                    "Throttle policy on battery enabled: {}",
+                    "Setting Throttle policy on AC failed"
+                );
                 set_ui_callbacks!(handle,
                     SystemPageData(as f32),
                     platform.ppt_pl1_spl(as u8),
