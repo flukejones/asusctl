@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Add a config option to set if throttle policy is changed on ac/bat change (UI only)
+- Allow X11 GUI. This is *not* supported.
+- Fixes to some GUI widget layouts and sizing
+- Do a backup HID raw write fro brightness if the read-back value does not match. This is a temporary solve for some G14 and G16 until the kernel patch is ready.
 
 ## [v6.0.6]
 

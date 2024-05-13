@@ -81,7 +81,7 @@ export component ColourSlider inherits VerticalLayout {
         hsv(base_colour.to-hsv().hue, 1, 0),
     ];
 
-    function set_base_colour(){
+    function set_base_colour() {
         root.base_colour = hsv(c1.value / base_colours.length * 360, 1, 1);
         root.final_colour = hsv(base_colour.to-hsv().hue, ((base_saturation.length - c2.value) / base_saturation.length), ((base_value.length - c3.value) / base_value.length));
         root.colourbox = root.final_colour;

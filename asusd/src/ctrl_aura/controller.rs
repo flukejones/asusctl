@@ -35,11 +35,20 @@ impl LEDNode {
     pub fn set_brightness(&self, value: u8) -> Result<(), RogError> {
         match self {
             LEDNode::KbdLed(k) => k.set_brightness(value)?,
-            LEDNode::Rog(k, _) => {
+            LEDNode::Rog(k, r) => {
                 if let Some(k) = k {
-                    k.set_brightness(value)?
+                    k.set_brightness(value)?;
+                    let x = k.get_brightness()?;
+                    if x != value {
+                        debug!(
+                            "Kernel brightness control didn't read back correct value, setting \
+                             with raw hid"
+                        );
+                        r.write_bytes(&[0x5a, 0xba, 0xc5, 0xc4, value])?;
+                    }
                 } else {
-                    debug!("No brightness control found");
+                    debug!("No brightness control found, trying raw write");
+                    r.write_bytes(&[0x5a, 0xba, 0xc5, 0xc4, value])?;
                 }
             }
         }

@@ -23,10 +23,10 @@ STRIP_BINARIES ?= 0
 
 DEBUG ?= 0
 ifeq ($(DEBUG),0)
-	ARGS += --release
+	ARGS += --release --features "rog-control-center/x11"
 	TARGET = release
 else
-	ARGS += --profile dev
+	ARGS += --profile dev --features "rog-control-center/x11"
 	TARGET = debug
 endif
 

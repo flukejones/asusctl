@@ -26,16 +26,20 @@ export component Graph inherits Rectangle {
         y: root.graph_padding;
         function scale_x_to_graph(x: length) -> length {
             ((x - node_min.x) / (node_max.x - node_min.x)) * graph.width
-        }//
+        }
+        //
         function scale_y_to_graph(y: length) -> length {
             ((y - node_min.y) / (node_max.y - node_min.y)) * graph.height
-        }//
+        }
+        //
         function scale_x_to_node(x: length) -> length {
             (x / graph.width) * (node_max.x - node_min.x)
-        }//
+        }
+        //
         function scale_y_to_node(y: length) -> length {
             (y / graph.height) * (node_max.y - node_min.y)
-        }//
+        }
+        //
 
         for n in 11: Path {
             viewbox-width: self.width / 1px;
@@ -43,21 +47,23 @@ export component Graph inherits Rectangle {
             stroke: Palette.alternate-foreground.darker(200%);
             stroke-width: 1px;
             MoveTo {
-                x: scale_x_to_graph(n*10px) / 1px;
-                y: 0; // scale_y_to_graph(n*1px) / 1px;
+                x: scale_x_to_graph(n * 10px) / 1px;
+                y: 0;
+                // scale_y_to_graph(n*1px) / 1px;
             }
 
             LineTo {
-                x: scale_x_to_graph(n*10px) / 1px;
-                y: graph.height / 1px; //scale_y_to_graph(n*1px) / 1px;
+                x: scale_x_to_graph(n * 10px) / 1px;
+                y: graph.height / 1px;
+                //scale_y_to_graph(n*1px) / 1px;
             }
         }
 
         for n in 11: Text {
             color: Palette.accent-background;
             font-size <=> root.axis_font_size;
-            text: "\{n*10}c";
-            x: scale_x_to_graph(n*10px) - self.width / 3;
+            text: "\{n * 10}c";
+            x: scale_x_to_graph(n * 10px) - self.width / 3;
             y: graph.height + 2px;
         }
 
@@ -67,22 +73,24 @@ export component Graph inherits Rectangle {
             stroke: Palette.alternate-foreground.darker(200%);
             stroke-width: 1px;
             MoveTo {
-                x: 0; //scale_x_to_graph(n*10px) / 1px;
-                y: scale_y_to_graph(n*25.5px) / 1px;
+                x: 0;
+                //scale_x_to_graph(n*10px) / 1px;
+                y: scale_y_to_graph(n * 25.5px) / 1px;
             }
 
             LineTo {
-                x: graph.width / 1px; //scale_x_to_graph(n*10px) / 1px;
-                y: scale_y_to_graph(n*25.5px) / 1px;
+                x: graph.width / 1px;
+                //scale_x_to_graph(n*10px) / 1px;
+                y: scale_y_to_graph(n * 25.5px) / 1px;
             }
         }
 
         for n in 11: Text {
             color: Palette.accent-background;
             font-size <=> root.axis_font_size;
-            text: "\{n*10}%";
+            text: "\{n * 10}%";
             x: - self.width;
-            y: graph.height - scale_y_to_graph(n*25.5px) - self.height / 2;
+            y: graph.height - scale_y_to_graph(n * 25.5px) - self.height / 2;
         }
 
         for l[idx] in nodes: path := Rectangle {
@@ -115,7 +123,8 @@ export component Graph inherits Rectangle {
                     tip.background: Palette.accent-background;
                     tip.opacity: 1.0;
                 }
-            ]//
+            ]
+            //
             point := Rectangle {
                 background: Palette.control-foreground;
                 x: scale_x_to_graph(n.x) - self.width / 2;
@@ -133,7 +142,6 @@ export component Graph inherits Rectangle {
                             } else if n.x + scale_x_to_node(self.mouse-x - self.pressed-x) < nodes[idx - 1].x {
                                 n.x = nodes[idx - 1].x + pad;
                             }
-
                             if n.y + scale_y_to_node(self.height - self.mouse-y - self.pressed-y) > nodes[idx + 1].y {
                                 n.y = nodes[idx + 1].y - pad;
                             } else if n.y + scale_y_to_node(self.height - self.mouse-y - self.pressed-y) < nodes[idx - 1].y {
@@ -145,7 +153,6 @@ export component Graph inherits Rectangle {
                             } else if n.x + scale_x_to_node(self.mouse-x - self.pressed-x) > nodes[idx + 1].x {
                                 n.x = nodes[idx + 1].x - pad;
                             }
-
                             if n.y - scale_y_to_node(self.mouse-y - self.pressed-y) < 0.0 {
                                 n.y = 1px;
                             } else if n.y + scale_y_to_node(self.height - self.mouse-y - self.pressed-y) > nodes[idx + 1].y {
@@ -157,14 +164,14 @@ export component Graph inherits Rectangle {
                             } else if n.x + scale_x_to_node(self.mouse-x - self.pressed-x) < nodes[idx - 1].x {
                                 n.x = nodes[idx - 1].x + pad;
                             }
-
                             if n.y - scale_y_to_node(self.mouse-y - self.pressed-y) > scale_y_to_node(graph.height) {
                                 n.y = scale_y_to_node(graph.height - 1px);
                             } else if n.y + scale_y_to_node(self.height - self.mouse-y - self.pressed-y) < nodes[idx - 1].y {
                                 n.y = nodes[idx - 1].y + pad;
                             }
                         }
-                    }//
+                    }
+                    //
                     moved => {
                         if (self.pressed) {
                             n.x += scale_x_to_node(self.mouse-x - self.pressed-x);
@@ -190,27 +197,32 @@ export component Graph inherits Rectangle {
                 height: label.preferred-height;
                 function x_pos() -> length {
                     scale_x_to_graph(n.x) - label.preferred-width - 8px
-                }//
+                }
+                //
                 function final_x_pos() -> length {
                     if x_pos() > 0 {
                         x_pos()
                     } else {
                         x_pos() + label.preferred-width
                     }
-                }//
+                }
+                //
                 function y_pos() -> length {
                     graph.height - scale_y_to_graph(n.y) - self.height - 4px
-                }//
+                }
+                //
                 function final_y_pos() -> length {
                     if y_pos() > 0 {
                         y_pos()
                     } else {
                         y_pos() + label.preferred-height
                     }
-                }//
+                }
+                //
                 function fan_pct() -> int {
                     Math.floor(n.y / 1px) / 255 * 100
-                }//
+                }
+                //
                 label := Text {
                     color: Palette.accent-foreground;
                     font-size: 16px;
