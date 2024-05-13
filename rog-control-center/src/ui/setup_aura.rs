@@ -82,6 +82,7 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
         set_ui_props_async!(handle, aura, AuraPageData, led_mode);
         set_ui_props_async!(handle, aura, AuraPageData, led_mode_data);
         set_ui_props_async!(handle, aura, AuraPageData, led_power);
+        set_ui_props_async!(handle, aura, AuraPageData, device_type);
 
         if let Ok(power) = aura.supported_power_zones().await {
             log::debug!("Available LED power modes {power:?}");

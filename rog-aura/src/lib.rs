@@ -126,5 +126,7 @@ pub enum PowerZones {
     Lid = 3,
     /// The led strip on the rear of some laptops
     RearGlow = 4,
+    /// Exists for the older 0x1866 models
+    KeyboardAndLightbar = 5,
     None = 255,
 }

@@ -2,6 +2,8 @@ export enum AuraDevType {
     New,
     Old,
     Tuf,
+    ScsiExtDisk,
+    Unknown,
 }
 
 export struct AuraEffect {
@@ -25,6 +27,7 @@ export enum PowerZones {
     Lightbar,
     Lid,
     RearGlow,
+    KeyboardAndLightbar,
 }
 
 export struct AuraPowerState {
@@ -41,6 +44,7 @@ export struct LaptopAuraPower {
 }
 
 export global AuraPageData {
+    // The ordering must match the rog-aura crate
     in-out property <[string]> power_zone_names: [
         @tr("Aura power zone" => "Logo"),
         @tr("Aura power zone" => "Keyboard"),
@@ -134,13 +138,15 @@ export global AuraPageData {
     }
     callback set_hex_from_colour(color) -> string;
     callback set_hex_to_colour(string) -> color;
-    in-out property <AuraDevType> aura_type: AuraDevType.New;
+    in-out property <AuraDevType> device_type: AuraDevType.New;
+    // List of indexes to power_zone_names. Must correspond to rog-aura crate
     in-out property <[PowerZones]> supported_power_zones: [
         PowerZones.Keyboard,
         PowerZones.RearGlow,
         PowerZones.Lid,
         PowerZones.Lightbar,
-        PowerZones.Logo
+        PowerZones.Logo,
+        PowerZones.KeyboardAndLightbar,
     ];
     in-out property <LaptopAuraPower> led_power: {
         states: [{
