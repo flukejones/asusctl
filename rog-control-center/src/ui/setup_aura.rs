@@ -84,14 +84,24 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
         set_ui_props_async!(handle, aura, AuraPageData, led_power);
         set_ui_props_async!(handle, aura, AuraPageData, device_type);
 
-        if let Ok(power) = aura.supported_power_zones().await {
-            log::debug!("Available LED power modes {power:?}");
-            let power: Vec<SlintPowerZones> = power.iter().map(|p| (*p).into()).collect();
+        if let Ok(pow3r) = aura.supported_power_zones().await {
+            log::debug!("Available LED power modes {pow3r:?}");
             handle
                 .upgrade_in_event_loop(move |handle| {
+                    let power: Vec<SlintPowerZones> = pow3r.iter().map(|p| (*p).into()).collect();
+                    let names: Vec<SharedString> = handle
+                        .global::<AuraPageData>()
+                        .get_power_zone_names()
+                        .iter()
+                        .collect();
+                    let names: Vec<SharedString> =
+                        pow3r.iter().map(|n| names[(*n) as usize].clone()).collect();
                     handle
                         .global::<AuraPageData>()
                         .set_supported_power_zones(power.as_slice().into());
+                    handle
+                        .global::<AuraPageData>()
+                        .set_power_zone_names_old(names.as_slice().into());
                 })
                 .ok();
         }

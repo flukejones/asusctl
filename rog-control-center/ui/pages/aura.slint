@@ -268,7 +268,7 @@ export component PageAura inherits Rectangle {
 
                 for state[idx] in AuraPageData.led_power.states: old_zone := AuraPowerGroupOld {
                     group-title: @tr("Power Zones");
-                    zone_strings <=> AuraPageData.power_zone_names;
+                    zone_strings <=> AuraPageData.power_zone_names_old;
                     selected_zone => {
                         AuraPageData.led_power.states[idx].zone = AuraPageData.supported_power_zones[old_zone.current_zone];
                         AuraPageData.set_led_power(AuraPageData.led_power);
