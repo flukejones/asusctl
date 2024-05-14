@@ -15,6 +15,10 @@ Now includes a GUI, `rog-control-center`.
 
 Z13 devices will need [these](https://lore.kernel.org/linux-input/20240416090402.31057-1-luke@ljones.dev/T/#t)
 
+## X11 support
+
+X11 is not supported at all, as in I will not help you with X11 issues if there are any due to limited time and it being unmaintained itself. You can however build `rog-control-center` with it enabled `cargo build --features "rog-control-center/x11"`.
+
 ## Goals
 
 The main goal of this work is to provide a safe and easy to use abstraction over various laptop features via DBUS, and to provide some helpful defaults and other behaviour such as toggling throttle/profile on AC/battery change.

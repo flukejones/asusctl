@@ -9,8 +9,8 @@ homepage.workspace = true
 edition.workspace = true
 
 [features]
-#default = ["mocking"]
-#mocking = []
+default = []
+mocking = []
 x11 = ["slint/backend-winit-x11"]
 
 [dependencies]

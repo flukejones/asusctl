@@ -10,6 +10,7 @@ description = "Laptop feature control for ASUS ROG laptops and others"
 edition = "2021"
 
 [workspace]
+resolver = "2"
 members = [
     "asusctl",
     "asusd",
@@ -33,7 +34,6 @@ default-members = [
     "cpuctl",
     "rog-control-center",
 ]
-resolver = "2"
 
 [workspace.dependencies]
 tokio = { version = "^1.36.0", default-features = false, features = [

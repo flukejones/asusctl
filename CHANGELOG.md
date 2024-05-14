@@ -7,13 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v6.0.7]
+
 ### Changed
 
 - Add a config option to set if throttle policy is changed on ac/bat change (UI only)
-- Allow X11 GUI. This is *not* supported.
+- Allow X11 GUI. This is *not* supported. Please see readme.
 - Fixes to some GUI widget layouts and sizing
 - Do a backup HID raw write fro brightness if the read-back value does not match. This is a temporary solve for some G14 and G16 until the kernel patch is ready.
-- Reimplement the older 0x1866 MCU keyboard control power bits plus UI control for it
+- Reimplement the older 0x1866 MCU keyboard control power bits plus UI control for it. If you had a keyboard affected by Lightbar issues and it is older than a couple of years this should help. If not, please file a bug.
 
 ## [v6.0.6]
 

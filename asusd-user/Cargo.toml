@@ -12,6 +12,10 @@ edition.workspace = true
 name = "asusd-user"
 path = "src/daemon.rs"
 
+[features]
+default = []
+local_data = []
+
 [dependencies]
 dirs.workspace = true
 smol.workspace = true

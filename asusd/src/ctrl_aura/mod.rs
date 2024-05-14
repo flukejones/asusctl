@@ -26,7 +26,7 @@ pub(super) fn filename_partial(parent: &Device) -> Option<OwnedObjectPath> {
         };
         if path.contains('.') {
             warn!("dbus path for {id_product} contains `.`, removing");
-            path = path.replace('.', "").to_owned();
+            path.replace('.', "").clone_into(&mut path);
         }
         return Some(ObjectPath::from_str_unchecked(&path).into());
     }
