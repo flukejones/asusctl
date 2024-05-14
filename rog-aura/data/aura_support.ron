@@ -117,7 +117,7 @@
         power_zones: [Keyboard],
     ),
     (
-        device_name: "G513R",
+        device_name: "G513RC",
         product_id: "",
         layout_name: "g513i",
         basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
@@ -132,7 +132,7 @@
         basic_modes: [Static, Breathe, Strobe, Rainbow, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
-        power_zones: [Keyboard],
+        power_zones: [Keyboard, Lightbar],
     ),
     (
         device_name: "G531",
