@@ -12,7 +12,7 @@ echo '+cargo clippy --all -- -D warnings'
 cargo clippy --all -- -D warnings
 
 echo '+cargo test --all'
-cargo test --all --test-threads=1
+cargo test --all -- --test-threads=1
 
 echo '+cargo cranky'
 cargo cranky
