@@ -20,7 +20,6 @@ use supergfxctl::pci_device::{GfxMode, GfxPower};
 use supergfxctl::zbus_proxy::DaemonProxy as SuperProxy;
 use tokio::runtime::Runtime;
 use tokio::task::JoinHandle;
-use tokio::time::sleep;
 use zbus::export::futures_util::StreamExt;
 
 use crate::config::Config;
@@ -148,7 +147,7 @@ pub fn start_notifications(
         if dev.is_dgpu() {
             let enabled_notifications_copy = config.clone();
             // Plain old thread is perfectly fine since most of this is potentially blocking
-            tokio::spawn(async move {
+            rt.spawn_blocking(move || {
                 let mut last_status = GfxPower::Unknown;
                 loop {
                     if let Ok(status) = dev.get_runtime_status() {
@@ -166,7 +165,7 @@ pub fn start_notifications(
                         }
                         last_status = status;
                     }
-                    sleep(Duration::from_millis(500)).await;
+                    std::thread::sleep(Duration::from_millis(500));
                 }
             });
             found_dgpu = true;

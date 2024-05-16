@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v6.0.8]
+
 ### Added
 - Add G512L laptop DB entry
 
@@ -15,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fix
 - asusctl incorrectly assumes fan-curves unsupported. Now fixed.
+- try to fix ROGCC using CPU time.
 
 ## [v6.0.7]
 
