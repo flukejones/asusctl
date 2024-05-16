@@ -2,6 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use log::{error, info};
 use rog_aura::keyboard::LaptopAuraPower;
+use rog_aura::{AuraDeviceType, PowerZones};
 use rog_dbus::zbus_aura::AuraProxy;
 use slint::{ComponentHandle, Model, RgbaColor, SharedString};
 
@@ -84,24 +85,40 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
         set_ui_props_async!(handle, aura, AuraPageData, led_power);
         set_ui_props_async!(handle, aura, AuraPageData, device_type);
 
-        if let Ok(pow3r) = aura.supported_power_zones().await {
+        if let Ok(mut pow3r) = aura.supported_power_zones().await {
+            let dev_type = aura
+                .device_type()
+                .await
+                .unwrap_or(AuraDeviceType::LaptopPost2021);
             log::debug!("Available LED power modes {pow3r:?}");
             handle
                 .upgrade_in_event_loop(move |handle| {
-                    let power: Vec<SlintPowerZones> = pow3r.iter().map(|p| (*p).into()).collect();
                     let names: Vec<SharedString> = handle
                         .global::<AuraPageData>()
                         .get_power_zone_names()
                         .iter()
                         .collect();
-                    let names: Vec<SharedString> =
-                        pow3r.iter().map(|n| names[(*n) as usize].clone()).collect();
-                    handle
-                        .global::<AuraPageData>()
-                        .set_supported_power_zones(power.as_slice().into());
-                    handle
-                        .global::<AuraPageData>()
-                        .set_power_zone_names_old(names.as_slice().into());
+
+                    if dev_type.is_old_laptop() {
+                        // Need to add the specific KeyboardAndLightbar
+                        if pow3r.contains(&PowerZones::Keyboard)
+                            && pow3r.contains(&PowerZones::Lightbar)
+                        {
+                            pow3r.push(PowerZones::KeyboardAndLightbar);
+                        }
+                        let names: Vec<SharedString> =
+                            pow3r.iter().map(|n| names[(*n) as usize].clone()).collect();
+                        handle
+                            .global::<AuraPageData>()
+                            .set_power_zone_names_old(names.as_slice().into());
+                    } else {
+                        let power: Vec<SlintPowerZones> =
+                            pow3r.iter().map(|p| (*p).into()).collect();
+
+                        handle
+                            .global::<AuraPageData>()
+                            .set_supported_power_zones(power.as_slice().into());
+                    }
                 })
                 .ok();
         }

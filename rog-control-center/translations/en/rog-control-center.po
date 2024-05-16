@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-05-14 05:08+0000\n"
+"POT-Creation-Date: 2024-05-16 21:35+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -642,42 +642,42 @@ msgctxt "AuraPowerGroupOld"
 msgid "Sleep"
 msgstr ""
 
-#: rog-control-center/ui/main_window.slint:50
+#: rog-control-center/ui/main_window.slint:51
 msgctxt "MainWindow"
 msgid "ROG"
 msgstr ""
 
-#: rog-control-center/ui/main_window.slint:52
+#: rog-control-center/ui/main_window.slint:53
 msgctxt "Menu1"
 msgid "System Control"
 msgstr ""
 
-#: rog-control-center/ui/main_window.slint:53
+#: rog-control-center/ui/main_window.slint:54
 msgctxt "Menu2"
 msgid "Keyboard Aura"
 msgstr ""
 
-#: rog-control-center/ui/main_window.slint:54
+#: rog-control-center/ui/main_window.slint:55
 msgctxt "Menu3"
 msgid "AniMe Matrix"
 msgstr ""
 
-#: rog-control-center/ui/main_window.slint:55
+#: rog-control-center/ui/main_window.slint:56
 msgctxt "Menu4"
 msgid "Fan Curves"
 msgstr ""
 
-#: rog-control-center/ui/main_window.slint:56
+#: rog-control-center/ui/main_window.slint:57
 msgctxt "Menu5"
 msgid "App Settings"
 msgstr ""
 
-#: rog-control-center/ui/main_window.slint:57
+#: rog-control-center/ui/main_window.slint:58
 msgctxt "Menu6"
 msgid "About"
 msgstr ""
 
-#: rog-control-center/ui/main_window.slint:69
+#: rog-control-center/ui/main_window.slint:70
 msgctxt "MainWindow"
 msgid "Quit"
 msgstr ""

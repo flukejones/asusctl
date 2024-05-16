@@ -488,7 +488,7 @@ mod tests {
             let rows = &data.key_rows;
             for row in rows {
                 for k in &row.row {
-                    if data.key_shapes.get(&k.1).is_some() {
+                    if data.key_shapes.contains_key(&k.1) {
                         unused.remove(&k.1);
                     } else {
                         panic!("Key {:?} was missing matching shape {}", k.0, k.1);

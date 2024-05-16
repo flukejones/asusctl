@@ -134,12 +134,16 @@ impl AuraConfig {
 
 #[cfg(test)]
 mod tests {
-    use rog_aura::{AuraEffect, AuraModeNum, AuraZone, Colour};
+    use rog_aura::keyboard::AuraPowerState;
+    use rog_aura::{
+        AuraEffect, AuraModeNum, AuraZone, Colour, Direction, LedBrightness, PowerZones, Speed,
+    };
 
     use super::AuraConfig;
 
     #[test]
     fn set_multizone_4key_config() {
+        std::env::set_var("BOARD_NAME", "");
         let mut config = AuraConfig::new("19b6");
 
         let effect = AuraEffect {
@@ -230,6 +234,7 @@ mod tests {
 
     #[test]
     fn set_multizone_multimode_config() {
+        std::env::set_var("BOARD_NAME", "");
         let mut config = AuraConfig::new("19b6");
 
         let effect = AuraEffect {
@@ -273,5 +278,67 @@ mod tests {
 
         let sta = res.get(&AuraModeNum::Pulse).unwrap();
         assert_eq!(sta.len(), 1);
+    }
+
+    #[test]
+    fn verify_0x1866_g531i() {
+        std::env::set_var("BOARD_NAME", "G513I");
+        let mut config = AuraConfig::new("1866");
+
+        assert_eq!(config.brightness, LedBrightness::Med);
+        assert_eq!(config.builtins.len(), 5);
+        assert_eq!(
+            config.builtins.first_entry().unwrap().get(),
+            &AuraEffect {
+                mode: AuraModeNum::Static,
+                zone: AuraZone::None,
+                colour1: Colour { r: 166, g: 0, b: 0 },
+                colour2: Colour { r: 0, g: 0, b: 0 },
+                speed: Speed::Med,
+                direction: Direction::Right
+            }
+        );
+        assert_eq!(config.enabled.states.len(), 1);
+        assert_eq!(
+            config.enabled.states[0],
+            AuraPowerState {
+                zone: PowerZones::KeyboardAndLightbar,
+                boot: true,
+                awake: true,
+                sleep: true,
+                shutdown: true
+            }
+        );
+    }
+
+    #[test]
+    fn verify_0x19b6_g634j() {
+        std::env::set_var("BOARD_NAME", "G634J");
+        let mut config = AuraConfig::new("19b6");
+
+        assert_eq!(config.brightness, LedBrightness::Med);
+        assert_eq!(config.builtins.len(), 12);
+        assert_eq!(
+            config.builtins.first_entry().unwrap().get(),
+            &AuraEffect {
+                mode: AuraModeNum::Static,
+                zone: AuraZone::None,
+                colour1: Colour { r: 166, g: 0, b: 0 },
+                colour2: Colour { r: 0, g: 0, b: 0 },
+                speed: Speed::Med,
+                direction: Direction::Right
+            }
+        );
+        assert_eq!(config.enabled.states.len(), 4);
+        assert_eq!(
+            config.enabled.states[0],
+            AuraPowerState {
+                zone: PowerZones::Keyboard,
+                boot: true,
+                awake: true,
+                sleep: true,
+                shutdown: true
+            }
+        );
     }
 }

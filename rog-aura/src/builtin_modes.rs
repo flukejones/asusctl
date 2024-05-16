@@ -434,7 +434,7 @@ impl From<AuraZone> for i32 {
 /// ```
 #[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct AuraEffect {
     /// The effect type
     pub mode: AuraModeNum,

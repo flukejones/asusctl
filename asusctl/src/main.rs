@@ -5,7 +5,6 @@ use std::process::Command;
 use std::thread::sleep;
 
 use anime_cli::{AnimeActions, AnimeCommand};
-use asusd::ctrl_fancurves::FAN_CURVE_ZBUS_NAME;
 use aura_cli::{LedPowerCommand1, LedPowerCommand2};
 use dmi_id::DMIID;
 use fan_curve_cli::FanCurveCommand;
@@ -172,7 +171,7 @@ fn do_parsed(
             handle_throttle_profile(&conn, supported_properties, cmd)?
         }
         Some(CliCommand::FanCurve(cmd)) => {
-            handle_fan_curve(&conn, supported_interfaces, cmd)?;
+            handle_fan_curve(&conn, cmd)?;
         }
         Some(CliCommand::Graphics(_)) => do_gfx(),
         Some(CliCommand::Anime(cmd)) => handle_anime(&conn, cmd)?,
@@ -807,13 +806,13 @@ fn handle_throttle_profile(
 
 fn handle_fan_curve(
     conn: &Connection,
-    supported: &[String],
     cmd: &FanCurveCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if !supported.contains(&FAN_CURVE_ZBUS_NAME.to_string()) {
-        println!("Fan-curves not supported by either this kernel or by the laptop.");
+    let Ok(fan_proxy) = FanCurvesProxyBlocking::new(conn).map_err(|e| {
+        println!("Fan-curves not supported by either this kernel or by the laptop: {e:?}");
+    }) else {
         return Err(ProfileError::NotSupported.into());
-    }
+    };
 
     if !cmd.get_enabled && !cmd.default && cmd.mod_profile.is_none() {
         if !cmd.help {
@@ -838,7 +837,6 @@ fn handle_fan_curve(
     }
 
     let plat_proxy = PlatformProxyBlocking::new(conn)?;
-    let fan_proxy = FanCurvesProxyBlocking::new(conn)?;
     if cmd.get_enabled {
         let profile = plat_proxy.throttle_thermal_policy()?;
         let curves = fan_proxy.fan_curve_data(profile)?;

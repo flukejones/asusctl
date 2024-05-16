@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add G512L laptop DB entry
+
+### Changed
+- Add more tests to verify things
+
+### Fix
+- asusctl incorrectly assumes fan-curves unsupported. Now fixed.
+
 ## [v6.0.7]
 
 ### Changed

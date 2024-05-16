@@ -1,3 +1,5 @@
+use std::env;
+
 use dmi_id::DMIID;
 use log::{error, info, warn};
 use serde_derive::{Deserialize, Serialize};
@@ -60,7 +62,10 @@ impl LedSupportData {
     /// matches against laptops first, then will proceed with matching the
     /// `device_name` if there are no DMI matches.
     pub fn get_data(product_id: &str) -> Self {
-        let dmi = DMIID::new().unwrap_or_default();
+        let mut dmi = DMIID::new().unwrap_or_default();
+        if let Ok(board_name) = env::var("BOARD_NAME") {
+            dmi.board_name = board_name;
+        }
         // let prod_family = dmi.product_family().expect("Could not get
         // product_family");
 
