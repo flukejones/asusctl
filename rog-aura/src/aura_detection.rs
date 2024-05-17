@@ -106,7 +106,10 @@ impl LedSupportFile {
                 }
                 return Some(config.clone());
             } else {
-                warn!("the aura_support.ron file has no entry for this model: {device_name}, {product_id}")
+                warn!(
+                    "the aura_support.ron file has no entry for this model: {device_name}, \
+                     {product_id}"
+                )
             }
         }
         None

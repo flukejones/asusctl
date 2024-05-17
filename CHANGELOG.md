@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add G513RS to laptop DB.
+- Add G512LI to laptop DB.
 
 ### Changed
 
