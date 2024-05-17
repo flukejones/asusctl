@@ -90,7 +90,7 @@ impl CtrlAnime {
         //     }
         // }
 
-        let config = AnimeConfig::new().load();
+        let mut config = AnimeConfig::new().load();
         let mut anime_type = get_anime_type()?;
         if let AnimeType::Unknown = anime_type {
             if let Some(model) = config.model_override {
@@ -101,7 +101,12 @@ impl CtrlAnime {
 
         info!("Device has an AniMe Matrix display: {anime_type:?}");
         let mut cache = AnimeConfigCached::default();
-        cache.init_from_config(&config, anime_type)?;
+        if let Err(e) = cache.init_from_config(&config, anime_type) {
+            error!("Trying to cache the Anime Config failed, will reset to default config: {e:?}");
+            config.rename_file_old();
+            config = AnimeConfig::new();
+            config.write();
+        }
 
         let ctrl = CtrlAnime {
             node,

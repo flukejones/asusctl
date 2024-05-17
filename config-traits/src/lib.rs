@@ -146,11 +146,7 @@ where
 
     /// Renames the existing file to `<file>-old`
     fn rename_file_old(&self) {
-        warn!(
-            "Renaming {} to {}-old and recreating config",
-            self.file_name(),
-            self.file_name()
-        );
+        warn!("Renaming {} to {}-old", self.file_name(), self.file_name());
         let mut cfg_old = self.file_path().to_string_lossy().to_string();
         cfg_old.push_str("-old");
         std::fs::rename(self.file_path(), cfg_old).unwrap_or_else(|err| {

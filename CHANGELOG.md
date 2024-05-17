@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add G513RS to laptop DB.
 
+### Changed
+
+- Rename and recreate the default Anime config if cache setup fails
+
 ## [v6.0.8]
 
 ### Added
