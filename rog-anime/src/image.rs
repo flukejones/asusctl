@@ -3,6 +3,7 @@ use std::path::Path;
 
 pub use glam::Vec2;
 use glam::{Mat3, Vec3};
+use log::error;
 
 use crate::data::AnimeDataBuffer;
 use crate::error::{AnimeError, Result};
@@ -421,7 +422,10 @@ impl AnimeImage {
         bright: f32,
         anime_type: AnimeType,
     ) -> Result<Self> {
-        let data = std::fs::read(path)?;
+        let data = std::fs::read(path).map_err(|e| {
+            error!("Could not open {path:?}: {e:?}");
+            e
+        })?;
         let data = std::io::Cursor::new(data);
         let decoder = png_pong::Decoder::new(data)?.into_steps();
         let png_pong::Step { raster, delay: _ } = decoder.last().ok_or(AnimeError::NoFrames)??;

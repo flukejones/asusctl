@@ -4,6 +4,7 @@ use std::path::Path;
 use std::time::Duration;
 
 use glam::Vec2;
+use log::error;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::error::{AnimeError, Result};
@@ -107,7 +108,10 @@ impl AnimeGif {
         // Configure the decoder such that it will expand the image to RGBA.
         decoder.set_color_output(gif::ColorOutput::RGBA);
         // Read the file header
-        let file = File::open(file_name)?;
+        let file = File::open(file_name).map_err(|e| {
+            error!("Could not open {file_name:?}: {e:?}");
+            e
+        })?;
         let mut decoder = decoder.read_info(file)?;
 
         let mut frames = Vec::default();
@@ -186,12 +190,14 @@ impl AnimeGif {
         anime_type: AnimeType,
     ) -> Result<Self> {
         let mut frames = Vec::new();
-
         let mut decoder = gif::DecodeOptions::new();
         // Configure the decoder such that it will expand the image to RGBA.
         decoder.set_color_output(gif::ColorOutput::RGBA);
         // Read the file header
-        let file = File::open(file_name)?;
+        let file = File::open(file_name).map_err(|e| {
+            error!("Could not open {file_name:?}: {e:?}");
+            e
+        })?;
         let mut decoder = decoder.read_info(file)?;
 
         let height = decoder.height();
