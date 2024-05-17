@@ -25,7 +25,7 @@ rog_dbus = { path = "../rog-dbus" }
 rog_aura = { path = "../rog-aura" }
 rog_profiles = { path = "../rog-profiles" }
 rog_platform = { path = "../rog-platform" }
-supergfxctl = { git = "https://gitlab.com/asus-linux/supergfxctl.git", rev = "4eb6e97c22b68ae8d1e80500709b0c0580776ad3", default-features = false }
+supergfxctl = { git = "https://gitlab.com/asus-linux/supergfxctl.git", default-features = false }
 dmi_id = { path = "../dmi-id" }
 
 gumdrop.workspace = true
