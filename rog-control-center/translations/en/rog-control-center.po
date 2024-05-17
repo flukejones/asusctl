@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-05-16 23:35+0000\n"
+"POT-Creation-Date: 2024-05-17 06:56+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -137,61 +137,6 @@ msgctxt "PageAnime"
 msgid "Off when on battery"
 msgstr ""
 
-#: rog-control-center/ui/pages/fans.slint:26
-msgctxt "FanTab"
-msgid "This fan is not avilable on this machine"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:34
-msgctxt "FanTab"
-msgid "Enabled"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:43
-msgctxt "FanTab"
-msgid "Apply"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:51
-msgctxt "FanTab"
-msgid "Cancel"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:59
-msgctxt "FanTab"
-msgid "Factory Default (all fans)"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:72
-msgctxt "PageFans"
-msgid "Balanced"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:75 rog-control-center/ui/pages/fans.slint:134 rog-control-center/ui/pages/fans.slint:193
-msgctxt "PageFans"
-msgid "CPU"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:93 rog-control-center/ui/pages/fans.slint:152 rog-control-center/ui/pages/fans.slint:211
-msgctxt "PageFans"
-msgid "Mid"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:111 rog-control-center/ui/pages/fans.slint:170 rog-control-center/ui/pages/fans.slint:229
-msgctxt "PageFans"
-msgid "GPU"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:131
-msgctxt "PageFans"
-msgid "Performance"
-msgstr ""
-
-#: rog-control-center/ui/pages/fans.slint:190
-msgctxt "PageFans"
-msgid "Quiet"
-msgstr ""
-
 #: rog-control-center/ui/pages/app_settings.slint:26
 msgctxt "PageAppSettings"
 msgid "Run in background after closing"
@@ -255,6 +200,61 @@ msgstr ""
 #: rog-control-center/ui/pages/aura.slint:270
 msgctxt "PageAura"
 msgid "Power Zones"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:26
+msgctxt "FanTab"
+msgid "This fan is not avilable on this machine"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:34
+msgctxt "FanTab"
+msgid "Enabled"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:43
+msgctxt "FanTab"
+msgid "Apply"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:51
+msgctxt "FanTab"
+msgid "Cancel"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:59
+msgctxt "FanTab"
+msgid "Factory Default (all fans)"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:72
+msgctxt "PageFans"
+msgid "Balanced"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:75 rog-control-center/ui/pages/fans.slint:134 rog-control-center/ui/pages/fans.slint:193
+msgctxt "PageFans"
+msgid "CPU"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:93 rog-control-center/ui/pages/fans.slint:152 rog-control-center/ui/pages/fans.slint:211
+msgctxt "PageFans"
+msgid "Mid"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:111 rog-control-center/ui/pages/fans.slint:170 rog-control-center/ui/pages/fans.slint:229
+msgctxt "PageFans"
+msgid "GPU"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:131
+msgctxt "PageFans"
+msgid "Performance"
+msgstr ""
+
+#: rog-control-center/ui/pages/fans.slint:190
+msgctxt "PageFans"
+msgid "Quiet"
 msgstr ""
 
 #: rog-control-center/ui/pages/system.slint:26
@@ -410,6 +410,46 @@ msgstr ""
 #: rog-control-center/ui/pages/system.slint:371
 msgctxt "PageSystem"
 msgid "Throttle Policy on AC"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:33
+msgctxt "AuraPowerGroup"
+msgid "Boot"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:43
+msgctxt "AuraPowerGroup"
+msgid "Awake"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:53
+msgctxt "AuraPowerGroup"
+msgid "Sleep"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:63
+msgctxt "AuraPowerGroup"
+msgid "Shutdown"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:102
+msgctxt "AuraPowerGroupOld"
+msgid "Zone Selection"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:114
+msgctxt "AuraPowerGroupOld"
+msgid "Boot"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:124
+msgctxt "AuraPowerGroupOld"
+msgid "Awake"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:134
+msgctxt "AuraPowerGroupOld"
+msgid "Sleep"
 msgstr ""
 
 #: rog-control-center/ui/types/aura_types.slint:49
@@ -600,46 +640,6 @@ msgstr ""
 #: rog-control-center/ui/types/aura_types.slint:116
 msgctxt "Aura speed"
 msgid "High"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:33
-msgctxt "AuraPowerGroup"
-msgid "Boot"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:43
-msgctxt "AuraPowerGroup"
-msgid "Awake"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:53
-msgctxt "AuraPowerGroup"
-msgid "Sleep"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:63
-msgctxt "AuraPowerGroup"
-msgid "Shutdown"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:102
-msgctxt "AuraPowerGroupOld"
-msgid "Zone Selection"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:114
-msgctxt "AuraPowerGroupOld"
-msgid "Boot"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:124
-msgctxt "AuraPowerGroupOld"
-msgid "Awake"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:134
-msgctxt "AuraPowerGroupOld"
-msgid "Sleep"
 msgstr ""
 
 #: rog-control-center/ui/main_window.slint:51
