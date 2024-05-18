@@ -9,6 +9,8 @@ use rog_aura::{
 };
 use serde_derive::{Deserialize, Serialize};
 
+use crate::error::RogError;
+
 #[derive(Deserialize, Serialize, Default, Debug, Clone)]
 // #[serde(default)]
 pub struct AuraConfig {
@@ -129,6 +131,37 @@ impl AuraConfig {
             return multi.get(&aura_type).map(|v| v.as_slice());
         }
         None
+    }
+
+    /// Create a default for the `current_mode` if multizone and no config
+    /// exists.
+    pub(super) fn create_multizone_default(
+        &mut self,
+        supported_data: &LedSupportData,
+    ) -> Result<(), RogError> {
+        let mut default = vec![];
+        for (i, tmp) in supported_data.basic_zones.iter().enumerate() {
+            default.push(AuraEffect {
+                mode: self.current_mode,
+                zone: *tmp,
+                colour1: *GRADIENT.get(i).unwrap_or(&GRADIENT[0]),
+                colour2: *GRADIENT.get(GRADIENT.len() - i).unwrap_or(&GRADIENT[6]),
+                speed: Speed::Med,
+                direction: Direction::Left,
+            });
+        }
+        if default.is_empty() {
+            return Err(RogError::AuraEffectNotSupported);
+        }
+
+        if let Some(multizones) = self.multizone.as_mut() {
+            multizones.insert(self.current_mode, default);
+        } else {
+            let mut tmp = BTreeMap::new();
+            tmp.insert(self.current_mode, default);
+            self.multizone = Some(tmp);
+        }
+        Ok(())
     }
 }
 

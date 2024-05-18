@@ -450,6 +450,15 @@
         power_zones: [Keyboard, Lightbar, Logo, RearGlow],
     ),
     (
+        device_name: "GA401I",
+        product_id: "",
+        layout_name: "ga401q",
+        basic_modes: [Static, Breathe, Pulse],
+        basic_zones: [],
+        advanced_type: None,
+        power_zones: [Keyboard],
+    ),
+    (
         device_name: "GA401Q",
         product_id: "",
         layout_name: "ga401q",

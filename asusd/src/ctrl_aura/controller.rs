@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::HashSet;
 
 use config_traits::{StdConfig, StdConfigLoad};
 use dmi_id::DMIID;
@@ -7,9 +7,7 @@ use log::{debug, info, warn};
 use rog_aura::aura_detection::LedSupportData;
 use rog_aura::keyboard::{LedUsbPackets, UsbPackets};
 use rog_aura::usb::{LED_APPLY, LED_SET};
-use rog_aura::{
-    AuraDeviceType, AuraEffect, Direction, LedBrightness, Speed, GRADIENT, LED_MSG_LEN,
-};
+use rog_aura::{AuraDeviceType, AuraEffect, LedBrightness, LED_MSG_LEN};
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::keyboard_led::KeyboardBacklight;
 use udev::Device;
@@ -180,7 +178,7 @@ impl CtrlKbdLed {
             info!("AuraControl found device at: {:?}", dev_node);
             let dev = HidRaw::from_device(device)?;
             let mut controller = Self::from_hidraw(dev, dbus_path.clone())?;
-            controller.config = Self::init_config(&prod_id);
+            controller.config = Self::load_and_update_config(&prod_id);
             interfaces.insert(dbus_path);
             return Ok(Some(controller));
         }
@@ -225,7 +223,7 @@ impl CtrlKbdLed {
                         led_node: LEDNode::KbdLed(kbd_backlight),
                         supported_data: LedSupportData::get_data("tuf"),
                         per_key_mode_active: false,
-                        config: Self::init_config("tuf"),
+                        config: Self::load_and_update_config("tuf"),
                         dbus_path: dbus_path_for_tuf(),
                     };
                     devices.push(ctrl);
@@ -244,7 +242,7 @@ impl CtrlKbdLed {
     /// The generated data from this function has a default config. This config
     /// should be overwritten. The reason for the default config is because
     /// of async issues between this and udev/hidraw
-    pub fn from_hidraw(device: HidRaw, dbus_path: OwnedObjectPath) -> Result<Self, RogError> {
+    fn from_hidraw(device: HidRaw, dbus_path: OwnedObjectPath) -> Result<Self, RogError> {
         let rgb_led = KeyboardBacklight::new()
             .map_err(|e| {
                 log::error!(
@@ -274,7 +272,8 @@ impl CtrlKbdLed {
         Ok(ctrl)
     }
 
-    pub fn init_config(prod_id: &str) -> AuraConfig {
+    /// Reload the config from disk then verify and update it if required
+    fn load_and_update_config(prod_id: &str) -> AuraConfig {
         // New loads data from the DB also
         let mut config_init = AuraConfig::new(prod_id);
         // config_init.set_filename(prod_id);
@@ -288,6 +287,11 @@ impl CtrlKbdLed {
         }
         // Then replace just incase the initialised data contains new modes added
         config_loaded.builtins = config_init.builtins;
+
+        // Check the powerzones and replace, if the len is different then the support file was updated
+        if config_loaded.enabled.states.len() != config_init.enabled.states.len() {
+            config_loaded.enabled.states = config_init.enabled.states;
+        }
 
         if let (Some(mut multizone_init), Some(multizone_loaded)) =
             (config_init.multizone, config_loaded.multizone.as_mut())
@@ -374,7 +378,8 @@ impl CtrlKbdLed {
         Ok(())
     }
 
-    pub fn write_mode(&mut self, mode: &AuraEffect) -> Result<(), RogError> {
+    /// Write the AuraEffect to the device
+    pub fn write_effect_and_apply(&mut self, mode: &AuraEffect) -> Result<(), RogError> {
         if let LEDNode::KbdLed(platform) = &self.led_node {
             let buf = [
                 1,
@@ -414,51 +419,23 @@ impl CtrlKbdLed {
             }
             if create {
                 info!("No user-set config for zone founding, attempting a default");
-                self.create_multizone_default()?;
+                self.config.create_multizone_default(&self.supported_data)?;
             }
 
             if let Some(multizones) = self.config.multizone.as_mut() {
                 if let Some(set) = multizones.get(&mode) {
                     for mode in set.clone() {
-                        self.write_mode(&mode)?;
+                        self.write_effect_and_apply(&mode)?;
                     }
                 }
             }
         } else {
             let mode = self.config.current_mode;
             if let Some(effect) = self.config.builtins.get(&mode).cloned() {
-                self.write_mode(&effect)?;
+                self.write_effect_and_apply(&effect)?;
             }
         }
 
-        Ok(())
-    }
-
-    /// Create a default for the `current_mode` if multizone and no config
-    /// exists.
-    fn create_multizone_default(&mut self) -> Result<(), RogError> {
-        let mut default = vec![];
-        for (i, tmp) in self.supported_data.basic_zones.iter().enumerate() {
-            default.push(AuraEffect {
-                mode: self.config.current_mode,
-                zone: *tmp,
-                colour1: *GRADIENT.get(i).unwrap_or(&GRADIENT[0]),
-                colour2: *GRADIENT.get(GRADIENT.len() - i).unwrap_or(&GRADIENT[6]),
-                speed: Speed::Med,
-                direction: Direction::Left,
-            });
-        }
-        if default.is_empty() {
-            return Err(RogError::AuraEffectNotSupported);
-        }
-
-        if let Some(multizones) = self.config.multizone.as_mut() {
-            multizones.insert(self.config.current_mode, default);
-        } else {
-            let mut tmp = BTreeMap::new();
-            tmp.insert(self.config.current_mode, default);
-            self.config.multizone = Some(tmp);
-        }
         Ok(())
     }
 }
@@ -502,12 +479,18 @@ mod tests {
         };
 
         assert!(controller.config.multizone.is_none());
-        assert!(controller.create_multizone_default().is_err());
+        assert!(controller
+            .config
+            .create_multizone_default(&controller.supported_data)
+            .is_err());
         assert!(controller.config.multizone.is_none());
 
         controller.supported_data.basic_zones.push(AuraZone::Key1);
         controller.supported_data.basic_zones.push(AuraZone::Key2);
-        assert!(controller.create_multizone_default().is_ok());
+        assert!(controller
+            .config
+            .create_multizone_default(&controller.supported_data)
+            .is_ok());
         assert!(controller.config.multizone.is_some());
 
         let m = controller.config.multizone.unwrap();

@@ -146,7 +146,7 @@ impl CtrlAuraZbus {
             )));
         }
 
-        ctrl.write_mode(&effect)?;
+        ctrl.write_effect_and_apply(&effect)?;
         if ctrl.config.brightness == LedBrightness::Off {
             ctrl.config.brightness = LedBrightness::Med;
         }

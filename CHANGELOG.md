@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add the GA401I model to aura_support.
+
+### Changed
+
+- Aura support return a default aura definition instead of nothing
+- Minor updates in aura controller to ensure configs are updated if the support file changes
+
 ## [v6.0.9]
 
 ### Added
