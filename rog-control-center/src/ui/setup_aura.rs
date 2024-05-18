@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use log::{error, info};
+use log::{debug, error, info};
 use rog_aura::keyboard::LaptopAuraPower;
 use rog_aura::{AuraDeviceType, PowerZones};
 use rog_dbus::zbus_aura::AuraProxy;
@@ -76,7 +76,7 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
     tokio::spawn(async move {
         let Ok(aura) = find_aura_iface().await else {
             info!("This device appears to have no aura interfaces");
-            return;
+            return Ok::<(), zbus::Error>(());
         };
 
         set_ui_props_async!(handle, aura, AuraPageData, brightness);
@@ -226,5 +226,7 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                 }
             }
         });
+        debug!("Aura setup tasks complete");
+        Ok(())
     });
 }

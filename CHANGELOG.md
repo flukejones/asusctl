@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Rename and recreate the default Anime config if cache setup fails
 
+### Fixed
+
+- Nuke the issue of GUI taking 100% of a CPU core
+
 ## [v6.0.8]
 
 ### Added

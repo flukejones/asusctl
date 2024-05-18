@@ -25,6 +25,9 @@ use tokio::runtime::Runtime;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    #[cfg(feature = "tokio-debug")]
+    console_subscriber::init();
+
     let self_version = env!("CARGO_PKG_VERSION");
     let conn = zbus::blocking::Connection::system()?;
     let proxy = rog_dbus::zbus_platform::PlatformProxyBlocking::new(&conn)?;
