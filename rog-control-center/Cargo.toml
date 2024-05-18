@@ -12,12 +12,11 @@ edition.workspace = true
 default = []
 mocking = []
 x11 = ["slint/backend-winit-x11"]
-
-[build]
-rustflags = ["--cfg", "tokio_unstable"]
+# Requires RUSTFLAGS="--cfg tokio_unstable"
+tokio-debug = ["console-subscriber"]
 
 [dependencies]
-console-subscriber = "0.2.0"
+console-subscriber = { version = "0.2.0", optional = true }
 
 nix = { version = "^0.28.0", features = ["fs"] }
 tempfile = "3.3.0"

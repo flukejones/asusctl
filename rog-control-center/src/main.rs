@@ -25,6 +25,7 @@ use tokio::runtime::Runtime;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    #[cfg(feature = "tokio-debug")]
     console_subscriber::init();
 
     let self_version = env!("CARGO_PKG_VERSION");
