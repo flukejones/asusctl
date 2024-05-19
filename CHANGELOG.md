@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Aura support return a default aura definition instead of nothing
 - Minor updates in aura controller to ensure configs are updated if the support file changes
+- Don't panic if -ENODEV on fan_curve enable
 
 ## [v6.0.9]
 
