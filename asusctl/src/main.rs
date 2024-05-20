@@ -36,6 +36,8 @@ mod fan_curve_cli;
 mod slash_cli;
 
 fn main() {
+    let self_version = env!("CARGO_PKG_VERSION");
+    println!("Starting version {self_version}");
     let args: Vec<String> = args().skip(1).collect();
 
     let missing_argument_k = gumdrop::Error::missing_argument(Opt::Short('k'));
@@ -57,7 +59,6 @@ fn main() {
         println!("\nError: {e}\n");
         print_info();
     }) {
-        let self_version = env!("CARGO_PKG_VERSION");
         let asusd_version = platform_proxy.version().unwrap();
         if asusd_version != self_version {
             println!("Version mismatch: asusctl = {self_version}, asusd = {asusd_version}");

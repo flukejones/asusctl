@@ -105,7 +105,10 @@ impl LedSupportFile {
                 return config.clone();
             }
         }
-        warn!("the aura_support.ron file has no entry for this model: {device_name}, {product_id}. Using a default");
+        warn!(
+            "the aura_support.ron file has no entry for this model: {device_name}, {product_id}. \
+             Using a default"
+        );
         LedSupportData {
             device_name: device_name.to_owned(),
             product_id: product_id.to_owned(),

@@ -288,7 +288,8 @@ impl CtrlKbdLed {
         // Then replace just incase the initialised data contains new modes added
         config_loaded.builtins = config_init.builtins;
 
-        // Check the powerzones and replace, if the len is different then the support file was updated
+        // Check the powerzones and replace, if the len is different then the support
+        // file was updated
         if config_loaded.enabled.states.len() != config_init.enabled.states.len() {
             config_loaded.enabled.states = config_init.enabled.states;
         }
