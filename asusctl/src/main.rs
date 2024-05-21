@@ -9,7 +9,7 @@ use aura_cli::{LedPowerCommand1, LedPowerCommand2};
 use dmi_id::DMIID;
 use fan_curve_cli::FanCurveCommand;
 use gumdrop::{Opt, Options};
-use rog_anime::usb::get_anime_type;
+use rog_anime::usb::get_maybe_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType, Vec2};
 use rog_aura::keyboard::{AuraPowerState, LaptopAuraPower};
 use rog_aura::{self, AuraDeviceType, AuraEffect, PowerZones};
@@ -365,8 +365,8 @@ fn handle_anime(conn: &Connection, cmd: &AnimeCommand) -> Result<(), Box<dyn std
         println!("Did Alice _really_ make it back from Wonderland?");
     }
 
-    let mut anime_type = get_anime_type()?;
-    if let AnimeType::Unknown = anime_type {
+    let mut anime_type = get_maybe_anime_type()?;
+    if let AnimeType::Unsupported = anime_type {
         if let Some(model) = cmd.override_type {
             anime_type = model;
         }

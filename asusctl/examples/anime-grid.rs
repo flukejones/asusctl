@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use rog_anime::usb::get_anime_type;
+use rog_anime::usb::get_maybe_anime_type;
 use rog_anime::{AnimeDataBuffer, AnimeGrid};
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use zbus::blocking::Connection;
@@ -14,7 +14,7 @@ fn main() {
     let conn = Connection::system().unwrap();
     let proxy = AnimeProxyBlocking::new(&conn).unwrap();
 
-    let anime_type = get_anime_type().unwrap();
+    let anime_type = get_maybe_anime_type().unwrap();
     let mut matrix = AnimeGrid::new(anime_type);
     let tmp = matrix.get_mut();
 

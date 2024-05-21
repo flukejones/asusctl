@@ -241,13 +241,13 @@ impl From<AnimShutdown> for i32 {
     }
 }
 
-/// `get_anime_type` is very broad, matching on part of the laptop board name
-/// only. For this reason `find_node()` must be used also to verify if the USB
-/// device is available.
+/// `get_maybe_anime_type` is very broad, matching on part of the laptop board
+/// name only. For this reason `find_node()` must be used also to verify if the
+/// USB device is available.
 ///
 /// The currently known USB device is `19b6`.
 #[inline]
-pub fn get_anime_type() -> Result<AnimeType, AnimeError> {
+pub fn get_maybe_anime_type() -> Result<AnimeType, AnimeError> {
     let dmi = DMIID::new().map_err(|_| AnimeError::NoDevice)?; // TODO: better error
     let board_name = dmi.board_name;
 
@@ -258,8 +258,8 @@ pub fn get_anime_type() -> Result<AnimeType, AnimeError> {
     } else if board_name.contains("GU604V") {
         return Ok(AnimeType::GU604);
     }
-    log::warn!("AniMe Matrix device found but not yet supported, will default to a GA402 layout");
-    Ok(AnimeType::Unknown)
+    log::warn!("AniMe Matrix device found but could be a slash");
+    Ok(AnimeType::Unsupported)
 }
 
 /// Get the two device initialization packets. These are required for device

@@ -6,7 +6,7 @@ use std::sync::{Arc, Mutex};
 use asusd_user::config::*;
 use asusd_user::ctrl_anime::{CtrlAnime, CtrlAnimeInner};
 use config_traits::{StdConfig, StdConfigLoad};
-use rog_anime::usb::get_anime_type;
+use rog_anime::usb::get_maybe_anime_type;
 use rog_aura::aura_detection::LedSupportData;
 use rog_aura::keyboard::KeyLayout;
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
@@ -44,7 +44,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Set up the anime data and run loop/thread
     if supported.contains(&"org.asuslinux.Anime".to_string()) {
         if let Some(cfg) = config.active_anime {
-            let anime_type = get_anime_type()?;
+            let anime_type = get_maybe_anime_type()?;
             let anime_config = ConfigAnime::new().set_name(cfg).load();
             let anime = anime_config.create(anime_type)?;
             let anime_config = Arc::new(Mutex::new(anime_config));

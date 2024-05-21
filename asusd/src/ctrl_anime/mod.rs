@@ -8,11 +8,11 @@ use std::sync::Arc;
 use std::thread::sleep;
 
 use ::zbus::export::futures_util::lock::Mutex;
-use config_traits::{StdConfig, StdConfigLoad2};
+use config_traits::{StdConfig, StdConfigLoad};
 use log::{error, info, warn};
 use rog_anime::error::AnimeError;
 use rog_anime::usb::{
-    get_anime_type, pkt_flush, pkt_set_brightness, pkt_set_enable_display,
+    get_maybe_anime_type, pkt_flush, pkt_set_brightness, pkt_set_enable_display,
     pkt_set_enable_powersave_anim, pkts_for_init, Brightness,
 };
 use rog_anime::{ActionData, AnimeDataBuffer, AnimePacketType, AnimeType};
@@ -64,6 +64,12 @@ pub struct CtrlAnime {
 impl CtrlAnime {
     #[inline]
     pub fn new() -> Result<CtrlAnime, RogError> {
+        let anime_type = get_maybe_anime_type()?;
+        if matches!(anime_type, AnimeType::Unsupported) {
+            info!("No Anime Matrix capable laptop found");
+            return Err(RogError::Anime(AnimeError::NoDevice));
+        }
+
         let usb = USBRaw::new(0x193b).ok();
         let hid = HidRaw::new("193b").ok();
         let node = if usb.is_some() {
@@ -91,13 +97,6 @@ impl CtrlAnime {
         // }
 
         let mut config = AnimeConfig::new().load();
-        let mut anime_type = get_anime_type()?;
-        if let AnimeType::Unknown = anime_type {
-            if let Some(model) = config.model_override {
-                warn!("Overriding the Animatrix type as {model:?}");
-                anime_type = model;
-            }
-        }
 
         info!("Device has an AniMe Matrix display: {anime_type:?}");
         let mut cache = AnimeConfigCached::default();

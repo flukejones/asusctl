@@ -1,7 +1,7 @@
 use std::thread::sleep;
 use std::time::Duration;
 
-use rog_anime::usb::get_anime_type;
+use rog_anime::usb::get_maybe_anime_type;
 use rog_anime::{AnimeDiagonal, AnimeType};
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use zbus::blocking::Connection;
@@ -29,7 +29,7 @@ fn main() {
             }
         }
 
-        let anime_type = get_anime_type().unwrap();
+        let anime_type = get_maybe_anime_type().unwrap();
         proxy
             .write(matrix.into_data_buffer(anime_type).unwrap())
             .unwrap();

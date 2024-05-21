@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use config_traits::{StdConfig, StdConfigLoad2};
+use config_traits::{StdConfig, StdConfigLoad};
 use rog_anime::error::AnimeError;
 use rog_anime::usb::Brightness;
 use rog_anime::{
@@ -9,60 +9,6 @@ use rog_anime::{
 use serde_derive::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "anime.ron";
-
-#[derive(Deserialize, Serialize)]
-pub struct AnimeConfigV460 {
-    pub system: Vec<ActionLoader>,
-    pub boot: Vec<ActionLoader>,
-    pub wake: Vec<ActionLoader>,
-    pub sleep: Vec<ActionLoader>,
-    pub shutdown: Vec<ActionLoader>,
-    pub brightness: f32,
-}
-
-impl From<AnimeConfigV460> for AnimeConfig {
-    fn from(c: AnimeConfigV460) -> AnimeConfig {
-        AnimeConfig {
-            system: c.system,
-            boot: c.boot,
-            wake: c.wake,
-            shutdown: c.shutdown,
-            ..Default::default()
-        }
-    }
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct AnimeConfigV472 {
-    pub model_override: Option<AnimeType>,
-    pub system: Vec<ActionLoader>,
-    pub boot: Vec<ActionLoader>,
-    pub wake: Vec<ActionLoader>,
-    pub sleep: Vec<ActionLoader>,
-    pub shutdown: Vec<ActionLoader>,
-    pub brightness: f32,
-    pub display_enabled: bool,
-    pub display_brightness: Brightness,
-    pub builtin_anims_enabled: bool,
-    pub builtin_anims: Animations,
-}
-
-impl From<AnimeConfigV472> for AnimeConfig {
-    fn from(c: AnimeConfigV472) -> AnimeConfig {
-        AnimeConfig {
-            system: c.system,
-            boot: c.boot,
-            wake: c.wake,
-            shutdown: c.shutdown,
-            model_override: c.model_override,
-            display_enabled: c.display_enabled,
-            display_brightness: c.display_brightness,
-            builtin_anims_enabled: c.builtin_anims_enabled,
-            builtin_anims: c.builtin_anims,
-            ..Default::default()
-        }
-    }
-}
 
 #[derive(Deserialize, Serialize, Default)]
 pub struct AnimeConfigCached {
@@ -108,7 +54,6 @@ impl AnimeConfigCached {
 /// Config for base system actions for the anime display
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct AnimeConfig {
-    pub model_override: Option<AnimeType>,
     pub system: Vec<ActionLoader>,
     pub boot: Vec<ActionLoader>,
     pub wake: Vec<ActionLoader>,
@@ -127,7 +72,6 @@ pub struct AnimeConfig {
 impl Default for AnimeConfig {
     fn default() -> Self {
         AnimeConfig {
-            model_override: None,
             system: Vec::new(),
             boot: Vec::new(),
             wake: Vec::new(),
@@ -159,7 +103,7 @@ impl StdConfig for AnimeConfig {
     }
 }
 
-impl StdConfigLoad2<AnimeConfigV460, AnimeConfigV472> for AnimeConfig {}
+impl StdConfigLoad for AnimeConfig {}
 
 impl From<&AnimeConfig> for DeviceState {
     fn from(config: &AnimeConfig) -> Self {

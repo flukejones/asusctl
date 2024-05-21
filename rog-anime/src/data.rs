@@ -62,7 +62,7 @@ pub enum AnimeType {
     GA401,
     GA402,
     GU604,
-    Unknown,
+    Unsupported,
 }
 
 impl FromStr for AnimeType {
@@ -73,7 +73,7 @@ impl FromStr for AnimeType {
             "ga401" | "GA401" => Self::GA401,
             "ga402" | "GA402" => Self::GA402,
             "gu604" | "GU604" => Self::GU604,
-            _ => Self::Unknown,
+            _ => Self::Unsupported,
         })
     }
 }
@@ -165,7 +165,7 @@ impl TryFrom<AnimeDataBuffer> for AnimePacketType {
 
         let mut buffers = match anime.anime {
             AnimeType::GA401 => vec![[0; 640]; 2],
-            AnimeType::GA402 | AnimeType::GU604 | AnimeType::Unknown => vec![[0; 640]; 3],
+            AnimeType::GA402 | AnimeType::GU604 | AnimeType::Unsupported => vec![[0; 640]; 3],
         };
 
         for (idx, chunk) in anime.data.as_slice().chunks(PANE_LEN).enumerate() {
@@ -176,7 +176,7 @@ impl TryFrom<AnimeDataBuffer> for AnimePacketType {
 
         if matches!(
             anime.anime,
-            AnimeType::GA402 | AnimeType::GU604 | AnimeType::Unknown
+            AnimeType::GA402 | AnimeType::GU604 | AnimeType::Unsupported
         ) {
             buffers[2][..7].copy_from_slice(&USB_PREFIX3);
         }

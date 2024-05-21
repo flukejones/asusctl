@@ -28,12 +28,14 @@ pub type SlashUsbPacket = [u8; PACKET_SIZE];
 ///
 /// The currently known USB device is `193B`.
 #[inline]
-pub fn get_slash_type() -> Result<SlashType, SlashError> {
+pub fn get_maybe_slash_type() -> Result<SlashType, SlashError> {
     let dmi = DMIID::new().map_err(|_| SlashError::NoDevice)?; // TODO: better error
     let board_name = dmi.board_name;
 
     if board_name.contains("GA403") {
         return Ok(SlashType::GA403);
+    } else if board_name.contains("GA605") {
+        return Ok(SlashType::GA605);
     }
     Ok(SlashType::Unsupported)
 }

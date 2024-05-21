@@ -11,6 +11,7 @@
 - Minor updates in aura controller to ensure configs are updated if the support file changes
 - Don't panic if -ENODEV on fan_curve enable
 - Adjust the G513Q support to match what is on the asus website.
+- Adjust init sequence of anime to prevent accidental use of Slash as Anime
 
 ## [v6.0.9]
 

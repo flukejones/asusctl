@@ -2,10 +2,11 @@ pub mod config;
 pub mod trait_impls;
 
 use config_traits::{StdConfig, StdConfigLoad};
+use log::info;
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::usb_raw::USBRaw;
 use rog_slash::error::SlashError;
-use rog_slash::usb::{get_slash_type, pkt_set_mode, pkt_set_options, pkts_for_init};
+use rog_slash::usb::{get_maybe_slash_type, pkt_set_mode, pkt_set_options, pkts_for_init};
 use rog_slash::{SlashMode, SlashType};
 
 use crate::ctrl_slash::config::SlashConfig;
@@ -39,8 +40,9 @@ pub struct CtrlSlash {
 impl CtrlSlash {
     #[inline]
     pub fn new() -> Result<CtrlSlash, RogError> {
-        let slash_type = get_slash_type()?;
-        if matches!(slash_type, SlashType::Unknown | SlashType::Unsupported) {
+        let slash_type = get_maybe_slash_type()?;
+        if matches!(slash_type, SlashType::Unsupported) {
+            info!("No Slash capable laptop found");
             return Err(RogError::Slash(SlashError::NoDevice));
         }
 
@@ -51,7 +53,7 @@ impl CtrlSlash {
         } else if hid.is_some() {
             unsafe { Node::Hid(hid.unwrap_unchecked()) }
         } else {
-            return Err(RogError::NotSupported);
+            return Err(RogError::Slash(SlashError::NoDevice));
         };
 
         let ctrl = CtrlSlash {
