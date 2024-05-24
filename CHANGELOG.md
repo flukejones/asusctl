@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [v6.0.10]
+
 ### Added
 - Add the GA401I model to aura_support.
 
