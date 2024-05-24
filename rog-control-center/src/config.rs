@@ -1,7 +1,7 @@
 use std::fs::create_dir;
 
 use config_traits::{StdConfig, StdConfigLoad1};
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::notify::EnabledNotifications;
 

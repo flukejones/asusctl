@@ -165,7 +165,6 @@ dependencies = [
  "rog_profiles",
  "rog_slash",
  "serde",
- "serde_derive",
  "tokio",
  "udev 0.8.0",
  "zbus",
@@ -185,7 +184,6 @@ dependencies = [
  "rog_platform",
  "ron",
  "serde",
- "serde_derive",
  "smol",
  "zbus",
 ]
@@ -3694,7 +3692,6 @@ dependencies = [
  "rog_platform",
  "rog_profiles",
  "serde",
- "serde_derive",
  "slint",
  "slint-build",
  "supergfxctl",
@@ -3716,7 +3713,6 @@ dependencies = [
  "pix",
  "png_pong",
  "serde",
- "serde_derive",
  "typeshare",
  "zbus",
 ]
@@ -3730,7 +3726,6 @@ dependencies = [
  "log",
  "ron",
  "serde",
- "serde_derive",
  "typeshare",
  "zbus",
 ]
@@ -3772,7 +3767,6 @@ dependencies = [
  "log",
  "rog_platform",
  "serde",
- "serde_derive",
  "typeshare",
  "udev 0.8.0",
  "zbus",
@@ -3795,7 +3789,6 @@ dependencies = [
  "cargo-husky",
  "dmi_id",
  "serde",
- "serde_derive",
  "typeshare",
  "zbus",
 ]

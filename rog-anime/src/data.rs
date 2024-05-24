@@ -4,7 +4,7 @@ use std::thread::sleep;
 use std::time::{Duration, Instant};
 
 use log::info;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::{OwnedValue, Type, Value};

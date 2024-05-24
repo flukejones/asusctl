@@ -23,7 +23,6 @@ path = "src/lib.rs"
 
 [dependencies]
 serde.workspace = true
-serde_derive.workspace = true
 typeshare.workspace = true
 zbus = { workspace = true, optional = true }
 dmi_id = { path = "../dmi-id", optional = true }

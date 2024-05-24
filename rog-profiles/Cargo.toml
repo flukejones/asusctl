@@ -16,7 +16,6 @@ dbus = ["zbus"]
 log.workspace = true
 udev.workspace = true
 serde.workspace = true
-serde_derive.workspace = true
 typeshare.workspace = true
 rog_platform = { path = "../rog-platform" }
 

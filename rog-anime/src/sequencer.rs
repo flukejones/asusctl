@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use glam::Vec2;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::error::Result;
 use crate::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType};

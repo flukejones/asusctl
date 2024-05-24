@@ -7,7 +7,7 @@ use rog_aura::keyboard::LaptopAuraPower;
 use rog_aura::{
     AuraDeviceType, AuraEffect, AuraModeNum, AuraZone, Direction, LedBrightness, Speed, GRADIENT,
 };
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::error::RogError;
 

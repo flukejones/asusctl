@@ -6,7 +6,7 @@ use rog_anime::usb::Brightness;
 use rog_anime::{
     ActionData, ActionLoader, AnimTime, Animations, AnimeType, DeviceState, Fade, Vec2,
 };
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "anime.ron";
 

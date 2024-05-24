@@ -2,7 +2,7 @@ use std::env;
 
 use dmi_id::DMIID;
 use log::{error, info, warn};
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::keyboard::AdvancedAuraType;
 use crate::{AuraModeNum, AuraZone, PowerZones};

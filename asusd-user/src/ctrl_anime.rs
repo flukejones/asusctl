@@ -9,7 +9,7 @@ use rog_anime::error::AnimeError;
 use rog_anime::{ActionData, ActionLoader, AnimTime, Fade, Sequences, Vec2};
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use ron::ser::PrettyConfig;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use zbus::interface;
 use zbus::zvariant::{ObjectPath, Type};
 

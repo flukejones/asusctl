@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use glam::Vec2;
 use log::error;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::error::{AnimeError, Result};
 use crate::{AnimeDataBuffer, AnimeDiagonal, AnimeImage, AnimeType, Pixel};

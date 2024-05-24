@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Changed
+- Renamed `Strobe` effect to `RainbowCycle` to prevent confusion over what it is
+- Ranamed `Rainbow` effect to `RainbowWave`
+- Cleaned up serde crate deps
+
 ## [v6.0.10]
 
 ### Added

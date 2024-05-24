@@ -1,7 +1,7 @@
 use config_traits::{StdConfig, StdConfigLoad1};
 use rog_platform::cpu::CPUEPP;
 use rog_platform::platform::ThrottlePolicy;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "asusd.ron";
 

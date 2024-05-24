@@ -28,7 +28,6 @@ gif.workspace = true
 log.workspace = true
 
 serde.workspace = true
-serde_derive.workspace = true
 
 glam.workspace = true
 typeshare.workspace = true

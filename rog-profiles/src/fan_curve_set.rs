@@ -1,5 +1,5 @@
 use log::{error, trace};
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 use udev::Device;
 #[cfg(feature = "dbus")]

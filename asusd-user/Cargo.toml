@@ -22,7 +22,6 @@ smol.workspace = true
 
 # serialisation
 serde.workspace = true
-serde_derive.workspace = true
 ron.workspace = true
 
 rog_anime = { path = "../rog-anime" }

@@ -38,7 +38,6 @@ logind-zbus.workspace = true
 
 # serialisation
 serde.workspace = true
-serde_derive.workspace = true
 
 concat-idents.workspace = true
 

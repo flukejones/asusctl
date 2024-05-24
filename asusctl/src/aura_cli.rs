@@ -219,9 +219,9 @@ pub enum SetAuraBuiltin {
     #[options(help = "pulse between one or two colours")]
     Breathe(TwoColourSpeed), // 1
     #[options(help = "strobe through all colours")]
-    Strobe(SingleSpeed), // 2
+    RainbowCycle(SingleSpeed), // 2
     #[options(help = "rainbow cycling in one of four directions")]
-    Rainbow(SingleSpeedDirection), // 3
+    RainbowWave(SingleSpeedDirection), // 3
     #[options(help = "rain pattern mimicking raindrops")]
     Stars(TwoColourSpeed), // 4
     #[options(help = "rain pattern of three preset colours")]
@@ -312,14 +312,14 @@ impl From<&SetAuraBuiltin> for AuraEffect {
                 data.mode = AuraModeNum::Breathe;
                 data
             }
-            SetAuraBuiltin::Strobe(x) => {
+            SetAuraBuiltin::RainbowCycle(x) => {
                 let mut data: AuraEffect = x.into();
-                data.mode = AuraModeNum::Strobe;
+                data.mode = AuraModeNum::RainbowCycle;
                 data
             }
-            SetAuraBuiltin::Rainbow(x) => {
+            SetAuraBuiltin::RainbowWave(x) => {
                 let mut data: AuraEffect = x.into();
-                data.mode = AuraModeNum::Rainbow;
+                data.mode = AuraModeNum::RainbowWave;
                 data
             }
             SetAuraBuiltin::Stars(x) => {
