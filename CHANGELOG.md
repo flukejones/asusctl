@@ -12,6 +12,7 @@
 - Don't panic if -ENODEV on fan_curve enable
 - Adjust the G513Q support to match what is on the asus website.
 - Adjust init sequence of anime to prevent accidental use of Slash as Anime
+- Enable notifs and tray icon without supergfx
 
 ## [v6.0.9]
 

@@ -185,7 +185,7 @@ export component PageSystem inherits Rectangle {
             }
 
             if SystemPageData.available.ppt-pl1-spl: SystemSlider {
-                text: @tr("ppt_pl1_spl" => "ppt_pl1_spl");
+                text: @tr("ppt_pl1_spl" => "PL1, Sustained Power Limit");
                 minimum: 5;
                 maximum: 250;
                 value <=> SystemPageData.ppt_pl1_spl;
@@ -195,7 +195,7 @@ export component PageSystem inherits Rectangle {
             }
 
             if SystemPageData.available.ppt-pl2-sppt: SystemSlider {
-                text: @tr("ppt_pl2_sppt" => "ppt_pl2_sppt");
+                text: @tr("ppt_pl2_sppt" => "PL2, turbo power limit");
                 minimum: 5;
                 maximum: 250;
                 value <=> SystemPageData.ppt_pl2_sppt;
@@ -205,7 +205,7 @@ export component PageSystem inherits Rectangle {
             }
 
             if SystemPageData.available.ppt-fppt: SystemSlider {
-                text: @tr("ppt_fppt" => "ppt_fppt");
+                text: @tr("ppt_fppt" => "fPPT, fast power limit");
                 minimum: 5;
                 maximum: 250;
                 value <=> SystemPageData.ppt_fppt;
@@ -215,7 +215,7 @@ export component PageSystem inherits Rectangle {
             }
 
             if SystemPageData.available.ppt-apu-sppt: SystemSlider {
-                text: @tr("ppt_apu_sppt" => "ppt_apu_sppt");
+                text: @tr("ppt_apu_sppt" => "sPPT, APU slow power limit");
                 minimum: 5;
                 maximum: 130;
                 value <=> SystemPageData.ppt_apu_sppt;
@@ -225,7 +225,7 @@ export component PageSystem inherits Rectangle {
             }
 
             if SystemPageData.available.ppt-platform-sppt: SystemSlider {
-                text: @tr("ppt_platform_sppt" => "ppt_platform_sppt");
+                text: @tr("ppt_platform_sppt" => "Slow Package Power Tracking Limit");
                 maximum: 130;
                 minimum: 5;
                 value <=> SystemPageData.ppt_platform_sppt;
@@ -235,7 +235,7 @@ export component PageSystem inherits Rectangle {
             }
 
             if SystemPageData.available.nv-dynamic-boost: SystemSlider {
-                text: @tr("nv_dynamic_boost" => "nv_dynamic_boost");
+                text: @tr("nv_dynamic_boost" => "dGPU boost overclock");
                 minimum: 5;
                 maximum: 25;
                 value <=> SystemPageData.nv_dynamic_boost;
@@ -245,7 +245,7 @@ export component PageSystem inherits Rectangle {
             }
 
             if SystemPageData.available.nv-temp-target: SystemSlider {
-                text: @tr("nv_temp_target" => "nv_temp_target");
+                text: @tr("nv_temp_target" => "dGPU temperature max");
                 minimum: 75;
                 maximum: 87;
                 value <=> SystemPageData.nv_temp_target;

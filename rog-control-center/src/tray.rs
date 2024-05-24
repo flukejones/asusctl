@@ -12,7 +12,7 @@ use std::time::Duration;
 use betrayer::{Icon, Menu, MenuItem, TrayEvent, TrayIcon, TrayIconBuilder};
 use log::{debug, error, info, warn};
 use rog_platform::platform::Properties;
-use supergfxctl::pci_device::{GfxMode, GfxPower};
+use supergfxctl::pci_device::{Device, GfxMode, GfxPower};
 use supergfxctl::zbus_proxy::DaemonProxyBlocking as GfxProxy;
 use versions::Versioning;
 
@@ -71,7 +71,7 @@ fn build_menu() -> Menu<TrayAction> {
     Menu::new([
         MenuItem::separator(),
         MenuItem::button("Open", TrayAction::Open),
-        MenuItem::button("Quit", TrayAction::Quit),
+        MenuItem::button("Quit App", TrayAction::Quit),
     ])
 }
 
@@ -126,6 +126,20 @@ fn set_tray_icon_and_tip(
     }
 }
 
+fn find_dgpu() -> Option<Device> {
+    use supergfxctl::pci_device::Device;
+    let dev = Device::find().unwrap_or_default();
+    for dev in dev {
+        if dev.is_dgpu() {
+            info!("Found dGPU: {}", dev.pci_id());
+            // Plain old thread is perfectly fine since most of this is potentially blocking
+            return Some(dev);
+        }
+    }
+    warn!("Did not find a dGPU on this system, dGPU status won't be avilable");
+    None
+}
+
 /// The tray is controlled somewhat by `Arc<Mutex<SystemState>>`
 pub fn init_tray(_supported_properties: Vec<Properties>, config: Arc<Mutex<Config>>) {
     std::thread::spawn(move || {
@@ -155,27 +169,30 @@ pub fn init_tray(_supported_properties: Vec<Properties>, config: Arc<Mutex<Confi
                 gpu_integrated,
             });
 
-            let mut has_supergfx = true;
+            let mut has_supergfx = false;
             let conn = zbus::blocking::Connection::system().unwrap();
             if let Ok(gfx_proxy) = GfxProxy::new(&conn) {
-                let mut supergfx_active = false;
-                if gfx_proxy.mode().is_ok() {
-                    supergfx_active = true;
-                    if let Ok(version) = gfx_proxy.version() {
-                        if let Some(version) = Versioning::new(&version) {
-                            let curr_gfx = Versioning::new("5.2.0").unwrap();
-                            warn!("supergfxd version = {version}");
-                            if version < curr_gfx {
-                                // Don't allow mode changing if too old a version
-                                warn!("supergfxd found but is too old to use");
-                                has_supergfx = false;
+                match gfx_proxy.mode() {
+                    Ok(_) => {
+                        has_supergfx = true;
+                        if let Ok(version) = gfx_proxy.version() {
+                            if let Some(version) = Versioning::new(&version) {
+                                let curr_gfx = Versioning::new("5.2.0").unwrap();
+                                warn!("supergfxd version = {version}");
+                                if version < curr_gfx {
+                                    // Don't allow mode changing if too old a version
+                                    warn!("supergfxd found but is too old to use");
+                                    has_supergfx = false;
+                                }
                             }
                         }
                     }
-                };
+                    Err(e) => warn!("Couldn't get mode form supergfxd: {e:?}"),
+                }
 
                 info!("Started ROGTray");
                 let mut last_power = GfxPower::Unknown;
+                let dev = find_dgpu();
                 loop {
                     sleep(Duration::from_millis(1000));
                     if let Ok(lock) = config.try_lock() {
@@ -187,9 +204,21 @@ pub fn init_tray(_supported_properties: Vec<Properties>, config: Arc<Mutex<Confi
                         if let Ok(mode) = gfx_proxy.mode() {
                             if let Ok(power) = gfx_proxy.power() {
                                 if last_power != power {
-                                    set_tray_icon_and_tip(mode, power, &mut tray, supergfx_active);
+                                    set_tray_icon_and_tip(mode, power, &mut tray, has_supergfx);
                                     last_power = power;
                                 }
+                            }
+                        }
+                    } else if let Some(dev) = dev.as_ref() {
+                        if let Ok(power) = dev.get_runtime_status() {
+                            if last_power != power {
+                                set_tray_icon_and_tip(
+                                    GfxMode::Hybrid,
+                                    power,
+                                    &mut tray,
+                                    has_supergfx,
+                                );
+                                last_power = power;
                             }
                         }
                     }

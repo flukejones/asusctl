@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-05-20 22:11+0000\n"
+"POT-Creation-Date: 2024-05-24 00:58+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -334,37 +334,37 @@ msgstr ""
 
 #: rog-control-center/ui/pages/system.slint:188
 msgctxt "ppt_pl1_spl"
-msgid "ppt_pl1_spl"
+msgid "PL1, Sustained Power Limit"
 msgstr ""
 
 #: rog-control-center/ui/pages/system.slint:198
 msgctxt "ppt_pl2_sppt"
-msgid "ppt_pl2_sppt"
+msgid "PL2, turbo power limit"
 msgstr ""
 
 #: rog-control-center/ui/pages/system.slint:208
 msgctxt "ppt_fppt"
-msgid "ppt_fppt"
+msgid "fPPT, fast power limit"
 msgstr ""
 
 #: rog-control-center/ui/pages/system.slint:218
 msgctxt "ppt_apu_sppt"
-msgid "ppt_apu_sppt"
+msgid "sPPT, APU slow power limit"
 msgstr ""
 
 #: rog-control-center/ui/pages/system.slint:228
 msgctxt "ppt_platform_sppt"
-msgid "ppt_platform_sppt"
+msgid "Slow Package Power Tracking Limit"
 msgstr ""
 
 #: rog-control-center/ui/pages/system.slint:238
 msgctxt "nv_dynamic_boost"
-msgid "nv_dynamic_boost"
+msgid "dGPU boost overclock"
 msgstr ""
 
 #: rog-control-center/ui/pages/system.slint:248
 msgctxt "nv_temp_target"
-msgid "nv_temp_target"
+msgid "dGPU temperature max"
 msgstr ""
 
 #: rog-control-center/ui/pages/system.slint:294
@@ -410,46 +410,6 @@ msgstr ""
 #: rog-control-center/ui/pages/system.slint:371
 msgctxt "PageSystem"
 msgid "Throttle Policy on AC"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:33
-msgctxt "AuraPowerGroup"
-msgid "Boot"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:43
-msgctxt "AuraPowerGroup"
-msgid "Awake"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:53
-msgctxt "AuraPowerGroup"
-msgid "Sleep"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:63
-msgctxt "AuraPowerGroup"
-msgid "Shutdown"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:102
-msgctxt "AuraPowerGroupOld"
-msgid "Zone Selection"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:114
-msgctxt "AuraPowerGroupOld"
-msgid "Boot"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:124
-msgctxt "AuraPowerGroupOld"
-msgid "Awake"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:134
-msgctxt "AuraPowerGroupOld"
-msgid "Sleep"
 msgstr ""
 
 #: rog-control-center/ui/types/aura_types.slint:49
@@ -642,6 +602,46 @@ msgctxt "Aura speed"
 msgid "High"
 msgstr ""
 
+#: rog-control-center/ui/widgets/aura_power.slint:33
+msgctxt "AuraPowerGroup"
+msgid "Boot"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:43
+msgctxt "AuraPowerGroup"
+msgid "Awake"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:53
+msgctxt "AuraPowerGroup"
+msgid "Sleep"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:63
+msgctxt "AuraPowerGroup"
+msgid "Shutdown"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:102
+msgctxt "AuraPowerGroupOld"
+msgid "Zone Selection"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:114
+msgctxt "AuraPowerGroupOld"
+msgid "Boot"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:124
+msgctxt "AuraPowerGroupOld"
+msgid "Awake"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:134
+msgctxt "AuraPowerGroupOld"
+msgid "Sleep"
+msgstr ""
+
 #: rog-control-center/ui/main_window.slint:51
 msgctxt "MainWindow"
 msgid "ROG"
@@ -679,6 +679,6 @@ msgstr ""
 
 #: rog-control-center/ui/main_window.slint:70
 msgctxt "MainWindow"
-msgid "Quit"
+msgid "Quit App"
 msgstr ""
 
