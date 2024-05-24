@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2024-05-24 01:13+0000\n"
+"POT-Creation-Date: 2024-05-24 06:49+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -334,7 +334,7 @@ msgstr ""
 
 #: rog-control-center/ui/pages/system.slint:188
 msgctxt "ppt_pl1_spl"
-msgid "PL1, Sustained Power Limit"
+msgid "PL1, sustained power limit"
 msgstr ""
 
 #: rog-control-center/ui/pages/system.slint:198
@@ -344,17 +344,17 @@ msgstr ""
 
 #: rog-control-center/ui/pages/system.slint:208
 msgctxt "ppt_fppt"
-msgid "fPPT, fast power limit"
+msgid "FPPT, Fast Power Limit"
 msgstr ""
 
 #: rog-control-center/ui/pages/system.slint:218
 msgctxt "ppt_apu_sppt"
-msgid "sPPT, APU slow power limit"
+msgid "SPPT, APU slow power limit"
 msgstr ""
 
 #: rog-control-center/ui/pages/system.slint:228
 msgctxt "ppt_platform_sppt"
-msgid "Slow Package Power Tracking Limit"
+msgid "Slow package power tracking limit"
 msgstr ""
 
 #: rog-control-center/ui/pages/system.slint:238
