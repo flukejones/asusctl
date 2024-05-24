@@ -9,8 +9,8 @@ use std::process::Command;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use log::{error, info, warn};
-use notify_rust::{Hint, Notification, NotificationHandle, Urgency};
+use log::{debug, error, info, warn};
+use notify_rust::{Hint, Notification, Timeout, Urgency};
 use rog_dbus::zbus_platform::PlatformProxy;
 use rog_platform::platform::GpuMode;
 use rog_platform::power::AsusPower;
@@ -60,7 +60,7 @@ fn start_dpu_status_mon(config: Arc<Mutex<Config>>) {
             std::thread::spawn(move || {
                 let mut last_status = GfxPower::Unknown;
                 loop {
-                    std::thread::sleep(Duration::from_millis(1000));
+                    std::thread::sleep(Duration::from_millis(1500));
                     if let Ok(status) = dev.get_runtime_status() {
                         if status != GfxPower::Unknown && status != last_status {
                             if let Ok(config) = enabled_notifications_copy.lock() {
@@ -72,7 +72,11 @@ fn start_dpu_status_mon(config: Arc<Mutex<Config>>) {
                             }
                             // Required check because status cycles through
                             // active/unknown/suspended
-                            do_gpu_status_notif("dGPU status changed:", &status).ok();
+                            do_gpu_status_notif("dGPU status changed:", &status)
+                                .show()
+                                .unwrap()
+                                .on_close(|_| ());
+                            debug!("dGPU status changed: {:?}", &status);
                         }
                         last_status = status;
                     }
@@ -240,7 +244,11 @@ pub fn start_notifications(
                         }
                         // Required check because status cycles through
                         // active/unknown/suspended
-                        do_gpu_status_notif("dGPU status changed:", &status).ok();
+                        do_gpu_status_notif("dGPU status changed:", &status)
+                            .show_async()
+                            .await
+                            .unwrap()
+                            .on_close(|_| ());
                     }
                     last_status = status;
                 }
@@ -269,19 +277,15 @@ where
     T: Display,
 {
     let mut notif = Notification::new();
-
     notif
-        .summary(NOTIF_HEADER)
-        .body(&format!("{message} {data}"))
-        .timeout(-1)
-        //.hint(Hint::Resident(true))
+        .appname(NOTIF_HEADER)
+        .summary(&format!("{message} {data}"))
+        .timeout(Timeout::Milliseconds(3000))
         .hint(Hint::Category("device".into()));
-
     notif
 }
 
-fn do_gpu_status_notif(message: &str, data: &GfxPower) -> Result<NotificationHandle> {
-    // eww
+fn do_gpu_status_notif(message: &str, data: &GfxPower) -> Notification {
     let mut notif = base_notification(message, &<&str>::from(data).to_owned());
     let icon = match data {
         GfxPower::Suspended => "asus_notif_blue",
@@ -291,7 +295,7 @@ fn do_gpu_status_notif(message: &str, data: &GfxPower) -> Result<NotificationHan
         GfxPower::Unknown => "gpu-integrated",
     };
     notif.icon(icon);
-    Ok(Notification::show(&notif)?)
+    notif
 }
 
 fn do_gfx_action_notif(message: &str, action: GfxUserAction, mode: GpuMode) -> Result<()> {
@@ -302,13 +306,12 @@ fn do_gfx_action_notif(message: &str, action: GfxUserAction, mode: GpuMode) -> R
 
     let mut notif = Notification::new();
     notif
-        .summary(NOTIF_HEADER)
-        .body(&format!("Changing to {mode}. {message}"))
-        .timeout(2000)
+        .appname(NOTIF_HEADER)
+        .summary(&format!("Changing to {mode}. {message}"))
         //.hint(Hint::Resident(true))
         .hint(Hint::Category("device".into()))
         .urgency(Urgency::Critical)
-        .timeout(-1)
+        .timeout(Timeout::Never)
         .icon("dialog-warning")
         .hint(Hint::Transient(true));
 

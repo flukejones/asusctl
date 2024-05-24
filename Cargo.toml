@@ -71,9 +71,7 @@ gif = "^0.12.0"
 
 versions = "6.2"
 
-notify-rust = { git = "https://github.com/flukejones/notify-rust.git", rev = "54176413b81189a3e4edbdc20a0b4f7e2e35c063", default-features = false, features = [
-    "z",
-] }
+notify-rust = { version = "4.11.0", features = ["z", "async"] }
 
 [profile.release]
 # thin = 57s, asusd = 9.0M

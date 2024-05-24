@@ -185,7 +185,7 @@ export component PageSystem inherits Rectangle {
             }
 
             if SystemPageData.available.ppt-pl1-spl: SystemSlider {
-                text: @tr("ppt_pl1_spl" => "PL1, Sustained Power Limit");
+                text: @tr("ppt_pl1_spl" => "PL1, sustained power limit");
                 minimum: 5;
                 maximum: 250;
                 value <=> SystemPageData.ppt_pl1_spl;
@@ -205,7 +205,7 @@ export component PageSystem inherits Rectangle {
             }
 
             if SystemPageData.available.ppt-fppt: SystemSlider {
-                text: @tr("ppt_fppt" => "fPPT, fast power limit");
+                text: @tr("ppt_fppt" => "FPPT, Fast Power Limit");
                 minimum: 5;
                 maximum: 250;
                 value <=> SystemPageData.ppt_fppt;
@@ -215,7 +215,7 @@ export component PageSystem inherits Rectangle {
             }
 
             if SystemPageData.available.ppt-apu-sppt: SystemSlider {
-                text: @tr("ppt_apu_sppt" => "sPPT, APU slow power limit");
+                text: @tr("ppt_apu_sppt" => "SPPT, APU slow power limit");
                 minimum: 5;
                 maximum: 130;
                 value <=> SystemPageData.ppt_apu_sppt;
@@ -225,7 +225,7 @@ export component PageSystem inherits Rectangle {
             }
 
             if SystemPageData.available.ppt-platform-sppt: SystemSlider {
-                text: @tr("ppt_platform_sppt" => "Slow Package Power Tracking Limit");
+                text: @tr("ppt_platform_sppt" => "Slow package power tracking limit");
                 maximum: 130;
                 minimum: 5;
                 value <=> SystemPageData.ppt_platform_sppt;
