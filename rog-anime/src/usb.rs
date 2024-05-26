@@ -253,7 +253,7 @@ pub fn get_maybe_anime_type() -> Result<AnimeType, AnimeError> {
 
     if board_name.contains("GA401I") || board_name.contains("GA401Q") {
         return Ok(AnimeType::GA401);
-    } else if board_name.contains("GA402R") {
+    } else if board_name.contains("GA402R") || board_name.contains("GA402X") {
         return Ok(AnimeType::GA402);
     } else if board_name.contains("GU604V") {
         return Ok(AnimeType::GU604);
