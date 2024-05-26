@@ -25,7 +25,6 @@ use tokio::runtime::Runtime;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    dbg!(notify_rust::get_capabilities().unwrap());
     #[cfg(feature = "tokio-debug")]
     console_subscriber::init();
 
