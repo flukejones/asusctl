@@ -6,6 +6,7 @@
 - Renamed `Strobe` effect to `RainbowCycle` to prevent confusion over what it is
 - Ranamed `Rainbow` effect to `RainbowWave`
 - Cleaned up serde crate deps
+- Fixed AniMe on GA402XZ
 
 ## [v6.0.10]
 
