@@ -7,6 +7,7 @@
 - Ranamed `Rainbow` effect to `RainbowWave`
 - Cleaned up serde crate deps
 - Fixed AniMe on GA402XZ
+- Update some of the G713 device aura features
 
 ## [v6.0.10]
 
