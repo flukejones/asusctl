@@ -126,6 +126,15 @@
         power_zones: [Keyboard, Lightbar],
     ),
     (
+        device_name: "G513RM",
+        product_id: "",
+        layout_name: "g513i",
+        basic_modes: [Static, Breathe, Strobe, Rainbow, Pulse],
+        basic_zones: [Key1, Key2, Key3, Key4],
+        advanced_type: None,
+        power_zones: [Keyboard, Lightbar],
+    ),
+    (
         device_name: "G513RS",
         product_id: "",
         layout_name: "g513i-per-key",
