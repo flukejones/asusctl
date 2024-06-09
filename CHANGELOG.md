@@ -2,12 +2,15 @@
 
 ## [Unreleased]
 
+## [v6.0.11]
+
 ### Changed
 - Renamed `Strobe` effect to `RainbowCycle` to prevent confusion over what it is
 - Ranamed `Rainbow` effect to `RainbowWave`
 - Cleaned up serde crate deps
 - Fixed AniMe on GA402XZ
 - Update some of the G713 device aura features
+- Update some of the G513 device aura features
 
 ## [v6.0.10]
 
