@@ -36,6 +36,8 @@ pub fn get_maybe_slash_type() -> Result<SlashType, SlashError> {
         return Ok(SlashType::GA403);
     } else if board_name.contains("GA605") {
         return Ok(SlashType::GA605);
+    } else if board_name.contains("GU605") {
+        return Ok(SlashType::GU605);
     }
     Ok(SlashType::Unsupported)
 }
