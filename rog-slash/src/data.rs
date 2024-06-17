@@ -13,6 +13,7 @@ use crate::error::SlashError;
 pub enum SlashType {
     GA403,
     GA605,
+    GU605,
     Unsupported,
 }
 
@@ -23,6 +24,7 @@ impl FromStr for SlashType {
         Ok(match s {
             "ga403" | "GA403" => Self::GA403,
             "ga605" | "GA605" => Self::GA605,
+            "gu605" | "GU605" => Self::GU605,
             _ => Self::Unsupported,
         })
     }
