@@ -5,15 +5,15 @@ use std::process::Command;
 use std::thread::sleep;
 
 use anime_cli::{AnimeActions, AnimeCommand};
-use asusd::ctrl_fancurves::FAN_CURVE_ZBUS_NAME;
 use aura_cli::{LedPowerCommand1, LedPowerCommand2};
 use dmi_id::DMIID;
 use fan_curve_cli::FanCurveCommand;
 use gumdrop::{Opt, Options};
-use rog_anime::usb::get_anime_type;
+use rog_anime::usb::get_maybe_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType, Vec2};
 use rog_aura::keyboard::{AuraPowerState, LaptopAuraPower};
 use rog_aura::{self, AuraDeviceType, AuraEffect, PowerZones};
+use rog_dbus::list_iface_blocking;
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use rog_dbus::zbus_aura::AuraProxyBlocking;
 use rog_dbus::zbus_fan_curves::FanCurvesProxyBlocking;
@@ -22,6 +22,7 @@ use rog_dbus::zbus_slash::SlashProxyBlocking;
 use rog_platform::platform::{GpuMode, Properties, ThrottlePolicy};
 use rog_profiles::error::ProfileError;
 use rog_slash::SlashMode;
+use ron::ser::PrettyConfig;
 use zbus::blocking::Connection;
 
 use crate::aura_cli::{AuraPowerStates, LedBrightness};
@@ -35,6 +36,8 @@ mod fan_curve_cli;
 mod slash_cli;
 
 fn main() {
+    let self_version = env!("CARGO_PKG_VERSION");
+    println!("Starting version {self_version}");
     let args: Vec<String> = args().skip(1).collect();
 
     let missing_argument_k = gumdrop::Error::missing_argument(Opt::Short('k'));
@@ -56,7 +59,6 @@ fn main() {
         println!("\nError: {e}\n");
         print_info();
     }) {
-        let self_version = env!("CARGO_PKG_VERSION");
         let asusd_version = platform_proxy.version().unwrap();
         if asusd_version != self_version {
             println!("Version mismatch: asusctl = {self_version}, asusd = {asusd_version}");
@@ -64,7 +66,7 @@ fn main() {
         }
 
         let supported_properties = platform_proxy.supported_properties().unwrap();
-        let supported_interfaces = platform_proxy.supported_interfaces().unwrap();
+        let supported_interfaces = list_iface_blocking().unwrap();
 
         if parsed.version {
             println!("asusctl v{}", env!("CARGO_PKG_VERSION"));
@@ -88,7 +90,10 @@ fn print_error_help(
     print_info();
     println!();
     println!("Supported interfaces:\n\n{:#?}\n", supported_interfaces);
-    println!("Supported properties:\n\n{:#?}\n", supported_properties);
+    println!(
+        "Supported properties on Platform:\n\n{:#?}\n",
+        supported_properties
+    );
 }
 
 fn print_info() {
@@ -119,8 +124,8 @@ fn check_service(name: &str) -> bool {
 
 fn find_aura_iface() -> Result<Vec<AuraProxyBlocking<'static>>, Box<dyn std::error::Error>> {
     let conn = zbus::blocking::Connection::system().unwrap();
-    let f = zbus::blocking::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/org")
-        .unwrap();
+    let f =
+        zbus::blocking::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/").unwrap();
     let interfaces = f.get_managed_objects().unwrap();
     let mut aura_paths = Vec::new();
     for v in interfaces.iter() {
@@ -167,7 +172,7 @@ fn do_parsed(
             handle_throttle_profile(&conn, supported_properties, cmd)?
         }
         Some(CliCommand::FanCurve(cmd)) => {
-            handle_fan_curve(&conn, supported_interfaces, cmd)?;
+            handle_fan_curve(&conn, cmd)?;
         }
         Some(CliCommand::Graphics(_)) => do_gfx(),
         Some(CliCommand::Anime(cmd)) => handle_anime(&conn, cmd)?,
@@ -198,6 +203,31 @@ fn do_parsed(
                     };
                     let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
                     for command in commands.iter().filter(|command| {
+                        if command.trim().starts_with("fan-curve")
+                            && !supported_interfaces
+                                .contains(&"org.asuslinux.FanCurves".to_string())
+                        {
+                            return false;
+                        }
+
+                        if command.trim().starts_with("anime")
+                            && !supported_interfaces.contains(&"org.asuslinux.Anime".to_string())
+                        {
+                            return false;
+                        }
+
+                        if command.trim().starts_with("slash")
+                            && !supported_interfaces.contains(&"org.asuslinux.Slash".to_string())
+                        {
+                            return false;
+                        }
+
+                        if command.trim().starts_with("bios")
+                            && !supported_interfaces.contains(&"org.asuslinux.Platform".to_string())
+                        {
+                            return false;
+                        }
+
                         if !dev_type.is_old_laptop()
                             && !dev_type.is_tuf_laptop()
                             && command.trim().starts_with("led-pow-1")
@@ -335,8 +365,8 @@ fn handle_anime(conn: &Connection, cmd: &AnimeCommand) -> Result<(), Box<dyn std
         println!("Did Alice _really_ make it back from Wonderland?");
     }
 
-    let mut anime_type = get_anime_type()?;
-    if let AnimeType::Unknown = anime_type {
+    let mut anime_type = get_maybe_anime_type()?;
+    if let AnimeType::Unsupported = anime_type {
         if let Some(model) = cmd.override_type {
             anime_type = model;
         }
@@ -640,25 +670,28 @@ fn handle_led_power_1_do_1866(
     aura: &AuraProxyBlocking,
     power: &LedPowerCommand1,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let zone = if power.keyboard && power.lightbar {
-        PowerZones::KeyboardAndLightbar
-    } else if power.lightbar {
-        PowerZones::Lightbar
-    } else {
-        PowerZones::Keyboard
-    };
-    let states = LaptopAuraPower {
-        states: vec![AuraPowerState {
-            zone,
+    let mut states = Vec::new();
+    if power.keyboard {
+        states.push(AuraPowerState {
+            zone: PowerZones::Keyboard,
             boot: power.boot.unwrap_or_default(),
             awake: power.awake.unwrap_or_default(),
             sleep: power.sleep.unwrap_or_default(),
             shutdown: false,
-        }],
-    };
+        });
+    }
+    if power.lightbar {
+        states.push(AuraPowerState {
+            zone: PowerZones::Lightbar,
+            boot: power.boot.unwrap_or_default(),
+            awake: power.awake.unwrap_or_default(),
+            sleep: power.sleep.unwrap_or_default(),
+            shutdown: false,
+        });
+    }
 
+    let states = LaptopAuraPower { states };
     aura.set_led_power(states)?;
-
     Ok(())
 }
 
@@ -774,13 +807,13 @@ fn handle_throttle_profile(
 
 fn handle_fan_curve(
     conn: &Connection,
-    supported: &[String],
     cmd: &FanCurveCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    if !supported.contains(&FAN_CURVE_ZBUS_NAME.to_string()) {
-        println!("Fan-curves not supported by either this kernel or by the laptop.");
+    let Ok(fan_proxy) = FanCurvesProxyBlocking::new(conn).map_err(|e| {
+        println!("Fan-curves not supported by either this kernel or by the laptop: {e:?}");
+    }) else {
         return Err(ProfileError::NotSupported.into());
-    }
+    };
 
     if !cmd.get_enabled && !cmd.default && cmd.mod_profile.is_none() {
         if !cmd.help {
@@ -805,7 +838,6 @@ fn handle_fan_curve(
     }
 
     let plat_proxy = PlatformProxyBlocking::new(conn)?;
-    let fan_proxy = FanCurvesProxyBlocking::new(conn)?;
     if cmd.get_enabled {
         let profile = plat_proxy.throttle_thermal_policy()?;
         let curves = fan_proxy.fan_curve_data(profile)?;
@@ -822,8 +854,8 @@ fn handle_fan_curve(
     if let Some(profile) = cmd.mod_profile {
         if cmd.enable_fan_curves.is_none() && cmd.data.is_none() {
             let data = fan_proxy.fan_curve_data(profile)?;
-            let data = toml::to_string(&data)?;
-            println!("\nFan curves for {:?}\n\n{}", profile, data);
+            let ron = ron::ser::to_string_pretty(&data, PrettyConfig::new().depth_limit(4))?;
+            println!("\nFan curves for {:?}\n\n{}", profile, ron);
         }
 
         if let Some(enabled) = cmd.enable_fan_curves {

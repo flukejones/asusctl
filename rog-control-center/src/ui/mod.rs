@@ -6,12 +6,12 @@ pub mod setup_system;
 use std::sync::{Arc, Mutex};
 
 use config_traits::StdConfig;
-use rog_dbus::zbus_platform::PlatformProxyBlocking;
+use rog_dbus::list_iface_blocking;
 use slint::{ComponentHandle, PhysicalSize, SharedString, Weak};
 
 use crate::config::Config;
 use crate::ui::setup_anime::setup_anime_page;
-use crate::ui::setup_aura::{has_aura_iface_blocking, setup_aura_page};
+use crate::ui::setup_aura::setup_aura_page;
 use crate::ui::setup_fans::setup_fan_curve_page;
 use crate::ui::setup_system::{setup_system_page, setup_system_page_callbacks};
 use crate::{AppSettingsPageData, MainWindow};
@@ -108,19 +108,14 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
         }
     };
 
-    let conn = zbus::blocking::Connection::system().unwrap();
-    let platform = PlatformProxyBlocking::new(&conn).unwrap();
-
-    let interfaces = platform.supported_interfaces().unwrap();
-    log::debug!("Available interfaces: {interfaces:?}");
-    // "Anime", "Aura", "FanCurves", "Platform"
+    let available = list_iface_blocking().unwrap_or_default();
     ui.set_sidebar_items_avilable(
         [
             // Needs to match the order of slint sidebar items
-            interfaces.contains(&"Platform".into()),
-            has_aura_iface_blocking().unwrap_or(false),
-            interfaces.contains(&"Anime".into()),
-            interfaces.contains(&"FanCurves".into()),
+            available.contains(&"org.asuslinux.Platform".to_string()),
+            available.contains(&"org.asuslinux.Aura".to_string()),
+            available.contains(&"org.asuslinux.Anime".to_string()),
+            available.contains(&"org.asuslinux.FanCurves".to_string()),
             true,
             true,
         ]
@@ -132,11 +127,19 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
     });
 
     setup_app_settings_page(&ui, config.clone());
-    setup_system_page(&ui, config.clone());
-    setup_system_page_callbacks(&ui, config.clone());
-    setup_aura_page(&ui, config.clone());
-    setup_anime_page(&ui, config.clone());
-    setup_fan_curve_page(&ui, config);
+    if available.contains(&"org.asuslinux.Platform".to_string()) {
+        setup_system_page(&ui, config.clone());
+        setup_system_page_callbacks(&ui, config.clone());
+    }
+    if available.contains(&"org.asuslinux.Aura".to_string()) {
+        setup_aura_page(&ui, config.clone());
+    }
+    if available.contains(&"org.asuslinux.Anime".to_string()) {
+        setup_anime_page(&ui, config.clone());
+    }
+    if available.contains(&"org.asuslinux.FanCurves".to_string()) {
+        setup_fan_curve_page(&ui, config);
+    }
     ui
 }
 
@@ -164,7 +167,7 @@ pub fn setup_app_settings_page(ui: &MainWindow, config: Arc<Mutex<Config>>) {
         }
     });
     let config_copy = config.clone();
-    global.on_set_enable_notifications(move |enable| {
+    global.on_set_enable_dgpu_notifications(move |enable| {
         if let Ok(mut lock) = config_copy.try_lock() {
             lock.notifications.enabled = enable;
             lock.write();
@@ -175,6 +178,6 @@ pub fn setup_app_settings_page(ui: &MainWindow, config: Arc<Mutex<Config>>) {
         global.set_run_in_background(lock.run_in_background);
         global.set_startup_in_background(lock.startup_in_background);
         global.set_enable_tray_icon(lock.enable_tray_icon);
-        global.set_enable_notifications(lock.notifications.enabled);
+        global.set_enable_dgpu_notifications(lock.notifications.enabled);
     }
 }

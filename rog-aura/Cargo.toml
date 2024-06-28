@@ -18,7 +18,6 @@ dbus = ["zbus"]
 
 [dependencies]
 serde.workspace = true
-serde_derive.workspace = true
 zbus = { workspace = true, optional = true }
 dmi_id = { path = "../dmi-id" }
 

@@ -6,7 +6,7 @@ use rog_anime::{ActionLoader, AnimTime, AnimeType, Fade, Sequences as AnimeSeque
 use rog_aura::effects::{AdvancedEffects as AuraSequences, Breathe, DoomFlicker, Effect, Static};
 use rog_aura::keyboard::LedCode;
 use rog_aura::{Colour, Speed};
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::error::Error;
 

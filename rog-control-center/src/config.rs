@@ -1,7 +1,7 @@
 use std::fs::create_dir;
 
 use config_traits::{StdConfig, StdConfigLoad1};
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::notify::EnabledNotifications;
 
@@ -74,7 +74,7 @@ pub struct Config461 {
     pub startup_in_background: bool,
     pub ac_command: String,
     pub bat_command: String,
-    pub enable_notifications: bool,
+    pub enable_dgpu_notifications: bool,
     pub dark_mode: bool,
     // This field must be last
     pub enabled_notifications: EnabledNotifications,

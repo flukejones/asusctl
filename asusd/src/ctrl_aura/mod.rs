@@ -1,3 +1,4 @@
+use log::warn;
 use udev::Device;
 use zbus::zvariant::{ObjectPath, OwnedObjectPath};
 
@@ -12,7 +13,7 @@ pub mod trait_impls;
 pub(super) fn filename_partial(parent: &Device) -> Option<OwnedObjectPath> {
     if let Some(id_product) = parent.attribute_value("idProduct") {
         let id_product = id_product.to_string_lossy();
-        let path = if let Some(devnum) = parent.attribute_value("devnum") {
+        let mut path = if let Some(devnum) = parent.attribute_value("devnum") {
             let devnum = devnum.to_string_lossy();
             if let Some(devpath) = parent.attribute_value("devpath") {
                 let devpath = devpath.to_string_lossy();
@@ -23,6 +24,10 @@ pub(super) fn filename_partial(parent: &Device) -> Option<OwnedObjectPath> {
         } else {
             format!("{id_product}")
         };
+        if path.contains('.') {
+            warn!("dbus path for {id_product} contains `.`, removing");
+            path.replace('.', "").clone_into(&mut path);
+        }
         return Some(ObjectPath::from_str_unchecked(&path).into());
     }
     None

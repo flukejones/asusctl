@@ -1,5 +1,9 @@
 # ROGALOG
 
+## X11 support
+
+X11 is not supported at all, as in I will not help you with X11 issues if there are any due to limited time and it being unmaintained itself. You can however build `rog-control-center` with it enabled `cargo build --features x11`.
+
 ### Translations
 
 You can help with translations by following https://slint.dev/releases/1.1.0/docs/slint/src/concepts/translations#translate-the-strings

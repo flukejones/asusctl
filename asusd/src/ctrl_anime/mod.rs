@@ -8,10 +8,11 @@ use std::sync::Arc;
 use std::thread::sleep;
 
 use ::zbus::export::futures_util::lock::Mutex;
+use config_traits::{StdConfig, StdConfigLoad};
 use log::{error, info, warn};
 use rog_anime::error::AnimeError;
 use rog_anime::usb::{
-    get_anime_type, pkt_flush, pkt_set_brightness, pkt_set_enable_display,
+    get_maybe_anime_type, pkt_flush, pkt_set_brightness, pkt_set_enable_display,
     pkt_set_enable_powersave_anim, pkts_for_init, Brightness,
 };
 use rog_anime::{ActionData, AnimeDataBuffer, AnimePacketType, AnimeType};
@@ -62,42 +63,49 @@ pub struct CtrlAnime {
 
 impl CtrlAnime {
     #[inline]
-    pub fn new(config: AnimeConfig) -> Result<CtrlAnime, RogError> {
+    pub fn new() -> Result<CtrlAnime, RogError> {
+        let anime_type = get_maybe_anime_type()?;
+        if matches!(anime_type, AnimeType::Unsupported) {
+            info!("No Anime Matrix capable laptop found");
+            return Err(RogError::Anime(AnimeError::NoDevice));
+        }
+
         let usb = USBRaw::new(0x193b).ok();
         let hid = HidRaw::new("193b").ok();
         let node = if usb.is_some() {
+            info!("Anime using the USB interface");
             unsafe { Node::Usb(usb.unwrap_unchecked()) }
         } else if hid.is_some() {
+            info!("Anime using the HID interface");
             unsafe { Node::Hid(hid.unwrap_unchecked()) }
         } else {
             return Err(RogError::Anime(AnimeError::NoDevice));
         };
 
         // TODO: something better to set wakeups disabled
-        if matches!(node, Node::Usb(_)) {
-            if let Ok(mut enumerator) = udev::Enumerator::new() {
-                enumerator.match_subsystem("usb").ok();
-                enumerator.match_attribute("idProduct", "193b").ok();
+        // if matches!(node, Node::Usb(_)) {
+        //     if let Ok(mut enumerator) = udev::Enumerator::new() {
+        //         enumerator.match_subsystem("usb").ok();
+        //         enumerator.match_attribute("idProduct", "193b").ok();
 
-                if let Ok(mut enumer) = enumerator.scan_devices() {
-                    if let Some(mut dev) = enumer.next() {
-                        dev.set_attribute_value("power/wakeup", "disabled").ok();
-                    }
-                }
-            }
-        }
+        //         if let Ok(mut enumer) = enumerator.scan_devices() {
+        //             if let Some(mut dev) = enumer.next() {
+        //                 dev.set_attribute_value("power/wakeup", "disabled").ok();
+        //             }
+        //         }
+        //     }
+        // }
 
-        let mut anime_type = get_anime_type()?;
-        if let AnimeType::Unknown = anime_type {
-            if let Some(model) = config.model_override {
-                warn!("Overriding the Animatrix type as {model:?}");
-                anime_type = model;
-            }
-        }
+        let mut config = AnimeConfig::new().load();
 
         info!("Device has an AniMe Matrix display: {anime_type:?}");
         let mut cache = AnimeConfigCached::default();
-        cache.init_from_config(&config, anime_type)?;
+        if let Err(e) = cache.init_from_config(&config, anime_type) {
+            error!("Trying to cache the Anime Config failed, will reset to default config: {e:?}");
+            config.rename_file_old();
+            config = AnimeConfig::new();
+            config.write();
+        }
 
         let ctrl = CtrlAnime {
             node,

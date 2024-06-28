@@ -11,7 +11,7 @@
 use std::str::FromStr;
 
 use dmi_id::DMIID;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::{OwnedValue, Type, Value};
@@ -241,25 +241,25 @@ impl From<AnimShutdown> for i32 {
     }
 }
 
-/// `get_anime_type` is very broad, matching on part of the laptop board name
-/// only. For this reason `find_node()` must be used also to verify if the USB
-/// device is available.
+/// `get_maybe_anime_type` is very broad, matching on part of the laptop board
+/// name only. For this reason `find_node()` must be used also to verify if the
+/// USB device is available.
 ///
 /// The currently known USB device is `19b6`.
 #[inline]
-pub fn get_anime_type() -> Result<AnimeType, AnimeError> {
+pub fn get_maybe_anime_type() -> Result<AnimeType, AnimeError> {
     let dmi = DMIID::new().map_err(|_| AnimeError::NoDevice)?; // TODO: better error
     let board_name = dmi.board_name;
 
     if board_name.contains("GA401I") || board_name.contains("GA401Q") {
         return Ok(AnimeType::GA401);
-    } else if board_name.contains("GA402R") {
+    } else if board_name.contains("GA402R") || board_name.contains("GA402X") {
         return Ok(AnimeType::GA402);
     } else if board_name.contains("GU604V") {
         return Ok(AnimeType::GU604);
     }
-    log::warn!("AniMe Matrix device found but not yet supported, will default to a GA402 layout");
-    Ok(AnimeType::Unknown)
+    log::warn!("AniMe Matrix device found but could be a slash");
+    Ok(AnimeType::Unsupported)
 }
 
 /// Get the two device initialization packets. These are required for device

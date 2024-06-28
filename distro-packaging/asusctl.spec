@@ -20,13 +20,14 @@
 %global debug_package %{nil}
 %endif
 
-%global rpm_dkms_opt 1
+%define specrelease %{?dist}
+%define pkg_release 3%{specrelease}
 
 # Use hardening ldflags.
 %global rustflags -Clink-arg=-Wl,-z,relro,-z,now
 Name:           asusctl
-Version:        4.7.0
-Release:        2
+Version:        6.0.7
+Release: %{pkg_release}
 Summary:        Control fan speeds, LEDs, graphics modes, and charge levels for ASUS notebooks
 License:        MPLv2
 
@@ -34,8 +35,8 @@ Group:          System Environment/Kernel
 
 URL:            https://gitlab.com/asus-linux/asusctl
 Source:         %{name}-%{version}.tar.gz
-Source1:        vendor-%{name}-%{version}.tar.gz
-Source2:        cargo_config
+Source1:        vendor_%{name}_%{version}.tar.xz
+Source2:        cargo-config
 
 BuildRequires:  cargo
 BuildRequires:  rust-packaging
@@ -44,12 +45,20 @@ BuildRequires:  clang-devel
 BuildRequires:  cmake
 BuildRequires:  rust
 BuildRequires:  rust-std-static
+BuildRequires:  pkgconfig(expat)
+BuildRequires:  pkgconfig(gbm)
 BuildRequires:  pkgconfig(dbus-1)
+BuildRequires:  pkgconfig(libdrm)
+BuildRequires:  pkgconfig(libinput)
+BuildRequires:  pkgconfig(libseat)
 BuildRequires:  pkgconfig(libudev)
+BuildRequires:  pkgconfig(xkbcommon)
+BuildRequires:  pkgconfig(libzstd)
 BuildRequires:  pkgconfig(gtk+-3.0)
 BuildRequires:  pkgconfig(gdk-3.0)
 BuildRequires:  desktop-file-utils
-Requires: libappindicator-gtk3
+
+# expat-devel pcre2-devel
 
 %description
 asus-nb-ctrl is a utility for Linux to control many aspects of various
@@ -67,9 +76,10 @@ A one-stop-shop GUI tool for asusd/asusctl. It aims to provide most controls,
 a notification service, and ability to run in the background.
 
 %prep
+# %setup -D -T -a 1 -c -n %{name}-%{version}/vendor
+# %setup -D -T -a 0 -c
 %autosetup
-%setup -D -T -a 1 -c -n %{name}-%{version}/vendor
-cd ..
+%setup -D -T -a 1
 
 mv Cargo.lock{,.bak}
 %cargo_prep
@@ -86,7 +96,7 @@ export RUSTFLAGS="%{rustflags}"
 export RUSTFLAGS="%{rustflags}"
 mkdir -p "%{buildroot}/%{_bindir}" "%{buildroot}%{_docdir}"
 %make_install
- 
+
 install -D -m 0644 README.md %{buildroot}/%{_docdir}/%{name}/README.md
 install -D -m 0644 rog-anime/README.md %{buildroot}/%{_docdir}/%{name}/README-anime.md
 install -D -m 0644 rog-anime/data/diagonal-template.png %{buildroot}/%{_docdir}/%{name}/diagonal-template.png

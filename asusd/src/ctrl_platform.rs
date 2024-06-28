@@ -9,17 +9,12 @@ use rog_platform::platform::{GpuMode, Properties, RogPlatform, ThrottlePolicy};
 use rog_platform::power::AsusPower;
 use zbus::export::futures_util::lock::Mutex;
 use zbus::fdo::Error as FdoErr;
-use zbus::{interface, Connection, ObjectServer, SignalContext};
+use zbus::{interface, Connection, SignalContext};
 
 use crate::config::Config;
-use crate::ctrl_anime::trait_impls::{CtrlAnimeZbus, ANIME_ZBUS_NAME, ANIME_ZBUS_PATH};
-use crate::ctrl_aura::trait_impls::{CtrlAuraZbus, AURA_ZBUS_NAME, AURA_ZBUS_PATH};
-use crate::ctrl_fancurves::{CtrlFanCurveZbus, FAN_CURVE_ZBUS_NAME, FAN_CURVE_ZBUS_PATH};
-use crate::ctrl_slash::trait_impls::{CtrlSlashZbus, SLASH_ZBUS_NAME, SLASH_ZBUS_PATH};
 use crate::error::RogError;
 use crate::{task_watch_item, task_watch_item_notify, CtrlTask, ReloadAndNotify};
 
-const PLATFORM_ZBUS_NAME: &str = "Platform";
 const PLATFORM_ZBUS_PATH: &str = "/org/asuslinux";
 
 macro_rules! platform_get_value {
@@ -258,6 +253,21 @@ impl CtrlPlatform {
     }
 
     async fn update_policy_ac_or_bat(&self, power_plugged: bool, change_epp: bool) {
+        if power_plugged && !self.config.lock().await.change_throttle_policy_on_ac {
+            debug!(
+                "Power status changed but set_throttle_policy_on_ac set false. Not setting the \
+                 thing"
+            );
+            return;
+        }
+        if !power_plugged && !self.config.lock().await.change_throttle_policy_on_battery {
+            debug!(
+                "Power status changed but set_throttle_policy_on_battery set false. Not setting \
+                 the thing"
+            );
+            return;
+        }
+
         let throttle = if power_plugged {
             self.config.lock().await.throttle_policy_on_ac
         } else {
@@ -326,49 +336,6 @@ impl CtrlPlatform {
         platform_name!(nv_temp_target, Properties::NvTempTarget);
 
         supported
-    }
-
-    async fn supported_interfaces(
-        &self,
-        #[zbus(object_server)] server: &ObjectServer,
-    ) -> Vec<String> {
-        let mut interfaces = Vec::default();
-        if server
-            .interface::<_, CtrlAnimeZbus>(ANIME_ZBUS_PATH)
-            .await
-            .is_ok()
-        {
-            interfaces.push(ANIME_ZBUS_NAME.to_owned());
-        }
-        if server
-            .interface::<_, CtrlAuraZbus>(AURA_ZBUS_PATH)
-            .await
-            .is_ok()
-        {
-            interfaces.push(AURA_ZBUS_NAME.to_owned());
-        }
-        if server
-            .interface::<_, CtrlFanCurveZbus>(FAN_CURVE_ZBUS_PATH)
-            .await
-            .is_ok()
-        {
-            interfaces.push(FAN_CURVE_ZBUS_NAME.to_owned());
-        }
-        if server
-            .interface::<_, CtrlPlatform>(PLATFORM_ZBUS_PATH)
-            .await
-            .is_ok()
-        {
-            interfaces.push(PLATFORM_ZBUS_NAME.to_owned());
-        }
-        if server
-            .interface::<_, CtrlSlashZbus>(SLASH_ZBUS_PATH)
-            .await
-            .is_ok()
-        {
-            interfaces.push(SLASH_ZBUS_NAME.to_owned());
-        }
-        interfaces
     }
 
     #[zbus(property)]
@@ -497,6 +464,18 @@ impl CtrlPlatform {
     }
 
     #[zbus(property)]
+    async fn change_throttle_policy_on_battery(&self) -> Result<bool, FdoErr> {
+        Ok(self.config.lock().await.change_throttle_policy_on_battery)
+    }
+
+    #[zbus(property)]
+    async fn set_change_throttle_policy_on_battery(&mut self, change: bool) -> Result<(), FdoErr> {
+        self.config.lock().await.change_throttle_policy_on_battery = change;
+        self.config.lock().await.write();
+        Ok(())
+    }
+
+    #[zbus(property)]
     async fn throttle_policy_on_ac(&self) -> Result<ThrottlePolicy, FdoErr> {
         Ok(self.config.lock().await.throttle_policy_on_ac)
     }
@@ -505,6 +484,18 @@ impl CtrlPlatform {
     async fn set_throttle_policy_on_ac(&mut self, policy: ThrottlePolicy) -> Result<(), FdoErr> {
         self.config.lock().await.throttle_policy_on_ac = policy;
         self.set_throttle_thermal_policy(policy).await?;
+        self.config.lock().await.write();
+        Ok(())
+    }
+
+    #[zbus(property)]
+    async fn change_throttle_policy_on_ac(&self) -> Result<bool, FdoErr> {
+        Ok(self.config.lock().await.change_throttle_policy_on_ac)
+    }
+
+    #[zbus(property)]
+    async fn set_change_throttle_policy_on_ac(&mut self, change: bool) -> Result<(), FdoErr> {
+        self.config.lock().await.change_throttle_policy_on_ac = change;
         self.config.lock().await.write();
         Ok(())
     }
@@ -720,6 +711,7 @@ impl crate::ZbusRun for CtrlPlatform {
 impl ReloadAndNotify for CtrlPlatform {
     type Data = Config;
 
+    /// Called on config file changed externally
     async fn reload_and_notify(
         &mut self,
         signal_context: &SignalContext<'static>,
@@ -730,8 +722,9 @@ impl ReloadAndNotify for CtrlPlatform {
             info!("asusd.ron updated externally, reloading and updating internal copy");
 
             if self.power.has_charge_control_end_threshold() {
-                self.power
-                    .set_charge_control_end_threshold(data.charge_control_end_threshold)?;
+                let limit = data.charge_control_end_threshold;
+                warn!("setting charge_control_end_threshold to {limit}");
+                self.power.set_charge_control_end_threshold(limit)?;
                 self.charge_control_end_threshold_changed(signal_context)
                     .await?;
             }
@@ -790,6 +783,15 @@ impl ReloadAndNotify for CtrlPlatform {
 
 impl crate::Reloadable for CtrlPlatform {
     async fn reload(&mut self) -> Result<(), RogError> {
+        info!("Begin Platform settings restore");
+        if self.power.has_charge_control_end_threshold() {
+            let limit = self.config.lock().await.charge_control_end_threshold;
+            info!("reloading charge_control_end_threshold to {limit}");
+            self.power.set_charge_control_end_threshold(limit)?;
+        } else {
+            warn!("No charge_control_end_threshold found")
+        }
+
         macro_rules! reload {
             ($property:tt, $prop_name:literal) => {
                 concat_idents::concat_idents!(has = has_, $property {
@@ -825,12 +827,6 @@ impl crate::Reloadable for CtrlPlatform {
         ppt_reload!(nv_dynamic_boost, "nv_dynamic_boost");
         ppt_reload!(nv_temp_target, "nv_temp_target");
 
-        if self.power.has_charge_control_end_threshold() {
-            self.power.set_charge_control_end_threshold(
-                self.config.lock().await.charge_control_end_threshold,
-            )?;
-        }
-
         if let Ok(power_plugged) = self.power.get_online() {
             self.config.lock().await.last_power_plugged = power_plugged;
             if self.platform.has_throttle_thermal_policy() {
@@ -846,11 +842,11 @@ impl crate::Reloadable for CtrlPlatform {
 }
 
 impl CtrlPlatform {
-    task_watch_item!(panel_od platform);
+    task_watch_item!(panel_od "panel_od" platform);
 
-    task_watch_item!(mini_led_mode platform);
+    task_watch_item!(mini_led_mode "mini_led_mode" platform);
 
-    task_watch_item!(charge_control_end_threshold power);
+    task_watch_item!(charge_control_end_threshold "charge_control_end_threshold" power);
 
     task_watch_item_notify!(boot_sound platform);
 
@@ -900,12 +896,16 @@ impl CtrlTask for CtrlPlatform {
                             })
                             .ok();
                     }
-                    if sleeping && platform1.power.has_charge_control_end_threshold() {
-                        platform1.config.lock().await.charge_control_end_threshold = platform1
-                            .power
-                            .get_charge_control_end_threshold()
-                            .unwrap_or(100);
-                    } else if !sleeping && platform1.power.has_charge_control_end_threshold() {
+                    // This block is commented out due to some kind of issue reported. Maybe the
+                    // desktops used were storing a value whcih was then read here.
+                    // Don't store it on suspend, assume that the current config setting is desired
+                    // if sleeping && platform1.power.has_charge_control_end_threshold() {
+                    //     platform1.config.lock().await.charge_control_end_threshold = platform1
+                    //         .power
+                    //         .get_charge_control_end_threshold()
+                    //         .unwrap_or(100);
+                    // } else
+                    if !sleeping && platform1.power.has_charge_control_end_threshold() {
                         platform1
                             .power
                             .set_charge_control_end_threshold(

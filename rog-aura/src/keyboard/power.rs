@@ -53,7 +53,8 @@ impl AuraPowerState {
     }
 
     fn tuf_to_bytes(&self) -> Vec<u8> {
-        todo!("0s and 1s for bool array")
+        // &cmd, &boot, &awake, &sleep, &keyboard
+        vec![1, self.boot as u8, self.awake as u8, self.sleep as u8, 1]
     }
 
     /// # Bits for older 0x1866 keyboard model
@@ -133,7 +134,7 @@ impl AuraPowerState {
                     | (self.sleep as u32) << (23 + 3)
                     | (self.shutdown as u32) << (23 + 4)
             }
-            PowerZones::KeyboardAndLightbar | PowerZones::None => 0,
+            PowerZones::None | PowerZones::KeyboardAndLightbar => 0,
         }
     }
 }
@@ -194,6 +195,10 @@ impl LaptopAuraPower {
                 Self { states }
             }
             AuraDeviceType::LaptopPre2021 => {
+                // The older devices are tri-state if have lightbar:
+                // 1. Keyboard
+                // 2. Lightbar
+                // 3. KeyboardAndLightbar
                 if support_data.power_zones.contains(&PowerZones::Lightbar) {
                     Self {
                         states: vec![AuraPowerState::default_for(PowerZones::KeyboardAndLightbar)],
@@ -214,12 +219,25 @@ impl LaptopAuraPower {
     pub fn to_bytes(&self, aura_type: AuraDeviceType) -> Vec<u8> {
         match aura_type {
             AuraDeviceType::LaptopPost2021 => self.new_to_bytes(),
-            AuraDeviceType::LaptopPre2021 => self
-                .states
-                .first()
-                .cloned()
-                .unwrap_or_default()
-                .old_to_bytes(),
+            AuraDeviceType::LaptopPre2021 => {
+                if self.states.len() == 1 {
+                    self.states
+                        .first()
+                        .cloned()
+                        .unwrap_or_default()
+                        .old_to_bytes()
+                } else {
+                    let mut bytes: Vec<Vec<u8>> =
+                        self.states.iter().map(|s| s.old_to_bytes()).collect();
+                    let mut b = bytes.pop().unwrap();
+                    for i in bytes {
+                        for (i, n) in i.iter().enumerate() {
+                            b[i] |= n;
+                        }
+                    }
+                    b
+                }
+            }
             AuraDeviceType::LaptopTuf => self
                 .states
                 .first()
@@ -230,7 +248,7 @@ impl LaptopAuraPower {
                 warn!("Trying to create bytes for an unknown device");
                 self.new_to_bytes()
             }
-            AuraDeviceType::ScsiExtDisk => todo!(),
+            AuraDeviceType::ScsiExtDisk => todo!("scsi disk not implemented yet"),
         }
     }
 }
@@ -279,76 +297,75 @@ mod test {
     use crate::keyboard::{AuraPowerState, LaptopAuraPower};
     use crate::{AuraDeviceType, PowerZones};
 
+    fn to_binary_string_post2021(power: &LaptopAuraPower) -> String {
+        let bytes = power.to_bytes(AuraDeviceType::LaptopPost2021);
+        format!(
+            "{:08b}, {:08b}, {:08b}, {:08b}",
+            bytes[0], bytes[1], bytes[2], bytes[3]
+        )
+    }
+
     #[test]
     fn check_0x1866_control_bytes() {
-        let state = AuraPowerState {
-            zone: PowerZones::Keyboard,
-            awake: true,
-            boot: false,
-            sleep: false,
-            shutdown: false,
+        let power = LaptopAuraPower {
+            states: vec![AuraPowerState {
+                zone: PowerZones::Keyboard,
+                boot: false,
+                awake: true,
+                sleep: false,
+                shutdown: false,
+            }],
         };
-        let bytes = state.old_to_bytes();
+        let bytes = power.to_bytes(AuraDeviceType::LaptopPre2021);
         println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
         assert_eq!(bytes, [0x08, 0x00, 0x02, 0x00]);
 
-        let state = AuraPowerState {
-            zone: PowerZones::Lightbar,
-            awake: true,
-            boot: false,
-            sleep: false,
-            shutdown: false,
+        let power = LaptopAuraPower {
+            states: vec![AuraPowerState {
+                zone: PowerZones::Lightbar,
+                boot: false,
+                awake: true,
+                sleep: false,
+                shutdown: false,
+            }],
         };
-        let bytes = state.old_to_bytes();
+        let bytes = power.to_bytes(AuraDeviceType::LaptopPre2021);
         println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
         assert_eq!(bytes, [0x04, 0x05, 0x02, 0x00]);
 
-        let bytes = AuraPowerState {
-            zone: PowerZones::None,
-            awake: false,
-            boot: false,
-            sleep: true,
-            shutdown: false,
+        // let bytes = [
+        //     OldAuraPower::Keyboard,
+        //     OldAuraPower::Lightbar,
+        //     OldAuraPower::Awake,
+        //     OldAuraPower::Sleep,
+        //     OldAuraPower::Boot,
+        // ];
+        let power = LaptopAuraPower {
+            states: vec![
+                AuraPowerState {
+                    zone: PowerZones::Keyboard,
+                    boot: true,
+                    awake: true,
+                    sleep: true,
+                    shutdown: false,
+                },
+                AuraPowerState {
+                    zone: PowerZones::Lightbar,
+                    boot: true,
+                    awake: true,
+                    sleep: true,
+                    shutdown: false,
+                },
+            ],
         };
-        let bytes = bytes.old_to_bytes();
-        println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes, [0x30, 0x08, 0x04, 0x00]);
-
-        let bytes = AuraPowerState {
-            zone: PowerZones::None,
-            awake: false,
-            boot: true,
-            sleep: false,
-            shutdown: false,
-        };
-        let bytes = bytes.old_to_bytes();
-        println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
-        assert_eq!(bytes, [0xc3, 0x12, 0x09, 0x00]);
-
-        let power = AuraPowerState {
-            zone: PowerZones::KeyboardAndLightbar,
-            awake: true,
-            boot: true,
-            sleep: true,
-            shutdown: false,
-        };
-
-        let bytes = power.old_to_bytes();
+        let bytes = power.to_bytes(AuraDeviceType::LaptopPre2021);
         println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
         assert_eq!(bytes, [0xff, 0x1f, 0x000f, 0x00]);
     }
 
     #[test]
     fn check_0x19b6_control_bytes_binary_rep() {
-        fn to_binary_string(power: &LaptopAuraPower) -> String {
-            let bytes = power.to_bytes(AuraDeviceType::LaptopPost2021);
-            format!(
-                "{:08b}, {:08b}, {:08b}, {:08b}",
-                bytes[0], bytes[1], bytes[2], bytes[3]
-            )
-        }
-
-        let boot_logo_ = to_binary_string(&LaptopAuraPower {
+        let boot_logo_ = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Logo,
                 boot: true,
@@ -357,7 +374,7 @@ mod test {
                 shutdown: false,
             }],
         });
-        let boot_keyb_ = to_binary_string(&LaptopAuraPower {
+        let boot_keyb_ = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Keyboard,
                 boot: true,
@@ -366,7 +383,7 @@ mod test {
                 shutdown: false,
             }],
         });
-        let sleep_logo = to_binary_string(&LaptopAuraPower {
+        let sleep_logo = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Logo,
                 boot: false,
@@ -375,7 +392,7 @@ mod test {
                 shutdown: false,
             }],
         });
-        let sleep_keyb = to_binary_string(&LaptopAuraPower {
+        let sleep_keyb = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Keyboard,
                 boot: false,
@@ -384,7 +401,7 @@ mod test {
                 shutdown: false,
             }],
         });
-        let awake_logo = to_binary_string(&LaptopAuraPower {
+        let awake_logo = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Logo,
                 boot: false,
@@ -393,7 +410,7 @@ mod test {
                 shutdown: false,
             }],
         });
-        let awake_keyb = to_binary_string(&LaptopAuraPower {
+        let awake_keyb = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Keyboard,
                 boot: false,
@@ -402,7 +419,7 @@ mod test {
                 shutdown: false,
             }],
         });
-        let shut_logo_ = to_binary_string(&LaptopAuraPower {
+        let shut_logo_ = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Logo,
                 boot: false,
@@ -411,7 +428,7 @@ mod test {
                 shutdown: true,
             }],
         });
-        let shut_keyb_ = to_binary_string(&LaptopAuraPower {
+        let shut_keyb_ = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Keyboard,
                 boot: false,
@@ -420,7 +437,7 @@ mod test {
                 shutdown: true,
             }],
         });
-        let boot_bar__ = to_binary_string(&LaptopAuraPower {
+        let boot_bar__ = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Lightbar,
                 boot: true,
@@ -429,7 +446,7 @@ mod test {
                 shutdown: false,
             }],
         });
-        let awake_bar_ = to_binary_string(&LaptopAuraPower {
+        let awake_bar_ = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Lightbar,
                 boot: false,
@@ -438,7 +455,7 @@ mod test {
                 shutdown: false,
             }],
         });
-        let sleep_bar_ = to_binary_string(&LaptopAuraPower {
+        let sleep_bar_ = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Lightbar,
                 boot: false,
@@ -447,7 +464,7 @@ mod test {
                 shutdown: false,
             }],
         });
-        let shut_bar__ = to_binary_string(&LaptopAuraPower {
+        let shut_bar__ = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Lightbar,
                 boot: false,
@@ -456,7 +473,7 @@ mod test {
                 shutdown: true,
             }],
         });
-        let boot_lid__ = to_binary_string(&LaptopAuraPower {
+        let boot_lid__ = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Lid,
                 boot: true,
@@ -465,7 +482,7 @@ mod test {
                 shutdown: false,
             }],
         });
-        let awake_lid_ = to_binary_string(&LaptopAuraPower {
+        let awake_lid_ = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Lid,
                 boot: false,
@@ -474,7 +491,7 @@ mod test {
                 shutdown: false,
             }],
         });
-        let sleep_lid_ = to_binary_string(&LaptopAuraPower {
+        let sleep_lid_ = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Lid,
                 boot: false,
@@ -483,7 +500,7 @@ mod test {
                 shutdown: false,
             }],
         });
-        let shut_lid__ = to_binary_string(&LaptopAuraPower {
+        let shut_lid__ = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::Lid,
                 boot: false,
@@ -492,7 +509,7 @@ mod test {
                 shutdown: true,
             }],
         });
-        let boot_rear_ = to_binary_string(&LaptopAuraPower {
+        let boot_rear_ = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::RearGlow,
                 boot: true,
@@ -501,7 +518,7 @@ mod test {
                 shutdown: false,
             }],
         });
-        let awake_rear = to_binary_string(&LaptopAuraPower {
+        let awake_rear = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::RearGlow,
                 boot: false,
@@ -510,7 +527,7 @@ mod test {
                 shutdown: false,
             }],
         });
-        let sleep_rear = to_binary_string(&LaptopAuraPower {
+        let sleep_rear = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::RearGlow,
                 boot: false,
@@ -519,7 +536,7 @@ mod test {
                 shutdown: false,
             }],
         });
-        let shut_rear_ = to_binary_string(&LaptopAuraPower {
+        let shut_rear_ = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![AuraPowerState {
                 zone: PowerZones::RearGlow,
                 boot: false,
@@ -554,7 +571,7 @@ mod test {
         assert_eq!(shut_rear_, "00000000, 00000000, 00000000, 00001000");
 
         // All on
-        let byte1 = to_binary_string(&LaptopAuraPower {
+        let byte1 = to_binary_string_post2021(&LaptopAuraPower {
             states: vec![
                 AuraPowerState {
                     zone: PowerZones::Keyboard,

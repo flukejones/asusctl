@@ -56,7 +56,7 @@ pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";
 /// // TODO: this is kind of useless if it can't trigger some action
 #[macro_export]
 macro_rules! task_watch_item {
-    ($name:ident $self_inner:ident) => {
+    ($name:ident $name_str:literal $self_inner:ident) => {
         concat_idents::concat_idents!(fn_name = watch_, $name {
         async fn fn_name(
             &self,
@@ -72,12 +72,15 @@ macro_rules! task_watch_item {
                             let mut buffer = [0; 32];
                             watch.into_event_stream(&mut buffer).unwrap().for_each(|_| async {
                                 if let Ok(value) = ctrl.$name() { // get new value from zbus method
-                                    concat_idents::concat_idents!(notif_fn = $name, _changed {
-                                        ctrl.notif_fn(&signal_ctxt).await.ok();
-                                    });
-                                    let mut lock = ctrl.config.lock().await;
-                                    lock.$name = value;
-                                    lock.write();
+                                    if ctrl.config.lock().await.$name != value {
+                                        log::debug!("{} was changed to {} externally", $name_str, value);
+                                        concat_idents::concat_idents!(notif_fn = $name, _changed {
+                                            ctrl.notif_fn(&signal_ctxt).await.ok();
+                                        });
+                                        let mut lock = ctrl.config.lock().await;
+                                        lock.$name = value;
+                                        lock.write();
+                                    }
                                 }
                             }).await;
                         });
@@ -199,16 +202,7 @@ pub trait CtrlTask {
     ///
     /// The closures can potentially block, so execution time should be the
     /// minimal possible such as save a variable.
-    fn create_sys_event_tasks<
-        Fut1,
-        Fut2,
-        Fut3,
-        Fut4,
-        F1: Send + 'static,
-        F2: Send + 'static,
-        F3: Send + 'static,
-        F4: Send + 'static,
-    >(
+    fn create_sys_event_tasks<Fut1, Fut2, Fut3, Fut4, F1, F2, F3, F4>(
         &self,
         mut on_prepare_for_sleep: F1,
         mut on_prepare_for_shutdown: F2,
@@ -216,10 +210,10 @@ pub trait CtrlTask {
         mut on_external_power_change: F4,
     ) -> impl Future<Output = ()> + Send
     where
-        F1: FnMut(bool) -> Fut1,
-        F2: FnMut(bool) -> Fut2,
-        F3: FnMut(bool) -> Fut3,
-        F4: FnMut(bool) -> Fut4,
+        F1: FnMut(bool) -> Fut1 + Send + 'static,
+        F2: FnMut(bool) -> Fut2 + Send + 'static,
+        F3: FnMut(bool) -> Fut3 + Send + 'static,
+        F4: FnMut(bool) -> Fut4 + Send + 'static,
         Fut1: Future<Output = ()> + Send,
         Fut2: Future<Output = ()> + Send,
         Fut3: Future<Output = ()> + Send,

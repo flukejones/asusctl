@@ -5,7 +5,7 @@ use error::ProfileError;
 use fan_curve_set::CurveData;
 use log::debug;
 use rog_platform::platform::ThrottlePolicy;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 pub use udev::Device;
 #[cfg(feature = "dbus")]
@@ -122,7 +122,6 @@ impl FanCurveProfiles {
         Ok(FanCurvePU::which_fans(&device))
     }
 
-    ///
     pub fn read_from_dev_profile(
         &mut self,
         profile: ThrottlePolicy,

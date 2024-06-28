@@ -6,10 +6,8 @@
 
 use std::collections::HashSet;
 
-use log::{debug, error, info, warn};
+use log::{error, info, warn};
 use mio::{Events, Interest, Poll, Token};
-use rog_aura::AuraDeviceType;
-use rog_platform::hid_raw::HidRaw;
 use tokio::task::spawn_blocking;
 use udev::{Device, MonitorBuilder};
 use zbus::object_server::SignalContext;
@@ -59,93 +57,42 @@ impl AuraManager {
                     continue;
                 }
                 for event in monitor.iter() {
-                    let parent = if let Some(parent) =
+                    let action = event.action().unwrap_or_default();
+
+                    if let Some(parent) =
                         event.parent_with_subsystem_devtype("usb", "usb_device")?
                     {
-                        parent
-                    } else {
-                        continue;
-                    };
-
-                    let action = if let Some(action) = event.action() {
-                        action
-                    } else {
-                        continue;
-                    };
-
-                    let id_product = if let Some(id_product) = parent.attribute_value("idProduct") {
-                        id_product.to_string_lossy()
-                    } else {
-                        continue;
-                    };
-
-                    let path = if let Some(path) = dbus_path_for_dev(&parent) {
-                        path
-                    } else {
-                        continue;
-                    };
-
-                    let aura_device = AuraDeviceType::from(&*id_product);
-                    if aura_device == AuraDeviceType::Unknown {
-                        warn!("idProduct:{id_product:?} is unknown, not using");
-                        continue;
-                    }
-
-                    if action == "remove" {
-                        if interfaces.remove(&path) {
-                            info!("AuraManager removing: {path:?}");
-                            let conn_copy = conn_copy.clone();
-                            tokio::spawn(async move {
-                                let res = conn_copy
-                                    .object_server()
-                                    .remove::<CtrlAuraZbus, _>(&path)
-                                    .await
-                                    .map_err(|e| {
-                                        error!("Failed to remove {path:?}, {e:?}");
-                                        e
-                                    })?;
-                                info!("AuraManager removed: {path:?}, {res}");
-                                Ok::<(), RogError>(())
-                            });
-                        }
-                    } else if action == "add" {
-                        if interfaces.contains(&path) {
-                            debug!("Already a ctrl at {path:?}");
-                            continue;
-                        }
-
-                        // Need to check the driver is asus to prevent using hid_generic
-                        if let Some(p2) = event.parent() {
-                            if let Some(driver) = p2.driver() {
-                                // There is a tree of devices added so filter by driver
-                                if driver != "asus" {
-                                    debug!("{id_product:?} driver was not asus, skipping");
-                                    continue;
-                                }
-                            } else {
-                                continue;
-                            }
-                        }
-
-                        if let Some(dev_node) = event.devnode() {
-                            if let Ok(raw) = HidRaw::from_device(event.device())
-                                .map_err(|e| error!("device path error: {e:?}"))
-                            {
-                                if let Ok(mut ctrl) = CtrlKbdLed::from_hidraw(raw, path.clone()) {
-                                    ctrl.config = CtrlKbdLed::init_config(&id_product);
-                                    interfaces.insert(path.clone());
-                                    info!("AuraManager starting device at: {dev_node:?}, {path:?}");
-                                    let sig_ctx = CtrlAuraZbus::signal_context(&conn_copy)?;
-                                    let zbus = CtrlAuraZbus::new(ctrl, sig_ctx);
-                                    let sig_ctx = CtrlAuraZbus::signal_context(&conn_copy)?;
+                        if action == "remove" {
+                            if let Some(path) = dbus_path_for_dev(&parent) {
+                                if interfaces.remove(&path) {
+                                    info!("AuraManager removing: {path:?}");
                                     let conn_copy = conn_copy.clone();
                                     tokio::spawn(async move {
-                                        start_tasks(zbus, conn_copy.clone(), sig_ctx, path).await
+                                        let res = conn_copy
+                                            .object_server()
+                                            .remove::<CtrlAuraZbus, _>(&path)
+                                            .await
+                                            .map_err(|e| {
+                                                error!("Failed to remove {path:?}, {e:?}");
+                                                e
+                                            })?;
+                                        info!("AuraManager removed: {path:?}, {res}");
+                                        Ok::<(), RogError>(())
                                     });
                                 }
                             }
-                        }
-                    };
+                        } else if action == "add" {
+                            if let Ok(Some(ctrl)) =
+                                CtrlKbdLed::maybe_device(event.device(), &mut interfaces)
+                            {
+                                ctrl.add_to_dbus_and_start(&mut interfaces, conn_copy.clone())
+                                    .map_err(|e| {
+                                        error!("Couldn't start aura device on dbus: {e:?}")
+                                    })
+                                    .ok();
+                            }
+                        };
+                    }
                 }
             }
             // Required for return type on spawn
@@ -169,7 +116,7 @@ pub(crate) fn dbus_path_for_tuf() -> OwnedObjectPath {
     ObjectPath::from_str_unchecked(&format!("{AURA_ZBUS_PATH}/tuf")).into()
 }
 
-async fn start_tasks(
+pub async fn start_tasks(
     mut zbus: CtrlAuraZbus,
     connection: Connection,
     _signal_ctx: SignalContext<'static>,
@@ -180,7 +127,12 @@ async fn start_tasks(
     zbus.reload()
         .await
         .unwrap_or_else(|err| warn!("Controller error: {}", err));
-    connection.object_server().at(path, zbus).await.unwrap();
+    connection
+        .object_server()
+        .at(path.clone(), zbus)
+        .await
+        .map_err(|e| error!("Couldn't add server at path: {path}, {e:?}"))
+        .ok();
     // TODO: skip this until we keep handles to tasks so they can be killed
     // task.create_tasks(signal_ctx).await
     Ok(())

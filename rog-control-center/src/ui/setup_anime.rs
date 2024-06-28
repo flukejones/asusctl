@@ -1,5 +1,6 @@
 use std::sync::{Arc, Mutex};
 
+use log::{error, info, warn};
 use rog_anime::Animations;
 use rog_dbus::zbus_anime::AnimeProxy;
 use slint::ComponentHandle;
@@ -11,8 +12,13 @@ use crate::{set_ui_callbacks, set_ui_props_async, AnimePageData, MainWindow};
 pub fn setup_anime_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
     let handle = ui.as_weak();
     tokio::spawn(async move {
-        let conn = zbus::Connection::system().await.unwrap();
-        let anime = AnimeProxy::new(&conn).await.unwrap();
+        let Ok(conn) = zbus::Connection::system().await.map_err(|e| warn!("{e:}")) else {
+            return;
+        };
+        let Ok(anime) = AnimeProxy::new(&conn).await.map_err(|e| warn!("{e:}")) else {
+            info!("This device may not have an AniMe. If not then the error can be ignored");
+            return;
+        };
 
         set_ui_props_async!(handle, anime, AnimePageData, brightness);
         set_ui_props_async!(handle, anime, AnimePageData, builtins_enabled);
@@ -123,6 +129,7 @@ pub fn setup_anime_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                     "Setting Anime off_when_unplugged failed"
                 );
             })
-            .unwrap();
+            .map_err(|e| error!("setup_anime_page: upgrade_in_event_loop: {e:?}"))
+            .ok();
     });
 }

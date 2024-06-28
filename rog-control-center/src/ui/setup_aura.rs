@@ -1,6 +1,8 @@
 use std::sync::{Arc, Mutex};
 
+use log::{debug, error, info};
 use rog_aura::keyboard::LaptopAuraPower;
+use rog_aura::{AuraDeviceType, PowerZones};
 use rog_dbus::zbus_aura::AuraProxy;
 use slint::{ComponentHandle, Model, RgbaColor, SharedString};
 
@@ -32,26 +34,11 @@ fn decode_hex(s: &str) -> RgbaColor<u8> {
     }
 }
 
-pub fn has_aura_iface_blocking() -> Result<bool, Box<dyn std::error::Error>> {
-    let conn = zbus::blocking::Connection::system()?;
-    let f = zbus::blocking::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/org")?;
-    let interfaces = f.get_managed_objects()?;
-    let mut aura_paths = Vec::new();
-    for v in interfaces.iter() {
-        for k in v.1.keys() {
-            if k.as_str() == "org.asuslinux.Aura" {
-                aura_paths.push(v.0.clone());
-            }
-        }
-    }
-    Ok(!aura_paths.is_empty())
-}
-
 /// Returns the first available Aura interface
 // TODO: return all
 async fn find_aura_iface() -> Result<AuraProxy<'static>, Box<dyn std::error::Error>> {
     let conn = zbus::Connection::system().await?;
-    let f = zbus::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/org").await?;
+    let f = zbus::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/").await?;
     let interfaces = f.get_managed_objects().await?;
     let mut aura_paths = Vec::new();
     for v in interfaces.iter() {
@@ -87,21 +74,51 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
 
     let handle = ui.as_weak();
     tokio::spawn(async move {
-        let aura = find_aura_iface().await.unwrap();
+        let Ok(aura) = find_aura_iface().await else {
+            info!("This device appears to have no aura interfaces");
+            return Ok::<(), zbus::Error>(());
+        };
 
         set_ui_props_async!(handle, aura, AuraPageData, brightness);
         set_ui_props_async!(handle, aura, AuraPageData, led_mode);
         set_ui_props_async!(handle, aura, AuraPageData, led_mode_data);
         set_ui_props_async!(handle, aura, AuraPageData, led_power);
+        set_ui_props_async!(handle, aura, AuraPageData, device_type);
 
-        if let Ok(power) = aura.supported_power_zones().await {
-            log::debug!("Available LED power modes {power:?}");
-            let power: Vec<SlintPowerZones> = power.iter().map(|p| (*p).into()).collect();
+        if let Ok(mut pow3r) = aura.supported_power_zones().await {
+            let dev_type = aura
+                .device_type()
+                .await
+                .unwrap_or(AuraDeviceType::LaptopPost2021);
+            log::debug!("Available LED power modes {pow3r:?}");
             handle
                 .upgrade_in_event_loop(move |handle| {
-                    handle
+                    let names: Vec<SharedString> = handle
                         .global::<AuraPageData>()
-                        .set_supported_power_zones(power.as_slice().into());
+                        .get_power_zone_names()
+                        .iter()
+                        .collect();
+
+                    if dev_type.is_old_laptop() {
+                        // Need to add the specific KeyboardAndLightbar
+                        if pow3r.contains(&PowerZones::Keyboard)
+                            && pow3r.contains(&PowerZones::Lightbar)
+                        {
+                            pow3r.push(PowerZones::KeyboardAndLightbar);
+                        }
+                        let names: Vec<SharedString> =
+                            pow3r.iter().map(|n| names[(*n) as usize].clone()).collect();
+                        handle
+                            .global::<AuraPageData>()
+                            .set_power_zone_names_old(names.as_slice().into());
+                    } else {
+                        let power: Vec<SlintPowerZones> =
+                            pow3r.iter().map(|p| (*p).into()).collect();
+
+                        handle
+                            .global::<AuraPageData>()
+                            .set_supported_power_zones(power.as_slice().into());
+                    }
                 })
                 .ok();
         }
@@ -127,6 +144,7 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                         .global::<AuraPageData>()
                         .set_available_mode_names(res.as_slice().into());
                 })
+                .map_err(|e| error!("{e:}"))
                 .ok();
         }
 
@@ -185,7 +203,8 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                         });
                     });
             })
-            .unwrap();
+            .map_err(|e| error!("{e:}"))
+            .ok();
 
         // Need to update the UI if the mode changes
         let handle_copy = handle.clone();
@@ -202,9 +221,12 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                                 .invoke_update_led_mode_data(out.into());
                             handle.invoke_external_colour_change();
                         })
+                        .map_err(|e| error!("{e:}"))
                         .ok();
                 }
             }
         });
+        debug!("Aura setup tasks complete");
+        Ok(())
     });
 }

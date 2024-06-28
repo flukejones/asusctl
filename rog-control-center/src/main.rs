@@ -22,11 +22,12 @@ use rog_control_center::{
     get_ipc_file, on_tmp_dir_exists, print_versions, MainWindow, QUIT_APP, SHOWING_GUI, SHOW_GUI,
 };
 use tokio::runtime::Runtime;
-// use winit::monitor::VideoMode;
-// use winit::window::{Fullscreen, WindowLevel};
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    #[cfg(feature = "tokio-debug")]
+    console_subscriber::init();
+
     let self_version = env!("CARGO_PKG_VERSION");
     let conn = zbus::blocking::Connection::system()?;
     let proxy = rog_dbus::zbus_platform::PlatformProxyBlocking::new(&conn)?;
@@ -73,11 +74,6 @@ async fn main() -> Result<()> {
         .format_timestamp(None)
         .init();
 
-    // start tokio
-    let rt = Runtime::new().expect("Unable to create Runtime");
-    // Enter the runtime so that `tokio::spawn` is available immediately.
-    let _enter = rt.enter();
-
     let supported_properties = match proxy.supported_properties() {
         Ok(s) => s,
         Err(_e) => {
@@ -117,13 +113,19 @@ async fn main() -> Result<()> {
     let enable_tray_icon = config.enable_tray_icon;
     let startup_in_background = config.startup_in_background;
     let config = Arc::new(Mutex::new(config));
-    start_notifications(config.clone())?;
+
+    // start tokio
+    let rt = Runtime::new().expect("Unable to create Runtime");
+    // Enter the runtime so that `tokio::spawn` is available immediately.
+    let _enter = rt.enter();
+    start_notifications(config.clone(), &rt)?;
+
     if enable_tray_icon {
         init_tray(supported_properties, config.clone());
     }
 
     thread_local! { pub static UI: std::cell::RefCell<Option<MainWindow>> = Default::default()};
-    i_slint_backend_selector::with_platform(|_| Ok(())).unwrap();
+    // i_slint_backend_selector::with_platform(|_| Ok(())).unwrap();
 
     let mut do_once = !startup_in_background;
 
@@ -159,7 +161,7 @@ async fn main() -> Result<()> {
                 sleep(Duration::from_millis(50));
 
                 let config_copy = config.clone();
-                i_slint_core::api::invoke_from_event_loop(move || {
+                slint::invoke_from_event_loop(move || {
                     UI.with(|ui| {
                         let mut ui = ui.borrow_mut();
                         if let Some(ui) = ui.as_mut() {
@@ -193,7 +195,7 @@ async fn main() -> Result<()> {
                         }
                     }
 
-                    i_slint_core::api::invoke_from_event_loop(move || {
+                    slint::invoke_from_event_loop(move || {
                         UI.with(|ui| {
                             let mut ui = ui.take();
                             if let Some(ui) = ui.borrow_mut() {
@@ -208,6 +210,7 @@ async fn main() -> Result<()> {
     });
 
     slint::run_event_loop_until_quit().unwrap();
+    rt.shutdown_background();
     Ok(())
 }
 

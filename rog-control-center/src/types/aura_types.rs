@@ -1,5 +1,6 @@
 use crate::slint_generatedMainWindow::{
-    AuraPowerState as SlintAuraPowerState, LaptopAuraPower as SlintLaptopAuraPower,
+    AuraDevType as SlintDeviceType, AuraPowerState as SlintAuraPowerState,
+    LaptopAuraPower as SlintLaptopAuraPower,
 };
 
 impl From<rog_aura::AuraEffect> for crate::slint_generatedMainWindow::AuraEffect {
@@ -51,7 +52,7 @@ impl From<crate::slint_generatedMainWindow::AuraEffect> for rog_aura::AuraEffect
 }
 
 use rog_aura::keyboard::{AuraPowerState, LaptopAuraPower};
-use rog_aura::PowerZones;
+use rog_aura::{AuraDeviceType, PowerZones};
 use slint::{Model, ModelRc, RgbaColor};
 
 use crate::slint_generatedMainWindow::PowerZones as SlintPowerZones;
@@ -63,8 +64,8 @@ impl From<PowerZones> for SlintPowerZones {
             PowerZones::Lightbar => SlintPowerZones::Lightbar,
             PowerZones::Lid => SlintPowerZones::Lid,
             PowerZones::RearGlow => SlintPowerZones::RearGlow,
-            PowerZones::KeyboardAndLightbar => todo!(),
-            PowerZones::None => todo!(),
+            PowerZones::KeyboardAndLightbar => SlintPowerZones::KeyboardAndLightbar,
+            PowerZones::None => SlintPowerZones::Keyboard,
         }
     }
 }
@@ -138,6 +139,30 @@ impl From<LaptopAuraPower> for SlintLaptopAuraPower {
             value.states.iter().map(SlintAuraPowerState::from).collect();
         Self {
             states: ModelRc::from(converted.as_slice()),
+        }
+    }
+}
+
+impl From<SlintDeviceType> for AuraDeviceType {
+    fn from(value: SlintDeviceType) -> Self {
+        match value {
+            SlintDeviceType::New => Self::LaptopPost2021,
+            SlintDeviceType::Old => Self::LaptopPre2021,
+            SlintDeviceType::Tuf => Self::LaptopTuf,
+            SlintDeviceType::ScsiExtDisk => Self::ScsiExtDisk,
+            SlintDeviceType::Unknown => Self::Unknown,
+        }
+    }
+}
+
+impl From<AuraDeviceType> for SlintDeviceType {
+    fn from(value: AuraDeviceType) -> Self {
+        match value {
+            AuraDeviceType::LaptopPost2021 => SlintDeviceType::New,
+            AuraDeviceType::LaptopPre2021 => SlintDeviceType::Old,
+            AuraDeviceType::LaptopTuf => SlintDeviceType::Tuf,
+            AuraDeviceType::ScsiExtDisk => SlintDeviceType::ScsiExtDisk,
+            AuraDeviceType::Unknown => SlintDeviceType::Unknown,
         }
     }
 }

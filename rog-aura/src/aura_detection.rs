@@ -1,6 +1,8 @@
+use std::env;
+
 use dmi_id::DMIID;
 use log::{error, info, warn};
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::keyboard::AdvancedAuraType;
 use crate::{AuraModeNum, AuraZone, PowerZones};
@@ -60,17 +62,20 @@ impl LedSupportData {
     /// matches against laptops first, then will proceed with matching the
     /// `device_name` if there are no DMI matches.
     pub fn get_data(product_id: &str) -> Self {
-        let dmi = DMIID::new().unwrap_or_default();
+        let mut dmi = DMIID::new().unwrap_or_default();
+        if let Ok(board_name) = env::var("BOARD_NAME") {
+            dmi.board_name = board_name;
+        }
         // let prod_family = dmi.product_family().expect("Could not get
         // product_family");
 
         if let Some(data) = LedSupportFile::load_from_supoprt_db() {
-            if let Some(data) = data.match_device(&dmi.board_name, product_id) {
-                return data;
-            }
+            return data.match_device(&dmi.board_name, product_id);
         }
-        info!("Using generic LED control for keyboard brightness only");
-        LedSupportData::default()
+        info!("Using generic LED control for keyboard brightness only. No aura_support file found");
+        let mut data = LedSupportData::default();
+        data.power_zones.push(PowerZones::Keyboard);
+        data
     }
 }
 
@@ -84,7 +89,7 @@ impl LedSupportFile {
 
     /// The list is stored in ordered format, so the iterator must be reversed
     /// to ensure we match to *whole names* first before doing a glob match
-    fn match_device(&self, device_name: &str, product_id: &str) -> Option<LedSupportData> {
+    fn match_device(&self, device_name: &str, product_id: &str) -> LedSupportData {
         for config in self.0.iter().rev() {
             if device_name.contains(&config.device_name) {
                 info!("Matched to {}", config.device_name);
@@ -92,15 +97,27 @@ impl LedSupportFile {
                     info!("Checking product ID");
                     if config.product_id == product_id {
                         info!("Matched to {}", config.product_id);
-                        return Some(config.clone());
+                        return config.clone();
                     } else {
                         continue;
                     }
                 }
-                return Some(config.clone());
+                return config.clone();
             }
         }
-        None
+        warn!(
+            "the aura_support.ron file has no entry for this model: {device_name}, {product_id}. \
+             Using a default"
+        );
+        LedSupportData {
+            device_name: device_name.to_owned(),
+            product_id: product_id.to_owned(),
+            layout_name: "Default".to_owned(),
+            basic_modes: vec![AuraModeNum::Static],
+            basic_zones: vec![],
+            advanced_type: AdvancedAuraType::None,
+            power_zones: vec![PowerZones::Keyboard],
+        }
     }
 
     /// Load `LedSupportFile` from the `aura_support.ron` file at

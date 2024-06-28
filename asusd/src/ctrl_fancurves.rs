@@ -8,7 +8,7 @@ use rog_platform::platform::{RogPlatform, ThrottlePolicy};
 use rog_profiles::error::ProfileError;
 use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::{find_fan_curve_node, FanCurvePU, FanCurveProfiles};
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 use zbus::{interface, Connection, SignalContext};
 

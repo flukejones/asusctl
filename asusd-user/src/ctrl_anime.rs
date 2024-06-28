@@ -8,7 +8,8 @@ use config_traits::StdConfig;
 use rog_anime::error::AnimeError;
 use rog_anime::{ActionData, ActionLoader, AnimTime, Fade, Sequences, Vec2};
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
-use serde_derive::{Deserialize, Serialize};
+use ron::ser::PrettyConfig;
+use serde::{Deserialize, Serialize};
 use zbus::interface;
 use zbus::zvariant::{ObjectPath, Type};
 
@@ -199,11 +200,12 @@ impl CtrlAnime<'static> {
             config.anime.push(action);
             config.write();
 
-            let json = serde_json::to_string_pretty(&*config).expect("Parse config to JSON failed");
+            let ron = ron::ser::to_string_pretty(&*config, PrettyConfig::new().depth_limit(4))
+                .expect("Parse config to RON failed");
 
             // Release the inner run loop again
             self.inner_early_return.store(false, Ordering::SeqCst);
-            return Ok(json);
+            return Ok(ron);
         }
         Err(zbus::fdo::Error::Failed("UserConfig lock fail".into()))
     }
@@ -244,12 +246,11 @@ impl CtrlAnime<'static> {
             config.anime.push(action);
             config.write();
 
-            let json =
-                serde_json::to_string_pretty(&*config.anime).expect("Parse config to JSON failed");
-
+            let ron = ron::ser::to_string_pretty(&*config, PrettyConfig::new().depth_limit(4))
+                .expect("Parse config to RON failed");
             // Release the inner run loop again
             self.inner_early_return.store(false, Ordering::SeqCst);
-            return Ok(json);
+            return Ok(ron);
         }
         Err(zbus::fdo::Error::Failed("UserConfig lock fail".into()))
     }
@@ -289,12 +290,11 @@ impl CtrlAnime<'static> {
             config.anime.push(action);
             config.write();
 
-            let json =
-                serde_json::to_string_pretty(&*config.anime).expect("Parse config to JSON failed");
-
+            let ron = ron::ser::to_string_pretty(&*config, PrettyConfig::new().depth_limit(4))
+                .expect("Parse config to RON failed");
             // Release the inner run loop again
             self.inner_early_return.store(false, Ordering::SeqCst);
-            return Ok(json);
+            return Ok(ron);
         }
         Err(zbus::fdo::Error::Failed("UserConfig lock fail".into()))
     }
@@ -314,12 +314,11 @@ impl CtrlAnime<'static> {
             config.anime.push(action);
             config.write();
 
-            let json =
-                serde_json::to_string_pretty(&*config.anime).expect("Parse config to JSON failed");
-
+            let ron = ron::ser::to_string_pretty(&*config, PrettyConfig::new().depth_limit(4))
+                .expect("Parse config to RON failed");
             // Release the inner run loop again
             self.inner_early_return.store(false, Ordering::SeqCst);
-            return Ok(json);
+            return Ok(ron);
         }
         Err(zbus::fdo::Error::Failed("UserConfig lock fail".into()))
     }
@@ -337,12 +336,11 @@ impl CtrlAnime<'static> {
             }
             config.write();
 
-            let json =
-                serde_json::to_string_pretty(&*config.anime).expect("Parse config to JSON failed");
-
+            let ron = ron::ser::to_string_pretty(&*config, PrettyConfig::new().depth_limit(4))
+                .expect("Parse config to RON failed");
             // Release the inner run loop again
             self.inner_early_return.store(false, Ordering::SeqCst);
-            return Ok(json);
+            return Ok(ron);
         }
         Err(zbus::fdo::Error::Failed("UserConfig lock fail".into()))
     }

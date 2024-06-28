@@ -5,7 +5,8 @@ export component RogItem inherits Rectangle {
     border-color: Palette.border;
     border-width: 3px;
     border-radius: 10px;
-    min-height: 46px;
+    min-height: 48px;
+    max-height: 56px;
 }
 
 export component SystemSlider inherits RogItem {
@@ -16,7 +17,7 @@ export component SystemSlider inherits RogItem {
     callback released(int);
     HorizontalLayout {
         HorizontalLayout {
-            width: 30%;
+            width: 50%;
             alignment: LayoutAlignment.space-between;
             padding-left: 10px;
             Text {
@@ -54,6 +55,7 @@ export component SystemToggle inherits RogItem {
     in-out property <bool> checked;
     callback toggled(bool);
     HorizontalLayout {
+        spacing: 6px;
         HorizontalLayout {
             alignment: LayoutAlignment.start;
             padding-left: 10px;

@@ -11,7 +11,13 @@ Now includes a GUI, `rog-control-center`.
 
 ## Kernel support
 
-**The minimum supported kernel version is 6.6**
+**The minimum supported kernel version is 6.10**, which will contain the patches from [here](https://lore.kernel.org/platform-driver-x86/20240404001652.86207-1-luke@ljones.dev/). This is especially required for 2023+ devices and possibly some lat 2022 devices.
+
+Z13 devices will need [these](https://lore.kernel.org/linux-input/20240416090402.31057-1-luke@ljones.dev/T/#t)
+
+## X11 support
+
+X11 is not supported at all, as in I will not help you with X11 issues if there are any due to limited time and it being unmaintained itself. You can however build `rog-control-center` with it enabled `cargo build --features "rog-control-center/x11"`.
 
 ## Goals
 
@@ -31,7 +37,7 @@ See the [rog-aura readme](./rog-aura/README.md) for more details.
 
 ## Discord
 
-[Discord server link](https://discord.gg/z8y99XqPb7)
+[![Discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/z8y99XqPb7)
 
 ## SUPPORTED LAPTOPS
 
@@ -41,7 +47,9 @@ to this:
 ```
 Bus 001 Device 002: ID 0b05:1866 ASUSTek Computer, Inc. N-KEY Device
 ```
+
 or
+
 ```
 Bus 003 Device 002: ID 0b05:19b6 ASUSTek Computer, Inc. [unknown]
 ```
@@ -53,20 +61,22 @@ and AniMe parts should work regardless of your latop make.
 
 The list is a bit outdated as many features have been enabled in the Linux kernel with upstream patches and then supported in asusctl suite.
 
-- [X] System daemon
-- [X] GUI app (includes tray and notifications)
-- [X] Setting/modifying built-in LED modes
-- [X] Per-key LED setting
-- [X] Fancy LED modes (See examples) (currently being reworked)
-- [X] AniMatrix display on G14 and M16 models that include it
-- [X] Set battery charge limit (with kernel supporting this)
-- [X] Fan curve control on supported laptops (G14/G15, some TUF like FA507)
-- [X] Toggle bios setting for boot/POST sound
-- [X] Toggle GPU MUX (g-sync, or called MUX on 2022+ laptops)
+- [x] System daemon
+- [x] GUI app (includes tray and notifications)
+- [x] Setting/modifying built-in LED modes
+- [x] Per-key LED setting
+- [x] Fancy LED modes (See examples) (currently being reworked)
+- [x] AniMatrix display on G14 and M16 models that include it
+- [x] Set battery charge limit (with kernel supporting this)
+- [x] Fan curve control on supported laptops (G14/G15, some TUF like FA507)
+- [x] Toggle bios setting for boot/POST sound
+- [x] Toggle GPU MUX (g-sync, or called MUX on 2022+ laptops)
 
 # GUI
 
 A gui is now in the repo - ROG Control Center. At this time it is still a WIP, but it has almost all features in place already.
+
+**NOTE**: Xorg is not supported.
 
 # BUILDING
 
@@ -74,8 +84,7 @@ Rust and cargo are required, they can be installed from [rustup.rs](https://rust
 
 **fedora:**
 
-    dnf install cmake clang-devel libinput-devel libseat-devel libgbm-devel libxkbcommon-devel systemd-devel \
-    libdrm-devel expat-devel pcre2-devel libzstd-devellibappindicator-gtk3
+    dnf install cmake clang-devel libinput-devel libseat-devel libgbm-devel libxkbcommon-devel systemd-devel libdrm-devel expat-devel pcre2-devel libzstd-devel gtk3-devel
     make
     sudo make install
 
@@ -84,7 +93,7 @@ Rust and cargo are required, they can be installed from [rustup.rs](https://rust
 Works with KDE Plasma (without GTK packages)
 
     zypper in -t pattern devel_basis
-    zypper in rustup make cmake libinput-devel libseat-devel libgbm-devel systemd-devel clang-devel llvm-devel gdk-pixbuf-devel cairo-devel pango-devel freetype-devel libexpat-devel libayatana-indicator3-7
+    zypper in rustup make cmake clang-devel libinput-devel libseat-devel libgbm-devel libxkbcommon-devel systemd-devel libdrm-devel expat-devel pcre2-devel libzstd-devel gtk3-devel
     make
     sudo make install
 
@@ -96,6 +105,7 @@ Works with KDE Plasma (without GTK packages)
     sudo make install
 
 ## Installing
+
 - Fedora copr = https://copr.fedorainfracloud.org/coprs/lukenukem/asus-linux/
 - openSUSE = https://download.opensuse.org/repositories/home:/luke_nukem:/asus/
 
@@ -104,7 +114,7 @@ Works with KDE Plasma (without GTK packages)
 The default init method is to use the udev rule, this ensures that the service is
 started when the device is initialised and ready.
 
-You may also need to activate the service for debian install. If running Pop!_OS, I suggest disabling `system76-power` gnome-shell extension and systemd service.
+You may also need to activate the service for debian install. If running Pop!\_OS, I suggest disabling `system76-power` gnome-shell extension and systemd service.
 
 ## Upgrading
 
@@ -130,7 +140,7 @@ Dbus introsepction XML requires with `make introspection` requires `anime_sim` t
 
 ## AniMe Matrix simulator
 
-A simulator using SDL2 can be built using `cargo build --package rog_simulators` and run with `./target/debug/anime_sim`. Once started `asusd` will need restarting to pick it up. If running this sim on a laptop *with* the display, the simulated display will be used instead of the physical display.
+A simulator using SDL2 can be built using `cargo build --package rog_simulators` and run with `./target/debug/anime_sim`. Once started `asusd` will need restarting to pick it up. If running this sim on a laptop _with_ the display, the simulated display will be used instead of the physical display.
 
 ## Supporting more laptops
 

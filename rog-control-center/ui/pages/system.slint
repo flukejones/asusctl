@@ -43,8 +43,12 @@ export global SystemPageData {
     callback set_throttle_policy_linked_epp(bool);
     in-out property <int> throttle_policy_on_ac: 0;
     callback set_throttle_policy_on_ac(int);
+    in-out property <bool> change_throttle_policy_on_ac: true;
+    callback set_change_throttle_policy_on_ac(bool);
     in-out property <int> throttle_policy_on_battery: 0;
     callback set_throttle_policy_on_battery(int);
+    in-out property <bool> change_throttle_policy_on_battery: true;
+    callback set_change_throttle_policy_on_battery(bool);
     in-out property <bool> panel_od;
     callback set_panel_od(bool);
     in-out property <bool> boot_sound;
@@ -181,7 +185,7 @@ export component PageSystem inherits Rectangle {
             }
 
             if SystemPageData.available.ppt-pl1-spl: SystemSlider {
-                text: @tr("ppt_pl1_spl" => "ppt_pl1_spl");
+                text: @tr("ppt_pl1_spl" => "PL1, sustained power limit");
                 minimum: 5;
                 maximum: 250;
                 value <=> SystemPageData.ppt_pl1_spl;
@@ -191,7 +195,7 @@ export component PageSystem inherits Rectangle {
             }
 
             if SystemPageData.available.ppt-pl2-sppt: SystemSlider {
-                text: @tr("ppt_pl2_sppt" => "ppt_pl2_sppt");
+                text: @tr("ppt_pl2_sppt" => "PL2, turbo power limit");
                 minimum: 5;
                 maximum: 250;
                 value <=> SystemPageData.ppt_pl2_sppt;
@@ -201,7 +205,7 @@ export component PageSystem inherits Rectangle {
             }
 
             if SystemPageData.available.ppt-fppt: SystemSlider {
-                text: @tr("ppt_fppt" => "ppt_fppt");
+                text: @tr("ppt_fppt" => "FPPT, Fast Power Limit");
                 minimum: 5;
                 maximum: 250;
                 value <=> SystemPageData.ppt_fppt;
@@ -211,7 +215,7 @@ export component PageSystem inherits Rectangle {
             }
 
             if SystemPageData.available.ppt-apu-sppt: SystemSlider {
-                text: @tr("ppt_apu_sppt" => "ppt_apu_sppt");
+                text: @tr("ppt_apu_sppt" => "SPPT, APU slow power limit");
                 minimum: 5;
                 maximum: 130;
                 value <=> SystemPageData.ppt_apu_sppt;
@@ -221,7 +225,7 @@ export component PageSystem inherits Rectangle {
             }
 
             if SystemPageData.available.ppt-platform-sppt: SystemSlider {
-                text: @tr("ppt_platform_sppt" => "ppt_platform_sppt");
+                text: @tr("ppt_platform_sppt" => "Slow package power tracking limit");
                 maximum: 130;
                 minimum: 5;
                 value <=> SystemPageData.ppt_platform_sppt;
@@ -231,7 +235,7 @@ export component PageSystem inherits Rectangle {
             }
 
             if SystemPageData.available.nv-dynamic-boost: SystemSlider {
-                text: @tr("nv_dynamic_boost" => "nv_dynamic_boost");
+                text: @tr("nv_dynamic_boost" => "dGPU boost overclock");
                 minimum: 5;
                 maximum: 25;
                 value <=> SystemPageData.nv_dynamic_boost;
@@ -241,7 +245,7 @@ export component PageSystem inherits Rectangle {
             }
 
             if SystemPageData.available.nv-temp-target: SystemSlider {
-                text: @tr("nv_temp_target" => "nv_temp_target");
+                text: @tr("nv_temp_target" => "dGPU temperature max");
                 minimum: 75;
                 maximum: 87;
                 value <=> SystemPageData.nv_temp_target;
@@ -340,23 +344,45 @@ export component PageSystem inherits Rectangle {
                             text: @tr("Throttle Policy for power state");
                         }
 
-                        SystemDropdown {
-                            text: @tr("Throttle Policy on Battery");
-                            current_index <=> SystemPageData.throttle_policy_on_battery;
-                            current_value: SystemPageData.throttle_policy_choices[SystemPageData.throttle_policy_on_battery];
-                            model <=> SystemPageData.throttle_policy_choices;
-                            selected => {
-                                SystemPageData.set_throttle_policy_on_battery(SystemPageData.throttle_policy_on_battery)
+                        HorizontalLayout {
+                            spacing: 10px;
+                            SystemDropdown {
+                                text: @tr("Throttle Policy on Battery");
+                                current_index <=> SystemPageData.throttle_policy_on_battery;
+                                current_value: SystemPageData.throttle_policy_choices[SystemPageData.throttle_policy_on_battery];
+                                model <=> SystemPageData.throttle_policy_choices;
+                                selected => {
+                                    SystemPageData.set_throttle_policy_on_battery(SystemPageData.throttle_policy_on_battery)
+                                }
+                            }
+
+                            SystemToggle {
+                                text: @tr("Enabled");
+                                checked <=> SystemPageData.change_throttle_policy_on_battery;
+                                toggled => {
+                                    SystemPageData.set_change_throttle_policy_on_battery(SystemPageData.change_throttle_policy_on_battery);
+                                }
                             }
                         }
 
-                        SystemDropdown {
-                            text: @tr("Throttle Policy on AC");
-                            current_index <=> SystemPageData.throttle_policy_on_ac;
-                            current_value: SystemPageData.throttle_policy_choices[SystemPageData.throttle_policy_on_ac];
-                            model <=> SystemPageData.throttle_policy_choices;
-                            selected => {
-                                SystemPageData.set_throttle_policy_on_ac(SystemPageData.throttle_policy_on_ac)
+                        HorizontalLayout {
+                            spacing: 10px;
+                            SystemDropdown {
+                                text: @tr("Throttle Policy on AC");
+                                current_index <=> SystemPageData.throttle_policy_on_ac;
+                                current_value: SystemPageData.throttle_policy_choices[SystemPageData.throttle_policy_on_ac];
+                                model <=> SystemPageData.throttle_policy_choices;
+                                selected => {
+                                    SystemPageData.set_throttle_policy_on_ac(SystemPageData.throttle_policy_on_ac)
+                                }
+                            }
+
+                            SystemToggle {
+                                text: @tr("Enabled");
+                                checked <=> SystemPageData.change_throttle_policy_on_ac;
+                                toggled => {
+                                    SystemPageData.set_change_throttle_policy_on_ac(SystemPageData.change_throttle_policy_on_ac);
+                                }
                             }
                         }
                     }

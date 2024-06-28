@@ -1,11 +1,137 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
 ## [Unreleased]
+
+## [v6.0.11]
+
+### Changed
+- Renamed `Strobe` effect to `RainbowCycle` to prevent confusion over what it is
+- Ranamed `Rainbow` effect to `RainbowWave`
+- Cleaned up serde crate deps
+- Fixed AniMe on GA402XZ
+- Update some of the G713 device aura features
+- Update some of the G513 device aura features
+
+## [v6.0.10]
+
+### Added
+- Add the GA401I model to aura_support.
+
+### Changed
+
+- Aura support return a default aura definition instead of nothing
+- Minor updates in aura controller to ensure configs are updated if the support file changes
+- Don't panic if -ENODEV on fan_curve enable
+- Adjust the G513Q support to match what is on the asus website.
+- Adjust init sequence of anime to prevent accidental use of Slash as Anime
+- Enable notifs and tray icon without supergfx
+
+## [v6.0.9]
+
+### Added
+
+- Add G513RS to laptop DB.
+- Add G512LI to laptop DB.
+
+### Changed
+
+- Rename and recreate the default Anime config if cache setup fails
+
+### Fixed
+
+- Nuke the issue of GUI taking 100% of a CPU core
+
+## [v6.0.8]
+
+### Added
+- Add G512L laptop DB entry
+
+### Changed
+- Add more tests to verify things
+
+### Fix
+- asusctl incorrectly assumes fan-curves unsupported. Now fixed.
+- try to fix ROGCC using CPU time.
+
+## [v6.0.7]
+
+### Changed
+
+- Add a config option to set if throttle policy is changed on ac/bat change (UI only)
+- Allow X11 GUI. This is *not* supported. Please see readme.
+- Fixes to some GUI widget layouts and sizing
+- Do a backup HID raw write fro brightness if the read-back value does not match. This is a temporary solve for some G14 and G16 until the kernel patch is ready.
+- Reimplement the older 0x1866 MCU keyboard control power bits plus UI control for it. If you had a keyboard affected by Lightbar issues and it is older than a couple of years this should help. If not, please file a bug.
+
+## [v6.0.6]
+
+### Added
+- Add GX650R laptop to aura DB
+
+### Changed
+- Further tweaks to aura init
+- More logging
+- Fix TUF laptop led power
+- Sanitize the dbus path for aura devices (remove `.` chars)
+- Even more error handling (gracefully)
+- Better checking for dbus interfaces
+- Remove dbus `supported_interfaces`
+- dbus ObjectManager is now at root `/`
+
+## [v6.0.5]
+
+### Changed
+
+- Better more robust error handling in ROGCC
+- Try to better handle pre-2021 laptops with lightbar
+- Add more logging to try and trace the charge_control_end_threshold issue
+- Make `kbd_brightness` optional to work around issues on some laptops that seem to lack it. Likely this will all need a refactor *again* if work proceeds in kernel for better RGB support.
+
+## [v6.0.4]
+
+### Changed
+
+- Remove some `todo()` in rogcc
+- Add missing `#[zbus(property)]` derive to Slash dbus properties
+- Match G533Q laptop explicitly to the 0x8166 PID
+
+## [v6.0.3]
+
+### NOTE
+
+- Xorg is not supported any longer. All major desktops and distros are Wayland.
+
+### Changed
+
+- Add a check to prevent non-TUF laptops with screwed up method return from TUF acpi methods from trying to add a TUF aura device without actually being a TUF laptop.
+- Make the G834JZ entry in aura db generic for all G834J
+
+## [v6.0.2]
+
+### Changed
+
+- Clean up code
+- Don't panic if no aura device in ROGCC
+- Try to prevent an errorenous tuf keyboard detection
+
+## [v6.0.1]
+
+### Added
+
+- Support the G713P keyboard
+
+### Changed
+
+- Update all `Cargo.toml` to use workspace deps and remove unused features
+- Update dependencies where possible
+- Switch the UI to use fluent-dark instead of cosmic-dark due to extremely long compile time
+
+## [v6.0.0]
+
+### Important note
+
+- The kernel patches from [here](https://lore.kernel.org/platform-driver-x86/20240404001652.86207-1-luke@ljones.dev/) are required. The ppt settings _will_ still apply without the patches but will be called a fail due to the read-back not being implemented (solved with kernel patch). These patches have been upstreamed for kernel 6.10
+- Z13 devices will need these Z13 devices will need [these](https://lore.kernel.org/linux-input/20240416090402.31057-1-luke@ljones.dev/T/#t)
 
 ### Changed
 
@@ -14,13 +140,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add ability to start rog-control-center fullscreen with a width and height. This should be useful for devices like the ROG Ally.
 - Many small changes due to requirements of slint UI
 
-## Added
+### Added
 
 - Support GA402N keyboard
 - Support GL553V keyboard
 - Support GU605M keyboard
 - Support Z13 lightbar (with kernel patch)
 - Resupport the TUF keyboard
+
+### BREAKING
+
+- The aura dbus interface, and well pretty much all dbus interfaces have been changed. The Aura interface in particular works differently to begin implementing _multiple_ aura device support, including _hot-plug_ of devices (USB Aura keybords and others).
+- All dbus interfaces except Aura are now in the `/org/asuslinux/` path
+- Aura dbus now appear under `/org/asuslinux/<device>` and there may be multiple devices. To find these device you use the `ObjectManager` interface under the `/org/asuslinux` path.
 
 ## [v5.0.8]
 

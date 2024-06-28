@@ -60,13 +60,12 @@ impl AsusPower {
                         info!("Found a battery");
                         if battery.is_none() {
                             info!("Checking battery attributes");
-                            if device
-                                .attribute_value("charge_control_end_threshold")
-                                .is_some()
+                            if let Some(current) =
+                                device.attribute_value("charge_control_end_threshold")
                             {
                                 info!(
                                     "Found battery power at {:?}, matched \
-                                     charge_control_end_threshold",
+                                     charge_control_end_threshold. Current level: {current:?}",
                                     device.sysname()
                                 );
                                 battery = Some(device.syspath().to_path_buf());

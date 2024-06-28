@@ -1,13 +1,16 @@
 [package]
 name = "rog_platform"
-license = "MPL-2.0"
+license.workspace = true
 version.workspace = true
-edition = "2021"
+readme.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+edition.workspace = true
 
 [dependencies]
 log.workspace = true
 serde.workspace = true
-serde_derive.workspace = true
 zbus.workspace = true
 concat-idents.workspace = true
 udev.workspace = true
@@ -18,4 +21,3 @@ rusb.workspace = true
 
 [dev-dependencies]
 cargo-husky.workspace = true
-rog_aura = { path = "../rog-aura" }

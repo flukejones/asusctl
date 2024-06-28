@@ -4,7 +4,7 @@ use std::error::Error;
 use std::path::Path;
 use std::process::exit;
 
-use rog_anime::usb::get_anime_type;
+use rog_anime::usb::get_maybe_anime_type;
 use rog_anime::{AnimeDataBuffer, AnimeImage, Vec2};
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use zbus::blocking::Connection;
@@ -20,7 +20,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         exit(-1);
     }
 
-    let anime_type = get_anime_type()?;
+    let anime_type = get_maybe_anime_type()?;
     let matrix = AnimeImage::from_png(
         Path::new(&args[1]),
         args[2].parse::<f32>().unwrap(),

@@ -1,10 +1,12 @@
 pub mod config;
 pub mod trait_impls;
 
+use config_traits::{StdConfig, StdConfigLoad};
+use log::info;
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::usb_raw::USBRaw;
 use rog_slash::error::SlashError;
-use rog_slash::usb::{get_slash_type, pkt_set_mode, pkt_set_options, pkts_for_init};
+use rog_slash::usb::{get_maybe_slash_type, pkt_set_mode, pkt_set_options, pkts_for_init};
 use rog_slash::{SlashMode, SlashType};
 
 use crate::ctrl_slash::config::SlashConfig;
@@ -31,19 +33,19 @@ impl Node {
 }
 
 pub struct CtrlSlash {
-    // node: HidRaw,
     node: Node,
     config: SlashConfig,
-    // slash_type: SlashType,
-    // // set to force thread to exit
-    // thread_exit: Arc<AtomicBool>,
-    // // Set to false when the thread exits
-    // thread_running: Arc<AtomicBool>,
 }
 
 impl CtrlSlash {
     #[inline]
-    pub fn new(config: SlashConfig) -> Result<CtrlSlash, RogError> {
+    pub fn new() -> Result<CtrlSlash, RogError> {
+        let slash_type = get_maybe_slash_type()?;
+        if matches!(slash_type, SlashType::Unsupported) {
+            info!("No Slash capable laptop found");
+            return Err(RogError::Slash(SlashError::NoDevice));
+        }
+
         let usb = USBRaw::new(rog_slash::usb::PROD_ID).ok();
         let hid = HidRaw::new(rog_slash::usb::PROD_ID_STR).ok();
         let node = if usb.is_some() {
@@ -51,20 +53,12 @@ impl CtrlSlash {
         } else if hid.is_some() {
             unsafe { Node::Hid(hid.unwrap_unchecked()) }
         } else {
-            return Err(RogError::NotSupported);
-        };
-
-        let slash_type = get_slash_type()?;
-        if slash_type == SlashType::Unknown {
             return Err(RogError::Slash(SlashError::NoDevice));
-        }
+        };
 
         let ctrl = CtrlSlash {
             node,
-            config,
-            // slash_type,
-            // thread_exit: Arc::new(AtomicBool::new(false)),
-            // thread_running: Arc::new(AtomicBool::new(false)),
+            config: SlashConfig::new().load(),
         };
         ctrl.do_initialization()?;
 

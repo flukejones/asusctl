@@ -3,10 +3,7 @@
 //! updating them from previous versions where fields or names are changed in
 //! some way.
 //!
-//! The end canonical file format is `.ron` as this supports rust types well,
-//! and includes the ability to add commenting, and is less verbose than `json`.
-//! Currently the crate will also try to parse from `json` and `toml` if the
-//! `ron` parsing fails, then update to `ron` format.
+//! The end canonical file format is `.ron` as this supports rust types well
 
 use std::fs::{self, create_dir, File, OpenOptions};
 use std::io::{Read, Write};
@@ -149,11 +146,7 @@ where
 
     /// Renames the existing file to `<file>-old`
     fn rename_file_old(&self) {
-        warn!(
-            "Renaming {} to {}-old and recreating config",
-            self.file_name(),
-            self.file_name()
-        );
+        warn!("Renaming {} to {}-old", self.file_name(), self.file_name());
         let mut cfg_old = self.file_path().to_string_lossy().to_string();
         cfg_old.push_str("-old");
         std::fs::rename(self.file_path(), cfg_old).unwrap_or_else(|err| {
@@ -221,21 +214,9 @@ macro_rules! std_config_load {
                         if let Ok(data) = ron::from_str(&buf) {
                             self = data;
                             log::info!("Parsed RON for {:?}", std::any::type_name::<Self>());
-                        } else if let Ok(data) = serde_json::from_str(&buf) {
-                            self = data;
-                            log::info!("Parsed JSON for {:?}", std::any::type_name::<Self>());
-                        } else if let Ok(data) = toml::from_str(&buf) {
-                            self = data;
-                            log::info!("Parsed TOML for {:?}", std::any::type_name::<Self>());
-                        } $(else if let Ok(data) = ron::from_str::<$generic>(&buf) {
+                        }  $(else if let Ok(data) = ron::from_str::<$generic>(&buf) {
                             self = data.into();
                             log::info!("New version failed, trying previous: Parsed RON for {:?}", std::any::type_name::<$generic>());
-                        } else if let Ok(data) = serde_json::from_str::<$generic>(&buf) {
-                            self = data.into();
-                            log::info!("New version failed, trying previous: Parsed JSON for {:?}", std::any::type_name::<$generic>());
-                        } else if let Ok(data) = toml::from_str::<$generic>(&buf) {
-                            self = data.into();
-                            log::info!("Newvious version failed, trying previous: Parsed TOML for {:?}", std::any::type_name::<$generic>());
                         })* else {
                             self.rename_file_old();
                             self = Self::new();

@@ -1,7 +1,7 @@
 use std::fmt::Display;
 use std::str::FromStr;
 
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::{OwnedValue, Type, Value};
@@ -261,8 +261,8 @@ pub enum AuraModeNum {
     #[default]
     Static = 0,
     Breathe = 1,
-    Strobe = 2,
-    Rainbow = 3,
+    RainbowCycle = 2,
+    RainbowWave = 3,
     Star = 4,
     Rain = 5,
     Highlight = 6,
@@ -290,8 +290,8 @@ impl From<&AuraModeNum> for &str {
         match mode {
             AuraModeNum::Static => "Static",
             AuraModeNum::Breathe => "Breathe",
-            AuraModeNum::Strobe => "Strobe",
-            AuraModeNum::Rainbow => "Rainbow",
+            AuraModeNum::RainbowCycle => "RainbowCycle",
+            AuraModeNum::RainbowWave => "RainbowWave",
             AuraModeNum::Star => "Stars",
             AuraModeNum::Rain => "Rain",
             AuraModeNum::Highlight => "Highlight",
@@ -307,8 +307,8 @@ impl From<&str> for AuraModeNum {
     fn from(mode: &str) -> Self {
         match mode {
             "Breathe" => AuraModeNum::Breathe,
-            "Strobe" => AuraModeNum::Strobe,
-            "Rainbow" => AuraModeNum::Rainbow,
+            "RainbowCycle" => AuraModeNum::RainbowCycle,
+            "RainbowWave" => AuraModeNum::RainbowWave,
             "Stars" => AuraModeNum::Star,
             "Rain" => AuraModeNum::Rain,
             "Highlight" => AuraModeNum::Highlight,
@@ -326,8 +326,8 @@ impl From<u8> for AuraModeNum {
     fn from(mode: u8) -> Self {
         match mode {
             1 => AuraModeNum::Breathe,
-            2 => AuraModeNum::Strobe,
-            3 => AuraModeNum::Rainbow,
+            2 => AuraModeNum::RainbowCycle,
+            3 => AuraModeNum::RainbowWave,
             4 => AuraModeNum::Star,
             5 => AuraModeNum::Rain,
             6 => AuraModeNum::Highlight,
@@ -434,7 +434,7 @@ impl From<AuraZone> for i32 {
 /// ```
 #[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct AuraEffect {
     /// The effect type
     pub mode: AuraModeNum,
@@ -532,10 +532,10 @@ impl AuraEffect {
             | AuraModeNum::Comet
             | AuraModeNum::Flash => AuraParameters::new(true, true, false, false, false),
             AuraModeNum::Breathe => AuraParameters::new(true, true, true, true, false),
-            AuraModeNum::Strobe | AuraModeNum::Rain => {
+            AuraModeNum::RainbowCycle | AuraModeNum::Rain => {
                 AuraParameters::new(true, false, false, true, false)
             }
-            AuraModeNum::Rainbow => AuraParameters::new(true, false, false, true, true),
+            AuraModeNum::RainbowWave => AuraParameters::new(true, false, false, true, true),
             AuraModeNum::Star => AuraParameters::new(true, true, true, true, true),
             AuraModeNum::Laser | AuraModeNum::Ripple => {
                 AuraParameters::new(true, true, false, true, false)
@@ -710,7 +710,7 @@ mod tests {
         ];
         assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
 
-        st.mode = AuraModeNum::Rainbow;
+        st.mode = AuraModeNum::RainbowWave;
         let capture = [
             0x5d, 0xb3, 0x07, 0x03, 0xff, 0x00, 0xcd, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,

@@ -1,5 +1,7 @@
 # asusctrl manual
 
+**NOTE:** this manual is in need of an update in some places. If you find issues please file issue reports.
+
 `asusd` is a utility for Linux to control many aspects of various ASUS laptops
 but can also be used with non-asus laptops with reduced features.
 
@@ -8,11 +10,10 @@ but can also be used with non-asus laptops with reduced features.
 - `asusd`: The main system daemon. It is autostarted by a udev rule and systemd unit.
 - `asusd-user`: The user level daemon. Currently will run an anime sequence, with RGB keyboard sequences soon.
 - `asusctl`: The CLI for interacting with the system daemon
-- `asus-notify`: A notification daemon with a user systemd unit that can be enabled.
 
 ## `asusd`
 
-`asusd` is the main system-level daemon which will control/load/save various settings in a safe way for the user, along with exposing a *safe* dbus interface for these interactions. This section covers only the daemon plus the various configuration file options.
+`asusd` is the main system-level daemon which will control/load/save various settings in a safe way for the user, along with exposing a _safe_ dbus interface for these interactions. This section covers only the daemon plus the various configuration file options.
 
 The functionality that `asusd` exposes is:
 
@@ -56,6 +57,7 @@ Almost all modern ASUS laptops have charging limit control now. This can be cont
 ```json
 "bat_charge_limit": 80,
 ```
+
 where the number is a percentage.
 
 ### Bios control
@@ -63,7 +65,7 @@ where the number is a percentage.
 Some options that you find in Armory Crate are available under this controller, so far there is:
 
 - POST sound: this is the sound you hear on bios boot post
-- GPU MUX: this controls if the dGPU is the *only* GPU, making it the main GPU and disabling the iGPU
+- GPU MUX: this controls if the dGPU is the _only_ GPU, making it the main GPU and disabling the iGPU
 
 These options are not written to the config file as they are stored in efivars. The only way to change these is to use the exposed safe dbus methods, or use the `asusctl` CLI tool.
 
@@ -72,6 +74,7 @@ These options are not written to the config file as they are stored in efivars. 
 asusctl can support setting a power profile via platform_profile drivers. This requires [power-profiles-daemon](https://gitlab.freedesktop.org/hadess/power-profiles-daemon) v0.10.0 minimum. It also requires the kernel patch for platform_profile support to be applied form [here](https://lkml.org/lkml/2021/8/18/1022) - this patch is merged to 5.15 kernel upstream.
 
 A common use of asusctl is to bind the `fn+f5` (fan) key to `asusctl profile -n` to cycle through the 3 profiles:
+
 1. Balanced
 2. Performance
 3. Quiet
@@ -97,7 +100,7 @@ There is one more controller; the support controller. The sole pupose of this co
 
 ## asusd-user
 
-`asusd-user` is a usermode daemon. The intended purpose is to provide a method for users to run there own custom per-key keyboard effects and modes, AniMe sequences, and possibly their own profiles - all without overwriting the *base* system config. As such some parts of the system daemon will migrate to the user daemon over time with the expectation that the Linux system runs both.
+`asusd-user` is a usermode daemon. The intended purpose is to provide a method for users to run there own custom per-key keyboard effects and modes, AniMe sequences, and possibly their own profiles - all without overwriting the _base_ system config. As such some parts of the system daemon will migrate to the user daemon over time with the expectation that the Linux system runs both.
 
 As of now only AniMe is active in this with configuration in `~/.config/rog/`. On first run defaults are created that are intended to work as examples.
 
@@ -177,6 +180,7 @@ An Aura config itself is a file with contents:
 ```
 
 If your laptop supports multizone, `"led"` can also be `"Zone": <one of the following>`
+
 - `SingleZone` // Keyboards with only one zone
 - `ZonedKbLeft` // keyboard left
 - `ZonedKbLeftMid` // keyboard left-middle
@@ -238,6 +242,7 @@ Each object in the array can be one of:
 ##### AsusAnimation
 
 `AsusAnimation` is specifically for running the gif files that Armory Crate comes with. `asusctl` includes all of these in `/usr/share/asusd/anime/asus/`
+
 ```json
       "AsusAnimation": {
         "file": "<FILE_PATH>",
@@ -260,7 +265,7 @@ Virtually the same as `AsusAnimation` but for png files, typically created in th
 
 ##### ImageAnimation
 
-`ImageAnimation` can play *any* gif of any size.
+`ImageAnimation` can play _any_ gif of any size.
 
 ```json
       "ImageAnimation": {
@@ -319,6 +324,7 @@ Must be full path: `"/usr/share/asusd/anime/asus/gaming/Controller.gif"` or `/ho
 **<FLOAT>**
 
 A number from 0.0-1.0.
+
 - `brightness`: If it is brightness it is combined with the system daemon global brightness
 - `scale`: 1.0 is the original size with lower number shrinking, larger growing
 - `angle`: Rotation angle in radians
@@ -327,6 +333,7 @@ A number from 0.0-1.0.
 **<TIME>**
 
 Time is the length of time to run the gif for:
+
 ```json
         "time": {
           "Time": {
@@ -335,17 +342,23 @@ Time is the length of time to run the gif for:
           }
         },
 ```
+
 A cycle is how many gif loops to run:
+
 ```json
         "time": {
           "Cycles": 2
         },
 ```
+
 `Infinite` means that this gif will never end:
+
 ```json
         "time": "Infinite",
 ```
+
 `Fade` allows an image or gif to fade in and out, and remain at max brightness to n time:
+
 ```json
         "time": {
           "Fade": {
@@ -364,6 +377,7 @@ A cycle is how many gif loops to run:
           }
         },
 ```
+
 `show_for` can be `null`, if it is `null` then the `show_for` becomes `gif_time_length - fade_in - fade_out`.
 This is period for which the gif or image will be max brightness (as set).
 
@@ -404,25 +418,18 @@ asusctl <command> <subcommand> --help
 
 To switch to next/previous Aura modes you will need to bind both the aura keys (if available) to one of:
 **Next**
+
 ```
 asusctl led-mode -n
 ```
+
 **Previous**
+
 ```
 asusctl led-mode -p
 ```
 
 To switch Fan/Thermal profiles you need to bind the Fn+F5 key to `asusctl profile -n`.
-
-## User NOTIFICATIONS via dbus
-
-If you have a notifications handler set up, or are using KDE or Gnome then you
-can enable the user service to get basic notifications when something changes.
-
-```
-systemctl --user enable asus-notify.service
-systemctl --user start asus-notify.service
-```
 
 # License & Trademarks
 

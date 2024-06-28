@@ -8,8 +8,8 @@ export global AppSettingsPageData {
     callback set_startup_in_background(bool);
     in-out property <bool> enable_tray_icon;
     callback set_enable_tray_icon(bool);
-    in-out property <bool> enable_notifications;
-    callback set_enable_notifications(bool);
+    in-out property <bool> enable_dgpu_notifications;
+    callback set_enable_dgpu_notifications(bool);
 }
 
 export component PageAppSettings inherits VerticalLayout {
@@ -22,45 +22,35 @@ export component PageAppSettings inherits VerticalLayout {
         mainview := VerticalLayout {
             padding: 10px;
             spacing: 10px;
-            HorizontalLayout {
-                spacing: 10px;
-                max-height: 32px;
-                SystemToggle {
-                    text: @tr("Run in background after closing");
-                    checked <=> AppSettingsPageData.run_in_background;
-                    toggled => {
-                        AppSettingsPageData.set_run_in_background(AppSettingsPageData.run_in_background)
-                    }
-                }
-
-                SystemToggle {
-                    width: parent.width * 1px / 2px;
-                    text: @tr("Start app in background (UI closed)");
-                    checked <=> AppSettingsPageData.startup_in_background;
-                    toggled => {
-                        AppSettingsPageData.set_startup_in_background(AppSettingsPageData.startup_in_background)
-                    }
+            SystemToggle {
+                text: @tr("Run in background after closing");
+                checked <=> AppSettingsPageData.run_in_background;
+                toggled => {
+                    AppSettingsPageData.set_run_in_background(AppSettingsPageData.run_in_background)
                 }
             }
 
-            HorizontalLayout {
-                max-height: 32px;
-                spacing: 10px;
-                SystemToggle {
-                    text: @tr("Enable system tray icon");
-                    checked <=> AppSettingsPageData.enable_tray_icon;
-                    toggled => {
-                        AppSettingsPageData.set_enable_tray_icon(AppSettingsPageData.enable_tray_icon)
-                    }
+            SystemToggle {
+                text: @tr("Start app in background (UI closed)");
+                checked <=> AppSettingsPageData.startup_in_background;
+                toggled => {
+                    AppSettingsPageData.set_startup_in_background(AppSettingsPageData.startup_in_background)
                 }
+            }
 
-                SystemToggle {
-                    width: parent.width * 1px / 2px;
-                    text: @tr("Enable change notifications");
-                    checked <=> AppSettingsPageData.enable_notifications;
-                    toggled => {
-                        AppSettingsPageData.set_enable_notifications(AppSettingsPageData.enable_notifications)
-                    }
+            SystemToggle {
+                text: @tr("Enable system tray icon");
+                checked <=> AppSettingsPageData.enable_tray_icon;
+                toggled => {
+                    AppSettingsPageData.set_enable_tray_icon(AppSettingsPageData.enable_tray_icon)
+                }
+            }
+
+            SystemToggle {
+                text: @tr("Enable dGPU notifications");
+                checked <=> AppSettingsPageData.enable_dgpu_notifications;
+                toggled => {
+                    AppSettingsPageData.set_enable_dgpu_notifications(AppSettingsPageData.enable_dgpu_notifications)
                 }
             }
 

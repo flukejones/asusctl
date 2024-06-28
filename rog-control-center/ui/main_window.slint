@@ -5,6 +5,7 @@ import { SideBar } from "widgets/sidebar.slint";
 import { PageAbout } from "pages/about.slint";
 import { PageFans } from "pages/fans.slint";
 import { PageAnime, AnimePageData } from "pages/anime.slint";
+import { RogItem } from "widgets/common.slint";
 import { PageAura } from "pages/aura.slint";
 import { Node } from "widgets/graph.slint";
 export { Node }
@@ -66,7 +67,7 @@ export component MainWindow inherits Window {
                 Text {
                     vertical-alignment: center;
                     horizontal-alignment: center;
-                    text: @tr("Quit");
+                    text: @tr("Quit App");
                 }
 
                 TouchArea {
@@ -178,4 +179,39 @@ export component MainWindow inherits Window {
             }
         }
     }
+
+    if SomeError.error_message != "": Rectangle {
+        x: 0px;
+        y: 0px;
+        width: root.width;
+        height: root.height;
+        padding: 10px;
+
+        background: Palette.background;
+        border-color: Palette.border;
+        border-width: 3px;
+        border-radius: 10px;
+
+        VerticalBox {
+            RogItem {
+                min-height: 50px;
+                max-height: 100px;
+                Text {
+                    text <=> SomeError.error_message;
+                    font-size: 18px;
+                }
+            }
+
+            Text {
+                text <=> SomeError.error_help;
+                horizontal-alignment: TextHorizontalAlignment.center;
+                vertical-alignment: TextVerticalAlignment.center;
+            }
+        }
+    }
+}
+
+export global SomeError {
+    in property <string> error_message: "";
+    in property <string> error_help: "";
 }
