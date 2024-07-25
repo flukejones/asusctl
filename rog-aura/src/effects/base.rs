@@ -2,6 +2,7 @@ use super::{EffectState, InputForEffect};
 use crate::keyboard::{KeyLayout, LedCode};
 use crate::Colour;
 
+#[allow(dead_code)]
 pub struct InputBased {
     led: LedCode,
     colour: Colour,

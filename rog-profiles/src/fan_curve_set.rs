@@ -91,7 +91,7 @@ impl std::str::FromStr for CurveData {
         }
 
         for (index, value) in input.split(',').enumerate() {
-            for (select, num) in value.splitn(2, |c| c == 'c' || c == ':').enumerate() {
+            for (select, num) in value.splitn(2, ['c', ':']).enumerate() {
                 if num.contains('%') {
                     percentages = true;
                 }
@@ -173,13 +173,13 @@ impl CurveData {
         for (index, out) in self.pwm.iter().enumerate() {
             let pwm = pwm_str(pwm_num, index);
             trace!("writing {pwm}");
-            device.set_attribute_value(&pwm, &out.to_string())?;
+            device.set_attribute_value(&pwm, out.to_string())?;
         }
 
         for (index, out) in self.temp.iter().enumerate() {
             let temp = temp_str(pwm_num, index);
             trace!("writing {temp}");
-            device.set_attribute_value(&temp, &out.to_string())?;
+            device.set_attribute_value(&temp, out.to_string())?;
         }
 
         // Enable must be done *after* all points are written pwm3_enable

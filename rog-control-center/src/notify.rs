@@ -191,17 +191,14 @@ pub fn start_notifications(
     let enabled_notifications_copy = config.clone();
     // GPU Mode change/action notif
     tokio::spawn(async move {
-        let conn = zbus::Connection::system().await.map_err(|e| {
-            no_supergfx(&e);
-            e
+        let conn = zbus::Connection::system().await.inspect_err(|e| {
+            no_supergfx(e);
         })?;
-        let proxy = SuperProxy::builder(&conn).build().await.map_err(|e| {
-            no_supergfx(&e);
-            e
+        let proxy = SuperProxy::builder(&conn).build().await.inspect_err(|e| {
+            no_supergfx(e);
         })?;
-        let _ = proxy.mode().await.map_err(|e| {
-            no_supergfx(&e);
-            e
+        let _ = proxy.mode().await.inspect_err(|e| {
+            no_supergfx(e);
         })?;
 
         let proxy_copy = proxy.clone();

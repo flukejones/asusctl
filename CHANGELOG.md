@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+- Add Ally X aura config
+
 ## [v6.0.11]
 
 ### Changed

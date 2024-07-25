@@ -74,13 +74,7 @@ async fn main() -> Result<()> {
         .format_timestamp(None)
         .init();
 
-    let supported_properties = match proxy.supported_properties() {
-        Ok(s) => s,
-        Err(_e) => {
-            // TODO: show an error window
-            Vec::default()
-        }
-    };
+    let supported_properties = proxy.supported_properties().unwrap_or_default();
 
     // Startup
     let mut config = Config::new().load();

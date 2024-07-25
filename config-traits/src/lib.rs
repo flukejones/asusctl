@@ -270,6 +270,8 @@ mod tests {
             }
         }
 
+        let _ = Test {};
+
         impl crate::StdConfigLoad1<Old1> for Test {}
     }
 
@@ -318,6 +320,8 @@ mod tests {
                 Self {}
             }
         }
+
+        let _ = Test {};
 
         impl crate::StdConfigLoad3<Old1, Old2, Old3> for Test {}
     }

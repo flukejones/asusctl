@@ -132,13 +132,12 @@ impl CtrlPlatform {
                             | inotify::WatchMask::ATTRIB
                             | inotify::WatchMask::CREATE,
                     )
-                    .map_err(|e| {
+                    .inspect_err(|e| {
                         if e.kind() == std::io::ErrorKind::NotFound {
                             error!("Not found: {:?}", config_path);
                         } else {
                             error!("Could not set asusd config inotify: {:?}", config_path);
                         }
-                        e
                     })
                     .ok();
                 let mut events = inotify.into_event_stream(&mut buffer).unwrap();

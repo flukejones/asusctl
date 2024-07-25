@@ -44,7 +44,7 @@ pub fn read_attr_bool(device: &Device, attr_name: &str) -> Result<bool> {
 
 pub fn write_attr_bool(device: &mut Device, attr: &str, value: bool) -> Result<()> {
     device
-        .set_attribute_value(attr, &(value as u8).to_string())
+        .set_attribute_value(attr, value.to_string())
         .map_err(|e| PlatformError::IoPath(attr.into(), e))
 }
 
@@ -58,7 +58,7 @@ pub fn read_attr_u8(device: &Device, attr_name: &str) -> Result<u8> {
 
 pub fn write_attr_u8(device: &mut Device, attr: &str, value: u8) -> Result<()> {
     device
-        .set_attribute_value(attr, &(value).to_string())
+        .set_attribute_value(attr, value.to_string())
         .map_err(|e| PlatformError::IoPath(attr.into(), e))
 }
 
