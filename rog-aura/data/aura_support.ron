@@ -303,7 +303,7 @@
         basic_modes: [Static, Breathe, RainbowCycle, RainbowWave, Pulse],
         basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: None,
-        power_zones: [Keyboard],
+        power_zones: [Keyboard, Lightbar],
     ),
     (
         device_name: "G713QC",
