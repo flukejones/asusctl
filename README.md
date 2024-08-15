@@ -11,7 +11,7 @@ Now includes a GUI, `rog-control-center`.
 
 ## Kernel support
 
-**The minimum supported kernel version is 6.10**, which will contain the patches from [here](https://lore.kernel.org/platform-driver-x86/20240404001652.86207-1-luke@ljones.dev/). This is especially required for 2023+ devices and possibly some lat 2022 devices.
+**The minimum supported kernel version is 6.10**, which will contain the patches from [here](https://lore.kernel.org/platform-driver-x86/20240404001652.86207-1-luke@ljones.dev/). This is especially required for 2023+ devices and possibly some late 2022 devices.
 
 Z13 devices will need [these](https://lore.kernel.org/linux-input/20240416090402.31057-1-luke@ljones.dev/T/#t)
 
