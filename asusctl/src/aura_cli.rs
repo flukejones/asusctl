@@ -41,6 +41,8 @@ pub enum SetAuraZoneEnabled {
     Lid(AuraPowerStates),
     #[options(help = "")]
     RearGlow(AuraPowerStates),
+    #[options(help = "")]
+    Ally(AuraPowerStates),
 }
 
 #[derive(Debug, Clone, Options)]

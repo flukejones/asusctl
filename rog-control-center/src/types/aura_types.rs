@@ -65,6 +65,7 @@ impl From<PowerZones> for SlintPowerZones {
             PowerZones::Lid => SlintPowerZones::Lid,
             PowerZones::RearGlow => SlintPowerZones::RearGlow,
             PowerZones::KeyboardAndLightbar => SlintPowerZones::KeyboardAndLightbar,
+            PowerZones::Ally => SlintPowerZones::Ally,
             PowerZones::None => SlintPowerZones::Keyboard,
         }
     }
@@ -79,6 +80,7 @@ impl From<SlintPowerZones> for PowerZones {
             SlintPowerZones::Lid => PowerZones::Lid,
             SlintPowerZones::RearGlow => PowerZones::RearGlow,
             SlintPowerZones::KeyboardAndLightbar => PowerZones::KeyboardAndLightbar,
+            SlintPowerZones::Ally => PowerZones::Ally,
         }
     }
 }
@@ -151,6 +153,7 @@ impl From<SlintDeviceType> for AuraDeviceType {
             SlintDeviceType::Tuf => Self::LaptopTuf,
             SlintDeviceType::ScsiExtDisk => Self::ScsiExtDisk,
             SlintDeviceType::Unknown => Self::Unknown,
+            SlintDeviceType::Ally => Self::Ally,
         }
     }
 }
@@ -163,6 +166,7 @@ impl From<AuraDeviceType> for SlintDeviceType {
             AuraDeviceType::LaptopTuf => SlintDeviceType::Tuf,
             AuraDeviceType::ScsiExtDisk => SlintDeviceType::ScsiExtDisk,
             AuraDeviceType::Unknown => SlintDeviceType::Unknown,
+            AuraDeviceType::Ally => SlintDeviceType::Ally,
         }
     }
 }

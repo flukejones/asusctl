@@ -43,23 +43,17 @@ impl KeyboardBacklight {
             PlatformError::Udev("match_subsystem failed".into(), err)
         })?;
 
-        enumerator
-            .match_sysname("asus::kbd_backlight")
-            .map_err(|err| {
-                warn!("{}", err);
-                PlatformError::Udev("match_subsystem failed".into(), err)
-            })?;
-
-        if let Some(device) = (enumerator.scan_devices().map_err(|err| {
+        for device in enumerator.scan_devices().map_err(|err| {
             warn!("{}", err);
             PlatformError::Udev("scan_devices failed".into(), err)
-        })?)
-        .next()
-        {
-            info!("Found keyboard LED controls at {:?}", device.sysname());
-            return Ok(Self {
-                path: device.syspath().to_owned(),
-            });
+        })? {
+            let sys = device.sysname().to_string_lossy();
+            if sys.contains("kbd_backlight") || sys.contains("ally:rgb:gamepad") {
+                info!("Found keyboard LED controls at {:?}", device.sysname());
+                return Ok(Self {
+                    path: device.syspath().to_owned(),
+                });
+            }
         }
         Err(PlatformError::MissingFunction(
             "KeyboardLed:new(), asus::kbd_backlight not found".into(),

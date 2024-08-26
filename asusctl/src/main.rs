@@ -751,6 +751,7 @@ fn handle_led_power2(
                     aura_cli::SetAuraZoneEnabled::Lightbar(l) => set(PowerZones::Lightbar, l),
                     aura_cli::SetAuraZoneEnabled::Lid(l) => set(PowerZones::Lid, l),
                     aura_cli::SetAuraZoneEnabled::RearGlow(r) => set(PowerZones::RearGlow, r),
+                    aura_cli::SetAuraZoneEnabled::Ally(r) => set(PowerZones::Ally, r),
                 }
             }
 

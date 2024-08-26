@@ -74,6 +74,7 @@ pub enum AuraDeviceType {
     LaptopPre2021 = 1,
     LaptopTuf = 2,
     ScsiExtDisk = 3,
+    Ally = 4,
     Unknown = 255,
 }
 
@@ -90,6 +91,10 @@ impl AuraDeviceType {
         *self == Self::LaptopPost2021
     }
 
+    pub fn is_ally(&self) -> bool {
+        *self == Self::Ally
+    }
+
     pub fn is_scsi(&self) -> bool {
         *self == Self::ScsiExtDisk
     }
@@ -101,6 +106,7 @@ impl From<&str> for AuraDeviceType {
             "tuf" => AuraDeviceType::LaptopTuf,
             "1932" => AuraDeviceType::ScsiExtDisk,
             "1866" | "18c6" | "1869" | "1854" => Self::LaptopPre2021,
+            "1abe" | "1b4c" => Self::Ally,
             _ => Self::LaptopPost2021,
         }
     }
@@ -128,5 +134,7 @@ pub enum PowerZones {
     RearGlow = 4,
     /// Exists for the older 0x1866 models
     KeyboardAndLightbar = 5,
+    /// Ally specific for creating correct packet
+    Ally = 6,
     None = 255,
 }

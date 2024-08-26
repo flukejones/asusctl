@@ -296,6 +296,7 @@ impl CtrlTask for CtrlAuraZbus {
 impl crate::Reloadable for CtrlAuraZbus {
     async fn reload(&mut self) -> Result<(), RogError> {
         let mut ctrl = self.0.lock().await;
+        ctrl.fix_ally_power()?;
         debug!("reloading keyboard mode");
         ctrl.write_current_config_mode()?;
         debug!("reloading power states");

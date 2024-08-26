@@ -15,6 +15,8 @@ use crate::error::RogError;
 // #[serde(default)]
 pub struct AuraConfig {
     pub config_name: String,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub ally_fix: Option<bool>,
     pub brightness: LedBrightness,
     pub current_mode: AuraModeNum,
     pub builtins: BTreeMap<AuraModeNum, AuraEffect>,
@@ -57,6 +59,7 @@ impl AuraConfig {
         let enabled = LaptopAuraPower::new(device_type, &support_data);
         let mut config = AuraConfig {
             config_name: format!("aura_{prod_id}.ron"),
+            ally_fix: None,
             brightness: LedBrightness::Med,
             current_mode: AuraModeNum::Static,
             builtins: BTreeMap::new(),
