@@ -3,6 +3,7 @@
 
 pub mod cpu;
 pub mod error;
+pub mod firmware_attributes;
 pub mod hid_raw;
 pub mod keyboard_led;
 pub(crate) mod macros;

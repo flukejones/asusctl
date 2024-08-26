@@ -5,6 +5,7 @@ use std::sync::Arc;
 use config_traits::StdConfig;
 use log::{debug, error, info, warn};
 use rog_platform::cpu::{CPUControl, CPUGovernor, CPUEPP};
+// use rog_platform::firmware_attributes::FirmwareAttributes;
 use rog_platform::platform::{GpuMode, Properties, RogPlatform, ThrottlePolicy};
 use rog_platform::power::AsusPower;
 use zbus::export::futures_util::lock::Mutex;
@@ -94,6 +95,7 @@ impl CtrlPlatform {
         config_path: &Path,
         signal_context: SignalContext<'static>,
     ) -> Result<Self, RogError> {
+        // let attrs = FirmwareAttributes::new();
         let platform = RogPlatform::new()?;
         let power = AsusPower::new()?;
 
