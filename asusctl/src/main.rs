@@ -573,10 +573,11 @@ fn handle_led_mode(
             let modes = aura.first().unwrap().supported_basic_modes()?;
             for command in commands.iter().filter(|command| {
                 for mode in &modes {
-                    if command
-                        .trim()
-                        .starts_with(&<&str>::from(mode).to_lowercase())
-                    {
+                    let mut mode = <&str>::from(mode).to_string();
+                    if let Some(pos) = mode.chars().skip(1).position(|c| c.is_uppercase()) {
+                        mode.insert(pos + 1, '-');
+                    }
+                    if command.trim().starts_with(&mode.to_lowercase()) {
                         return true;
                     }
                 }
