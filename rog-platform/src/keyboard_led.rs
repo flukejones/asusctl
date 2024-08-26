@@ -44,7 +44,7 @@ impl KeyboardBacklight {
         })?;
 
         enumerator
-            .match_sysname("asus::kbd_backlight")
+            .match_sysname("ally:kbd_backlight")
             .map_err(|err| {
                 warn!("{}", err);
                 PlatformError::Udev("match_subsystem failed".into(), err)

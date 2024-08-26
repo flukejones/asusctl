@@ -894,7 +894,7 @@
         device_name: "RC72L",
         product_id: "",
         layout_name: "ga401q",
-        basic_modes: [Static, Breathe, Pulse],
+        basic_modes: [Static, Breathe, Pulse, RainbowWave],
         basic_zones: [],
         advanced_type: None,
         power_zones: [Keyboard],
