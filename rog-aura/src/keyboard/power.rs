@@ -102,13 +102,19 @@ impl AuraPowerState {
         ]
     }
 
-    fn new_to_byte(&self) -> u32 {
+    pub fn new_to_byte(&self) -> u32 {
         match self.zone {
             PowerZones::Logo => {
                 self.boot as u32
                     | (self.awake as u32) << 2
                     | (self.sleep as u32) << 4
                     | (self.shutdown as u32) << 6
+            }
+            PowerZones::Ally => {
+                (self.boot as u32)
+                    | (self.awake as u32) << 1
+                    | (self.sleep as u32) << 2
+                    | (self.shutdown as u32) << 3
             }
             PowerZones::Keyboard => {
                 (self.boot as u32) << 1
@@ -217,6 +223,11 @@ impl LaptopAuraPower {
     }
 
     pub fn to_bytes(&self, aura_type: AuraDeviceType) -> Vec<u8> {
+        if let Some(stuff) = self.states.first() {
+            if stuff.zone == PowerZones::Ally {
+                return vec![0x5d, 0xd1, 0x09, 0x01, stuff.new_to_byte() as u8];
+            }
+        }
         match aura_type {
             AuraDeviceType::LaptopPost2021 => self.new_to_bytes(),
             AuraDeviceType::LaptopPre2021 => {

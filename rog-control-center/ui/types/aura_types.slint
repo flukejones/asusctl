@@ -28,6 +28,7 @@ export enum PowerZones {
     Lid,
     RearGlow,
     KeyboardAndLightbar,
+    Ally,
 }
 
 export struct AuraPowerState {
@@ -52,6 +53,7 @@ export global AuraPageData {
         @tr("Aura power zone" => "Lid"),
         @tr("Aura power zone" => "Rear Glow"),
         @tr("Aura power zone" => "Keyboard and Lightbar"),
+        @tr("Aura power zone" => "Ally"),
     ];
     // Exists only for the older 0x1866 keybaords. On page setup it must
     // be set to match the supported_power_zones

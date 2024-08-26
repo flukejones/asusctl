@@ -128,5 +128,7 @@ pub enum PowerZones {
     RearGlow = 4,
     /// Exists for the older 0x1866 models
     KeyboardAndLightbar = 5,
+    /// Ally specific for creating correct packet
+    Ally = 6,
     None = 255,
 }

@@ -7,7 +7,7 @@ use log::{debug, info, warn};
 use rog_aura::aura_detection::LedSupportData;
 use rog_aura::keyboard::{LedUsbPackets, UsbPackets};
 use rog_aura::usb::{LED_APPLY, LED_SET};
-use rog_aura::{AuraDeviceType, AuraEffect, LedBrightness, LED_MSG_LEN};
+use rog_aura::{AuraDeviceType, AuraEffect, LedBrightness, PowerZones, LED_MSG_LEN};
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::keyboard_led::KeyboardBacklight;
 use udev::Device;
@@ -325,10 +325,17 @@ impl CtrlKbdLed {
             let buf = self.config.enabled.to_bytes(self.led_type);
             platform.set_kbd_rgb_state(&buf)?;
         } else if let LEDNode::Rog(_, hid_raw) = &self.led_node {
-            let bytes = self.config.enabled.to_bytes(self.led_type);
-            let message = [0x5d, 0xbd, 0x01, bytes[0], bytes[1], bytes[2], bytes[3]];
+            let mut msg = [0x5d, 0xbd, 0x01, 0x0, 0x0, 0x0, 0x0];
+            if let Some(p) = self.config.enabled.states.first() {
+                if p.zone == PowerZones::Ally {
+                    msg.copy_from_slice(&[0x5d, 0xd1, 0x09, 0x01, p.new_to_byte() as u8, 0x0, 0x0]);
+                }
+            } else {
+                let bytes = self.config.enabled.to_bytes(self.led_type);
+                msg.copy_from_slice(&[0x5d, 0xbd, 0x01, bytes[0], bytes[1], bytes[2], bytes[3]]);
+            }
 
-            hid_raw.write_bytes(&message)?;
+            hid_raw.write_bytes(&msg)?;
             hid_raw.write_bytes(&LED_SET)?;
             // Changes won't persist unless apply is set
             hid_raw.write_bytes(&LED_APPLY)?;
