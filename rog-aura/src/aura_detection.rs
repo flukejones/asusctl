@@ -171,6 +171,7 @@ impl LedSupportFile {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
     use std::fs::OpenOptions;
     use std::io::Write;
     use std::path::PathBuf;
@@ -212,6 +213,11 @@ mod tests {
         let mut tmp_sort = tmp.clone();
         tmp_sort.0.sort_by(|a, b| a.product_id.cmp(&b.product_id));
         tmp_sort.0.sort_by(|a, b| a.device_name.cmp(&b.device_name));
+        for model in tmp_sort.0.iter_mut() {
+            model
+                .basic_modes
+                .sort_by(|a, b| (*a as u8).cmp(&(*b as u8)));
+        }
         if tmp != tmp_sort {
             let sorted =
                 ron::ser::to_string_pretty(&tmp_sort, PrettyConfig::new().depth_limit(2)).unwrap();
@@ -233,5 +239,32 @@ mod tests {
             "RON: {}",
             ron::ser::to_string_pretty(&tmp, my_config).unwrap()
         );
+    }
+
+    #[test]
+    fn find_data_file_groups() {
+        let mut data = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        data.push("data/aura_support.ron");
+
+        let buf = std::fs::read_to_string(&data).unwrap();
+
+        let tmp = ron::from_str::<LedSupportFile>(&buf).unwrap();
+
+        let mut modes: HashMap<Vec<AuraModeNum>, Vec<String>> = HashMap::new();
+
+        for entry in tmp.0 {
+            if let Some(modes) = modes.get_mut(&entry.basic_modes) {
+                modes.push(entry.device_name);
+            } else {
+                modes.insert(entry.basic_modes, vec![entry.device_name]);
+            }
+        }
+        dbg!(modes);
+
+        // let my_config = PrettyConfig::new().depth_limit(2);
+        // println!(
+        //     "RON: {}",
+        //     ron::ser::to_string_pretty(&tmp, my_config).unwrap()
+        // );
     }
 }
