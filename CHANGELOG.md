@@ -2,8 +2,15 @@
 
 ## [Unreleased]
 
+## [v6.0.12]
+
 ### Changed
 - Add Ally X aura config
+- Fixes to Ally led power configs
+- Fix CLI led modes
+- Add FX517Z to aura_support
+- Add G614JJ Aura support
+- Add G614JZ (2023 Strix G16) Aura support
 
 ## [v6.0.11]
 
