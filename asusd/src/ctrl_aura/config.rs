@@ -166,6 +166,57 @@ impl AuraConfig {
         }
         Ok(())
     }
+
+    /// Reload the config from disk then verify and update it if required.
+    /// Always rewrites the file to disk.
+    pub fn load_and_update_config(prod_id: &str) -> AuraConfig {
+        // New loads data from the DB also
+        let mut config_init = AuraConfig::new(prod_id);
+        // config_init.set_filename(prod_id);
+        let mut config_loaded = config_init.clone().load();
+        // update the initialised data with what we loaded from disk
+        for mode_init in &mut config_init.builtins {
+            // update init values from loaded values if they exist
+            if let Some(loaded) = config_loaded.builtins.get(mode_init.0) {
+                *mode_init.1 = loaded.clone();
+            }
+        }
+        // Then replace just incase the initialised data contains new modes added
+        config_loaded.builtins = config_init.builtins;
+
+        for enabled_init in &mut config_init.enabled.states {
+            for enabled in &mut config_loaded.enabled.states {
+                if enabled.zone == enabled_init.zone {
+                    *enabled_init = enabled.clone();
+                    break;
+                }
+            }
+        }
+        config_loaded.enabled = config_init.enabled;
+
+        if let (Some(mut multizone_init), Some(multizone_loaded)) =
+            (config_init.multizone, config_loaded.multizone.as_mut())
+        {
+            for mode in multizone_init.iter_mut() {
+                // update init values from loaded values if they exist
+                if let Some(loaded) = multizone_loaded.get(mode.0) {
+                    let mut new_set = Vec::new();
+                    let data = LedSupportData::get_data(prod_id);
+                    // only reuse a zone mode if the mode is supported
+                    for mode in loaded {
+                        if data.basic_modes.contains(&mode.mode) {
+                            new_set.push(mode.clone());
+                        }
+                    }
+                    *mode.1 = new_set;
+                }
+            }
+            *multizone_loaded = multizone_init;
+        }
+
+        config_loaded.write();
+        config_loaded
+    }
 }
 
 #[cfg(test)]

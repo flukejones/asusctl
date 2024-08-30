@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use config_traits::{StdConfig, StdConfigLoad};
+use config_traits::StdConfig;
 use dmi_id::DMIID;
 use inotify::Inotify;
 use log::{debug, info, warn};
@@ -178,7 +178,7 @@ impl CtrlKbdLed {
             info!("AuraControl found device at: {:?}", dev_node);
             let dev = HidRaw::from_device(device)?;
             let mut controller = Self::from_hidraw(dev, dbus_path.clone())?;
-            controller.config = Self::load_and_update_config(&prod_id);
+            controller.config = AuraConfig::load_and_update_config(&prod_id);
             interfaces.insert(dbus_path);
             return Ok(Some(controller));
         }
@@ -223,7 +223,7 @@ impl CtrlKbdLed {
                         led_node: LEDNode::KbdLed(kbd_backlight),
                         supported_data: LedSupportData::get_data("tuf"),
                         per_key_mode_active: false,
-                        config: Self::load_and_update_config("tuf"),
+                        config: AuraConfig::load_and_update_config("tuf"),
                         dbus_path: dbus_path_for_tuf(),
                     };
                     devices.push(ctrl);
@@ -270,51 +270,6 @@ impl CtrlKbdLed {
             dbus_path,
         };
         Ok(ctrl)
-    }
-
-    /// Reload the config from disk then verify and update it if required
-    fn load_and_update_config(prod_id: &str) -> AuraConfig {
-        // New loads data from the DB also
-        let mut config_init = AuraConfig::new(prod_id);
-        // config_init.set_filename(prod_id);
-        let mut config_loaded = config_init.clone().load();
-        // update the initialised data with what we loaded from disk
-        for mode in &mut config_init.builtins {
-            // update init values from loaded values if they exist
-            if let Some(loaded) = config_loaded.builtins.get(mode.0) {
-                *mode.1 = loaded.clone();
-            }
-        }
-        // Then replace just incase the initialised data contains new modes added
-        config_loaded.builtins = config_init.builtins;
-
-        // Check the powerzones and replace, if the len is different then the support
-        // file was updated
-        if config_loaded.enabled.states.len() != config_init.enabled.states.len() {
-            config_loaded.enabled.states = config_init.enabled.states;
-        }
-
-        if let (Some(mut multizone_init), Some(multizone_loaded)) =
-            (config_init.multizone, config_loaded.multizone.as_mut())
-        {
-            for mode in multizone_init.iter_mut() {
-                // update init values from loaded values if they exist
-                if let Some(loaded) = multizone_loaded.get(mode.0) {
-                    let mut new_set = Vec::new();
-                    let data = LedSupportData::get_data(prod_id);
-                    // only reuse a zone mode if the mode is supported
-                    for mode in loaded {
-                        if data.basic_modes.contains(&mode.mode) {
-                            new_set.push(mode.clone());
-                        }
-                    }
-                    *mode.1 = new_set;
-                }
-            }
-            *multizone_loaded = multizone_init;
-        }
-
-        config_loaded
     }
 
     pub(super) fn fix_ally_power(&mut self) -> Result<(), RogError> {
