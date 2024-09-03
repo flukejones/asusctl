@@ -275,13 +275,11 @@ impl CtrlKbdLed {
     pub(super) fn fix_ally_power(&mut self) -> Result<(), RogError> {
         if self.led_type == AuraDeviceType::Ally {
             if let LEDNode::Rog(_, hid_raw) = &self.led_node {
-                if let Some(fix) = self.config.ally_fix.as_mut() {
-                    if !*fix {
-                        let msg = [0x5d, 0xbd, 0x01, 0xff, 0xff, 0xff, 0xff];
-                        hid_raw.write_bytes(&msg)?;
-                        info!("Reset Ally power settings to base");
-                    }
-                    *fix = true;
+                if self.config.ally_fix.is_none() {
+                    let msg = [0x5d, 0xbd, 0x01, 0xff, 0xff, 0xff, 0xff];
+                    hid_raw.write_bytes(&msg)?;
+                    info!("Reset Ally power settings to base");
+                    self.config.ally_fix = Some(true);
                 }
                 self.config.write();
             }
