@@ -1,6 +1,6 @@
-use std::fs::{read_dir, File};
-use std::io::Read;
-use std::path::Path;
+use std::fs::{read_dir, File, OpenOptions};
+use std::io::{Read, Write};
+use std::path::{Path, PathBuf};
 
 use crate::error::PlatformError;
 
@@ -39,12 +39,12 @@ pub enum AttrValue {
 pub struct Attribute {
     name: String,
     help: String,
-    current_value: AttrValue,
     default_value: AttrValue,
     possible_values: AttrValue,
     min_value: AttrValue,
     max_value: AttrValue,
     scalar_increment: Option<i32>,
+    base_path: PathBuf,
 }
 
 impl Attribute {
@@ -56,8 +56,33 @@ impl Attribute {
         &self.help
     }
 
-    pub fn current_value(&mut self) -> &mut AttrValue {
-        &mut self.current_value
+    /// Read the `current_value` directly from the attribute path
+    pub fn current_value(&self) -> Result<AttrValue, PlatformError> {
+        match read_string(&self.base_path.join("current_value")) {
+            Ok(val) => {
+                if let Ok(int) = val.parse::<i32>() {
+                    Ok(AttrValue::Integer(int))
+                } else {
+                    Ok(AttrValue::String(val))
+                }
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    /// Write the `current_value` directly to the attribute path
+    pub fn set_current_value(&self, new_value: AttrValue) -> Result<(), PlatformError> {
+        let path = self.base_path.join("current_value");
+
+        let value_str = match new_value {
+            AttrValue::Integer(val) => val.to_string(),
+            AttrValue::String(val) => val,
+            _ => return Err(PlatformError::InvalidValue),
+        };
+
+        let mut file = OpenOptions::new().write(true).open(&path)?;
+        file.write_all(value_str.as_bytes())?;
+        Ok(())
     }
 
     pub fn default_value(&self) -> &AttrValue {
@@ -80,27 +105,12 @@ impl Attribute {
         self.scalar_increment
     }
 
-    fn read_values(
+    /// Read all the immutable values to struct data. These should *never*
+    /// change, if they do then it is possibly a driver issue - although this is
+    /// subject to `firmware_attributes` class changes in kernel.
+    fn read_base_values(
         base_path: &Path,
-    ) -> (
-        AttrValue,
-        AttrValue,
-        AttrValue,
-        AttrValue,
-        AttrValue,
-        Option<i32>,
-    ) {
-        let current_value = match read_string(&base_path.join("current_value")) {
-            Ok(val) => {
-                if let Ok(int) = val.parse::<i32>() {
-                    AttrValue::Integer(int)
-                } else {
-                    AttrValue::String(val)
-                }
-            }
-            Err(_) => AttrValue::None,
-        };
-
+    ) -> (AttrValue, AttrValue, AttrValue, AttrValue, Option<i32>) {
         let default_value = match read_string(&base_path.join("default_value")) {
             Ok(val) => {
                 if let Ok(int) = val.parse::<i32>() {
@@ -136,7 +146,6 @@ impl Attribute {
         let scalar_increment = read_i32(&base_path.join("scalar_increment")).ok();
 
         (
-            current_value,
             default_value,
             possible_values,
             min_value,
@@ -160,24 +169,18 @@ impl FirmwareAttributes {
                 let name = base_path.file_name().unwrap().to_string_lossy().to_string();
                 let help = read_string(&base_path.join("display_name")).unwrap_or_default();
 
-                let (
-                    current_value,
-                    default_value,
-                    possible_values,
-                    min_value,
-                    max_value,
-                    scalar_increment,
-                ) = Attribute::read_values(&base_path);
+                let (default_value, possible_values, min_value, max_value, scalar_increment) =
+                    Attribute::read_base_values(&base_path);
 
                 attrs.push(Attribute {
                     name,
                     help,
-                    current_value,
                     default_value,
                     possible_values,
                     min_value,
                     max_value,
                     scalar_increment,
+                    base_path,
                 });
             }
         }
@@ -248,8 +251,11 @@ mod tests {
             match attr.name() {
                 "nv_dynamic_boost" => {
                     assert!(!attr.help().is_empty());
-                    assert!(matches!(attr.current_value, AttrValue::Integer(_)));
-                    if let AttrValue::Integer(val) = attr.current_value {
+                    assert!(matches!(
+                        attr.current_value().unwrap(),
+                        AttrValue::Integer(_)
+                    ));
+                    if let AttrValue::Integer(val) = attr.current_value().unwrap() {
                         assert_eq!(val, 5);
                     }
                     if let AttrValue::Integer(val) = attr.default_value {
@@ -260,7 +266,10 @@ mod tests {
                 }
                 "boot_sound" => {
                     assert!(!attr.help().is_empty());
-                    assert!(matches!(attr.current_value, AttrValue::Integer(0)));
+                    assert!(matches!(
+                        attr.current_value().unwrap(),
+                        AttrValue::Integer(0)
+                    ));
                     // dbg!(attr.current_value());
                 }
                 _ => {}
@@ -270,19 +279,42 @@ mod tests {
 
     #[test]
     fn test_boot_sound() {
-        let mut attrs = FirmwareAttributes::new();
+        let attrs = FirmwareAttributes::new();
         let attr = attrs
-            .attributes_mut()
-            .iter_mut()
+            .attributes()
+            .iter()
             .find(|a| a.name() == "boot_sound")
             .unwrap();
 
         assert_eq!(attr.name(), "boot_sound");
+        assert_eq!(
+            attr.base_path.to_str().unwrap(),
+            "/sys/class/firmware-attributes/asus-armoury/attributes/boot_sound"
+        );
         assert!(!attr.help().is_empty());
-        assert!(matches!(attr.current_value(), AttrValue::Integer(_)));
-        if let AttrValue::Integer(val) = attr.current_value() {
-            assert_eq!(*val, 0); // assuming value is 0
+        assert!(matches!(
+            attr.current_value().unwrap(),
+            AttrValue::Integer(_)
+        ));
+        if let AttrValue::Integer(val) = attr.current_value().unwrap() {
+            assert_eq!(val, 0); // assuming value is 0
         }
-        // Check other members if applicable
+    }
+
+    #[test]
+    #[ignore = "Requires root to set the value"]
+    fn test_set_boot_sound() {
+        let attrs = FirmwareAttributes::new();
+        let attr = attrs
+            .attributes()
+            .iter()
+            .find(|a| a.name() == "boot_sound")
+            .unwrap();
+
+        let mut val = attr.current_value().unwrap();
+        if let AttrValue::Integer(val) = &mut val {
+            *val = 0;
+        }
+        attr.set_current_value(val).unwrap();
     }
 }
