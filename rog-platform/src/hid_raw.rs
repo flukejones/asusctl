@@ -17,7 +17,7 @@ pub struct HidRaw {
     syspath: PathBuf,
     /// The product ID. The vendor ID is not kept
     prod_id: String,
-    device_bcd: u32,
+    _device_bcd: u32,
     /// Retaining a handle to the file for the duration of `HidRaw`
     file: RefCell<File>,
 }
@@ -53,7 +53,7 @@ impl HidRaw {
                                 devfs_path: dev_node.to_owned(),
                                 prod_id: id_product.to_string(),
                                 syspath: endpoint.syspath().into(),
-                                device_bcd: usb_device
+                                _device_bcd: usb_device
                                     .attribute_value("bcdDevice")
                                     .unwrap_or_default()
                                     .to_string_lossy()
@@ -77,7 +77,7 @@ impl HidRaw {
                             devfs_path: dev_node.to_owned(),
                             prod_id: id_product.to_string(),
                             syspath: endpoint.syspath().into(),
-                            device_bcd: endpoint
+                            _device_bcd: endpoint
                                 .attribute_value("bcdDevice")
                                 .unwrap_or_default()
                                 .to_string_lossy()
@@ -107,7 +107,7 @@ impl HidRaw {
                         devfs_path: dev_node.to_owned(),
                         prod_id: id_product.to_string_lossy().into(),
                         syspath: device.syspath().into(),
-                        device_bcd: device
+                        _device_bcd: device
                             .attribute_value("bcdDevice")
                             .unwrap_or_default()
                             .to_string_lossy()

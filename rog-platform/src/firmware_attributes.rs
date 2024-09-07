@@ -56,8 +56,8 @@ impl Attribute {
         &self.help
     }
 
-    pub fn current_value(&self) -> &AttrValue {
-        &self.current_value
+    pub fn current_value(&mut self) -> &mut AttrValue {
+        &mut self.current_value
     }
 
     pub fn default_value(&self) -> &AttrValue {
@@ -270,10 +270,10 @@ mod tests {
 
     #[test]
     fn test_boot_sound() {
-        let attrs = FirmwareAttributes::new();
+        let mut attrs = FirmwareAttributes::new();
         let attr = attrs
-            .attributes()
-            .iter()
+            .attributes_mut()
+            .iter_mut()
             .find(|a| a.name() == "boot_sound")
             .unwrap();
 
