@@ -97,6 +97,15 @@ Works with KDE Plasma (without GTK packages)
     make
     sudo make install
 
+**Debian(unsuported):**
+
+officially unsuported,but you can still try and test it by yourself(some features may not be available).
+
+    sudo apt install libclang-dev libudev-dev libfontconfig-dev build-essential cmake libseat-dev libxkbcommon-dev libinput-dev libgbm-dev
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    make
+    sudo make install
+
 **Ubuntu, Popos (unsuported):**
 
 instructions removed as outdated
