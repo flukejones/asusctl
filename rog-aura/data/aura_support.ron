@@ -12,7 +12,7 @@
         device_name: "FA506N",
         product_id: "",
         layout_name: "fa506i",
-        basic_modes: [Static, Breathe, RainbowWave],
+        basic_modes: [Static, Breathe, RainbowCycle],
         basic_zones: [],
         advanced_type: None,
         power_zones: [Keyboard],
