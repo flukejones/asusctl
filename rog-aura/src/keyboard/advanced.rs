@@ -195,7 +195,7 @@ impl LedCode {
 
 /// Represents the per-key raw USB packets
 #[typeshare]
-pub type UsbPackets = Vec<Vec<u8>>;
+pub type AuraLaptopUsbPackets = Vec<Vec<u8>>;
 
 /// A `UsbPackets` contains all data to change the full set of keyboard
 /// key colours individually.
@@ -209,7 +209,7 @@ pub type UsbPackets = Vec<Vec<u8>>;
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct LedUsbPackets {
     /// The packet data used to send data to the USB keyboard
-    usb_packets: UsbPackets,
+    usb_packets: AuraLaptopUsbPackets,
     /// Wether or not this packet collection is zoned. The determines which
     /// starting bytes are used and what the indexing is for lightbar RGB
     /// colours
@@ -472,22 +472,22 @@ impl LedUsbPackets {
     }
 
     #[inline]
-    pub fn get(&self) -> UsbPackets {
+    pub fn get(&self) -> AuraLaptopUsbPackets {
         self.usb_packets.clone()
     }
 
     #[inline]
-    pub fn get_ref(&self) -> &UsbPackets {
+    pub fn get_ref(&self) -> &AuraLaptopUsbPackets {
         &self.usb_packets
     }
 
     #[inline]
-    pub fn get_mut(&mut self) -> &mut UsbPackets {
+    pub fn get_mut(&mut self) -> &mut AuraLaptopUsbPackets {
         &mut self.usb_packets
     }
 }
 
-impl From<LedUsbPackets> for UsbPackets {
+impl From<LedUsbPackets> for AuraLaptopUsbPackets {
     fn from(k: LedUsbPackets) -> Self {
         k.usb_packets
     }
@@ -643,7 +643,7 @@ impl From<&LedCode> for &str {
 
 #[cfg(test)]
 mod tests {
-    use crate::keyboard::{LedCode, LedUsbPackets, UsbPackets};
+    use crate::keyboard::{AuraLaptopUsbPackets, LedCode, LedUsbPackets};
 
     macro_rules! colour_check_zoned {
         ($zone:expr, $pkt_idx_start:expr) => {
@@ -653,7 +653,7 @@ mod tests {
             c[1] = 255;
             c[2] = 255;
 
-            let pkt: UsbPackets = zone.into();
+            let pkt: AuraLaptopUsbPackets = zone.into();
             assert_eq!(pkt[0][$pkt_idx_start], 0xff);
             assert_eq!(pkt[0][$pkt_idx_start + 1], 0xff);
             assert_eq!(pkt[0][$pkt_idx_start + 2], 0xff);
@@ -663,7 +663,7 @@ mod tests {
     #[test]
     fn zone_to_packet_check() {
         let zone = LedUsbPackets::new_zoned(true);
-        let pkt: UsbPackets = zone.into();
+        let pkt: AuraLaptopUsbPackets = zone.into();
         assert_eq!(pkt[0][0], 0x5d);
         assert_eq!(pkt[0][1], 0xbc);
         assert_eq!(pkt[0][2], 0x01);
@@ -686,7 +686,7 @@ mod tests {
     #[test]
     fn perkey_to_packet_check() {
         let per_key = LedUsbPackets::new_per_key();
-        let pkt: UsbPackets = per_key.into();
+        let pkt: AuraLaptopUsbPackets = per_key.into();
         assert_eq!(pkt[0][0], 0x5d);
         assert_eq!(pkt[0][1], 0xbc);
         assert_eq!(pkt[0][2], 0x00);
@@ -712,7 +712,7 @@ mod tests {
         c[1] = 255;
         c[2] = 255;
 
-        let pkt: UsbPackets = per_key.into();
+        let pkt: AuraLaptopUsbPackets = per_key.into();
         assert_eq!(pkt[5][30], 0xff); // D, red
         assert_eq!(pkt[5][31], 0xff); // D
         assert_eq!(pkt[5][32], 0xff); // D

@@ -57,11 +57,12 @@ pub struct DeviceState {
 
 #[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize, Serialize, Default)]
 pub enum AnimeType {
     GA401,
     GA402,
     GU604,
+    #[default]
     Unsupported,
 }
 

@@ -1,4 +1,4 @@
-use rog_anime::usb::get_maybe_anime_type;
+use rog_anime::usb::get_anime_type;
 use rog_anime::AnimeDataBuffer;
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use zbus::blocking::Connection;
@@ -9,7 +9,7 @@ use zbus::blocking::Connection;
 fn main() {
     let conn = Connection::system().unwrap();
     let proxy = AnimeProxyBlocking::new(&conn).unwrap();
-    let anime_type = get_maybe_anime_type().unwrap();
+    let anime_type = get_anime_type();
     let mut matrix = AnimeDataBuffer::new(anime_type);
     matrix.data_mut()[1] = 100; // start = 1
     for n in matrix.data_mut()[2..32].iter_mut() {
