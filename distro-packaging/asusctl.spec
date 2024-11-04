@@ -46,11 +46,7 @@ BuildRequires:  cmake
 BuildRequires:  rust
 BuildRequires:  rust-std-static
 BuildRequires:  pkgconfig(expat)
-BuildRequires:  pkgconfig(gbm)
 BuildRequires:  pkgconfig(dbus-1)
-BuildRequires:  pkgconfig(libdrm)
-BuildRequires:  pkgconfig(libinput)
-BuildRequires:  pkgconfig(libseat)
 BuildRequires:  pkgconfig(libudev)
 BuildRequires:  pkgconfig(xkbcommon)
 BuildRequires:  pkgconfig(libzstd)

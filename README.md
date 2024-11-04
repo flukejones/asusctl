@@ -84,7 +84,7 @@ Rust and cargo are required, they can be installed from [rustup.rs](https://rust
 
 **fedora:**
 
-    dnf install cmake clang-devel libinput-devel libseat-devel libgbm-devel libxkbcommon-devel systemd-devel libdrm-devel expat-devel pcre2-devel libzstd-devel gtk3-devel
+    dnf install cmake clang-devel  libxkbcommon-devel systemd-devel expat-devel pcre2-devel libzstd-devel gtk3-devel
     make
     sudo make install
 
@@ -93,7 +93,7 @@ Rust and cargo are required, they can be installed from [rustup.rs](https://rust
 Works with KDE Plasma (without GTK packages)
 
     zypper in -t pattern devel_basis
-    zypper in rustup make cmake clang-devel libinput-devel libseat-devel libgbm-devel libxkbcommon-devel systemd-devel libdrm-devel expat-devel pcre2-devel libzstd-devel gtk3-devel
+    zypper in rustup make cmake clang-devel libxkbcommon-devel systemd-devel expat-devel pcre2-devel libzstd-devel gtk3-devel
     make
     sudo make install
 
@@ -101,7 +101,7 @@ Works with KDE Plasma (without GTK packages)
 
 officially unsuported,but you can still try and test it by yourself(some features may not be available).
 
-    sudo apt install libclang-dev libudev-dev libfontconfig-dev build-essential cmake libseat-dev libxkbcommon-dev libinput-dev libgbm-dev
+    sudo apt install libclang-dev libudev-dev libfontconfig-dev build-essential cmake libxkbcommon-dev
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     make
     sudo make install
