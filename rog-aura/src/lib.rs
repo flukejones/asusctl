@@ -24,7 +24,7 @@ pub mod usb;
 
 pub mod keyboard;
 
-pub const LED_MSG_LEN: usize = 17;
+pub const AURA_LAPTOP_LED_MSG_LEN: usize = 17;
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub const RED: Colour = Colour {
@@ -108,8 +108,9 @@ impl From<&str> for AuraDeviceType {
             "1932" => AuraDeviceType::ScsiExtDisk,
             "1866" | "18c6" | "1869" | "1854" => Self::LaptopKeyboardPre2021,
             "1abe" | "1b4c" => Self::Ally,
-            "19b3" => Self::AnimeOrSlash,
-            _ => Self::LaptopKeyboard2021,
+            "19b3" | "193b" => Self::AnimeOrSlash,
+            "19b6" => Self::LaptopKeyboard2021,
+            _ => Self::Unknown,
         }
     }
 }

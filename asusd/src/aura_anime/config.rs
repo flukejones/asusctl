@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "anime.ron";
 
-#[derive(Deserialize, Serialize, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct AnimeConfigCached {
     pub system: Vec<ActionData>,
     pub boot: Vec<ActionData>,
@@ -54,6 +54,8 @@ impl AnimeConfigCached {
 /// Config for base system actions for the anime display
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct AnimeConfig {
+    #[serde(skip)]
+    pub anime_type: AnimeType,
     pub system: Vec<ActionLoader>,
     pub boot: Vec<ActionLoader>,
     pub wake: Vec<ActionLoader>,
@@ -72,6 +74,7 @@ pub struct AnimeConfig {
 impl Default for AnimeConfig {
     fn default() -> Self {
         AnimeConfig {
+            anime_type: AnimeType::GA402,
             system: Vec::new(),
             boot: Vec::new(),
             wake: Vec::new(),

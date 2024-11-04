@@ -127,24 +127,24 @@ fn find_aura_iface() -> Result<Vec<AuraProxyBlocking<'static>>, Box<dyn std::err
     let f =
         zbus::blocking::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/").unwrap();
     let interfaces = f.get_managed_objects().unwrap();
-    let mut aura_paths = Vec::new();
+    let mut paths = Vec::new();
     for v in interfaces.iter() {
         // let o: Vec<zbus::names::OwnedInterfaceName> = v.1.keys().map(|e|
         // e.to_owned()).collect(); println!("{}, {:?}", v.0, o);
         for k in v.1.keys() {
             if k.as_str() == "org.asuslinux.Aura" {
                 println!("Found aura device at {}, {}", v.0, k);
-                aura_paths.push(v.0.clone());
+                paths.push(v.0.clone());
             }
         }
     }
-    if aura_paths.len() > 1 {
-        println!("Multiple aura devices found: {aura_paths:?}");
+    if paths.len() > 1 {
+        println!("Multiple aura devices found: {paths:?}");
         println!("TODO: enable selection");
     }
-    if !aura_paths.is_empty() {
+    if !paths.is_empty() {
         let mut ctrl = Vec::new();
-        for path in aura_paths {
+        for path in paths {
             ctrl.push(
                 AuraProxyBlocking::builder(&conn)
                     .path(path.clone())?
@@ -156,6 +156,42 @@ fn find_aura_iface() -> Result<Vec<AuraProxyBlocking<'static>>, Box<dyn std::err
     }
 
     Err("No Aura interface".into())
+}
+
+fn find_slash_iface() -> Result<Vec<SlashProxyBlocking<'static>>, Box<dyn std::error::Error>> {
+    let conn = zbus::blocking::Connection::system().unwrap();
+    let f =
+        zbus::blocking::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/").unwrap();
+    let interfaces = f.get_managed_objects().unwrap();
+    let mut paths = Vec::new();
+    for v in interfaces.iter() {
+        // let o: Vec<zbus::names::OwnedInterfaceName> = v.1.keys().map(|e|
+        // e.to_owned()).collect(); println!("{}, {:?}", v.0, o);
+        for k in v.1.keys() {
+            if k.as_str() == "org.asuslinux.Slash" {
+                println!("Found slash device at {}, {}", v.0, k);
+                paths.push(v.0.clone());
+            }
+        }
+    }
+    if paths.len() > 1 {
+        println!("Multiple slash devices found: {paths:?}");
+        println!("TODO: enable selection");
+    }
+    if !paths.is_empty() {
+        let mut ctrl = Vec::new();
+        for path in paths {
+            ctrl.push(
+                SlashProxyBlocking::builder(&conn)
+                    .path(path.clone())?
+                    .destination("org.asuslinux.Daemon")?
+                    .build()?,
+            );
+        }
+        return Ok(ctrl);
+    }
+
+    Err("No Slash interface".into())
 }
 
 fn do_parsed(
@@ -176,7 +212,7 @@ fn do_parsed(
         }
         Some(CliCommand::Graphics(_)) => do_gfx(),
         Some(CliCommand::Anime(cmd)) => handle_anime(&conn, cmd)?,
-        Some(CliCommand::Slash(cmd)) => handle_slash(&conn, cmd)?,
+        Some(CliCommand::Slash(cmd)) => handle_slash(cmd)?,
         Some(CliCommand::Bios(cmd)) => {
             handle_platform_properties(&conn, supported_properties, cmd)?
         }
@@ -522,7 +558,7 @@ fn verify_brightness(brightness: f32) {
     }
 }
 
-fn handle_slash(conn: &Connection, cmd: &SlashCommand) -> Result<(), Box<dyn std::error::Error>> {
+fn handle_slash(cmd: &SlashCommand) -> Result<(), Box<dyn std::error::Error>> {
     if (cmd.brightness.is_none()
         && cmd.interval.is_none()
         && cmd.slash_mode.is_none()
@@ -536,21 +572,24 @@ fn handle_slash(conn: &Connection, cmd: &SlashCommand) -> Result<(), Box<dyn std
             println!("\n{}", lst);
         }
     }
-    let proxy = SlashProxyBlocking::new(conn)?;
-    if cmd.enable {
-        proxy.set_enabled(true)?;
-    }
-    if cmd.disable {
-        proxy.set_enabled(false)?;
-    }
-    if let Some(brightness) = cmd.brightness {
-        proxy.set_brightness(brightness)?;
-    }
-    if let Some(interval) = cmd.interval {
-        proxy.set_interval(interval)?;
-    }
-    if let Some(slash_mode) = cmd.slash_mode {
-        proxy.set_slash_mode(slash_mode)?;
+
+    let slashes = find_slash_iface()?;
+    for proxy in slashes {
+        if cmd.enable {
+            proxy.set_enabled(true)?;
+        }
+        if cmd.disable {
+            proxy.set_enabled(false)?;
+        }
+        if let Some(brightness) = cmd.brightness {
+            proxy.set_brightness(brightness)?;
+        }
+        if let Some(interval) = cmd.interval {
+            proxy.set_interval(interval)?;
+        }
+        if let Some(slash_mode) = cmd.slash_mode {
+            proxy.set_slash_mode(slash_mode)?;
+        }
     }
     if cmd.list {
         let res = SlashMode::list();

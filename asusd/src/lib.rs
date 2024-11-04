@@ -1,17 +1,16 @@
 #![deny(unused_must_use)]
 /// Configuration loading, saving
 pub mod config;
-/// Control of anime matrix display
-pub mod ctrl_anime;
-/// Keyboard LED brightness control, RGB, and LED display modes
-pub mod ctrl_aura;
 /// Control platform profiles + fan-curves if available
 pub mod ctrl_fancurves;
 /// Control ASUS bios function such as boot sound, Optimus/Dedicated gfx mode
 pub mod ctrl_platform;
-/// Control of Slash led bar
-pub mod ctrl_slash;
 
+pub mod aura_anime;
+pub mod aura_laptop;
+pub mod aura_manager;
+pub mod aura_slash;
+pub mod aura_types;
 pub mod error;
 
 use std::future::Future;
