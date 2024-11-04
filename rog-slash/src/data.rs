@@ -8,6 +8,7 @@ use zbus::zvariant::Type;
 use zbus::zvariant::{OwnedValue, Value};
 
 use crate::error::SlashError;
+use crate::usb::{PROD_ID1, PROD_ID1_STR, PROD_ID2, PROD_ID2_STR};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum SlashType {
@@ -15,6 +16,26 @@ pub enum SlashType {
     GA605,
     GU605,
     Unsupported,
+}
+
+impl SlashType {
+    pub const fn prod_id(&self) -> u16 {
+        match self {
+            SlashType::GA403 => PROD_ID1,
+            SlashType::GA605 => PROD_ID2,
+            SlashType::GU605 => PROD_ID1,
+            SlashType::Unsupported => 0,
+        }
+    }
+
+    pub const fn prod_id_str(&self) -> &str {
+        match self {
+            SlashType::GA403 => PROD_ID1_STR,
+            SlashType::GA605 => PROD_ID2_STR,
+            SlashType::GU605 => PROD_ID1_STR,
+            SlashType::Unsupported => "",
+        }
+    }
 }
 
 impl FromStr for SlashType {

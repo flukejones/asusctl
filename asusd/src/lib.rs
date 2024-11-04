@@ -12,6 +12,8 @@ pub mod ctrl_platform;
 /// Control of Slash led bar
 pub mod ctrl_slash;
 
+pub mod hid_manager;
+
 pub mod error;
 
 use std::future::Future;

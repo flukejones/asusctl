@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use config_traits::StdConfig;
 use log::warn;
-use rog_slash::usb::{pkt_set_mode, pkt_set_options};
+use rog_slash::usb::pkt_set_options;
 use rog_slash::{DeviceState, SlashMode};
 use zbus::export::futures_util::lock::Mutex;
 use zbus::{interface, Connection, SignalContext};
@@ -41,8 +41,10 @@ impl CtrlSlashZbus {
         } else {
             lock.config.slash_brightness
         };
+        let slash_type = lock.slash_type;
         lock.node
             .write_bytes(&pkt_set_options(
+                slash_type,
                 enabled,
                 brightness,
                 lock.config.slash_interval,
@@ -69,8 +71,10 @@ impl CtrlSlashZbus {
     async fn set_brightness(&self, brightness: u8) {
         let mut lock = self.0.lock().await;
         let enabled = brightness > 0;
+        let slash_type = lock.slash_type;
         lock.node
             .write_bytes(&pkt_set_options(
+                slash_type,
                 enabled,
                 brightness,
                 lock.config.slash_interval,
@@ -95,8 +99,10 @@ impl CtrlSlashZbus {
     #[zbus(property)]
     async fn set_interval(&self, interval: u8) {
         let mut lock = self.0.lock().await;
+        let slash_type = lock.slash_type;
         lock.node
             .write_bytes(&pkt_set_options(
+                slash_type,
                 lock.config.slash_enabled,
                 lock.config.slash_brightness,
                 interval,
@@ -121,16 +127,7 @@ impl CtrlSlashZbus {
     async fn set_slash_mode(&self, slash_mode: SlashMode) {
         let mut lock = self.0.lock().await;
 
-        let command_packets = pkt_set_mode(slash_mode);
-
-        lock.node
-            .write_bytes(&command_packets[0])
-            .map_err(|err| {
-                warn!("ctrl_slash::set_options {}", err);
-            })
-            .ok();
-        lock.node
-            .write_bytes(&command_packets[1])
+        lock.set_slash_mode(slash_mode)
             .map_err(|err| {
                 warn!("ctrl_slash::set_options {}", err);
             })

@@ -49,6 +49,12 @@ impl CtrlAnimeZbus {
     /// Writes a data stream of length. Will force system thread to exit until
     /// it is restarted
     async fn write(&self, input: AnimeDataBuffer) -> zbus::fdo::Result<()> {
+        let bright = self.0.lock().await.config.display_brightness;
+        self.0
+            .lock()
+            .await
+            .node
+            .set_builtins_enabled(false, bright)?;
         self.0
             .lock()
             .await

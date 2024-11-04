@@ -12,7 +12,7 @@ use asusd::ctrl_fancurves::CtrlFanCurveZbus;
 use asusd::ctrl_platform::CtrlPlatform;
 use asusd::ctrl_slash::trait_impls::CtrlSlashZbus;
 use asusd::ctrl_slash::CtrlSlash;
-use asusd::{print_board_info, start_tasks, CtrlTask, DBUS_NAME};
+use asusd::{print_board_info, start_tasks, CtrlTask, ZbusRun, DBUS_NAME};
 use config_traits::{StdConfig, StdConfigLoad1};
 use log::{error, info};
 use zbus::fdo::ObjectManager;
@@ -71,6 +71,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     let config = Arc::new(Mutex::new(config));
 
     // supported.add_to_server(&mut connection).await;
+    let _ = AuraManager::new(connection.clone()).await?;
 
     match CtrlFanCurveZbus::new() {
         Ok(ctrl) => {
@@ -110,19 +111,19 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     match CtrlSlash::new() {
         Ok(ctrl) => {
             let zbus = CtrlSlashZbus(Arc::new(Mutex::new(ctrl)));
-            // Currently, the Slash has no need for a loop watching power events, however,
-            // it could be cool to have the slash do some power-on/off animation
-            // (It has a built-in power on animation which plays when u plug in the power
+            // Currently, the Slash has no need for a loop watching power
+            // events, however, it could be cool to have the slash
+            // do some power-on/off animation (It has a built-in
+            // power on animation which plays when u plug in the power
             // supply)
-            let sig_ctx = CtrlSlashZbus::signal_context(&connection)?;
-            start_tasks(zbus, &mut connection, sig_ctx).await?;
+            zbus.add_to_server(&mut connection).await;
+            // let sig_ctx = CtrlSlashZbus::signal_context(&connection)?;
+            // start_tasks(zbus, &mut connection, sig_ctx).await?;
         }
         Err(err) => {
             info!("AniMe control: {}", err);
         }
     }
-
-    let _ = AuraManager::new(connection.clone()).await?;
 
     // Request dbus name after finishing initalizing all functions
     connection.request_name(DBUS_NAME).await?;
