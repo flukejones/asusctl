@@ -1,25 +1,22 @@
 use std::sync::atomic::Ordering;
-use std::sync::Arc;
 
 use config_traits::StdConfig;
-use log::warn;
+use log::{error, warn};
 use logind_zbus::manager::ManagerProxy;
 use rog_anime::usb::{
     pkt_set_brightness, pkt_set_builtin_animations, pkt_set_enable_display,
     pkt_set_enable_powersave_anim, Brightness,
 };
 use rog_anime::{Animations, AnimeDataBuffer, DeviceState};
-use zbus::export::futures_util::lock::Mutex;
 use zbus::object_server::SignalEmitter;
 use zbus::proxy::CacheProperties;
+use zbus::zvariant::OwnedObjectPath;
 use zbus::{interface, Connection};
 
-use super::config::AnimeConfig;
-use super::CtrlAnime;
+use super::config::AniMeConfig;
+use super::AniMe;
 use crate::error::RogError;
-
-pub const ANIME_ZBUS_NAME: &str = "Anime";
-pub const ANIME_ZBUS_PATH: &str = "/org/asuslinux";
+use crate::Reloadable;
 
 async fn get_logind_manager<'a>() -> ManagerProxy<'a> {
     let connection = Connection::system()
@@ -34,12 +31,29 @@ async fn get_logind_manager<'a>() -> ManagerProxy<'a> {
 }
 
 #[derive(Clone)]
-pub struct CtrlAnimeZbus(pub Arc<Mutex<CtrlAnime>>);
+pub struct AniMeZbus(AniMe);
 
-/// The struct with the main dbus methods requires this trait
-impl crate::ZbusRun for CtrlAnimeZbus {
-    async fn add_to_server(self, server: &mut Connection) {
-        Self::add_to_server_helper(self, ANIME_ZBUS_PATH, server).await;
+impl AniMeZbus {
+    pub fn new(anime: AniMe) -> Self {
+        Self(anime)
+    }
+
+    pub async fn start_tasks(
+        mut self,
+        connection: &Connection,
+        path: OwnedObjectPath,
+    ) -> Result<(), RogError> {
+        // let task = zbus.clone();
+        self.reload()
+            .await
+            .unwrap_or_else(|err| warn!("Controller error: {}", err));
+        connection
+            .object_server()
+            .at(path.clone(), self)
+            .await
+            .map_err(|e| error!("Couldn't add server at path: {path}, {e:?}"))
+            .ok();
+        Ok(())
     }
 }
 
@@ -47,91 +61,84 @@ impl crate::ZbusRun for CtrlAnimeZbus {
 // If the try_lock *does* succeed then any other thread trying to lock will not
 // grab it until we finish.
 #[interface(name = "org.asuslinux.Anime")]
-impl CtrlAnimeZbus {
+impl AniMeZbus {
     /// Writes a data stream of length. Will force system thread to exit until
     /// it is restarted
     async fn write(&self, input: AnimeDataBuffer) -> zbus::fdo::Result<()> {
-        self.0
-            .lock()
-            .await
-            .thread_exit
-            .store(true, Ordering::SeqCst);
-        self.0
-            .lock()
-            .await
-            .write_data_buffer(input)
-            .map_err(|err| {
-                warn!("ctrl_anime::run_animation:callback {}", err);
-                err
-            })?;
+        let bright = self.0.config.lock().await.display_brightness;
+        self.0.set_builtins_enabled(false, bright).await?;
+        self.0.thread_exit.store(true, Ordering::SeqCst);
+        self.0.write_data_buffer(input).await.map_err(|err| {
+            warn!("ctrl_anime::run_animation:callback {}", err);
+            err
+        })?;
         Ok(())
     }
 
     /// Set base brightness level
     #[zbus(property)]
     async fn brightness(&self) -> Brightness {
-        self.0.lock().await.config.display_brightness
+        if let Ok(config) = self.0.config.try_lock() {
+            return config.display_brightness;
+        }
+        Brightness::Off
     }
 
     /// Set base brightness level
     #[zbus(property)]
     async fn set_brightness(&self, brightness: Brightness) {
         self.0
-            .lock()
-            .await
-            .node
             .write_bytes(&pkt_set_brightness(brightness))
+            .await
             .map_err(|err| {
                 warn!("ctrl_anime::set_brightness {}", err);
             })
             .ok();
         self.0
-            .lock()
-            .await
-            .node
             .write_bytes(&pkt_set_enable_display(brightness != Brightness::Off))
+            .await
             .map_err(|err| {
                 warn!("ctrl_anime::set_brightness {}", err);
             })
             .ok();
 
-        self.0.lock().await.config.display_enabled = brightness != Brightness::Off;
-        self.0.lock().await.config.display_brightness = brightness;
-        self.0.lock().await.config.write();
+        let mut config = self.0.config.lock().await;
+        config.display_enabled = brightness != Brightness::Off;
+        config.display_brightness = brightness;
+        config.write();
     }
 
     #[zbus(property)]
     async fn builtins_enabled(&self) -> bool {
-        let lock = self.0.lock().await;
-        lock.config.builtin_anims_enabled
+        if let Ok(config) = self.0.config.try_lock() {
+            return config.builtin_anims_enabled;
+        }
+        false
     }
 
     /// Enable the builtin animations or not. This is quivalent to "Powersave
     /// animations" in Armory crate
     #[zbus(property)]
     async fn set_builtins_enabled(&self, enabled: bool) {
-        let brightness = self.0.lock().await.config.display_brightness;
+        let mut config = self.0.config.lock().await;
+        let brightness = config.display_brightness;
         self.0
-            .lock()
-            .await
-            .node
             .set_builtins_enabled(enabled, brightness)
+            .await
             .map_err(|err| {
                 warn!("ctrl_anime::set_builtins_enabled {}", err);
             })
             .ok();
 
         if !enabled {
-            let anime_type = self.0.lock().await.anime_type;
+            let anime_type = config.anime_type;
             let data = vec![255u8; anime_type.data_length()];
             if let Ok(tmp) = AnimeDataBuffer::from_vec(anime_type, data).map_err(|err| {
                 warn!("ctrl_anime::set_builtins_enabled {}", err);
             }) {
                 self.0
-                    .lock()
-                    .await
-                    .node
                     .write_bytes(tmp.data())
+                    .await
                     .map_err(|err| {
                         warn!("ctrl_anime::set_builtins_enabled {}", err);
                     })
@@ -139,77 +146,78 @@ impl CtrlAnimeZbus {
             }
         }
 
-        self.0.lock().await.config.builtin_anims_enabled = enabled;
-        self.0.lock().await.config.write();
+        config.builtin_anims_enabled = enabled;
+        config.write();
         if enabled {
-            self.0
-                .lock()
-                .await
-                .thread_exit
-                .store(true, Ordering::Release);
+            self.0.thread_exit.store(true, Ordering::Release);
         }
     }
 
     #[zbus(property)]
     async fn builtin_animations(&self) -> Animations {
-        self.0.lock().await.config.builtin_anims
+        if let Ok(config) = self.0.config.try_lock() {
+            return config.builtin_anims;
+        }
+        Animations::default()
     }
 
     /// Set which builtin animation is used for each stage
     #[zbus(property)]
     async fn set_builtin_animations(&self, settings: Animations) {
         self.0
-            .lock()
-            .await
-            .node
             .write_bytes(&pkt_set_builtin_animations(
                 settings.boot,
                 settings.awake,
                 settings.sleep,
                 settings.shutdown,
             ))
+            .await
             .map_err(|err| {
                 warn!("ctrl_anime::run_animation:callback {}", err);
             })
             .ok();
         self.0
-            .lock()
-            .await
-            .node
             .write_bytes(&pkt_set_enable_powersave_anim(true))
+            .await
             .map_err(|err| {
                 warn!("ctrl_anime::run_animation:callback {}", err);
             })
             .ok();
-        self.0.lock().await.config.display_enabled = true;
-        self.0.lock().await.config.builtin_anims = settings;
-        self.0.lock().await.config.write();
+        let mut config = self.0.config.lock().await;
+        config.display_enabled = true;
+        config.builtin_anims = settings;
+        config.write();
     }
 
     #[zbus(property)]
     async fn enable_display(&self) -> bool {
-        self.0.lock().await.config.display_enabled
+        if let Ok(config) = self.0.config.try_lock() {
+            return config.display_enabled;
+        }
+        false
     }
 
     /// Set whether the AniMe is enabled at all
     #[zbus(property)]
     async fn set_enable_display(&self, enabled: bool) {
         self.0
-            .lock()
-            .await
-            .node
             .write_bytes(&pkt_set_enable_display(enabled))
+            .await
             .map_err(|err| {
                 warn!("ctrl_anime::run_animation:callback {}", err);
             })
             .ok();
-        self.0.lock().await.config.display_enabled = enabled;
-        self.0.lock().await.config.write();
+        let mut config = self.0.config.lock().await;
+        config.display_enabled = enabled;
+        config.write();
     }
 
     #[zbus(property)]
     async fn off_when_unplugged(&self) -> bool {
-        self.0.lock().await.config.off_when_unplugged
+        if let Ok(config) = self.0.config.try_lock() {
+            return config.off_when_unplugged;
+        }
+        false
     }
 
     /// Set if to turn the AniMe Matrix off when external power is unplugged
@@ -219,34 +227,40 @@ impl CtrlAnimeZbus {
         let pow = manager.on_external_power().await.unwrap_or_default();
 
         self.0
-            .lock()
-            .await
-            .node
             .write_bytes(&pkt_set_enable_display(!pow && !enabled))
+            .await
             .map_err(|err| {
                 warn!("create_sys_event_tasks::off_when_lid_closed {}", err);
             })
             .ok();
 
-        self.0.lock().await.config.off_when_unplugged = enabled;
-        self.0.lock().await.config.write();
+        let mut config = self.0.config.lock().await;
+        config.off_when_unplugged = enabled;
+        config.write();
     }
 
     #[zbus(property)]
     async fn off_when_suspended(&self) -> bool {
-        self.0.lock().await.config.off_when_suspended
+        if let Ok(config) = self.0.config.try_lock() {
+            return config.off_when_suspended;
+        }
+        false
     }
 
     /// Set if to turn the AniMe Matrix off when the laptop is suspended
     #[zbus(property)]
     async fn set_off_when_suspended(&self, enabled: bool) {
-        self.0.lock().await.config.off_when_suspended = enabled;
-        self.0.lock().await.config.write();
+        let mut config = self.0.config.lock().await;
+        config.off_when_suspended = enabled;
+        config.write();
     }
 
     #[zbus(property)]
     async fn off_when_lid_closed(&self) -> bool {
-        self.0.lock().await.config.off_when_lid_closed
+        if let Ok(config) = self.0.config.try_lock() {
+            return config.off_when_lid_closed;
+        }
+        false
     }
 
     /// Set if to turn the AniMe Matrix off when the lid is closed
@@ -256,47 +270,37 @@ impl CtrlAnimeZbus {
         let lid = manager.lid_closed().await.unwrap_or_default();
 
         self.0
-            .lock()
-            .await
-            .node
             .write_bytes(&pkt_set_enable_display(lid && !enabled))
+            .await
             .map_err(|err| {
                 warn!("create_sys_event_tasks::off_when_lid_closed {}", err);
             })
             .ok();
 
-        self.0.lock().await.config.off_when_lid_closed = enabled;
-        self.0.lock().await.config.write();
+        let mut config = self.0.config.lock().await;
+        config.off_when_lid_closed = enabled;
+        config.write();
     }
 
     /// The main loop is the base system set action if the user isn't running
     /// the user daemon
     async fn run_main_loop(&self, start: bool) {
         if start {
-            self.0
-                .lock()
-                .await
-                .thread_exit
-                .store(true, Ordering::SeqCst);
-            CtrlAnime::run_thread(
-                self.0.clone(),
-                self.0.lock().await.cache.system.clone(),
-                false,
-            )
-            .await;
+            self.0.thread_exit.store(true, Ordering::SeqCst);
+            self.0.run_thread(self.0.cache.system.clone(), false).await;
         }
     }
 
     /// Get the device state as stored by asusd
     // #[zbus(property)]
     async fn device_state(&self) -> DeviceState {
-        DeviceState::from(&self.0.lock().await.config)
+        DeviceState::from(&*self.0.config.lock().await)
     }
 }
 
-impl crate::CtrlTask for CtrlAnimeZbus {
+impl crate::CtrlTask for AniMeZbus {
     fn zbus_path() -> &'static str {
-        ANIME_ZBUS_PATH
+        "ANIME_ZBUS_PATH"
     }
 
     async fn create_tasks(&self, _: SignalEmitter<'static>) -> Result<(), RogError> {
@@ -309,21 +313,15 @@ impl crate::CtrlTask for CtrlAnimeZbus {
                 // on_sleep
                 let inner = inner1.clone();
                 async move {
-                    let config = inner.lock().await.config.clone();
+                    let config = inner.config.lock().await.clone();
                     if config.display_enabled {
-                        inner
-                            .lock()
-                            .await
-                            .thread_exit
-                            .store(true, Ordering::Release); // ensure clean slate
+                        inner.thread_exit.store(true, Ordering::Release); // ensure clean slate
 
                         inner
-                            .lock()
-                            .await
-                            .node
                             .write_bytes(&pkt_set_enable_display(
                                 !(sleeping && config.off_when_suspended),
                             ))
+                            .await
                             .map_err(|err| {
                                 warn!("create_sys_event_tasks::off_when_suspended {}", err);
                             })
@@ -331,12 +329,10 @@ impl crate::CtrlTask for CtrlAnimeZbus {
 
                         if config.builtin_anims_enabled {
                             inner
-                                .lock()
-                                .await
-                                .node
                                 .write_bytes(&pkt_set_enable_powersave_anim(
                                     !(sleeping && config.off_when_suspended),
                                 ))
+                                .await
                                 .map_err(|err| {
                                     warn!("create_sys_event_tasks::off_when_suspended {}", err);
                                 })
@@ -344,18 +340,11 @@ impl crate::CtrlTask for CtrlAnimeZbus {
                         } else if !sleeping && !config.builtin_anims_enabled {
                             // Run custom wake animation
                             inner
-                                .lock()
-                                .await
-                                .node
                                 .write_bytes(&pkt_set_enable_powersave_anim(false))
+                                .await
                                 .ok(); // ensure builtins are disabled
 
-                            CtrlAnime::run_thread(
-                                inner.clone(),
-                                inner.lock().await.cache.wake.clone(),
-                                true,
-                            )
-                            .await;
+                            inner.run_thread(inner.cache.wake.clone(), true).await;
                         }
                     }
                 }
@@ -364,26 +353,16 @@ impl crate::CtrlTask for CtrlAnimeZbus {
                 // on_shutdown
                 let inner = inner2.clone();
                 async move {
-                    let AnimeConfig {
+                    let AniMeConfig {
                         display_enabled,
                         builtin_anims_enabled,
                         ..
-                    } = inner.lock().await.config;
+                    } = *inner.config.lock().await;
                     if display_enabled && !builtin_anims_enabled {
                         if shutting_down {
-                            CtrlAnime::run_thread(
-                                inner.clone(),
-                                inner.lock().await.cache.shutdown.clone(),
-                                true,
-                            )
-                            .await;
+                            inner.run_thread(inner.cache.shutdown.clone(), true).await;
                         } else {
-                            CtrlAnime::run_thread(
-                                inner.clone(),
-                                inner.lock().await.cache.boot.clone(),
-                                true,
-                            )
-                            .await;
+                            inner.run_thread(inner.cache.boot.clone(), true).await;
                         }
                     }
                 }
@@ -392,28 +371,24 @@ impl crate::CtrlTask for CtrlAnimeZbus {
                 let inner = inner3.clone();
                 // on lid change
                 async move {
-                    let AnimeConfig {
+                    let AniMeConfig {
                         off_when_lid_closed,
                         builtin_anims_enabled,
                         ..
-                    } = inner.lock().await.config;
+                    } = *inner.config.lock().await;
                     if off_when_lid_closed {
                         if builtin_anims_enabled {
                             inner
-                                .lock()
-                                .await
-                                .node
                                 .write_bytes(&pkt_set_enable_powersave_anim(!lid_closed))
+                                .await
                                 .map_err(|err| {
                                     warn!("create_sys_event_tasks::off_when_suspended {}", err);
                                 })
                                 .ok();
                         }
                         inner
-                            .lock()
-                            .await
-                            .node
                             .write_bytes(&pkt_set_enable_display(!lid_closed))
+                            .await
                             .map_err(|err| {
                                 warn!("create_sys_event_tasks::off_when_lid_closed {}", err);
                             })
@@ -425,39 +400,33 @@ impl crate::CtrlTask for CtrlAnimeZbus {
                 let inner = inner4.clone();
                 // on power change
                 async move {
-                    let AnimeConfig {
+                    let AniMeConfig {
                         off_when_unplugged,
                         builtin_anims_enabled,
                         brightness_on_battery,
                         ..
-                    } = inner.lock().await.config;
+                    } = *inner.config.lock().await;
                     if off_when_unplugged {
                         if builtin_anims_enabled {
                             inner
-                                .lock()
-                                .await
-                                .node
                                 .write_bytes(&pkt_set_enable_powersave_anim(power_plugged))
+                                .await
                                 .map_err(|err| {
                                     warn!("create_sys_event_tasks::off_when_suspended {}", err);
                                 })
                                 .ok();
                         }
                         inner
-                            .lock()
-                            .await
-                            .node
                             .write_bytes(&pkt_set_enable_display(power_plugged))
+                            .await
                             .map_err(|err| {
                                 warn!("create_sys_event_tasks::off_when_unplugged {}", err);
                             })
                             .ok();
                     } else {
                         inner
-                            .lock()
-                            .await
-                            .node
                             .write_bytes(&pkt_set_brightness(brightness_on_battery))
+                            .await
                             .map_err(|err| {
                                 warn!("create_sys_event_tasks::off_when_unplugged {}", err);
                             })
@@ -472,51 +441,54 @@ impl crate::CtrlTask for CtrlAnimeZbus {
     }
 }
 
-impl crate::Reloadable for CtrlAnimeZbus {
+impl crate::Reloadable for AniMeZbus {
     async fn reload(&mut self) -> Result<(), RogError> {
-        if let Some(lock) = self.0.try_lock() {
-            let anim = &lock.config.builtin_anims;
+        if let Ok(config) = self.0.config.try_lock() {
+            let anim = &config.builtin_anims;
             // Set builtins
-            if lock.config.builtin_anims_enabled {
-                lock.node.write_bytes(&pkt_set_builtin_animations(
-                    anim.boot,
-                    anim.awake,
-                    anim.sleep,
-                    anim.shutdown,
-                ))?;
+            if config.builtin_anims_enabled {
+                self.0
+                    .write_bytes(&pkt_set_builtin_animations(
+                        anim.boot,
+                        anim.awake,
+                        anim.sleep,
+                        anim.shutdown,
+                    ))
+                    .await?;
             }
             // Builtins enabled or na?
-            lock.node.set_builtins_enabled(
-                lock.config.builtin_anims_enabled,
-                lock.config.display_brightness,
-            )?;
+            self.0
+                .set_builtins_enabled(config.builtin_anims_enabled, config.display_brightness)
+                .await?;
 
             let manager = get_logind_manager().await;
             let lid_closed = manager.lid_closed().await.unwrap_or_default();
             let power_plugged = manager.on_external_power().await.unwrap_or_default();
 
-            let turn_off = (lid_closed && lock.config.off_when_lid_closed)
-                || (!power_plugged && lock.config.off_when_unplugged);
-            lock.node
+            let turn_off = (lid_closed && config.off_when_lid_closed)
+                || (!power_plugged && config.off_when_unplugged);
+            self.0
                 .write_bytes(&pkt_set_enable_display(!turn_off))
+                .await
                 .map_err(|err| {
                     warn!("create_sys_event_tasks::reload {}", err);
                 })
                 .ok();
 
-            if turn_off || !lock.config.display_enabled {
-                lock.node.write_bytes(&pkt_set_enable_display(false))?;
+            if turn_off || !config.display_enabled {
+                self.0.write_bytes(&pkt_set_enable_display(false)).await?;
                 // early return so we don't run animation thread
                 return Ok(());
             }
 
-            if !lock.config.builtin_anims_enabled && !lock.cache.boot.is_empty() {
-                lock.node
+            if !config.builtin_anims_enabled && !self.0.cache.boot.is_empty() {
+                self.0
                     .write_bytes(&pkt_set_enable_powersave_anim(false))
+                    .await
                     .ok();
 
-                let action = lock.cache.boot.clone();
-                CtrlAnime::run_thread(self.0.clone(), action, true).await;
+                let action = self.0.cache.boot.clone();
+                self.0.run_thread(action, true).await;
             }
         }
         Ok(())

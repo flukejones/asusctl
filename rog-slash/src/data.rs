@@ -1,6 +1,7 @@
 use std::fmt::Display;
 use std::str::FromStr;
 
+use dmi_id::DMIID;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 #[cfg(feature = "dbus")]
@@ -8,13 +9,48 @@ use zbus::zvariant::Type;
 use zbus::zvariant::{OwnedValue, Value};
 
 use crate::error::SlashError;
+use crate::usb::{PROD_ID1, PROD_ID1_STR, PROD_ID2, PROD_ID2_STR};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum SlashType {
     GA403,
     GA605,
     GU605,
+    #[default]
     Unsupported,
+}
+
+impl SlashType {
+    pub const fn prod_id(&self) -> u16 {
+        match self {
+            SlashType::GA403 => PROD_ID1,
+            SlashType::GA605 => PROD_ID2,
+            SlashType::GU605 => PROD_ID1,
+            SlashType::Unsupported => 0,
+        }
+    }
+
+    pub const fn prod_id_str(&self) -> &str {
+        match self {
+            SlashType::GA403 => PROD_ID1_STR,
+            SlashType::GA605 => PROD_ID2_STR,
+            SlashType::GU605 => PROD_ID1_STR,
+            SlashType::Unsupported => "",
+        }
+    }
+
+    pub fn from_dmi() -> Self {
+        let board_name = DMIID::new().unwrap_or_default().board_name.to_uppercase();
+        if board_name.contains("GA403") {
+            SlashType::GA403
+        } else if board_name.contains("GA605") {
+            SlashType::GA605
+        } else if board_name.contains("GU605") {
+            SlashType::GU605
+        } else {
+            SlashType::Unsupported
+        }
+    }
 }
 
 impl FromStr for SlashType {

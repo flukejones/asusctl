@@ -14,11 +14,16 @@ use dmi_id::DMIID;
 use crate::error::SlashError;
 use crate::{SlashMode, SlashType};
 
-const PACKET_SIZE: usize = 128;
-const DEV_PAGE: u8 = 0x5e;
+const PACKET_SIZE: usize = 32;
+const REPORT_ID_193B: u8 = 0x5e;
+const REPORT_ID_19B6: u8 = 0x5d;
+
 pub const VENDOR_ID: u16 = 0x0b05;
-pub const PROD_ID: u16 = 0x193b;
-pub const PROD_ID_STR: &str = "193B";
+
+pub const PROD_ID1: u16 = 0x193b;
+pub const PROD_ID1_STR: &str = "193B";
+pub const PROD_ID2: u16 = 0x19b6;
+pub const PROD_ID2_STR: &str = "19B6";
 
 pub type SlashUsbPacket = [u8; PACKET_SIZE];
 
@@ -28,26 +33,40 @@ pub type SlashUsbPacket = [u8; PACKET_SIZE];
 ///
 /// The currently known USB device is `193B`.
 #[inline]
-pub fn get_maybe_slash_type() -> Result<SlashType, SlashError> {
-    let dmi = DMIID::new().map_err(|_| SlashError::NoDevice)?; // TODO: better error
+pub fn get_slash_type() -> SlashType {
+    let dmi = DMIID::new()
+        .map_err(|_| SlashError::NoDevice)
+        .unwrap_or_default();
     let board_name = dmi.board_name;
 
     if board_name.contains("GA403") {
-        return Ok(SlashType::GA403);
+        SlashType::GA403
     } else if board_name.contains("GA605") {
-        return Ok(SlashType::GA605);
+        SlashType::GA605
     } else if board_name.contains("GU605") {
-        return Ok(SlashType::GU605);
+        SlashType::GU605
+    } else {
+        SlashType::Unsupported
     }
-    Ok(SlashType::Unsupported)
+}
+
+pub const fn report_id(slash_type: SlashType) -> u8 {
+    match slash_type {
+        SlashType::GA403 => REPORT_ID_193B,
+        SlashType::GA605 => REPORT_ID_19B6,
+        SlashType::GU605 => REPORT_ID_193B,
+        SlashType::Unsupported => REPORT_ID_19B6,
+    }
 }
 
 /// Get the two device initialization packets. These are required for device
 /// start after the laptop boots.
 #[inline]
-pub const fn pkts_for_init() -> [SlashUsbPacket; 2] {
+pub fn pkts_for_init(slash_type: SlashType) -> [SlashUsbPacket; 2] {
+    let report_id = report_id(slash_type);
+
     let mut pkt1 = [0; PACKET_SIZE];
-    pkt1[0] = DEV_PAGE;
+    pkt1[0] = report_id;
     pkt1[1] = 0xd7;
     pkt1[2] = 0x00;
     pkt1[3] = 0x00;
@@ -55,7 +74,7 @@ pub const fn pkts_for_init() -> [SlashUsbPacket; 2] {
     pkt1[5] = 0xac;
 
     let mut pkt2 = [0; PACKET_SIZE];
-    pkt2[0] = DEV_PAGE;
+    pkt2[0] = report_id;
     pkt2[1] = 0xd2;
     pkt2[2] = 0x02;
     pkt2[3] = 0x01;
@@ -66,9 +85,9 @@ pub const fn pkts_for_init() -> [SlashUsbPacket; 2] {
 }
 
 #[inline]
-pub const fn pkt_save() -> SlashUsbPacket {
+pub const fn pkt_save(slash_type: SlashType) -> SlashUsbPacket {
     let mut pkt = [0; PACKET_SIZE];
-    pkt[0] = DEV_PAGE;
+    pkt[0] = report_id(slash_type);
     pkt[1] = 0xd4;
     pkt[2] = 0x00;
     pkt[3] = 0x00;
@@ -79,16 +98,17 @@ pub const fn pkt_save() -> SlashUsbPacket {
 }
 
 #[inline]
-pub const fn pkt_set_mode(mode: SlashMode) -> [SlashUsbPacket; 2] {
+pub const fn pkt_set_mode(slash_type: SlashType, mode: SlashMode) -> [SlashUsbPacket; 2] {
+    let report_id = report_id(slash_type);
     let mut pkt1 = [0; PACKET_SIZE];
-    pkt1[0] = DEV_PAGE;
-    pkt1[1] = 0x02;
+    pkt1[0] = report_id;
+    pkt1[1] = 0xd2;
     pkt1[2] = 0x03;
     pkt1[3] = 0x00;
     pkt1[4] = 0x0c;
 
     let mut pkt2 = [0; PACKET_SIZE];
-    pkt2[0] = DEV_PAGE;
+    pkt2[0] = report_id;
     pkt2[1] = 0xd3;
     pkt2[2] = 0x04;
     pkt2[3] = 0x00;
@@ -96,7 +116,7 @@ pub const fn pkt_set_mode(mode: SlashMode) -> [SlashUsbPacket; 2] {
     pkt2[5] = 0x01;
     pkt2[6] = mode as u8;
     pkt2[7] = 0x02;
-    pkt2[8] = 0x19;
+    pkt2[8] = 0x19; // difference, GA605 = 0x10
     pkt2[9] = 0x03;
     pkt2[10] = 0x13;
     pkt2[11] = 0x04;
@@ -110,11 +130,16 @@ pub const fn pkt_set_mode(mode: SlashMode) -> [SlashUsbPacket; 2] {
 }
 
 #[inline]
-pub const fn pkt_set_options(enabled: bool, brightness: u8, interval: u8) -> SlashUsbPacket {
+pub const fn pkt_set_options(
+    slash_type: SlashType,
+    enabled: bool,
+    brightness: u8,
+    interval: u8,
+) -> SlashUsbPacket {
     let status_byte = if enabled { 0x01 } else { 0x00 };
 
     let mut pkt = [0; PACKET_SIZE];
-    pkt[0] = DEV_PAGE;
+    pkt[0] = report_id(slash_type);
     pkt[1] = 0xd3;
     pkt[2] = 0x03;
     pkt[3] = 0x01;

@@ -11,9 +11,9 @@ pub struct SlashCommand {
     pub disable: bool,
     #[options(meta = "", help = "Set brightness value <0-255>")]
     pub brightness: Option<u8>,
-    #[options(meta = "", help = "Set interval value <0-255>")]
+    #[options(meta = "", help = "Set interval value <0-5>")]
     pub interval: Option<u8>,
-    #[options(help = "Set SlashMode (so 'list' for all options)")]
+    #[options(meta = "", help = "Set SlashMode (so 'list' for all options)")]
     pub slash_mode: Option<SlashMode>,
     #[options(help = "list available animations")]
     pub list: bool,

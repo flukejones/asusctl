@@ -1,5 +1,5 @@
 use config_traits::{StdConfig, StdConfigLoad};
-use rog_slash::{DeviceState, SlashMode};
+use rog_slash::{DeviceState, SlashMode, SlashType};
 use serde::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "slash.ron";
@@ -7,6 +7,8 @@ const CONFIG_FILE: &str = "slash.ron";
 /// Config for base system actions for the anime display
 #[derive(Deserialize, Serialize, Debug)]
 pub struct SlashConfig {
+    #[serde(skip)]
+    pub slash_type: SlashType,
     pub slash_enabled: bool,
     pub slash_brightness: u8,
     pub slash_interval: u8,
@@ -20,6 +22,7 @@ impl Default for SlashConfig {
             slash_brightness: 255,
             slash_interval: 0,
             slash_mode: SlashMode::Bounce,
+            slash_type: SlashType::Unsupported,
         }
     }
 }

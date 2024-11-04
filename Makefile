@@ -19,15 +19,20 @@ LEDCFG := aura_support.ron
 
 SRC := Cargo.toml Cargo.lock Makefile $(shell find -type f -wholename '**/src/*.rs')
 
-STRIP_BINARIES ?= 0
+STRIP_BINARIES ?= 1
 
 DEBUG ?= 0
 ifeq ($(DEBUG),0)
-	ARGS += --release --features "rog-control-center/x11"
+	ARGS += --release
 	TARGET = release
 else
-	ARGS += --profile dev --features "rog-control-center/x11"
+	ARGS += --profile dev
 	TARGET = debug
+endif
+
+X11 ?= 0
+ifeq ($(X11),1)
+	ARGS += --features "rog-control-center/x11"
 endif
 
 VENDORED ?= 0
@@ -133,7 +138,7 @@ ifeq ($(VENDORED),1)
 	tar pxf vendor_asusctl_$(VERSION).tar.xz
 endif
 	cargo build $(ARGS)
-ifneq ($(STRIP_BINARIES),0)
+ifeq ($(STRIP_BINARIES),1)
 	strip -s ./target/$(TARGET)/$(BIN_C)
 	strip -s ./target/$(TARGET)/$(BIN_D)
 	strip -s ./target/$(TARGET)/$(BIN_U)

@@ -9,7 +9,7 @@ use aura_cli::{LedPowerCommand1, LedPowerCommand2};
 use dmi_id::DMIID;
 use fan_curve_cli::FanCurveCommand;
 use gumdrop::{Opt, Options};
-use rog_anime::usb::get_maybe_anime_type;
+use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType, Vec2};
 use rog_aura::keyboard::{AuraPowerState, LaptopAuraPower};
 use rog_aura::{self, AuraDeviceType, AuraEffect, PowerZones};
@@ -23,6 +23,7 @@ use rog_platform::platform::{GpuMode, Properties, ThrottlePolicy};
 use rog_profiles::error::ProfileError;
 use rog_slash::SlashMode;
 use ron::ser::PrettyConfig;
+use zbus::blocking::proxy::ProxyImpl;
 use zbus::blocking::Connection;
 
 use crate::aura_cli::{AuraPowerStates, LedBrightness};
@@ -122,31 +123,33 @@ fn check_service(name: &str) -> bool {
     false
 }
 
-fn find_aura_iface() -> Result<Vec<AuraProxyBlocking<'static>>, Box<dyn std::error::Error>> {
+fn find_iface<T>(iface_name: &str) -> Result<Vec<T>, Box<dyn std::error::Error>>
+where
+    T: ProxyImpl<'static> + From<zbus::Proxy<'static>>,
+{
     let conn = zbus::blocking::Connection::system().unwrap();
     let f =
         zbus::blocking::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/").unwrap();
     let interfaces = f.get_managed_objects().unwrap();
-    let mut aura_paths = Vec::new();
+    let mut paths = Vec::new();
     for v in interfaces.iter() {
         // let o: Vec<zbus::names::OwnedInterfaceName> = v.1.keys().map(|e|
         // e.to_owned()).collect(); println!("{}, {:?}", v.0, o);
         for k in v.1.keys() {
-            if k.as_str() == "org.asuslinux.Aura" {
-                println!("Found aura device at {}, {}", v.0, k);
-                aura_paths.push(v.0.clone());
+            if k.as_str() == iface_name {
+                println!("Found {iface_name} device at {}, {}", v.0, k);
+                paths.push(v.0.clone());
             }
         }
     }
-    if aura_paths.len() > 1 {
-        println!("Multiple aura devices found: {aura_paths:?}");
-        println!("TODO: enable selection");
+    if paths.len() > 1 {
+        println!("Multiple aura devices found: {paths:?}");
     }
-    if !aura_paths.is_empty() {
+    if !paths.is_empty() {
         let mut ctrl = Vec::new();
-        for path in aura_paths {
+        for path in paths {
             ctrl.push(
-                AuraProxyBlocking::builder(&conn)
+                T::builder(&conn)
                     .path(path.clone())?
                     .destination("org.asuslinux.Daemon")?
                     .build()?,
@@ -165,9 +168,9 @@ fn do_parsed(
     conn: Connection,
 ) -> Result<(), Box<dyn std::error::Error>> {
     match &parsed.command {
-        Some(CliCommand::LedMode(mode)) => handle_led_mode(&find_aura_iface()?, mode)?,
-        Some(CliCommand::LedPow1(pow)) => handle_led_power1(&find_aura_iface()?, pow)?,
-        Some(CliCommand::LedPow2(pow)) => handle_led_power2(&find_aura_iface()?, pow)?,
+        Some(CliCommand::Aura(mode)) => handle_led_mode(mode)?,
+        Some(CliCommand::AuraPowerOld(pow)) => handle_led_power1(pow)?,
+        Some(CliCommand::AuraPower(pow)) => handle_led_power2(pow)?,
         Some(CliCommand::Profile(cmd)) => {
             handle_throttle_profile(&conn, supported_properties, cmd)?
         }
@@ -175,9 +178,9 @@ fn do_parsed(
             handle_fan_curve(&conn, cmd)?;
         }
         Some(CliCommand::Graphics(_)) => do_gfx(),
-        Some(CliCommand::Anime(cmd)) => handle_anime(&conn, cmd)?,
-        Some(CliCommand::Slash(cmd)) => handle_slash(&conn, cmd)?,
-        Some(CliCommand::Bios(cmd)) => {
+        Some(CliCommand::Anime(cmd)) => handle_anime(cmd)?,
+        Some(CliCommand::Slash(cmd)) => handle_slash(cmd)?,
+        Some(CliCommand::Platform(cmd)) => {
             handle_platform_properties(&conn, supported_properties, cmd)?
         }
         None => {
@@ -192,21 +195,28 @@ fn do_parsed(
                 println!("{}", CliStart::usage());
                 println!();
                 if let Some(cmdlist) = CliStart::command_list() {
-                    let dev_type = if let Ok(proxy) = find_aura_iface() {
-                        // TODO: commands on all?
-                        proxy
-                            .first()
-                            .unwrap()
-                            .device_type()
-                            .unwrap_or(AuraDeviceType::Unknown)
-                    } else {
-                        AuraDeviceType::Unknown
-                    };
+                    let dev_type =
+                        if let Ok(proxy) = find_iface::<AuraProxyBlocking>("org.asuslinux.Aura") {
+                            // TODO: commands on all?
+                            proxy
+                                .first()
+                                .unwrap()
+                                .device_type()
+                                .unwrap_or(AuraDeviceType::Unknown)
+                        } else {
+                            AuraDeviceType::Unknown
+                        };
                     let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
                     for command in commands.iter().filter(|command| {
                         if command.trim().starts_with("fan-curve")
                             && !supported_interfaces
                                 .contains(&"org.asuslinux.FanCurves".to_string())
+                        {
+                            return false;
+                        }
+
+                        if command.trim().starts_with("aura")
+                            && !supported_interfaces.contains(&"org.asuslinux.Aura".to_string())
                         {
                             return false;
                         }
@@ -223,7 +233,7 @@ fn do_parsed(
                             return false;
                         }
 
-                        if command.trim().starts_with("bios")
+                        if command.trim().starts_with("platform")
                             && !supported_interfaces.contains(&"org.asuslinux.Platform".to_string())
                         {
                             return false;
@@ -231,11 +241,11 @@ fn do_parsed(
 
                         if !dev_type.is_old_laptop()
                             && !dev_type.is_tuf_laptop()
-                            && command.trim().starts_with("led-pow-1")
+                            && command.trim().starts_with("aura-power-old")
                         {
                             return false;
                         }
-                        if !dev_type.is_new_laptop() && command.trim().starts_with("led-pow-2") {
+                        if !dev_type.is_new_laptop() && command.trim().starts_with("aura-power") {
                             return false;
                         }
                         true
@@ -252,7 +262,7 @@ fn do_parsed(
     }
 
     if let Some(brightness) = &parsed.kbd_bright {
-        if let Ok(aura) = find_aura_iface() {
+        if let Ok(aura) = find_iface::<AuraProxyBlocking>("org.asuslinux.Aura") {
             for aura in aura.iter() {
                 match brightness.level() {
                     None => {
@@ -268,7 +278,7 @@ fn do_parsed(
     }
 
     if parsed.next_kbd_bright {
-        if let Ok(aura) = find_aura_iface() {
+        if let Ok(aura) = find_iface::<AuraProxyBlocking>("org.asuslinux.Aura") {
             for aura in aura.iter() {
                 let brightness = aura.brightness()?;
                 aura.set_brightness(brightness.next())?;
@@ -279,7 +289,7 @@ fn do_parsed(
     }
 
     if parsed.prev_kbd_bright {
-        if let Ok(aura) = find_aura_iface() {
+        if let Ok(aura) = find_iface::<AuraProxyBlocking>("org.asuslinux.Aura") {
             for aura in aura.iter() {
                 let brightness = aura.brightness()?;
                 aura.set_brightness(brightness.prev())?;
@@ -295,7 +305,7 @@ fn do_parsed(
             "Supported Platform Properties:\n{:#?}",
             supported_properties
         );
-        if let Ok(aura) = find_aura_iface() {
+        if let Ok(aura) = find_iface::<AuraProxyBlocking>("org.asuslinux.Aura") {
             // TODO: multiple RGB check
             let bright = aura.first().unwrap().supported_brightness()?;
             let modes = aura.first().unwrap().supported_basic_modes()?;
@@ -331,7 +341,7 @@ fn do_gfx() {
     println!("This command will be removed in future");
 }
 
-fn handle_anime(conn: &Connection, cmd: &AnimeCommand) -> Result<(), Box<dyn std::error::Error>> {
+fn handle_anime(cmd: &AnimeCommand) -> Result<(), Box<dyn std::error::Error>> {
     if (cmd.command.is_none()
         && cmd.enable_display.is_none()
         && cmd.enable_powersave_anim.is_none()
@@ -348,165 +358,169 @@ fn handle_anime(conn: &Connection, cmd: &AnimeCommand) -> Result<(), Box<dyn std
             println!("\n{}", lst);
         }
     }
-    let proxy = AnimeProxyBlocking::new(conn)?;
-    if let Some(enable) = cmd.enable_display {
-        proxy.set_enable_display(enable)?;
-    }
-    if let Some(enable) = cmd.enable_powersave_anim {
-        proxy.set_builtins_enabled(enable)?;
-    }
-    if let Some(bright) = cmd.brightness {
-        proxy.set_brightness(bright)?;
-    }
-    if let Some(enable) = cmd.off_when_lid_closed {
-        proxy.set_off_when_lid_closed(enable)?;
-    }
-    if let Some(enable) = cmd.off_when_suspended {
-        proxy.set_off_when_suspended(enable)?;
-    }
-    if let Some(enable) = cmd.off_when_unplugged {
-        proxy.set_off_when_unplugged(enable)?;
-    }
-    if cmd.off_with_his_head.is_some() {
-        println!("Did Alice _really_ make it back from Wonderland?");
-    }
-
-    let mut anime_type = get_maybe_anime_type()?;
-    if let AnimeType::Unsupported = anime_type {
-        if let Some(model) = cmd.override_type {
-            anime_type = model;
+    let animes = find_iface::<AnimeProxyBlocking>("org.asuslinux.Anime")?;
+    for proxy in animes {
+        if let Some(enable) = cmd.enable_display {
+            proxy.set_enable_display(enable)?;
         }
-    }
+        if let Some(enable) = cmd.enable_powersave_anim {
+            proxy.set_builtins_enabled(enable)?;
+        }
+        if let Some(bright) = cmd.brightness {
+            proxy.set_brightness(bright)?;
+        }
+        if let Some(enable) = cmd.off_when_lid_closed {
+            proxy.set_off_when_lid_closed(enable)?;
+        }
+        if let Some(enable) = cmd.off_when_suspended {
+            proxy.set_off_when_suspended(enable)?;
+        }
+        if let Some(enable) = cmd.off_when_unplugged {
+            proxy.set_off_when_unplugged(enable)?;
+        }
+        if cmd.off_with_his_head.is_some() {
+            println!("Did Alice _really_ make it back from Wonderland?");
+        }
 
-    if cmd.clear {
-        let data = vec![255u8; anime_type.data_length()];
-        let tmp = AnimeDataBuffer::from_vec(anime_type, data)?;
-        proxy.write(tmp)?;
-    }
-
-    if let Some(action) = cmd.command.as_ref() {
-        match action {
-            AnimeActions::Image(image) => {
-                if image.help_requested() || image.path.is_empty() {
-                    println!("Missing arg or command\n\n{}", image.self_usage());
-                    if let Some(lst) = image.self_command_list() {
-                        println!("\n{}", lst);
-                    }
-                    return Ok(());
-                }
-                verify_brightness(image.bright);
-
-                let matrix = AnimeImage::from_png(
-                    Path::new(&image.path),
-                    image.scale,
-                    image.angle,
-                    Vec2::new(image.x_pos, image.y_pos),
-                    image.bright,
-                    anime_type,
-                )?;
-
-                proxy.write(<AnimeDataBuffer>::try_from(&matrix)?)?;
+        let mut anime_type = get_anime_type();
+        if let AnimeType::Unsupported = anime_type {
+            if let Some(model) = cmd.override_type {
+                anime_type = model;
             }
-            AnimeActions::PixelImage(image) => {
-                if image.help_requested() || image.path.is_empty() {
-                    println!("Missing arg or command\n\n{}", image.self_usage());
-                    if let Some(lst) = image.self_command_list() {
-                        println!("\n{}", lst);
+        }
+
+        if cmd.clear {
+            let data = vec![255u8; anime_type.data_length()];
+            let tmp = AnimeDataBuffer::from_vec(anime_type, data)?;
+            proxy.write(tmp)?;
+        }
+
+        if let Some(action) = cmd.command.as_ref() {
+            match action {
+                AnimeActions::Image(image) => {
+                    if image.help_requested() || image.path.is_empty() {
+                        println!("Missing arg or command\n\n{}", image.self_usage());
+                        if let Some(lst) = image.self_command_list() {
+                            println!("\n{}", lst);
+                        }
+                        return Ok(());
                     }
-                    return Ok(());
+                    verify_brightness(image.bright);
+
+                    let matrix = AnimeImage::from_png(
+                        Path::new(&image.path),
+                        image.scale,
+                        image.angle,
+                        Vec2::new(image.x_pos, image.y_pos),
+                        image.bright,
+                        anime_type,
+                    )?;
+
+                    proxy.write(<AnimeDataBuffer>::try_from(&matrix)?)?;
                 }
-                verify_brightness(image.bright);
-
-                let matrix = AnimeDiagonal::from_png(
-                    Path::new(&image.path),
-                    None,
-                    image.bright,
-                    anime_type,
-                )?;
-
-                proxy.write(matrix.into_data_buffer(anime_type)?)?;
-            }
-            AnimeActions::Gif(gif) => {
-                if gif.help_requested() || gif.path.is_empty() {
-                    println!("Missing arg or command\n\n{}", gif.self_usage());
-                    if let Some(lst) = gif.self_command_list() {
-                        println!("\n{}", lst);
+                AnimeActions::PixelImage(image) => {
+                    if image.help_requested() || image.path.is_empty() {
+                        println!("Missing arg or command\n\n{}", image.self_usage());
+                        if let Some(lst) = image.self_command_list() {
+                            println!("\n{}", lst);
+                        }
+                        return Ok(());
                     }
-                    return Ok(());
+                    verify_brightness(image.bright);
+
+                    let matrix = AnimeDiagonal::from_png(
+                        Path::new(&image.path),
+                        None,
+                        image.bright,
+                        anime_type,
+                    )?;
+
+                    proxy.write(matrix.into_data_buffer(anime_type)?)?;
                 }
-                verify_brightness(gif.bright);
+                AnimeActions::Gif(gif) => {
+                    if gif.help_requested() || gif.path.is_empty() {
+                        println!("Missing arg or command\n\n{}", gif.self_usage());
+                        if let Some(lst) = gif.self_command_list() {
+                            println!("\n{}", lst);
+                        }
+                        return Ok(());
+                    }
+                    verify_brightness(gif.bright);
 
-                let matrix = AnimeGif::from_gif(
-                    Path::new(&gif.path),
-                    gif.scale,
-                    gif.angle,
-                    Vec2::new(gif.x_pos, gif.y_pos),
-                    AnimTime::Count(1),
-                    gif.bright,
-                    anime_type,
-                )?;
+                    let matrix = AnimeGif::from_gif(
+                        Path::new(&gif.path),
+                        gif.scale,
+                        gif.angle,
+                        Vec2::new(gif.x_pos, gif.y_pos),
+                        AnimTime::Count(1),
+                        gif.bright,
+                        anime_type,
+                    )?;
 
-                let mut loops = gif.loops as i32;
-                loop {
-                    for frame in matrix.frames() {
-                        proxy.write(frame.frame().clone())?;
-                        sleep(frame.delay());
-                    }
-                    if loops >= 0 {
-                        loops -= 1;
-                    }
-                    if loops == 0 {
-                        break;
-                    }
-                }
-            }
-            AnimeActions::PixelGif(gif) => {
-                if gif.help_requested() || gif.path.is_empty() {
-                    println!("Missing arg or command\n\n{}", gif.self_usage());
-                    if let Some(lst) = gif.self_command_list() {
-                        println!("\n{}", lst);
-                    }
-                    return Ok(());
-                }
-                verify_brightness(gif.bright);
-
-                let matrix = AnimeGif::from_diagonal_gif(
-                    Path::new(&gif.path),
-                    AnimTime::Count(1),
-                    gif.bright,
-                    anime_type,
-                )?;
-
-                let mut loops = gif.loops as i32;
-                loop {
-                    for frame in matrix.frames() {
-                        proxy.write(frame.frame().clone())?;
-                        sleep(frame.delay());
-                    }
-                    if loops >= 0 {
-                        loops -= 1;
-                    }
-                    if loops == 0 {
-                        break;
+                    let mut loops = gif.loops as i32;
+                    loop {
+                        for frame in matrix.frames() {
+                            proxy.write(frame.frame().clone())?;
+                            sleep(frame.delay());
+                        }
+                        if loops >= 0 {
+                            loops -= 1;
+                        }
+                        if loops == 0 {
+                            break;
+                        }
                     }
                 }
-            }
-            AnimeActions::SetBuiltins(builtins) => {
-                if builtins.help_requested() || builtins.set.is_none() {
-                    println!("\nAny unspecified args will be set to default (first shown var)\n");
-                    println!("\n{}", builtins.self_usage());
-                    if let Some(lst) = builtins.self_command_list() {
-                        println!("\n{}", lst);
+                AnimeActions::PixelGif(gif) => {
+                    if gif.help_requested() || gif.path.is_empty() {
+                        println!("Missing arg or command\n\n{}", gif.self_usage());
+                        if let Some(lst) = gif.self_command_list() {
+                            println!("\n{}", lst);
+                        }
+                        return Ok(());
                     }
-                    return Ok(());
-                }
+                    verify_brightness(gif.bright);
 
-                proxy.set_builtin_animations(rog_anime::Animations {
-                    boot: builtins.boot,
-                    awake: builtins.awake,
-                    sleep: builtins.sleep,
-                    shutdown: builtins.shutdown,
-                })?;
+                    let matrix = AnimeGif::from_diagonal_gif(
+                        Path::new(&gif.path),
+                        AnimTime::Count(1),
+                        gif.bright,
+                        anime_type,
+                    )?;
+
+                    let mut loops = gif.loops as i32;
+                    loop {
+                        for frame in matrix.frames() {
+                            proxy.write(frame.frame().clone())?;
+                            sleep(frame.delay());
+                        }
+                        if loops >= 0 {
+                            loops -= 1;
+                        }
+                        if loops == 0 {
+                            break;
+                        }
+                    }
+                }
+                AnimeActions::SetBuiltins(builtins) => {
+                    if builtins.help_requested() || builtins.set.is_none() {
+                        println!(
+                            "\nAny unspecified args will be set to default (first shown var)\n"
+                        );
+                        println!("\n{}", builtins.self_usage());
+                        if let Some(lst) = builtins.self_command_list() {
+                            println!("\n{}", lst);
+                        }
+                        return Ok(());
+                    }
+
+                    proxy.set_builtin_animations(rog_anime::Animations {
+                        boot: builtins.boot,
+                        awake: builtins.awake,
+                        sleep: builtins.sleep,
+                        shutdown: builtins.shutdown,
+                    })?;
+                }
             }
         }
     }
@@ -522,7 +536,7 @@ fn verify_brightness(brightness: f32) {
     }
 }
 
-fn handle_slash(conn: &Connection, cmd: &SlashCommand) -> Result<(), Box<dyn std::error::Error>> {
+fn handle_slash(cmd: &SlashCommand) -> Result<(), Box<dyn std::error::Error>> {
     if (cmd.brightness.is_none()
         && cmd.interval.is_none()
         && cmd.slash_mode.is_none()
@@ -536,21 +550,24 @@ fn handle_slash(conn: &Connection, cmd: &SlashCommand) -> Result<(), Box<dyn std
             println!("\n{}", lst);
         }
     }
-    let proxy = SlashProxyBlocking::new(conn)?;
-    if cmd.enable {
-        proxy.set_enabled(true)?;
-    }
-    if cmd.disable {
-        proxy.set_enabled(false)?;
-    }
-    if let Some(brightness) = cmd.brightness {
-        proxy.set_brightness(brightness)?;
-    }
-    if let Some(interval) = cmd.interval {
-        proxy.set_interval(interval)?;
-    }
-    if let Some(slash_mode) = cmd.slash_mode {
-        proxy.set_slash_mode(slash_mode)?;
+
+    let slashes = find_iface::<SlashProxyBlocking>("org.asuslinux.Slash")?;
+    for proxy in slashes {
+        if cmd.enable {
+            proxy.set_enabled(true)?;
+        }
+        if cmd.disable {
+            proxy.set_enabled(false)?;
+        }
+        if let Some(brightness) = cmd.brightness {
+            proxy.set_brightness(brightness)?;
+        }
+        if let Some(interval) = cmd.interval {
+            proxy.set_interval(interval)?;
+        }
+        if let Some(slash_mode) = cmd.slash_mode {
+            proxy.set_slash_mode(slash_mode)?;
+        }
     }
     if cmd.list {
         let res = SlashMode::list();
@@ -562,10 +579,7 @@ fn handle_slash(conn: &Connection, cmd: &SlashCommand) -> Result<(), Box<dyn std
     Ok(())
 }
 
-fn handle_led_mode(
-    aura: &[AuraProxyBlocking],
-    mode: &LedModeCommand,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn handle_led_mode(mode: &LedModeCommand) -> Result<(), Box<dyn std::error::Error>> {
     if mode.command.is_none() && !mode.prev_mode && !mode.next_mode {
         if !mode.help {
             println!("Missing arg or command\n");
@@ -576,6 +590,7 @@ fn handle_led_mode(
         if let Some(cmdlist) = LedModeCommand::command_list() {
             let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
             // TODO: multiple rgb check
+            let aura = find_iface::<AuraProxyBlocking>("org.asuslinux.Aura")?;
             let modes = aura.first().unwrap().supported_basic_modes()?;
             for command in commands.iter().filter(|command| {
                 for mode in &modes {
@@ -605,6 +620,7 @@ fn handle_led_mode(
         println!("Please specify either next or previous");
         return Ok(());
     }
+    let aura = find_iface::<AuraProxyBlocking>("org.asuslinux.Aura")?;
     if mode.next_mode {
         for aura in aura {
             let mode = aura.led_mode()?;
@@ -640,10 +656,8 @@ fn handle_led_mode(
     Ok(())
 }
 
-fn handle_led_power1(
-    aura: &[AuraProxyBlocking],
-    power: &LedPowerCommand1,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn handle_led_power1(power: &LedPowerCommand1) -> Result<(), Box<dyn std::error::Error>> {
+    let aura = find_iface::<AuraProxyBlocking>("org.asuslinux.Aura")?;
     for aura in aura {
         let dev_type = aura.device_type()?;
         if !dev_type.is_old_laptop() && !dev_type.is_tuf_laptop() {
@@ -664,7 +678,7 @@ fn handle_led_power1(
         }
 
         if dev_type.is_old_laptop() || dev_type.is_tuf_laptop() {
-            handle_led_power_1_do_1866(aura, power)?;
+            handle_led_power_1_do_1866(&aura, power)?;
             return Ok(());
         }
     }
@@ -702,10 +716,8 @@ fn handle_led_power_1_do_1866(
     Ok(())
 }
 
-fn handle_led_power2(
-    aura: &[AuraProxyBlocking],
-    power: &LedPowerCommand2,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn handle_led_power2(power: &LedPowerCommand2) -> Result<(), Box<dyn std::error::Error>> {
+    let aura = find_iface::<AuraProxyBlocking>("org.asuslinux.Aura")?;
     for aura in aura {
         let dev_type = aura.device_type()?;
         if !dev_type.is_new_laptop() {
@@ -894,7 +906,7 @@ fn handle_fan_curve(
 fn handle_platform_properties(
     conn: &Connection,
     supported: &[Properties],
-    cmd: &BiosCommand,
+    cmd: &PlatformCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
     {
         if (cmd.gpu_mux_mode_set.is_none()
@@ -907,7 +919,10 @@ fn handle_platform_properties(
         {
             println!("Missing arg or command\n");
 
-            let usage: Vec<String> = BiosCommand::usage().lines().map(|s| s.to_owned()).collect();
+            let usage: Vec<String> = PlatformCommand::usage()
+                .lines()
+                .map(|s| s.to_owned())
+                .collect();
 
             for line in usage.iter().filter(|line| {
                 line.contains("sound") && supported.contains(&Properties::PostAnimationSound)
