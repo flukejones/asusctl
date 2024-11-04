@@ -14,6 +14,10 @@ use crate::error::RogError;
 #[derive(Deserialize, Serialize, Default, Debug, Clone)]
 // #[serde(default)]
 pub struct AuraConfig {
+    #[serde(skip)]
+    pub led_type: AuraDeviceType,
+    #[serde(skip)]
+    pub support_data: LedSupportData,
     pub config_name: String,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub ally_fix: Option<bool>,
@@ -24,6 +28,8 @@ pub struct AuraConfig {
     pub multizone: Option<BTreeMap<AuraModeNum, Vec<AuraEffect>>>,
     pub multizone_on: bool,
     pub enabled: LaptopAuraPower,
+    #[serde(skip)]
+    pub per_key_mode_active: bool,
 }
 
 impl StdConfig for AuraConfig {
@@ -58,6 +64,8 @@ impl AuraConfig {
         let support_data = LedSupportData::get_data(prod_id);
         let enabled = LaptopAuraPower::new(device_type, &support_data);
         let mut config = AuraConfig {
+            led_type: device_type,
+            support_data,
             config_name: format!("aura_{prod_id}.ron"),
             ally_fix: None,
             brightness: LedBrightness::Med,
@@ -66,17 +74,18 @@ impl AuraConfig {
             multizone: None,
             multizone_on: false,
             enabled,
+            per_key_mode_active: false,
         };
 
-        for n in &support_data.basic_modes {
+        for n in &config.support_data.basic_modes {
             debug!("creating default for {n}");
             config
                 .builtins
                 .insert(*n, AuraEffect::default_with_mode(*n));
 
-            if !support_data.basic_zones.is_empty() {
+            if !config.support_data.basic_zones.is_empty() {
                 let mut default = vec![];
-                for (i, tmp) in support_data.basic_zones.iter().enumerate() {
+                for (i, tmp) in config.support_data.basic_zones.iter().enumerate() {
                     default.push(AuraEffect {
                         mode: *n,
                         zone: *tmp,
@@ -138,12 +147,9 @@ impl AuraConfig {
 
     /// Create a default for the `current_mode` if multizone and no config
     /// exists.
-    pub(super) fn create_multizone_default(
-        &mut self,
-        supported_data: &LedSupportData,
-    ) -> Result<(), RogError> {
+    pub fn create_multizone_default(&mut self) -> Result<(), RogError> {
         let mut default = vec![];
-        for (i, tmp) in supported_data.basic_zones.iter().enumerate() {
+        for (i, tmp) in self.support_data.basic_zones.iter().enumerate() {
             default.push(AuraEffect {
                 mode: self.current_mode,
                 zone: *tmp,
@@ -183,6 +189,9 @@ impl AuraConfig {
         }
         // Then replace just incase the initialised data contains new modes added
         config_loaded.builtins = config_init.builtins;
+        config_loaded.support_data = config_init.support_data;
+        config_loaded.led_type = config_init.led_type;
+        config_loaded.ally_fix = config_init.ally_fix;
 
         for enabled_init in &mut config_init.enabled.states {
             for enabled in &mut config_loaded.enabled.states {

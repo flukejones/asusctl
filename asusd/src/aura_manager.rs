@@ -1,0 +1,368 @@
+// Plan:
+// - Manager has udev monitor on USB looking for ROG devices
+// - If a device is found, add it to watch
+// - Add it to Zbus server
+// - If udev sees device removed then remove the zbus path
+
+use std::sync::Arc;
+
+use futures_lite::future::block_on;
+use log::{debug, error, info, warn};
+use mio::{Events, Interest, Poll, Token};
+use rog_platform::error::PlatformError;
+use rog_platform::hid_raw::HidRaw;
+use tokio::sync::Mutex;
+use udev::{Device, MonitorBuilder};
+use zbus::zvariant::{ObjectPath, OwnedObjectPath};
+use zbus::Connection;
+
+use crate::aura_anime::trait_impls::AniMeZbus;
+use crate::aura_laptop::trait_impls::AuraZbus;
+use crate::aura_slash::trait_impls::SlashZbus;
+use crate::aura_types::DeviceHandle;
+use crate::error::RogError;
+
+pub const ASUS_ZBUS_PATH: &str = "/org/asuslinux";
+
+/// Returns only the Device details concatenated in a form usable for
+/// adding/appending to a filename
+pub fn filename_partial(parent: &Device) -> Option<OwnedObjectPath> {
+    if let Some(id_product) = parent.attribute_value("idProduct") {
+        let id_product = id_product.to_string_lossy();
+        let mut path = if let Some(devnum) = parent.attribute_value("devnum") {
+            let devnum = devnum.to_string_lossy();
+            if let Some(devpath) = parent.attribute_value("devpath") {
+                let devpath = devpath.to_string_lossy();
+                format!("{id_product}_{devnum}_{devpath}")
+            } else {
+                format!("{id_product}_{devnum}")
+            }
+        } else {
+            format!("{id_product}")
+        };
+        if path.contains('.') {
+            warn!("dbus path for {id_product} contains `.`, removing");
+            path.replace('.', "").clone_into(&mut path);
+        }
+        return Some(ObjectPath::from_str_unchecked(&path).into());
+    }
+    None
+}
+
+fn dbus_path_for_dev(parent: &Device) -> Option<OwnedObjectPath> {
+    if let Some(filename) = filename_partial(parent) {
+        return Some(
+            ObjectPath::from_str_unchecked(&format!("{ASUS_ZBUS_PATH}/{filename}")).into(),
+        );
+    }
+    None
+}
+
+fn dbus_path_for_tuf() -> OwnedObjectPath {
+    ObjectPath::from_str_unchecked(&format!("{ASUS_ZBUS_PATH}/tuf")).into()
+}
+
+fn dbus_path_for_slash() -> OwnedObjectPath {
+    ObjectPath::from_str_unchecked(&format!("{ASUS_ZBUS_PATH}/slash")).into()
+}
+
+fn dbus_path_for_anime() -> OwnedObjectPath {
+    ObjectPath::from_str_unchecked(&format!("{ASUS_ZBUS_PATH}/anime")).into()
+}
+
+// TODO:
+// - make this the HID manager (and universal)
+// - *really* need to make most of this actual kernel drivers
+//   - LED class
+//   - RGB modes (how, attribute?)
+//   - power features (how, attribute?)
+//   - what about per-key stuff?
+//   - how would the AniMe be exposed? Just a series of LEDs?
+
+/// A device.
+///
+/// Each controller within should track its dbus path so it can be removed if
+/// required.
+#[derive(Debug)]
+pub struct AsusDevice {
+    device: DeviceHandle,
+    dbus_path: OwnedObjectPath,
+}
+
+pub struct DeviceManager {
+    _dbus_connection: Connection,
+}
+
+impl DeviceManager {
+    async fn init_hid_devices(
+        connection: &Connection,
+        device: Device,
+    ) -> Result<Vec<AsusDevice>, RogError> {
+        let mut devices = Vec::new();
+        if let Some(usb_device) = device.parent_with_subsystem_devtype("usb", "usb_device")? {
+            if let Some(usb_id) = usb_device.attribute_value("idProduct") {
+                if let Some(vendor_id) = usb_device.attribute_value("idVendor") {
+                    if vendor_id != "0b05" {
+                        debug!("Not ASUS vendor ID");
+                        return Ok(devices);
+                    }
+                    // Almost all devices are identified by the productId.
+                    // So let's see what we have and:
+                    // 1. Generate an interface path
+                    // 2. Create the device
+                    // Use the top-level endpoint, not the parent
+                    if let Ok(hidraw) = HidRaw::from_device(device) {
+                        debug!("Testing device {usb_id:?}");
+                        let dev = Arc::new(Mutex::new(hidraw));
+                        // SLASH DEVICE
+                        if let Ok(dev_type) = DeviceHandle::new_slash_hid(
+                            dev.clone(),
+                            usb_id.to_str().unwrap_or_default(),
+                        )
+                        .await
+                        {
+                            if let DeviceHandle::Slash(slash) = dev_type.clone() {
+                                let path =
+                                    dbus_path_for_dev(&usb_device).unwrap_or(dbus_path_for_slash());
+                                let ctrl = SlashZbus::new(slash);
+                                ctrl.start_tasks(connection, path.clone()).await.unwrap();
+                                devices.push(AsusDevice {
+                                    device: dev_type,
+                                    dbus_path: path,
+                                });
+                            }
+                        }
+                        // ANIME MATRIX DEVICE
+                        if let Ok(dev_type) = DeviceHandle::maybe_anime_hid(
+                            dev.clone(),
+                            usb_id.to_str().unwrap_or_default(),
+                        )
+                        .await
+                        {
+                            if let DeviceHandle::AniMe(anime) = dev_type.clone() {
+                                let path =
+                                    dbus_path_for_dev(&usb_device).unwrap_or(dbus_path_for_anime());
+                                let ctrl = AniMeZbus::new(anime);
+                                ctrl.start_tasks(connection, path.clone()).await.unwrap();
+                                devices.push(AsusDevice {
+                                    device: dev_type,
+                                    dbus_path: path,
+                                });
+                            }
+                        }
+                        // AURA LAPTOP DEVICE
+                        if let Ok(dev_type) = DeviceHandle::maybe_laptop_aura(
+                            dev,
+                            usb_id.to_str().unwrap_or_default(),
+                        )
+                        .await
+                        {
+                            if let DeviceHandle::Aura(aura) = dev_type.clone() {
+                                let path =
+                                    dbus_path_for_dev(&usb_device).unwrap_or(dbus_path_for_tuf());
+                                let ctrl = AuraZbus::new(aura);
+                                ctrl.start_tasks(connection, path.clone()).await.unwrap();
+                                devices.push(AsusDevice {
+                                    device: dev_type,
+                                    dbus_path: path,
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Ok(devices)
+    }
+
+    /// To be called on daemon startup
+    async fn init_all_hid(connection: &Connection) -> Result<Vec<AsusDevice>, RogError> {
+        // track and ensure we use only one hidraw per prod_id
+        // let mut interfaces = HashSet::new();
+        let mut devices: Vec<AsusDevice> = Vec::new();
+
+        let mut enumerator = udev::Enumerator::new().map_err(|err| {
+            warn!("{}", err);
+            PlatformError::Udev("enumerator failed".into(), err)
+        })?;
+
+        enumerator.match_subsystem("hidraw").map_err(|err| {
+            warn!("{}", err);
+            PlatformError::Udev("match_subsystem failed".into(), err)
+        })?;
+
+        for device in enumerator
+            .scan_devices()
+            .map_err(|e| PlatformError::IoPath("enumerator".to_owned(), e))?
+        {
+            devices.append(&mut Self::init_hid_devices(connection, device).await?);
+        }
+        // debug!("Found devices: {devices:?}");
+
+        Ok(devices)
+    }
+
+    pub async fn find_all_devices(connection: &Connection) -> Vec<AsusDevice> {
+        let mut devices: Vec<AsusDevice> = Vec::new();
+        // HID first, always
+        if let Ok(devs) = &mut Self::init_all_hid(connection).await {
+            devices.append(devs);
+        }
+        // USB after, need to check if HID picked something up and if so, skip it
+        let mut do_anime = true;
+        let mut do_slash = true;
+        for dev in devices.iter() {
+            if matches!(dev.device, DeviceHandle::Slash(_)) {
+                do_slash = false;
+            }
+            if matches!(dev.device, DeviceHandle::AniMe(_)) {
+                do_anime = false;
+            }
+        }
+
+        if do_slash {
+            if let Ok(dev_type) = DeviceHandle::new_slash_usb().await {
+                if let DeviceHandle::Slash(slash) = dev_type.clone() {
+                    let path = dbus_path_for_slash();
+                    let ctrl = SlashZbus::new(slash);
+                    ctrl.start_tasks(connection, path.clone()).await.unwrap();
+                    devices.push(AsusDevice {
+                        device: dev_type,
+                        dbus_path: path,
+                    });
+                }
+            } else {
+                info!("Tested device was not Slash");
+            }
+        }
+
+        if do_anime {
+            if let Ok(dev_type) = DeviceHandle::maybe_anime_usb().await {
+                // TODO: this is copy/pasted
+                if let DeviceHandle::AniMe(anime) = dev_type.clone() {
+                    let path = dbus_path_for_anime();
+                    let ctrl = AniMeZbus::new(anime);
+                    ctrl.start_tasks(connection, path.clone()).await.unwrap();
+                    devices.push(AsusDevice {
+                        device: dev_type,
+                        dbus_path: path,
+                    });
+                }
+            } else {
+                info!("Tested device was not AniMe Matrix");
+            }
+        }
+        devices
+    }
+
+    pub async fn new(connection: Connection) -> Result<Self, RogError> {
+        let conn_copy = connection.clone();
+        let devices = Arc::new(Mutex::new(Self::find_all_devices(&conn_copy).await));
+        let manager = Self {
+            _dbus_connection: connection,
+        };
+
+        // TODO: The /sysfs/ LEDs don't cause events, so they need to be manually
+        // checked for and added
+
+        // detect all plugged in aura devices (eventually)
+        // only USB devices are detected for here
+        std::thread::spawn(move || {
+            let mut monitor = MonitorBuilder::new()?.match_subsystem("hidraw")?.listen()?;
+            let mut poll = Poll::new()?;
+            let mut events = Events::with_capacity(1024);
+            poll.registry()
+                .register(&mut monitor, Token(0), Interest::READABLE)?;
+
+            let rt = tokio::runtime::Runtime::new().expect("Unable to create Runtime");
+            let _enter = rt.enter();
+            loop {
+                if poll.poll(&mut events, None).is_err() {
+                    continue;
+                }
+                for event in monitor.iter() {
+                    let action = event.action().unwrap_or_default();
+
+                    if let Some(parent) =
+                        event.parent_with_subsystem_devtype("usb", "usb_device")?
+                    {
+                        let devices = devices.clone();
+
+                        if action == "remove" {
+                            if let Some(path) = dbus_path_for_dev(&parent) {
+                                let conn_copy = conn_copy.clone();
+                                tokio::spawn(async move {
+                                    // Find the indexs of devices matching the path
+                                    let removals: Vec<usize> = devices
+                                        .lock()
+                                        .await
+                                        .iter()
+                                        .enumerate()
+                                        .filter_map(|(i, dev)| {
+                                            if dev.dbus_path == path {
+                                                Some(i)
+                                            } else {
+                                                None
+                                            }
+                                        })
+                                        .collect();
+                                    if removals.is_empty() {
+                                        return Ok(());
+                                    }
+                                    info!("removing: {path:?}");
+                                    // Iter in reverse so as to not screw up indexing
+                                    for index in removals.iter().rev() {
+                                        let dev = devices.lock().await.remove(*index);
+                                        let path = path.clone();
+                                        let res = match dev.device {
+                                            DeviceHandle::Aura(_) => {
+                                                conn_copy
+                                                    .object_server()
+                                                    .remove::<AuraZbus, _>(&path)
+                                                    .await?
+                                            }
+                                            DeviceHandle::Slash(_) => {
+                                                conn_copy
+                                                    .object_server()
+                                                    .remove::<SlashZbus, _>(&path)
+                                                    .await?
+                                            }
+                                            DeviceHandle::AniMe(_) => {
+                                                conn_copy
+                                                    .object_server()
+                                                    .remove::<AniMeZbus, _>(&path)
+                                                    .await?
+                                            }
+                                            DeviceHandle::Ally(_) => todo!(),
+                                            DeviceHandle::OldAura(_) => todo!(),
+                                            DeviceHandle::TufLedClass(_) => todo!(),
+                                            DeviceHandle::MulticolourLed => todo!(),
+                                            DeviceHandle::None => todo!(),
+                                        };
+                                        info!("AuraManager removed: {path:?}, {res}");
+                                    }
+                                    Ok::<(), RogError>(())
+                                });
+                            }
+                        } else if action == "add" {
+                            let evdev = event.device();
+                            let conn_copy = conn_copy.clone();
+                            block_on(async move {
+                                if let Ok(mut new_devs) = Self::init_hid_devices(&conn_copy, evdev)
+                                    .await
+                                    .map_err(|e| error!("Couldn't add new device: {e:?}"))
+                                {
+                                    devices.lock().await.append(&mut new_devs);
+                                }
+                            });
+                        };
+                    }
+                }
+            }
+            // Required for return type on spawn
+            #[allow(unreachable_code)]
+            Ok::<(), RogError>(())
+        });
+        Ok(manager)
+    }
+}

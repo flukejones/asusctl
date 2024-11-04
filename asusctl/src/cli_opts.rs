@@ -31,11 +31,11 @@ pub struct CliStart {
 #[derive(Options)]
 pub enum CliCommand {
     #[options(help = "Set the keyboard lighting from built-in modes")]
-    LedMode(LedModeCommand),
+    Aura(LedModeCommand),
     #[options(help = "Set the LED power states")]
-    LedPow1(LedPowerCommand1),
+    AuraPowerOld(LedPowerCommand1),
     #[options(help = "Set the LED power states")]
-    LedPow2(LedPowerCommand2),
+    AuraPower(LedPowerCommand2),
     #[options(help = "Set or select platform_profile")]
     Profile(ProfileCommand),
     #[options(help = "Set, select, or modify fan curves if supported")]
@@ -47,7 +47,7 @@ pub enum CliCommand {
     #[options(name = "slash", help = "Manage Slash Ledbar")]
     Slash(SlashCommand),
     #[options(help = "Change bios settings")]
-    Bios(BiosCommand),
+    Platform(PlatformCommand),
 }
 
 #[derive(Debug, Clone, Options)]
@@ -87,7 +87,7 @@ pub struct GraphicsCommand {
 }
 
 #[derive(Options, Debug)]
-pub struct BiosCommand {
+pub struct PlatformCommand {
     #[options(help = "print help message")]
     pub help: bool,
     #[options(

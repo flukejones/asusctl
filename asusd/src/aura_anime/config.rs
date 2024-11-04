@@ -10,18 +10,18 @@ use serde::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "anime.ron";
 
-#[derive(Deserialize, Serialize, Default)]
-pub struct AnimeConfigCached {
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
+pub struct AniMeConfigCached {
     pub system: Vec<ActionData>,
     pub boot: Vec<ActionData>,
     pub wake: Vec<ActionData>,
     pub shutdown: Vec<ActionData>,
 }
 
-impl AnimeConfigCached {
+impl AniMeConfigCached {
     pub fn init_from_config(
         &mut self,
-        config: &AnimeConfig,
+        config: &AniMeConfig,
         anime_type: AnimeType,
     ) -> Result<(), AnimeError> {
         let mut sys = Vec::with_capacity(config.system.len());
@@ -53,7 +53,9 @@ impl AnimeConfigCached {
 
 /// Config for base system actions for the anime display
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct AnimeConfig {
+pub struct AniMeConfig {
+    #[serde(skip)]
+    pub anime_type: AnimeType,
     pub system: Vec<ActionLoader>,
     pub boot: Vec<ActionLoader>,
     pub wake: Vec<ActionLoader>,
@@ -69,9 +71,10 @@ pub struct AnimeConfig {
     pub builtin_anims: Animations,
 }
 
-impl Default for AnimeConfig {
+impl Default for AniMeConfig {
     fn default() -> Self {
-        AnimeConfig {
+        AniMeConfig {
+            anime_type: AnimeType::GA402,
             system: Vec::new(),
             boot: Vec::new(),
             wake: Vec::new(),
@@ -89,7 +92,7 @@ impl Default for AnimeConfig {
     }
 }
 
-impl StdConfig for AnimeConfig {
+impl StdConfig for AniMeConfig {
     fn new() -> Self {
         Self::create_default()
     }
@@ -103,10 +106,10 @@ impl StdConfig for AnimeConfig {
     }
 }
 
-impl StdConfigLoad for AnimeConfig {}
+impl StdConfigLoad for AniMeConfig {}
 
-impl From<&AnimeConfig> for DeviceState {
-    fn from(config: &AnimeConfig) -> Self {
+impl From<&AniMeConfig> for DeviceState {
+    fn from(config: &AniMeConfig) -> Self {
         DeviceState {
             display_enabled: config.display_enabled,
             display_brightness: config.display_brightness,
@@ -120,7 +123,7 @@ impl From<&AnimeConfig> for DeviceState {
     }
 }
 
-impl AnimeConfig {
+impl AniMeConfig {
     // fn clamp_config_brightness(mut config: &mut AnimeConfig) {
     //     if config.brightness < 0.0 || config.brightness > 1.0 {
     //         warn!(
@@ -133,7 +136,7 @@ impl AnimeConfig {
 
     fn create_default() -> Self {
         // create a default config here
-        AnimeConfig {
+        AniMeConfig {
             system: vec![],
             boot: vec![ActionLoader::ImageAnimation {
                 file: "/usr/share/asusd/anime/custom/sonic-run.gif".into(),

@@ -247,19 +247,19 @@ impl From<AnimShutdown> for i32 {
 ///
 /// The currently known USB device is `19b6`.
 #[inline]
-pub fn get_maybe_anime_type() -> Result<AnimeType, AnimeError> {
-    let dmi = DMIID::new().map_err(|_| AnimeError::NoDevice)?; // TODO: better error
+pub fn get_anime_type() -> AnimeType {
+    let dmi = DMIID::new().unwrap_or_default();
     let board_name = dmi.board_name;
 
     if board_name.contains("GA401I") || board_name.contains("GA401Q") {
-        return Ok(AnimeType::GA401);
+        AnimeType::GA401
     } else if board_name.contains("GA402R") || board_name.contains("GA402X") {
-        return Ok(AnimeType::GA402);
+        AnimeType::GA402
     } else if board_name.contains("GU604V") {
-        return Ok(AnimeType::GU604);
+        AnimeType::GU604
+    } else {
+        AnimeType::Unsupported
     }
-    log::warn!("AniMe Matrix device found but could be a slash");
-    Ok(AnimeType::Unsupported)
 }
 
 /// Get the two device initialization packets. These are required for device

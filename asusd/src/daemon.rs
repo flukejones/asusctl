@@ -4,14 +4,10 @@ use std::sync::Arc;
 
 use ::zbus::export::futures_util::lock::Mutex;
 use ::zbus::Connection;
+use asusd::aura_manager::DeviceManager;
 use asusd::config::Config;
-use asusd::ctrl_anime::trait_impls::CtrlAnimeZbus;
-use asusd::ctrl_anime::CtrlAnime;
-use asusd::ctrl_aura::manager::AuraManager;
 use asusd::ctrl_fancurves::CtrlFanCurveZbus;
 use asusd::ctrl_platform::CtrlPlatform;
-use asusd::ctrl_slash::trait_impls::CtrlSlashZbus;
-use asusd::ctrl_slash::CtrlSlash;
 use asusd::{print_board_info, start_tasks, CtrlTask, DBUS_NAME};
 use config_traits::{StdConfig, StdConfigLoad1};
 use log::{error, info};
@@ -97,33 +93,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    match CtrlAnime::new() {
-        Ok(ctrl) => {
-            let zbus = CtrlAnimeZbus(Arc::new(Mutex::new(ctrl)));
-            let sig_ctx = CtrlAnimeZbus::signal_context(&connection)?;
-            start_tasks(zbus, &mut connection, sig_ctx).await?;
-        }
-        Err(err) => {
-            info!("AniMe control: {}", err);
-        }
-    }
-
-    let _ = AuraManager::new(connection.clone()).await?;
-
-    match CtrlSlash::new() {
-        Ok(ctrl) => {
-            let zbus = CtrlSlashZbus(Arc::new(Mutex::new(ctrl)));
-            // Currently, the Slash has no need for a loop watching power events, however,
-            // it could be cool to have the slash do some power-on/off animation
-            // (It has a built-in power on animation which plays when u plug in the power
-            // supply)
-            let sig_ctx = CtrlSlashZbus::signal_context(&connection)?;
-            start_tasks(zbus, &mut connection, sig_ctx).await?;
-        }
-        Err(err) => {
-            info!("AniMe control: {}", err);
-        }
-    }
+    let _ = DeviceManager::new(connection.clone()).await?;
 
     // Request dbus name after finishing initalizing all functions
     connection.request_name(DBUS_NAME).await?;

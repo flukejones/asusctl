@@ -7,7 +7,7 @@ use typeshare::typeshare;
 use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::Error;
-use crate::LED_MSG_LEN;
+use crate::AURA_LAPTOP_LED_MSG_LEN;
 
 #[typeshare]
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -552,9 +552,9 @@ impl AuraEffect {
 /// |---|---|-----|-----|---------|------|----------|---|-----------|
 /// |5d |b3 |Zone |Mode |Colour 1 |Speed |Direction |00 |Colour 2   |
 /// ```
-impl From<&AuraEffect> for [u8; LED_MSG_LEN] {
+impl From<&AuraEffect> for [u8; AURA_LAPTOP_LED_MSG_LEN] {
     fn from(aura: &AuraEffect) -> Self {
-        let mut msg = [0u8; LED_MSG_LEN];
+        let mut msg = [0u8; AURA_LAPTOP_LED_MSG_LEN];
         msg[0] = 0x5d;
         msg[1] = 0xb3;
         msg[2] = aura.zone as u8;
@@ -573,7 +573,7 @@ impl From<&AuraEffect> for [u8; LED_MSG_LEN] {
 
 impl From<&AuraEffect> for Vec<u8> {
     fn from(aura: &AuraEffect) -> Self {
-        let mut msg = vec![0u8; LED_MSG_LEN];
+        let mut msg = vec![0u8; AURA_LAPTOP_LED_MSG_LEN];
         msg[0] = 0x5d;
         msg[1] = 0xb3;
         msg[2] = aura.zone as u8;
@@ -592,7 +592,9 @@ impl From<&AuraEffect> for Vec<u8> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{AuraEffect, AuraModeNum, AuraZone, Colour, Direction, Speed, LED_MSG_LEN};
+    use crate::{
+        AuraEffect, AuraModeNum, AuraZone, Colour, Direction, Speed, AURA_LAPTOP_LED_MSG_LEN,
+    };
 
     #[test]
     fn check_led_static_packet() {
@@ -608,7 +610,7 @@ mod tests {
             speed: Speed::Med,
             direction: Direction::Right,
         };
-        let ar = <[u8; LED_MSG_LEN]>::from(&st);
+        let ar = <[u8; AURA_LAPTOP_LED_MSG_LEN]>::from(&st);
 
         println!("{:02x?}", ar);
         let check = [
@@ -636,7 +638,10 @@ mod tests {
             0x5d, 0xb3, 0x01, 0x00, 0xff, 0x00, 0x00, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
         ];
-        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+        assert_eq!(
+            <[u8; AURA_LAPTOP_LED_MSG_LEN]>::from(&st)[..9],
+            capture[..9]
+        );
 
         st.zone = AuraZone::Key2;
         st.colour1 = Colour {
@@ -648,7 +653,10 @@ mod tests {
             0x5d, 0xb3, 0x02, 0x00, 0xff, 0xff, 0x00, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
         ];
-        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+        assert_eq!(
+            <[u8; AURA_LAPTOP_LED_MSG_LEN]>::from(&st)[..9],
+            capture[..9]
+        );
 
         st.zone = AuraZone::Key3;
         st.colour1 = Colour {
@@ -660,7 +668,10 @@ mod tests {
             0x5d, 0xb3, 0x03, 0x00, 0x00, 0xff, 0xff, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
         ];
-        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+        assert_eq!(
+            <[u8; AURA_LAPTOP_LED_MSG_LEN]>::from(&st)[..9],
+            capture[..9]
+        );
 
         st.zone = AuraZone::Key4;
         st.colour1 = Colour {
@@ -672,7 +683,10 @@ mod tests {
             0x5d, 0xb3, 0x04, 0x00, 0xff, 0x00, 0xff, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
         ];
-        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+        assert_eq!(
+            <[u8; AURA_LAPTOP_LED_MSG_LEN]>::from(&st)[..9],
+            capture[..9]
+        );
 
         st.zone = AuraZone::Logo;
         st.colour1 = Colour {
@@ -684,7 +698,10 @@ mod tests {
             0x5d, 0xb3, 0x05, 0x00, 0x2c, 0xff, 0x00, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
         ];
-        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+        assert_eq!(
+            <[u8; AURA_LAPTOP_LED_MSG_LEN]>::from(&st)[..9],
+            capture[..9]
+        );
 
         st.zone = AuraZone::BarLeft;
         st.colour1 = Colour {
@@ -696,7 +713,10 @@ mod tests {
             0x5d, 0xb3, 0x06, 0x00, 0xff, 0x00, 0x00, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
         ];
-        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+        assert_eq!(
+            <[u8; AURA_LAPTOP_LED_MSG_LEN]>::from(&st)[..9],
+            capture[..9]
+        );
 
         st.zone = AuraZone::BarRight;
         st.colour1 = Colour {
@@ -708,13 +728,19 @@ mod tests {
             0x5d, 0xb3, 0x07, 0x00, 0xff, 0x00, 0xcd, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
         ];
-        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+        assert_eq!(
+            <[u8; AURA_LAPTOP_LED_MSG_LEN]>::from(&st)[..9],
+            capture[..9]
+        );
 
         st.mode = AuraModeNum::RainbowWave;
         let capture = [
             0x5d, 0xb3, 0x07, 0x03, 0xff, 0x00, 0xcd, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
         ];
-        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+        assert_eq!(
+            <[u8; AURA_LAPTOP_LED_MSG_LEN]>::from(&st)[..9],
+            capture[..9]
+        );
     }
 }

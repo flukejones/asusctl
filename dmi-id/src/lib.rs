@@ -1,4 +1,4 @@
-use log::{info, warn};
+use log::warn;
 
 #[derive(Debug, Default, PartialEq, Eq, PartialOrd, Clone)]
 pub struct DMIID {
@@ -33,8 +33,6 @@ impl DMIID {
         })?;
 
         if let Some(device) = (result).next() {
-            info!("Found dmi ID info at {:?}", device.sysname());
-
             return Ok(Self {
                 id_model: device
                     .property_value("ID_MODEL")

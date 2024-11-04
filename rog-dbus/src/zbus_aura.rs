@@ -22,7 +22,7 @@
 
 use std::collections::BTreeMap;
 
-use rog_aura::keyboard::{LaptopAuraPower, UsbPackets};
+use rog_aura::keyboard::{AuraLaptopUsbPackets, LaptopAuraPower};
 use rog_aura::{AuraDeviceType, AuraEffect, AuraModeNum, AuraZone, LedBrightness, PowerZones};
 use zbus::blocking::Connection;
 use zbus::{proxy, Result};
@@ -39,7 +39,7 @@ pub trait Aura {
     fn all_mode_data(&self) -> zbus::Result<BTreeMap<AuraModeNum, AuraEffect>>;
 
     /// DirectAddressingRaw method
-    fn direct_addressing_raw(&self, data: UsbPackets) -> zbus::Result<()>;
+    fn direct_addressing_raw(&self, data: AuraLaptopUsbPackets) -> zbus::Result<()>;
 
     /// Brightness property
     #[zbus(property)]
@@ -104,7 +104,7 @@ impl<'a> AuraProxyPerkey<'a> {
     /// Intentionally blocks for 10ms after sending to allow the block to
     /// be written to the keyboard EC. This should not be async.
     #[inline]
-    pub fn direct_addressing_raw(&self, direct_raw: UsbPackets) -> Result<()> {
+    pub fn direct_addressing_raw(&self, direct_raw: AuraLaptopUsbPackets) -> Result<()> {
         self.0.direct_addressing_raw(direct_raw)?;
         std::thread::sleep(std::time::Duration::from_millis(BLOCKING_TIME));
         Ok(())

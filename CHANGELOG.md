@@ -4,6 +4,9 @@
 
 ### Changed
 - Fix attribute writes. At some point the kernel API seems to have changed.
+- Extremely large refactor of Aura device handling. Should enable easy add of different kinds now.
+- Add GA605W LED layout
+- Rename CLI args for aura related properties. This will likely change further as more devices are added
 
 ## [v6.0.12]
 
