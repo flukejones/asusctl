@@ -411,7 +411,7 @@
         basic_modes: [Static, Breathe, RainbowCycle, RainbowWave, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
         basic_zones: [],
         advanced_type: PerKey,
-        power_zones: [Keyboard],
+        power_zones: [Keyboard, Lightbar, Logo, Lid],
     ),
     (
         device_name: "G814J",
