@@ -7,7 +7,7 @@ use zbus::proxy;
     default_service = "org.asuslinux.Daemon",
     default_path = "/org/asuslinux"
 )]
-trait Anime {
+pub trait Anime {
     /// DeviceState method
     fn device_state(&self) -> zbus::Result<AnimeDeviceState>;
 

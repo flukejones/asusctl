@@ -10,7 +10,7 @@ use log::{error, info, warn};
 use mio::{Events, Interest, Poll, Token};
 use tokio::task::spawn_blocking;
 use udev::{Device, MonitorBuilder};
-use zbus::object_server::SignalContext;
+use zbus::object_server::SignalEmitter;
 use zbus::zvariant::{ObjectPath, OwnedObjectPath};
 use zbus::Connection;
 
@@ -119,7 +119,7 @@ pub(crate) fn dbus_path_for_tuf() -> OwnedObjectPath {
 pub async fn start_tasks(
     mut zbus: CtrlAuraZbus,
     connection: Connection,
-    _signal_ctx: SignalContext<'static>,
+    _signal_ctx: SignalEmitter<'static>,
     path: OwnedObjectPath,
 ) -> Result<(), RogError> {
     // let task = zbus.clone();

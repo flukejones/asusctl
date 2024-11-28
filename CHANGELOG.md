@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+- Fix attribute writes. At some point the kernel API seems to have changed.
+
 ## [v6.0.12]
 
 ### Changed

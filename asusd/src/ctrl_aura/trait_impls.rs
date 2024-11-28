@@ -8,7 +8,8 @@ use rog_aura::{AuraDeviceType, AuraEffect, AuraModeNum, AuraZone, LedBrightness,
 use zbus::export::futures_util::lock::{Mutex, MutexGuard};
 use zbus::export::futures_util::StreamExt;
 use zbus::fdo::Error as ZbErr;
-use zbus::{interface, SignalContext};
+use zbus::interface;
+use zbus::object_server::SignalEmitter;
 
 use super::controller::CtrlKbdLed;
 use crate::error::RogError;
@@ -18,10 +19,10 @@ pub const AURA_ZBUS_NAME: &str = "Aura";
 pub const AURA_ZBUS_PATH: &str = "/org/asuslinux";
 
 #[derive(Clone)]
-pub struct CtrlAuraZbus(Arc<Mutex<CtrlKbdLed>>, SignalContext<'static>);
+pub struct CtrlAuraZbus(Arc<Mutex<CtrlKbdLed>>, SignalEmitter<'static>);
 
 impl CtrlAuraZbus {
-    pub fn new(controller: CtrlKbdLed, signal: SignalContext<'static>) -> Self {
+    pub fn new(controller: CtrlKbdLed, signal: SignalEmitter<'static>) -> Self {
         Self(Arc::new(Mutex::new(controller)), signal)
     }
 
@@ -115,7 +116,7 @@ impl CtrlAuraZbus {
         }
         ctrl.config.write();
 
-        self.led_mode_data_invalidate(&self.1).await.ok();
+        self.led_mode_data_changed(&self.1).await.ok();
         Ok(())
     }
 
@@ -157,7 +158,7 @@ impl CtrlAuraZbus {
         ctrl.config.set_builtin(effect);
         ctrl.config.write();
 
-        self.led_mode_invalidate(&self.1).await.ok();
+        self.led_mode_changed(&self.1).await.ok();
         Ok(())
     }
 
@@ -211,7 +212,7 @@ impl CtrlTask for CtrlAuraZbus {
         "/org/asuslinux"
     }
 
-    async fn create_tasks(&self, _: SignalContext<'static>) -> Result<(), RogError> {
+    async fn create_tasks(&self, _: SignalEmitter<'static>) -> Result<(), RogError> {
         let load_save =
             |start: bool, mut lock: MutexGuard<'_, CtrlKbdLed>| -> Result<(), RogError> {
                 // If waking up

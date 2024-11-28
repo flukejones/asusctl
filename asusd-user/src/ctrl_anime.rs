@@ -66,7 +66,7 @@ pub struct CtrlAnimeInner<'a> {
     do_early_return: Arc<AtomicBool>,
 }
 
-impl<'a> CtrlAnimeInner<'static> {
+impl CtrlAnimeInner<'static> {
     pub fn new(
         sequences: Sequences,
         client: AnimeProxyBlocking<'static>,
@@ -81,7 +81,7 @@ impl<'a> CtrlAnimeInner<'static> {
 
     /// To be called on each main loop iteration to pump out commands to the
     /// anime
-    pub fn run(&'a self) -> Result<(), Error> {
+    pub fn run(&self) -> Result<(), Error> {
         if self.do_early_return.load(Ordering::SeqCst) {
             return Ok(());
         }

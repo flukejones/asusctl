@@ -10,7 +10,8 @@ use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::{find_fan_curve_node, FanCurvePU, FanCurveProfiles};
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
-use zbus::{interface, Connection, SignalContext};
+use zbus::object_server::SignalEmitter;
+use zbus::{interface, Connection};
 
 use crate::error::RogError;
 use crate::{CtrlTask, CONFIG_PATH_BASE};
@@ -234,7 +235,7 @@ impl CtrlTask for CtrlFanCurveZbus {
         FAN_CURVE_ZBUS_PATH
     }
 
-    async fn create_tasks(&self, _signal_ctxt: SignalContext<'static>) -> Result<(), RogError> {
+    async fn create_tasks(&self, _signal_ctxt: SignalEmitter<'static>) -> Result<(), RogError> {
         let watch_throttle_thermal_policy = self.platform.monitor_throttle_thermal_policy()?;
         let platform = self.platform.clone();
         let config = self.config.clone();

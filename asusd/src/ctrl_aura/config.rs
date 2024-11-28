@@ -187,7 +187,7 @@ impl AuraConfig {
         for enabled_init in &mut config_init.enabled.states {
             for enabled in &mut config_loaded.enabled.states {
                 if enabled.zone == enabled_init.zone {
-                    *enabled_init = enabled.clone();
+                    *enabled_init = *enabled;
                     break;
                 }
             }

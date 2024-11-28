@@ -5,7 +5,8 @@ use log::warn;
 use rog_slash::usb::{pkt_set_mode, pkt_set_options};
 use rog_slash::{DeviceState, SlashMode};
 use zbus::export::futures_util::lock::Mutex;
-use zbus::{interface, Connection, SignalContext};
+use zbus::object_server::SignalEmitter;
+use zbus::{interface, Connection};
 
 use crate::ctrl_slash::CtrlSlash;
 use crate::error::RogError;
@@ -153,7 +154,7 @@ impl crate::CtrlTask for CtrlSlashZbus {
         SLASH_ZBUS_PATH
     }
 
-    async fn create_tasks(&self, _: SignalContext<'static>) -> Result<(), RogError> {
+    async fn create_tasks(&self, _: SignalEmitter<'static>) -> Result<(), RogError> {
         Ok(())
     }
 }

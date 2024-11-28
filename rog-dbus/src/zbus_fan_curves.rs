@@ -30,7 +30,7 @@ use zbus::proxy;
     default_service = "org.asuslinux.Daemon",
     default_path = "/org/asuslinux"
 )]
-trait FanCurves {
+pub trait FanCurves {
     /// Get the fan-curve data for the currently active PlatformProfile
     fn fan_curve_data(&self, profile: ThrottlePolicy) -> zbus::Result<Vec<CurveData>>;
 

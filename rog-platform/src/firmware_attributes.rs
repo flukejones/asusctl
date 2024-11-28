@@ -244,25 +244,26 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore = "Can't check in docker env"]
     fn find_attributes() {
         let attrs = FirmwareAttributes::new();
         for attr in attrs.attributes() {
             dbg!(attr.name());
             match attr.name() {
-                "nv_dynamic_boost" => {
+                "dgpu_disable" => {
                     assert!(!attr.help().is_empty());
                     assert!(matches!(
                         attr.current_value().unwrap(),
                         AttrValue::Integer(_)
                     ));
                     if let AttrValue::Integer(val) = attr.current_value().unwrap() {
-                        assert_eq!(val, 5);
+                        assert_eq!(val, 0);
                     }
                     if let AttrValue::Integer(val) = attr.default_value {
                         assert_eq!(val, 25);
                     }
-                    assert_eq!(attr.min_value, AttrValue::Integer(0));
-                    assert_eq!(attr.max_value, AttrValue::Integer(25));
+                    assert_eq!(attr.min_value, AttrValue::None);
+                    assert_eq!(attr.max_value, AttrValue::None);
                 }
                 "boot_sound" => {
                     assert!(!attr.help().is_empty());
@@ -278,6 +279,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "Can't check in docker env"]
     fn test_boot_sound() {
         let attrs = FirmwareAttributes::new();
         let attr = attrs
@@ -302,7 +304,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "Requires root to set the value"]
+    #[ignore = "Can't check in docker env"]
     fn test_set_boot_sound() {
         let attrs = FirmwareAttributes::new();
         let attr = attrs

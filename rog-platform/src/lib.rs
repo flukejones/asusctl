@@ -14,6 +14,7 @@ pub mod usb_raw;
 use std::path::Path;
 
 use error::{PlatformError, Result};
+use log::warn;
 use udev::Device;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -44,9 +45,13 @@ pub fn read_attr_bool(device: &Device, attr_name: &str) -> Result<bool> {
 }
 
 pub fn write_attr_bool(device: &mut Device, attr: &str, value: bool) -> Result<()> {
+    let value = if value { 1 } else { 0 };
     device
         .set_attribute_value(attr, value.to_string())
-        .map_err(|e| PlatformError::IoPath(attr.into(), e))
+        .map_err(|e| {
+            warn!("attr write error: {e:?}");
+            PlatformError::IoPath(attr.into(), e)
+        })
 }
 
 pub fn read_attr_u8(device: &Device, attr_name: &str) -> Result<u8> {

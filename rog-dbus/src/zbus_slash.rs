@@ -6,7 +6,7 @@ use zbus::proxy;
     default_service = "org.asuslinux.Daemon",
     default_path = "/org/asuslinux"
 )]
-trait Slash {
+pub trait Slash {
     /// EnableDisplay property
     #[zbus(property)]
     fn enabled(&self) -> zbus::Result<bool>;

@@ -29,7 +29,7 @@ use zbus::proxy;
     default_service = "org.asuslinux.Daemon",
     default_path = "/org/asuslinux"
 )]
-trait Platform {
+pub trait Platform {
     #[zbus(property)]
     fn version(&self) -> zbus::Result<String>;
 

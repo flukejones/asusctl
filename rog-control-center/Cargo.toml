@@ -20,7 +20,7 @@ console-subscriber = { version = "^0.4", optional = true }
 
 nix = { version = "^0.29.0", features = ["fs"] }
 tempfile = "3.3.0"
-betrayer = { version = "0.2.0" }
+betrayer = { version = "0.3.0" }
 
 asusd = { path = "../asusd" }
 config-traits = { path = "../config-traits" }

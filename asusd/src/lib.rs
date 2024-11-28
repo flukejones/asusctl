@@ -22,8 +22,10 @@ use futures_lite::stream::StreamExt;
 use log::{debug, info, warn};
 use logind_zbus::manager::ManagerProxy;
 use tokio::time::sleep;
+use zbus::object_server::{Interface, SignalEmitter};
+use zbus::proxy::CacheProperties;
 use zbus::zvariant::ObjectPath;
-use zbus::{CacheProperties, Connection, SignalContext};
+use zbus::Connection;
 
 use crate::error::RogError;
 
@@ -39,7 +41,7 @@ pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";
 /// methods to be available:
 /// - `<name>() -> SomeValue`, functionally is a getter, but is allowed to have
 ///   side effects.
-/// - `notify_<name>(SignalContext, SomeValue)`
+/// - `notify_<name>(SignalEmitter, SomeValue)`
 ///
 /// In most cases if `SomeValue` is stored in a config then `<name>()` getter is
 /// expected to update it. The getter should *never* write back to the path or
@@ -60,7 +62,7 @@ macro_rules! task_watch_item {
         concat_idents::concat_idents!(fn_name = watch_, $name {
         async fn fn_name(
             &self,
-            signal_ctxt: SignalContext<'static>,
+            signal_ctxt: SignalEmitter<'static>,
         ) -> Result<(), RogError> {
             use zbus::export::futures_util::StreamExt;
 
@@ -100,7 +102,7 @@ macro_rules! task_watch_item_notify {
         concat_idents::concat_idents!(fn_name = watch_, $name {
         async fn fn_name(
             &self,
-            signal_ctxt: SignalContext<'static>,
+            signal_ctxt: SignalEmitter<'static>,
         ) -> Result<(), RogError> {
             use zbus::export::futures_util::StreamExt;
 
@@ -143,7 +145,7 @@ pub trait ReloadAndNotify {
 
     fn reload_and_notify(
         &mut self,
-        signal_context: &SignalContext<'static>,
+        signal_context: &SignalEmitter<'static>,
         data: Self::Data,
     ) -> impl Future<Output = Result<(), RogError>> + Send;
 }
@@ -152,7 +154,7 @@ pub trait ZbusRun {
     fn add_to_server(self, server: &mut Connection) -> impl Future<Output = ()> + Send;
 
     fn add_to_server_helper(
-        iface: impl zbus::Interface,
+        iface: impl Interface,
         path: &str,
         server: &mut Connection,
     ) -> impl Future<Output = ()> + Send {
@@ -174,8 +176,8 @@ pub trait ZbusRun {
 pub trait CtrlTask {
     fn zbus_path() -> &'static str;
 
-    fn signal_context(connection: &Connection) -> Result<SignalContext<'static>, zbus::Error> {
-        SignalContext::new(connection, Self::zbus_path())
+    fn signal_context(connection: &Connection) -> Result<SignalEmitter<'static>, zbus::Error> {
+        SignalEmitter::new(connection, Self::zbus_path())
     }
 
     /// Implement to set up various tasks that may be required, using the
@@ -183,7 +185,7 @@ pub trait CtrlTask {
     /// separate thread.
     fn create_tasks(
         &self,
-        signal: SignalContext<'static>,
+        signal: SignalEmitter<'static>,
     ) -> impl Future<Output = Result<(), RogError>> + Send;
 
     // /// Create a timed repeating task
@@ -297,7 +299,7 @@ pub trait GetSupported {
 pub async fn start_tasks<T>(
     mut zbus: T,
     connection: &mut Connection,
-    signal_ctx: SignalContext<'static>,
+    signal_ctx: SignalEmitter<'static>,
 ) -> Result<(), RogError>
 where
     T: ZbusRun + Reloadable + CtrlTask + Clone,

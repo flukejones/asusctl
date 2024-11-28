@@ -34,7 +34,7 @@ const BLOCKING_TIME: u64 = 33; // 100ms = 10 FPS, max 50ms = 20 FPS, 40ms = 25 F
     default_service = "org.asuslinux.Daemon",
     default_path = "/org/asuslinux/Aura"
 )]
-trait Aura {
+pub trait Aura {
     /// AllModeData method
     fn all_mode_data(&self) -> zbus::Result<BTreeMap<AuraModeNum, AuraEffect>>;
 

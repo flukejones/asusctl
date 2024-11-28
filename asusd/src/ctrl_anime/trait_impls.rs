@@ -10,7 +10,9 @@ use rog_anime::usb::{
 };
 use rog_anime::{Animations, AnimeDataBuffer, DeviceState};
 use zbus::export::futures_util::lock::Mutex;
-use zbus::{interface, CacheProperties, Connection, SignalContext};
+use zbus::object_server::SignalEmitter;
+use zbus::proxy::CacheProperties;
+use zbus::{interface, Connection};
 
 use super::config::AnimeConfig;
 use super::CtrlAnime;
@@ -297,7 +299,7 @@ impl crate::CtrlTask for CtrlAnimeZbus {
         ANIME_ZBUS_PATH
     }
 
-    async fn create_tasks(&self, _: SignalContext<'static>) -> Result<(), RogError> {
+    async fn create_tasks(&self, _: SignalEmitter<'static>) -> Result<(), RogError> {
         let inner1 = self.0.clone();
         let inner2 = self.0.clone();
         let inner3 = self.0.clone();

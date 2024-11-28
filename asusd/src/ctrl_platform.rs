@@ -10,7 +10,8 @@ use rog_platform::platform::{GpuMode, Properties, RogPlatform, ThrottlePolicy};
 use rog_platform::power::AsusPower;
 use zbus::export::futures_util::lock::Mutex;
 use zbus::fdo::Error as FdoErr;
-use zbus::{interface, Connection, SignalContext};
+use zbus::object_server::SignalEmitter;
+use zbus::{interface, Connection};
 
 use crate::config::Config;
 use crate::error::RogError;
@@ -44,7 +45,7 @@ macro_rules! platform_set_value {
                 concat_idents::concat_idents!(set = set_, $property {
                     $self.platform.set($new_value).map_err(|err| {
                         error!("RogPlatform: {} {err}", $prop_name);
-                        FdoErr::NotSupported(format!("RogPlatform: {} {err}", $prop_name))
+                        FdoErr::Failed(format!("RogPlatform: {} {err}", $prop_name))
                     })?;
                 });
                 let mut lock = $self.config.lock().await;
@@ -93,7 +94,7 @@ impl CtrlPlatform {
     pub fn new(
         config: Arc<Mutex<Config>>,
         config_path: &Path,
-        signal_context: SignalContext<'static>,
+        signal_context: SignalEmitter<'static>,
     ) -> Result<Self, RogError> {
         // let attrs = FirmwareAttributes::new();
         let platform = RogPlatform::new()?;
@@ -384,7 +385,7 @@ impl CtrlPlatform {
     /// If fan-curves are supported will also activate a fan curve for profile.
     async fn next_throttle_thermal_policy(
         &mut self,
-        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+        #[zbus(signal_context)] ctxt: SignalEmitter<'_>,
     ) -> Result<(), FdoErr> {
         let policy: ThrottlePolicy =
             platform_get_value!(self, throttle_thermal_policy, "throttle_thermal_policy")
@@ -715,7 +716,7 @@ impl ReloadAndNotify for CtrlPlatform {
     /// Called on config file changed externally
     async fn reload_and_notify(
         &mut self,
-        signal_context: &SignalContext<'static>,
+        signal_context: &SignalEmitter<'static>,
         data: Self::Data,
     ) -> Result<(), RogError> {
         let mut config = self.config.lock().await;
@@ -878,7 +879,7 @@ impl CtrlTask for CtrlPlatform {
         PLATFORM_ZBUS_PATH
     }
 
-    async fn create_tasks(&self, signal_ctxt: SignalContext<'static>) -> Result<(), RogError> {
+    async fn create_tasks(&self, signal_ctxt: SignalEmitter<'static>) -> Result<(), RogError> {
         let platform1 = self.clone();
         let platform2 = self.clone();
         let platform3 = self.clone();
