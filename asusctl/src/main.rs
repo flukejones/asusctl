@@ -185,7 +185,8 @@ fn do_parsed(
                 && parsed.kbd_bright.is_none()
                 && parsed.chg_limit.is_none()
                 && !parsed.next_kbd_bright
-                && !parsed.prev_kbd_bright)
+                && !parsed.prev_kbd_bright
+                && !parsed.one_shot_chg)
                 || parsed.help
             {
                 println!("{}", CliStart::usage());
@@ -312,6 +313,11 @@ fn do_parsed(
     if let Some(chg_limit) = parsed.chg_limit {
         let proxy = PlatformProxyBlocking::new(&conn)?;
         proxy.set_charge_control_end_threshold(chg_limit)?;
+    }
+
+    if parsed.one_shot_chg {
+        let proxy = PlatformProxyBlocking::new(&conn)?;
+        proxy.one_shot_full_charge()?;
     }
 
     Ok(())
