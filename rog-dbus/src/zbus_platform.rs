@@ -45,6 +45,9 @@ pub trait Platform {
     #[zbus(property)]
     fn set_charge_control_end_threshold(&self, value: u8) -> zbus::Result<()>;
 
+    // Toggle one-shot charge to 100%
+    fn one_shot_full_charge(&self) -> zbus::Result<()>;
+
     /// DgpuDisable property
     #[zbus(property)]
     fn dgpu_disable(&self) -> zbus::Result<bool>;

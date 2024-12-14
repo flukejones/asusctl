@@ -181,6 +181,24 @@ impl CtrlPlatform {
         Ok(())
     }
 
+    async fn restore_charge_limit(&self) {
+        let limit = self.config.lock().await.base_charge_control_end_threshold;
+        if limit > 0
+            && std::mem::replace(
+                &mut self.config.lock().await.charge_control_end_threshold,
+                limit,
+            ) != limit
+        {
+            self.power
+                .set_charge_control_end_threshold(limit)
+                .map_err(|e| {
+                    error!("Couldn't restore charge limit: {e}");
+                })
+                .ok();
+            self.config.lock().await.write();
+        }
+    }
+
     async fn run_ac_or_bat_cmd(&self, power_plugged: bool) {
         let prog: Vec<String> = if power_plugged {
             // AC ONLINE
@@ -353,7 +371,21 @@ impl CtrlPlatform {
         }
         self.power.set_charge_control_end_threshold(limit)?;
         self.config.lock().await.charge_control_end_threshold = limit;
+        self.config.lock().await.base_charge_control_end_threshold = limit;
         self.config.lock().await.write();
+        Ok(())
+    }
+
+    async fn one_shot_full_charge(&self) -> Result<(), FdoErr> {
+        let base_limit = std::mem::replace(
+            &mut self.config.lock().await.charge_control_end_threshold,
+            100,
+        );
+        if base_limit != 100 {
+            self.power.set_charge_control_end_threshold(100)?;
+            self.config.lock().await.base_charge_control_end_threshold = base_limit;
+            self.config.lock().await.write();
+        }
         Ok(())
     }
 
@@ -723,12 +755,17 @@ impl ReloadAndNotify for CtrlPlatform {
         if *config != data {
             info!("asusd.ron updated externally, reloading and updating internal copy");
 
+            let mut base_charge_control_end_threshold = None;
+
             if self.power.has_charge_control_end_threshold() {
                 let limit = data.charge_control_end_threshold;
                 warn!("setting charge_control_end_threshold to {limit}");
                 self.power.set_charge_control_end_threshold(limit)?;
                 self.charge_control_end_threshold_changed(signal_context)
                     .await?;
+                base_charge_control_end_threshold = (config.base_charge_control_end_threshold > 0)
+                    .then_some(config.base_charge_control_end_threshold)
+                    .or(Some(limit));
             }
 
             if self.platform.has_throttle_thermal_policy()
@@ -777,6 +814,8 @@ impl ReloadAndNotify for CtrlPlatform {
             ppt_reload_and_notify!(nv_temp_target, "nv_temp_target");
 
             *config = data;
+            config.base_charge_control_end_threshold =
+                base_charge_control_end_threshold.unwrap_or_default();
         }
 
         Ok(())
@@ -787,6 +826,7 @@ impl crate::Reloadable for CtrlPlatform {
     async fn reload(&mut self) -> Result<(), RogError> {
         info!("Begin Platform settings restore");
         if self.power.has_charge_control_end_threshold() {
+            // self.restore_charge_limit().await;
             let limit = self.config.lock().await.charge_control_end_threshold;
             info!("reloading charge_control_end_threshold to {limit}");
             self.power.set_charge_control_end_threshold(limit)?;
@@ -947,6 +987,23 @@ impl CtrlTask for CtrlPlatform {
                             })
                             .ok();
                     }
+
+                    if shutting_down
+                        && platform2.power.has_charge_control_end_threshold()
+                        && lock.base_charge_control_end_threshold > 0
+                    {
+                        info!("RogPlatform restoring charge_control_end_threshold");
+                        platform2
+                            .power
+                            .set_charge_control_end_threshold(
+                                lock.base_charge_control_end_threshold,
+                            )
+                            .map_err(|err| {
+                                warn!("CtrlCharge: charge_control_end_threshold {}", err);
+                                err
+                            })
+                            .ok();
+                    }
                 }
             },
             move |_lid_closed| {
@@ -964,6 +1021,10 @@ impl CtrlTask for CtrlPlatform {
                             .await;
                     }
                     platform3.run_ac_or_bat_cmd(power_plugged).await;
+                    // In case one-shot charge was used, restore the old charge limit
+                    if platform3.power.has_charge_control_end_threshold() && !power_plugged {
+                        platform3.restore_charge_limit().await;
+                    }
                 }
             },
         )

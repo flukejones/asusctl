@@ -7,8 +7,11 @@ const CONFIG_FILE: &str = "asusd.ron";
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, PartialOrd)]
 pub struct Config {
-    /// Save charge limit for restoring on boot/resume
+    // The current charge limit applied
     pub charge_control_end_threshold: u8,
+    /// Save charge limit for restoring
+    #[serde(skip)]
+    pub base_charge_control_end_threshold: u8,
     pub panel_od: bool,
     pub boot_sound: bool,
     pub mini_led_mode: bool,
@@ -64,6 +67,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             charge_control_end_threshold: 100,
+            base_charge_control_end_threshold: 100,
             panel_od: false,
             boot_sound: false,
             mini_led_mode: false,
@@ -116,7 +120,7 @@ impl StdConfigLoad1<Config507> for Config {}
 
 #[derive(Deserialize, Serialize)]
 pub struct Config507 {
-    /// Save charge limit for restoring on boot
+    // The current charge limit applied
     pub charge_control_end_threshold: u8,
     pub panel_od: bool,
     pub mini_led_mode: bool,
@@ -139,7 +143,9 @@ pub struct Config507 {
 impl From<Config507> for Config {
     fn from(c: Config507) -> Self {
         Self {
+            // Restore the base charge limit
             charge_control_end_threshold: c.charge_control_end_threshold,
+            base_charge_control_end_threshold: c.charge_control_end_threshold,
             panel_od: c.panel_od,
             boot_sound: false,
             disable_nvidia_powerd_on_battery: c.disable_nvidia_powerd_on_battery,

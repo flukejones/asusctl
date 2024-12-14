@@ -22,6 +22,8 @@ pub struct CliStart {
     pub prev_kbd_bright: bool,
     #[options(meta = "", help = "Set your battery charge limit <20-100>")]
     pub chg_limit: Option<u8>,
+    #[options(help = "Toggle one-shot battery charge to 100%")]
+    pub one_shot_chg: bool,
     #[options(command)]
     pub command: Option<CliCommand>,
 }
