@@ -49,8 +49,10 @@ impl CtrlSlash {
         let usb = USBRaw::new(rog_slash::usb::PROD_ID).ok();
         let hid = HidRaw::new(rog_slash::usb::PROD_ID_STR).ok();
         let node = if usb.is_some() {
+            info!("Slash is using raw USB");
             unsafe { Node::Usb(usb.unwrap_unchecked()) }
         } else if hid.is_some() {
+            info!("Slash is using HIDRAW");
             unsafe { Node::Hid(hid.unwrap_unchecked()) }
         } else {
             return Err(RogError::Slash(SlashError::NoDevice));

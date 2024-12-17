@@ -148,12 +148,13 @@ impl From<LaptopAuraPower> for SlintLaptopAuraPower {
 impl From<SlintDeviceType> for AuraDeviceType {
     fn from(value: SlintDeviceType) -> Self {
         match value {
-            SlintDeviceType::New => Self::LaptopPost2021,
-            SlintDeviceType::Old => Self::LaptopPre2021,
-            SlintDeviceType::Tuf => Self::LaptopTuf,
+            SlintDeviceType::New => Self::LaptopKeyboard2021,
+            SlintDeviceType::Old => Self::LaptopKeyboardPre2021,
+            SlintDeviceType::Tuf => Self::LaptopKeyboardTuf,
             SlintDeviceType::ScsiExtDisk => Self::ScsiExtDisk,
             SlintDeviceType::Unknown => Self::Unknown,
             SlintDeviceType::Ally => Self::Ally,
+            SlintDeviceType::AnimeOrSlash => Self::AnimeOrSlash,
         }
     }
 }
@@ -161,12 +162,13 @@ impl From<SlintDeviceType> for AuraDeviceType {
 impl From<AuraDeviceType> for SlintDeviceType {
     fn from(value: AuraDeviceType) -> Self {
         match value {
-            AuraDeviceType::LaptopPost2021 => SlintDeviceType::New,
-            AuraDeviceType::LaptopPre2021 => SlintDeviceType::Old,
-            AuraDeviceType::LaptopTuf => SlintDeviceType::Tuf,
+            AuraDeviceType::LaptopKeyboard2021 => SlintDeviceType::New,
+            AuraDeviceType::LaptopKeyboardPre2021 => SlintDeviceType::Old,
+            AuraDeviceType::LaptopKeyboardTuf => SlintDeviceType::Tuf,
             AuraDeviceType::ScsiExtDisk => SlintDeviceType::ScsiExtDisk,
             AuraDeviceType::Unknown => SlintDeviceType::Unknown,
             AuraDeviceType::Ally => SlintDeviceType::Ally,
+            AuraDeviceType::AnimeOrSlash => SlintDeviceType::AnimeOrSlash,
         }
     }
 }
