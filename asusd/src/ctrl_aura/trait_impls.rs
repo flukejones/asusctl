@@ -94,8 +94,14 @@ impl CtrlAuraZbus {
     /// The current mode data
     #[zbus(property)]
     async fn led_mode(&self) -> Result<AuraModeNum, ZbErr> {
-        let ctrl = self.0.lock().await;
-        Ok(ctrl.config.current_mode)
+        // entirely possible to deadlock here, so use try instead of lock()
+        // let ctrl = self.0.lock().await;
+        // Ok(ctrl.config.current_mode)
+        if let Some(ctrl) = self.0.try_lock() {
+            Ok(ctrl.config.current_mode)
+        } else {
+            Err(ZbErr::Failed("Aura control couldn't lock self".to_string()))
+        }
     }
 
     /// Set an Aura effect if the effect mode or zone is supported.
@@ -116,6 +122,7 @@ impl CtrlAuraZbus {
         }
         ctrl.config.write();
 
+        self.led_mode_changed(&self.1).await.ok();
         self.led_mode_data_changed(&self.1).await.ok();
         Ok(())
     }
@@ -123,11 +130,15 @@ impl CtrlAuraZbus {
     /// The current mode data
     #[zbus(property)]
     async fn led_mode_data(&self) -> Result<AuraEffect, ZbErr> {
-        let ctrl = self.0.lock().await;
-        let mode = ctrl.config.current_mode;
-        match ctrl.config.builtins.get(&mode) {
-            Some(effect) => Ok(effect.clone()),
-            None => Err(ZbErr::Failed("Could not get the current effect".into())),
+        // entirely possible to deadlock here, so use try instead of lock()
+        if let Some(ctrl) = self.0.try_lock() {
+            let mode = ctrl.config.current_mode;
+            match ctrl.config.builtins.get(&mode) {
+                Some(effect) => Ok(effect.clone()),
+                None => Err(ZbErr::Failed("Could not get the current effect".into())),
+            }
+        } else {
+            Err(ZbErr::Failed("Aura control couldn't lock self".to_string()))
         }
     }
 

@@ -40,6 +40,7 @@ tokio = { version = "^1.39.0", default-features = false, features = [
     "macros",
     "sync",
     "time",
+    "rt",
     "rt-multi-thread",
 ] }
 concat-idents = "^1.1"
