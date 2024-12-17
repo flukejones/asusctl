@@ -13,6 +13,9 @@ edition.workspace = true
 name = "asusd"
 path = "src/daemon.rs"
 
+[features]
+tokio_debug = []
+
 [dependencies]
 config-traits = { path = "../config-traits" }
 rog_anime = { path = "../rog-anime", features = ["dbus"] }
@@ -27,7 +30,7 @@ inotify.workspace = true
 
 mio.workspace = true
 tokio.workspace = true
-# console-subscriber = "0.2.0"
+console-subscriber = "0.2.0"
 
 # cli and logging
 log.workspace = true

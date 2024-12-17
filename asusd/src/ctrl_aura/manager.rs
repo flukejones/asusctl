@@ -8,7 +8,6 @@ use std::collections::HashSet;
 
 use log::{error, info, warn};
 use mio::{Events, Interest, Poll, Token};
-use tokio::task::spawn_blocking;
 use udev::{Device, MonitorBuilder};
 use zbus::object_server::SignalEmitter;
 use zbus::zvariant::{ObjectPath, OwnedObjectPath};
@@ -45,7 +44,7 @@ impl AuraManager {
 
         // detect all plugged in aura devices (eventually)
         // only USB devices are detected for here
-        spawn_blocking(move || {
+        std::thread::spawn(move || {
             let mut monitor = MonitorBuilder::new()?.match_subsystem("hidraw")?.listen()?;
             let mut poll = Poll::new()?;
             let mut events = Events::with_capacity(1024);

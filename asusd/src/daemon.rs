@@ -19,17 +19,18 @@ use zbus::fdo::ObjectManager;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // console_subscriber::init();
+    console_subscriber::init();
     let mut logger = env_logger::Builder::new();
     logger
         .parse_default_env()
         .target(env_logger::Target::Stdout)
         .format_timestamp(None)
+        .filter_level(log::LevelFilter::Debug)
         .init();
 
     let is_service = match env::var_os("IS_SERVICE") {
         Some(val) => val == "1",
-        None => false,
+        None => true,
     };
 
     if !is_service {
