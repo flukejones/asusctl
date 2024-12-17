@@ -193,14 +193,14 @@ impl LaptopAuraPower {
     // TODO: use support data to setup correct zones
     pub fn new(aura_type: AuraDeviceType, support_data: &LedSupportData) -> Self {
         match aura_type {
-            AuraDeviceType::Unknown | AuraDeviceType::Ally | AuraDeviceType::LaptopPost2021 => {
+            AuraDeviceType::Unknown | AuraDeviceType::Ally | AuraDeviceType::LaptopKeyboard2021 => {
                 let mut states = Vec::new();
                 for zone in support_data.power_zones.iter() {
                     states.push(AuraPowerState::default_for(*zone))
                 }
                 Self { states }
             }
-            AuraDeviceType::LaptopPre2021 => {
+            AuraDeviceType::LaptopKeyboardPre2021 => {
                 // The older devices are tri-state if have lightbar:
                 // 1. Keyboard
                 // 2. Lightbar
@@ -215,10 +215,11 @@ impl LaptopAuraPower {
                     }
                 }
             }
-            AuraDeviceType::LaptopTuf => Self {
+            AuraDeviceType::LaptopKeyboardTuf => Self {
                 states: vec![AuraPowerState::default_for(PowerZones::Keyboard)],
             },
             AuraDeviceType::ScsiExtDisk => todo!(),
+            AuraDeviceType::AnimeOrSlash => todo!(),
         }
     }
 
@@ -229,8 +230,8 @@ impl LaptopAuraPower {
             }
         }
         match aura_type {
-            AuraDeviceType::LaptopPost2021 | AuraDeviceType::Ally => self.new_to_bytes(),
-            AuraDeviceType::LaptopPre2021 => {
+            AuraDeviceType::LaptopKeyboard2021 | AuraDeviceType::Ally => self.new_to_bytes(),
+            AuraDeviceType::LaptopKeyboardPre2021 => {
                 if self.states.len() == 1 {
                     self.states
                         .first()
@@ -249,7 +250,7 @@ impl LaptopAuraPower {
                     b
                 }
             }
-            AuraDeviceType::LaptopTuf => self
+            AuraDeviceType::LaptopKeyboardTuf => self
                 .states
                 .first()
                 .cloned()
@@ -260,6 +261,7 @@ impl LaptopAuraPower {
                 self.new_to_bytes()
             }
             AuraDeviceType::ScsiExtDisk => todo!("scsi disk not implemented yet"),
+            AuraDeviceType::AnimeOrSlash => todo!("anime/slash not implemented yet"),
         }
     }
 }
@@ -309,7 +311,7 @@ mod test {
     use crate::{AuraDeviceType, PowerZones};
 
     fn to_binary_string_post2021(power: &LaptopAuraPower) -> String {
-        let bytes = power.to_bytes(AuraDeviceType::LaptopPost2021);
+        let bytes = power.to_bytes(AuraDeviceType::LaptopKeyboard2021);
         format!(
             "{:08b}, {:08b}, {:08b}, {:08b}",
             bytes[0], bytes[1], bytes[2], bytes[3]
@@ -327,7 +329,7 @@ mod test {
                 shutdown: false,
             }],
         };
-        let bytes = power.to_bytes(AuraDeviceType::LaptopPre2021);
+        let bytes = power.to_bytes(AuraDeviceType::LaptopKeyboardPre2021);
         println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
         assert_eq!(bytes, [0x08, 0x00, 0x02, 0x00]);
 
@@ -340,7 +342,7 @@ mod test {
                 shutdown: false,
             }],
         };
-        let bytes = power.to_bytes(AuraDeviceType::LaptopPre2021);
+        let bytes = power.to_bytes(AuraDeviceType::LaptopKeyboardPre2021);
         println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
         assert_eq!(bytes, [0x04, 0x05, 0x02, 0x00]);
 
@@ -369,7 +371,7 @@ mod test {
                 },
             ],
         };
-        let bytes = power.to_bytes(AuraDeviceType::LaptopPre2021);
+        let bytes = power.to_bytes(AuraDeviceType::LaptopKeyboardPre2021);
         println!("{:08b}, {:08b}, {:08b}", bytes[0], bytes[1], bytes[2]);
         assert_eq!(bytes, [0xff, 0x1f, 0x000f, 0x00]);
     }

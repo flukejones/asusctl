@@ -89,7 +89,7 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
             let dev_type = aura
                 .device_type()
                 .await
-                .unwrap_or(AuraDeviceType::LaptopPost2021);
+                .unwrap_or(AuraDeviceType::LaptopKeyboard2021);
             log::debug!("Available LED power modes {pow3r:?}");
             handle
                 .upgrade_in_event_loop(move |handle| {

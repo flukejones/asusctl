@@ -19,7 +19,7 @@ use zbus::fdo::ObjectManager;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    console_subscriber::init();
+    // console_subscriber::init();
     let mut logger = env_logger::Builder::new();
     logger
         .parse_default_env()
@@ -108,6 +108,8 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
     }
 
+    let _ = AuraManager::new(connection.clone()).await?;
+
     match CtrlSlash::new() {
         Ok(ctrl) => {
             let zbus = CtrlSlashZbus(Arc::new(Mutex::new(ctrl)));
@@ -122,8 +124,6 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
             info!("AniMe control: {}", err);
         }
     }
-
-    let _ = AuraManager::new(connection.clone()).await?;
 
     // Request dbus name after finishing initalizing all functions
     connection.request_name(DBUS_NAME).await?;

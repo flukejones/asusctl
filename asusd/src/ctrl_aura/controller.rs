@@ -219,7 +219,7 @@ impl CtrlKbdLed {
                 if dmi.product_family.contains("TUF") {
                     info!("AuraControl found a TUF laptop keyboard");
                     let ctrl = CtrlKbdLed {
-                        led_type: AuraDeviceType::LaptopTuf,
+                        led_type: AuraDeviceType::LaptopKeyboardTuf,
                         led_node: LEDNode::KbdLed(kbd_backlight),
                         supported_data: LedSupportData::get_data("tuf"),
                         per_key_mode_active: false,
@@ -442,7 +442,7 @@ mod tests {
             power_zones: vec![PowerZones::Keyboard, PowerZones::RearGlow],
         };
         let mut controller = CtrlKbdLed {
-            led_type: AuraDeviceType::LaptopPost2021,
+            led_type: AuraDeviceType::LaptopKeyboard2021,
             led_node: LEDNode::Rog(
                 Some(KeyboardBacklight::default()),
                 HidRaw::new("19b6").unwrap(),
@@ -492,7 +492,7 @@ mod tests {
             power_zones: vec![PowerZones::Keyboard, PowerZones::RearGlow],
         };
         let mut controller = CtrlKbdLed {
-            led_type: AuraDeviceType::LaptopPost2021,
+            led_type: AuraDeviceType::LaptopKeyboard2021,
             led_node: LEDNode::Rog(
                 Some(KeyboardBacklight::default()),
                 HidRaw::new("19b6").unwrap(),

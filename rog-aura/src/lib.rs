@@ -70,25 +70,26 @@ pub const GRADIENT: [Colour; 7] = [RED, VIOLET, BLUE, TEAL, GREEN, YELLOW, ORANG
 pub enum AuraDeviceType {
     /// Most new laptops
     #[default]
-    LaptopPost2021 = 0,
-    LaptopPre2021 = 1,
-    LaptopTuf = 2,
+    LaptopKeyboard2021 = 0,
+    LaptopKeyboardPre2021 = 1,
+    LaptopKeyboardTuf = 2,
     ScsiExtDisk = 3,
     Ally = 4,
+    AnimeOrSlash = 5,
     Unknown = 255,
 }
 
 impl AuraDeviceType {
     pub fn is_old_laptop(&self) -> bool {
-        *self == Self::LaptopPre2021
+        *self == Self::LaptopKeyboardPre2021
     }
 
     pub fn is_tuf_laptop(&self) -> bool {
-        *self == Self::LaptopTuf
+        *self == Self::LaptopKeyboardTuf
     }
 
     pub fn is_new_laptop(&self) -> bool {
-        *self == Self::LaptopPost2021
+        *self == Self::LaptopKeyboard2021
     }
 
     pub fn is_ally(&self) -> bool {
@@ -103,11 +104,12 @@ impl AuraDeviceType {
 impl From<&str> for AuraDeviceType {
     fn from(s: &str) -> Self {
         match s.to_lowercase().trim_start_matches("0x") {
-            "tuf" => AuraDeviceType::LaptopTuf,
+            "tuf" => AuraDeviceType::LaptopKeyboardTuf,
             "1932" => AuraDeviceType::ScsiExtDisk,
-            "1866" | "18c6" | "1869" | "1854" => Self::LaptopPre2021,
+            "1866" | "18c6" | "1869" | "1854" => Self::LaptopKeyboardPre2021,
             "1abe" | "1b4c" => Self::Ally,
-            _ => Self::LaptopPost2021,
+            "19b3" => Self::AnimeOrSlash,
+            _ => Self::LaptopKeyboard2021,
         }
     }
 }
