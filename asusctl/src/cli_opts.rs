@@ -4,6 +4,7 @@ use rog_platform::platform::ThrottlePolicy;
 use crate::anime_cli::AnimeCommand;
 use crate::aura_cli::{LedBrightness, LedPowerCommand1, LedPowerCommand2, SetAuraBuiltin};
 use crate::fan_curve_cli::FanCurveCommand;
+use crate::scsi_cli::ScsiCommand;
 use crate::slash_cli::SlashCommand;
 
 #[derive(Default, Options)]
@@ -46,6 +47,8 @@ pub enum CliCommand {
     Anime(AnimeCommand),
     #[options(name = "slash", help = "Manage Slash Ledbar")]
     Slash(SlashCommand),
+    #[options(name = "scsi", help = "Manage SCSI external drive")]
+    Scsi(ScsiCommand),
     #[options(help = "Change bios settings")]
     Platform(PlatformCommand),
 }

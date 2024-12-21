@@ -25,7 +25,7 @@ members = [
     "rog-profiles",
     "rog-control-center",
     "rog-slash",
-    "simulators",
+    "simulators", "rog-scsi",
 ]
 default-members = [
     "asusctl",
@@ -72,6 +72,8 @@ gif = "^0.12.0"
 versions = "6.2"
 
 notify-rust = { version = "4.11.0", features = ["z", "async"] }
+
+sg = {git = "https://github.com/flukejones/sg-rs.git"}
 
 [profile.release]
 # thin = 57s, asusd = 9.0M

@@ -9,6 +9,7 @@ pub mod ctrl_platform;
 pub mod aura_anime;
 pub mod aura_laptop;
 pub mod aura_manager;
+pub mod aura_scsi;
 pub mod aura_slash;
 pub mod aura_types;
 pub mod error;
