@@ -18,6 +18,7 @@ use zbus::Connection;
 
 use crate::aura_anime::trait_impls::AniMeZbus;
 use crate::aura_laptop::trait_impls::AuraZbus;
+use crate::aura_scsi::trait_impls::ScsiZbus;
 use crate::aura_slash::trait_impls::SlashZbus;
 use crate::aura_types::DeviceHandle;
 use crate::error::RogError;
@@ -70,6 +71,17 @@ fn dbus_path_for_anime() -> OwnedObjectPath {
     ObjectPath::from_str_unchecked(&format!("{ASUS_ZBUS_PATH}/anime")).into()
 }
 
+fn dbus_path_for_scsi(prod_id: &str) -> OwnedObjectPath {
+    ObjectPath::from_str_unchecked(&format!("{ASUS_ZBUS_PATH}/{prod_id}_scsi")).into()
+}
+
+fn dev_prop_matches(dev: &Device, prop: &str, value: &str) -> bool {
+    if let Some(p) = dev.property_value(prop) {
+        return p == value;
+    }
+    false
+}
+
 // TODO:
 // - make this the HID manager (and universal)
 // - *really* need to make most of this actual kernel drivers
@@ -83,7 +95,6 @@ fn dbus_path_for_anime() -> OwnedObjectPath {
 ///
 /// Each controller within should track its dbus path so it can be removed if
 /// required.
-#[derive(Debug)]
 pub struct AsusDevice {
     device: DeviceHandle,
     dbus_path: OwnedObjectPath,
@@ -197,7 +208,75 @@ impl DeviceManager {
         {
             devices.append(&mut Self::init_hid_devices(connection, device).await?);
         }
-        // debug!("Found devices: {devices:?}");
+
+        Ok(devices)
+    }
+
+    async fn init_scsi(
+        connection: &Connection,
+        device: &Device,
+        path: OwnedObjectPath,
+    ) -> Option<AsusDevice> {
+        // "ID_MODEL_ID" "1932"
+        // "ID_VENDOR_ID" "0b05"
+        if dev_prop_matches(&device, "ID_VENDOR_ID", "0b05") {
+            if let Some(dev_node) = device.devnode() {
+                let prod_id = device
+                    .property_value("ID_MODEL_ID")
+                    .unwrap_or_default()
+                    .to_string_lossy();
+                if let Ok(dev_type) =
+                    DeviceHandle::maybe_scsi(dev_node.as_os_str().to_str().unwrap(), &prod_id).await
+                {
+                    if let DeviceHandle::Scsi(scsi) = dev_type.clone() {
+                        let ctrl = ScsiZbus::new(scsi);
+                        ctrl.start_tasks(connection, path.clone()).await.unwrap();
+                        return Some(AsusDevice {
+                            device: dev_type,
+                            dbus_path: path,
+                        });
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    async fn init_all_scsi(connection: &Connection) -> Result<Vec<AsusDevice>, RogError> {
+        // track and ensure we use only one hidraw per prod_id
+        // let mut interfaces = HashSet::new();
+        let mut devices: Vec<AsusDevice> = Vec::new();
+
+        let mut enumerator = udev::Enumerator::new().map_err(|err| {
+            warn!("{}", err);
+            PlatformError::Udev("enumerator failed".into(), err)
+        })?;
+
+        enumerator.match_subsystem("block").map_err(|err| {
+            warn!("{}", err);
+            PlatformError::Udev("match_subsystem failed".into(), err)
+        })?;
+
+        let mut found = Vec::new();
+        for device in enumerator
+            .scan_devices()
+            .map_err(|e| PlatformError::IoPath("enumerator".to_owned(), e))?
+        {
+            if let Some(serial) = device.property_value("ID_SERIAL_SHORT") {
+                let serial = serial.to_string_lossy().to_string();
+                let path = dbus_path_for_scsi(&serial);
+                if found.contains(&path) {
+                    continue;
+                }
+
+                if let Some(dev) = Self::init_scsi(connection, &device, path.clone()).await {
+                    devices.push(dev);
+                    found.push(path);
+                }
+            } else {
+                warn!("No serial for SCSI device");
+            }
+        }
 
         Ok(devices)
     }
@@ -252,6 +331,11 @@ impl DeviceManager {
                 info!("Tested device was not AniMe Matrix");
             }
         }
+
+        if let Ok(devs) = &mut Self::init_all_scsi(connection).await {
+            devices.append(devs);
+        }
+
         devices
     }
 
@@ -268,7 +352,7 @@ impl DeviceManager {
         // detect all plugged in aura devices (eventually)
         // only USB devices are detected for here
         std::thread::spawn(move || {
-            let mut monitor = MonitorBuilder::new()?.match_subsystem("hidraw")?.listen()?;
+            let mut monitor = MonitorBuilder::new()?.listen()?;
             let mut poll = Poll::new()?;
             let mut events = Events::with_capacity(1024);
             poll.registry()
@@ -281,82 +365,142 @@ impl DeviceManager {
                     continue;
                 }
                 for event in monitor.iter() {
-                    let action = event.action().unwrap_or_default();
+                    let action = event
+                        .action()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .to_string();
 
-                    if let Some(parent) =
-                        event.parent_with_subsystem_devtype("usb", "usb_device")?
-                    {
-                        let devices = devices.clone();
+                    let subsys = if let Some(subsys) = event.subsystem() {
+                        subsys.to_string_lossy().to_string()
+                    } else {
+                        continue;
+                    };
 
-                        if action == "remove" {
-                            if let Some(path) = dbus_path_for_dev(&parent) {
-                                let conn_copy = conn_copy.clone();
-                                tokio::spawn(async move {
-                                    // Find the indexs of devices matching the path
-                                    let removals: Vec<usize> = devices
+                    let devices = devices.clone();
+                    let conn_copy = conn_copy.clone();
+                    block_on(async move {
+                        // SCSCI devs
+                        if subsys == "block" {
+                            if action == "remove" {
+                                if let Some(serial) =
+                                    event.device().property_value("ID_SERIAL_SHORT")
+                                {
+                                    let serial = serial.to_string_lossy().to_string();
+                                    let path = dbus_path_for_scsi(&serial);
+
+                                    let index = if let Some(index) = devices
                                         .lock()
                                         .await
                                         .iter()
-                                        .enumerate()
-                                        .filter_map(|(i, dev)| {
-                                            if dev.dbus_path == path {
-                                                Some(i)
-                                            } else {
-                                                None
-                                            }
-                                        })
-                                        .collect();
-                                    if removals.is_empty() {
+                                        .position(|dev| dev.dbus_path == path)
+                                    {
+                                        index
+                                    } else {
+                                        warn!("No device for dbus path: {path:?}");
                                         return Ok(());
-                                    }
+                                    };
                                     info!("removing: {path:?}");
-                                    // Iter in reverse so as to not screw up indexing
-                                    for index in removals.iter().rev() {
-                                        let dev = devices.lock().await.remove(*index);
-                                        let path = path.clone();
-                                        let res = match dev.device {
-                                            DeviceHandle::Aura(_) => {
-                                                conn_copy
-                                                    .object_server()
-                                                    .remove::<AuraZbus, _>(&path)
-                                                    .await?
-                                            }
-                                            DeviceHandle::Slash(_) => {
-                                                conn_copy
-                                                    .object_server()
-                                                    .remove::<SlashZbus, _>(&path)
-                                                    .await?
-                                            }
-                                            DeviceHandle::AniMe(_) => {
-                                                conn_copy
-                                                    .object_server()
-                                                    .remove::<AniMeZbus, _>(&path)
-                                                    .await?
-                                            }
-                                            DeviceHandle::Ally(_) => todo!(),
-                                            DeviceHandle::OldAura(_) => todo!(),
-                                            DeviceHandle::TufLedClass(_) => todo!(),
-                                            DeviceHandle::MulticolourLed => todo!(),
-                                            DeviceHandle::None => todo!(),
-                                        };
-                                        info!("AuraManager removed: {path:?}, {res}");
+                                    let dev = devices.lock().await.remove(index);
+                                    let path = path.clone();
+                                    match dev.device {
+                                        DeviceHandle::Scsi(_) => {
+                                            conn_copy
+                                                .object_server()
+                                                .remove::<ScsiZbus, _>(&path)
+                                                .await?;
+                                        }
+                                        _ => {}
                                     }
-                                    Ok::<(), RogError>(())
-                                });
-                            }
-                        } else if action == "add" {
-                            let evdev = event.device();
-                            let conn_copy = conn_copy.clone();
-                            block_on(async move {
-                                if let Ok(mut new_devs) = Self::init_hid_devices(&conn_copy, evdev)
-                                    .await
-                                    .map_err(|e| error!("Couldn't add new device: {e:?}"))
-                                {
-                                    devices.lock().await.append(&mut new_devs);
                                 }
-                            });
-                        };
-                    }
+                            } else if action == "add" {
+                                let evdev = event.device();
+                                if let Some(serial) = evdev.property_value("ID_SERIAL_SHORT") {
+                                    let serial = serial.to_string_lossy().to_string();
+                                    let path = dbus_path_for_scsi(&serial);
+                                    if let Some(new_devs) =
+                                        Self::init_scsi(&conn_copy, &evdev, path).await
+                                    {
+                                        devices.lock().await.append(&mut vec![new_devs]);
+                                    }
+                                }
+                            };
+                        }
+
+                        if subsys == "hidraw" {
+                            if let Some(parent) =
+                                event.parent_with_subsystem_devtype("usb", "usb_device")?
+                            {
+                                if action == "remove" {
+                                    if let Some(path) = dbus_path_for_dev(&parent) {
+                                        // Find the indexs of devices matching the path
+                                        let removals: Vec<usize> = devices
+                                            .lock()
+                                            .await
+                                            .iter()
+                                            .enumerate()
+                                            .filter_map(|(i, dev)| {
+                                                if dev.dbus_path == path {
+                                                    Some(i)
+                                                } else {
+                                                    None
+                                                }
+                                            })
+                                            .collect();
+                                        if removals.is_empty() {
+                                            return Ok(());
+                                        }
+                                        info!("removing: {path:?}");
+                                        // Iter in reverse so as to not screw up indexing
+                                        for index in removals.iter().rev() {
+                                            let dev = devices.lock().await.remove(*index);
+                                            let path = path.clone();
+                                            let res = match dev.device {
+                                                DeviceHandle::Aura(_) => {
+                                                    conn_copy
+                                                        .object_server()
+                                                        .remove::<AuraZbus, _>(&path)
+                                                        .await?
+                                                }
+                                                DeviceHandle::Slash(_) => {
+                                                    conn_copy
+                                                        .object_server()
+                                                        .remove::<SlashZbus, _>(&path)
+                                                        .await?
+                                                }
+                                                DeviceHandle::AniMe(_) => {
+                                                    conn_copy
+                                                        .object_server()
+                                                        .remove::<AniMeZbus, _>(&path)
+                                                        .await?
+                                                }
+                                                DeviceHandle::Scsi(_) => {
+                                                    conn_copy
+                                                        .object_server()
+                                                        .remove::<ScsiZbus, _>(&path)
+                                                        .await?
+                                                }
+                                                _ => todo!(),
+                                            };
+                                            info!("AuraManager removed: {path:?}, {res}");
+                                        }
+                                    }
+                                } else if action == "add" {
+                                    let evdev = event.device();
+                                    if let Ok(mut new_devs) =
+                                        Self::init_hid_devices(&conn_copy, evdev)
+                                            .await
+                                            .map_err(|e| error!("Couldn't add new device: {e:?}"))
+                                    {
+                                        devices.lock().await.append(&mut new_devs);
+                                    }
+                                };
+                            }
+                        }
+                        Ok::<(), RogError>(())
+                    })
+                    .map_err(|e| error!("{e:?}"))
+                    .ok();
                 }
             }
             // Required for return type on spawn

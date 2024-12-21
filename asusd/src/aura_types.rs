@@ -9,6 +9,7 @@ use rog_aura::AuraDeviceType;
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::keyboard_led::KeyboardBacklight;
 use rog_platform::usb_raw::USBRaw;
+use rog_scsi::{open_device, ScsiType};
 use rog_slash::error::SlashError;
 use rog_slash::SlashType;
 use tokio::sync::Mutex;
@@ -17,6 +18,8 @@ use crate::aura_anime::config::AniMeConfig;
 use crate::aura_anime::AniMe;
 use crate::aura_laptop::config::AuraConfig;
 use crate::aura_laptop::Aura;
+use crate::aura_scsi::config::ScsiConfig;
+use crate::aura_scsi::ScsiAura;
 use crate::aura_slash::config::SlashConfig;
 use crate::aura_slash::Slash;
 use crate::error::RogError;
@@ -31,12 +34,13 @@ pub enum _DeviceHandle {
     None,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum DeviceHandle {
     Aura(Aura),
     Slash(Slash),
     /// The AniMe devices require USBRaw as they are not HID devices
     AniMe(AniMe),
+    Scsi(ScsiAura),
     Ally(Arc<Mutex<HidRaw>>),
     OldAura(Arc<Mutex<HidRaw>>),
     /// TUF laptops have an aditional set of attributes added to the LED /sysfs/
@@ -144,6 +148,23 @@ impl DeviceHandle {
                 "No AnimeMatrix device found".to_string(),
             ))
         }
+    }
+
+    pub async fn maybe_scsi(dev_node: &str, prod_id: &str) -> Result<Self, RogError> {
+        debug!("Testing for SCSI");
+        let prod_id = ScsiType::from(prod_id);
+        if prod_id == ScsiType::Unsupported {
+            log::info!("Unknown or invalid SCSI: {prod_id:?}, skipping");
+            return Err(RogError::NotFound("No SCSI device".to_string()));
+        }
+        info!("Found SCSI device {prod_id:?} on {dev_node}");
+
+        let mut config = ScsiConfig::new().load();
+        config.dev_type = AuraDeviceType::ScsiExtDisk;
+        let dev = Arc::new(Mutex::new(open_device(dev_node)?));
+        let scsi = ScsiAura::new(dev, Arc::new(Mutex::new(config)));
+        scsi.do_initialization().await?;
+        Ok(Self::Scsi(scsi))
     }
 
     pub async fn maybe_laptop_aura(

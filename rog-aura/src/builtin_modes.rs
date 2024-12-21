@@ -494,56 +494,6 @@ impl Display for AuraEffect {
     }
 }
 
-pub struct AuraParameters {
-    pub zone: bool,
-    pub colour1: bool,
-    pub colour2: bool,
-    pub speed: bool,
-    pub direction: bool,
-}
-
-#[allow(clippy::fn_params_excessive_bools)]
-impl AuraParameters {
-    pub const fn new(
-        zone: bool,
-        colour1: bool,
-        colour2: bool,
-        speed: bool,
-        direction: bool,
-    ) -> Self {
-        Self {
-            zone,
-            colour1,
-            colour2,
-            speed,
-            direction,
-        }
-    }
-}
-
-impl AuraEffect {
-    /// A helper to provide detail on what effects have which parameters, e.g
-    /// the static factory mode accepts only one colour.
-    pub const fn allowed_parameters(mode: AuraModeNum) -> AuraParameters {
-        match mode {
-            AuraModeNum::Static
-            | AuraModeNum::Highlight
-            | AuraModeNum::Pulse
-            | AuraModeNum::Comet
-            | AuraModeNum::Flash => AuraParameters::new(true, true, false, false, false),
-            AuraModeNum::Breathe => AuraParameters::new(true, true, true, true, false),
-            AuraModeNum::RainbowCycle | AuraModeNum::Rain => {
-                AuraParameters::new(true, false, false, true, false)
-            }
-            AuraModeNum::RainbowWave => AuraParameters::new(true, false, false, true, true),
-            AuraModeNum::Star => AuraParameters::new(true, true, true, true, true),
-            AuraModeNum::Laser | AuraModeNum::Ripple => {
-                AuraParameters::new(true, true, false, true, false)
-            }
-        }
-    }
-}
-
 /// Parses `AuraEffect` in to packet data for writing to the USB interface
 ///
 /// Byte structure where colour is RGB, one byte per R, G, B:

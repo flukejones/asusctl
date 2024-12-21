@@ -14,6 +14,7 @@ use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, 
 use rog_aura::keyboard::{AuraPowerState, LaptopAuraPower};
 use rog_aura::{self, AuraDeviceType, AuraEffect, PowerZones};
 use rog_dbus::list_iface_blocking;
+use rog_dbus::scsi_aura::ScsiAuraProxyBlocking;
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use rog_dbus::zbus_aura::AuraProxyBlocking;
 use rog_dbus::zbus_fan_curves::FanCurvesProxyBlocking;
@@ -21,8 +22,10 @@ use rog_dbus::zbus_platform::PlatformProxyBlocking;
 use rog_dbus::zbus_slash::SlashProxyBlocking;
 use rog_platform::platform::{GpuMode, Properties, ThrottlePolicy};
 use rog_profiles::error::ProfileError;
+use rog_scsi::AuraMode;
 use rog_slash::SlashMode;
 use ron::ser::PrettyConfig;
+use scsi_cli::ScsiCommand;
 use zbus::blocking::proxy::ProxyImpl;
 use zbus::blocking::Connection;
 
@@ -34,6 +37,7 @@ mod anime_cli;
 mod aura_cli;
 mod cli_opts;
 mod fan_curve_cli;
+mod scsi_cli;
 mod slash_cli;
 
 fn main() {
@@ -180,6 +184,7 @@ fn do_parsed(
         Some(CliCommand::Graphics(_)) => do_gfx(),
         Some(CliCommand::Anime(cmd)) => handle_anime(cmd)?,
         Some(CliCommand::Slash(cmd)) => handle_slash(cmd)?,
+        Some(CliCommand::Scsi(cmd)) => handle_scsi(cmd)?,
         Some(CliCommand::Platform(cmd)) => {
             handle_platform_properties(&conn, supported_properties, cmd)?
         }
@@ -571,6 +576,79 @@ fn handle_slash(cmd: &SlashCommand) -> Result<(), Box<dyn std::error::Error>> {
     }
     if cmd.list {
         let res = SlashMode::list();
+        for p in &res {
+            println!("{:?}", p);
+        }
+    }
+
+    Ok(())
+}
+
+fn handle_scsi(cmd: &ScsiCommand) -> Result<(), Box<dyn std::error::Error>> {
+    if (!cmd.list && cmd.enable.is_none() && cmd.mode.is_none() && cmd.colours.is_empty())
+        || cmd.help
+    {
+        println!("Missing arg or command\n\n{}", cmd.self_usage());
+        if let Some(lst) = cmd.self_command_list() {
+            println!("\n{}", lst);
+        }
+    }
+
+    let scsis = find_iface::<ScsiAuraProxyBlocking>("org.asuslinux.ScsiAura")?;
+
+    for scsi in scsis {
+        if let Some(enable) = cmd.enable {
+            scsi.set_enabled(enable)?;
+        }
+
+        if let Some(mode) = cmd.mode {
+            dbg!(mode as u8);
+            scsi.set_led_mode(mode).unwrap();
+        }
+
+        let mut mode = scsi.led_mode_data()?;
+        let mut do_update = false;
+        if !cmd.colours.is_empty() {
+            let mut count = 0;
+            for c in &cmd.colours {
+                if count == 0 {
+                    mode.colour1 = *c;
+                }
+                if count == 1 {
+                    mode.colour2 = *c;
+                }
+                if count == 2 {
+                    mode.colour3 = *c;
+                }
+                if count == 3 {
+                    mode.colour4 = *c;
+                }
+                count += 1;
+            }
+            do_update = true;
+        }
+
+        if let Some(speed) = cmd.speed {
+            mode.speed = speed;
+            do_update = true;
+        }
+
+        if let Some(dir) = cmd.direction {
+            mode.direction = dir;
+            do_update = true;
+        }
+
+        if do_update {
+            scsi.set_led_mode_data(mode.clone())?;
+        }
+
+        // let mode_ret = scsi.led_mode_data()?;
+        // assert_eq!(mode, mode_ret);
+        println!("{mode}");
+    }
+
+    if cmd.list {
+        let res = AuraMode::list();
         for p in &res {
             println!("{:?}", p);
         }

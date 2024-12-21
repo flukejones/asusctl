@@ -1,5 +1,6 @@
 pub use asusd::{DBUS_IFACE, DBUS_NAME, DBUS_PATH};
 
+pub mod scsi_aura;
 pub mod zbus_anime;
 pub mod zbus_aura;
 pub mod zbus_fan_curves;
