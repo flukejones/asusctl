@@ -180,6 +180,15 @@
         power_zones: [Keyboard, Lightbar],
     ),
     (
+        device_name: "G533QS",
+        product_id: "18c6",
+        layout_name: "g533q-per-key",
+        basic_modes: [Static, Breathe, RainbowCycle, RainbowWave, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
+        basic_zones: [],
+        advanced_type: PerKey,
+        power_zones: [Keyboard, Lightbar],
+    ),
+    (
         device_name: "G533Z",
         product_id: "",
         layout_name: "g533q-per-key",
