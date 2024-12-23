@@ -1,22 +1,20 @@
-//! A seld-contained tray icon with menus. The control of app<->tray is done via
-//! commands over an MPSC channel.
+//! A self-contained tray icon with menus.
 
 use std::fs::OpenOptions;
-use std::io::{Read, Write};
+use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 
 use ksni::{Handle, Icon, TrayMethods};
-// use betrayer::{Icon, Menu, MenuItem, TrayEvent, TrayIcon, TrayIconBuilder};
-use log::{error, info, warn};
+use log::{info, warn};
 use rog_platform::platform::Properties;
 use supergfxctl::pci_device::{Device, GfxMode, GfxPower};
 use supergfxctl::zbus_proxy::DaemonProxy as GfxProxy;
 use versions::Versioning;
 
 use crate::config::Config;
-use crate::{get_ipc_file, QUIT_APP, SHOW_GUI};
+use crate::zbus::{AppState, ROGCCZbusProxyBlocking};
 
 const TRAY_LABEL: &str = "ROG Control Center";
 const TRAY_ICON_PATH: &str = "/usr/share/icons/hicolor/512x512/apps/";
@@ -30,15 +28,6 @@ struct Icons {
 }
 
 static ICONS: OnceLock<Icons> = OnceLock::new();
-
-fn toggle_app(open: bool) {
-    if let Ok(mut ipc) = get_ipc_file().map_err(|e| {
-        error!("ROGTray: get_ipc_file: {}", e);
-    }) {
-        let action = if open { SHOW_GUI } else { QUIT_APP };
-        ipc.write_all(&[action, 0]).ok();
-    }
-}
 
 fn read_icon(file: &Path) -> Icon {
     let mut path = PathBuf::from(TRAY_ICON_PATH);
@@ -66,6 +55,7 @@ fn read_icon(file: &Path) -> Icon {
 struct AsusTray {
     current_title: String,
     current_icon: Icon,
+    proxy: ROGCCZbusProxyBlocking<'static>,
 }
 
 impl ksni::Tray for AsusTray {
@@ -91,7 +81,9 @@ impl ksni::Tray for AsusTray {
             StandardItem {
                 label: "Open ROGCC".into(),
                 icon_name: "rog-control-center".into(),
-                activate: Box::new(|_| toggle_app(true)),
+                activate: Box::new(move |s: &mut AsusTray| {
+                    s.proxy.set_state(AppState::MainWindowShouldOpen).ok();
+                }),
                 ..Default::default()
             }
             .into(),
@@ -163,11 +155,15 @@ fn find_dgpu() -> Option<Device> {
 /// The tray is controlled somewhat by `Arc<Mutex<SystemState>>`
 pub fn init_tray(_supported_properties: Vec<Properties>, config: Arc<Mutex<Config>>) {
     tokio::spawn(async move {
+        let user_con = zbus::blocking::Connection::session().unwrap();
+        let proxy = ROGCCZbusProxyBlocking::new(&user_con).unwrap();
+
         let rog_red = read_icon(&PathBuf::from("asus_notif_red.png"));
 
         let tray = AsusTray {
             current_title: TRAY_LABEL.to_string(),
             current_icon: rog_red.clone(),
+            proxy,
         };
 
         let mut tray = tray

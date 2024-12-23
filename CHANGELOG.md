@@ -5,6 +5,7 @@
 ### Added
 - ROG Arion external driver LED support
 - Add GA605W LED layout
+- Add GA605 + GU605 Slash support
 
 ### Changed
 - Fix attribute writes. At some point the kernel API seems to have changed.

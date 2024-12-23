@@ -117,9 +117,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.94"
+version = "1.0.95"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1fd03a028ef38ba2276dce7e33fcd6369c158a1bca17946c4b1b701891c1ff7"
+checksum = "34ac096ce696dc2fcabef30516bb13c0a68a11d30131d3df6f04711467681b04"
 
 [[package]]
 name = "arbitrary"
@@ -135,7 +135,7 @@ checksum = "0ae92a5119aa49cdbcf6b9f893fe4e1d98b04ccbf82ee0584ad948a44a734dea"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -239,9 +239,9 @@ dependencies = [
 
 [[package]]
 name = "async-broadcast"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20cd0e2e25ea8e5f7e9df04578dc6cf5c83577fd09b1a46aaf5c85e1c33f2a7e"
+checksum = "435a87a52755b8f27fcf321ac4f04b2802e337c8c4872923137471ec39c37532"
 dependencies = [
  "event-listener",
  "event-listener-strategy",
@@ -353,7 +353,7 @@ checksum = "3b43422f69d8ff38f95f1b2bb76517c91589a924d1559a0e935d7c8ce0274c11"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -393,7 +393,7 @@ checksum = "c7c24de15d275a1ecfd47a380fb4d5ec9bfe0933f309ed5e705b775596a3574d"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -410,7 +410,7 @@ checksum = "721cae7de5c34fbb2acd27e21e6d2cf7b886dce0c27388d46c4e6c47ea4318dd"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -428,7 +428,7 @@ dependencies = [
  "derive_utils",
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -553,7 +553,7 @@ dependencies = [
  "regex",
  "rustc-hash 1.1.0",
  "shlex",
- "syn 2.0.90",
+ "syn 2.0.91",
  "which",
 ]
 
@@ -574,7 +574,7 @@ dependencies = [
  "regex",
  "rustc-hash 2.1.0",
  "shlex",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -685,7 +685,7 @@ checksum = "3fa76293b4f7bb636ab88fd78228235b5248b4d05cc589aed610f954af5d7c7a"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -888,7 +888,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f76990911f2267d837d9d0ad060aa63aaad170af40904b29461734c339030d4d"
 dependencies = [
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -952,7 +952,7 @@ dependencies = [
 [[package]]
 name = "const-field-offset"
 version = "0.1.5"
-source = "git+https://github.com/slint-ui/slint.git#e125da180d34df9e221cb925ea5c1af6e813bd8f"
+source = "git+https://github.com/slint-ui/slint.git#d6f83a2af663de2128104fe4241e8b12f308db8d"
 dependencies = [
  "const-field-offset-macro",
  "field-offset",
@@ -961,11 +961,11 @@ dependencies = [
 [[package]]
 name = "const-field-offset-macro"
 version = "0.1.5"
-source = "git+https://github.com/slint-ui/slint.git#e125da180d34df9e221cb925ea5c1af6e813bd8f"
+source = "git+https://github.com/slint-ui/slint.git#d6f83a2af663de2128104fe4241e8b12f308db8d"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -1205,7 +1205,7 @@ checksum = "cb7330aeadfbe296029522e6c40f315320aba36fc43a5b3632f3795348f3bd22"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
  "unicode-xid",
 ]
 
@@ -1217,7 +1217,7 @@ checksum = "65f152f4b8559c4da5d574bafc7af85454d706b4c5fe8b530d508cacbb6807ea"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -1285,7 +1285,7 @@ checksum = "97369cbbc041bc366949bc74d34658d6cda5621039731c6310521892a3a20ae0"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -1401,7 +1401,7 @@ checksum = "de0d48a183585823424a4ce1aa132d174a6a81bd540895822eb4c8373a8e49e8"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -1612,7 +1612,7 @@ checksum = "1a5c6c585bc94aaf2c7b51dd4c2ba22680844aba4c687be581871a6f518c5742"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -1699,7 +1699,7 @@ checksum = "162ee34ebcb7c64a8abebc059ce0fee27c2262618d7b60ed8faf72fef13c3650"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -2173,7 +2173,7 @@ dependencies = [
 [[package]]
 name = "i-slint-backend-linuxkms"
 version = "1.9.1"
-source = "git+https://github.com/slint-ui/slint.git#e125da180d34df9e221cb925ea5c1af6e813bd8f"
+source = "git+https://github.com/slint-ui/slint.git#d6f83a2af663de2128104fe4241e8b12f308db8d"
 dependencies = [
  "calloop 0.14.2",
  "drm",
@@ -2191,7 +2191,7 @@ dependencies = [
 [[package]]
 name = "i-slint-backend-selector"
 version = "1.9.1"
-source = "git+https://github.com/slint-ui/slint.git#e125da180d34df9e221cb925ea5c1af6e813bd8f"
+source = "git+https://github.com/slint-ui/slint.git#d6f83a2af663de2128104fe4241e8b12f308db8d"
 dependencies = [
  "cfg-if",
  "i-slint-backend-linuxkms",
@@ -2204,7 +2204,7 @@ dependencies = [
 [[package]]
 name = "i-slint-backend-winit"
 version = "1.9.1"
-source = "git+https://github.com/slint-ui/slint.git#e125da180d34df9e221cb925ea5c1af6e813bd8f"
+source = "git+https://github.com/slint-ui/slint.git#d6f83a2af663de2128104fe4241e8b12f308db8d"
 dependencies = [
  "ashpd",
  "cfg-if",
@@ -2235,7 +2235,7 @@ dependencies = [
 [[package]]
 name = "i-slint-common"
 version = "1.9.1"
-source = "git+https://github.com/slint-ui/slint.git#e125da180d34df9e221cb925ea5c1af6e813bd8f"
+source = "git+https://github.com/slint-ui/slint.git#d6f83a2af663de2128104fe4241e8b12f308db8d"
 dependencies = [
  "cfg-if",
  "derive_more",
@@ -2247,7 +2247,7 @@ dependencies = [
 [[package]]
 name = "i-slint-compiler"
 version = "1.9.1"
-source = "git+https://github.com/slint-ui/slint.git#e125da180d34df9e221cb925ea5c1af6e813bd8f"
+source = "git+https://github.com/slint-ui/slint.git#d6f83a2af663de2128104fe4241e8b12f308db8d"
 dependencies = [
  "by_address",
  "codemap",
@@ -2277,7 +2277,7 @@ dependencies = [
 [[package]]
 name = "i-slint-core"
 version = "1.9.1"
-source = "git+https://github.com/slint-ui/slint.git#e125da180d34df9e221cb925ea5c1af6e813bd8f"
+source = "git+https://github.com/slint-ui/slint.git#d6f83a2af663de2128104fe4241e8b12f308db8d"
 dependencies = [
  "auto_enums",
  "bitflags 2.6.0",
@@ -2322,17 +2322,17 @@ dependencies = [
 [[package]]
 name = "i-slint-core-macros"
 version = "1.9.1"
-source = "git+https://github.com/slint-ui/slint.git#e125da180d34df9e221cb925ea5c1af6e813bd8f"
+source = "git+https://github.com/slint-ui/slint.git#d6f83a2af663de2128104fe4241e8b12f308db8d"
 dependencies = [
  "quote",
  "serde_json",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
 name = "i-slint-renderer-femtovg"
 version = "1.9.1"
-source = "git+https://github.com/slint-ui/slint.git#e125da180d34df9e221cb925ea5c1af6e813bd8f"
+source = "git+https://github.com/slint-ui/slint.git#d6f83a2af663de2128104fe4241e8b12f308db8d"
 dependencies = [
  "cfg-if",
  "const-field-offset",
@@ -2362,7 +2362,7 @@ dependencies = [
 [[package]]
 name = "i-slint-renderer-skia"
 version = "1.9.1"
-source = "git+https://github.com/slint-ui/slint.git#e125da180d34df9e221cb925ea5c1af6e813bd8f"
+source = "git+https://github.com/slint-ui/slint.git#d6f83a2af663de2128104fe4241e8b12f308db8d"
 dependencies = [
  "bytemuck",
  "cfg-if",
@@ -2530,7 +2530,7 @@ checksum = "1ec89e9337638ecdc08744df490b221a7399bf8d164eb52a665454e60e075ad6"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -2695,7 +2695,7 @@ checksum = "c34819042dc3d3971c46c2190835914dfbe0c3c13f61449b2997f4e9722dfa60"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -2934,9 +2934,9 @@ checksum = "0717cef1bc8b636c6e1c1bbdefc09e6322da8a9321966e8928ef80d20f7f770f"
 
 [[package]]
 name = "linked_hash_set"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47186c6da4d81ca383c7c47c1bfc80f4b95f4720514d860a5407aaf4233f9588"
+checksum = "bae85b5be22d9843c80e5fc80e9b64c8a3b1f98f867c709956eca3efff4e92e2"
 dependencies = [
  "linked-hash-map",
 ]
@@ -3273,7 +3273,7 @@ checksum = "ed3955f1a9c7c0c15e092f9c887db08b1fc683305fdf6eb6684f22555355e202"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -3324,7 +3324,7 @@ dependencies = [
  "proc-macro-crate",
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -3647,7 +3647,7 @@ checksum = "3c0f5fad0874fc7abcd4d750e76917eaebbecaa2c20bde22e1dbeeba8beb758c"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -3769,7 +3769,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "64d1ec885c64d0457d564db4ec299b2dae3f9c02808b8ad9c3a089c591b18033"
 dependencies = [
  "proc-macro2",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -3806,7 +3806,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a65f2e60fbf1063868558d69c6beacf412dc755f9fc020f514b7955fc914fe30"
 dependencies = [
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -3829,7 +3829,7 @@ dependencies = [
  "itertools 0.13.0",
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -4112,7 +4112,6 @@ dependencies = [
  "image 0.25.5",
  "ksni",
  "log",
- "nix",
  "notify-rust",
  "rog_anime",
  "rog_aura",
@@ -4123,7 +4122,6 @@ dependencies = [
  "slint",
  "slint-build",
  "supergfxctl",
- "tempfile",
  "tokio",
  "versions",
  "zbus 5.2.0",
@@ -4449,7 +4447,7 @@ checksum = "46f859dbbf73865c6627ed570e78961cd3ac92407a2d117204c49232485da55e"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -4472,7 +4470,7 @@ checksum = "6c64451ba24fc7a6a2d60fc75dd9c83c90903b19028d4eff35e88fc1e86564e9"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -4600,7 +4598,7 @@ dependencies = [
 [[package]]
 name = "slint"
 version = "1.9.1"
-source = "git+https://github.com/slint-ui/slint.git#e125da180d34df9e221cb925ea5c1af6e813bd8f"
+source = "git+https://github.com/slint-ui/slint.git#d6f83a2af663de2128104fe4241e8b12f308db8d"
 dependencies = [
  "const-field-offset",
  "i-slint-backend-selector",
@@ -4617,7 +4615,7 @@ dependencies = [
 [[package]]
 name = "slint-build"
 version = "1.9.1"
-source = "git+https://github.com/slint-ui/slint.git#e125da180d34df9e221cb925ea5c1af6e813bd8f"
+source = "git+https://github.com/slint-ui/slint.git#d6f83a2af663de2128104fe4241e8b12f308db8d"
 dependencies = [
  "i-slint-compiler",
  "i-slint-core-macros",
@@ -4629,7 +4627,7 @@ dependencies = [
 [[package]]
 name = "slint-macros"
 version = "1.9.1"
-source = "git+https://github.com/slint-ui/slint.git#e125da180d34df9e221cb925ea5c1af6e813bd8f"
+source = "git+https://github.com/slint-ui/slint.git#d6f83a2af663de2128104fe4241e8b12f308db8d"
 dependencies = [
  "i-slint-compiler",
  "proc-macro2",
@@ -4814,7 +4812,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "rustversion",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -4855,9 +4853,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.90"
+version = "2.0.91"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "919d3b74a5dd0ccd15aeb8f93e7006bd9e14c295087c9896a110f490752bcf31"
+checksum = "d53cbcb5a243bd33b7858b1d7f4aca2153490815872d86d955d6ea29f743c035"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4878,7 +4876,7 @@ checksum = "c8af7666ab7b6390ab78131fb5b0fce11d6b7a6951602017c35fa82800708971"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -4982,7 +4980,7 @@ checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -5114,7 +5112,7 @@ checksum = "693d596312e88961bc67d7f1f97af8a70227d9f90c31bba5806eec004978d752"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -5271,7 +5269,7 @@ checksum = "395ae124c09f9e6918a2310af6038fba074bcf474ac352496d5910dd59a2226d"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -5354,7 +5352,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a615d6c2764852a2e88a4f16e9ce1ea49bb776b5872956309e170d63a042a34f"
 dependencies = [
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -5590,7 +5588,7 @@ dependencies = [
 [[package]]
 name = "vtable"
 version = "0.2.1"
-source = "git+https://github.com/slint-ui/slint.git#e125da180d34df9e221cb925ea5c1af6e813bd8f"
+source = "git+https://github.com/slint-ui/slint.git#d6f83a2af663de2128104fe4241e8b12f308db8d"
 dependencies = [
  "const-field-offset",
  "portable-atomic",
@@ -5601,11 +5599,11 @@ dependencies = [
 [[package]]
 name = "vtable-macro"
 version = "0.2.1"
-source = "git+https://github.com/slint-ui/slint.git#e125da180d34df9e221cb925ea5c1af6e813bd8f"
+source = "git+https://github.com/slint-ui/slint.git#d6f83a2af663de2128104fe4241e8b12f308db8d"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -5654,7 +5652,7 @@ dependencies = [
  "log",
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
  "wasm-bindgen-shared",
 ]
 
@@ -5689,7 +5687,7 @@ checksum = "30d7a95b763d3c45903ed6c81f156801839e5ee968bb07e534c44df0fcd330c2"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
 ]
@@ -5940,7 +5938,7 @@ checksum = "f6fc35f58ecd95a9b71c4f2329b911016e6bec66b3f2e6a4aad86bd2e99e2f9b"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -5951,7 +5949,7 @@ checksum = "2bbd5b46c938e506ecbce286b6628a02171d56153ba733b6c741fc627ec9579b"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -5962,7 +5960,7 @@ checksum = "08990546bf4edef8f431fa6326e032865f27138718c587dc21bc0265bbcb57cc"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -5973,7 +5971,7 @@ checksum = "053c4c462dc91d3b1504c6fe5a726dd15e216ba718e84a0e46a88fbe5ded3515"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -6229,9 +6227,9 @@ checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
 
 [[package]]
 name = "winit"
-version = "0.30.6"
+version = "0.30.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c3d72dfa0f47e429290cd0d236884ca02f22dbd5dd33a43ad2b8bf4d79b6c18"
+checksum = "dba50bc8ef4b6f1a75c9274fb95aa9a8f63fbc66c56f391bd85cf68d51e7b1a3"
 dependencies = [
  "ahash",
  "android-activity",
@@ -6440,7 +6438,7 @@ checksum = "2380878cad4ac9aac1e2435f3eb4020e8374b5f13c296cb75b4620ff8e229154"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
  "synstructure",
 ]
 
@@ -6527,7 +6525,7 @@ dependencies = [
  "proc-macro-crate",
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
  "zvariant_utils 2.1.0",
 ]
 
@@ -6540,7 +6538,7 @@ dependencies = [
  "proc-macro-crate",
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
  "zbus_names 4.1.0",
  "zvariant 5.1.0",
  "zvariant_utils 3.0.2",
@@ -6587,7 +6585,7 @@ checksum = "fa4f8080344d4671fb4e831a13ad1e68092748387dfc4f55e356242fae12ce3e"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -6607,7 +6605,7 @@ checksum = "595eed982f7d355beb85837f651fa22e90b3c044842dc7f2c2842c086f295808"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
  "synstructure",
 ]
 
@@ -6630,7 +6628,7 @@ checksum = "6eafa6dfb17584ea3e2bd6e76e0cc15ad7af12b09abdd1ca55961bed9b1063c6"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -6695,7 +6693,7 @@ dependencies = [
  "proc-macro-crate",
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
  "zvariant_utils 2.1.0",
 ]
 
@@ -6708,7 +6706,7 @@ dependencies = [
  "proc-macro-crate",
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
  "zvariant_utils 3.0.2",
 ]
 
@@ -6720,7 +6718,7 @@ checksum = "c51bcff7cc3dbb5055396bcf774748c3dab426b4b8659046963523cee4808340"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.90",
+ "syn 2.0.91",
 ]
 
 [[package]]
@@ -6733,6 +6731,6 @@ dependencies = [
  "quote",
  "serde",
  "static_assertions",
- "syn 2.0.90",
+ "syn 2.0.91",
  "winnow",
 ]

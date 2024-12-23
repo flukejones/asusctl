@@ -18,8 +18,6 @@ tokio-debug = ["console-subscriber"]
 [dependencies]
 console-subscriber = { version = "^0.4", optional = true }
 
-nix = { version = "^0.29.0", features = ["fs"] }
-tempfile = "3.3.0"
 ksni = { version = "0.3", default-features = false, features = ["async-io"] }
 image = "0.25.5"
 
