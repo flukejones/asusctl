@@ -2,8 +2,14 @@ use std::fs::{read_dir, File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
+use serde::{Deserialize, Serialize};
+use typeshare::typeshare;
+use zbus::zvariant::Type;
+
 use crate::error::PlatformError;
 
+/// The root sysfs path. This path should never change in kernel so
+/// using udev to find it *should* not be required.
 const BASE_DIR: &str = "/sys/class/firmware-attributes/asus-armoury/attributes/";
 
 fn read_i32(path: &Path) -> Result<i32, PlatformError> {
@@ -239,6 +245,98 @@ define_attribute_getters!(
     mini_led_mode
 );
 
+/// CamelCase names of the properties. Intended for use with DBUS
+#[typeshare]
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Type, PartialEq, PartialOrd)]
+#[zvariant(signature = "s")]
+pub enum FirmwareAttribute {
+    ApuMem,
+    CoresPerformance,
+    CoresEfficiency,
+    PptPl1Spl,
+    PptPl2Sppt,
+    PptApuSppt,
+    PptPlatformSppt,
+    PptFppt,
+    NvDynamicBoost,
+    NvTempTarget,
+    DgpuBaseTgp,
+    DgpuTgp,
+    ChargeMode,
+    BootSound,
+    McuPowersave,
+    PanelOverdrive,
+    PanelHdMode,
+    EgpuConnected,
+    EgpuEnable,
+    DgpuDisable,
+    GpuMuxMode,
+    MiniLedMode,
+    PendingReboot,
+}
+
+impl From<&str> for FirmwareAttribute {
+    fn from(s: &str) -> Self {
+        match s {
+            "apu_mem" => Self::ApuMem,
+            "cores_performance" => Self::CoresPerformance,
+            "cores_efficiency" => Self::CoresEfficiency,
+            "ppt_pl1_spl" => Self::PptPl1Spl,
+            "ppt_pl2_sppt" => Self::PptPl2Sppt,
+            "ppt_apu_sppt" => Self::PptApuSppt,
+            "ppt_platform_sppt" => Self::PptPlatformSppt,
+            "ppt_fppt" => Self::PptFppt,
+            "nv_dynamic_boost" => Self::NvDynamicBoost,
+            "nv_temp_target" => Self::NvTempTarget,
+            "dgpu_base_tgp" => Self::DgpuBaseTgp,
+            "dgpu_tgp" => Self::DgpuTgp,
+            "charge_mode" => Self::ChargeMode,
+            "boot_sound" => Self::BootSound,
+            "mcu_powersave" => Self::McuPowersave,
+            "panel_overdrive" => Self::PanelOverdrive,
+            "panel_hd_mode" => Self::PanelHdMode,
+            "egpu_connected" => Self::EgpuConnected,
+            "egpu_enable" => Self::EgpuEnable,
+            "dgpu_disable" => Self::DgpuDisable,
+            "gpu_mux_mode" => Self::GpuMuxMode,
+            "mini_led_mode" => Self::MiniLedMode,
+            "pending_reboot" => Self::PendingReboot,
+            _ => panic!("Invalid firmware attribute: {}", s),
+        }
+    }
+}
+
+impl From<FirmwareAttribute> for &'static str {
+    fn from(attr: FirmwareAttribute) -> Self {
+        match attr {
+            FirmwareAttribute::ApuMem => "apu_mem",
+            FirmwareAttribute::CoresPerformance => "cores_performance",
+            FirmwareAttribute::CoresEfficiency => "cores_efficiency",
+            FirmwareAttribute::PptPl1Spl => "ppt_pl1_spl",
+            FirmwareAttribute::PptPl2Sppt => "ppt_pl2_sppt",
+            FirmwareAttribute::PptApuSppt => "ppt_apu_sppt",
+            FirmwareAttribute::PptPlatformSppt => "ppt_platform_sppt",
+            FirmwareAttribute::PptFppt => "ppt_fppt",
+            FirmwareAttribute::NvDynamicBoost => "nv_dynamic_boost",
+            FirmwareAttribute::NvTempTarget => "nv_temp_target",
+            FirmwareAttribute::DgpuBaseTgp => "dgpu_base_tgp",
+            FirmwareAttribute::DgpuTgp => "dgpu_tgp",
+            FirmwareAttribute::ChargeMode => "charge_mode",
+            FirmwareAttribute::BootSound => "boot_sound",
+            FirmwareAttribute::McuPowersave => "mcu_powersave",
+            FirmwareAttribute::PanelOverdrive => "panel_overdrive",
+            FirmwareAttribute::PanelHdMode => "panel_hd_mode",
+            FirmwareAttribute::EgpuConnected => "egpu_connected",
+            FirmwareAttribute::EgpuEnable => "egpu_enable",
+            FirmwareAttribute::DgpuDisable => "dgpu_disable",
+            FirmwareAttribute::GpuMuxMode => "gpu_mux_mode",
+            FirmwareAttribute::MiniLedMode => "mini_led_mode",
+            FirmwareAttribute::PendingReboot => "pending_reboot",
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -249,8 +347,8 @@ mod tests {
         let attrs = FirmwareAttributes::new();
         for attr in attrs.attributes() {
             dbg!(attr.name());
-            match attr.name() {
-                "dgpu_disable" => {
+            match attr.name().into() {
+                FirmwareAttribute::DgpuDisable => {
                     assert!(!attr.help().is_empty());
                     assert!(matches!(
                         attr.current_value().unwrap(),
@@ -265,7 +363,7 @@ mod tests {
                     assert_eq!(attr.min_value, AttrValue::None);
                     assert_eq!(attr.max_value, AttrValue::None);
                 }
-                "boot_sound" => {
+                FirmwareAttribute::BootSound => {
                     assert!(!attr.help().is_empty());
                     assert!(matches!(
                         attr.current_value().unwrap(),
@@ -285,10 +383,10 @@ mod tests {
         let attr = attrs
             .attributes()
             .iter()
-            .find(|a| a.name() == "boot_sound")
+            .find(|a| a.name() == <&str>::from(FirmwareAttribute::BootSound))
             .unwrap();
 
-        assert_eq!(attr.name(), "boot_sound");
+        assert_eq!(attr.name(), <&str>::from(FirmwareAttribute::BootSound));
         assert_eq!(
             attr.base_path.to_str().unwrap(),
             "/sys/class/firmware-attributes/asus-armoury/attributes/boot_sound"
@@ -310,7 +408,7 @@ mod tests {
         let attr = attrs
             .attributes()
             .iter()
-            .find(|a| a.name() == "boot_sound")
+            .find(|a| a.name() == <&str>::from(FirmwareAttribute::BootSound))
             .unwrap();
 
         let mut val = attr.current_value().unwrap();
