@@ -339,6 +339,8 @@ impl DeviceManager {
 
         if do_kb_backlight {
             // TUF AURA LAPTOP DEVICE
+            // product_name = ASUS TUF Gaming F15 FX507ZE_FX507ZE
+            // product_family = ASUS TUF Gaming F15
             let product_name = DMIID::new().unwrap_or_default().product_name;
             let product_family = DMIID::new().unwrap_or_default().product_family;
             info!(

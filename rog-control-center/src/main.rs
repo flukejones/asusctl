@@ -214,6 +214,7 @@ async fn main() -> Result<()> {
                 })
                 .unwrap();
             }
+            sleep(Duration::from_millis(300));
         }
     });
 
