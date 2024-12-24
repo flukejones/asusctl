@@ -6,6 +6,7 @@
 
 use std::sync::Arc;
 
+use dmi_id::DMIID;
 use futures_lite::future::block_on;
 use log::{debug, error, info, warn};
 use mio::{Events, Interest, Poll, Token};
@@ -163,7 +164,7 @@ impl DeviceManager {
                         }
                         // AURA LAPTOP DEVICE
                         if let Ok(dev_type) = DeviceHandle::maybe_laptop_aura(
-                            dev,
+                            Some(dev),
                             usb_id.to_str().unwrap_or_default(),
                         )
                         .await
@@ -329,6 +330,23 @@ impl DeviceManager {
                 }
             } else {
                 info!("Tested device was not AniMe Matrix");
+            }
+        }
+
+        let board_name = DMIID::new().unwrap_or_default().board_name;
+        if board_name.contains("TUF") {
+            // TUF AURA LAPTOP DEVICE
+            info!("Seems to be a TUF laptop, try using sysfs backlight control");
+            if let Ok(dev_type) = DeviceHandle::maybe_laptop_aura(None, "tuf").await {
+                if let DeviceHandle::Aura(aura) = dev_type.clone() {
+                    let path = dbus_path_for_tuf();
+                    let ctrl = AuraZbus::new(aura);
+                    ctrl.start_tasks(connection, path.clone()).await.unwrap();
+                    devices.push(AsusDevice {
+                        device: dev_type,
+                        dbus_path: path,
+                    });
+                }
             }
         }
 

@@ -168,7 +168,7 @@ impl DeviceHandle {
     }
 
     pub async fn maybe_laptop_aura(
-        device: Arc<Mutex<HidRaw>>,
+        device: Option<Arc<Mutex<HidRaw>>>,
         prod_id: &str,
     ) -> Result<Self, RogError> {
         debug!("Testing for laptop aura");
@@ -194,7 +194,7 @@ impl DeviceHandle {
         let mut config = AuraConfig::load_and_update_config(prod_id);
         config.led_type = aura_type;
         let aura = Aura {
-            hid: Some(device),
+            hid: device,
             backlight,
             config: Arc::new(Mutex::new(config)),
         };
