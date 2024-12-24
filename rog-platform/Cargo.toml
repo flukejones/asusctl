@@ -18,6 +18,3 @@ inotify.workspace = true
 typeshare.workspace = true
 
 rusb.workspace = true
-
-[dev-dependencies]
-cargo-husky.workspace = true

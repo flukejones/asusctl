@@ -57,6 +57,3 @@ features = [
 
 [build-dependencies.slint-build]
 git = "https://github.com/slint-ui/slint.git"
-
-[dev-dependencies]
-cargo-husky.workspace = true

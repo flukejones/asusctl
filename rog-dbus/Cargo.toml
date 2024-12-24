@@ -19,5 +19,3 @@ rog_profiles = { path = "../rog-profiles" }
 rog_platform = { path = "../rog-platform" }
 zbus.workspace = true
 
-[dev-dependencies]
-cargo-husky.workspace = true

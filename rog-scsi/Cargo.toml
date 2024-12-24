@@ -20,10 +20,6 @@ serde.workspace = true
 zbus = { workspace = true, optional = true }
 
 # cli and logging
-log.workspace = true
 typeshare.workspace = true
 
 ron = { version = "*", optional = true }
-
-[dev-dependencies]
-cargo-husky.workspace = true

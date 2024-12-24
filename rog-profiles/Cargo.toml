@@ -20,9 +20,3 @@ typeshare.workspace = true
 rog_platform = { path = "../rog-platform" }
 
 zbus = { workspace = true, optional = true }
-
-[dev-dependencies]
-cargo-husky.workspace = true
-
-[package.metadata.cargo-machete]
-ignored = ["serde"]

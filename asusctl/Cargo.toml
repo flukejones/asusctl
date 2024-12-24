@@ -16,7 +16,6 @@ rog_aura = { path = "../rog-aura" }
 rog_dbus = { path = "../rog-dbus" }
 rog_profiles = { path = "../rog-profiles" }
 rog_platform = { path = "../rog-platform" }
-asusd = { path = "../asusd" }
 dmi_id = { path = "../dmi-id" }
 
 ron.workspace = true
@@ -26,4 +25,3 @@ zbus.workspace = true
 [dev-dependencies]
 rog_dbus = { path = "../rog-dbus" }
 
-cargo-husky.workspace = true
