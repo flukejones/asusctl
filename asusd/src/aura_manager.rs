@@ -291,12 +291,16 @@ impl DeviceManager {
         // USB after, need to check if HID picked something up and if so, skip it
         let mut do_anime = true;
         let mut do_slash = true;
+        let mut do_kb_backlight = true;
         for dev in devices.iter() {
             if matches!(dev.device, DeviceHandle::Slash(_)) {
                 do_slash = false;
             }
             if matches!(dev.device, DeviceHandle::AniMe(_)) {
                 do_anime = false;
+            }
+            if matches!(dev.device, DeviceHandle::Aura(_) | DeviceHandle::OldAura(_)) {
+                do_kb_backlight = false;
             }
         }
 
@@ -333,19 +337,25 @@ impl DeviceManager {
             }
         }
 
-        let board_name = DMIID::new().unwrap_or_default().board_name;
-        if board_name.contains("TUF") {
+        if do_kb_backlight {
             // TUF AURA LAPTOP DEVICE
-            info!("Seems to be a TUF laptop, try using sysfs backlight control");
-            if let Ok(dev_type) = DeviceHandle::maybe_laptop_aura(None, "tuf").await {
-                if let DeviceHandle::Aura(aura) = dev_type.clone() {
-                    let path = dbus_path_for_tuf();
-                    let ctrl = AuraZbus::new(aura);
-                    ctrl.start_tasks(connection, path.clone()).await.unwrap();
-                    devices.push(AsusDevice {
-                        device: dev_type,
-                        dbus_path: path,
-                    });
+            let product_name = DMIID::new().unwrap_or_default().product_name;
+            let product_family = DMIID::new().unwrap_or_default().product_family;
+            info!(
+                "No USB keyboard aura, system is {product_name}, try using sysfs backlight control"
+            );
+            if product_name.contains("TUF") || product_family.contains("TUF") {
+                info!("TUF laptop, try using sysfs backlight control");
+                if let Ok(dev_type) = DeviceHandle::maybe_laptop_aura(None, "tuf").await {
+                    if let DeviceHandle::Aura(aura) = dev_type.clone() {
+                        let path = dbus_path_for_tuf();
+                        let ctrl = AuraZbus::new(aura);
+                        ctrl.start_tasks(connection, path.clone()).await.unwrap();
+                        devices.push(AsusDevice {
+                            device: dev_type,
+                            dbus_path: path,
+                        });
+                    }
                 }
             }
         }
