@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [v6.1.0-rc1]
+
 ### Added
 - ROG Arion external driver LED support
 - Add GA605W LED layout
