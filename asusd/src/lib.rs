@@ -6,6 +6,7 @@ pub mod ctrl_fancurves;
 /// Control ASUS bios function such as boot sound, Optimus/Dedicated gfx mode
 pub mod ctrl_platform;
 
+pub mod asus_armoury;
 pub mod aura_anime;
 pub mod aura_laptop;
 pub mod aura_manager;
@@ -30,6 +31,8 @@ use zbus::Connection;
 use crate::error::RogError;
 
 const CONFIG_PATH_BASE: &str = "/etc/asusd/";
+pub const ASUS_ZBUS_PATH: &str = "/org/asuslinux";
+
 pub static DBUS_NAME: &str = "org.asuslinux.Daemon";
 pub static DBUS_PATH: &str = "/org/asuslinux/Daemon";
 pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";

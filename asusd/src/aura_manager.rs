@@ -23,8 +23,9 @@ use crate::aura_scsi::trait_impls::ScsiZbus;
 use crate::aura_slash::trait_impls::SlashZbus;
 use crate::aura_types::DeviceHandle;
 use crate::error::RogError;
+use crate::ASUS_ZBUS_PATH;
 
-pub const ASUS_ZBUS_PATH: &str = "/org/asuslinux";
+const MOD_NAME: &str = "aura";
 
 /// Returns only the Device details concatenated in a form usable for
 /// adding/appending to a filename
@@ -54,26 +55,27 @@ pub fn filename_partial(parent: &Device) -> Option<OwnedObjectPath> {
 fn dbus_path_for_dev(parent: &Device) -> Option<OwnedObjectPath> {
     if let Some(filename) = filename_partial(parent) {
         return Some(
-            ObjectPath::from_str_unchecked(&format!("{ASUS_ZBUS_PATH}/{filename}")).into(),
+            ObjectPath::from_str_unchecked(&format!("{ASUS_ZBUS_PATH}/{MOD_NAME}/{filename}"))
+                .into(),
         );
     }
     None
 }
 
 fn dbus_path_for_tuf() -> OwnedObjectPath {
-    ObjectPath::from_str_unchecked(&format!("{ASUS_ZBUS_PATH}/tuf")).into()
+    ObjectPath::from_str_unchecked(&format!("{ASUS_ZBUS_PATH}/{MOD_NAME}/tuf")).into()
 }
 
 fn dbus_path_for_slash() -> OwnedObjectPath {
-    ObjectPath::from_str_unchecked(&format!("{ASUS_ZBUS_PATH}/slash")).into()
+    ObjectPath::from_str_unchecked(&format!("{ASUS_ZBUS_PATH}/{MOD_NAME}/slash")).into()
 }
 
 fn dbus_path_for_anime() -> OwnedObjectPath {
-    ObjectPath::from_str_unchecked(&format!("{ASUS_ZBUS_PATH}/anime")).into()
+    ObjectPath::from_str_unchecked(&format!("{ASUS_ZBUS_PATH}/{MOD_NAME}/anime")).into()
 }
 
 fn dbus_path_for_scsi(prod_id: &str) -> OwnedObjectPath {
-    ObjectPath::from_str_unchecked(&format!("{ASUS_ZBUS_PATH}/{prod_id}_scsi")).into()
+    ObjectPath::from_str_unchecked(&format!("{ASUS_ZBUS_PATH}/{MOD_NAME}/{prod_id}_scsi")).into()
 }
 
 fn dev_prop_matches(dev: &Device, prop: &str, value: &str) -> bool {
@@ -82,15 +84,6 @@ fn dev_prop_matches(dev: &Device, prop: &str, value: &str) -> bool {
     }
     false
 }
-
-// TODO:
-// - make this the HID manager (and universal)
-// - *really* need to make most of this actual kernel drivers
-//   - LED class
-//   - RGB modes (how, attribute?)
-//   - power features (how, attribute?)
-//   - what about per-key stuff?
-//   - how would the AniMe be exposed? Just a series of LEDs?
 
 /// A device.
 ///

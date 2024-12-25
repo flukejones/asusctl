@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
-use zbus::zvariant::Type;
+use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::PlatformError;
 
@@ -31,7 +31,15 @@ fn read_string(path: &Path) -> Result<String, PlatformError> {
     Ok(buf.trim().to_string())
 }
 
-#[derive(Debug, Default, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Deserialize, Serialize, Type, Value, OwnedValue)]
+pub enum AttrType {
+    MinMax = 0,
+    EnumInt = 1,
+    EnumStr = 2,
+    Unbounded = 3,
+}
+
+#[derive(Debug, Default, Clone, PartialEq, PartialOrd)]
 pub enum AttrValue {
     Integer(i32),
     String(String),
@@ -41,7 +49,7 @@ pub enum AttrValue {
     None,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Attribute {
     name: String,
     help: String,
@@ -60,6 +68,20 @@ impl Attribute {
 
     pub fn help(&self) -> &str {
         &self.help
+    }
+
+    pub fn attribute_type(&self) -> AttrType {
+        let mut attr_type = AttrType::Unbounded;
+        match self.max_value {
+            AttrValue::Integer(_) => attr_type = AttrType::MinMax,
+            _ => {}
+        }
+        match self.possible_values {
+            AttrValue::EnumInt(_) => attr_type = AttrType::EnumInt,
+            AttrValue::EnumStr(_) => attr_type = AttrType::EnumStr,
+            _ => {}
+        }
+        attr_type
     }
 
     /// Read the `current_value` directly from the attribute path

@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use ::zbus::export::futures_util::lock::Mutex;
 use ::zbus::Connection;
+use asusd::asus_armoury::start_attributes_zbus;
 use asusd::aura_manager::DeviceManager;
 use asusd::config::Config;
 use asusd::ctrl_fancurves::CtrlFanCurveZbus;
@@ -56,23 +57,20 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     // println!("{:?}", supported.supported_functions());
 
     // Start zbus server
-    let mut connection = Connection::system().await?;
-    connection
-        .object_server()
-        .at("/", ObjectManager)
-        .await
-        .unwrap();
+    let mut server = Connection::system().await?;
+    server.object_server().at("/", ObjectManager).await.unwrap();
 
     let config = Config::new().load();
     let cfg_path = config.file_path();
     let config = Arc::new(Mutex::new(config));
 
     // supported.add_to_server(&mut connection).await;
+    start_attributes_zbus(&server).await?;
 
     match CtrlFanCurveZbus::new() {
         Ok(ctrl) => {
-            let sig_ctx = CtrlFanCurveZbus::signal_context(&connection)?;
-            start_tasks(ctrl, &mut connection, sig_ctx).await?;
+            let sig_ctx = CtrlFanCurveZbus::signal_context(&server)?;
+            start_tasks(ctrl, &mut server, sig_ctx).await?;
         }
         Err(err) => {
             error!("FanCurves: {}", err);
@@ -82,24 +80,24 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     match CtrlPlatform::new(
         config.clone(),
         &cfg_path,
-        CtrlPlatform::signal_context(&connection)?,
+        CtrlPlatform::signal_context(&server)?,
     ) {
         Ok(ctrl) => {
-            let sig_ctx = CtrlPlatform::signal_context(&connection)?;
-            start_tasks(ctrl, &mut connection, sig_ctx).await?;
+            let sig_ctx = CtrlPlatform::signal_context(&server)?;
+            start_tasks(ctrl, &mut server, sig_ctx).await?;
         }
         Err(err) => {
             error!("CtrlPlatform: {}", err);
         }
     }
 
-    let _ = DeviceManager::new(connection.clone()).await?;
+    let _ = DeviceManager::new(server.clone()).await?;
 
     // Request dbus name after finishing initalizing all functions
-    connection.request_name(DBUS_NAME).await?;
+    server.request_name(DBUS_NAME).await?;
 
     loop {
         // This is just a blocker to idle and ensure the reator reacts
-        connection.executor().tick().await;
+        server.executor().tick().await;
     }
 }
