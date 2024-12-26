@@ -31,11 +31,11 @@ use zbus::Connection;
 use crate::error::RogError;
 
 const CONFIG_PATH_BASE: &str = "/etc/asusd/";
-pub const ASUS_ZBUS_PATH: &str = "/org/asuslinux";
+pub const ASUS_ZBUS_PATH: &str = "/xyz/ljones";
 
-pub static DBUS_NAME: &str = "org.asuslinux.Daemon";
-pub static DBUS_PATH: &str = "/org/asuslinux/Daemon";
-pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";
+pub static DBUS_NAME: &str = "xyz.ljones.Asusd";
+pub static DBUS_PATH: &str = "/xyz/ljones/Daemon";
+pub static DBUS_IFACE: &str = "xyz.ljones.Asusd";
 
 /// This macro adds a function which spawns an `inotify` task on the passed in
 /// `Executor`.

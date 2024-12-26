@@ -14,7 +14,7 @@ use crate::error::RogError;
 use crate::{CtrlTask, Reloadable};
 
 pub const AURA_ZBUS_NAME: &str = "Aura";
-pub const AURA_ZBUS_PATH: &str = "/org/asuslinux";
+pub const AURA_ZBUS_PATH: &str = "/xyz/ljones";
 
 #[derive(Clone)]
 pub struct AuraZbus(Aura);
@@ -50,7 +50,7 @@ impl AuraZbus {
 /// The main interface for changing, reading, or notfying
 ///
 /// LED commands are split between Brightness, Modes, Per-Key
-#[interface(name = "org.asuslinux.Aura")]
+#[interface(name = "xyz.ljones.Aura")]
 impl AuraZbus {
     /// Return the device type for this Aura keyboard
     #[zbus(property)]
@@ -227,7 +227,7 @@ impl AuraZbus {
 
 impl CtrlTask for AuraZbus {
     fn zbus_path() -> &'static str {
-        "/org/asuslinux"
+        "/xyz/ljones"
     }
 
     async fn create_tasks(&self, _: SignalEmitter<'static>) -> Result<(), RogError> {

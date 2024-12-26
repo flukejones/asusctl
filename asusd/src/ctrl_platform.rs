@@ -17,7 +17,7 @@ use crate::config::Config;
 use crate::error::RogError;
 use crate::{task_watch_item, task_watch_item_notify, CtrlTask, ReloadAndNotify};
 
-const PLATFORM_ZBUS_PATH: &str = "/org/asuslinux";
+const PLATFORM_ZBUS_PATH: &str = "/xyz/ljones";
 
 macro_rules! platform_get_value {
     ($self:ident, $property:tt, $prop_name:literal) => {
@@ -302,7 +302,7 @@ impl CtrlPlatform {
     }
 }
 
-#[interface(name = "org.asuslinux.Platform")]
+#[interface(name = "xyz.ljones.Platform")]
 impl CtrlPlatform {
     #[zbus(property)]
     async fn version(&self) -> String {

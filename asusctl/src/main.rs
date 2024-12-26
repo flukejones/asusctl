@@ -132,8 +132,7 @@ where
     T: ProxyImpl<'static> + From<zbus::Proxy<'static>>,
 {
     let conn = zbus::blocking::Connection::system().unwrap();
-    let f =
-        zbus::blocking::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/").unwrap();
+    let f = zbus::blocking::fdo::ObjectManagerProxy::new(&conn, "xyz.ljones.Asusd", "/").unwrap();
     let interfaces = f.get_managed_objects().unwrap();
     let mut paths = Vec::new();
     for v in interfaces.iter() {
@@ -155,7 +154,7 @@ where
             ctrl.push(
                 T::builder(&conn)
                     .path(path.clone())?
-                    .destination("org.asuslinux.Daemon")?
+                    .destination("xyz.ljones.Asusd")?
                     .build()?,
             );
         }
@@ -201,7 +200,7 @@ fn do_parsed(
                 println!();
                 if let Some(cmdlist) = CliStart::command_list() {
                     let dev_type =
-                        if let Ok(proxy) = find_iface::<AuraProxyBlocking>("org.asuslinux.Aura") {
+                        if let Ok(proxy) = find_iface::<AuraProxyBlocking>("xyz.ljones.Aura") {
                             // TODO: commands on all?
                             proxy
                                 .first()
@@ -214,32 +213,31 @@ fn do_parsed(
                     let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
                     for command in commands.iter().filter(|command| {
                         if command.trim().starts_with("fan-curve")
-                            && !supported_interfaces
-                                .contains(&"org.asuslinux.FanCurves".to_string())
+                            && !supported_interfaces.contains(&"xyz.ljones.FanCurves".to_string())
                         {
                             return false;
                         }
 
                         if command.trim().starts_with("aura")
-                            && !supported_interfaces.contains(&"org.asuslinux.Aura".to_string())
+                            && !supported_interfaces.contains(&"xyz.ljones.Aura".to_string())
                         {
                             return false;
                         }
 
                         if command.trim().starts_with("anime")
-                            && !supported_interfaces.contains(&"org.asuslinux.Anime".to_string())
+                            && !supported_interfaces.contains(&"xyz.ljones.Anime".to_string())
                         {
                             return false;
                         }
 
                         if command.trim().starts_with("slash")
-                            && !supported_interfaces.contains(&"org.asuslinux.Slash".to_string())
+                            && !supported_interfaces.contains(&"xyz.ljones.Slash".to_string())
                         {
                             return false;
                         }
 
                         if command.trim().starts_with("platform")
-                            && !supported_interfaces.contains(&"org.asuslinux.Platform".to_string())
+                            && !supported_interfaces.contains(&"xyz.ljones.Platform".to_string())
                         {
                             return false;
                         }
@@ -267,7 +265,7 @@ fn do_parsed(
     }
 
     if let Some(brightness) = &parsed.kbd_bright {
-        if let Ok(aura) = find_iface::<AuraProxyBlocking>("org.asuslinux.Aura") {
+        if let Ok(aura) = find_iface::<AuraProxyBlocking>("xyz.ljones.Aura") {
             for aura in aura.iter() {
                 match brightness.level() {
                     None => {
@@ -283,7 +281,7 @@ fn do_parsed(
     }
 
     if parsed.next_kbd_bright {
-        if let Ok(aura) = find_iface::<AuraProxyBlocking>("org.asuslinux.Aura") {
+        if let Ok(aura) = find_iface::<AuraProxyBlocking>("xyz.ljones.Aura") {
             for aura in aura.iter() {
                 let brightness = aura.brightness()?;
                 aura.set_brightness(brightness.next())?;
@@ -294,7 +292,7 @@ fn do_parsed(
     }
 
     if parsed.prev_kbd_bright {
-        if let Ok(aura) = find_iface::<AuraProxyBlocking>("org.asuslinux.Aura") {
+        if let Ok(aura) = find_iface::<AuraProxyBlocking>("xyz.ljones.Aura") {
             for aura in aura.iter() {
                 let brightness = aura.brightness()?;
                 aura.set_brightness(brightness.prev())?;
@@ -310,7 +308,7 @@ fn do_parsed(
             "Supported Platform Properties:\n{:#?}",
             supported_properties
         );
-        if let Ok(aura) = find_iface::<AuraProxyBlocking>("org.asuslinux.Aura") {
+        if let Ok(aura) = find_iface::<AuraProxyBlocking>("xyz.ljones.Aura") {
             // TODO: multiple RGB check
             let bright = aura.first().unwrap().supported_brightness()?;
             let modes = aura.first().unwrap().supported_basic_modes()?;
@@ -363,7 +361,7 @@ fn handle_anime(cmd: &AnimeCommand) -> Result<(), Box<dyn std::error::Error>> {
             println!("\n{}", lst);
         }
     }
-    let animes = find_iface::<AnimeProxyBlocking>("org.asuslinux.Anime")?;
+    let animes = find_iface::<AnimeProxyBlocking>("xyz.ljones.Anime")?;
     for proxy in animes {
         if let Some(enable) = cmd.enable_display {
             proxy.set_enable_display(enable)?;
@@ -556,7 +554,7 @@ fn handle_slash(cmd: &SlashCommand) -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    let slashes = find_iface::<SlashProxyBlocking>("org.asuslinux.Slash")?;
+    let slashes = find_iface::<SlashProxyBlocking>("xyz.ljones.Slash")?;
     for proxy in slashes {
         if cmd.enable {
             proxy.set_enabled(true)?;
@@ -594,7 +592,7 @@ fn handle_scsi(cmd: &ScsiCommand) -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    let scsis = find_iface::<ScsiAuraProxyBlocking>("org.asuslinux.ScsiAura")?;
+    let scsis = find_iface::<ScsiAuraProxyBlocking>("xyz.ljones.ScsiAura")?;
 
     for scsi in scsis {
         if let Some(enable) = cmd.enable {
@@ -668,7 +666,7 @@ fn handle_led_mode(mode: &LedModeCommand) -> Result<(), Box<dyn std::error::Erro
         if let Some(cmdlist) = LedModeCommand::command_list() {
             let commands: Vec<String> = cmdlist.lines().map(|s| s.to_owned()).collect();
             // TODO: multiple rgb check
-            let aura = find_iface::<AuraProxyBlocking>("org.asuslinux.Aura")?;
+            let aura = find_iface::<AuraProxyBlocking>("xyz.ljones.Aura")?;
             let modes = aura.first().unwrap().supported_basic_modes()?;
             for command in commands.iter().filter(|command| {
                 for mode in &modes {
@@ -698,7 +696,7 @@ fn handle_led_mode(mode: &LedModeCommand) -> Result<(), Box<dyn std::error::Erro
         println!("Please specify either next or previous");
         return Ok(());
     }
-    let aura = find_iface::<AuraProxyBlocking>("org.asuslinux.Aura")?;
+    let aura = find_iface::<AuraProxyBlocking>("xyz.ljones.Aura")?;
     if mode.next_mode {
         for aura in aura {
             let mode = aura.led_mode()?;
@@ -735,7 +733,7 @@ fn handle_led_mode(mode: &LedModeCommand) -> Result<(), Box<dyn std::error::Erro
 }
 
 fn handle_led_power1(power: &LedPowerCommand1) -> Result<(), Box<dyn std::error::Error>> {
-    let aura = find_iface::<AuraProxyBlocking>("org.asuslinux.Aura")?;
+    let aura = find_iface::<AuraProxyBlocking>("xyz.ljones.Aura")?;
     for aura in aura {
         let dev_type = aura.device_type()?;
         if !dev_type.is_old_laptop() && !dev_type.is_tuf_laptop() {
@@ -795,7 +793,7 @@ fn handle_led_power_1_do_1866(
 }
 
 fn handle_led_power2(power: &LedPowerCommand2) -> Result<(), Box<dyn std::error::Error>> {
-    let aura = find_iface::<AuraProxyBlocking>("org.asuslinux.Aura")?;
+    let aura = find_iface::<AuraProxyBlocking>("xyz.ljones.Aura")?;
     for aura in aura {
         let dev_type = aura.device_type()?;
         if !dev_type.is_new_laptop() {

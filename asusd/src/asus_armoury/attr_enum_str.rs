@@ -1,12 +1,11 @@
-use crate::{error::RogError, ASUS_ZBUS_PATH};
 use log::error;
 use rog_platform::firmware_attributes::{AttrType, AttrValue, Attribute};
 use serde::{Deserialize, Serialize};
-use zbus::{
-    fdo, interface,
-    zvariant::{ObjectPath, OwnedObjectPath, OwnedValue, Type, Value},
-    Connection,
-};
+use zbus::zvariant::{ObjectPath, OwnedObjectPath, OwnedValue, Type, Value};
+use zbus::{fdo, interface, Connection};
+
+use crate::error::RogError;
+use crate::ASUS_ZBUS_PATH;
 
 const MOD_NAME: &str = "asus_armoury";
 
@@ -50,15 +49,10 @@ impl AsusArmouryAttribute {
     }
 
     #[zbus(property)]
-    fn attribute_type(&self) -> AttrType {
-        self.0.attribute_type()
-    }
-
-    #[zbus(property)]
-    async fn default_value(&self) -> i32 {
+    async fn default_value(&self) -> String {
         match self.0.default_value() {
-            AttrValue::Integer(i) => *i,
-            _ => -1,
+            AttrValue::String(s) => *s,
+            _ => String::default(),
         }
     }
 

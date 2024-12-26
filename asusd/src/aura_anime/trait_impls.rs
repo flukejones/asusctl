@@ -60,7 +60,7 @@ impl AniMeZbus {
 // None of these calls can be guarnateed to succeed unless we loop until okay
 // If the try_lock *does* succeed then any other thread trying to lock will not
 // grab it until we finish.
-#[interface(name = "org.asuslinux.Anime")]
+#[interface(name = "xyz.ljones.Anime")]
 impl AniMeZbus {
     /// Writes a data stream of length. Will force system thread to exit until
     /// it is restarted

@@ -38,12 +38,12 @@ fn decode_hex(s: &str) -> RgbaColor<u8> {
 // TODO: return all
 async fn find_aura_iface() -> Result<AuraProxy<'static>, Box<dyn std::error::Error>> {
     let conn = zbus::Connection::system().await?;
-    let f = zbus::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/").await?;
+    let f = zbus::fdo::ObjectManagerProxy::new(&conn, "xyz.ljones.Asusd", "/").await?;
     let interfaces = f.get_managed_objects().await?;
     let mut aura_paths = Vec::new();
     for v in interfaces.iter() {
         for k in v.1.keys() {
-            if k.as_str() == "org.asuslinux.Aura" {
+            if k.as_str() == "xyz.ljones.Aura" {
                 println!("Found aura device at {}, {}", v.0, k);
                 aura_paths.push(v.0.clone());
             }
@@ -56,7 +56,7 @@ async fn find_aura_iface() -> Result<AuraProxy<'static>, Box<dyn std::error::Err
     if let Some(path) = aura_paths.first() {
         return Ok(AuraProxy::builder(&conn)
             .path(path.clone())?
-            .destination("org.asuslinux.Daemon")?
+            .destination("xyz.ljones.Asusd")?
             .build()
             .await?);
     }

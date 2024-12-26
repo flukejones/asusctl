@@ -1,12 +1,11 @@
-use crate::{error::RogError, ASUS_ZBUS_PATH};
 use log::error;
 use rog_platform::firmware_attributes::{AttrValue, Attribute};
 use serde::{Deserialize, Serialize};
-use zbus::{
-    fdo, interface,
-    zvariant::{ObjectPath, OwnedObjectPath, OwnedValue, Type, Value},
-    Connection,
-};
+use zbus::zvariant::{ObjectPath, OwnedObjectPath, OwnedValue, Type, Value};
+use zbus::{fdo, interface, Connection};
+
+use crate::error::RogError;
+use crate::ASUS_ZBUS_PATH;
 
 const MOD_NAME: &str = "asus_armoury";
 

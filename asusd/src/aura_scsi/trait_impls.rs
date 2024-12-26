@@ -34,7 +34,7 @@ impl ScsiZbus {
     }
 }
 
-#[interface(name = "org.asuslinux.ScsiAura")]
+#[interface(name = "xyz.ljones.ScsiAura")]
 impl ScsiZbus {
     /// Return the device type for this Aura keyboard
     #[zbus(property)]

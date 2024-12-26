@@ -17,7 +17,7 @@ use crate::error::RogError;
 use crate::{CtrlTask, CONFIG_PATH_BASE};
 
 pub const FAN_CURVE_ZBUS_NAME: &str = "FanCurves";
-pub const FAN_CURVE_ZBUS_PATH: &str = "/org/asuslinux";
+pub const FAN_CURVE_ZBUS_PATH: &str = "/xyz/ljones";
 
 #[derive(Deserialize, Serialize, Debug, Default)]
 pub struct FanCurveConfig {
@@ -101,7 +101,7 @@ impl CtrlFanCurveZbus {
     }
 }
 
-#[interface(name = "org.asuslinux.FanCurves")]
+#[interface(name = "xyz.ljones.FanCurves")]
 impl CtrlFanCurveZbus {
     /// Set all fan curves for a profile to enabled status. Will also activate a
     /// fan curve if in the same profile mode

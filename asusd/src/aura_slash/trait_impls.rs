@@ -36,7 +36,7 @@ impl SlashZbus {
     }
 }
 
-#[interface(name = "org.asuslinux.Slash")]
+#[interface(name = "xyz.ljones.Slash")]
 impl SlashZbus {
     /// Get enabled or not
     #[zbus(property)]

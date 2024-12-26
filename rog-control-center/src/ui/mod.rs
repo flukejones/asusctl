@@ -112,10 +112,10 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
     ui.set_sidebar_items_avilable(
         [
             // Needs to match the order of slint sidebar items
-            available.contains(&"org.asuslinux.Platform".to_string()),
-            available.contains(&"org.asuslinux.Aura".to_string()),
-            available.contains(&"org.asuslinux.Anime".to_string()),
-            available.contains(&"org.asuslinux.FanCurves".to_string()),
+            available.contains(&"xyz.ljones.Platform".to_string()),
+            available.contains(&"xyz.ljones.Aura".to_string()),
+            available.contains(&"xyz.ljones.Anime".to_string()),
+            available.contains(&"xyz.ljones.FanCurves".to_string()),
             true,
             true,
         ]
@@ -127,17 +127,17 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
     });
 
     setup_app_settings_page(&ui, config.clone());
-    if available.contains(&"org.asuslinux.Platform".to_string()) {
+    if available.contains(&"xyz.ljones.Platform".to_string()) {
         setup_system_page(&ui, config.clone());
         setup_system_page_callbacks(&ui, config.clone());
     }
-    if available.contains(&"org.asuslinux.Aura".to_string()) {
+    if available.contains(&"xyz.ljones.Aura".to_string()) {
         setup_aura_page(&ui, config.clone());
     }
-    if available.contains(&"org.asuslinux.Anime".to_string()) {
+    if available.contains(&"xyz.ljones.Anime".to_string()) {
         setup_anime_page(&ui, config.clone());
     }
-    if available.contains(&"org.asuslinux.FanCurves".to_string()) {
+    if available.contains(&"xyz.ljones.FanCurves".to_string()) {
         setup_fan_curve_page(&ui, config);
     }
     ui

@@ -2,9 +2,9 @@ use rog_slash::SlashMode;
 use zbus::proxy;
 
 #[proxy(
-    interface = "org.asuslinux.Slash",
-    default_service = "org.asuslinux.Daemon",
-    default_path = "/org/asuslinux"
+    interface = "xyz.ljones.Slash",
+    default_service = "xyz.ljones.Asusd",
+    default_path = "/xyz/ljones"
 )]
 pub trait Slash {
     /// EnableDisplay property

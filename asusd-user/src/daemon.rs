@@ -42,7 +42,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let early_return = Arc::new(AtomicBool::new(false));
     // Set up the anime data and run loop/thread
-    if supported.contains(&"org.asuslinux.Anime".to_string()) {
+    if supported.contains(&"xyz.ljones.Anime".to_string()) {
         if let Some(cfg) = config.active_anime {
             let anime_type = get_anime_type();
             let anime_config = ConfigAnime::new().set_name(cfg).load();
