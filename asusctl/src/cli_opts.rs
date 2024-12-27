@@ -51,6 +51,8 @@ pub enum CliCommand {
     Scsi(ScsiCommand),
     #[options(help = "Change bios settings")]
     Platform(PlatformCommand),
+    #[options(help = "Change platform settings")]
+    PlatformNew(PlatformNewCommand),
 }
 
 #[derive(Debug, Clone, Options)]
@@ -120,4 +122,12 @@ pub struct PlatformCommand {
     pub panel_overdrive_set: Option<bool>,
     #[options(no_long, short = "o", help = "get panel overdrive")]
     pub panel_overdrive_get: bool,
+}
+
+#[derive(Options, Debug)]
+pub struct PlatformNewCommand {
+    #[options(help = "print help message")]
+    pub help: bool,
+    #[options(free)]
+    pub free: Vec<String>,
 }

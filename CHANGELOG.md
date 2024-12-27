@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- asus-armoury driver support. WIP, will be adjusted/changed further
+
 ## [v6.1.0-rc1]
 
 ### Added

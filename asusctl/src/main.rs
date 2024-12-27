@@ -13,6 +13,7 @@ use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType, Vec2};
 use rog_aura::keyboard::{AuraPowerState, LaptopAuraPower};
 use rog_aura::{self, AuraDeviceType, AuraEffect, PowerZones};
+use rog_dbus::asus_armoury::AsusArmouryProxyBlocking;
 use rog_dbus::list_iface_blocking;
 use rog_dbus::scsi_aura::ScsiAuraProxyBlocking;
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
@@ -140,13 +141,13 @@ where
         // e.to_owned()).collect(); println!("{}, {:?}", v.0, o);
         for k in v.1.keys() {
             if k.as_str() == iface_name {
-                println!("Found {iface_name} device at {}, {}", v.0, k);
+                // println!("Found {iface_name} device at {}, {}", v.0, k);
                 paths.push(v.0.clone());
             }
         }
     }
     if paths.len() > 1 {
-        println!("Multiple aura devices found: {paths:?}");
+        println!("Multiple asusd interfaces devices found");
     }
     if !paths.is_empty() {
         let mut ctrl = Vec::new();
@@ -187,6 +188,7 @@ fn do_parsed(
         Some(CliCommand::Platform(cmd)) => {
             handle_platform_properties(&conn, supported_properties, cmd)?
         }
+        Some(CliCommand::PlatformNew(cmd)) => handle_platform_new_properties(&conn, cmd)?,
         None => {
             if (!parsed.show_supported
                 && parsed.kbd_bright.is_none()
@@ -1065,4 +1067,54 @@ fn check_systemd_unit_enabled(name: &str) -> bool {
         return buf.contains("enabled");
     }
     false
+}
+
+fn handle_platform_new_properties(
+    conn: &Connection,
+    cmd: &PlatformNewCommand,
+) -> Result<(), Box<dyn std::error::Error>> {
+    {
+        if cmd.free.is_empty() || cmd.help {
+            println!("Missing arg or command\n");
+
+            let usage: Vec<String> = PlatformCommand::usage()
+                .lines()
+                .map(|s| s.to_owned())
+                .collect();
+        }
+
+        if let Ok(attr) = find_iface::<AsusArmouryProxyBlocking>("xyz.ljones.AsusArmoury") {
+            for attr in attr.iter() {
+                let name = attr.name()?;
+                let attrs = attr.available_attrs()?;
+                // dbg!(&name, &attrs);
+                println!("{name}::");
+                if attrs.contains(&"defalt_value".to_string()) {
+                    let v = attr.default_value()?;
+                    println!("  default_value: {v:?}");
+                }
+                if attrs.contains(&"min_value".to_string()) {
+                    let v = attr.min_value()?;
+                    println!("  min_value: {v:?}");
+                }
+                if attrs.contains(&"max_value".to_string()) {
+                    let v = attr.max_value()?;
+                    println!("  max_value: {v}");
+                }
+                if attrs.contains(&"scalar_increment".to_string()) {
+                    let v = attr.scalar_increment()?;
+                    println!("  scalar_increment: {v}");
+                }
+                if attrs.contains(&"possible_values".to_string()) {
+                    let v = attr.possible_values()?;
+                    println!("  possible_values: {v:?}");
+                }
+                if attrs.contains(&"current_value".to_string()) {
+                    let v = attr.current_value()?;
+                    println!("  current_value: {v}");
+                }
+            }
+        }
+    }
+    Ok(())
 }

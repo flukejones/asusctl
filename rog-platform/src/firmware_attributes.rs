@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
-use zbus::zvariant::{OwnedValue, Type, Value};
+use zbus::zvariant::Type;
 
 use crate::error::PlatformError;
 
@@ -31,14 +31,6 @@ fn read_string(path: &Path) -> Result<String, PlatformError> {
     Ok(buf.trim().to_string())
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, Type, Value, OwnedValue)]
-pub enum AttrType {
-    MinMax = 0,
-    EnumInt = 1,
-    EnumStr = 2,
-    Unbounded = 3,
-}
-
 #[derive(Debug, Default, Clone, PartialEq, PartialOrd)]
 pub enum AttrValue {
     Integer(i32),
@@ -57,7 +49,7 @@ pub struct Attribute {
     possible_values: AttrValue,
     min_value: AttrValue,
     max_value: AttrValue,
-    scalar_increment: Option<i32>,
+    scalar_increment: AttrValue,
     base_path: PathBuf,
 }
 
@@ -68,20 +60,6 @@ impl Attribute {
 
     pub fn help(&self) -> &str {
         &self.help
-    }
-
-    pub fn attribute_type(&self) -> AttrType {
-        let mut attr_type = AttrType::Unbounded;
-        match self.max_value {
-            AttrValue::Integer(_) => attr_type = AttrType::MinMax,
-            _ => {}
-        }
-        match self.possible_values {
-            AttrValue::EnumInt(_) => attr_type = AttrType::EnumInt,
-            AttrValue::EnumStr(_) => attr_type = AttrType::EnumStr,
-            _ => {}
-        }
-        attr_type
     }
 
     /// Read the `current_value` directly from the attribute path
@@ -129,8 +107,8 @@ impl Attribute {
         &self.max_value
     }
 
-    pub fn scalar_increment(&self) -> Option<i32> {
-        self.scalar_increment
+    pub fn scalar_increment(&self) -> &AttrValue {
+        &self.scalar_increment
     }
 
     /// Read all the immutable values to struct data. These should *never*
@@ -138,7 +116,7 @@ impl Attribute {
     /// subject to `firmware_attributes` class changes in kernel.
     fn read_base_values(
         base_path: &Path,
-    ) -> (AttrValue, AttrValue, AttrValue, AttrValue, Option<i32>) {
+    ) -> (AttrValue, AttrValue, AttrValue, AttrValue, AttrValue) {
         let default_value = match read_string(&base_path.join("default_value")) {
             Ok(val) => {
                 if let Ok(int) = val.parse::<i32>() {
@@ -171,7 +149,10 @@ impl Attribute {
             .ok()
             .map(AttrValue::Integer)
             .unwrap_or_default();
-        let scalar_increment = read_i32(&base_path.join("scalar_increment")).ok();
+        let scalar_increment = read_i32(&base_path.join("scalar_increment"))
+            .ok()
+            .map(AttrValue::Integer)
+            .unwrap_or_default();
 
         (
             default_value,

@@ -1,8 +1,11 @@
+use rog_platform::firmware_attributes::FirmwareAttributes;
+use zbus::Connection;
+
 use log::error;
 use rog_platform::firmware_attributes::{AttrValue, Attribute};
 use serde::{Deserialize, Serialize};
 use zbus::zvariant::{ObjectPath, OwnedObjectPath, OwnedValue, Type, Value};
-use zbus::{fdo, interface, Connection};
+use zbus::{fdo, interface};
 
 use crate::error::RogError;
 use crate::ASUS_ZBUS_PATH;
@@ -41,7 +44,9 @@ impl AsusArmouryAttribute {
     }
 }
 
-#[interface(name = "org.asuslinux.AsusArmoury")]
+/// If return is `-1` on a property then there is avilable value for that
+/// property
+#[interface(name = "xyz.ljones.AsusArmoury")]
 impl AsusArmouryAttribute {
     #[zbus(property)]
     async fn name(&self) -> String {
@@ -49,8 +54,63 @@ impl AsusArmouryAttribute {
     }
 
     #[zbus(property)]
+    async fn available_attrs(&self) -> Vec<String> {
+        let mut attrs = Vec::new();
+        if !matches!(self.0.default_value(), AttrValue::None) {
+            attrs.push("default_value".to_string());
+        }
+        if !matches!(self.0.min_value(), AttrValue::None) {
+            attrs.push("min_value".to_string());
+        }
+        if !matches!(self.0.max_value(), AttrValue::None) {
+            attrs.push("max_value".to_string());
+        }
+        if !matches!(self.0.scalar_increment(), AttrValue::None) {
+            attrs.push("scalar_increment".to_string());
+        }
+        if !matches!(self.0.possible_values(), AttrValue::None) {
+            attrs.push("possible_values".to_string());
+        }
+        // TODO: Don't unwrap, use error
+        if let Ok(value) = self.0.current_value().map_err(|e| {
+            error!("Failed to read: {e:?}");
+            e
+        }) {
+            if !matches!(value, AttrValue::None) {
+                attrs.push("current_value".to_string());
+            }
+        }
+        attrs
+    }
+
+    /// If return is `-1` then there is no default value
+    #[zbus(property)]
     async fn default_value(&self) -> i32 {
         match self.0.default_value() {
+            AttrValue::Integer(i) => *i,
+            _ => -1,
+        }
+    }
+
+    #[zbus(property)]
+    async fn min_value(&self) -> i32 {
+        match self.0.min_value() {
+            AttrValue::Integer(i) => *i,
+            _ => -1,
+        }
+    }
+
+    #[zbus(property)]
+    async fn max_value(&self) -> i32 {
+        match self.0.max_value() {
+            AttrValue::Integer(i) => *i,
+            _ => -1,
+        }
+    }
+
+    #[zbus(property)]
+    async fn scalar_increment(&self) -> i32 {
+        match self.0.scalar_increment() {
             AttrValue::Integer(i) => *i,
             _ => -1,
         }
@@ -86,4 +146,13 @@ impl AsusArmouryAttribute {
                 e
             })?)
     }
+}
+
+pub async fn start_attributes_zbus(server: &Connection) -> Result<(), RogError> {
+    for attr in FirmwareAttributes::new().attributes() {
+        AsusArmouryAttribute::new(attr.clone())
+            .start_tasks(server)
+            .await?;
+    }
+    Ok(())
 }

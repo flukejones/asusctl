@@ -135,7 +135,7 @@ impl crate::ZbusAdd for CtrlAnimeZbus {
     }
 }
 
-#[dbus_interface(name = "org.asuslinux.Daemon")]
+#[dbus_interface(name = "xyz.ljones.Asusd")]
 impl CtrlAnimeZbus {
     async fn <zbus method>() {
        let lock = self.inner.lock().await;
