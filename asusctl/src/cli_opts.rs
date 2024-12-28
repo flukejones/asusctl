@@ -50,9 +50,12 @@ pub enum CliCommand {
     #[options(name = "scsi", help = "Manage SCSI external drive")]
     Scsi(ScsiCommand),
     #[options(help = "Change bios settings")]
-    Platform(PlatformCommand),
-    #[options(help = "Change platform settings")]
-    PlatformNew(PlatformNewCommand),
+    PlatformOld(PlatformCommand),
+    #[options(
+        help = "Change platform settings. This is a new interface exposed by the asus-armoury \
+                driver, some of the settings will be the same as the older platform interface"
+    )]
+    Armoury(ArmouryCommand),
 }
 
 #[derive(Debug, Clone, Options)]
@@ -125,7 +128,7 @@ pub struct PlatformCommand {
 }
 
 #[derive(Options, Debug)]
-pub struct PlatformNewCommand {
+pub struct ArmouryCommand {
     #[options(help = "print help message")]
     pub help: bool,
     #[options(free)]

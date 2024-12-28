@@ -186,10 +186,10 @@ fn do_parsed(
         Some(CliCommand::Anime(cmd)) => handle_anime(cmd)?,
         Some(CliCommand::Slash(cmd)) => handle_slash(cmd)?,
         Some(CliCommand::Scsi(cmd)) => handle_scsi(cmd)?,
-        Some(CliCommand::Platform(cmd)) => {
+        Some(CliCommand::PlatformOld(cmd)) => {
             handle_platform_properties(&conn, supported_properties, cmd)?
         }
-        Some(CliCommand::PlatformNew(cmd)) => handle_platform_new_properties(&conn, cmd)?,
+        Some(CliCommand::Armoury(cmd)) => handle_armoury_command(cmd)?,
         None => {
             if (!parsed.show_supported
                 && parsed.kbd_bright.is_none()
@@ -241,6 +241,12 @@ fn do_parsed(
 
                         if command.trim().starts_with("platform")
                             && !supported_interfaces.contains(&"xyz.ljones.Platform".to_string())
+                        {
+                            return false;
+                        }
+
+                        if command.trim().starts_with("platform")
+                            && !supported_interfaces.contains(&"xyz.ljones.AsusArmoury".to_string())
                         {
                             return false;
                         }
@@ -1070,10 +1076,60 @@ fn check_systemd_unit_enabled(name: &str) -> bool {
     false
 }
 
-fn handle_platform_new_properties(
-    conn: &Connection,
-    cmd: &PlatformNewCommand,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn print_firmware_attr(attr: &AsusArmouryProxyBlocking) -> Result<(), Box<dyn std::error::Error>> {
+    let name = attr.name()?;
+    println!("{name}:");
+
+    let attrs = attr.available_attrs()?;
+    if attrs.contains(&"min_value".to_string())
+        && attrs.contains(&"max_value".to_string())
+        && attrs.contains(&"current_value".to_string())
+    {
+        let c = attr.current_value()?;
+        let min = attr.min_value()?;
+        let max = attr.max_value()?;
+        println!("  current: {min}..[{c}]..{max}");
+        if attrs.contains(&"default_value".to_string()) {
+            println!("  default: {}\n", attr.default_value()?);
+        } else {
+            println!();
+        }
+    } else if attrs.contains(&"possible_values".to_string())
+        && attrs.contains(&"current_value".to_string())
+    {
+        let c = attr.current_value()?;
+        let v = attr.possible_values()?;
+        for p in v.iter().enumerate() {
+            if p.0 == 0 {
+                print!("  current: [");
+            }
+            if *p.1 == c {
+                print!("({c})");
+            } else {
+                print!("{}", p.1);
+            }
+            if p.0 < v.len() - 1 {
+                print!(",");
+            }
+            if p.0 == v.len() - 1 {
+                print!("]");
+            }
+        }
+        if attrs.contains(&"default_value".to_string()) {
+            println!("  default: {}\n", attr.default_value()?);
+        } else {
+            println!("\n");
+        }
+    } else if attrs.contains(&"current_value".to_string()) {
+        let c = attr.current_value()?;
+        println!("  current: {c}\n");
+    } else {
+        println!();
+    }
+    return Ok(());
+}
+
+fn handle_armoury_command(cmd: &ArmouryCommand) -> Result<(), Box<dyn std::error::Error>> {
     {
         if cmd.free.is_empty() || cmd.free.len() % 2 != 0 || cmd.help {
             const USAGE: &str = "Usage: asusctl platform panel_overdrive 1 nv_dynamic_boost 5";
@@ -1089,85 +1145,20 @@ fn handle_platform_new_properties(
                 println!("\n{USAGE}\n");
                 println!("Available firmware attributes: ");
                 for attr in attr.iter() {
-                    let name = attr.name()?;
-                    println!("{name}:");
-
-                    let attrs = attr.available_attrs()?;
-                    if attrs.contains(&"min_value".to_string())
-                        && attrs.contains(&"max_value".to_string())
-                        && attrs.contains(&"current_value".to_string())
-                    {
-                        let c = attr.current_value()?;
-                        let min = attr.min_value()?;
-                        let max = attr.max_value()?;
-                        println!("  current: {min}..[{c}]..{max}");
-                        if attrs.contains(&"default_value".to_string()) {
-                            println!("  default: {}\n", attr.default_value()?);
-                        } else {
-                            println!();
-                        }
-                    } else if attrs.contains(&"possible_values".to_string())
-                        && attrs.contains(&"current_value".to_string())
-                    {
-                        let c = attr.current_value()?;
-                        let v = attr.possible_values()?;
-                        for p in v.iter().enumerate() {
-                            if p.0 == 0 {
-                                print!("  current: [");
-                            }
-                            if *p.1 == c {
-                                print!("({c})");
-                            } else {
-                                print!("{}", p.1);
-                            }
-                            if p.0 < v.len() - 1 {
-                                print!(",");
-                            }
-                            if p.0 == v.len() - 1 {
-                                print!("]");
-                            }
-                        }
-                        if attrs.contains(&"default_value".to_string()) {
-                            println!("  default: {}\n", attr.default_value()?);
-                        } else {
-                            println!("\n");
-                        }
-                    } else if attrs.contains(&"current_value".to_string()) {
-                        let c = attr.current_value()?;
-                        println!("  current: {c}\n");
-                    } else {
-                        println!();
-                    }
+                    print_firmware_attr(attr)?;
                 }
             }
             return Ok(());
         }
 
         if let Ok(attr) = find_iface::<AsusArmouryProxyBlocking>("xyz.ljones.AsusArmoury") {
-            for attr in attr.iter() {
-                let name = attr.name()?;
-                let attrs = attr.available_attrs()?;
-                // dbg!(&name, &attrs);
-                println!("{name}::");
-                if attrs.contains(&"current_value".to_string()) {
-                    let v = attr.current_value()?;
-                    println!("  current_value: {v}");
-                }
-                if attrs.contains(&"default_value".to_string()) {
-                    let v = attr.default_value()?;
-                    println!("  default_value: {v:?}");
-                }
-                if attrs.contains(&"min_value".to_string()) {
-                    let v = attr.min_value()?;
-                    println!("  min_value: {v:?}");
-                }
-                if attrs.contains(&"max_value".to_string()) {
-                    let v = attr.max_value()?;
-                    println!("  max_value: {v}");
-                }
-                if attrs.contains(&"possible_values".to_string()) {
-                    let v = attr.possible_values()?;
-                    println!("  possible_values: {v:?}");
+            for cmd in cmd.free.chunks(2) {
+                for attr in attr.iter() {
+                    let name = attr.name()?;
+                    if name == cmd[0] {
+                        attr.set_current_value(cmd[1].parse()?)?;
+                        print_firmware_attr(attr)?;
+                    }
                 }
             }
         }
