@@ -151,6 +151,7 @@ where
     }
     if !paths.is_empty() {
         let mut ctrl = Vec::new();
+        paths.sort_by(|a, b| a.cmp(&b));
         for path in paths {
             ctrl.push(
                 T::builder(&conn)
@@ -1089,7 +1090,11 @@ fn handle_platform_new_properties(
                 let attrs = attr.available_attrs()?;
                 // dbg!(&name, &attrs);
                 println!("{name}::");
-                if attrs.contains(&"defalt_value".to_string()) {
+                if attrs.contains(&"current_value".to_string()) {
+                    let v = attr.current_value()?;
+                    println!("  current_value: {v}");
+                }
+                if attrs.contains(&"default_value".to_string()) {
                     let v = attr.default_value()?;
                     println!("  default_value: {v:?}");
                 }
@@ -1101,17 +1106,9 @@ fn handle_platform_new_properties(
                     let v = attr.max_value()?;
                     println!("  max_value: {v}");
                 }
-                if attrs.contains(&"scalar_increment".to_string()) {
-                    let v = attr.scalar_increment()?;
-                    println!("  scalar_increment: {v}");
-                }
                 if attrs.contains(&"possible_values".to_string()) {
                     let v = attr.possible_values()?;
                     println!("  possible_values: {v:?}");
-                }
-                if attrs.contains(&"current_value".to_string()) {
-                    let v = attr.current_value()?;
-                    println!("  current_value: {v}");
                 }
             }
         }

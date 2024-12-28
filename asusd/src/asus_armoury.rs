@@ -1,11 +1,8 @@
-use rog_platform::firmware_attributes::FirmwareAttributes;
-use zbus::Connection;
-
 use log::error;
-use rog_platform::firmware_attributes::{AttrValue, Attribute};
+use rog_platform::firmware_attributes::{AttrValue, Attribute, FirmwareAttributes};
 use serde::{Deserialize, Serialize};
 use zbus::zvariant::{ObjectPath, OwnedObjectPath, OwnedValue, Type, Value};
-use zbus::{fdo, interface};
+use zbus::{fdo, interface, Connection};
 
 use crate::error::RogError;
 use crate::ASUS_ZBUS_PATH;

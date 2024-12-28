@@ -1,4 +1,3 @@
-use std::borrow::BorrowMut;
 use std::env::args;
 use std::path::{Path, PathBuf};
 use std::process::exit;
@@ -203,16 +202,6 @@ async fn main() -> Result<()> {
                         exit(0);
                     }
                 }
-
-                slint::invoke_from_event_loop(move || {
-                    UI.with(|ui| {
-                        let mut ui = ui.take();
-                        if let Some(ui) = ui.borrow_mut() {
-                            ui.window().hide().unwrap();
-                        }
-                    });
-                })
-                .unwrap();
             }
             sleep(Duration::from_millis(300));
         }
@@ -222,42 +211,6 @@ async fn main() -> Result<()> {
     rt.shutdown_background();
     Ok(())
 }
-
-// /// Bah.. the icon dosn't work on wayland anyway, but we'll leave it in for
-// now. fn load_icon() -> IconData {
-//     let path = PathBuf::from(APP_ICON_PATH);
-//     let mut rgba = Vec::new();
-//     let mut height = 512;
-//     let mut width = 512;
-//     if path.exists() {
-//         if let Ok(data) = std::fs::read(path)
-//             .map_err(|e| error!("Error reading app icon: {e:?}"))
-//             .map_err(|e| error!("Error opening app icon: {e:?}"))
-//         {
-//             let data = std::io::Cursor::new(data);
-//             let decoder = png_pong::Decoder::new(data).unwrap().into_steps();
-//             let png_pong::Step { raster, delay: _ } =
-// decoder.last().unwrap().unwrap();
-
-//             if let png_pong::PngRaster::Rgba8(ras) = raster {
-//                 rgba = ras.as_u8_slice().to_vec();
-//                 width = ras.width();
-//                 height = ras.height();
-//                 info!("Loaded app icon. Not actually supported in Wayland
-// yet");             }
-//         }
-//     } else {
-//         error!("Missing {APP_ICON_PATH}");
-//     }
-
-//     IconData {
-//         height,
-//         width,
-//         rgba
-//
-//
-// /     }
-// }
 
 fn do_cli_help(parsed: &CliStart) -> bool {
     if parsed.help {

@@ -176,6 +176,9 @@ impl FirmwareAttributes {
             for entry in dir.flatten() {
                 let base_path = entry.path();
                 let name = base_path.file_name().unwrap().to_string_lossy().to_string();
+                if name == "pending_reboot" {
+                    continue;
+                }
                 let help = read_string(&base_path.join("display_name")).unwrap_or_default();
 
                 let (default_value, possible_values, min_value, max_value, scalar_increment) =

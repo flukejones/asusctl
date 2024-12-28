@@ -268,7 +268,7 @@ impl DeviceManager {
                     found.push(path);
                 }
             } else {
-                warn!("No serial for SCSI device");
+                debug!("No serial for SCSI device: {:?}", device.devpath());
             }
         }
 
