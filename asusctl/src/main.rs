@@ -1075,13 +1075,72 @@ fn handle_platform_new_properties(
     cmd: &PlatformNewCommand,
 ) -> Result<(), Box<dyn std::error::Error>> {
     {
-        if cmd.free.is_empty() || cmd.help {
-            println!("Missing arg or command\n");
+        if cmd.free.is_empty() || cmd.free.len() % 2 != 0 || cmd.help {
+            const USAGE: &str = "Usage: asusctl platform panel_overdrive 1 nv_dynamic_boost 5";
+            if cmd.free.len() % 2 != 0 {
+                println!(
+                    "Incorrect number of args, each attribute label must be paired with a setting:"
+                );
+                println!("{USAGE}");
+                return Ok(());
+            }
 
-            let usage: Vec<String> = PlatformCommand::usage()
-                .lines()
-                .map(|s| s.to_owned())
-                .collect();
+            if let Ok(attr) = find_iface::<AsusArmouryProxyBlocking>("xyz.ljones.AsusArmoury") {
+                println!("\n{USAGE}\n");
+                println!("Available firmware attributes: ");
+                for attr in attr.iter() {
+                    let name = attr.name()?;
+                    println!("{name}:");
+
+                    let attrs = attr.available_attrs()?;
+                    if attrs.contains(&"min_value".to_string())
+                        && attrs.contains(&"max_value".to_string())
+                        && attrs.contains(&"current_value".to_string())
+                    {
+                        let c = attr.current_value()?;
+                        let min = attr.min_value()?;
+                        let max = attr.max_value()?;
+                        println!("  current: {min}..[{c}]..{max}");
+                        if attrs.contains(&"default_value".to_string()) {
+                            println!("  default: {}\n", attr.default_value()?);
+                        } else {
+                            println!();
+                        }
+                    } else if attrs.contains(&"possible_values".to_string())
+                        && attrs.contains(&"current_value".to_string())
+                    {
+                        let c = attr.current_value()?;
+                        let v = attr.possible_values()?;
+                        for p in v.iter().enumerate() {
+                            if p.0 == 0 {
+                                print!("  current: [");
+                            }
+                            if *p.1 == c {
+                                print!("({c})");
+                            } else {
+                                print!("{}", p.1);
+                            }
+                            if p.0 < v.len() - 1 {
+                                print!(",");
+                            }
+                            if p.0 == v.len() - 1 {
+                                print!("]");
+                            }
+                        }
+                        if attrs.contains(&"default_value".to_string()) {
+                            println!("  default: {}\n", attr.default_value()?);
+                        } else {
+                            println!("\n");
+                        }
+                    } else if attrs.contains(&"current_value".to_string()) {
+                        let c = attr.current_value()?;
+                        println!("  current: {c}\n");
+                    } else {
+                        println!();
+                    }
+                }
+            }
+            return Ok(());
         }
 
         if let Ok(attr) = find_iface::<AsusArmouryProxyBlocking>("xyz.ljones.AsusArmoury") {

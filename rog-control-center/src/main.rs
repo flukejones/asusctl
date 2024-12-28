@@ -117,11 +117,6 @@ async fn main() -> Result<()> {
         config.startup_in_background = false;
     }
 
-    if config.startup_in_background {
-        config.run_in_background = true;
-    }
-    config.write();
-
     let enable_tray_icon = config.enable_tray_icon;
     let startup_in_background = config.startup_in_background;
     let config = Arc::new(Mutex::new(config));
@@ -162,7 +157,6 @@ async fn main() -> Result<()> {
                 if let Ok(mut lock) = app_state.lock() {
                     *lock = AppState::MainWindowOpen;
                 }
-                sleep(Duration::from_millis(50));
 
                 let config_copy = config.clone();
                 let app_state_copy = app_state.clone();
