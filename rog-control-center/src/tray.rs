@@ -14,7 +14,7 @@ use supergfxctl::zbus_proxy::DaemonProxy as GfxProxy;
 use versions::Versioning;
 
 use crate::config::Config;
-use crate::zbus::{AppState, ROGCCZbusProxyBlocking};
+use crate::zbus_proxies::{AppState, ROGCCZbusProxyBlocking};
 
 const TRAY_LABEL: &str = "ROG Control Center";
 const TRAY_ICON_PATH: &str = "/usr/share/icons/hicolor/512x512/apps/";

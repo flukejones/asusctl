@@ -27,13 +27,6 @@ members = [
     "rog-slash",
     "simulators", "rog-scsi",
 ]
-default-members = [
-    "asusctl",
-    "asusd",
-    "asusd-user",
-    "cpuctl",
-    "rog-control-center",
-]
 
 [workspace.dependencies]
 tokio = { version = "^1.39.0", default-features = false, features = [

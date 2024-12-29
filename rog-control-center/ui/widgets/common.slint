@@ -15,30 +15,42 @@ export component SystemSlider inherits RogItem {
     in-out property <float> minimum;
     in-out property <float> maximum;
     callback released(int);
+
     HorizontalLayout {
         HorizontalLayout {
             width: 50%;
-            alignment: LayoutAlignment.space-between;
+            alignment: LayoutAlignment.stretch;
             padding-left: 10px;
-            Text {
-                font-size: 16px;
-                vertical-alignment: TextVerticalAlignment.center;
-                color: Palette.control-foreground;
-                text <=> root.text;
-            }
-
-            Text {
-                font-size: 16px;
-                vertical-alignment: TextVerticalAlignment.center;
-                color: Palette.control-foreground;
-                text: "\{Math.round(root.value)}";
+            TouchArea {
+              clicked => {
+                slider.value += 1;
+                if slider.value > slider.maximum {
+                  slider.value = slider.minimum;
+                }
+              }
+              HorizontalLayout {
+                spacing: 6px;
+                Text {
+                    font-size: 16px;
+                    vertical-alignment: TextVerticalAlignment.center;
+                    color: Palette.control-foreground;
+                    text <=> root.text;
+                }
+                Text {
+                    font-size: 16px;
+                    horizontal-alignment: TextHorizontalAlignment.right;
+                    vertical-alignment: TextVerticalAlignment.center;
+                    color: Palette.control-foreground;
+                    text: "\{Math.round(root.value)}";
+                }
+              }
             }
         }
 
         HorizontalBox {
             // alignment: LayoutAlignment.end;
             padding-right: 20px;
-            Slider {
+            slider := Slider {
                 maximum: root.maximum;
                 minimum: root.minimum;
                 value <=> root.value;
@@ -74,6 +86,38 @@ export component SystemToggle inherits RogItem {
                 checked <=> root.checked;
                 toggled => {
                     root.toggled(root.checked)
+                }
+            }
+        }
+    }
+}
+
+export component SystemToggleInt inherits RogItem {
+    in property <string> text;
+    // in-out property <bool> checked;
+    in-out property <int> checked_int;
+    callback toggled(int);
+    HorizontalLayout {
+        spacing: 6px;
+        HorizontalLayout {
+            alignment: LayoutAlignment.start;
+            padding-left: 10px;
+            Text {
+                font-size: 16px;
+                vertical-alignment: TextVerticalAlignment.center;
+                color: Palette.control-foreground;
+                text <=> root.text;
+            }
+        }
+
+        HorizontalLayout {
+            alignment: LayoutAlignment.end;
+            padding-right: 20px;
+            Switch {
+              checked: root.checked_int != 0;
+                toggled => {
+                    root.checked_int = self.checked ? 1 : 0;
+                    root.toggled(root.checked_int);
                 }
             }
         }

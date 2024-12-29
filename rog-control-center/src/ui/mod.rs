@@ -16,21 +16,6 @@ use crate::ui::setup_fans::setup_fan_curve_page;
 use crate::ui::setup_system::{setup_system_page, setup_system_page_callbacks};
 use crate::{AppSettingsPageData, MainWindow};
 
-// This macro expects are consistent naming between proxy calls and slint
-// globals
-#[macro_export]
-macro_rules! set_ui_props_async {
-    ($ui:ident, $proxy:ident, $global:ident, $proxy_fn:ident) => {
-        if let Ok(value) = $proxy.$proxy_fn().await {
-            $ui.upgrade_in_event_loop(move |handle| {
-                concat_idents::concat_idents!(set = set_, $proxy_fn {
-                    handle.global::<$global>().set(value.into());
-                });
-            }).ok();
-        }
-    };
-}
-
 // this macro sets up:
 // - a link from UI callback -> dbus proxy property
 // - a link from dbus property signal -> UI state

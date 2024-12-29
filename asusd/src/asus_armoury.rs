@@ -1,5 +1,7 @@
 use log::error;
-use rog_platform::firmware_attributes::{AttrValue, Attribute, FirmwareAttributes};
+use rog_platform::firmware_attributes::{
+    AttrValue, Attribute, FirmwareAttribute, FirmwareAttributes,
+};
 use serde::{Deserialize, Serialize};
 use zbus::zvariant::{ObjectPath, OwnedObjectPath, OwnedValue, Type, Value};
 use zbus::{fdo, interface, Connection};
@@ -46,8 +48,8 @@ impl AsusArmouryAttribute {
 #[interface(name = "xyz.ljones.AsusArmoury")]
 impl AsusArmouryAttribute {
     #[zbus(property)]
-    async fn name(&self) -> String {
-        self.0.name().to_string()
+    async fn name(&self) -> FirmwareAttribute {
+        self.0.name().into()
     }
 
     #[zbus(property)]

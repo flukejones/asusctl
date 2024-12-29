@@ -1,6 +1,6 @@
 import { Palette, Button, VerticalBox } from "std-widgets.slint";
 import { AppSize } from "globals.slint";
-import { PageSystem, AvailableSystemProperties, SystemPageData } from "pages/system.slint";
+import { PageSystem, SystemPageData, AttrMinMax } from "pages/system.slint";
 import { SideBar } from "widgets/sidebar.slint";
 import { PageAbout } from "pages/about.slint";
 import { PageFans } from "pages/fans.slint";
@@ -15,7 +15,7 @@ import { AuraPageData, AuraDevType, LaptopAuraPower, AuraPowerState, PowerZones,
 export { AuraPageData, AuraDevType, LaptopAuraPower, AuraPowerState, PowerZones, AuraEffect }
 import { PageAppSettings, AppSettingsPageData } from "pages/app_settings.slint";
 
-export { AppSize, AvailableSystemProperties, SystemPageData, AnimePageData, AppSettingsPageData }
+export { AppSize, AttrMinMax, SystemPageData, AnimePageData, AppSettingsPageData }
 
 export component MainWindow inherits Window {
     title: "ROG Control";
@@ -134,7 +134,8 @@ export component MainWindow inherits Window {
         y: 0px;
         width: root.width;
         height: 32px;
-        opacity: 0.8;
+        opacity: 1.0;
+        background: Colors.grey;
         TouchArea {
             height: 100%;
             width: 100%;

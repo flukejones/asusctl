@@ -16,7 +16,7 @@ use rog_control_center::notify::start_notifications;
 use rog_control_center::slint::ComponentHandle;
 use rog_control_center::tray::init_tray;
 use rog_control_center::ui::setup_window;
-use rog_control_center::zbus::{
+use rog_control_center::zbus_proxies::{
     AppState, ROGCCZbus, ROGCCZbusProxyBlocking, ZBUS_IFACE, ZBUS_PATH,
 };
 use rog_control_center::{print_versions, MainWindow};
@@ -153,6 +153,8 @@ async fn main() -> Result<()> {
                 state = *lock;
             }
 
+            // This sleep is required to give the event loop time to react
+            sleep(Duration::from_millis(300));
             if state == AppState::MainWindowShouldOpen {
                 if let Ok(mut lock) = app_state.lock() {
                     *lock = AppState::MainWindowOpen;
@@ -197,7 +199,6 @@ async fn main() -> Result<()> {
                     }
                 }
             }
-            sleep(Duration::from_millis(300));
         }
     });
 

@@ -1078,7 +1078,7 @@ fn check_systemd_unit_enabled(name: &str) -> bool {
 
 fn print_firmware_attr(attr: &AsusArmouryProxyBlocking) -> Result<(), Box<dyn std::error::Error>> {
     let name = attr.name()?;
-    println!("{name}:");
+    println!("{}:", <&str>::from(name));
 
     let attrs = attr.available_attrs()?;
     if attrs.contains(&"min_value".to_string())
@@ -1155,7 +1155,7 @@ fn handle_armoury_command(cmd: &ArmouryCommand) -> Result<(), Box<dyn std::error
             for cmd in cmd.free.chunks(2) {
                 for attr in attr.iter() {
                     let name = attr.name()?;
-                    if name == cmd[0] {
+                    if <&str>::from(name) == cmd[0] {
                         attr.set_current_value(cmd[1].parse()?)?;
                         print_firmware_attr(attr)?;
                     }

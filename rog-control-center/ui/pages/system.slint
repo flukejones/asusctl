@@ -1,30 +1,23 @@
-import { SystemSlider, SystemDropdown, SystemToggle } from "../widgets/common.slint";
+import { SystemSlider, SystemDropdown, SystemToggle, SystemToggleInt } from "../widgets/common.slint";
 import { Palette, HorizontalBox , VerticalBox, ScrollView, Slider, Button, Switch, ComboBox, GroupBox} from "std-widgets.slint";
 
-export struct AvailableSystemProperties {
-    charge_control_end_threshold: bool,
-    panel_od: bool,
-    boot_sound: bool,
-    mini_led_mode: bool,
-    disable_nvidia_powerd_on_battery: bool,
-    ac_command: bool,
-    bat_command: bool,
-    throttle_thermal_policy: bool,
-    ppt_pl1_spl: bool,
-    ppt_pl2_sppt: bool,
-    ppt_fppt: bool,
-    ppt_apu_sppt: bool,
-    ppt_platform_sppt: bool,
-    nv_dynamic_boost: bool,
-    nv_temp_target: bool,
+export struct AttrMinMax {
+  min: int,
+  max: int,
+  val: float,
+}
+
+export struct AttrPossible {
+  range: [int],
+  val: int,
 }
 
 export global SystemPageData {
     in-out property <float> charge_control_end_threshold: 30;
-    callback set_charge_control_end_threshold(/* charge limit */ int);
+    callback cb_charge_control_end_threshold(/* charge limit */ int);
     in-out property <int> throttle_thermal_policy: 0;
     in-out property <[string]> throttle_policy_choices: [@tr("Balanced"), @tr("Performance"), @tr("Quiet")];
-    callback set_throttle_thermal_policy(int);
+    callback cb_throttle_thermal_policy(int);
     in-out property <[string]> energy_performance_choices: [
         @tr("Default"),
         @tr("Performance"),
@@ -33,59 +26,78 @@ export global SystemPageData {
         @tr("Power")
     ];
     in-out property <int> throttle_balanced_epp: 0;
-    callback set_throttle_balanced_epp(int);
+    callback cb_throttle_balanced_epp(int);
     in-out property <int> throttle_performance_epp: 0;
-    callback set_throttle_performance_epp(int);
+    callback cb_throttle_performance_epp(int);
     in-out property <int> throttle_quiet_epp: 0;
-    callback set_throttle_quiet_epp(int);
+    callback cb_throttle_quiet_epp(int);
     // if the EPP should change with throttle
     in-out property <bool> throttle_policy_linked_epp: true;
-    callback set_throttle_policy_linked_epp(bool);
+    callback cb_throttle_policy_linked_epp(bool);
     in-out property <int> throttle_policy_on_ac: 0;
-    callback set_throttle_policy_on_ac(int);
+    callback cb_throttle_policy_on_ac(int);
     in-out property <bool> change_throttle_policy_on_ac: true;
-    callback set_change_throttle_policy_on_ac(bool);
+    callback cb_change_throttle_policy_on_ac(bool);
     in-out property <int> throttle_policy_on_battery: 0;
-    callback set_throttle_policy_on_battery(int);
+    callback cb_throttle_policy_on_battery(int);
     in-out property <bool> change_throttle_policy_on_battery: true;
-    callback set_change_throttle_policy_on_battery(bool);
-    in-out property <bool> panel_od;
-    callback set_panel_od(bool);
-    in-out property <bool> boot_sound;
-    callback set_boot_sound(bool);
-    in-out property <bool> mini_led_mode;
-    callback set_mini_led_mode(bool);
-    in-out property <float> ppt_pl1_spl: 5;
-    callback set_ppt_pl1_spl(int);
-    in-out property <float> ppt_pl2_sppt: 5;
-    callback set_ppt_pl2_sppt(int);
-    in-out property <float> ppt_fppt: 5;
-    callback set_ppt_fppt(int);
-    in-out property <float> ppt_apu_sppt: 5;
-    callback set_ppt_apu_sppt(int);
-    in-out property <float> ppt_platform_sppt: 5;
-    callback set_ppt_platform_sppt(int);
-    in-out property <float> nv_dynamic_boost: 5;
-    callback set_nv_dynamic_boost(int);
-    in-out property <float> nv_temp_target: 75;
-    callback set_nv_temp_target(int);
-    in-out property <AvailableSystemProperties> available: {
-        charge_control_end_threshold: true,
-        panel_od: true,
-        boot_sound: true,
-        mini_led_mode: true,
-        disable_nvidia_powerd_on_battery: true,
-        ac_command: true,
-        bat_command: true,
-        throttle_thermal_policy: true,
-        ppt_pl1_spl: true,
-        ppt_pl2_sppt: true,
-        ppt_fppt: true,
-        ppt_apu_sppt: true,
-        ppt_platform_sppt: true,
-        nv_dynamic_boost: true,
-        nv_temp_target: true,
+    callback cb_change_throttle_policy_on_battery(bool);
+    //
+    in-out property <int> panel_overdrive;
+    callback cb_panel_overdrive(int);
+    in-out property <int> boot_sound;
+    callback cb_boot_sound(int);
+    in-out property <int> mini_led_mode;
+    callback cb_mini_led_mode(int);
+
+    in-out property <AttrMinMax> ppt_pl1_spl: {
+        min: 0,
+        max: 100,
+        val: 20,
     };
+    callback cb_ppt_pl1_spl(int);
+
+    in-out property <AttrMinMax> ppt_pl2_sppt: {
+        min: 0,
+        max: 100,
+        val: 20,
+    };
+    callback cb_ppt_pl2_sppt(int);
+
+    in-out property <AttrMinMax> ppt_fppt: {
+        min: 0,
+        max: 100,
+        val: 20,
+    };
+    callback cb_ppt_fppt(int);
+
+    in-out property <AttrMinMax> ppt_apu_sppt: {
+        min: 0,
+        max: 100,
+        val: 20,
+    };
+    callback cb_ppt_apu_sppt(int);
+
+    in-out property <AttrMinMax> ppt_platform_sppt: {
+        min: 0,
+        max: 100,
+        val: 20,
+    };
+    callback cb_ppt_platform_sppt(int);
+
+    in-out property <AttrMinMax> nv_dynamic_boost: {
+        min: 0,
+        max: 30,
+        val: 5,
+    };
+    callback cb_nv_dynamic_boost(int);
+
+    in-out property <AttrMinMax> nv_temp_target: {
+        min: 0,
+        max: 80,
+        val: 75,
+    };
+    callback cb_nv_temp_target(int);
 }
 
 export component PageSystem inherits Rectangle {
@@ -107,21 +119,21 @@ export component PageSystem inherits Rectangle {
                     font-size: 18px;
                     color: Palette.control-foreground;
                     horizontal-alignment: TextHorizontalAlignment.center;
-                    text: @tr("Base system settings");
+                    text: @tr("Power settings");
                 }
             }
 
-            if SystemPageData.available.charge-control-end-threshold: SystemSlider {
+            if SystemPageData.charge_control_end_threshold != -1: SystemSlider {
                 text: @tr("Charge limit");
                 minimum: 20;
                 maximum: 100;
                 value <=> SystemPageData.charge_control_end_threshold;
                 released => {
-                    SystemPageData.set_charge_control_end_threshold(Math.round(SystemPageData.charge_control_end_threshold))
+                    SystemPageData.cb_charge_control_end_threshold(Math.round(SystemPageData.charge_control_end_threshold))
                 }
             }
 
-            if SystemPageData.available.throttle-thermal-policy: HorizontalLayout {
+            if SystemPageData.throttle_thermal_policy != -1: HorizontalLayout {
                 spacing: 10px;
                 SystemDropdown {
                     text: @tr("Throttle Policy");
@@ -129,7 +141,7 @@ export component PageSystem inherits Rectangle {
                     current_value: SystemPageData.throttle_policy_choices[SystemPageData.throttle_thermal_policy];
                     model <=> SystemPageData.throttle_policy_choices;
                     selected => {
-                        SystemPageData.set_throttle_thermal_policy(SystemPageData.throttle_thermal_policy)
+                        SystemPageData.cb_throttle_thermal_policy(SystemPageData.throttle_thermal_policy)
                     }
                 }
 
@@ -138,34 +150,6 @@ export component PageSystem inherits Rectangle {
                     clicked => {
                         root.show_fade_cover = true;
                         root.show_throttle_advanced = true;
-                    }
-                }
-            }
-
-            HorizontalBox {
-                padding: 0px;
-                spacing: 10px;
-                if SystemPageData.available.panel-od: SystemToggle {
-                    text: @tr("Panel Overdrive");
-                    checked <=> SystemPageData.panel_od;
-                    toggled => {
-                        SystemPageData.set_panel_od(SystemPageData.panel_od)
-                    }
-                }
-
-                if SystemPageData.available.mini-led-mode: SystemToggle {
-                    text: @tr("MiniLED Mode");
-                    checked <=> SystemPageData.mini_led_mode;
-                    toggled => {
-                        SystemPageData.set_mini_led_mode(SystemPageData.mini_led_mode)
-                    }
-                }
-
-                if SystemPageData.available.boot-sound: SystemToggle {
-                    text: @tr("POST boot sound");
-                    checked <=> SystemPageData.boot_sound;
-                    toggled => {
-                        SystemPageData.set_boot_sound(SystemPageData.boot_sound)
                     }
                 }
             }
@@ -180,77 +164,112 @@ export component PageSystem inherits Rectangle {
                     font-size: 18px;
                     color: Palette.control-foreground;
                     horizontal-alignment: TextHorizontalAlignment.center;
-                    text: @tr("System performance settings");
+                    text: @tr("Armoury settings");
                 }
             }
 
-            if SystemPageData.available.ppt-pl1-spl: SystemSlider {
+            HorizontalBox {
+                padding: 0px;
+                spacing: 10px;
+                if SystemPageData.panel_overdrive != -1: SystemToggleInt {
+                    text: @tr("Panel Overdrive");
+                    checked_int <=> SystemPageData.panel_overdrive;
+                    toggled => {
+                        SystemPageData.cb_panel_overdrive(SystemPageData.panel_overdrive)
+                    }
+                }
+
+                if SystemPageData.mini_led_mode != -1: SystemToggleInt {
+                    text: @tr("MiniLED Mode");
+                    checked_int <=> SystemPageData.mini_led_mode;
+                    toggled => {
+                        SystemPageData.cb_mini_led_mode(SystemPageData.mini_led_mode)
+                    }
+                }
+
+                if SystemPageData.boot_sound != -1: SystemToggleInt {
+                    text: @tr("POST boot sound");
+                    checked_int <=> SystemPageData.boot_sound;
+                    toggled => {
+                        SystemPageData.cb_boot_sound(SystemPageData.boot_sound)
+                    }
+                }
+            }
+
+            if SystemPageData.ppt_pl1_spl.val != -1: SystemSlider {
                 text: @tr("ppt_pl1_spl" => "PL1, sustained power limit");
-                minimum: 5;
-                maximum: 250;
-                value <=> SystemPageData.ppt_pl1_spl;
+                minimum: SystemPageData.ppt_pl1_spl.min;
+                maximum: SystemPageData.ppt_pl1_spl.max;
+                value: SystemPageData.ppt_pl1_spl.val;
                 released => {
-                    SystemPageData.set_ppt_pl1_spl(Math.round(SystemPageData.ppt_pl1_spl))
+                    SystemPageData.ppt_pl1_spl.val = self.value;
+                    SystemPageData.cb_ppt_pl1_spl(Math.round(self.value))
                 }
             }
 
-            if SystemPageData.available.ppt-pl2-sppt: SystemSlider {
+            if SystemPageData.ppt_pl2_sppt.val != -1: SystemSlider {
                 text: @tr("ppt_pl2_sppt" => "PL2, turbo power limit");
-                minimum: 5;
-                maximum: 250;
-                value <=> SystemPageData.ppt_pl2_sppt;
+                minimum: SystemPageData.ppt_pl2_sppt.min;
+                maximum: SystemPageData.ppt_pl2_sppt.max;
+                value: SystemPageData.ppt_pl2_sppt.val;
                 released => {
-                    SystemPageData.set_ppt_pl2_sppt(Math.round(SystemPageData.ppt_pl2_sppt))
+                    SystemPageData.ppt_pl2_sppt.val = self.value;
+                    SystemPageData.cb_ppt_pl2_sppt(Math.round(self.value))
                 }
             }
 
-            if SystemPageData.available.ppt-fppt: SystemSlider {
+            if SystemPageData.ppt_fppt.val != -1: SystemSlider {
                 text: @tr("ppt_fppt" => "FPPT, Fast Power Limit");
-                minimum: 5;
-                maximum: 250;
-                value <=> SystemPageData.ppt_fppt;
+                minimum: SystemPageData.ppt_fppt.min;
+                maximum: SystemPageData.ppt_fppt.max;
+                value: SystemPageData.ppt_fppt.val;
                 released => {
-                    SystemPageData.set_ppt_fppt(Math.round(SystemPageData.ppt_fppt))
+                    SystemPageData.ppt_fppt.val = self.value;
+                    SystemPageData.cb_ppt_fppt(Math.round(self.value))
                 }
             }
 
-            if SystemPageData.available.ppt-apu-sppt: SystemSlider {
+            if SystemPageData.ppt_apu_sppt.val != -1: SystemSlider {
                 text: @tr("ppt_apu_sppt" => "SPPT, APU slow power limit");
-                minimum: 5;
-                maximum: 130;
-                value <=> SystemPageData.ppt_apu_sppt;
+                minimum: SystemPageData.ppt_apu_sppt.min;
+                maximum: SystemPageData.ppt_apu_sppt.max;
+                value: SystemPageData.ppt_apu_sppt.val;
                 released => {
-                    SystemPageData.set_ppt_apu_sppt(Math.round(SystemPageData.ppt_apu_sppt))
+                    SystemPageData.ppt_apu_sppt.val = self.value;
+                    SystemPageData.cb_ppt_apu_sppt(Math.round(self.value))
                 }
             }
 
-            if SystemPageData.available.ppt-platform-sppt: SystemSlider {
+            if SystemPageData.ppt_platform_sppt.val != -1: SystemSlider {
                 text: @tr("ppt_platform_sppt" => "Slow package power tracking limit");
-                maximum: 130;
-                minimum: 5;
-                value <=> SystemPageData.ppt_platform_sppt;
+                minimum: SystemPageData.ppt_platform_sppt.min;
+                maximum: SystemPageData.ppt_platform_sppt.max;
+                value: SystemPageData.ppt_platform_sppt.val;
                 released => {
-                    SystemPageData.set_ppt_platform_sppt(Math.round(SystemPageData.ppt_platform_sppt))
+                    SystemPageData.ppt_platform_sppt.val = self.value;
+                    SystemPageData.cb_ppt_platform_sppt(Math.round(self.value))
                 }
             }
 
-            if SystemPageData.available.nv-dynamic-boost: SystemSlider {
+            if SystemPageData.nv_dynamic_boost.val != -1: SystemSlider {
                 text: @tr("nv_dynamic_boost" => "dGPU boost overclock");
-                minimum: 5;
-                maximum: 25;
-                value <=> SystemPageData.nv_dynamic_boost;
+                minimum: SystemPageData.nv_dynamic_boost.min;
+                maximum: SystemPageData.nv_dynamic_boost.max;
+                value: SystemPageData.nv_dynamic_boost.val;
                 released => {
-                    SystemPageData.set_nv_dynamic_boost(Math.round(SystemPageData.nv_dynamic_boost))
+                    SystemPageData.nv_dynamic_boost.val = self.value;
+                    SystemPageData.cb_nv_dynamic_boost(Math.round(self.value))
                 }
             }
 
-            if SystemPageData.available.nv-temp-target: SystemSlider {
+            if SystemPageData.nv_temp_target.val != -1: SystemSlider {
                 text: @tr("nv_temp_target" => "dGPU temperature max");
-                minimum: 75;
-                maximum: 87;
-                value <=> SystemPageData.nv_temp_target;
+                minimum: SystemPageData.nv_temp_target.min;
+                maximum: SystemPageData.nv_temp_target.max;
+                value: SystemPageData.nv_temp_target.val;
                 released => {
-                    SystemPageData.set_nv_temp_target(Math.round(SystemPageData.nv_temp_target))
+                    SystemPageData.nv_temp_target.val = self.value;
+                    SystemPageData.cb_nv_temp_target(Math.round(self.value))
                 }
             }
         }
@@ -298,7 +317,7 @@ export component PageSystem inherits Rectangle {
                             text: @tr("Change EPP based on Throttle Policy");
                             checked <=> SystemPageData.throttle_policy_linked_epp;
                             toggled => {
-                                SystemPageData.set_throttle_policy_linked_epp(SystemPageData.throttle_policy_linked_epp)
+                                SystemPageData.cb_throttle_policy_linked_epp(SystemPageData.throttle_policy_linked_epp)
                             }
                         }
 
@@ -308,7 +327,7 @@ export component PageSystem inherits Rectangle {
                             current_value: SystemPageData.energy_performance_choices[SystemPageData.throttle_balanced_epp];
                             model <=> SystemPageData.energy_performance_choices;
                             selected => {
-                                SystemPageData.set_throttle_balanced_epp(SystemPageData.throttle_balanced_epp)
+                                SystemPageData.cb_throttle_balanced_epp(SystemPageData.throttle_balanced_epp)
                             }
                         }
 
@@ -318,7 +337,7 @@ export component PageSystem inherits Rectangle {
                             current_value: SystemPageData.energy_performance_choices[SystemPageData.throttle_performance_epp];
                             model <=> SystemPageData.energy_performance_choices;
                             selected => {
-                                SystemPageData.set_throttle_performance_epp(SystemPageData.throttle_performance_epp)
+                                SystemPageData.cb_throttle_performance_epp(SystemPageData.throttle_performance_epp)
                             }
                         }
 
@@ -328,7 +347,7 @@ export component PageSystem inherits Rectangle {
                             current_value: SystemPageData.energy_performance_choices[SystemPageData.throttle_quiet_epp];
                             model <=> SystemPageData.energy_performance_choices;
                             selected => {
-                                SystemPageData.set_throttle_quiet_epp(SystemPageData.throttle_quiet_epp)
+                                SystemPageData.cb_throttle_quiet_epp(SystemPageData.throttle_quiet_epp)
                             }
                         }
                     }
@@ -352,7 +371,7 @@ export component PageSystem inherits Rectangle {
                                 current_value: SystemPageData.throttle_policy_choices[SystemPageData.throttle_policy_on_battery];
                                 model <=> SystemPageData.throttle_policy_choices;
                                 selected => {
-                                    SystemPageData.set_throttle_policy_on_battery(SystemPageData.throttle_policy_on_battery)
+                                    SystemPageData.cb_throttle_policy_on_battery(SystemPageData.throttle_policy_on_battery)
                                 }
                             }
 
@@ -360,7 +379,7 @@ export component PageSystem inherits Rectangle {
                                 text: @tr("Enabled");
                                 checked <=> SystemPageData.change_throttle_policy_on_battery;
                                 toggled => {
-                                    SystemPageData.set_change_throttle_policy_on_battery(SystemPageData.change_throttle_policy_on_battery);
+                                    SystemPageData.cb_change_throttle_policy_on_battery(SystemPageData.change_throttle_policy_on_battery);
                                 }
                             }
                         }
@@ -373,7 +392,7 @@ export component PageSystem inherits Rectangle {
                                 current_value: SystemPageData.throttle_policy_choices[SystemPageData.throttle_policy_on_ac];
                                 model <=> SystemPageData.throttle_policy_choices;
                                 selected => {
-                                    SystemPageData.set_throttle_policy_on_ac(SystemPageData.throttle_policy_on_ac)
+                                    SystemPageData.cb_throttle_policy_on_ac(SystemPageData.throttle_policy_on_ac)
                                 }
                             }
 
@@ -381,7 +400,7 @@ export component PageSystem inherits Rectangle {
                                 text: @tr("Enabled");
                                 checked <=> SystemPageData.change_throttle_policy_on_ac;
                                 toggled => {
-                                    SystemPageData.set_change_throttle_policy_on_ac(SystemPageData.change_throttle_policy_on_ac);
+                                    SystemPageData.cb_change_throttle_policy_on_ac(SystemPageData.change_throttle_policy_on_ac);
                                 }
                             }
                         }

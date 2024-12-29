@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
-use zbus::zvariant::Type;
+use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::PlatformError;
 
@@ -254,32 +254,33 @@ define_attribute_getters!(
 /// CamelCase names of the properties. Intended for use with DBUS
 #[typeshare]
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, Type, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Serialize, Deserialize, Type, Value, OwnedValue, PartialEq, PartialOrd)]
 #[zvariant(signature = "s")]
 pub enum FirmwareAttribute {
-    ApuMem,
-    CoresPerformance,
-    CoresEfficiency,
-    PptPl1Spl,
-    PptPl2Sppt,
-    PptApuSppt,
-    PptPlatformSppt,
-    PptFppt,
-    NvDynamicBoost,
-    NvTempTarget,
-    DgpuBaseTgp,
-    DgpuTgp,
-    ChargeMode,
-    BootSound,
-    McuPowersave,
-    PanelOverdrive,
-    PanelHdMode,
-    EgpuConnected,
-    EgpuEnable,
-    DgpuDisable,
-    GpuMuxMode,
-    MiniLedMode,
-    PendingReboot,
+    ApuMem = 0,
+    CoresPerformance = 1,
+    CoresEfficiency = 2,
+    PptPl1Spl = 3,
+    PptPl2Sppt = 4,
+    PptApuSppt = 5,
+    PptPlatformSppt = 6,
+    PptFppt = 7,
+    NvDynamicBoost = 8,
+    NvTempTarget = 9,
+    DgpuBaseTgp = 10,
+    DgpuTgp = 11,
+    ChargeMode = 12,
+    BootSound = 13,
+    McuPowersave = 14,
+    PanelOverdrive = 15,
+    PanelHdMode = 16,
+    EgpuConnected = 17,
+    EgpuEnable = 18,
+    DgpuDisable = 19,
+    GpuMuxMode = 20,
+    MiniLedMode = 21,
+    PendingReboot = 22,
+    None = 23,
 }
 
 impl From<&str> for FirmwareAttribute {
@@ -313,7 +314,7 @@ impl From<&str> for FirmwareAttribute {
     }
 }
 
-impl From<FirmwareAttribute> for &'static str {
+impl From<FirmwareAttribute> for &str {
     fn from(attr: FirmwareAttribute) -> Self {
         match attr {
             FirmwareAttribute::ApuMem => "apu_mem",
@@ -339,6 +340,7 @@ impl From<FirmwareAttribute> for &'static str {
             FirmwareAttribute::GpuMuxMode => "gpu_mux_mode",
             FirmwareAttribute::MiniLedMode => "mini_led_mode",
             FirmwareAttribute::PendingReboot => "pending_reboot",
+            FirmwareAttribute::None => "none",
         }
     }
 }

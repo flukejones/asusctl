@@ -2,6 +2,7 @@
 //!
 //! `zbus-xmlgen system xyz.ljones.Asusd
 //! /xyz/ljones/asus_armoury/nv_temp_target`
+use rog_platform::firmware_attributes::FirmwareAttribute;
 use zbus::proxy;
 #[proxy(
     interface = "xyz.ljones.AsusArmoury",
@@ -41,7 +42,7 @@ pub trait AsusArmoury {
 
     /// Name property
     #[zbus(property)]
-    fn name(&self) -> zbus::Result<String>;
+    fn name(&self) -> zbus::Result<FirmwareAttribute>;
 
     /// ScalarIncrement property. The increment steps that `current_value` may
     /// take. Returns `-1` if not used or set.
