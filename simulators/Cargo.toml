@@ -15,7 +15,7 @@ path = "src/simulator.rs"
 
 [dependencies]
 log.workspace = true
-uhid-virt = "^0.0.7"
+uhid-virt = "^0.0.8"
 rog_anime = { path = "../rog-anime", features = ["dbus"] }
 
 [dependencies.sdl2]

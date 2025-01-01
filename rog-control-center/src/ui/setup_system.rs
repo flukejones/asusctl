@@ -1,5 +1,6 @@
 use std::sync::{Arc, Mutex};
 
+use concat_idents::concat_idents;
 use rog_dbus::asus_armoury::AsusArmouryProxy;
 use rog_dbus::zbus_platform::{PlatformProxy, PlatformProxyBlocking};
 use rog_platform::firmware_attributes::FirmwareAttribute;
@@ -10,7 +11,6 @@ use super::show_toast;
 use crate::config::Config;
 use crate::zbus_proxies::find_iface_async;
 use crate::{set_ui_props_async, AttrMinMax, MainWindow, SystemPageData};
-use concat_idents::concat_idents;
 
 const MINMAX: AttrMinMax = AttrMinMax {
     min: 0,
@@ -21,7 +21,8 @@ const MINMAX: AttrMinMax = AttrMinMax {
 pub fn setup_system_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
     let conn = zbus::blocking::Connection::system().unwrap();
     let platform = PlatformProxyBlocking::new(&conn).unwrap();
-    // let armoury_attrs = find_iface::<AsusArmouryProxyBlocking>("xyz.ljones.AsusArmoury").unwrap();
+    // let armoury_attrs =
+    // find_iface::<AsusArmouryProxyBlocking>("xyz.ljones.AsusArmoury").unwrap();
 
     // Null everything before the setup step
     ui.global::<SystemPageData>()

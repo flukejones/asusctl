@@ -12,29 +12,32 @@ edition = "2021"
 [workspace]
 resolver = "2"
 members = [
-    "asusctl",
-    "asusd",
-    "asusd-user",
-    "config-traits",
-    "cpuctl",
-    "dmi-id",
-    "rog-platform",
-    "rog-dbus",
-    "rog-anime",
-    "rog-aura",
-    "rog-profiles",
-    "rog-control-center",
-    "rog-slash",
-    "simulators", "rog-scsi",
+  "asusctl",
+  "asusd",
+  "asusd-user",
+  "config-traits",
+  "cpuctl",
+  "dmi-id",
+  "rog-platform",
+  "rog-dbus",
+  "rog-anime",
+  "rog-aura",
+  "rog-profiles",
+  "rog-control-center",
+  "rog-slash",
+  "simulators",
+  "rog-scsi",
 ]
+
+default-members = ["asusctl", "asusd", "asusd-user", "rog-control-center"]
 
 [workspace.dependencies]
 tokio = { version = "^1.39.0", default-features = false, features = [
-    "macros",
-    "sync",
-    "time",
-    "rt",
-    "rt-multi-thread",
+  "macros",
+  "sync",
+  "time",
+  "rt",
+  "rt-multi-thread",
 ] }
 concat-idents = "^1.1"
 dirs = "^4.0"
@@ -66,7 +69,7 @@ versions = "6.2"
 
 notify-rust = { version = "4.11.0", features = ["z", "async"] }
 
-sg = {git = "https://github.com/flukejones/sg-rs.git"}
+sg = { git = "https://github.com/flukejones/sg-rs.git" }
 
 [profile.release]
 # thin = 57s, asusd = 9.0M
