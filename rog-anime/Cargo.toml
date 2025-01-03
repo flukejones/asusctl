@@ -30,7 +30,6 @@ log.workspace = true
 serde.workspace = true
 
 glam.workspace = true
-typeshare.workspace = true
 
 zbus = { workspace = true, optional = true }
 

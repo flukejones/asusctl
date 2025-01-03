@@ -20,6 +20,5 @@ serde.workspace = true
 zbus = { workspace = true, optional = true }
 
 # cli and logging
-typeshare.workspace = true
 
 ron = { version = "*", optional = true }

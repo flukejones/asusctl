@@ -6,7 +6,6 @@ use fan_curve_set::CurveData;
 use log::debug;
 use rog_platform::platform::ThrottlePolicy;
 use serde::{Deserialize, Serialize};
-use typeshare::typeshare;
 pub use udev::Device;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
@@ -33,7 +32,6 @@ pub fn find_fan_curve_node() -> Result<Device, ProfileError> {
     Err(ProfileError::NotSupported)
 }
 
-#[typeshare]
 #[cfg_attr(
     feature = "dbus",
     derive(Type, Value, OwnedValue),
@@ -105,7 +103,6 @@ impl Default for FanCurvePU {
 }
 
 /// Main purpose of `FanCurves` is to enable restoring state on system boot
-#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Deserialize, Serialize, Debug, Default)]
 pub struct FanCurveProfiles {

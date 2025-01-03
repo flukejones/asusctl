@@ -2,14 +2,12 @@ use std::fmt::Display;
 use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
-use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::Error;
 use crate::scsi::{apply_task, dir_task, mode_task, rgb_task, save_task, speed_task};
 
-#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Deserialize, Serialize)]
 pub struct Colour {
@@ -54,7 +52,6 @@ impl From<Colour> for [u8; 3] {
     }
 }
 
-#[typeshare]
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[cfg_attr(
     feature = "dbus",
@@ -95,7 +92,6 @@ impl From<Direction> for u8 {
     }
 }
 
-#[typeshare]
 #[cfg_attr(
     feature = "dbus",
     derive(Type, Value, OwnedValue),
@@ -152,7 +148,6 @@ impl From<u8> for Speed {
 }
 
 /// Enum of modes that convert to the actual number required by a USB HID packet
-#[typeshare]
 #[cfg_attr(
     feature = "dbus",
     derive(Type, Value, OwnedValue),
@@ -297,7 +292,6 @@ impl From<AuraEffect> for AuraMode {
 }
 
 /// Default factory modes structure.
-#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct AuraEffect {

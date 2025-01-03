@@ -5,7 +5,6 @@ use std::ops::{BitAnd, BitOr};
 
 use log::warn;
 use serde::{Deserialize, Serialize};
-use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::{OwnedValue, Type, Value};
 
@@ -16,7 +15,6 @@ use crate::{AuraDeviceType, PowerZones};
 /// - 2021+, the struct is a single zone with 4 states
 /// - pre-2021, the struct is 1 or 2 zones and 3 states
 /// - Tuf, the struct is 1 zone and 3 states
-#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AuraPowerState {
@@ -145,7 +143,6 @@ impl AuraPowerState {
     }
 }
 
-#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LaptopAuraPower {

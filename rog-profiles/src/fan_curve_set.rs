@@ -1,6 +1,5 @@
 use log::{error, trace};
 use serde::{Deserialize, Serialize};
-use typeshare::typeshare;
 use udev::Device;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
@@ -31,7 +30,6 @@ pub(crate) fn temp_str(fan: char, index: usize) -> String {
     string
 }
 
-#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Deserialize, Serialize, Default, Debug, Clone)]
 pub struct CurveData {

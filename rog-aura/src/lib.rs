@@ -6,7 +6,6 @@
 use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize};
-use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::{OwnedValue, Type, Value};
 
@@ -64,7 +63,6 @@ pub const ORANGE: Colour = Colour {
 };
 pub const GRADIENT: [Colour; 7] = [RED, VIOLET, BLUE, TEAL, GREEN, YELLOW, ORANGE];
 
-#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum AuraDeviceType {
@@ -116,7 +114,6 @@ impl From<&str> for AuraDeviceType {
 }
 
 /// The powerr zones this laptop supports
-#[typeshare]
 #[cfg_attr(
     feature = "dbus",
     derive(Type, Value, OwnedValue),

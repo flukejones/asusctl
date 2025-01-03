@@ -2,7 +2,6 @@ use std::path::PathBuf;
 
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
-use typeshare::typeshare;
 use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::{PlatformError, Result};
@@ -147,7 +146,6 @@ impl CPUControl {
     }
 }
 
-#[typeshare]
 #[repr(u8)]
 #[derive(
     Deserialize, Serialize, Type, Value, OwnedValue, Debug, PartialEq, PartialOrd, Clone, Copy,
@@ -179,7 +177,6 @@ impl From<CPUGovernor> for String {
     }
 }
 
-#[typeshare]
 #[repr(u32)]
 #[derive(
     Deserialize,

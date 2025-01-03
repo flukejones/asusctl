@@ -16,7 +16,6 @@ members = [
   "asusd",
   "asusd-user",
   "config-traits",
-  "cpuctl",
   "dmi-id",
   "rog-platform",
   "rog-dbus",
@@ -49,7 +48,6 @@ logind-zbus = { version = "5.0.0" } #, default-features = false, features = ["no
 
 serde = { version = "^1.0", features = ["serde_derive"] }
 ron = "*"
-typeshare = "1.0.0"
 
 log = "^0.4"
 env_logger = "^0.10.0"

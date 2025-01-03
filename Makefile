@@ -122,12 +122,6 @@ vendor:
 	tar pcfJ vendor_asusctl_$(VERSION).tar.xz vendor
 	rm -rf vendor
 
-bindings:
-	typeshare ./rog-anime/src/ --lang=typescript --output-file=bindings/ts/anime.ts
-	typeshare ./rog-aura/src/ --lang=typescript --output-file=bindings/ts/aura.ts
-	typeshare ./rog-profiles/src/ --lang=typescript --output-file=bindings/ts/profiles.ts
-	typeshare ./rog-platform/src/ --lang=typescript --output-file=bindings/ts/platform.ts
-
 translate:
 	find -name \*.slint | xargs slint-tr-extractor -o rog-control-center/translations/en/rog-control-center.po
 

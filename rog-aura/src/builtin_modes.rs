@@ -2,14 +2,12 @@ use std::fmt::Display;
 use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
-use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::Error;
 use crate::AURA_LAPTOP_LED_MSG_LEN;
 
-#[typeshare]
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[cfg_attr(
     feature = "dbus",
@@ -79,7 +77,6 @@ impl From<i32> for LedBrightness {
     }
 }
 
-#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Deserialize, Serialize)]
 pub struct Colour {
@@ -140,7 +137,6 @@ impl From<Colour> for [u8; 3] {
     }
 }
 
-#[typeshare]
 #[cfg_attr(
     feature = "dbus",
     derive(Type, Value, OwnedValue),
@@ -200,7 +196,6 @@ impl From<Speed> for u8 {
 /// Used for Rainbow mode.
 ///
 /// Enum corresponds to the required integer value
-#[typeshare]
 #[cfg_attr(
     feature = "dbus",
     derive(Type, Value, OwnedValue),
@@ -248,7 +243,6 @@ impl From<Direction> for i32 {
 }
 
 /// Enum of modes that convert to the actual number required by a USB HID packet
-#[typeshare]
 #[cfg_attr(
     feature = "dbus",
     derive(Type, Value, OwnedValue),
@@ -360,7 +354,6 @@ impl From<AuraEffect> for AuraModeNum {
 }
 
 /// Base effects have no zoning, while multizone is 1-4
-#[typeshare]
 #[cfg_attr(
     feature = "dbus",
     derive(Type, Value, OwnedValue),
@@ -432,7 +425,6 @@ impl From<AuraZone> for i32 {
 /// ```rust
 /// // let bytes: [u8; LED_MSG_LEN] = mode.into();
 /// ```
-#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct AuraEffect {

@@ -12,7 +12,6 @@ use std::str::FromStr;
 
 use dmi_id::DMIID;
 use serde::{Deserialize, Serialize};
-use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::{OwnedValue, Type, Value};
 
@@ -29,7 +28,6 @@ pub const PROD_ID: u16 = 0x193b;
     derive(Type, Value, OwnedValue),
     zvariant(signature = "u")
 )]
-#[typeshare]
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 /// Base LED brightness of the display
 pub enum Brightness {
@@ -82,7 +80,6 @@ impl From<Brightness> for i32 {
     derive(Type, Value, OwnedValue),
     zvariant(signature = "s")
 )]
-#[typeshare]
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub enum AnimBooting {
     #[default]
@@ -123,7 +120,6 @@ impl From<AnimBooting> for i32 {
     derive(Type, Value, OwnedValue),
     zvariant(signature = "s")
 )]
-#[typeshare]
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub enum AnimAwake {
     #[default]
@@ -164,7 +160,6 @@ impl From<AnimAwake> for i32 {
     derive(Type, Value, OwnedValue),
     zvariant(signature = "s")
 )]
-#[typeshare]
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub enum AnimSleeping {
     #[default]
@@ -205,7 +200,6 @@ impl From<AnimSleeping> for i32 {
     derive(Type, Value, OwnedValue),
     zvariant(signature = "s")
 )]
-#[typeshare]
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub enum AnimShutdown {
     #[default]

@@ -3,7 +3,6 @@ use std::str::FromStr;
 
 use dmi_id::DMIID;
 use serde::{Deserialize, Serialize};
-use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
 use zbus::zvariant::{OwnedValue, Value};
@@ -66,7 +65,6 @@ impl FromStr for SlashType {
     }
 }
 
-#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub enum SlashMode {
@@ -158,9 +156,7 @@ impl SlashMode {
     }
 }
 
-#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[typeshare]
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub struct DeviceState {
     pub slash_enabled: bool,

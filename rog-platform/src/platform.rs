@@ -4,7 +4,6 @@ use std::str::FromStr;
 
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
-use typeshare::typeshare;
 use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::{PlatformError, Result};
@@ -148,7 +147,6 @@ impl Default for RogPlatform {
     }
 }
 
-#[typeshare]
 #[repr(u8)]
 #[derive(
     Serialize, Deserialize, Default, Type, Value, OwnedValue, Debug, PartialEq, Eq, Clone, Copy,
@@ -245,7 +243,6 @@ impl Display for GpuMode {
     }
 }
 
-#[typeshare]
 #[repr(u32)]
 #[derive(
     Deserialize,
@@ -352,7 +349,6 @@ impl Display for ThrottlePolicy {
 }
 
 /// CamelCase names of the properties. Intended for use with DBUS
-#[typeshare]
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Type, PartialEq, PartialOrd)]
 #[zvariant(signature = "s")]

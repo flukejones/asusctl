@@ -1080,10 +1080,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7704b5fdd17b18ae31c4c1da5a2e0305a2bf17b5249300a9ee9ed7b72114c636"
 
 [[package]]
-name = "cpuctl"
-version = "6.1.0-rc1"
-
-[[package]]
 name = "cpufeatures"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4133,7 +4129,6 @@ dependencies = [
  "pix",
  "png_pong",
  "serde",
- "typeshare",
  "zbus 5.2.0",
 ]
 
@@ -4145,7 +4140,6 @@ dependencies = [
  "log",
  "ron",
  "serde",
- "typeshare",
  "zbus 5.2.0",
 ]
 
@@ -4172,7 +4166,6 @@ dependencies = [
  "log",
  "rusb",
  "serde",
- "typeshare",
  "udev 0.8.0",
  "zbus 5.2.0",
 ]
@@ -4184,7 +4177,6 @@ dependencies = [
  "log",
  "rog_platform",
  "serde",
- "typeshare",
  "udev 0.8.0",
  "zbus 5.2.0",
 ]
@@ -4196,7 +4188,6 @@ dependencies = [
  "ron",
  "serde",
  "sg",
- "typeshare",
  "zbus 5.2.0",
 ]
 
@@ -4216,7 +4207,6 @@ version = "6.1.0-rc1"
 dependencies = [
  "dmi_id",
  "serde",
- "typeshare",
  "zbus 5.2.0",
 ]
 
@@ -5319,28 +5309,6 @@ name = "typenum"
 version = "1.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42ff0bf0c66b8238c6f3b578df37d0b7848e55df8577b3f74f92a69acceeb825"
-
-[[package]]
-name = "typeshare"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19be0f411120091e76e13e5a0186d8e2bcc3e7e244afdb70152197f1a8486ceb"
-dependencies = [
- "chrono",
- "serde",
- "serde_json",
- "typeshare-annotation",
-]
-
-[[package]]
-name = "typeshare-annotation"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a615d6c2764852a2e88a4f16e9ce1ea49bb776b5872956309e170d63a042a34f"
-dependencies = [
- "quote",
- "syn 2.0.93",
-]
 
 [[package]]
 name = "udev"

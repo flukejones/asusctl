@@ -3,7 +3,6 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
-use typeshare::typeshare;
 use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::PlatformError;
@@ -252,7 +251,6 @@ define_attribute_getters!(
 );
 
 /// CamelCase names of the properties. Intended for use with DBUS
-#[typeshare]
 #[repr(u8)]
 #[derive(Clone, Copy, Serialize, Deserialize, Type, Value, OwnedValue, PartialEq, PartialOrd)]
 #[zvariant(signature = "s")]

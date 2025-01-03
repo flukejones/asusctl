@@ -6,7 +6,6 @@ use std::time::{Duration, Instant};
 use dmi_id::DMIID;
 use log::info;
 use serde::{Deserialize, Serialize};
-use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::{OwnedValue, Type, Value};
 
@@ -29,9 +28,7 @@ pub const USB_PREFIX2: [u8; 7] = [0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x02];
 /// Third packet is for GA402 matrix
 pub const USB_PREFIX3: [u8; 7] = [0x5e, 0xc0, 0x02, 0xe7, 0x04, 0x73, 0x02];
 
-#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
-#[typeshare]
 #[derive(Default, Deserialize, PartialEq, Eq, Clone, Copy, Serialize, Debug)]
 pub struct Animations {
     pub boot: AnimBooting,
@@ -41,9 +38,7 @@ pub struct Animations {
 }
 
 // TODO: move this out
-#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type))]
-#[typeshare]
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub struct DeviceState {
     pub display_enabled: bool,
@@ -56,7 +51,6 @@ pub struct DeviceState {
     pub brightness_on_battery: Brightness,
 }
 
-#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Deserialize, Serialize, Default)]
 pub enum AnimeType {
