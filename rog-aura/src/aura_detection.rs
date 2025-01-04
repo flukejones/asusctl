@@ -214,9 +214,7 @@ mod tests {
         tmp_sort.0.sort_by(|a, b| a.product_id.cmp(&b.product_id));
         tmp_sort.0.sort_by(|a, b| a.device_name.cmp(&b.device_name));
         for model in tmp_sort.0.iter_mut() {
-            model
-                .basic_modes
-                .sort_by(|a, b| (*a as u8).cmp(&(*b as u8)));
+            model.basic_modes.sort_by_key(|a| *a as u8);
         }
         if tmp != tmp_sort {
             let sorted =

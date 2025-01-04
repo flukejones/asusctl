@@ -92,7 +92,7 @@ where
     }
     if !paths.is_empty() {
         let mut ctrl = Vec::new();
-        paths.sort_by(|a, b| a.cmp(&b));
+        paths.sort_by(|a, b| a.cmp(b));
         for path in paths {
             ctrl.push(
                 T::builder(&conn)
@@ -132,7 +132,7 @@ where
     }
     if !paths.is_empty() {
         let mut ctrl = Vec::new();
-        paths.sort_by(|a, b| a.cmp(&b));
+        paths.sort_by(|a, b| a.cmp(b));
         for path in paths {
             ctrl.push(
                 T::builder(&conn)

@@ -151,7 +151,7 @@ where
     }
     if !paths.is_empty() {
         let mut ctrl = Vec::new();
-        paths.sort_by(|a, b| a.cmp(&b));
+        paths.sort_by(|a, b| a.cmp(b));
         for path in paths {
             ctrl.push(
                 T::builder(&conn)
@@ -616,8 +616,7 @@ fn handle_scsi(cmd: &ScsiCommand) -> Result<(), Box<dyn std::error::Error>> {
         let mut mode = scsi.led_mode_data()?;
         let mut do_update = false;
         if !cmd.colours.is_empty() {
-            let mut count = 0;
-            for c in &cmd.colours {
+            for (count, c) in cmd.colours.iter().enumerate() {
                 if count == 0 {
                     mode.colour1 = *c;
                 }
@@ -630,7 +629,6 @@ fn handle_scsi(cmd: &ScsiCommand) -> Result<(), Box<dyn std::error::Error>> {
                 if count == 3 {
                     mode.colour4 = *c;
                 }
-                count += 1;
             }
             do_update = true;
         }
@@ -1126,7 +1124,7 @@ fn print_firmware_attr(attr: &AsusArmouryProxyBlocking) -> Result<(), Box<dyn st
     } else {
         println!();
     }
-    return Ok(());
+    Ok(())
 }
 
 fn handle_armoury_command(cmd: &ArmouryCommand) -> Result<(), Box<dyn std::error::Error>> {

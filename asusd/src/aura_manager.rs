@@ -213,7 +213,7 @@ impl DeviceManager {
     ) -> Option<AsusDevice> {
         // "ID_MODEL_ID" "1932"
         // "ID_VENDOR_ID" "0b05"
-        if dev_prop_matches(&device, "ID_VENDOR_ID", "0b05") {
+        if dev_prop_matches(device, "ID_VENDOR_ID", "0b05") {
             if let Some(dev_node) = device.devnode() {
                 let prod_id = device
                     .property_value("ID_MODEL_ID")
@@ -426,14 +426,11 @@ impl DeviceManager {
                                     info!("removing: {path:?}");
                                     let dev = devices.lock().await.remove(index);
                                     let path = path.clone();
-                                    match dev.device {
-                                        DeviceHandle::Scsi(_) => {
-                                            conn_copy
-                                                .object_server()
-                                                .remove::<ScsiZbus, _>(&path)
-                                                .await?;
-                                        }
-                                        _ => {}
+                                    if let DeviceHandle::Scsi(_) = dev.device {
+                                        conn_copy
+                                            .object_server()
+                                            .remove::<ScsiZbus, _>(&path)
+                                            .await?;
                                     }
                                 }
                             } else if action == "add" {

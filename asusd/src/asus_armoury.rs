@@ -125,10 +125,8 @@ impl AsusArmouryAttribute {
 
     #[zbus(property)]
     async fn current_value(&self) -> fdo::Result<i32> {
-        if let Ok(v) = self.0.current_value() {
-            if let AttrValue::Integer(i) = v {
-                return Ok(i);
-            }
+        if let Ok(AttrValue::Integer(i)) = self.0.current_value() {
+            return Ok(i);
         }
         Err(fdo::Error::Failed(
             "Could not read current value".to_string(),
