@@ -10,7 +10,7 @@ use crate::{attr_u8, has_attr, set_attr_u8_array, to_device};
 /// for Aura keyboards
 #[derive(Debug, Default, PartialEq, Eq, PartialOrd, Clone)]
 pub struct KeyboardBacklight {
-    path: PathBuf,
+    path: PathBuf
 }
 
 impl KeyboardBacklight {
@@ -51,12 +51,12 @@ impl KeyboardBacklight {
             if sys.contains("kbd_backlight") || sys.contains("ally:rgb:gamepad") {
                 info!("Found keyboard LED controls at {:?}", device.sysname());
                 return Ok(Self {
-                    path: device.syspath().to_owned(),
+                    path: device.syspath().to_owned()
                 });
             }
         }
         Err(PlatformError::MissingFunction(
-            "KeyboardLed:new(), asus::kbd_backlight not found".into(),
+            "KeyboardLed:new(), asus::kbd_backlight not found".into()
         ))
     }
 }

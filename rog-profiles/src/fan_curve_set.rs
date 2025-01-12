@@ -36,7 +36,7 @@ pub struct CurveData {
     pub fan: FanCurvePU,
     pub pwm: [u8; 8],
     pub temp: [u8; 8],
-    pub enabled: bool,
+    pub enabled: bool
 }
 
 impl From<&CurveData> for String {
@@ -99,9 +99,7 @@ impl std::str::FromStr for CurveData {
                 if select == 0 {
                     if temp_prev > r {
                         return Err(ProfileError::ParseFanCurvePrevHigher(
-                            "temperature",
-                            temp_prev,
-                            r,
+                            "temperature", temp_prev, r
                         ));
                     }
                     temp_prev = r;
@@ -116,9 +114,7 @@ impl std::str::FromStr for CurveData {
                     }
                     if pwm_prev > p {
                         return Err(ProfileError::ParseFanCurvePrevHigher(
-                            "percentage",
-                            pwm_prev,
-                            p,
+                            "percentage", pwm_prev, p
                         ));
                     }
                     pwm_prev = p;
@@ -130,7 +126,7 @@ impl std::str::FromStr for CurveData {
             fan: FanCurvePU::CPU,
             pwm,
             temp,
-            enabled: false,
+            enabled: false
         })
     }
 }

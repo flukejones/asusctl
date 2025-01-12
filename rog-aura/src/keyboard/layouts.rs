@@ -26,12 +26,12 @@ pub enum KeyShape {
         pad_left: f32,
         pad_right: f32,
         pad_top: f32,
-        pad_bottom: f32,
+        pad_bottom: f32
     },
     Blank {
         width: f32,
-        height: f32,
-    },
+        height: f32
+    }
 }
 
 impl KeyShape {
@@ -41,7 +41,7 @@ impl KeyShape {
         pad_left: f32,
         pad_right: f32,
         pad_top: f32,
-        pad_bottom: f32,
+        pad_bottom: f32
     ) -> Self {
         Self::Led {
             width,
@@ -49,7 +49,7 @@ impl KeyShape {
             pad_left,
             pad_right,
             pad_top,
-            pad_bottom,
+            pad_bottom
         }
     }
 
@@ -66,7 +66,7 @@ impl KeyShape {
                 pad_left,
                 pad_right,
                 pad_top,
-                pad_bottom,
+                pad_bottom
             } => {
                 *width *= scale;
                 *height *= scale;
@@ -97,7 +97,7 @@ pub struct KeyRow {
     row: Vec<(LedCode, String)>,
     /// The final data structure merged key_shapes and rows
     #[serde(skip)]
-    built_row: Vec<(LedCode, KeyShape)>,
+    built_row: Vec<(LedCode, KeyShape)>
 }
 
 impl KeyRow {
@@ -106,7 +106,7 @@ impl KeyRow {
             pad_left,
             pad_top,
             row,
-            built_row: Default::default(),
+            built_row: Default::default()
         }
     }
 
@@ -132,7 +132,7 @@ impl KeyRow {
                     pad_bottom,
                     ..
                 } => height + pad_top + pad_bottom,
-                KeyShape::Blank { height, .. } => *height,
+                KeyShape::Blank { height, .. } => *height
             };
 
             if h < height {
@@ -156,7 +156,7 @@ impl KeyRow {
                     pad_right,
                     ..
                 } => w += width + pad_left + pad_right,
-                KeyShape::Blank { width, .. } => w += width,
+                KeyShape::Blank { width, .. } => w += width
             }
         }
         w
@@ -185,7 +185,7 @@ pub struct KeyLayout {
     /// Should be copied from the `LaptopLedData` as laptops may have the same
     /// layout, but different EC features.
     #[serde(skip)]
-    advanced_type: AdvancedAuraType,
+    advanced_type: AdvancedAuraType
 }
 
 impl KeyLayout {
@@ -195,7 +195,7 @@ impl KeyLayout {
         if buf.is_empty() {
             Err(Error::IoPath(
                 path.to_string_lossy().to_string(),
-                std::io::ErrorKind::InvalidData.into(),
+                std::io::ErrorKind::InvalidData.into()
             ))
         } else {
             let mut data = ron::from_str::<Self>(&buf)?;
@@ -332,121 +332,97 @@ impl KeyLayout {
             advanced_type: AdvancedAuraType::None,
             key_shapes: HashMap::from([(
                 "regular".to_owned(),
-                KeyShape::new_led(1.0, 1.0, 0.1, 0.1, 0.1, 0.1),
+                KeyShape::new_led(1.0, 1.0, 0.1, 0.1, 0.1, 0.1)
             )]),
             key_rows: vec![
-                KeyRow::new(
-                    0.1,
-                    0.1,
-                    vec![
-                        (LedCode::Esc, "regular".to_owned()),
-                        (LedCode::F1, "regular".to_owned()),
-                        (LedCode::F2, "regular".to_owned()),
-                        (LedCode::F3, "regular".to_owned()),
-                        (LedCode::F4, "regular".to_owned()),
-                        // not sure which key to put here
-                        (LedCode::F5, "regular".to_owned()),
-                        (LedCode::F6, "regular".to_owned()),
-                        (LedCode::F7, "regular".to_owned()),
-                        (LedCode::F8, "regular".to_owned()),
-                        (LedCode::F9, "regular".to_owned()),
-                        (LedCode::F10, "regular".to_owned()),
-                        (LedCode::F11, "regular".to_owned()),
-                        (LedCode::F12, "regular".to_owned()),
-                    ],
-                ),
-                KeyRow::new(
-                    0.1,
-                    0.1,
-                    vec![
-                        (LedCode::Tilde, "regular".to_owned()),
-                        (LedCode::N1, "regular".to_owned()),
-                        (LedCode::N2, "regular".to_owned()),
-                        (LedCode::N3, "regular".to_owned()),
-                        (LedCode::N4, "regular".to_owned()),
-                        (LedCode::N5, "regular".to_owned()),
-                        (LedCode::N6, "regular".to_owned()),
-                        (LedCode::N7, "regular".to_owned()),
-                        (LedCode::N8, "regular".to_owned()),
-                        (LedCode::N9, "regular".to_owned()),
-                        (LedCode::N0, "regular".to_owned()),
-                        (LedCode::Hyphen, "regular".to_owned()),
-                        (LedCode::Equals, "regular".to_owned()),
-                        (LedCode::Backspace, "regular".to_owned()),
-                    ],
-                ),
-                KeyRow::new(
-                    0.1,
-                    0.1,
-                    vec![
-                        (LedCode::Tab, "regular".to_owned()),
-                        (LedCode::Q, "regular".to_owned()),
-                        (LedCode::W, "regular".to_owned()),
-                        (LedCode::E, "regular".to_owned()),
-                        (LedCode::R, "regular".to_owned()),
-                        (LedCode::T, "regular".to_owned()),
-                        (LedCode::Y, "regular".to_owned()),
-                        (LedCode::U, "regular".to_owned()),
-                        (LedCode::I, "regular".to_owned()),
-                        (LedCode::O, "regular".to_owned()),
-                        (LedCode::P, "regular".to_owned()),
-                        (LedCode::LBracket, "regular".to_owned()),
-                        (LedCode::RBracket, "regular".to_owned()),
-                        (LedCode::BackSlash, "regular".to_owned()),
-                    ],
-                ),
-                KeyRow::new(
-                    0.1,
-                    0.1,
-                    vec![
-                        (LedCode::Caps, "regular".to_owned()),
-                        (LedCode::A, "regular".to_owned()),
-                        (LedCode::S, "regular".to_owned()),
-                        (LedCode::D, "regular".to_owned()),
-                        (LedCode::F, "regular".to_owned()),
-                        (LedCode::G, "regular".to_owned()),
-                        (LedCode::H, "regular".to_owned()),
-                        (LedCode::J, "regular".to_owned()),
-                        (LedCode::K, "regular".to_owned()),
-                        (LedCode::L, "regular".to_owned()),
-                        (LedCode::SemiColon, "regular".to_owned()),
-                        (LedCode::Quote, "regular".to_owned()),
-                        (LedCode::Return, "regular".to_owned()),
-                    ],
-                ),
-                KeyRow::new(
-                    0.1,
-                    0.1,
-                    vec![
-                        (LedCode::LShift, "regular".to_owned()),
-                        (LedCode::Z, "regular".to_owned()),
-                        (LedCode::X, "regular".to_owned()),
-                        (LedCode::C, "regular".to_owned()),
-                        (LedCode::V, "regular".to_owned()),
-                        (LedCode::B, "regular".to_owned()),
-                        (LedCode::N, "regular".to_owned()),
-                        (LedCode::M, "regular".to_owned()),
-                        (LedCode::Comma, "regular".to_owned()),
-                        (LedCode::Period, "regular".to_owned()),
-                        (LedCode::FwdSlash, "regular".to_owned()),
-                        (LedCode::Rshift, "regular".to_owned()),
-                    ],
-                ),
-                KeyRow::new(
-                    0.1,
-                    0.1,
-                    vec![
-                        (LedCode::LCtrl, "regular".to_owned()),
-                        (LedCode::LFn, "regular".to_owned()),
-                        (LedCode::Meta, "regular".to_owned()),
-                        (LedCode::LAlt, "regular".to_owned()),
-                        (LedCode::Spacebar, "regular".to_owned()),
-                        (LedCode::RAlt, "regular".to_owned()),
-                        (LedCode::PrtSc, "regular".to_owned()),
-                        (LedCode::RCtrl, "regular".to_owned()),
-                    ],
-                ),
-            ],
+                KeyRow::new(0.1, 0.1, vec![
+                    (LedCode::Esc, "regular".to_owned()),
+                    (LedCode::F1, "regular".to_owned()),
+                    (LedCode::F2, "regular".to_owned()),
+                    (LedCode::F3, "regular".to_owned()),
+                    (LedCode::F4, "regular".to_owned()),
+                    // not sure which key to put here
+                    (LedCode::F5, "regular".to_owned()),
+                    (LedCode::F6, "regular".to_owned()),
+                    (LedCode::F7, "regular".to_owned()),
+                    (LedCode::F8, "regular".to_owned()),
+                    (LedCode::F9, "regular".to_owned()),
+                    (LedCode::F10, "regular".to_owned()),
+                    (LedCode::F11, "regular".to_owned()),
+                    (LedCode::F12, "regular".to_owned()),
+                ]),
+                KeyRow::new(0.1, 0.1, vec![
+                    (LedCode::Tilde, "regular".to_owned()),
+                    (LedCode::N1, "regular".to_owned()),
+                    (LedCode::N2, "regular".to_owned()),
+                    (LedCode::N3, "regular".to_owned()),
+                    (LedCode::N4, "regular".to_owned()),
+                    (LedCode::N5, "regular".to_owned()),
+                    (LedCode::N6, "regular".to_owned()),
+                    (LedCode::N7, "regular".to_owned()),
+                    (LedCode::N8, "regular".to_owned()),
+                    (LedCode::N9, "regular".to_owned()),
+                    (LedCode::N0, "regular".to_owned()),
+                    (LedCode::Hyphen, "regular".to_owned()),
+                    (LedCode::Equals, "regular".to_owned()),
+                    (LedCode::Backspace, "regular".to_owned()),
+                ]),
+                KeyRow::new(0.1, 0.1, vec![
+                    (LedCode::Tab, "regular".to_owned()),
+                    (LedCode::Q, "regular".to_owned()),
+                    (LedCode::W, "regular".to_owned()),
+                    (LedCode::E, "regular".to_owned()),
+                    (LedCode::R, "regular".to_owned()),
+                    (LedCode::T, "regular".to_owned()),
+                    (LedCode::Y, "regular".to_owned()),
+                    (LedCode::U, "regular".to_owned()),
+                    (LedCode::I, "regular".to_owned()),
+                    (LedCode::O, "regular".to_owned()),
+                    (LedCode::P, "regular".to_owned()),
+                    (LedCode::LBracket, "regular".to_owned()),
+                    (LedCode::RBracket, "regular".to_owned()),
+                    (LedCode::BackSlash, "regular".to_owned()),
+                ]),
+                KeyRow::new(0.1, 0.1, vec![
+                    (LedCode::Caps, "regular".to_owned()),
+                    (LedCode::A, "regular".to_owned()),
+                    (LedCode::S, "regular".to_owned()),
+                    (LedCode::D, "regular".to_owned()),
+                    (LedCode::F, "regular".to_owned()),
+                    (LedCode::G, "regular".to_owned()),
+                    (LedCode::H, "regular".to_owned()),
+                    (LedCode::J, "regular".to_owned()),
+                    (LedCode::K, "regular".to_owned()),
+                    (LedCode::L, "regular".to_owned()),
+                    (LedCode::SemiColon, "regular".to_owned()),
+                    (LedCode::Quote, "regular".to_owned()),
+                    (LedCode::Return, "regular".to_owned()),
+                ]),
+                KeyRow::new(0.1, 0.1, vec![
+                    (LedCode::LShift, "regular".to_owned()),
+                    (LedCode::Z, "regular".to_owned()),
+                    (LedCode::X, "regular".to_owned()),
+                    (LedCode::C, "regular".to_owned()),
+                    (LedCode::V, "regular".to_owned()),
+                    (LedCode::B, "regular".to_owned()),
+                    (LedCode::N, "regular".to_owned()),
+                    (LedCode::M, "regular".to_owned()),
+                    (LedCode::Comma, "regular".to_owned()),
+                    (LedCode::Period, "regular".to_owned()),
+                    (LedCode::FwdSlash, "regular".to_owned()),
+                    (LedCode::Rshift, "regular".to_owned()),
+                ]),
+                KeyRow::new(0.1, 0.1, vec![
+                    (LedCode::LCtrl, "regular".to_owned()),
+                    (LedCode::LFn, "regular".to_owned()),
+                    (LedCode::Meta, "regular".to_owned()),
+                    (LedCode::LAlt, "regular".to_owned()),
+                    (LedCode::Spacebar, "regular".to_owned()),
+                    (LedCode::RAlt, "regular".to_owned()),
+                    (LedCode::PrtSc, "regular".to_owned()),
+                    (LedCode::RCtrl, "regular".to_owned()),
+                ]),
+            ]
         }
     }
 }

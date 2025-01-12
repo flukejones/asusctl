@@ -21,14 +21,11 @@ fn main() {
     let brightness = args[2].parse::<f32>().unwrap();
     let anime_type = get_anime_type();
     let mut seq = Sequences::new(anime_type);
-    seq.insert(
-        0,
-        &ActionLoader::AsusAnimation {
-            file: path.into(),
-            time: rog_anime::AnimTime::Infinite,
-            brightness,
-        },
-    )
+    seq.insert(0, &ActionLoader::AsusAnimation {
+        file: path.into(),
+        time: rog_anime::AnimTime::Infinite,
+        brightness
+    })
     .unwrap();
 
     loop {

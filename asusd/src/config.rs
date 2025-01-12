@@ -60,7 +60,7 @@ pub struct Config {
     pub nv_temp_target: Option<u8>,
     /// Temporary state for AC/Batt
     #[serde(skip)]
-    pub last_power_plugged: u8,
+    pub last_power_plugged: u8
 }
 
 impl Default for Config {
@@ -89,7 +89,7 @@ impl Default for Config {
             ppt_platform_sppt: Default::default(),
             nv_dynamic_boost: Default::default(),
             nv_temp_target: Default::default(),
-            last_power_plugged: Default::default(),
+            last_power_plugged: Default::default()
         }
     }
 }
@@ -137,7 +137,7 @@ pub struct Config507 {
     pub ppt_apu_sppt: Option<u8>,
     pub ppt_platform_sppt: Option<u8>,
     pub nv_dynamic_boost: Option<u8>,
-    pub nv_temp_target: Option<u8>,
+    pub nv_temp_target: Option<u8>
 }
 
 impl From<Config507> for Config {
@@ -167,7 +167,7 @@ impl From<Config507> for Config {
             ppt_platform_sppt: c.ppt_platform_sppt,
             nv_dynamic_boost: c.nv_dynamic_boost,
             nv_temp_target: c.nv_temp_target,
-            last_power_plugged: 0,
+            last_power_plugged: 0
         }
     }
 }

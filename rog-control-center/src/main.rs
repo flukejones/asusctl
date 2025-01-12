@@ -17,7 +17,7 @@ use rog_control_center::slint::ComponentHandle;
 use rog_control_center::tray::init_tray;
 use rog_control_center::ui::setup_window;
 use rog_control_center::zbus_proxies::{
-    AppState, ROGCCZbus, ROGCCZbusProxyBlocking, ZBUS_IFACE, ZBUS_PATH,
+    AppState, ROGCCZbus, ROGCCZbusProxyBlocking, ZBUS_IFACE, ZBUS_PATH
 };
 use rog_control_center::{print_versions, MainWindow};
 use tokio::runtime::Runtime;

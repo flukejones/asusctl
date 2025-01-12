@@ -55,7 +55,7 @@ pub const fn report_id(slash_type: SlashType) -> u8 {
         SlashType::GA403 => REPORT_ID_193B,
         SlashType::GA605 => REPORT_ID_19B6,
         SlashType::GU605 => REPORT_ID_193B,
-        SlashType::Unsupported => REPORT_ID_19B6,
+        SlashType::Unsupported => REPORT_ID_19B6
     }
 }
 
@@ -81,7 +81,9 @@ pub fn pkts_for_init(slash_type: SlashType) -> [SlashUsbPacket; 2] {
     pkt2[4] = 0x08;
     pkt2[5] = 0xab;
 
-    [pkt1, pkt2]
+    [
+        pkt1, pkt2
+    ]
 }
 
 #[inline]
@@ -126,40 +128,68 @@ pub const fn pkt_set_mode(slash_type: SlashType, mode: SlashMode) -> [SlashUsbPa
     pkt2[15] = 0x06;
     pkt2[16] = 0x13;
 
-    [pkt1, pkt2]
+    [
+        pkt1, pkt2
+    ]
 }
 
-/// DEVICE SETTINGS
-/// Interval:
-/// - 1 = 0x5d, 0xd3, 0x3, 0x1, 0x8, 0xab, 0xff, 0x1, 0x1, 0x6, 0x19, 0xff, 0x1
-/// - 5 = 0x5d, 0xd3, 0x3, 0x1, 0x8, 0xab, 0xff, 0x1, 0x1, 0x6, 0x19, 0xff, 0x5
-/// Brightness: 100
-/// - 100 = 0x5d, 0xd3, 0x3, 0x1, 0x8, 0xab, 0xff, 0x1, 0x1, 0x6, 0xff, 0xff
-/// - 000 = 0x5d, 0xd3, 0x3, 0x1, 0x8, 0xab, 0xff, 0x1, 0x1, 0x6, 0x00, 0xff
-/// - off = 0x5d, 0xd3, 0x3, 0x1, 0x8, 0xab, 0xff, 0x1, 0x0, 0x6, 0xff, 0xff
-#[inline]
-pub const fn pkt_set_options(
+pub const fn get_options_packet(
     slash_type: SlashType,
     enabled: bool,
     brightness: u8,
-    interval: u8,
-) -> SlashUsbPacket {
-    let status_byte = if enabled { 0x01 } else { 0x00 };
+    interval: u8
+) -> [u8; 13] {
+    let typ = report_id(slash_type);
+    let status = enabled as u8;
+    [
+        typ, 0xd3, 0x03, 0x01, 0x08, 0xab, 0xff, 0x01, status, 0x06, brightness, 0xff, interval
+    ]
+}
 
-    let mut pkt = [0; PACKET_SIZE];
-    pkt[0] = report_id(slash_type);
-    pkt[1] = 0xd3;
-    pkt[2] = 0x03;
-    pkt[3] = 0x01;
-    pkt[4] = 0x08;
-    pkt[5] = 0xab; // Setting byte 1
-    pkt[6] = 0xff; // Setting byte 2
-    pkt[7] = 0x01;
-    pkt[8] = status_byte; // Setting enable/disable
-    pkt[9] = 0x06;
-    pkt[10] = brightness;
-    pkt[11] = 0xff;
-    pkt[12] = interval;
+pub const fn get_boot_packet(slash_type: SlashType, enabled: bool) -> [u8; 12] {
+    let typ = report_id(slash_type);
+    let status = enabled as u8;
+    [
+        typ, 0xd3, 0x03, 0x01, 0x08, 0xa0, 0x04, 0xff, status, 0x01, 0xff, 0x00
+    ]
+}
 
-    pkt
+pub const fn get_sleep_packet(slash_type: SlashType, enabled: bool) -> [u8; 12] {
+    let typ = report_id(slash_type);
+    let status = (!enabled) as u8;
+    [
+        typ, 0xd3, 0x03, 0x01, 0x08, 0xa1, 0x00, 0xff, status, 0x02, 0xff, 0xff
+    ]
+}
+
+pub const fn get_low_battery_packet(slash_type: SlashType, enabled: bool) -> [u8; 12] {
+    let typ = report_id(slash_type);
+    let status = enabled as u8;
+    [
+        typ, 0xd3, 0x03, 0x01, 0x08, 0xa2, 0x01, 0xff, status, 0x02, 0xff, 0xff
+    ]
+}
+
+pub const fn get_shutdown_packet(slash_type: SlashType, enabled: bool) -> [u8; 12] {
+    let typ = report_id(slash_type);
+    let status = enabled as u8;
+    [
+        typ, 0xd3, 0x03, 0x01, 0x08, 0xa4, 0x05, 0xff, status, 0x01, 0xff, 0x00
+    ]
+}
+
+pub const fn get_battery_saver_packet(slash_type: SlashType, enabled: bool) -> [u8; 6] {
+    let typ = report_id(slash_type);
+    let status = if enabled { 0x00 } else { 0x80 };
+    [
+        typ, 0xd8, 0x01, 0x00, 0x01, status
+    ]
+}
+
+pub const fn get_lid_closed_packet(slash_type: SlashType, enabled: bool) -> [u8; 7] {
+    let typ = report_id(slash_type);
+    let status = if enabled { 0x00 } else { 0x80 };
+    [
+        typ, 0xd8, 0x00, 0x00, 0x02, 0xa5, status
+    ]
 }

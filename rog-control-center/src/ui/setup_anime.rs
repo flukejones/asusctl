@@ -52,9 +52,9 @@ pub fn setup_anime_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                                         boot: boot.into(),
                                         awake: awake.into(),
                                         sleep: sleep.into(),
-                                        shutdown: shutdown.into(),
+                                        shutdown: shutdown.into()
                                     })
-                                    .await,
+                                    .await
                             );
                         });
                     });

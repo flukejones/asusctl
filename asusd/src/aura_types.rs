@@ -31,7 +31,7 @@ pub enum _DeviceHandle {
     LedClass(KeyboardBacklight),
     /// TODO
     MulticolourLed,
-    None,
+    None
 }
 
 #[derive(Clone)]
@@ -47,14 +47,14 @@ pub enum DeviceHandle {
     TufLedClass(Arc<Mutex<HidRaw>>),
     /// TODO
     MulticolourLed,
-    None,
+    None
 }
 
 impl DeviceHandle {
     /// Try Slash HID. If one exists it is initialsed and returned.
     pub async fn new_slash_hid(
         device: Arc<Mutex<HidRaw>>,
-        prod_id: &str,
+        prod_id: &str
     ) -> Result<Self, RogError> {
         debug!("Testing for HIDRAW Slash");
         let slash_type = SlashType::from_dmi();
@@ -93,7 +93,7 @@ impl DeviceHandle {
             let slash = Slash::new(
                 None,
                 Some(Arc::new(Mutex::new(usb))),
-                Arc::new(Mutex::new(config)),
+                Arc::new(Mutex::new(config))
             );
             slash.do_initialization().await?;
             Ok(Self::Slash(slash))
@@ -105,7 +105,7 @@ impl DeviceHandle {
     /// Try AniMe Matrix HID. If one exists it is initialsed and returned.
     pub async fn maybe_anime_hid(
         device: Arc<Mutex<HidRaw>>,
-        prod_id: &str,
+        prod_id: &str
     ) -> Result<Self, RogError> {
         debug!("Testing for HIDRAW AniMe");
         let anime_type = AnimeType::from_dmi();
@@ -139,13 +139,13 @@ impl DeviceHandle {
             let mut anime = AniMe::new(
                 None,
                 Some(Arc::new(Mutex::new(usb))),
-                Arc::new(Mutex::new(config)),
+                Arc::new(Mutex::new(config))
             );
             anime.do_initialization().await?;
             Ok(Self::AniMe(anime))
         } else {
             Err(RogError::NotFound(
-                "No AnimeMatrix device found".to_string(),
+                "No AnimeMatrix device found".to_string()
             ))
         }
     }
@@ -169,7 +169,7 @@ impl DeviceHandle {
 
     pub async fn maybe_laptop_aura(
         device: Option<Arc<Mutex<HidRaw>>>,
-        prod_id: &str,
+        prod_id: &str
     ) -> Result<Self, RogError> {
         debug!("Testing for laptop aura");
         let aura_type = AuraDeviceType::from(prod_id);
@@ -196,7 +196,7 @@ impl DeviceHandle {
         let aura = Aura {
             hid: device,
             backlight,
-            config: Arc::new(Mutex::new(config)),
+            config: Arc::new(Mutex::new(config))
         };
         aura.do_initialization().await?;
         Ok(Self::Aura(aura))

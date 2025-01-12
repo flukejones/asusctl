@@ -32,7 +32,7 @@ trait Daemon {
         file: &str,
         time: u32,
         count: u32,
-        brightness: f64,
+        brightness: f64
     ) -> zbus::Result<String>;
 
     /// InsertImage method
@@ -43,7 +43,7 @@ trait Daemon {
         scale: f64,
         angle: f64,
         xy: &(f64, f64),
-        brightness: f64,
+        brightness: f64
     ) -> zbus::Result<String>;
 
     /// InsertImageGif method
@@ -56,7 +56,7 @@ trait Daemon {
         xy: &(f64, f64),
         time: u32,
         count: u32,
-        brightness: f64,
+        brightness: f64
     ) -> zbus::Result<String>;
 
     /// InsertPause method

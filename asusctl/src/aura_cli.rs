@@ -17,7 +17,7 @@ pub struct LedPowerCommand1 {
     #[options(meta = "", help = "Control boot animations <true/false>")]
     pub boot: Option<bool>,
     #[options(meta = "", help = "Control suspend animations <true/false>")]
-    pub sleep: Option<bool>,
+    pub sleep: Option<bool>
 }
 
 #[derive(Options, Debug)]
@@ -25,7 +25,7 @@ pub struct LedPowerCommand2 {
     #[options(help = "print help message")]
     pub help: bool,
     #[options(command)]
-    pub command: Option<SetAuraZoneEnabled>,
+    pub command: Option<SetAuraZoneEnabled>
 }
 
 #[derive(Options, Debug)]
@@ -42,7 +42,7 @@ pub enum SetAuraZoneEnabled {
     #[options(help = "")]
     RearGlow(AuraPowerStates),
     #[options(help = "")]
-    Ally(AuraPowerStates),
+    Ally(AuraPowerStates)
 }
 
 #[derive(Debug, Clone, Options)]
@@ -56,12 +56,12 @@ pub struct AuraPowerStates {
     #[options(help = "defaults to false if option unused")]
     pub sleep: bool,
     #[options(help = "defaults to false if option unused")]
-    pub shutdown: bool,
+    pub shutdown: bool
 }
 
 #[derive(Options)]
 pub struct LedBrightness {
-    level: Option<u8>,
+    level: Option<u8>
 }
 impl LedBrightness {
     pub fn new(level: Option<u8>) -> Self {
@@ -96,7 +96,7 @@ impl ToString for LedBrightness {
             Some(0x00) => "low",
             Some(0x01) => "med",
             Some(0x02) => "high",
-            _ => "unknown",
+            _ => "unknown"
         };
         s.to_owned()
     }
@@ -113,7 +113,7 @@ pub struct SingleSpeed {
         meta = "",
         help = "set the zone for this effect e.g, 0, 1, one, logo, lightbar-left"
     )]
-    pub zone: AuraZone,
+    pub zone: AuraZone
 }
 
 #[derive(Debug, Clone, Options, Default)]
@@ -129,7 +129,7 @@ pub struct SingleSpeedDirection {
         meta = "",
         help = "set the zone for this effect e.g, 0, 1, one, logo, lightbar-left"
     )]
-    pub zone: AuraZone,
+    pub zone: AuraZone
 }
 
 #[derive(Debug, Clone, Default, Options)]
@@ -143,7 +143,7 @@ pub struct SingleColour {
         meta = "",
         help = "set the zone for this effect e.g, 0, 1, one, logo, lightbar-left"
     )]
-    pub zone: AuraZone,
+    pub zone: AuraZone
 }
 
 #[derive(Debug, Clone, Default, Options)]
@@ -159,7 +159,7 @@ pub struct SingleColourSpeed {
         meta = "",
         help = "set the zone for this effect e.g, 0, 1, one, logo, lightbar-left"
     )]
-    pub zone: AuraZone,
+    pub zone: AuraZone
 }
 
 #[derive(Debug, Clone, Options, Default)]
@@ -177,7 +177,7 @@ pub struct TwoColourSpeed {
         meta = "",
         help = "set the zone for this effect e.g, 0, 1, one, logo, lightbar-left"
     )]
-    pub zone: AuraZone,
+    pub zone: AuraZone
 }
 
 #[derive(Debug, Clone, Default, Options)]
@@ -191,7 +191,7 @@ pub struct MultiZone {
     #[options(short = "c", meta = "", help = "set the RGB value e.g, ff00ff")]
     pub colour3: Colour,
     #[options(short = "d", meta = "", help = "set the RGB value e.g, ff00ff")]
-    pub colour4: Colour,
+    pub colour4: Colour
 }
 
 #[derive(Debug, Clone, Default, Options)]
@@ -207,7 +207,7 @@ pub struct MultiColourSpeed {
     #[options(short = "d", meta = "", help = "set the RGB value e.g, ff00ff")]
     pub colour4: Colour,
     #[options(no_long, meta = "", help = "set the speed: low, med, high")]
-    pub speed: Speed,
+    pub speed: Speed
 }
 
 /// Byte value for setting the built-in mode.
@@ -239,7 +239,7 @@ pub enum SetAuraBuiltin {
     #[options(help = "set a vertical line zooming from left")]
     Comet(SingleColour), // 11
     #[options(help = "set a wide vertical line zooming from left")]
-    Flash(SingleColour), // 12
+    Flash(SingleColour) // 12
 }
 
 impl Default for SetAuraBuiltin {

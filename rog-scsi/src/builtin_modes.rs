@@ -13,7 +13,7 @@ use crate::scsi::{apply_task, dir_task, mode_task, rgb_task, save_task, speed_ta
 pub struct Colour {
     pub r: u8,
     pub g: u8,
-    pub b: u8,
+    pub b: u8
 }
 
 impl Default for Colour {
@@ -41,14 +41,16 @@ impl From<&[u8; 3]> for Colour {
         Self {
             r: c[0],
             g: c[1],
-            b: c[2],
+            b: c[2]
         }
     }
 }
 
 impl From<Colour> for [u8; 3] {
     fn from(c: Colour) -> Self {
-        [c.r, c.b, c.g]
+        [
+            c.r, c.b, c.g
+        ]
     }
 }
 
@@ -61,7 +63,7 @@ impl From<Colour> for [u8; 3] {
 pub enum Direction {
     #[default]
     Forward = 0,
-    Reverse = 1,
+    Reverse = 1
 }
 
 impl FromStr for Direction {
@@ -72,7 +74,7 @@ impl FromStr for Direction {
         match s.as_str() {
             "forward" => Ok(Direction::Forward),
             "reverse" => Ok(Direction::Reverse),
-            _ => Err(Error::ParseSpeed),
+            _ => Err(Error::ParseSpeed)
         }
     }
 }
@@ -81,7 +83,7 @@ impl From<u8> for Direction {
     fn from(dir: u8) -> Self {
         match dir {
             1 => Direction::Reverse,
-            _ => Direction::Forward,
+            _ => Direction::Forward
         }
     }
 }
@@ -104,7 +106,7 @@ pub enum Speed {
     #[default]
     Med = 2,
     Fast = 1,
-    Fastest = 0,
+    Fastest = 0
 }
 
 impl FromStr for Speed {
@@ -118,7 +120,7 @@ impl FromStr for Speed {
             "med" => Ok(Speed::Med),
             "fast" => Ok(Speed::Fast),
             "fastest" => Ok(Speed::Fastest),
-            _ => Err(Error::ParseSpeed),
+            _ => Err(Error::ParseSpeed)
         }
     }
 }
@@ -130,7 +132,7 @@ impl From<Speed> for u8 {
             Speed::Slow => 3,
             Speed::Med => 2,
             Speed::Fast => 1,
-            Speed::Fastest => 0,
+            Speed::Fastest => 0
         }
     }
 }
@@ -142,7 +144,7 @@ impl From<u8> for Speed {
             3 => Self::Slow,
             1 => Self::Fast,
             0 => Self::Fastest,
-            _ => Self::Med,
+            _ => Self::Med
         }
     }
 }
@@ -172,7 +174,7 @@ pub enum AuraMode {
     RainbowCycleWave = 11,
     RainbowPulseChase = 12,
     RandomFlicker = 13,
-    DoubleFade = 14,
+    DoubleFade = 14
 }
 
 impl AuraMode {
@@ -192,7 +194,7 @@ impl AuraMode {
             AuraMode::RainbowCycleWave.to_string(),
             AuraMode::RainbowPulseChase.to_string(),
             AuraMode::RandomFlicker.to_string(),
-            AuraMode::DoubleFade.to_string(),
+            AuraMode::DoubleFade.to_string()
         ]
     }
 }
@@ -226,7 +228,7 @@ impl From<&AuraMode> for &str {
             AuraMode::RainbowCycleWave => "RainbowCycleWave",
             AuraMode::RainbowPulseChase => "RainbowPulseChase",
             AuraMode::RandomFlicker => "RandomFlicker",
-            AuraMode::DoubleFade => "DoubleFade",
+            AuraMode::DoubleFade => "DoubleFade"
         }
     }
 }
@@ -251,7 +253,7 @@ impl FromStr for AuraMode {
             "RainbowPulseChase" => Ok(Self::RainbowPulseChase),
             "RandomFlicker" => Ok(Self::RandomFlicker),
             "DoubleFade" => Ok(Self::DoubleFade),
-            _ => Err(Error::ParseMode),
+            _ => Err(Error::ParseMode)
         }
     }
 }
@@ -280,7 +282,7 @@ impl From<u8> for AuraMode {
             12 => Self::RainbowPulseChase,
             13 => Self::RandomFlicker,
             14 => Self::DoubleFade,
-            _ => Self::Static,
+            _ => Self::Static
         }
     }
 }
@@ -306,7 +308,7 @@ pub struct AuraEffect {
     /// Secondary colour in some modes like Breathing or Stars
     pub colour2: Colour,
     pub colour3: Colour,
-    pub colour4: Colour,
+    pub colour4: Colour
 }
 
 impl AuraEffect {
@@ -339,7 +341,7 @@ impl Default for AuraEffect {
             colour3: Colour { r: 166, g: 0, b: 0 },
             colour4: Colour { r: 0, g: 0, b: 0 },
             speed: Speed::Med,
-            direction: Direction::Forward,
+            direction: Direction::Forward
         }
     }
 }
@@ -386,7 +388,10 @@ impl From<&AuraEffect> for Vec<sg::Task> {
             tasks.push(dir_task(effect.direction as u8));
         }
 
-        tasks.append(&mut vec![apply_task(), save_task()]);
+        tasks.append(&mut vec![
+            apply_task(),
+            save_task(),
+        ]);
         tasks
     }
 }

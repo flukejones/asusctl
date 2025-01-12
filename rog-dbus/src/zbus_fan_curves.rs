@@ -57,6 +57,6 @@ pub trait FanCurves {
         &self,
         profile: ThrottlePolicy,
         fan: FanCurvePU,
-        enabled: bool,
+        enabled: bool
     ) -> zbus::Result<()>;
 }

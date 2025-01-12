@@ -13,7 +13,7 @@ pub struct DoomFlicker {
     #[serde(skip)]
     count: u8,
     #[serde(skip)]
-    colour: Colour,
+    colour: Colour
 }
 
 impl DoomFlicker {
@@ -24,7 +24,7 @@ impl DoomFlicker {
             count: 4,
             max_percentage,
             min_percentage,
-            start_colour: colour,
+            start_colour: colour
         }
     }
 }
@@ -53,13 +53,13 @@ impl EffectState for DoomFlicker {
         let max_light = Colour {
             r: (start_colour.r as f32 / 100.0 * *max_percentage as f32) as u8,
             g: (start_colour.g as f32 / 100.0 * *max_percentage as f32) as u8,
-            b: (start_colour.b as f32 / 100.0 * *max_percentage as f32) as u8,
+            b: (start_colour.b as f32 / 100.0 * *max_percentage as f32) as u8
         };
         // min light is a percentage of the set colour
         let min_light = Colour {
             r: (start_colour.r as f32 / 100.0 * *min_percentage as f32) as u8,
             g: (start_colour.g as f32 / 100.0 * *min_percentage as f32) as u8,
-            b: (start_colour.b as f32 / 100.0 * *min_percentage as f32) as u8,
+            b: (start_colour.b as f32 / 100.0 * *min_percentage as f32) as u8
         };
 
         // Convert the 255 to percentage
@@ -96,7 +96,7 @@ pub struct DoomLightFlash {
     #[serde(skip)]
     count: u8,
     #[serde(skip)]
-    colour: Colour,
+    colour: Colour
 }
 
 impl DoomLightFlash {
@@ -109,7 +109,7 @@ impl DoomLightFlash {
             min_percentage,
             start_colour: colour,
             max_time: 32,
-            min_time: 7,
+            min_time: 7
         }
     }
 }
@@ -135,13 +135,13 @@ impl EffectState for DoomLightFlash {
         let max_light = Colour {
             r: (start_colour.r as f32 / 100.0 * *max_percentage as f32) as u8,
             g: (start_colour.g as f32 / 100.0 * *max_percentage as f32) as u8,
-            b: (start_colour.b as f32 / 100.0 * *max_percentage as f32) as u8,
+            b: (start_colour.b as f32 / 100.0 * *max_percentage as f32) as u8
         };
         // min light is a percentage of the set colour
         let min_light = Colour {
             r: (start_colour.r as f32 / 100.0 * *min_percentage as f32) as u8,
             g: (start_colour.g as f32 / 100.0 * *min_percentage as f32) as u8,
-            b: (start_colour.b as f32 / 100.0 * *min_percentage as f32) as u8,
+            b: (start_colour.b as f32 / 100.0 * *min_percentage as f32) as u8
         };
 
         if *colour == max_light {

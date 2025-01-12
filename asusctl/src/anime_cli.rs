@@ -40,7 +40,7 @@ pub struct AnimeCommand {
     #[options(no_short, meta = "", help = "Off with his head!!!")]
     pub off_with_his_head: Option<bool>,
     #[options(command)]
-    pub command: Option<AnimeActions>,
+    pub command: Option<AnimeActions>
 }
 
 #[derive(Options)]
@@ -54,7 +54,7 @@ pub enum AnimeActions {
     #[options(help = "display an animated diagonal/pixel-perfect GIF")]
     PixelGif(AnimeGifDiagonal),
     #[options(help = "change which builtin animations are shown")]
-    SetBuiltins(Builtins),
+    SetBuiltins(Builtins)
 }
 
 #[derive(Options)]
@@ -82,7 +82,7 @@ pub struct Builtins {
     )]
     pub shutdown: AnimShutdown,
     #[options(meta = "", help = "set/apply the animations <true/false>")]
-    pub set: Option<bool>,
+    pub set: Option<bool>
 }
 
 #[derive(Options)]
@@ -100,7 +100,7 @@ pub struct AnimeImage {
     #[options(meta = "", default = "0.0", help = "the angle in radians")]
     pub angle: f32,
     #[options(meta = "", default = "1.0", help = "brightness 0.0-1.0")]
-    pub bright: f32,
+    pub bright: f32
 }
 
 #[derive(Options)]
@@ -110,7 +110,7 @@ pub struct AnimeImageDiagonal {
     #[options(meta = "", help = "full path to the png to display")]
     pub path: String,
     #[options(meta = "", default = "1.0", help = "brightness 0.0-1.0")]
-    pub bright: f32,
+    pub bright: f32
 }
 
 #[derive(Options)]
@@ -134,7 +134,7 @@ pub struct AnimeGif {
         default = "1",
         help = "how many loops to play - 0 is infinite"
     )]
-    pub loops: u32,
+    pub loops: u32
 }
 
 #[derive(Options)]
@@ -150,5 +150,5 @@ pub struct AnimeGifDiagonal {
         default = "1",
         help = "how many loops to play - 0 is infinite"
     )]
-    pub loops: u32,
+    pub loops: u32
 }

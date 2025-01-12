@@ -28,7 +28,7 @@ impl AuraZbus {
         mut self,
         connection: &Connection,
         // _signal_ctx: SignalEmitter<'static>,
-        path: OwnedObjectPath,
+        path: OwnedObjectPath
     ) -> Result<(), RogError> {
         // let task = zbus.clone();
         // let signal_ctx = signal_ctx.clone();
@@ -144,7 +144,7 @@ impl AuraZbus {
             let mode = config.current_mode;
             match config.builtins.get(&mode) {
                 Some(effect) => Ok(effect.clone()),
-                None => Err(ZbErr::Failed("Could not get the current effect".into())),
+                None => Err(ZbErr::Failed("Could not get the current effect".into()))
             }
         } else {
             Err(ZbErr::Failed("Aura control couldn't lock self".to_string()))
@@ -297,7 +297,7 @@ impl CtrlTask for AuraZbus {
             move |_power_plugged| {
                 // power change
                 async move {}
-            },
+            }
         )
         .await;
 

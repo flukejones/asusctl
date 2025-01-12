@@ -14,7 +14,7 @@ pub struct ScsiConfig {
     pub dev_type: AuraDeviceType,
     pub enabled: bool,
     pub current_mode: AuraMode,
-    pub modes: BTreeMap<AuraMode, AuraEffect>,
+    pub modes: BTreeMap<AuraMode, AuraEffect>
 }
 
 impl ScsiConfig {
@@ -38,61 +38,61 @@ impl Default for ScsiConfig {
                 (AuraMode::Off, AuraEffect::default_with_mode(AuraMode::Off)),
                 (
                     AuraMode::Static,
-                    AuraEffect::default_with_mode(AuraMode::Static),
+                    AuraEffect::default_with_mode(AuraMode::Static)
                 ),
                 (
                     AuraMode::Breathe,
-                    AuraEffect::default_with_mode(AuraMode::Breathe),
+                    AuraEffect::default_with_mode(AuraMode::Breathe)
                 ),
                 (
                     AuraMode::Flashing,
-                    AuraEffect::default_with_mode(AuraMode::Flashing),
+                    AuraEffect::default_with_mode(AuraMode::Flashing)
                 ),
                 (
                     AuraMode::RainbowCycle,
-                    AuraEffect::default_with_mode(AuraMode::RainbowCycle),
+                    AuraEffect::default_with_mode(AuraMode::RainbowCycle)
                 ),
                 (
                     AuraMode::RainbowWave,
-                    AuraEffect::default_with_mode(AuraMode::RainbowWave),
+                    AuraEffect::default_with_mode(AuraMode::RainbowWave)
                 ),
                 (
                     AuraMode::RainbowCycleBreathe,
-                    AuraEffect::default_with_mode(AuraMode::RainbowCycleBreathe),
+                    AuraEffect::default_with_mode(AuraMode::RainbowCycleBreathe)
                 ),
                 (
                     AuraMode::ChaseFade,
-                    AuraEffect::default_with_mode(AuraMode::ChaseFade),
+                    AuraEffect::default_with_mode(AuraMode::ChaseFade)
                 ),
                 (
                     AuraMode::RainbowCycleChaseFade,
-                    AuraEffect::default_with_mode(AuraMode::RainbowCycleChaseFade),
+                    AuraEffect::default_with_mode(AuraMode::RainbowCycleChaseFade)
                 ),
                 (
                     AuraMode::Chase,
-                    AuraEffect::default_with_mode(AuraMode::Chase),
+                    AuraEffect::default_with_mode(AuraMode::Chase)
                 ),
                 (
                     AuraMode::RainbowCycleChase,
-                    AuraEffect::default_with_mode(AuraMode::RainbowCycleChase),
+                    AuraEffect::default_with_mode(AuraMode::RainbowCycleChase)
                 ),
                 (
                     AuraMode::RainbowCycleWave,
-                    AuraEffect::default_with_mode(AuraMode::RainbowCycleWave),
+                    AuraEffect::default_with_mode(AuraMode::RainbowCycleWave)
                 ),
                 (
                     AuraMode::RainbowPulseChase,
-                    AuraEffect::default_with_mode(AuraMode::RainbowPulseChase),
+                    AuraEffect::default_with_mode(AuraMode::RainbowPulseChase)
                 ),
                 (
                     AuraMode::RandomFlicker,
-                    AuraEffect::default_with_mode(AuraMode::RandomFlicker),
+                    AuraEffect::default_with_mode(AuraMode::RandomFlicker)
                 ),
                 (
                     AuraMode::DoubleFade,
-                    AuraEffect::default_with_mode(AuraMode::DoubleFade),
-                ),
-            ]),
+                    AuraEffect::default_with_mode(AuraMode::DoubleFade)
+                )
+            ])
         }
     }
 }

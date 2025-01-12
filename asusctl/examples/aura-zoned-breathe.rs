@@ -36,10 +36,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Colour {
             r: 200,
             g: 110,
-            b: 0,
+            b: 0
         },
         100,
-        10,
+        10
     ));
     seq.push(zone);
 

@@ -1,6 +1,6 @@
 # `asusctl` for ASUS ROG
 
-[Become a Patron!](https://www.patreon.com/bePatron?u=7602281) - [Asus Linux Website](https://asus-linux.org/)
+[![Become a Patron!](https://github.com/codebard/patron-button-and-widgets-by-codebard/blob/master/images/become_a_patron_button.png?raw=true)](https://www.patreon.com/bePatron?u=7602281) [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/V7V5CLU67) - [Asus Linux Website](https://asus-linux.org/)
 
 **WARNING:** Many features are developed in tandem with kernel patches. If you see a feature is missing you either need a patched kernel or latest release.
 
@@ -11,7 +11,9 @@ Now includes a GUI, `rog-control-center`.
 
 ## Kernel support
 
-**The minimum supported kernel version is 6.10**, which will contain the patches from [here](https://lore.kernel.org/platform-driver-x86/20240404001652.86207-1-luke@ljones.dev/). This is especially required for 2023+ devices and possibly some late 2022 devices.
+Due to on-going driver work the minimum suggested kernel version is always **the latest*, as improvements and fixes are continuous.
+
+Support for some new features is not avilable unless you run a patched kernel with the work I am doing [in this github repo](https://github.com/flukejones/linux/tree/wip/ally-6.13). Use the linked branch, or `wip/ally-6.12`. Everything that is done here is upstreamed eventually (a long process).
 
 Z13 devices will need [these](https://lore.kernel.org/linux-input/20240416090402.31057-1-luke@ljones.dev/T/#t)
 

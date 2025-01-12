@@ -14,17 +14,18 @@ pub enum AppState {
     MainWindowClosed = 2,
     StartingUp = 3,
     QuitApp = 4,
-    LockFailed = 5,
+    LockFailed = 5
 }
 
 pub struct ROGCCZbus {
-    state: Arc<Mutex<AppState>>,
+    state: Arc<Mutex<AppState>>
 }
 
 impl ROGCCZbus {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self {
-            state: Arc::new(Mutex::new(AppState::StartingUp)),
+            state: Arc::new(Mutex::new(AppState::StartingUp))
         }
     }
 
@@ -71,7 +72,7 @@ pub trait ROGCCZbus {
 
 pub fn find_iface<T>(iface_name: &str) -> Result<Vec<T>, Box<dyn std::error::Error>>
 where
-    T: ProxyImpl<'static> + From<zbus::Proxy<'static>>,
+    T: ProxyImpl<'static> + From<zbus::Proxy<'static>>
 {
     let conn = Connection::system().unwrap();
     let f = fdo::ObjectManagerProxy::new(&conn, "xyz.ljones.Asusd", "/").unwrap();
@@ -98,7 +99,7 @@ where
                 T::builder(&conn)
                     .path(path.clone())?
                     .destination("xyz.ljones.Asusd")?
-                    .build()?,
+                    .build()?
             );
         }
         return Ok(ctrl);
@@ -109,7 +110,7 @@ where
 
 pub async fn find_iface_async<T>(iface_name: &str) -> Result<Vec<T>, Box<dyn std::error::Error>>
 where
-    T: zbus::proxy::ProxyImpl<'static> + From<zbus::Proxy<'static>>,
+    T: zbus::proxy::ProxyImpl<'static> + From<zbus::Proxy<'static>>
 {
     let conn = zbus::Connection::system().await.unwrap();
     let f = zbus::fdo::ObjectManagerProxy::new(&conn, "xyz.ljones.Asusd", "/")
@@ -139,7 +140,7 @@ where
                     .path(path.clone())?
                     .destination("xyz.ljones.Asusd")?
                     .build()
-                    .await?,
+                    .await?
             );
         }
         return Ok(ctrl);

@@ -8,7 +8,7 @@ impl From<Profile> for ThrottlePolicy {
         match value {
             Profile::Balanced => ThrottlePolicy::Balanced,
             Profile::Performance => ThrottlePolicy::Performance,
-            Profile::Quiet => ThrottlePolicy::Quiet,
+            Profile::Quiet => ThrottlePolicy::Quiet
         }
     }
 }
@@ -18,7 +18,7 @@ impl From<ThrottlePolicy> for Profile {
         match value {
             ThrottlePolicy::Balanced => Profile::Balanced,
             ThrottlePolicy::Performance => Profile::Performance,
-            ThrottlePolicy::Quiet => Profile::Quiet,
+            ThrottlePolicy::Quiet => Profile::Quiet
         }
     }
 }
@@ -28,7 +28,7 @@ impl From<FanType> for FanCurvePU {
         match value {
             FanType::CPU => FanCurvePU::CPU,
             FanType::Middle => FanCurvePU::MID,
-            FanType::GPU => FanCurvePU::GPU,
+            FanType::GPU => FanCurvePU::GPU
         }
     }
 }
@@ -38,7 +38,7 @@ impl From<FanCurvePU> for FanType {
         match value {
             FanCurvePU::CPU => FanType::CPU,
             FanCurvePU::GPU => FanType::GPU,
-            FanCurvePU::MID => FanType::Middle,
+            FanCurvePU::MID => FanType::Middle
         }
     }
 }

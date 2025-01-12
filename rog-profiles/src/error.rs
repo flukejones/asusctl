@@ -16,8 +16,7 @@ pub enum ProfileError {
     /// (pwm/temp, prev, next)
     ParseFanCurvePrevHigher(&'static str, u8, u8),
     ParseFanCurvePercentOver100(u8),
-    NotEnoughPoints,
-    // Zbus(zbus::Error),
+    NotEnoughPoints // Zbus(zbus::Error),
 }
 
 impl fmt::Display for ProfileError {
@@ -61,7 +60,7 @@ impl From<ProfileError> for FdoErr {
         error!("ProfileError: got: {error}");
         match error {
             ProfileError::NotSupported => FdoErr::NotSupported("".to_owned()),
-            _ => FdoErr::Failed(format!("Failed with {error}")),
+            _ => FdoErr::Failed(format!("Failed with {error}"))
         }
     }
 }

@@ -8,7 +8,7 @@ pub enum Error {
     ParseDirection,
     IoPath(String, std::io::Error),
     Ron(ron::Error),
-    RonParse(ron::error::SpannedError),
+    RonParse(ron::error::SpannedError)
 }
 
 impl fmt::Display for Error {
@@ -21,7 +21,7 @@ impl fmt::Display for Error {
             Error::ParseMode => write!(f, "Could not parse mode"),
             Error::IoPath(path, io) => write!(f, "IO Error: {path}, {io}"),
             Error::Ron(e) => write!(f, "RON Parse Error: {e}"),
-            Error::RonParse(e) => write!(f, "RON Parse Error: {e}"),
+            Error::RonParse(e) => write!(f, "RON Parse Error: {e}")
         }
     }
 }

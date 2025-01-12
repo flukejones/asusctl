@@ -37,7 +37,7 @@ pub enum AttrValue {
     EnumInt(Vec<i32>),
     EnumStr(Vec<String>),
     #[default]
-    None,
+    None
 }
 
 #[derive(Debug, Default, Clone)]
@@ -49,7 +49,7 @@ pub struct Attribute {
     min_value: AttrValue,
     max_value: AttrValue,
     scalar_increment: AttrValue,
-    base_path: PathBuf,
+    base_path: PathBuf
 }
 
 impl Attribute {
@@ -71,7 +71,7 @@ impl Attribute {
                     Ok(AttrValue::String(val))
                 }
             }
-            Err(e) => Err(e),
+            Err(e) => Err(e)
         }
     }
 
@@ -82,7 +82,7 @@ impl Attribute {
         let value_str = match new_value {
             AttrValue::Integer(val) => val.to_string(),
             AttrValue::String(val) => val,
-            _ => return Err(PlatformError::InvalidValue),
+            _ => return Err(PlatformError::InvalidValue)
         };
 
         let mut file = OpenOptions::new().write(true).open(&path)?;
@@ -114,7 +114,7 @@ impl Attribute {
     /// change, if they do then it is possibly a driver issue - although this is
     /// subject to `firmware_attributes` class changes in kernel.
     fn read_base_values(
-        base_path: &Path,
+        base_path: &Path
     ) -> (AttrValue, AttrValue, AttrValue, AttrValue, AttrValue) {
         let default_value = match read_string(&base_path.join("default_value")) {
             Ok(val) => {
@@ -124,7 +124,7 @@ impl Attribute {
                     AttrValue::String(val)
                 }
             }
-            Err(_) => AttrValue::None,
+            Err(_) => AttrValue::None
         };
 
         let possible_values = match read_string(&base_path.join("possible_values")) {
@@ -137,7 +137,7 @@ impl Attribute {
                     AttrValue::EnumStr(val.split(';').map(|s| s.to_string()).collect())
                 }
             }
-            Err(_) => AttrValue::None,
+            Err(_) => AttrValue::None
         };
 
         let min_value = read_i32(&base_path.join("min_value"))
@@ -154,17 +154,13 @@ impl Attribute {
             .unwrap_or_default();
 
         (
-            default_value,
-            possible_values,
-            min_value,
-            max_value,
-            scalar_increment,
+            default_value, possible_values, min_value, max_value, scalar_increment
         )
     }
 }
 
 pub struct FirmwareAttributes {
-    attrs: Vec<Attribute>,
+    attrs: Vec<Attribute>
 }
 
 #[allow(clippy::new_without_default)]
@@ -191,7 +187,7 @@ impl FirmwareAttributes {
                     min_value,
                     max_value,
                     scalar_increment,
-                    base_path,
+                    base_path
                 });
             }
         }
@@ -226,28 +222,10 @@ macro_rules! define_attribute_getters {
 }
 
 define_attribute_getters!(
-    apu_mem,
-    cores_performance,
-    cores_efficiency,
-    ppt_pl1_spl,
-    ppt_pl2_sppt,
-    ppt_apu_sppt,
-    ppt_platform_sppt,
-    ppt_fppt,
-    nv_dynamic_boost,
-    nv_temp_target,
-    dgpu_base_tgp,
-    dgpu_tgp,
-    charge_mode,
-    boot_sound,
-    mcu_powersave,
-    panel_od,
-    panel_hd_mode,
-    egpu_connected,
-    egpu_enable,
-    dgpu_disable,
-    gpu_mux_mode,
-    mini_led_mode
+    apu_mem, cores_performance, cores_efficiency, ppt_pl1_spl, ppt_pl2_sppt, ppt_apu_sppt,
+    ppt_platform_sppt, ppt_fppt, nv_dynamic_boost, nv_temp_target, dgpu_base_tgp, dgpu_tgp,
+    charge_mode, boot_sound, mcu_powersave, panel_od, panel_hd_mode, egpu_connected, egpu_enable,
+    dgpu_disable, gpu_mux_mode, mini_led_mode
 );
 
 /// CamelCase names of the properties. Intended for use with DBUS
@@ -278,7 +256,7 @@ pub enum FirmwareAttribute {
     GpuMuxMode = 20,
     MiniLedMode = 21,
     PendingReboot = 22,
-    None = 23,
+    None = 23
 }
 
 impl From<&str> for FirmwareAttribute {
@@ -307,7 +285,7 @@ impl From<&str> for FirmwareAttribute {
             "gpu_mux_mode" => Self::GpuMuxMode,
             "mini_led_mode" => Self::MiniLedMode,
             "pending_reboot" => Self::PendingReboot,
-            _ => panic!("Invalid firmware attribute: {}", s),
+            _ => panic!("Invalid firmware attribute: {}", s)
         }
     }
 }
@@ -338,7 +316,7 @@ impl From<FirmwareAttribute> for &str {
             FirmwareAttribute::GpuMuxMode => "gpu_mux_mode",
             FirmwareAttribute::MiniLedMode => "mini_led_mode",
             FirmwareAttribute::PendingReboot => "pending_reboot",
-            FirmwareAttribute::None => "none",
+            FirmwareAttribute::None => "none"
         }
     }
 }

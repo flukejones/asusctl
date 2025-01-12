@@ -20,7 +20,7 @@ impl AnimeDiagonal {
         Self(
             anime_type,
             vec![vec![0; anime_type.width()]; anime_type.height()],
-            duration,
+            duration
         )
     }
 
@@ -49,7 +49,7 @@ impl AnimeDiagonal {
         path: &Path,
         duration: Option<Duration>,
         bright: f32,
-        anime_type: AnimeType,
+        anime_type: AnimeType
     ) -> Result<Self> {
         let data = std::fs::read(path).map_err(|e| {
             error!("Could not open {path:?}: {e:?}");
@@ -86,7 +86,7 @@ impl AnimeDiagonal {
             png_pong::PngRaster::Rgba16(ras) => {
                 Self::pixels_from_16bit(ras, &mut matrix, bright, false);
             }
-            png_pong::PngRaster::Palette(..) => return Err(AnimeError::Format),
+            png_pong::PngRaster::Palette(..) => return Err(AnimeError::Format)
         };
 
         Ok(matrix)
@@ -96,9 +96,9 @@ impl AnimeDiagonal {
         ras: &pix::Raster<P>,
         matrix: &mut AnimeDiagonal,
         bright: f32,
-        grey: bool,
+        grey: bool
     ) where
-        P: pix::el::Pixel<Chan = pix::chan::Ch8>,
+        P: pix::el::Pixel<Chan = pix::chan::Ch8>
     {
         let width = ras.width();
         for (y, row) in ras.pixels().chunks(width as usize).enumerate() {
@@ -121,9 +121,9 @@ impl AnimeDiagonal {
         ras: &pix::Raster<P>,
         matrix: &mut AnimeDiagonal,
         bright: f32,
-        grey: bool,
+        grey: bool
     ) where
-        P: pix::el::Pixel<Chan = pix::chan::Ch16>,
+        P: pix::el::Pixel<Chan = pix::chan::Ch16>
     {
         let width = ras.width();
         for (y, row) in ras.pixels().chunks(width as usize).enumerate() {
@@ -146,7 +146,7 @@ impl AnimeDiagonal {
         match anime_type {
             AnimeType::GA401 => self.to_ga401_packets(),
             AnimeType::GU604 => self.to_gu604_packets(),
-            _ => self.to_ga402_packets(),
+            _ => self.to_ga402_packets()
         }
     }
 
@@ -224,7 +224,7 @@ impl AnimeDiagonal {
             x: usize,
             y: usize,
             start_index: &mut usize,
-            len: usize,
+            len: usize
         ) {
             buf[*start_index..*start_index + len].copy_from_slice(&anime.get_row(x, y, len));
             *start_index += len;
@@ -307,7 +307,7 @@ impl AnimeDiagonal {
             x: usize,
             y: usize,
             start_index: &mut usize,
-            len: usize,
+            len: usize
         ) {
             buf[*start_index..*start_index + len].copy_from_slice(&anime.get_row(x, y, len));
             *start_index += len;

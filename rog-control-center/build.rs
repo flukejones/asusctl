@@ -20,7 +20,7 @@ fn main() {
         CompilerConfiguration::new()
             // .embed_resources(EmbedResourcesKind::EmbedFiles)
             .with_include_paths(vec![include])
-            .with_style("fluent-dark".into()),
+            .with_style("fluent-dark".into())
     )
     .unwrap();
 }

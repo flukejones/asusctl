@@ -8,7 +8,7 @@ pub enum Error {
     ConfigLoadFail,
     ConfigLockFail,
     XdgVars,
-    Anime(AnimeError),
+    Anime(AnimeError)
 }
 
 impl fmt::Display for Error {
@@ -19,7 +19,7 @@ impl fmt::Display for Error {
             Error::ConfigLoadFail => write!(f, "Failed to load user config"),
             Error::ConfigLockFail => write!(f, "Failed to lock user config"),
             Error::XdgVars => write!(f, "XDG environment vars appear unset"),
-            Error::Anime(err) => write!(f, "Anime error: {}", err),
+            Error::Anime(err) => write!(f, "Anime error: {}", err)
         }
     }
 }

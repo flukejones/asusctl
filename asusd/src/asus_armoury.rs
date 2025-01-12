@@ -1,6 +1,6 @@
 use log::error;
 use rog_platform::firmware_attributes::{
-    AttrValue, Attribute, FirmwareAttribute, FirmwareAttributes,
+    AttrValue, Attribute, FirmwareAttribute, FirmwareAttributes
 };
 use serde::{Deserialize, Serialize};
 use zbus::zvariant::{ObjectPath, OwnedObjectPath, OwnedValue, Type, Value};
@@ -14,7 +14,7 @@ const MOD_NAME: &str = "asus_armoury";
 #[derive(Debug, Default, Clone, Deserialize, Serialize, Type, Value, OwnedValue)]
 pub struct PossibleValues {
     strings: Vec<String>,
-    nums: Vec<i32>,
+    nums: Vec<i32>
 }
 
 fn dbus_path_for_attr(attr_name: &str) -> OwnedObjectPath {
@@ -87,7 +87,7 @@ impl AsusArmouryAttribute {
     async fn default_value(&self) -> i32 {
         match self.0.default_value() {
             AttrValue::Integer(i) => *i,
-            _ => -1,
+            _ => -1
         }
     }
 
@@ -95,7 +95,7 @@ impl AsusArmouryAttribute {
     async fn min_value(&self) -> i32 {
         match self.0.min_value() {
             AttrValue::Integer(i) => *i,
-            _ => -1,
+            _ => -1
         }
     }
 
@@ -103,7 +103,7 @@ impl AsusArmouryAttribute {
     async fn max_value(&self) -> i32 {
         match self.0.max_value() {
             AttrValue::Integer(i) => *i,
-            _ => -1,
+            _ => -1
         }
     }
 
@@ -111,7 +111,7 @@ impl AsusArmouryAttribute {
     async fn scalar_increment(&self) -> i32 {
         match self.0.scalar_increment() {
             AttrValue::Integer(i) => *i,
-            _ => -1,
+            _ => -1
         }
     }
 
@@ -119,7 +119,7 @@ impl AsusArmouryAttribute {
     async fn possible_values(&self) -> Vec<i32> {
         match self.0.possible_values() {
             AttrValue::EnumInt(i) => i.clone(),
-            _ => Vec::default(),
+            _ => Vec::default()
         }
     }
 
@@ -129,7 +129,7 @@ impl AsusArmouryAttribute {
             return Ok(i);
         }
         Err(fdo::Error::Failed(
-            "Could not read current value".to_string(),
+            "Could not read current value".to_string()
         ))
     }
 

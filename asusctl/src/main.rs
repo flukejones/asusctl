@@ -89,7 +89,7 @@ fn main() {
 fn print_error_help(
     err: &dyn std::error::Error,
     supported_interfaces: &[String],
-    supported_properties: &[Properties],
+    supported_properties: &[Properties]
 ) {
     check_service("asusd");
     println!("\nError: {}\n", err);
@@ -130,7 +130,7 @@ fn check_service(name: &str) -> bool {
 
 fn find_iface<T>(iface_name: &str) -> Result<Vec<T>, Box<dyn std::error::Error>>
 where
-    T: ProxyImpl<'static> + From<zbus::Proxy<'static>>,
+    T: ProxyImpl<'static> + From<zbus::Proxy<'static>>
 {
     let conn = zbus::blocking::Connection::system().unwrap();
     let f = zbus::blocking::fdo::ObjectManagerProxy::new(&conn, "xyz.ljones.Asusd", "/").unwrap();
@@ -157,7 +157,7 @@ where
                 T::builder(&conn)
                     .path(path.clone())?
                     .destination("xyz.ljones.Asusd")?
-                    .build()?,
+                    .build()?
             );
         }
         return Ok(ctrl);
@@ -170,7 +170,7 @@ fn do_parsed(
     parsed: &CliStart,
     supported_interfaces: &[String],
     supported_properties: &[Properties],
-    conn: Connection,
+    conn: Connection
 ) -> Result<(), Box<dyn std::error::Error>> {
     match &parsed.command {
         Some(CliCommand::Aura(mode)) => handle_led_mode(mode)?,
@@ -281,7 +281,7 @@ fn do_parsed(
                         let level = aura.brightness()?;
                         println!("Current keyboard led brightness: {level:?}");
                     }
-                    Some(level) => aura.set_brightness(rog_aura::LedBrightness::from(level))?,
+                    Some(level) => aura.set_brightness(rog_aura::LedBrightness::from(level))?
                 }
             }
         } else {
@@ -425,7 +425,7 @@ fn handle_anime(cmd: &AnimeCommand) -> Result<(), Box<dyn std::error::Error>> {
                         image.angle,
                         Vec2::new(image.x_pos, image.y_pos),
                         image.bright,
-                        anime_type,
+                        anime_type
                     )?;
 
                     proxy.write(<AnimeDataBuffer>::try_from(&matrix)?)?;
@@ -444,7 +444,7 @@ fn handle_anime(cmd: &AnimeCommand) -> Result<(), Box<dyn std::error::Error>> {
                         Path::new(&image.path),
                         None,
                         image.bright,
-                        anime_type,
+                        anime_type
                     )?;
 
                     proxy.write(matrix.into_data_buffer(anime_type)?)?;
@@ -466,7 +466,7 @@ fn handle_anime(cmd: &AnimeCommand) -> Result<(), Box<dyn std::error::Error>> {
                         Vec2::new(gif.x_pos, gif.y_pos),
                         AnimTime::Count(1),
                         gif.bright,
-                        anime_type,
+                        anime_type
                     )?;
 
                     let mut loops = gif.loops as i32;
@@ -497,7 +497,7 @@ fn handle_anime(cmd: &AnimeCommand) -> Result<(), Box<dyn std::error::Error>> {
                         Path::new(&gif.path),
                         AnimTime::Count(1),
                         gif.bright,
-                        anime_type,
+                        anime_type
                     )?;
 
                     let mut loops = gif.loops as i32;
@@ -530,7 +530,7 @@ fn handle_anime(cmd: &AnimeCommand) -> Result<(), Box<dyn std::error::Error>> {
                         boot: builtins.boot,
                         awake: builtins.awake,
                         sleep: builtins.sleep,
-                        shutdown: builtins.shutdown,
+                        shutdown: builtins.shutdown
                     })?;
                 }
             }
@@ -551,7 +551,12 @@ fn verify_brightness(brightness: f32) {
 fn handle_slash(cmd: &SlashCommand) -> Result<(), Box<dyn std::error::Error>> {
     if (cmd.brightness.is_none()
         && cmd.interval.is_none()
-        && cmd.slash_mode.is_none()
+        && cmd.show_on_boot.is_none()
+        && cmd.show_on_shutdown.is_none()
+        && cmd.show_on_sleep.is_none()
+        && cmd.show_on_battery.is_none()
+        && cmd.show_battery_warning.is_none()
+        && cmd.mode.is_none()
         && !cmd.list
         && !cmd.enable
         && !cmd.disable)
@@ -577,8 +582,24 @@ fn handle_slash(cmd: &SlashCommand) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(interval) = cmd.interval {
             proxy.set_interval(interval)?;
         }
-        if let Some(slash_mode) = cmd.slash_mode {
-            proxy.set_slash_mode(slash_mode)?;
+        if let Some(slash_mode) = cmd.mode {
+            proxy.set_mode(slash_mode)?;
+        }
+        if let Some(show) = cmd.show_on_boot {
+            proxy.set_show_on_boot(show)?;
+        }
+
+        if let Some(show) = cmd.show_on_shutdown {
+            proxy.set_show_on_shutdown(show)?;
+        }
+        if let Some(show) = cmd.show_on_sleep {
+            proxy.set_show_on_sleep(show)?;
+        }
+        if let Some(show) = cmd.show_on_battery {
+            proxy.set_show_on_battery(show)?;
+        }
+        if let Some(show) = cmd.show_battery_warning {
+            proxy.set_show_battery_warning(show)?;
         }
     }
     if cmd.list {
@@ -772,7 +793,7 @@ fn handle_led_power1(power: &LedPowerCommand1) -> Result<(), Box<dyn std::error:
 
 fn handle_led_power_1_do_1866(
     aura: &AuraProxyBlocking,
-    power: &LedPowerCommand1,
+    power: &LedPowerCommand1
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut states = Vec::new();
     if power.keyboard {
@@ -781,7 +802,7 @@ fn handle_led_power_1_do_1866(
             boot: power.boot.unwrap_or_default(),
             awake: power.awake.unwrap_or_default(),
             sleep: power.sleep.unwrap_or_default(),
-            shutdown: false,
+            shutdown: false
         });
     }
     if power.lightbar {
@@ -790,7 +811,7 @@ fn handle_led_power_1_do_1866(
             boot: power.boot.unwrap_or_default(),
             awake: power.awake.unwrap_or_default(),
             sleep: power.sleep.unwrap_or_default(),
-            shutdown: false,
+            shutdown: false
         });
     }
 
@@ -852,7 +873,7 @@ fn handle_led_power2(power: &LedPowerCommand2) -> Result<(), Box<dyn std::error:
                     aura_cli::SetAuraZoneEnabled::Lightbar(l) => set(PowerZones::Lightbar, l),
                     aura_cli::SetAuraZoneEnabled::Lid(l) => set(PowerZones::Lid, l),
                     aura_cli::SetAuraZoneEnabled::RearGlow(r) => set(PowerZones::RearGlow, r),
-                    aura_cli::SetAuraZoneEnabled::Ally(r) => set(PowerZones::Ally, r),
+                    aura_cli::SetAuraZoneEnabled::Ally(r) => set(PowerZones::Ally, r)
                 }
             }
 
@@ -866,7 +887,7 @@ fn handle_led_power2(power: &LedPowerCommand2) -> Result<(), Box<dyn std::error:
 fn handle_throttle_profile(
     conn: &Connection,
     supported: &[Properties],
-    cmd: &ProfileCommand,
+    cmd: &ProfileCommand
 ) -> Result<(), Box<dyn std::error::Error>> {
     if !supported.contains(&Properties::ThrottlePolicy) {
         println!("Profiles not supported by either this kernel or by the laptop.");
@@ -910,7 +931,7 @@ fn handle_throttle_profile(
 
 fn handle_fan_curve(
     conn: &Connection,
-    cmd: &FanCurveCommand,
+    cmd: &FanCurveCommand
 ) -> Result<(), Box<dyn std::error::Error>> {
     let Ok(fan_proxy) = FanCurvesProxyBlocking::new(conn).map_err(|e| {
         println!("Fan-curves not supported by either this kernel or by the laptop: {e:?}");
@@ -989,7 +1010,7 @@ fn handle_fan_curve(
 fn handle_platform_properties(
     conn: &Connection,
     supported: &[Properties],
-    cmd: &PlatformCommand,
+    cmd: &PlatformCommand
 ) -> Result<(), Box<dyn std::error::Error>> {
     {
         if (cmd.gpu_mux_mode_set.is_none()

@@ -20,7 +20,7 @@ use crate::{attr_bool, attr_string, attr_u8, to_device};
 #[derive(Debug, PartialEq, Eq, PartialOrd, Clone)]
 pub struct RogPlatform {
     path: PathBuf,
-    pp_path: PathBuf,
+    pp_path: PathBuf
 }
 
 impl RogPlatform {
@@ -127,11 +127,11 @@ impl RogPlatform {
             info!("Found platform support at {:?}", device.sysname());
             return Ok(Self {
                 path: device.syspath().to_owned(),
-                pp_path: PathBuf::from_str("/sys/firmware/acpi").unwrap(),
+                pp_path: PathBuf::from_str("/sys/firmware/acpi").unwrap()
             });
         }
         Err(PlatformError::MissingFunction(
-            "asus-nb-wmi not found".into(),
+            "asus-nb-wmi not found".into()
         ))
     }
 }
@@ -141,7 +141,7 @@ impl Default for RogPlatform {
         unsafe {
             Self {
                 path: PathBuf::from_str("/this_shouldNeVErr_exisid").unwrap_unchecked(),
-                pp_path: PathBuf::from_str("/this_shouldNeVErr_exisid").unwrap_unchecked(),
+                pp_path: PathBuf::from_str("/this_shouldNeVErr_exisid").unwrap_unchecked()
             }
         }
     }
@@ -159,7 +159,7 @@ pub enum GpuMode {
     Ultimate = 4,
     #[default]
     Error = 254,
-    NotSupported = 255,
+    NotSupported = 255
 }
 
 impl From<u8> for GpuMode {
@@ -171,7 +171,7 @@ impl From<u8> for GpuMode {
             3 => GpuMode::Vfio,
             4 => GpuMode::Ultimate,
             5 => GpuMode::Error,
-            _ => GpuMode::NotSupported,
+            _ => GpuMode::NotSupported
         }
     }
 }
@@ -238,7 +238,7 @@ impl Display for GpuMode {
             GpuMode::Vfio => write!(f, "VFIO"),
             GpuMode::Ultimate => write!(f, "Ultimate"),
             GpuMode::Error => write!(f, "Error"),
-            GpuMode::NotSupported => write!(f, "Not Supported"),
+            GpuMode::NotSupported => write!(f, "Not Supported")
         }
     }
 }
@@ -266,7 +266,7 @@ pub enum ThrottlePolicy {
     #[default]
     Balanced = 0,
     Performance = 1,
-    Quiet = 2,
+    Quiet = 2
 }
 
 impl ThrottlePolicy {
@@ -274,12 +274,16 @@ impl ThrottlePolicy {
         match self {
             Self::Balanced => Self::Performance,
             Self::Performance => Self::Quiet,
-            Self::Quiet => Self::Balanced,
+            Self::Quiet => Self::Balanced
         }
     }
 
     pub const fn list() -> [Self; 3] {
-        [Self::Balanced, Self::Performance, Self::Quiet]
+        [
+            Self::Balanced,
+            Self::Performance,
+            Self::Quiet
+        ]
     }
 }
 
@@ -308,7 +312,7 @@ impl From<ThrottlePolicy> for u8 {
         match p {
             ThrottlePolicy::Balanced => 0,
             ThrottlePolicy::Performance => 1,
-            ThrottlePolicy::Quiet => 2,
+            ThrottlePolicy::Quiet => 2
         }
     }
 }
@@ -324,7 +328,7 @@ impl From<ThrottlePolicy> for &str {
         match profile {
             ThrottlePolicy::Balanced => "balanced",
             ThrottlePolicy::Performance => "performance",
-            ThrottlePolicy::Quiet => "quiet",
+            ThrottlePolicy::Quiet => "quiet"
         }
     }
 }
@@ -337,7 +341,7 @@ impl std::str::FromStr for ThrottlePolicy {
             "balanced" => Ok(ThrottlePolicy::Balanced),
             "performance" => Ok(ThrottlePolicy::Performance),
             "quiet" => Ok(ThrottlePolicy::Quiet),
-            _ => Err(PlatformError::NotSupported),
+            _ => Err(PlatformError::NotSupported)
         }
     }
 }
@@ -367,5 +371,5 @@ pub enum Properties {
     PptApuSppt,
     PptPlatformSppt,
     NvDynamicBoost,
-    NvTempTarget,
+    NvTempTarget
 }

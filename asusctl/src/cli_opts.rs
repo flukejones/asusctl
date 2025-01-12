@@ -26,7 +26,7 @@ pub struct CliStart {
     #[options(help = "Toggle one-shot battery charge to 100%")]
     pub one_shot_chg: bool,
     #[options(command)]
-    pub command: Option<CliCommand>,
+    pub command: Option<CliCommand>
 }
 
 #[derive(Options)]
@@ -55,7 +55,7 @@ pub enum CliCommand {
         help = "Change platform settings. This is a new interface exposed by the asus-armoury \
                 driver, some of the settings will be the same as the older platform interface"
     )]
-    Armoury(ArmouryCommand),
+    Armoury(ArmouryCommand)
 }
 
 #[derive(Debug, Clone, Options)]
@@ -73,7 +73,7 @@ pub struct ProfileCommand {
     pub profile_get: bool,
 
     #[options(meta = "", help = "set the active profile")]
-    pub profile_set: Option<ThrottlePolicy>,
+    pub profile_set: Option<ThrottlePolicy>
 }
 
 #[derive(Options)]
@@ -85,13 +85,13 @@ pub struct LedModeCommand {
     #[options(help = "switch to previous aura mode")]
     pub prev_mode: bool,
     #[options(command)]
-    pub command: Option<SetAuraBuiltin>,
+    pub command: Option<SetAuraBuiltin>
 }
 
 #[derive(Options)]
 pub struct GraphicsCommand {
     #[options(help = "print help message")]
-    pub help: bool,
+    pub help: bool
 }
 
 #[derive(Options, Debug)]
@@ -124,7 +124,7 @@ pub struct PlatformCommand {
     )]
     pub panel_overdrive_set: Option<bool>,
     #[options(no_long, short = "o", help = "get panel overdrive")]
-    pub panel_overdrive_get: bool,
+    pub panel_overdrive_get: bool
 }
 
 #[derive(Options, Debug)]
@@ -132,5 +132,5 @@ pub struct ArmouryCommand {
     #[options(help = "print help message")]
     pub help: bool,
     #[options(free)]
-    pub free: Vec<String>,
+    pub free: Vec<String>
 }

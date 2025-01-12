@@ -22,7 +22,7 @@ impl ScsiZbus {
     pub async fn start_tasks(
         self,
         connection: &Connection,
-        path: OwnedObjectPath,
+        path: OwnedObjectPath
     ) -> Result<(), RogError> {
         connection
             .object_server()
@@ -87,7 +87,7 @@ impl ScsiZbus {
             let mode = config.current_mode;
             match config.modes.get(&mode) {
                 Some(effect) => Ok(effect.clone()),
-                None => Err(ZbErr::Failed("Could not get the current effect".into())),
+                None => Err(ZbErr::Failed("Could not get the current effect".into()))
             }
         } else {
             Err(ZbErr::Failed("Aura control couldn't lock self".to_string()))

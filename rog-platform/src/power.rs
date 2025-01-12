@@ -16,7 +16,7 @@ use crate::{attr_u8, to_device};
 pub struct AsusPower {
     mains: PathBuf,
     battery: PathBuf,
-    usb: Option<PathBuf>,
+    usb: Option<PathBuf>
 }
 
 impl AsusPower {
@@ -97,12 +97,12 @@ impl AsusPower {
             return Ok(Self {
                 mains,
                 battery,
-                usb,
+                usb
             });
         }
 
         Err(PlatformError::MissingFunction(
-            "Did not find a battery".to_owned(),
+            "Did not find a battery".to_owned()
         ))
     }
 }

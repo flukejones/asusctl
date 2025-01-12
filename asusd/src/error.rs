@@ -37,7 +37,7 @@ pub enum RogError {
     SystemdUnitAction(String),
     SystemdUnitWaitTimeout(String),
     Command(String, std::io::Error),
-    ParseRon(ron::Error),
+    ParseRon(ron::Error)
 }
 
 impl fmt::Display for RogError {
@@ -87,7 +87,7 @@ impl fmt::Display for RogError {
                 )
             }
             RogError::Command(func, error) => write!(f, "Command exec error: {}: {}", func, error),
-            RogError::ParseRon(error) => write!(f, "Parse config error: {}", error),
+            RogError::ParseRon(error) => write!(f, "Parse config error: {}", error)
         }
     }
 }
@@ -140,5 +140,12 @@ impl From<RogError> for zbus::fdo::Error {
     #[inline]
     fn from(err: RogError) -> Self {
         zbus::fdo::Error::Failed(format!("{}", err))
+    }
+}
+
+impl From<RogError> for zbus::Error {
+    #[inline]
+    fn from(err: RogError) -> Self {
+        zbus::Error::Failure(format!("{}", err))
     }
 }

@@ -24,7 +24,7 @@ struct Icons {
     rog_red: Icon,
     rog_green: Icon,
     rog_white: Icon,
-    gpu_integrated: Icon,
+    gpu_integrated: Icon
 }
 
 static ICONS: OnceLock<Icons> = OnceLock::new();
@@ -48,14 +48,14 @@ fn read_icon(file: &Path) -> Icon {
     Icon {
         width: width as i32,
         height: height as i32,
-        data: img.into_raw(),
+        data: img.into_raw()
     }
 }
 
 struct AsusTray {
     current_title: String,
     current_icon: Icon,
-    proxy: ROGCCZbusProxyBlocking<'static>,
+    proxy: ROGCCZbusProxyBlocking<'static>
 }
 
 impl ksni::Tray for AsusTray {
@@ -103,7 +103,7 @@ async fn set_tray_icon_and_tip(
     mode: GfxMode,
     power: GfxPower,
     tray: &mut Handle<AsusTray>,
-    supergfx_active: bool,
+    supergfx_active: bool
 ) {
     if let Some(icons) = ICONS.get() {
         let icon = match power {
@@ -163,7 +163,7 @@ pub fn init_tray(_supported_properties: Vec<Properties>, config: Arc<Mutex<Confi
         let tray = AsusTray {
             current_title: TRAY_LABEL.to_string(),
             current_icon: rog_red.clone(),
-            proxy,
+            proxy
         };
 
         let mut tray = tray
@@ -186,7 +186,7 @@ pub fn init_tray(_supported_properties: Vec<Properties>, config: Arc<Mutex<Confi
             rog_red: rog_red.clone(),
             rog_green,
             rog_white,
-            gpu_integrated,
+            gpu_integrated
         });
 
         let mut has_supergfx = false;
@@ -207,7 +207,7 @@ pub fn init_tray(_supported_properties: Vec<Properties>, config: Arc<Mutex<Confi
                         }
                     }
                 }
-                Err(e) => warn!("Couldn't get mode form supergfxd: {e:?}"),
+                Err(e) => warn!("Couldn't get mode form supergfxd: {e:?}")
             }
 
             info!("Started ROGTray");

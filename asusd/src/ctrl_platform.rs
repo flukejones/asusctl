@@ -86,14 +86,14 @@ pub struct CtrlPlatform {
     power: AsusPower,
     platform: RogPlatform,
     cpu_control: Option<CPUControl>,
-    config: Arc<Mutex<Config>>,
+    config: Arc<Mutex<Config>>
 }
 
 impl CtrlPlatform {
     pub fn new(
         config: Arc<Mutex<Config>>,
         config_path: &Path,
-        signal_context: SignalEmitter<'static>,
+        signal_context: SignalEmitter<'static>
     ) -> Result<Self, RogError> {
         let platform = RogPlatform::new()?;
         let power = AsusPower::new()?;
@@ -112,7 +112,7 @@ impl CtrlPlatform {
             config,
             cpu_control: CPUControl::new()
                 .map_err(|e| error!("Couldn't get CPU control sysfs: {e}"))
-                .ok(),
+                .ok()
         };
         let mut inotify_self = ret_self.clone();
 
@@ -131,7 +131,7 @@ impl CtrlPlatform {
                         inotify::WatchMask::MODIFY
                             | inotify::WatchMask::CLOSE_WRITE
                             | inotify::WatchMask::ATTRIB
-                            | inotify::WatchMask::CREATE,
+                            | inotify::WatchMask::CREATE
                     )
                     .inspect_err(|e| {
                         if e.kind() == std::io::ErrorKind::NotFound {
@@ -184,7 +184,7 @@ impl CtrlPlatform {
         if limit > 0
             && std::mem::replace(
                 &mut self.config.lock().await.charge_control_end_threshold,
-                limit,
+                limit
             ) != limit
         {
             self.power
@@ -266,7 +266,7 @@ impl CtrlPlatform {
         match throttle {
             ThrottlePolicy::Balanced => self.config.lock().await.throttle_balanced_epp,
             ThrottlePolicy::Performance => self.config.lock().await.throttle_performance_epp,
-            ThrottlePolicy::Quiet => self.config.lock().await.throttle_quiet_epp,
+            ThrottlePolicy::Quiet => self.config.lock().await.throttle_quiet_epp
         }
     }
 
@@ -377,7 +377,7 @@ impl CtrlPlatform {
     async fn one_shot_full_charge(&self) -> Result<(), FdoErr> {
         let base_limit = std::mem::replace(
             &mut self.config.lock().await.charge_control_end_threshold,
-            100,
+            100
         );
         if base_limit != 100 {
             self.power.set_charge_control_end_threshold(100)?;
@@ -405,7 +405,7 @@ impl CtrlPlatform {
             self.config.lock().await.write();
         } else {
             return Err(FdoErr::NotSupported(
-                "RogPlatform: set_gpu_mux_mode not supported".to_owned(),
+                "RogPlatform: set_gpu_mux_mode not supported".to_owned()
             ));
         }
         Ok(())
@@ -415,7 +415,7 @@ impl CtrlPlatform {
     /// If fan-curves are supported will also activate a fan curve for profile.
     async fn next_throttle_thermal_policy(
         &mut self,
-        #[zbus(signal_context)] ctxt: SignalEmitter<'_>,
+        #[zbus(signal_context)] ctxt: SignalEmitter<'_>
     ) -> Result<(), FdoErr> {
         let policy: ThrottlePolicy =
             platform_get_value!(self, throttle_thermal_policy, "throttle_thermal_policy")
@@ -435,7 +435,7 @@ impl CtrlPlatform {
             Ok(self.throttle_thermal_policy_changed(&ctxt).await?)
         } else {
             Err(FdoErr::NotSupported(
-                "RogPlatform: throttle_thermal_policy not supported".to_owned(),
+                "RogPlatform: throttle_thermal_policy not supported".to_owned()
             ))
         }
     }
@@ -462,7 +462,7 @@ impl CtrlPlatform {
                 })
         } else {
             Err(FdoErr::NotSupported(
-                "RogPlatform: throttle_thermal_policy not supported".to_owned(),
+                "RogPlatform: throttle_thermal_policy not supported".to_owned()
             ))
         }
     }
@@ -487,7 +487,7 @@ impl CtrlPlatform {
     #[zbus(property)]
     async fn set_throttle_policy_on_battery(
         &mut self,
-        policy: ThrottlePolicy,
+        policy: ThrottlePolicy
     ) -> Result<(), FdoErr> {
         self.config.lock().await.throttle_policy_on_battery = policy;
         self.set_throttle_thermal_policy(policy).await?;
@@ -747,7 +747,7 @@ impl ReloadAndNotify for CtrlPlatform {
     async fn reload_and_notify(
         &mut self,
         signal_context: &SignalEmitter<'static>,
-        data: Self::Data,
+        data: Self::Data
     ) -> Result<(), RogError> {
         let mut config = self.config.lock().await;
         if *config != data {
@@ -949,7 +949,7 @@ impl CtrlTask for CtrlPlatform {
                         platform1
                             .power
                             .set_charge_control_end_threshold(
-                                platform1.config.lock().await.charge_control_end_threshold,
+                                platform1.config.lock().await.charge_control_end_threshold
                             )
                             .ok();
                     }
@@ -994,7 +994,7 @@ impl CtrlTask for CtrlPlatform {
                         platform2
                             .power
                             .set_charge_control_end_threshold(
-                                lock.base_charge_control_end_threshold,
+                                lock.base_charge_control_end_threshold
                             )
                             .map_err(|err| {
                                 warn!("CtrlCharge: charge_control_end_threshold {}", err);
@@ -1024,7 +1024,7 @@ impl CtrlTask for CtrlPlatform {
                         platform3.restore_charge_limit().await;
                     }
                 }
-            },
+            }
         )
         .await;
 

@@ -16,5 +16,5 @@ pub enum AdvancedAuraType {
     #[default]
     None,
     Zoned(Vec<LedCode>),
-    PerKey,
+    PerKey
 }

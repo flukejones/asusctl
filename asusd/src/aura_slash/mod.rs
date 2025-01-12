@@ -3,7 +3,7 @@ use std::sync::Arc;
 use config::SlashConfig;
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::usb_raw::USBRaw;
-use rog_slash::usb::{pkt_set_mode, pkt_set_options, pkts_for_init};
+use rog_slash::usb::{get_options_packet, pkt_set_mode, pkts_for_init};
 use rog_slash::SlashType;
 use tokio::sync::{Mutex, MutexGuard};
 
@@ -16,14 +16,14 @@ pub mod trait_impls;
 pub struct Slash {
     hid: Option<Arc<Mutex<HidRaw>>>,
     usb: Option<Arc<Mutex<USBRaw>>>,
-    config: Arc<Mutex<SlashConfig>>,
+    config: Arc<Mutex<SlashConfig>>
 }
 
 impl Slash {
     pub fn new(
         hid: Option<Arc<Mutex<HidRaw>>>,
         usb: Option<Arc<Mutex<USBRaw>>>,
-        config: Arc<Mutex<SlashConfig>>,
+        config: Arc<Mutex<SlashConfig>>
     ) -> Self {
         Self { hid, usb, config }
     }
@@ -53,15 +53,15 @@ impl Slash {
         }
 
         // Apply config upon initialization
-        let option_packets = pkt_set_options(
+        let option_packets = get_options_packet(
             config.slash_type,
-            config.slash_enabled,
-            config.slash_brightness,
-            config.slash_interval,
+            config.enabled,
+            config.brightness,
+            config.display_interval
         );
         self.write_bytes(&option_packets).await?;
 
-        let mode_packets = pkt_set_mode(config.slash_type, config.slash_mode);
+        let mode_packets = pkt_set_mode(config.slash_type, config.display_mode);
         // self.node.write_bytes(&mode_packets[0])?;
         self.write_bytes(&mode_packets[1]).await?;
 

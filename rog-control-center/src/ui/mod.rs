@@ -67,7 +67,7 @@ pub fn show_toast(
     success: SharedString,
     fail: SharedString,
     handle: Weak<MainWindow>,
-    result: zbus::Result<()>,
+    result: zbus::Result<()>
 ) {
     match result {
         Ok(_) => {
@@ -77,7 +77,7 @@ pub fn show_toast(
             log::warn!("{fail}: {e}");
             handle.unwrap().invoke_show_toast(fail)
         })
-        .ok(),
+        .ok()
     };
 }
 
@@ -102,9 +102,9 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
             available.contains(&"xyz.ljones.Anime".to_string()),
             available.contains(&"xyz.ljones.FanCurves".to_string()),
             true,
-            true,
+            true
         ]
-        .into(),
+        .into()
     );
 
     ui.on_exit_app(move || {

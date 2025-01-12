@@ -19,7 +19,7 @@ use serde::Serialize;
 /// implemented, the rest are intended to be free methods.
 pub trait StdConfig
 where
-    Self: Serialize + DeserializeOwned,
+    Self: Serialize + DeserializeOwned
 {
     /// Taking over the standard `new()` to ensure things can be generic
     fn new() -> Self;

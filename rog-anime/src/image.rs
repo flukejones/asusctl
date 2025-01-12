@@ -13,7 +13,7 @@ use crate::AnimeType;
 #[derive(Copy, Clone, Debug)]
 pub struct Pixel {
     pub color: u32,
-    pub alpha: f32,
+    pub alpha: f32
 }
 
 impl Default for Pixel {
@@ -21,7 +21,7 @@ impl Default for Pixel {
     fn default() -> Self {
         Pixel {
             color: 0,
-            alpha: 0.0,
+            alpha: 0.0
         }
     }
 }
@@ -76,7 +76,7 @@ pub struct AnimeImage {
     /// The type of the display. The GA401 and GA402 use the same controller and
     /// therefore same ID, so the identifier must be by laptop model in
     /// `AnimeType`.
-    anime_type: AnimeType,
+    anime_type: AnimeType
 }
 
 impl AnimeImage {
@@ -88,7 +88,7 @@ impl AnimeImage {
         bright: f32,
         pixels: Vec<Pixel>,
         width: u32,
-        anime_type: AnimeType,
+        anime_type: AnimeType
     ) -> Result<Self> {
         if !(0.0..=1.0).contains(&bright) {
             return Err(AnimeError::InvalidBrightness(bright));
@@ -102,7 +102,7 @@ impl AnimeImage {
             led_pos: Self::generate_image_positioning(anime_type),
             img_pixels: pixels,
             width,
-            anime_type,
+            anime_type
         })
     }
 
@@ -121,7 +121,7 @@ impl AnimeImage {
         match anime_type {
             AnimeType::GA401 => 0.8,
             AnimeType::GU604 => 0.78,
-            _ => 0.77,
+            _ => 0.77
         }
     }
 
@@ -138,7 +138,7 @@ impl AnimeImage {
         match anime_type {
             AnimeType::GA401 => 0.3,
             AnimeType::GU604 => 0.28,
-            _ => 0.283,
+            _ => 0.283
         }
     }
 
@@ -237,7 +237,7 @@ impl AnimeImage {
             AnimeType::GA401 => (33.0 + 0.5) * Self::scale_x(anime_type),
 
             AnimeType::GU604 => (38.0 + 0.5) * Self::scale_x(anime_type),
-            _ => (35.0 + 0.5) * Self::scale_x(anime_type),
+            _ => (35.0 + 0.5) * Self::scale_x(anime_type)
         }
     }
 
@@ -246,7 +246,7 @@ impl AnimeImage {
         match anime_type {
             AnimeType::GA401 => 55,
             AnimeType::GU604 => 62,
-            _ => 61,
+            _ => 61
         }
     }
 
@@ -257,7 +257,7 @@ impl AnimeImage {
             AnimeType::GA401 => (54.0 + 1.0) * Self::scale_y(anime_type),
             AnimeType::GU604 => 62.0 * Self::scale_y(anime_type),
             // GA402 may not have dead pixels and require only the physical LED count
-            _ => 61.0 * Self::scale_y(anime_type),
+            _ => 61.0 * Self::scale_y(anime_type)
         }
     }
 
@@ -267,11 +267,11 @@ impl AnimeImage {
             AnimeType::GA401 => match y {
                 0 | 2 | 4 => 33,
                 1 | 3 => 35, // Some rows are padded
-                _ => 36 - y / 2,
+                _ => 36 - y / 2
             },
             AnimeType::GU604 => AnimeImage::width(anime_type, y),
             // GA402 does not have padding, equivalent to width
-            _ => AnimeImage::width(anime_type, y),
+            _ => AnimeImage::width(anime_type, y)
         }
     }
 
@@ -321,7 +321,9 @@ impl AnimeImage {
             let pos = Vec3::new(led.x(), led.y(), 1.0);
             let x0 = led_from_px.mul_vec3(pos + Vec3::new(0.0, -0.5, 0.0));
 
-            const GROUP: [f32; 4] = [0.0, 0.5, 1.0, 1.5];
+            const GROUP: [f32; 4] = [
+                0.0, 0.5, 1.0, 1.5
+            ];
             for u in &GROUP {
                 for v in &GROUP {
                     let sample = x0 + *u * du + *v * dv;
@@ -397,7 +399,7 @@ impl AnimeImage {
 
         let led_from_cm = Mat3::from_scale(Vec2::new(
             1.0 / AnimeImage::scale_x(self.anime_type),
-            1.0 / AnimeImage::scale_y(self.anime_type),
+            1.0 / AnimeImage::scale_y(self.anime_type)
         ));
 
         let transform =
@@ -420,7 +422,7 @@ impl AnimeImage {
         angle: f32,
         translation: Vec2,
         bright: f32,
-        anime_type: AnimeType,
+        anime_type: AnimeType
     ) -> Result<Self> {
         let data = std::fs::read(path).map_err(|e| {
             error!("Could not open {path:?}: {e:?}");
@@ -464,7 +466,7 @@ impl AnimeImage {
                 width = ras.width();
                 Self::pixels_from_16bit(ras, false)
             }
-            png_pong::PngRaster::Palette(..) => return Err(AnimeError::Format),
+            png_pong::PngRaster::Palette(..) => return Err(AnimeError::Format)
         };
 
         let mut matrix = AnimeImage::new(
@@ -474,7 +476,7 @@ impl AnimeImage {
             bright,
             pixels,
             width,
-            anime_type,
+            anime_type
         )?;
 
         matrix.update();
@@ -483,7 +485,7 @@ impl AnimeImage {
 
     fn pixels_from_8bit<P>(ras: &pix::Raster<P>, grey: bool) -> Vec<Pixel>
     where
-        P: pix::el::Pixel<Chan = pix::chan::Ch8>,
+        P: pix::el::Pixel<Chan = pix::chan::Ch8>
     {
         ras.pixels()
             .iter()
@@ -495,14 +497,14 @@ impl AnimeImage {
                         + (<u8>::from(px.two()) / 3) as u32
                         + (<u8>::from(px.three()) / 3) as u32
                 },
-                alpha: <f32>::from(px.alpha()),
+                alpha: <f32>::from(px.alpha())
             })
             .collect()
     }
 
     fn pixels_from_16bit<P>(ras: &pix::Raster<P>, grey: bool) -> Vec<Pixel>
     where
-        P: pix::el::Pixel<Chan = pix::chan::Ch16>,
+        P: pix::el::Pixel<Chan = pix::chan::Ch16>
     {
         ras.pixels()
             .iter()
@@ -514,7 +516,7 @@ impl AnimeImage {
                         + ((<u16>::from(px.two()) / 3) >> 8) as u32
                         + ((<u16>::from(px.three()) / 3) >> 8) as u32
                 },
-                alpha: <f32>::from(px.alpha()),
+                alpha: <f32>::from(px.alpha())
             })
             .collect()
     }
@@ -651,7 +653,7 @@ mod tests {
             Vec2::default(),
             AnimTime::Infinite,
             1.0,
-            AnimeType::GA402,
+            AnimeType::GA402
         )
         .unwrap();
         matrix.frames()[0].frame();

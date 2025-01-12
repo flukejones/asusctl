@@ -13,14 +13,14 @@ pub const PROD_SCSI_ARION: &str = "1932";
 pub enum ScsiType {
     Arion,
     #[default]
-    Unsupported,
+    Unsupported
 }
 
 impl ScsiType {
     pub const fn prod_id_str(&self) -> &str {
         match self {
             ScsiType::Arion => PROD_SCSI_ARION,
-            ScsiType::Unsupported => "",
+            ScsiType::Unsupported => ""
         }
     }
 }
@@ -29,7 +29,7 @@ impl From<&str> for ScsiType {
     fn from(s: &str) -> Self {
         match s.to_lowercase().as_str() {
             PROD_SCSI_ARION | "0x1932" => Self::Arion,
-            _ => Self::Unsupported,
+            _ => Self::Unsupported
         }
     }
 }
@@ -38,7 +38,7 @@ impl From<ScsiType> for &str {
     fn from(s: ScsiType) -> Self {
         match s {
             ScsiType::Arion => PROD_SCSI_ARION,
-            ScsiType::Unsupported => "Unsupported",
+            ScsiType::Unsupported => "Unsupported"
         }
     }
 }

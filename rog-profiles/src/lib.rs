@@ -41,13 +41,17 @@ pub fn find_fan_curve_node() -> Result<Device, ProfileError> {
 pub enum FanCurvePU {
     CPU = 0,
     GPU = 1,
-    MID = 2,
+    MID = 2
 }
 
 impl FanCurvePU {
     fn which_fans(device: &Device) -> Vec<Self> {
         let mut fans = Vec::with_capacity(3);
-        for fan in [Self::CPU, Self::GPU, Self::MID] {
+        for fan in [
+            Self::CPU,
+            Self::GPU,
+            Self::MID
+        ] {
             let pwm_num: char = fan.into();
             let pwm_enable = format!("pwm{pwm_num}_enable");
             debug!("Looking for {pwm_enable}");
@@ -68,7 +72,7 @@ impl From<FanCurvePU> for &str {
         match pu {
             FanCurvePU::CPU => "cpu",
             FanCurvePU::GPU => "gpu",
-            FanCurvePU::MID => "mid",
+            FanCurvePU::MID => "mid"
         }
     }
 }
@@ -78,7 +82,7 @@ impl From<FanCurvePU> for char {
         match pu {
             FanCurvePU::CPU => '1',
             FanCurvePU::GPU => '2',
-            FanCurvePU::MID => '3',
+            FanCurvePU::MID => '3'
         }
     }
 }
@@ -91,7 +95,7 @@ impl std::str::FromStr for FanCurvePU {
             "cpu" => Ok(FanCurvePU::CPU),
             "gpu" => Ok(FanCurvePU::GPU),
             "mid" => Ok(FanCurvePU::MID),
-            _ => Err(ProfileError::ParseProfileName),
+            _ => Err(ProfileError::ParseProfileName)
         }
     }
 }
@@ -108,7 +112,7 @@ impl Default for FanCurvePU {
 pub struct FanCurveProfiles {
     pub balanced: Vec<CurveData>,
     pub performance: Vec<CurveData>,
-    pub quiet: Vec<CurveData>,
+    pub quiet: Vec<CurveData>
 }
 
 impl FanCurveProfiles {
@@ -122,7 +126,7 @@ impl FanCurveProfiles {
     pub fn read_from_dev_profile(
         &mut self,
         profile: ThrottlePolicy,
-        device: &Device,
+        device: &Device
     ) -> Result<(), ProfileError> {
         let fans = Self::supported_fans()?;
         let mut curves = Vec::with_capacity(3);
@@ -141,7 +145,7 @@ impl FanCurveProfiles {
         match profile {
             ThrottlePolicy::Balanced => self.balanced = curves,
             ThrottlePolicy::Performance => self.performance = curves,
-            ThrottlePolicy::Quiet => self.quiet = curves,
+            ThrottlePolicy::Quiet => self.quiet = curves
         }
         Ok(())
     }
@@ -154,7 +158,7 @@ impl FanCurveProfiles {
     pub fn set_active_curve_to_defaults(
         &mut self,
         profile: ThrottlePolicy,
-        device: &mut Device,
+        device: &mut Device
     ) -> Result<(), ProfileError> {
         let fans = Self::supported_fans()?;
         // Do reset for all
@@ -172,12 +176,12 @@ impl FanCurveProfiles {
     pub fn write_profile_curve_to_platform(
         &mut self,
         profile: ThrottlePolicy,
-        device: &mut Device,
+        device: &mut Device
     ) -> Result<(), ProfileError> {
         let fans = match profile {
             ThrottlePolicy::Balanced => &mut self.balanced,
             ThrottlePolicy::Performance => &mut self.performance,
-            ThrottlePolicy::Quiet => &mut self.quiet,
+            ThrottlePolicy::Quiet => &mut self.quiet
         };
         for fan in fans.iter().filter(|f| !f.enabled) {
             debug!("write_profile_curve_to_platform: writing profile:{profile}, {fan:?}");
@@ -216,7 +220,7 @@ impl FanCurveProfiles {
         &mut self,
         profile: ThrottlePolicy,
         fan: FanCurvePU,
-        enabled: bool,
+        enabled: bool
     ) {
         match profile {
             ThrottlePolicy::Balanced => {
@@ -250,7 +254,7 @@ impl FanCurveProfiles {
         match name {
             ThrottlePolicy::Balanced => &self.balanced,
             ThrottlePolicy::Performance => &self.performance,
-            ThrottlePolicy::Quiet => &self.quiet,
+            ThrottlePolicy::Quiet => &self.quiet
         }
     }
 
@@ -284,7 +288,7 @@ impl FanCurveProfiles {
     pub fn save_fan_curve(
         &mut self,
         curve: CurveData,
-        profile: ThrottlePolicy,
+        profile: ThrottlePolicy
     ) -> Result<(), ProfileError> {
         match profile {
             ThrottlePolicy::Balanced => {

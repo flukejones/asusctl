@@ -17,7 +17,7 @@ use animatrix::*;
 pub struct VirtAnimeMatrix {
     device: UHIDDevice<std::fs::File>,
     buffer: [u8; 640],
-    animatrix: AniMatrix,
+    animatrix: AniMatrix
 }
 
 impl VirtAnimeMatrix {
@@ -84,10 +84,10 @@ impl VirtAnimeMatrix {
 
                           /* 85 bytes */
                 ]
-                .to_vec(),
+                .to_vec()
             })
             .map_err(|err| error!("Could not create virtual device: {:?}", err))
-            .expect("Could not create virtual device"),
+            .expect("Could not create virtual device")
         }
     }
 

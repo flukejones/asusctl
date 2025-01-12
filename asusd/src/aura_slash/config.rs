@@ -9,20 +9,30 @@ const CONFIG_FILE: &str = "slash.ron";
 pub struct SlashConfig {
     #[serde(skip)]
     pub slash_type: SlashType,
-    pub slash_enabled: bool,
-    pub slash_brightness: u8,
-    pub slash_interval: u8,
-    pub slash_mode: SlashMode,
+    pub enabled: bool,
+    pub brightness: u8,
+    pub display_interval: u8,
+    pub display_mode: SlashMode,
+    pub show_on_boot: bool,
+    pub show_on_shutdown: bool,
+    pub show_on_sleep: bool,
+    pub show_on_battery: bool,
+    pub show_battery_warning: bool
 }
 
 impl Default for SlashConfig {
     fn default() -> Self {
         SlashConfig {
-            slash_enabled: true,
-            slash_brightness: 255,
-            slash_interval: 0,
-            slash_mode: SlashMode::Bounce,
+            enabled: true,
+            brightness: 255,
+            display_interval: 0,
+            display_mode: SlashMode::Bounce,
             slash_type: SlashType::Unsupported,
+            show_on_boot: true,
+            show_on_shutdown: true,
+            show_on_sleep: true,
+            show_on_battery: true,
+            show_battery_warning: true
         }
     }
 }
@@ -45,10 +55,10 @@ impl StdConfigLoad for SlashConfig {}
 impl From<&SlashConfig> for DeviceState {
     fn from(config: &SlashConfig) -> Self {
         DeviceState {
-            slash_enabled: config.slash_enabled,
-            slash_brightness: config.slash_brightness,
-            slash_interval: config.slash_interval,
-            slash_mode: config.slash_mode,
+            slash_enabled: config.enabled,
+            slash_brightness: config.brightness,
+            slash_interval: config.display_interval,
+            slash_mode: config.display_mode
         }
     }
 }

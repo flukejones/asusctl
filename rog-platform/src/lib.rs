@@ -111,7 +111,9 @@ pub fn write_attr_string(device: &mut Device, attr: &str, value: &str) -> Result
 mod tests {
     #[test]
     fn check() {
-        let data = [1, 2, 3, 4, 5];
+        let data = [
+            1, 2, 3, 4, 5
+        ];
         let mut tmp = String::new();
         for n in data {
             tmp.push_str(&n.to_string());
