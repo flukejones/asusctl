@@ -2,8 +2,11 @@
 
 ## [Unreleased]
 
+## [v6.1.0-rc2]
+
 ### Added
 - asus-armoury driver support. WIP, will be adjusted/changed further
+- More "Slash" display controls
 
 ## [v6.1.0-rc1]
 
