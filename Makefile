@@ -1,4 +1,4 @@
-VERSION := $(shell /usr/bin/grep -Pm1 'version = "(\d+.\d+.\d+)"' Cargo.toml | cut -d'"' -f2)
+VERSION := $(shell /usr/bin/grep -Pm1 'version = "(\d+.\d+.\d+.*)"' Cargo.toml | cut -d'"' -f2)
 
 INSTALL = install
 INSTALL_PROGRAM = ${INSTALL} -D -m 0755
