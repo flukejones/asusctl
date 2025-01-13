@@ -47,57 +47,6 @@ impl RogPlatform {
         pp_path
     );
 
-    attr_u8!(
-        /// Package Power Target total of CPU: PL1 on Intel, SPL on AMD.
-        /// Shown on Intel+Nvidia or AMD+Nvidia based systems:
-        /// * min=5, max=250
-        "ppt_pl1_spl",
-        path
-    );
-
-    attr_u8!(
-        /// Slow Package Power Tracking Limit of CPU: PL2 on Intel, SPPT,
-        /// on AMD. Shown on Intel+Nvidia or AMD+Nvidia based systems:
-        /// * min=5, max=250
-        "ppt_pl2_sppt",
-        path
-    );
-
-    attr_u8!(
-        /// Fast Package Power Tracking Limit of CPU. AMD+Nvidia only:
-        /// * min=5, max=250
-        "ppt_fppt",
-        path
-    );
-
-    attr_u8!(
-        /// APU SPPT limit. Shown on full AMD systems only:
-        /// * min=5, max=130
-        "ppt_apu_sppt",
-        path
-    );
-
-    attr_u8!(
-        /// Platform SPPT limit. Shown on full AMD systems only:
-        /// * min=5, max=130
-        "ppt_platform_sppt",
-        path
-    );
-
-    attr_u8!(
-        /// Dynamic boost limit of the Nvidia dGPU:
-        /// * min=5, max=25
-        "nv_dynamic_boost",
-        path
-    );
-
-    attr_u8!(
-        /// Target temperature limit of the Nvidia dGPU:
-        /// * min=75, max=87
-        "nv_temp_target",
-        path
-    );
-
     attr_bool!(
         /// Control the POST animation "FWOOoosh" sound
         "boot_sound",
@@ -364,12 +313,5 @@ pub enum Properties {
     PanelOd,
     MiniLedMode,
     EgpuEnable,
-    ThrottlePolicy,
-    PptPl1Spl,
-    PptPl2Sppt,
-    PptFppt,
-    PptApuSppt,
-    PptPlatformSppt,
-    NvDynamicBoost,
-    NvTempTarget
+    ThrottlePolicy
 }

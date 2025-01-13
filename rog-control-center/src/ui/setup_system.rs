@@ -272,6 +272,16 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                             setup_callback!(ppt_pl2_sppt, handle, attr, i32);
                             setup_minmax_external!(ppt_pl2_sppt, handle, attr);
                         }
+                        FirmwareAttribute::PptPl3Fppt => {
+                            init_minmax_property!(ppt_pl3_fppt, handle, attr);
+                            setup_callback!(ppt_pl3_fppt, handle, attr, i32);
+                            setup_minmax_external!(ppt_pl3_fppt, handle, attr);
+                        }
+                        FirmwareAttribute::PptFppt => {
+                            init_minmax_property!(ppt_fppt, handle, attr);
+                            setup_callback!(ppt_fppt, handle, attr, i32);
+                            setup_minmax_external!(ppt_fppt, handle, attr);
+                        }
                         FirmwareAttribute::PptApuSppt => {
                             init_minmax_property!(ppt_apu_sppt, handle, attr);
                             setup_callback!(ppt_apu_sppt, handle, attr, i32);
@@ -281,11 +291,6 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                             init_minmax_property!(ppt_platform_sppt, handle, attr);
                             setup_callback!(ppt_platform_sppt, handle, attr, i32);
                             setup_minmax_external!(ppt_platform_sppt, handle, attr);
-                        }
-                        FirmwareAttribute::PptFppt => {
-                            init_minmax_property!(ppt_fppt, handle, attr);
-                            setup_callback!(ppt_fppt, handle, attr, i32);
-                            setup_minmax_external!(ppt_fppt, handle, attr);
                         }
                         FirmwareAttribute::NvDynamicBoost => {
                             init_minmax_property!(nv_dynamic_boost, handle, attr);

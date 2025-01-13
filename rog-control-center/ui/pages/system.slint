@@ -65,6 +65,13 @@ export global SystemPageData {
     };
     callback cb_ppt_pl2_sppt(int);
 
+    in-out property <AttrMinMax> ppt_pl3_fppt: {
+        min: 0,
+        max: 100,
+        val: 20,
+    };
+    callback cb_ppt_pl3_fppt(int);
+
     in-out property <AttrMinMax> ppt_fppt: {
         min: 0,
         max: 100,
@@ -234,6 +241,16 @@ export component PageSystem inherits Rectangle {
                 }
             }
 
+            if SystemPageData.ppt_pl3_fppt.val != -1: SystemSlider {
+                text: @tr("ppt_pl3_fppt" => "PL3, Fast Power Limit");
+                minimum: SystemPageData.ppt_pl3_fppt.min;
+                maximum: SystemPageData.ppt_pl3_fppt.max;
+                value: SystemPageData.ppt_pl3_fppt.val;
+                released => {
+                    SystemPageData.ppt_fppt.val = self.value;
+                    SystemPageData.cb_ppt_fppt(Math.round(self.value))
+                }
+            }
             if SystemPageData.ppt_fppt.val != -1: SystemSlider {
                 text: @tr("ppt_fppt" => "FPPT, Fast Power Limit");
                 minimum: SystemPageData.ppt_fppt.min;

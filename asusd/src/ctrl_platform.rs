@@ -59,28 +59,6 @@ macro_rules! platform_set_value {
     }
 }
 
-macro_rules! platform_ppt_set_value {
-    ($self:ident, $property:tt, $prop_name:literal, $new_value:expr) => {
-        concat_idents::concat_idents!(has = has_, $property {
-            if $self.platform.has() {
-                concat_idents::concat_idents!(set = set_, $property {
-                    $self.platform.set($new_value).map_err(|err| {
-                        error!("RogPlatform: {} {err}", $prop_name);
-                        FdoErr::NotSupported(format!("RogPlatform: {} {err}", $prop_name))
-                    })?;
-                });
-                let mut lock = $self.config.lock().await;
-                lock.$property = Some($new_value);
-                lock.write();
-                Ok(())
-            } else {
-                debug!("RogPlatform: ppt: setting {} not supported", $prop_name);
-                Err(FdoErr::NotSupported(format!("RogPlatform: {} not supported", $prop_name)))
-            }
-        })
-    }
-}
-
 #[derive(Clone)]
 pub struct CtrlPlatform {
     power: AsusPower,
@@ -344,14 +322,6 @@ impl CtrlPlatform {
         platform_name!(mini_led_mode, Properties::MiniLedMode);
         platform_name!(egpu_enable, Properties::EgpuEnable);
         platform_name!(throttle_thermal_policy, Properties::ThrottlePolicy);
-
-        platform_name!(ppt_pl1_spl, Properties::PptPl1Spl);
-        platform_name!(ppt_pl2_sppt, Properties::PptPl2Sppt);
-        platform_name!(ppt_fppt, Properties::PptFppt);
-        platform_name!(ppt_apu_sppt, Properties::PptApuSppt);
-        platform_name!(ppt_platform_sppt, Properties::PptPlatformSppt);
-        platform_name!(nv_dynamic_boost, Properties::NvDynamicBoost);
-        platform_name!(nv_temp_target, Properties::NvTempTarget);
 
         supported
     }
@@ -631,107 +601,6 @@ impl CtrlPlatform {
     fn egpu_enable(&self) -> Result<bool, FdoErr> {
         platform_get_value!(self, egpu_enable, "egpu_enable")
     }
-
-    /// ***********************************************************************
-    /// Set the Package Power Target total of CPU: PL1 on Intel, SPL on AMD.
-    /// Shown on Intel+Nvidia or AMD+Nvidia based systems:
-    /// * min=5, max=250
-    #[zbus(property)]
-    async fn ppt_pl1_spl(&self) -> Result<u8, FdoErr> {
-        platform_get_value!(self, ppt_pl1_spl, "ppt_pl1_spl")
-    }
-
-    #[zbus(property)]
-    async fn set_ppt_pl1_spl(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_ppt_set_value!(self, ppt_pl1_spl, "ppt_pl1_spl", value)?;
-        self.config.lock().await.write();
-        Ok(())
-    }
-
-    /// Set the Slow Package Power Tracking Limit of CPU: PL2 on Intel, SPPT,
-    /// on AMD. Shown on Intel+Nvidia or AMD+Nvidia based systems:
-    /// * min=5, max=250
-    #[zbus(property)]
-    async fn ppt_pl2_sppt(&self) -> Result<u8, FdoErr> {
-        platform_get_value!(self, ppt_pl2_sppt, "ppt_pl2_sppt")
-    }
-
-    #[zbus(property)]
-    async fn set_ppt_pl2_sppt(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_ppt_set_value!(self, ppt_pl2_sppt, "ppt_pl2_sppt", value)?;
-        self.config.lock().await.write();
-        Ok(())
-    }
-
-    /// Set the Fast Package Power Tracking Limit of CPU. AMD+Nvidia only:
-    /// * min=5, max=250
-    #[zbus(property)]
-    async fn ppt_fppt(&self) -> Result<u8, FdoErr> {
-        platform_get_value!(self, ppt_fppt, "ppt_fppt")
-    }
-
-    #[zbus(property)]
-    async fn set_ppt_fppt(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_ppt_set_value!(self, ppt_fppt, "ppt_fppt", value)?;
-        self.config.lock().await.write();
-        Ok(())
-    }
-
-    /// Set the APU SPPT limit. Shown on full AMD systems only:
-    /// * min=5, max=130
-    #[zbus(property)]
-    async fn ppt_apu_sppt(&self) -> Result<u8, FdoErr> {
-        platform_get_value!(self, ppt_apu_sppt, "ppt_apu_sppt")
-    }
-
-    #[zbus(property)]
-    async fn set_ppt_apu_sppt(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_ppt_set_value!(self, ppt_apu_sppt, "ppt_apu_sppt", value)?;
-        self.config.lock().await.write();
-        Ok(())
-    }
-
-    /// Set the platform SPPT limit. Shown on full AMD systems only:
-    /// * min=5, max=130
-    #[zbus(property)]
-    async fn ppt_platform_sppt(&self) -> Result<u8, FdoErr> {
-        platform_get_value!(self, ppt_platform_sppt, "ppt_platform_sppt")
-    }
-
-    #[zbus(property)]
-    async fn set_ppt_platform_sppt(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_ppt_set_value!(self, ppt_platform_sppt, "ppt_platform_sppt", value)?;
-        self.config.lock().await.write();
-        Ok(())
-    }
-
-    /// Set the dynamic boost limit of the Nvidia dGPU:
-    /// * min=5, max=25
-    #[zbus(property)]
-    async fn nv_dynamic_boost(&self) -> Result<u8, FdoErr> {
-        platform_get_value!(self, nv_dynamic_boost, "nv_dynamic_boost")
-    }
-
-    #[zbus(property)]
-    async fn set_nv_dynamic_boost(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_ppt_set_value!(self, nv_dynamic_boost, "nv_dynamic_boost", value)?;
-        self.config.lock().await.write();
-        Ok(())
-    }
-
-    /// Set the target temperature limit of the Nvidia dGPU:
-    /// * min=75, max=87
-    #[zbus(property)]
-    async fn nv_temp_target(&self) -> Result<u8, FdoErr> {
-        platform_get_value!(self, nv_temp_target, "nv_temp_target")
-    }
-
-    #[zbus(property)]
-    async fn set_nv_temp_target(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_ppt_set_value!(self, nv_temp_target, "nv_temp_target", value)?;
-        self.config.lock().await.write();
-        Ok(())
-    }
 }
 
 impl crate::ZbusRun for CtrlPlatform {
@@ -790,27 +659,6 @@ impl ReloadAndNotify for CtrlPlatform {
             reload_and_notify!(boot_sound, "boot_sound");
             // reload_and_notify!(throttle_thermal_policy, "throttle_thermal_policy");
 
-            macro_rules! ppt_reload_and_notify {
-                ($property:tt, $prop_name:literal) => {
-                    concat_idents::concat_idents!(has = has_, $property {
-                        if self.platform.has() && config.$property != data.$property {
-                            concat_idents::concat_idents!(set = set_, $property {
-                            self.platform
-                                .set(data.$property.unwrap_or_default())?;});
-                            concat_idents::concat_idents!(changed = $property, _changed {
-                            self.changed(signal_context).await?;});
-                        }
-                    })
-                }
-            }
-            ppt_reload_and_notify!(ppt_pl1_spl, "ppt_pl1_spl");
-            ppt_reload_and_notify!(ppt_pl2_sppt, "ppt_pl2_sppt");
-            ppt_reload_and_notify!(ppt_fppt, "ppt_fppt");
-            ppt_reload_and_notify!(ppt_apu_sppt, "ppt_apu_sppt");
-            ppt_reload_and_notify!(ppt_platform_sppt, "ppt_platform_sppt");
-            ppt_reload_and_notify!(nv_dynamic_boost, "nv_dynamic_boost");
-            ppt_reload_and_notify!(nv_temp_target, "nv_temp_target");
-
             *config = data;
             config.base_charge_control_end_threshold =
                 base_charge_control_end_threshold.unwrap_or_default();
@@ -848,25 +696,6 @@ impl crate::Reloadable for CtrlPlatform {
         reload!(panel_od, "panel_od");
         reload!(boot_sound, "boot_sound");
 
-        macro_rules! ppt_reload {
-            ($property:tt, $prop_name:literal) => {
-                concat_idents::concat_idents!(has = has_, $property {
-                    if self.platform.has() {
-                        concat_idents::concat_idents!(set = set_, $property {
-                        self.platform
-                            .set(self.config.lock().await.$property.unwrap_or_default())?;});
-                    }
-                })
-            }
-        }
-        ppt_reload!(ppt_pl1_spl, "ppt_pl1_spl");
-        ppt_reload!(ppt_pl2_sppt, "ppt_pl2_sppt");
-        ppt_reload!(ppt_fppt, "ppt_fppt");
-        ppt_reload!(ppt_apu_sppt, "ppt_apu_sppt");
-        ppt_reload!(ppt_platform_sppt, "ppt_platform_sppt");
-        ppt_reload!(nv_dynamic_boost, "nv_dynamic_boost");
-        ppt_reload!(nv_temp_target, "nv_temp_target");
-
         if let Ok(power_plugged) = self.power.get_online() {
             self.config.lock().await.last_power_plugged = power_plugged;
             if self.platform.has_throttle_thermal_policy() {
@@ -896,20 +725,6 @@ impl CtrlPlatform {
 
     // NOTE: see note further below
     task_watch_item_notify!(gpu_mux_mode platform);
-
-    task_watch_item_notify!(ppt_pl1_spl platform);
-
-    task_watch_item_notify!(ppt_pl2_sppt platform);
-
-    task_watch_item_notify!(ppt_fppt platform);
-
-    task_watch_item_notify!(ppt_apu_sppt platform);
-
-    task_watch_item_notify!(ppt_platform_sppt platform);
-
-    task_watch_item_notify!(nv_dynamic_boost platform);
-
-    task_watch_item_notify!(nv_temp_target platform);
 }
 
 impl CtrlTask for CtrlPlatform {
@@ -1042,14 +857,6 @@ impl CtrlTask for CtrlPlatform {
         // booted-with value  as it does not actually change until reboot.
         self.watch_gpu_mux_mode(signal_ctxt.clone()).await?;
         self.watch_boot_sound(signal_ctxt.clone()).await?;
-
-        self.watch_ppt_pl1_spl(signal_ctxt.clone()).await?;
-        self.watch_ppt_pl2_sppt(signal_ctxt.clone()).await?;
-        self.watch_ppt_fppt(signal_ctxt.clone()).await?;
-        self.watch_ppt_apu_sppt(signal_ctxt.clone()).await?;
-        self.watch_ppt_platform_sppt(signal_ctxt.clone()).await?;
-        self.watch_nv_dynamic_boost(signal_ctxt.clone()).await?;
-        self.watch_nv_temp_target(signal_ctxt.clone()).await?;
 
         let watch_throttle_thermal_policy = self.platform.monitor_throttle_thermal_policy()?;
         let ctrl = self.clone();
