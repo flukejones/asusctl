@@ -146,5 +146,5 @@ where
         return Ok(ctrl);
     }
 
-    Err("No Aura interface".into())
+    Err("No interface".into())
 }

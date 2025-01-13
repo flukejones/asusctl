@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use concat_idents::concat_idents;
+use log::error;
 use rog_dbus::asus_armoury::AsusArmouryProxy;
 use rog_dbus::zbus_platform::{PlatformProxy, PlatformProxyBlocking};
 use rog_platform::firmware_attributes::FirmwareAttribute;
@@ -208,9 +209,6 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
         // Create the connections/proxies here to prevent future delays in process
         let conn = zbus::Connection::system().await.unwrap();
         let platform = PlatformProxy::new(&conn).await.unwrap();
-        let armoury_attrs = find_iface_async::<AsusArmouryProxy>("xyz.ljones.AsusArmoury")
-            .await
-            .unwrap();
 
         set_ui_props_async!(
             handle,
@@ -238,6 +236,23 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
             SystemPageData,
             change_throttle_policy_on_ac
         );
+
+        let armoury_attrs;
+        if let Ok(attrs) = find_iface_async::<AsusArmouryProxy>("xyz.ljones.AsusArmoury").await {
+            armoury_attrs = attrs;
+            handle
+                .upgrade_in_event_loop(|ui| {
+                    ui.global::<SystemPageData>().set_asus_armoury_loaded(true)
+                })
+                .ok();
+        } else {
+            error!(
+                "The kernel module asus-armoury is required, if you do not have this you will \
+                 need to either build or install a kernel which includes the patchwork. This \
+                 driver is in process of being upstreamed"
+            );
+            return;
+        }
 
         for attr in armoury_attrs {
             if let Ok(value) = attr.current_value().await {

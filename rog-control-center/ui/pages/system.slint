@@ -49,6 +49,7 @@ export global SystemPageData {
     callback cb_boot_sound(int);
     in-out property <int> mini_led_mode;
     callback cb_mini_led_mode(int);
+    in-out property <bool> asus_armoury_loaded: false;
 
     in-out property <AttrMinMax> ppt_pl1_spl: {
         min: 0,
@@ -194,6 +195,21 @@ export component PageSystem inherits Rectangle {
                         SystemPageData.cb_boot_sound(SystemPageData.boot_sound)
                     }
                 }
+            }
+
+            if !SystemPageData.asus_armoury_loaded: Rectangle {
+              VerticalBox {
+                Text {
+                  text: @tr("The asus-armoury driver is not loaded");
+                  font-size: 16px;
+                  horizontal-alignment: TextHorizontalAlignment.center;
+                }
+                Text {
+                  text: @tr("For advanced features you will require a kernel with this driver added.");
+                  font-size: 16px;
+                  horizontal-alignment: TextHorizontalAlignment.center;
+                }
+              }
             }
 
             if SystemPageData.ppt_pl1_spl.val != -1: SystemSlider {

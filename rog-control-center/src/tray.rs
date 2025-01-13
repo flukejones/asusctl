@@ -127,7 +127,6 @@ async fn set_tray_icon_and_tip(
         };
 
         tray.update(|tray: &mut AsusTray| {
-            dbg!(power);
             tray.current_icon = icon;
             tray.current_title = format!(
                 "ROG: gpu mode = {mode:?}, gpu power =
