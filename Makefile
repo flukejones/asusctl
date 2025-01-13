@@ -19,7 +19,7 @@ LEDCFG := aura_support.ron
 
 SRC := Cargo.toml Cargo.lock Makefile $(shell find -type f -wholename '**/src/*.rs')
 
-STRIP_BINARIES ?= 1
+STRIP_BINARIES ?= 0
 
 DEBUG ?= 0
 ifeq ($(DEBUG),0)
