@@ -203,7 +203,7 @@ macro_rules! std_config_load {
         /// new one created
         pub trait $trait_name<$($generic),*>
         where
-            Self: $crate::StdConfig +std::fmt::Debug + DeserializeOwned + Serialize,
+            Self: $crate::StdConfig + DeserializeOwned + Serialize,
             $($generic: DeserializeOwned + Into<Self>),*
         {
             fn load(mut self) -> Self {

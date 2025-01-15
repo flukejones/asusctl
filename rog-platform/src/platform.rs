@@ -204,7 +204,6 @@ impl Display for GpuMode {
     PartialEq,
     Eq,
     PartialOrd,
-    Ord,
     Hash,
     Clone,
     Copy,

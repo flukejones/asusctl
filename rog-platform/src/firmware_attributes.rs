@@ -230,7 +230,20 @@ define_attribute_getters!(
 
 /// CamelCase names of the properties. Intended for use with DBUS
 #[repr(u8)]
-#[derive(Clone, Copy, Serialize, Deserialize, Type, Value, OwnedValue, PartialEq, PartialOrd)]
+#[derive(
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    Type,
+    Value,
+    OwnedValue,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+)]
 #[zvariant(signature = "s")]
 pub enum FirmwareAttribute {
     ApuMem = 0,

@@ -619,29 +619,28 @@ impl ReloadAndNotify for CtrlPlatform {
         data: Self::Data
     ) -> Result<(), RogError> {
         let mut config = self.config.lock().await;
-        if *config != data {
-            info!("asusd.ron updated externally, reloading and updating internal copy");
+        info!("asusd.ron updated externally, reloading and updating internal copy");
 
-            let mut base_charge_control_end_threshold = None;
+        let mut base_charge_control_end_threshold = None;
 
-            if self.power.has_charge_control_end_threshold() {
-                let limit = data.charge_control_end_threshold;
-                warn!("setting charge_control_end_threshold to {limit}");
-                self.power.set_charge_control_end_threshold(limit)?;
-                self.charge_control_end_threshold_changed(signal_context)
-                    .await?;
-                base_charge_control_end_threshold = (config.base_charge_control_end_threshold > 0)
-                    .then_some(config.base_charge_control_end_threshold)
-                    .or(Some(limit));
-            }
+        if self.power.has_charge_control_end_threshold() {
+            let limit = data.charge_control_end_threshold;
+            warn!("setting charge_control_end_threshold to {limit}");
+            self.power.set_charge_control_end_threshold(limit)?;
+            self.charge_control_end_threshold_changed(signal_context)
+                .await?;
+            base_charge_control_end_threshold = (config.base_charge_control_end_threshold > 0)
+                .then_some(config.base_charge_control_end_threshold)
+                .or(Some(limit));
+        }
 
-            if self.platform.has_throttle_thermal_policy()
-                && config.throttle_policy_linked_epp != data.throttle_policy_linked_epp
-            {
-                // TODO: extra stuff
-            }
+        if self.platform.has_throttle_thermal_policy()
+            && config.throttle_policy_linked_epp != data.throttle_policy_linked_epp
+        {
+            // TODO: extra stuff
+        }
 
-            macro_rules! reload_and_notify {
+        macro_rules! reload_and_notify {
                 ($property:tt, $prop_name:literal) => {
                     concat_idents::concat_idents!(has = has_, $property {
                         if self.platform.has() && config.$property != data.$property {
@@ -654,15 +653,14 @@ impl ReloadAndNotify for CtrlPlatform {
                     })
                 }
             }
-            reload_and_notify!(mini_led_mode, "mini_led_mode");
-            reload_and_notify!(panel_od, "panel_od");
-            reload_and_notify!(boot_sound, "boot_sound");
-            // reload_and_notify!(throttle_thermal_policy, "throttle_thermal_policy");
+        reload_and_notify!(mini_led_mode, "mini_led_mode");
+        reload_and_notify!(panel_od, "panel_od");
+        reload_and_notify!(boot_sound, "boot_sound");
+        // reload_and_notify!(throttle_thermal_policy, "throttle_thermal_policy");
 
-            *config = data;
-            config.base_charge_control_end_threshold =
-                base_charge_control_end_threshold.unwrap_or_default();
-        }
+        *config = data;
+        config.base_charge_control_end_threshold =
+            base_charge_control_end_threshold.unwrap_or_default();
 
         Ok(())
     }

@@ -4,6 +4,12 @@
 
 ## [v6.1.0-rc2]
 
+### Changed
+- Bug fixes
+- Partial support for per-profile CPU tunings (WIP)
+
+## [v6.1.0-rc2]
+
 ### Added
 - asus-armoury driver support. WIP, will be adjusted/changed further
 - More "Slash" display controls
