@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-## [v6.1.0-rc2]
+## [v6.1.0-rc3]
 
 ### Changed
 - Bug fixes
