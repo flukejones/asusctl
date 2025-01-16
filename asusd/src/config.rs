@@ -1,23 +1,20 @@
 use std::collections::HashMap;
 
 use config_traits::{StdConfig, StdConfigLoad1};
+use rog_platform::asus_armoury::FirmwareAttribute;
 use rog_platform::cpu::CPUEPP;
-use rog_platform::firmware_attributes::FirmwareAttribute;
 use rog_platform::platform::ThrottlePolicy;
 use serde::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "asusd.ron";
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, PartialEq)]
 pub struct Config {
     // The current charge limit applied
     pub charge_control_end_threshold: u8,
     /// Save charge limit for restoring
     #[serde(skip)]
     pub base_charge_control_end_threshold: u8,
-    pub panel_od: bool,
-    pub boot_sound: bool,
-    pub mini_led_mode: bool,
     pub disable_nvidia_powerd_on_battery: bool,
     /// An optional command/script to run when power is changed to AC
     pub ac_command: String,
@@ -40,7 +37,8 @@ pub struct Config {
     pub throttle_balanced_epp: CPUEPP,
     /// The energy_performance_preference for this throttle/platform profile
     pub throttle_performance_epp: CPUEPP,
-    pub tunings: HashMap<ThrottlePolicy, HashMap<FirmwareAttribute, i32>>,
+    pub profile_tunings: HashMap<ThrottlePolicy, HashMap<FirmwareAttribute, i32>>,
+    pub armoury_settings: HashMap<FirmwareAttribute, i32>,
     /// Temporary state for AC/Batt
     #[serde(skip)]
     pub last_power_plugged: u8
@@ -51,9 +49,6 @@ impl Default for Config {
         Self {
             charge_control_end_threshold: 100,
             base_charge_control_end_threshold: 100,
-            panel_od: false,
-            boot_sound: false,
-            mini_led_mode: false,
             disable_nvidia_powerd_on_battery: true,
             ac_command: Default::default(),
             bat_command: Default::default(),
@@ -65,7 +60,8 @@ impl Default for Config {
             throttle_quiet_epp: CPUEPP::Power,
             throttle_balanced_epp: CPUEPP::BalancePower,
             throttle_performance_epp: CPUEPP::Performance,
-            tunings: HashMap::default(),
+            profile_tunings: HashMap::default(),
+            armoury_settings: HashMap::default(),
             last_power_plugged: Default::default()
         }
     }
@@ -140,12 +136,9 @@ impl From<Config601> for Config {
             // Restore the base charge limit
             charge_control_end_threshold: c.charge_control_end_threshold,
             base_charge_control_end_threshold: c.charge_control_end_threshold,
-            panel_od: c.panel_od,
-            boot_sound: c.boot_sound,
             disable_nvidia_powerd_on_battery: c.disable_nvidia_powerd_on_battery,
             ac_command: c.ac_command,
             bat_command: c.bat_command,
-            mini_led_mode: c.mini_led_mode,
             throttle_policy_linked_epp: c.throttle_policy_linked_epp,
             throttle_policy_on_battery: c.throttle_policy_on_battery,
             change_throttle_policy_on_battery: c.change_throttle_policy_on_battery,
@@ -155,7 +148,8 @@ impl From<Config601> for Config {
             throttle_balanced_epp: c.throttle_balanced_epp,
             throttle_performance_epp: c.throttle_performance_epp,
             last_power_plugged: c.last_power_plugged,
-            tunings: HashMap::default()
+            profile_tunings: HashMap::default(),
+            armoury_settings: HashMap::default()
         }
     }
 }

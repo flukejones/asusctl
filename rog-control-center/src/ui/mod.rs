@@ -26,7 +26,7 @@ macro_rules! set_ui_callbacks {
         let handle_copy = $handle.as_weak();
         let proxy_copy = $proxy.clone();
         let data = $handle.global::<$data>();
-        concat_idents::concat_idents!(on_set = on_set_, $proxy_fn {
+        concat_idents::concat_idents!(on_set = on_cb_, $proxy_fn {
         data.on_set(move |value| {
             let proxy_copy = proxy_copy.clone();
             let handle_copy = handle_copy.clone();

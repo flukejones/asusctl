@@ -11,7 +11,6 @@ use std::time::Duration;
 
 use log::{debug, error, info, warn};
 use notify_rust::{Hint, Notification, Timeout, Urgency};
-use rog_dbus::zbus_platform::PlatformProxy;
 use rog_platform::platform::GpuMode;
 use rog_platform::power::AsusPower;
 use serde::{Deserialize, Serialize};
@@ -154,39 +153,41 @@ pub fn start_notifications(
     };
 
     // GPU MUX Mode notif
-    let enabled_notifications_copy = config.clone();
-    tokio::spawn(async move {
-        let conn = zbus::Connection::system().await.map_err(|e| {
-            error!("zbus signal: receive_notify_gpu_mux_mode: {e}");
-            e
-        })?;
-        let proxy = PlatformProxy::new(&conn).await.map_err(|e| {
-            error!("zbus signal: receive_notify_gpu_mux_mode: {e}");
-            e
-        })?;
+    // TODO: need to get armoury attrs and iter to find
+    // let enabled_notifications_copy = config.clone();
+    // tokio::spawn(async move {
+    //     let conn = zbus::Connection::system().await.map_err(|e| {
+    //         error!("zbus signal: receive_notify_gpu_mux_mode: {e}");
+    //         e
+    //     })?;
+    //     let proxy = PlatformProxy::new(&conn).await.map_err(|e| {
+    //         error!("zbus signal: receive_notify_gpu_mux_mode: {e}");
+    //         e
+    //     })?;
 
-        let mut actual_mux_mode = GpuMode::Error;
-        if let Ok(mode) = proxy.gpu_mux_mode().await {
-            actual_mux_mode = GpuMode::from(mode);
-        }
+    //     let mut actual_mux_mode = GpuMode::Error;
+    //     if let Ok(mode) = proxy.gpu_mux_mode().await {
+    //         actual_mux_mode = GpuMode::from(mode);
+    //     }
 
-        info!("Started zbus signal thread: receive_notify_gpu_mux_mode");
-        while let Some(e) = proxy.receive_gpu_mux_mode_changed().await.next().await {
-            if let Ok(config) = enabled_notifications_copy.lock() {
-                if !config.notifications.enabled || !config.notifications.receive_notify_gfx {
-                    continue;
-                }
-            }
-            if let Ok(out) = e.get().await {
-                let mode = GpuMode::from(out);
-                if mode == actual_mux_mode {
-                    continue;
-                }
-                do_mux_notification("Reboot required. BIOS GPU MUX mode set to", &mode).ok();
-            }
-        }
-        Ok::<(), zbus::Error>(())
-    });
+    //     info!("Started zbus signal thread: receive_notify_gpu_mux_mode");
+    //     while let Some(e) =
+    // proxy.receive_gpu_mux_mode_changed().await.next().await {         if let
+    // Ok(config) = enabled_notifications_copy.lock() {             if
+    // !config.notifications.enabled || !config.notifications.receive_notify_gfx {
+    //                 continue;
+    //             }
+    //         }
+    //         if let Ok(out) = e.get().await {
+    //             let mode = GpuMode::from(out);
+    //             if mode == actual_mux_mode {
+    //                 continue;
+    //             }
+    //             do_mux_notification("Reboot required. BIOS GPU MUX mode set to",
+    // &mode).ok();         }
+    //     }
+    //     Ok::<(), zbus::Error>(())
+    // });
 
     let enabled_notifications_copy = config.clone();
     // GPU Mode change/action notif

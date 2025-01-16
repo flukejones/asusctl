@@ -39,7 +39,7 @@ pub fn setup_anime_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
 
                     let handle_copy = handle.as_weak();
                     let anime_copy = anime.clone();
-                    global.on_set_builtin_animations(move |boot, awake, sleep, shutdown| {
+                    global.on_cb_builtin_animations(move |boot, awake, sleep, shutdown| {
                         let handle_copy = handle_copy.clone();
                         let anime_copy = anime_copy.clone();
                         tokio::spawn(async move {

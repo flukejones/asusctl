@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::{PlatformError, Result};
-use crate::{attr_bool, attr_string, attr_u8, to_device};
+use crate::{attr_string, attr_u8, to_device};
 
 /// The "platform" device provides access to things like:
 /// - `dgpu_disable`
@@ -24,16 +24,6 @@ pub struct RogPlatform {
 }
 
 impl RogPlatform {
-    attr_bool!("dgpu_disable", path);
-
-    attr_bool!("egpu_enable", path);
-
-    attr_u8!("gpu_mux_mode", path);
-
-    attr_bool!("panel_od", path);
-
-    attr_bool!("mini_led_mode", path);
-
     attr_u8!(
         /// This is technically the same as `platform_profile` since both are
         /// tied in-kernel
@@ -45,12 +35,6 @@ impl RogPlatform {
         /// The acpi platform_profile support
         "platform_profile",
         pp_path
-    );
-
-    attr_bool!(
-        /// Control the POST animation "FWOOoosh" sound
-        "boot_sound",
-        path
     );
 
     pub fn new() -> Result<Self> {

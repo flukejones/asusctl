@@ -1,20 +1,20 @@
+use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
 
 use ::zbus::export::futures_util::lock::Mutex;
 use config_traits::StdConfig;
-use log::error;
-use rog_platform::firmware_attributes::{
-    AttrValue, Attribute, FirmwareAttribute, FirmwareAttributes
-};
+use log::{debug, error, info};
+use rog_platform::asus_armoury::{AttrValue, Attribute, FirmwareAttribute, FirmwareAttributes};
 use rog_platform::platform::{RogPlatform, ThrottlePolicy};
 use serde::{Deserialize, Serialize};
+use zbus::object_server::SignalEmitter;
 use zbus::zvariant::{ObjectPath, OwnedObjectPath, OwnedValue, Type, Value};
 use zbus::{fdo, interface, Connection};
 
 use crate::config::Config;
 use crate::error::RogError;
-use crate::ASUS_ZBUS_PATH;
+use crate::{Reloadable, ASUS_ZBUS_PATH};
 
 const MOD_NAME: &str = "asus_armoury";
 
@@ -28,6 +28,7 @@ fn dbus_path_for_attr(attr_name: &str) -> OwnedObjectPath {
     ObjectPath::from_str_unchecked(&format!("{ASUS_ZBUS_PATH}/{MOD_NAME}/{attr_name}")).into()
 }
 
+#[derive(Clone)]
 pub struct AsusArmouryAttribute {
     attr: Attribute,
     config: Arc<Mutex<Config>>,
@@ -44,10 +45,7 @@ impl AsusArmouryAttribute {
         }
     }
 
-    pub async fn start_tasks(self, connection: &Connection) -> Result<(), RogError> {
-        // self.reload()
-        //     .await
-        //     .unwrap_or_else(|err| warn!("Controller error: {}", err));
+    pub async fn move_to_zbus(self, connection: &Connection) -> Result<(), RogError> {
         let path = dbus_path_for_attr(self.attr.name());
         connection
             .object_server()
@@ -55,6 +53,60 @@ impl AsusArmouryAttribute {
             .await
             .map_err(|e| error!("Couldn't add server at path: {path}, {e:?}"))
             .ok();
+        Ok(())
+    }
+
+    async fn watch_and_notify(
+        &mut self,
+        signal_ctxt: SignalEmitter<'static>
+    ) -> Result<(), RogError> {
+        use zbus::export::futures_util::StreamExt;
+
+        let ctrl = self.clone();
+        let name = self.name();
+        match self.attr.get_watcher() {
+            Ok(watch) => {
+                let name = <&str>::from(name);
+                tokio::spawn(async move {
+                    let mut buffer = [0; 32];
+                    watch
+                        .into_event_stream(&mut buffer)
+                        .unwrap()
+                        .for_each(|_| async {
+                            debug!("{} changed", name);
+                            ctrl.current_value_changed(&signal_ctxt).await.ok();
+                        })
+                        .await;
+                });
+            }
+            Err(e) => info!(
+                "inotify watch failed: {}. You can ignore this if your device does not support \
+                 the feature",
+                e
+            )
+        }
+
+        Ok(())
+    }
+}
+
+impl crate::Reloadable for AsusArmouryAttribute {
+    async fn reload(&mut self) -> Result<(), RogError> {
+        info!("Reloading {}", self.attr.name());
+        let profile: ThrottlePolicy =
+            ThrottlePolicy::from_str(self.platform.get_platform_profile()?.as_str())?;
+        if let Some(tunings) = self.config.lock().await.profile_tunings.get(&profile) {
+            if let Some(tune) = tunings.get(&self.name()) {
+                self.attr
+                    .set_current_value(AttrValue::Integer(*tune))
+                    .map_err(|e| {
+                        error!("Could not set value: {e:?}");
+                        e
+                    })?;
+                info!("Set {} to {:?}", self.attr.name(), tune);
+            }
+        }
+
         Ok(())
     }
 }
@@ -157,11 +209,73 @@ impl AsusArmouryAttribute {
                 error!("Could not set value: {e:?}");
                 e
             })?;
-        let profile: ThrottlePolicy =
-            ThrottlePolicy::from_str(self.platform.get_platform_profile()?.as_str())?;
-        if let Some(tunings) = self.config.lock().await.tunings.get_mut(&profile) {
-            if let Some(tune) = tunings.get_mut(&self.name()) {
-                *tune = value;
+
+        if matches!(
+            self.name(),
+            FirmwareAttribute::PptPl1Spl
+                | FirmwareAttribute::PptPl2Sppt
+                | FirmwareAttribute::PptPl3Fppt
+                | FirmwareAttribute::PptFppt
+                | FirmwareAttribute::PptApuSppt
+                | FirmwareAttribute::PptPlatformSppt
+                | FirmwareAttribute::NvDynamicBoost
+                | FirmwareAttribute::NvTempTarget
+                | FirmwareAttribute::DgpuBaseTgp
+                | FirmwareAttribute::DgpuTgp
+        ) {
+            let profile: ThrottlePolicy =
+                ThrottlePolicy::from_str(self.platform.get_platform_profile()?.as_str())?;
+
+            // var here to prevent async deadlock on else clause
+            let has_profile = self
+                .config
+                .lock()
+                .await
+                .profile_tunings
+                .contains_key(&profile);
+            if has_profile {
+                if let Some(tunings) = self.config.lock().await.profile_tunings.get_mut(&profile) {
+                    if let Some(tune) = tunings.get_mut(&self.name()) {
+                        *tune = value;
+                    } else {
+                        tunings.insert(self.name(), value);
+                        debug!("Set tuning config for {} = {:?}", self.attr.name(), value);
+                    }
+                }
+            } else {
+                debug!("Adding tuning config for {}", profile);
+                self.config
+                    .lock()
+                    .await
+                    .profile_tunings
+                    .insert(profile, HashMap::from([(self.name(), value)]));
+                debug!("Set tuning config for {} = {:?}", self.attr.name(), value);
+            }
+        } else {
+            let has_attr = self
+                .config
+                .lock()
+                .await
+                .armoury_settings
+                .contains_key(&self.name());
+            if has_attr {
+                if let Some(setting) = self
+                    .config
+                    .lock()
+                    .await
+                    .armoury_settings
+                    .get_mut(&self.name())
+                {
+                    *setting = value
+                }
+            } else {
+                debug!("Adding config for {}", self.attr.name());
+                self.config
+                    .lock()
+                    .await
+                    .armoury_settings
+                    .insert(self.name(), value);
+                debug!("Set config for {} = {:?}", self.attr.name(), value);
             }
         }
         self.config.lock().await.write();
@@ -170,14 +284,19 @@ impl AsusArmouryAttribute {
 }
 
 pub async fn start_attributes_zbus(
-    server: &Connection,
+    conn: &Connection,
     platform: RogPlatform,
     config: Arc<Mutex<Config>>
 ) -> Result<(), RogError> {
     for attr in FirmwareAttributes::new().attributes() {
-        AsusArmouryAttribute::new(attr.clone(), platform.clone(), config.clone())
-            .start_tasks(server)
-            .await?;
+        let mut attr = AsusArmouryAttribute::new(attr.clone(), platform.clone(), config.clone());
+        attr.reload().await?;
+
+        let path = dbus_path_for_attr(attr.attr.name());
+        let sig = zbus::object_server::SignalEmitter::new(conn, path)?;
+        attr.watch_and_notify(sig).await?;
+
+        attr.move_to_zbus(conn).await?;
     }
     Ok(())
 }

@@ -219,6 +219,14 @@ export component PageSystem inherits Rectangle {
               }
             }
 
+            if SystemPageData.ppt_pl1_spl.val != -1: Rectangle {
+              height: 32px;
+              Text {
+                font-size: 16px;
+                text: @tr("ppt_warning" => "The following settings may not be safe, please take care.");
+              }
+            }
+
             if SystemPageData.ppt_pl1_spl.val != -1: SystemSlider {
                 text: @tr("ppt_pl1_spl" => "PL1, sustained power limit");
                 minimum: SystemPageData.ppt_pl1_spl.min;
@@ -247,8 +255,8 @@ export component PageSystem inherits Rectangle {
                 maximum: SystemPageData.ppt_pl3_fppt.max;
                 value: SystemPageData.ppt_pl3_fppt.val;
                 released => {
-                    SystemPageData.ppt_fppt.val = self.value;
-                    SystemPageData.cb_ppt_fppt(Math.round(self.value))
+                    SystemPageData.ppt_pl3_fppt.val = self.value;
+                    SystemPageData.cb_ppt_pl3_fppt(Math.round(self.value))
                 }
             }
             if SystemPageData.ppt_fppt.val != -1: SystemSlider {

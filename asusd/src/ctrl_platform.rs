@@ -1,11 +1,12 @@
 use std::path::Path;
 use std::process::Command;
+use std::str::FromStr;
 use std::sync::Arc;
 
 use config_traits::StdConfig;
 use log::{debug, error, info, warn};
 use rog_platform::cpu::{CPUControl, CPUGovernor, CPUEPP};
-use rog_platform::platform::{GpuMode, Properties, RogPlatform, ThrottlePolicy};
+use rog_platform::platform::{Properties, RogPlatform, ThrottlePolicy};
 use rog_platform::power::AsusPower;
 use zbus::export::futures_util::lock::Mutex;
 use zbus::fdo::Error as FdoErr;
@@ -14,7 +15,7 @@ use zbus::{interface, Connection};
 
 use crate::config::Config;
 use crate::error::RogError;
-use crate::{task_watch_item, task_watch_item_notify, CtrlTask, ReloadAndNotify};
+use crate::{task_watch_item, CtrlTask, ReloadAndNotify};
 
 const PLATFORM_ZBUS_PATH: &str = "/xyz/ljones";
 
@@ -37,28 +38,6 @@ macro_rules! platform_get_value {
     }
 }
 
-macro_rules! platform_set_value {
-    ($self:ident, $property:tt, $prop_name:literal, $new_value:expr) => {
-        concat_idents::concat_idents!(has = has_, $property {
-            if $self.platform.has() {
-                concat_idents::concat_idents!(set = set_, $property {
-                    $self.platform.set($new_value).map_err(|err| {
-                        error!("RogPlatform: {} {err}", $prop_name);
-                        FdoErr::Failed(format!("RogPlatform: {} {err}", $prop_name))
-                    })?;
-                });
-                let mut lock = $self.config.lock().await;
-                lock.$property = $new_value;
-                lock.write();
-                Ok(())
-            } else {
-                debug!("RogPlatform: {} not supported", $prop_name);
-                Err(FdoErr::NotSupported(format!("RogPlatform: {} not supported", $prop_name)))
-            }
-        })
-    }
-}
-
 #[derive(Clone)]
 pub struct CtrlPlatform {
     power: AsusPower,
@@ -75,12 +54,6 @@ impl CtrlPlatform {
     ) -> Result<Self, RogError> {
         let platform = RogPlatform::new()?;
         let power = AsusPower::new()?;
-
-        if !platform.has_gpu_mux_mode() {
-            info!("G-Sync Switchable Graphics or GPU MUX not detected");
-            info!("Standard graphics switching will still work.");
-        }
-
         let config1 = config.clone();
         let config_path = config_path.to_owned();
 
@@ -144,17 +117,6 @@ impl CtrlPlatform {
         });
 
         Ok(ret_self)
-    }
-
-    fn set_gfx_mode(&self, mode: GpuMode) -> Result<(), RogError> {
-        self.platform.set_gpu_mux_mode(mode.to_mux_attr())?;
-        // self.update_initramfs(enable)?;
-        if mode == GpuMode::Ultimate {
-            info!("Set system-level graphics mode: Dedicated Nvidia");
-        } else {
-            info!("Set system-level graphics mode: Optimus");
-        }
-        Ok(())
     }
 
     async fn restore_charge_limit(&self) {
@@ -315,12 +277,6 @@ impl CtrlPlatform {
             Properties::ChargeControlEndThreshold
         );
 
-        platform_name!(dgpu_disable, Properties::DgpuDisable);
-        platform_name!(gpu_mux_mode, Properties::GpuMuxMode);
-        platform_name!(boot_sound, Properties::PostAnimationSound);
-        platform_name!(panel_od, Properties::PanelOd);
-        platform_name!(mini_led_mode, Properties::MiniLedMode);
-        platform_name!(egpu_enable, Properties::EgpuEnable);
         platform_name!(throttle_thermal_policy, Properties::ThrottlePolicy);
 
         supported
@@ -353,30 +309,6 @@ impl CtrlPlatform {
             self.power.set_charge_control_end_threshold(100)?;
             self.config.lock().await.base_charge_control_end_threshold = base_limit;
             self.config.lock().await.write();
-        }
-        Ok(())
-    }
-
-    #[zbus(property)]
-    fn gpu_mux_mode(&self) -> Result<u8, FdoErr> {
-        self.platform.get_gpu_mux_mode().map_err(|err| {
-            warn!("get_gpu_mux_mode {err}");
-            FdoErr::NotSupported("RogPlatform: set_gpu_mux_mode not supported".to_owned())
-        })
-    }
-
-    #[zbus(property)]
-    async fn set_gpu_mux_mode(&mut self, mode: u8) -> Result<(), FdoErr> {
-        if self.platform.has_gpu_mux_mode() {
-            self.set_gfx_mode(mode.into()).map_err(|err| {
-                warn!("set_gpu_mux_mode {}", err);
-                FdoErr::Failed(format!("RogPlatform: set_gpu_mux_mode: {err}"))
-            })?;
-            self.config.lock().await.write();
-        } else {
-            return Err(FdoErr::NotSupported(
-                "RogPlatform: set_gpu_mux_mode not supported".to_owned()
-            ));
         }
         Ok(())
     }
@@ -549,58 +481,6 @@ impl CtrlPlatform {
         self.config.lock().await.write();
         Ok(())
     }
-
-    /// Get the `panel_od` value from platform. Updates the stored value in
-    /// internal config also.
-    #[zbus(property)]
-    fn panel_od(&self) -> Result<bool, FdoErr> {
-        platform_get_value!(self, panel_od, "panel_od")
-    }
-
-    #[zbus(property)]
-    async fn set_panel_od(&mut self, overdrive: bool) -> Result<(), FdoErr> {
-        platform_set_value!(self, panel_od, "panel_od", overdrive)?;
-        self.config.lock().await.write();
-        Ok(())
-    }
-
-    /// Get the `boot_sound` value from platform. Updates the stored value in
-    /// internal config also.
-    #[zbus(property)]
-    fn boot_sound(&self) -> Result<bool, FdoErr> {
-        platform_get_value!(self, boot_sound, "boot_sound")
-    }
-
-    #[zbus(property)]
-    async fn set_boot_sound(&mut self, on: bool) -> Result<(), FdoErr> {
-        platform_set_value!(self, boot_sound, "boot_sound", on)?;
-        self.config.lock().await.write();
-        Ok(())
-    }
-
-    /// Get the `panel_od` value from platform. Updates the stored value in
-    /// internal config also.
-    #[zbus(property)]
-    fn mini_led_mode(&self) -> Result<bool, FdoErr> {
-        platform_get_value!(self, mini_led_mode, "mini_led_mode")
-    }
-
-    #[zbus(property)]
-    async fn set_mini_led_mode(&mut self, on: bool) -> Result<(), FdoErr> {
-        platform_set_value!(self, mini_led_mode, "mini_led_mode", on)?;
-        self.config.lock().await.write();
-        Ok(())
-    }
-
-    #[zbus(property)]
-    fn dgpu_disable(&self) -> Result<bool, FdoErr> {
-        platform_get_value!(self, dgpu_disable, "dgpu_disable")
-    }
-
-    #[zbus(property)]
-    fn egpu_enable(&self) -> Result<bool, FdoErr> {
-        platform_get_value!(self, egpu_enable, "egpu_enable")
-    }
 }
 
 impl crate::ZbusRun for CtrlPlatform {
@@ -619,49 +499,44 @@ impl ReloadAndNotify for CtrlPlatform {
         data: Self::Data
     ) -> Result<(), RogError> {
         let mut config = self.config.lock().await;
-        info!("asusd.ron updated externally, reloading and updating internal copy");
+        if *config != data {
+            info!("asusd.ron updated externally, reloading and updating internal copy");
 
-        let mut base_charge_control_end_threshold = None;
+            let mut base_charge_control_end_threshold = None;
 
-        if self.power.has_charge_control_end_threshold() {
-            let limit = data.charge_control_end_threshold;
-            warn!("setting charge_control_end_threshold to {limit}");
-            self.power.set_charge_control_end_threshold(limit)?;
-            self.charge_control_end_threshold_changed(signal_context)
-                .await?;
-            base_charge_control_end_threshold = (config.base_charge_control_end_threshold > 0)
-                .then_some(config.base_charge_control_end_threshold)
-                .or(Some(limit));
-        }
-
-        if self.platform.has_throttle_thermal_policy()
-            && config.throttle_policy_linked_epp != data.throttle_policy_linked_epp
-        {
-            // TODO: extra stuff
-        }
-
-        macro_rules! reload_and_notify {
-                ($property:tt, $prop_name:literal) => {
-                    concat_idents::concat_idents!(has = has_, $property {
-                        if self.platform.has() && config.$property != data.$property {
-                            concat_idents::concat_idents!(set = set_, $property {
-                            self.platform
-                                .set(data.$property)?;});
-                            concat_idents::concat_idents!(changed = $property, _changed {
-                            self.changed(signal_context).await?;});
-                        }
-                    })
-                }
+            if self.power.has_charge_control_end_threshold()
+                && data.charge_control_end_threshold != config.charge_control_end_threshold
+            {
+                let limit = data.charge_control_end_threshold;
+                warn!("setting charge_control_end_threshold to {limit}");
+                self.power.set_charge_control_end_threshold(limit)?;
+                self.charge_control_end_threshold_changed(signal_context)
+                    .await?;
+                base_charge_control_end_threshold = (config.base_charge_control_end_threshold > 0)
+                    .then_some(config.base_charge_control_end_threshold)
+                    .or(Some(limit));
             }
-        reload_and_notify!(mini_led_mode, "mini_led_mode");
-        reload_and_notify!(panel_od, "panel_od");
-        reload_and_notify!(boot_sound, "boot_sound");
-        // reload_and_notify!(throttle_thermal_policy, "throttle_thermal_policy");
 
-        *config = data;
-        config.base_charge_control_end_threshold =
-            base_charge_control_end_threshold.unwrap_or_default();
+            if self.platform.has_throttle_thermal_policy()
+                && config.throttle_policy_linked_epp != data.throttle_policy_linked_epp
+            {
+                let profile: ThrottlePolicy =
+                    ThrottlePolicy::from_str(self.platform.get_platform_profile()?.as_str())?;
 
+                let epp = match profile {
+                    ThrottlePolicy::Balanced => data.throttle_balanced_epp,
+                    ThrottlePolicy::Performance => data.throttle_performance_epp,
+                    ThrottlePolicy::Quiet => data.throttle_quiet_epp
+                };
+                warn!("setting epp to {epp:?}");
+                self.check_and_set_epp(epp, true);
+            }
+            // reload_and_notify!(throttle_thermal_policy, "throttle_thermal_policy");
+
+            *config = data;
+            config.base_charge_control_end_threshold =
+                base_charge_control_end_threshold.unwrap_or_default();
+        }
         Ok(())
     }
 }
@@ -678,22 +553,6 @@ impl crate::Reloadable for CtrlPlatform {
             warn!("No charge_control_end_threshold found")
         }
 
-        macro_rules! reload {
-            ($property:tt, $prop_name:literal) => {
-                concat_idents::concat_idents!(has = has_, $property {
-                  if self.platform.has() {
-                        concat_idents::concat_idents!(set = set_, $property {
-                        self.platform
-                            .set(self.config.lock().await.$property)?;});
-
-                    }
-                })
-            }
-        }
-        reload!(mini_led_mode, "mini_led_mode");
-        reload!(panel_od, "panel_od");
-        reload!(boot_sound, "boot_sound");
-
         if let Ok(power_plugged) = self.power.get_online() {
             self.config.lock().await.last_power_plugged = power_plugged;
             if self.platform.has_throttle_thermal_policy() {
@@ -709,20 +568,7 @@ impl crate::Reloadable for CtrlPlatform {
 }
 
 impl CtrlPlatform {
-    task_watch_item!(panel_od "panel_od" platform);
-
-    task_watch_item!(mini_led_mode "mini_led_mode" platform);
-
     task_watch_item!(charge_control_end_threshold "charge_control_end_threshold" power);
-
-    task_watch_item_notify!(boot_sound platform);
-
-    task_watch_item_notify!(dgpu_disable platform);
-
-    task_watch_item_notify!(egpu_enable platform);
-
-    // NOTE: see note further below
-    task_watch_item_notify!(gpu_mux_mode platform);
 }
 
 impl CtrlTask for CtrlPlatform {
@@ -738,17 +584,6 @@ impl CtrlTask for CtrlPlatform {
             move |sleeping| {
                 let platform1 = platform1.clone();
                 async move {
-                    info!("RogPlatform reloading panel_od");
-                    if !sleeping && platform1.platform.has_panel_od() {
-                        platform1
-                            .platform
-                            .set_panel_od(platform1.config.lock().await.panel_od)
-                            .map_err(|err| {
-                                warn!("CtrlCharge: panel_od {}", err);
-                                err
-                            })
-                            .ok();
-                    }
                     // This block is commented out due to some kind of issue reported. Maybe the
                     // desktops used were storing a value whcih was then read here.
                     // Don't store it on suspend, assume that the current config setting is desired
@@ -788,17 +623,6 @@ impl CtrlTask for CtrlPlatform {
                 async move {
                     info!("RogPlatform reloading panel_od");
                     let lock = platform2.config.lock().await;
-                    if !shutting_down && platform2.platform.has_panel_od() {
-                        platform2
-                            .platform
-                            .set_panel_od(lock.panel_od)
-                            .map_err(|err| {
-                                warn!("CtrlCharge: panel_od {}", err);
-                                err
-                            })
-                            .ok();
-                    }
-
                     if shutting_down
                         && platform2.power.has_charge_control_end_threshold()
                         && lock.base_charge_control_end_threshold > 0
@@ -843,18 +667,8 @@ impl CtrlTask for CtrlPlatform {
 
         // This spawns a new task for every item.
         // TODO: find a better way to manage this
-        self.watch_panel_od(signal_ctxt.clone()).await?;
-        self.watch_mini_led_mode(signal_ctxt.clone()).await?;
         self.watch_charge_control_end_threshold(signal_ctxt.clone())
             .await?;
-
-        self.watch_dgpu_disable(signal_ctxt.clone()).await?;
-        self.watch_egpu_enable(signal_ctxt.clone()).await?;
-
-        // NOTE: Can't have this as a watch because on a write to it, it reverts back to
-        // booted-with value  as it does not actually change until reboot.
-        self.watch_gpu_mux_mode(signal_ctxt.clone()).await?;
-        self.watch_boot_sound(signal_ctxt.clone()).await?;
 
         let watch_throttle_thermal_policy = self.platform.monitor_throttle_thermal_policy()?;
         let ctrl = self.clone();

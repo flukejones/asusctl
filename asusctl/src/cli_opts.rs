@@ -49,8 +49,6 @@ pub enum CliCommand {
     Slash(SlashCommand),
     #[options(name = "scsi", help = "Manage SCSI external drive")]
     Scsi(ScsiCommand),
-    #[options(help = "Change bios settings")]
-    PlatformOld(PlatformCommand),
     #[options(
         help = "Change platform settings. This is a new interface exposed by the asus-armoury \
                 driver, some of the settings will be the same as the older platform interface"
@@ -92,39 +90,6 @@ pub struct LedModeCommand {
 pub struct GraphicsCommand {
     #[options(help = "print help message")]
     pub help: bool
-}
-
-#[derive(Options, Debug)]
-pub struct PlatformCommand {
-    #[options(help = "print help message")]
-    pub help: bool,
-    #[options(
-        meta = "",
-        short = "S",
-        no_long,
-        help = "set bios POST sound: asusctl -S <true/false>"
-    )]
-    pub post_sound_set: Option<bool>,
-    #[options(no_long, short = "s", help = "read bios POST sound")]
-    pub post_sound_get: bool,
-    #[options(
-        meta = "",
-        short = "D",
-        no_long,
-        help = "Switch GPU MUX mode: 0 = Discrete, 1 = Optimus, reboot required"
-    )]
-    pub gpu_mux_mode_set: Option<u8>,
-    #[options(no_long, short = "d", help = "get GPU mode")]
-    pub gpu_mux_mode_get: bool,
-    #[options(
-        meta = "",
-        short = "O",
-        no_long,
-        help = "Set device panel overdrive <true/false>"
-    )]
-    pub panel_overdrive_set: Option<bool>,
-    #[options(no_long, short = "o", help = "get panel overdrive")]
-    pub panel_overdrive_get: bool
 }
 
 #[derive(Options, Debug)]

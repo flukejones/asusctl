@@ -17,7 +17,7 @@ export component PageAbout inherits VerticalLayout {
 
             Text {
                 wrap: TextWrap.word-wrap;
-                text: "You will require these patches: https://lore.kernel.org/platform-driver-x86/20240404001652.86207-1-luke@ljones.dev/, they have been merged upstream for kernel 6.10. The main thing is that the PPT settings will apply without them, but the read/back will fail";
+                text: "You will require a kernel built with my work from here: https://github.com/flukejones/linux";
             }
 
             Text {
@@ -28,19 +28,7 @@ export component PageAbout inherits VerticalLayout {
             }
 
             Text {
-                text: "- [x] Theme the widgets";
-            }
-
-            Text {
-                text: "- [x] Add a fullscreen mode (cli arg)";
-            }
-
-            Text {
-                text: "- [x] Disable aura items depending if mode supports or not";
-            }
-
-            Text {
-                text: "- [x] Add fan curve graph controls";
+                text: "- [ ] Theme the widgets";
             }
 
             Text {
@@ -48,11 +36,15 @@ export component PageAbout inherits VerticalLayout {
             }
 
             Text {
-                text: "- [ ] Supergfx control";
+                text: "- [ ] Include fan speeds, temps in a bottom bar";
             }
 
             Text {
-                text: "- [ ] Include fan speeds, temps in a bottom bar";
+                text: "- [ ] Slash control";
+            }
+
+            Text {
+                text: "- [ ] Supergfx control";
             }
 
             Text {

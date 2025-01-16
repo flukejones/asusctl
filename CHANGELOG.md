@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Changed
+- Bug fix: UI was setting incorrect value for FPPT
+- Bug fix: Re-add callbacks for the throttle and epp settings in UI
+- Strip out all outdated and unsafe tuning stuff
+
 ## [v6.1.0-rc3]
 
 ### Changed

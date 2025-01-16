@@ -65,12 +65,12 @@ async fn find_aura_iface() -> Result<AuraProxy<'static>, Box<dyn std::error::Err
 }
 
 pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
-    ui.global::<AuraPageData>().on_set_hex_from_colour(|c| {
+    ui.global::<AuraPageData>().on_cb_hex_from_colour(|c| {
         format!("#{:02X}{:02X}{:02X}", c.red(), c.green(), c.blue()).into()
     });
 
     ui.global::<AuraPageData>()
-        .on_set_hex_to_colour(|s| decode_hex(s.as_str()).into());
+        .on_cb_hex_to_colour(|s| decode_hex(s.as_str()).into());
 
     let handle = ui.as_weak();
     tokio::spawn(async move {
@@ -189,7 +189,7 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
             .upgrade_in_event_loop(|handle| {
                 handle
                     .global::<AuraPageData>()
-                    .on_set_led_power(move |power| {
+                    .on_cb_led_power(move |power| {
                         let handle_copy = handle_copy.clone();
                         let proxy_copy = aura.clone();
                         let power: LaptopAuraPower = power.into();

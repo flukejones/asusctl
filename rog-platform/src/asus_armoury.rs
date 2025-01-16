@@ -157,6 +157,25 @@ impl Attribute {
             default_value, possible_values, min_value, max_value, scalar_increment
         )
     }
+
+    pub fn get_watcher(&self) -> Result<inotify::Inotify, PlatformError> {
+        let path = self.base_path.join("current_value");
+        if let Some(path) = path.to_str() {
+            let inotify = inotify::Inotify::init()?;
+            inotify
+                .watches()
+                .add(path, inotify::WatchMask::MODIFY)
+                .map_err(|e| {
+                    if e.kind() == std::io::ErrorKind::NotFound {
+                        PlatformError::AttrNotFound(self.name().to_string())
+                    } else {
+                        PlatformError::IoPath(path.to_string(), e)
+                    }
+                })?;
+            return Ok(inotify);
+        }
+        Err(PlatformError::AttrNotFound(self.name().to_string()))
+    }
 }
 
 pub struct FirmwareAttributes {

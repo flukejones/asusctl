@@ -2,7 +2,7 @@
 //!
 //! `zbus-xmlgen system xyz.ljones.Asusd
 //! /xyz/ljones/asus_armoury/nv_temp_target`
-use rog_platform::firmware_attributes::FirmwareAttribute;
+use rog_platform::asus_armoury::FirmwareAttribute;
 use zbus::proxy;
 #[proxy(
     interface = "xyz.ljones.AsusArmoury",

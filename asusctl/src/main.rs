@@ -21,7 +21,7 @@ use rog_dbus::zbus_aura::AuraProxyBlocking;
 use rog_dbus::zbus_fan_curves::FanCurvesProxyBlocking;
 use rog_dbus::zbus_platform::PlatformProxyBlocking;
 use rog_dbus::zbus_slash::SlashProxyBlocking;
-use rog_platform::platform::{GpuMode, Properties, ThrottlePolicy};
+use rog_platform::platform::{Properties, ThrottlePolicy};
 use rog_profiles::error::ProfileError;
 use rog_scsi::AuraMode;
 use rog_slash::SlashMode;
@@ -186,9 +186,6 @@ fn do_parsed(
         Some(CliCommand::Anime(cmd)) => handle_anime(cmd)?,
         Some(CliCommand::Slash(cmd)) => handle_slash(cmd)?,
         Some(CliCommand::Scsi(cmd)) => handle_scsi(cmd)?,
-        Some(CliCommand::PlatformOld(cmd)) => {
-            handle_platform_properties(&conn, supported_properties, cmd)?
-        }
         Some(CliCommand::Armoury(cmd)) => handle_armoury_command(cmd)?,
         None => {
             if (!parsed.show_supported
@@ -1004,70 +1001,6 @@ fn handle_fan_curve(
         }
     }
 
-    Ok(())
-}
-
-fn handle_platform_properties(
-    conn: &Connection,
-    supported: &[Properties],
-    cmd: &PlatformCommand
-) -> Result<(), Box<dyn std::error::Error>> {
-    {
-        if (cmd.gpu_mux_mode_set.is_none()
-            && !cmd.gpu_mux_mode_get
-            && cmd.post_sound_set.is_none()
-            && !cmd.post_sound_get
-            && cmd.panel_overdrive_set.is_none()
-            && !cmd.panel_overdrive_get)
-            || cmd.help
-        {
-            println!("Missing arg or command\n");
-
-            let usage: Vec<String> = PlatformCommand::usage()
-                .lines()
-                .map(|s| s.to_owned())
-                .collect();
-
-            for line in usage.iter().filter(|line| {
-                line.contains("sound") && supported.contains(&Properties::PostAnimationSound)
-                    || line.contains("GPU") && supported.contains(&Properties::GpuMuxMode)
-                    || line.contains("panel") && supported.contains(&Properties::PanelOd)
-            }) {
-                println!("{}", line);
-            }
-        }
-
-        let proxy = PlatformProxyBlocking::new(conn)?;
-
-        if let Some(opt) = cmd.post_sound_set {
-            proxy.set_boot_sound(opt)?;
-        }
-        if cmd.post_sound_get {
-            let res = proxy.boot_sound()?;
-            println!("Bios POST sound on: {}", res);
-        }
-
-        if let Some(opt) = cmd.gpu_mux_mode_set {
-            println!("Rebuilding initrd to include drivers");
-            proxy.set_gpu_mux_mode(GpuMode::from_mux(opt))?;
-            println!(
-                "The mode change is not active until you reboot, on boot the bios will make the \
-                 required change"
-            );
-        }
-        if cmd.gpu_mux_mode_get {
-            let res = proxy.gpu_mux_mode()?;
-            println!("Bios GPU MUX: {:?}", res);
-        }
-
-        if let Some(opt) = cmd.panel_overdrive_set {
-            proxy.set_panel_od(opt)?;
-        }
-        if cmd.panel_overdrive_get {
-            let res = proxy.panel_od()?;
-            println!("Panel overdrive on: {}", res);
-        }
-    }
     Ok(())
 }
 

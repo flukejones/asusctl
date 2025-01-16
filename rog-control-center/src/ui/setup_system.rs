@@ -4,14 +4,14 @@ use concat_idents::concat_idents;
 use log::error;
 use rog_dbus::asus_armoury::AsusArmouryProxy;
 use rog_dbus::zbus_platform::{PlatformProxy, PlatformProxyBlocking};
-use rog_platform::firmware_attributes::FirmwareAttribute;
+use rog_platform::asus_armoury::FirmwareAttribute;
 use rog_platform::platform::Properties;
 use slint::ComponentHandle;
 
 use super::show_toast;
 use crate::config::Config;
 use crate::zbus_proxies::find_iface_async;
-use crate::{set_ui_props_async, AttrMinMax, MainWindow, SystemPageData};
+use crate::{set_ui_callbacks, set_ui_props_async, AttrMinMax, MainWindow, SystemPageData};
 
 const MINMAX: AttrMinMax = AttrMinMax {
     min: 0,
@@ -35,6 +35,7 @@ pub fn setup_system_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
     ui.global::<SystemPageData>().set_mini_led_mode(-1);
     ui.global::<SystemPageData>().set_ppt_pl1_spl(MINMAX);
     ui.global::<SystemPageData>().set_ppt_pl2_sppt(MINMAX);
+    ui.global::<SystemPageData>().set_ppt_pl3_fppt(MINMAX);
     ui.global::<SystemPageData>().set_ppt_fppt(MINMAX);
     ui.global::<SystemPageData>().set_ppt_apu_sppt(MINMAX);
     ui.global::<SystemPageData>().set_ppt_platform_sppt(MINMAX);
@@ -142,7 +143,6 @@ macro_rules! setup_external {
                 use zbus::export::futures_util::StreamExt;
                 while let Some(e) = x.next().await {
                     if let Ok(out) = e.get().await {
-                        dbg!(out);
                         handle_copy
                             .upgrade_in_event_loop(move |handle| {
                                 handle
@@ -216,8 +216,8 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
             SystemPageData,
             charge_control_end_threshold
         );
-        set_ui_props_async!(handle, platform, SystemPageData, throttle_thermal_policy);
 
+        set_ui_props_async!(handle, platform, SystemPageData, throttle_thermal_policy);
         set_ui_props_async!(handle, platform, SystemPageData, throttle_policy_linked_epp);
         set_ui_props_async!(handle, platform, SystemPageData, throttle_balanced_epp);
         set_ui_props_async!(handle, platform, SystemPageData, throttle_performance_epp);
@@ -236,6 +236,72 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
             SystemPageData,
             change_throttle_policy_on_ac
         );
+
+        handle
+            .upgrade_in_event_loop(move |handle| {
+                set_ui_callbacks!(handle,
+                    SystemPageData(as f32),
+                    platform.charge_control_end_threshold(as u8),
+                    "Charge limit successfully set to {}",
+                    "Setting Charge limit failed"
+                );
+                set_ui_callbacks!(handle,
+                    SystemPageData(as i32),
+                    platform.throttle_thermal_policy(.into()),
+                    "Throttle policy set to {}",
+                    "Setting Throttle policy failed"
+                );
+                set_ui_callbacks!(handle,
+                    SystemPageData(as i32),
+                    platform.throttle_balanced_epp(.into()),
+                    "Throttle policy EPP set to {}",
+                    "Setting Throttle policy EPP failed"
+                );
+                set_ui_callbacks!(handle,
+                    SystemPageData(as i32),
+                    platform.throttle_performance_epp(.into()),
+                    "Throttle policy EPP set to {}",
+                    "Setting Throttle policy EPP failed"
+                );
+                set_ui_callbacks!(handle,
+                    SystemPageData(as i32),
+                    platform.throttle_quiet_epp(.into()),
+                    "Throttle policy EPP set to {}",
+                    "Setting Throttle policy EPP failed"
+                );
+                set_ui_callbacks!(
+                    handle,
+                    SystemPageData(),
+                    platform.throttle_policy_linked_epp(),
+                    "Throttle policy linked to EPP: {}",
+                    "Setting Throttle policy linked to EPP failed"
+                );
+                set_ui_callbacks!(handle,
+                    SystemPageData(as i32),
+                    platform.throttle_policy_on_ac(.into()),
+                    "Throttle policy on AC set to {}",
+                    "Setting Throttle policy on AC failed"
+                );
+                set_ui_callbacks!(handle,
+                    SystemPageData(as bool),
+                    platform.change_throttle_policy_on_ac(.into()),
+                    "Throttle policy on AC enabled: {}",
+                    "Setting Throttle policy on AC failed"
+                );
+                set_ui_callbacks!(handle,
+                    SystemPageData(as i32),
+                    platform.throttle_policy_on_battery(.into()),
+                    "Throttle policy on abttery set to {}",
+                    "Setting Throttle policy on battery failed"
+                );
+                set_ui_callbacks!(handle,
+                    SystemPageData(as bool),
+                    platform.change_throttle_policy_on_battery(.into()),
+                    "Throttle policy on battery enabled: {}",
+                    "Setting Throttle policy on AC failed"
+                );
+            })
+            .ok();
 
         let armoury_attrs;
         if let Ok(attrs) = find_iface_async::<AsusArmouryProxy>("xyz.ljones.AsusArmoury").await {

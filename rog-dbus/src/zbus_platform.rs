@@ -21,7 +21,7 @@
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
 use rog_platform::cpu::CPUEPP;
-use rog_platform::platform::{GpuMode, Properties, ThrottlePolicy};
+use rog_platform::platform::{Properties, ThrottlePolicy};
 use zbus::proxy;
 
 #[proxy(
@@ -47,80 +47,6 @@ pub trait Platform {
 
     // Toggle one-shot charge to 100%
     fn one_shot_full_charge(&self) -> zbus::Result<()>;
-
-    /// DgpuDisable property
-    #[zbus(property)]
-    fn dgpu_disable(&self) -> zbus::Result<bool>;
-
-    /// EgpuEnable property
-    #[zbus(property)]
-    fn egpu_enable(&self) -> zbus::Result<bool>;
-
-    /// GpuMuxMode property
-    #[zbus(property)]
-    fn gpu_mux_mode(&self) -> zbus::Result<u8>;
-    #[zbus(property)]
-    fn set_gpu_mux_mode(&self, value: GpuMode) -> zbus::Result<()>;
-
-    /// MiniLedMode property
-    #[zbus(property)]
-    fn mini_led_mode(&self) -> zbus::Result<bool>;
-    #[zbus(property)]
-    fn set_mini_led_mode(&self, value: bool) -> zbus::Result<()>;
-
-    /// NvDynamicBoost property
-    #[zbus(property)]
-    fn nv_dynamic_boost(&self) -> zbus::Result<u8>;
-    #[zbus(property)]
-    fn set_nv_dynamic_boost(&self, value: u8) -> zbus::Result<()>;
-
-    /// NvTempTarget property
-    #[zbus(property)]
-    fn nv_temp_target(&self) -> zbus::Result<u8>;
-    #[zbus(property)]
-    fn set_nv_temp_target(&self, value: u8) -> zbus::Result<()>;
-
-    /// PanelOd property
-    #[zbus(property)]
-    fn panel_od(&self) -> zbus::Result<bool>;
-    #[zbus(property)]
-    fn set_panel_od(&self, value: bool) -> zbus::Result<()>;
-
-    /// PostAnimationSound property
-    #[zbus(property)]
-    fn boot_sound(&self) -> zbus::Result<bool>;
-    #[zbus(property)]
-    fn set_boot_sound(&self, value: bool) -> zbus::Result<()>;
-
-    /// PptApuSppt property
-    #[zbus(property)]
-    fn ppt_apu_sppt(&self) -> zbus::Result<u8>;
-    #[zbus(property)]
-    fn set_ppt_apu_sppt(&self, value: u8) -> zbus::Result<()>;
-
-    /// PptFppt property
-    #[zbus(property)]
-    fn ppt_fppt(&self) -> zbus::Result<u8>;
-    #[zbus(property)]
-    fn set_ppt_fppt(&self, value: u8) -> zbus::Result<()>;
-
-    /// PptPl1Spl property
-    #[zbus(property)]
-    fn ppt_pl1_spl(&self) -> zbus::Result<u8>;
-    #[zbus(property)]
-    fn set_ppt_pl1_spl(&self, value: u8) -> zbus::Result<()>;
-
-    /// PptPl2Sppt property
-    #[zbus(property)]
-    fn ppt_pl2_sppt(&self) -> zbus::Result<u8>;
-    #[zbus(property)]
-    fn set_ppt_pl2_sppt(&self, value: u8) -> zbus::Result<()>;
-
-    /// PptPlatformSppt property
-    #[zbus(property)]
-    fn ppt_platform_sppt(&self) -> zbus::Result<u8>;
-    #[zbus(property)]
-    fn set_ppt_platform_sppt(&self, value: u8) -> zbus::Result<()>;
 
     /// ThrottleBalancedEpp property
     #[zbus(property)]

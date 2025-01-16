@@ -1,9 +1,9 @@
 //! This crate functions as a wrapper of all the relevant ASUS functionality
 //! on ROG, Strix, and TUF laptops.
 
+pub mod asus_armoury;
 pub mod cpu;
 pub mod error;
-pub mod firmware_attributes;
 pub mod hid_raw;
 pub mod keyboard_led;
 pub(crate) mod macros;
