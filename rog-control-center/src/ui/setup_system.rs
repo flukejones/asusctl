@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use concat_idents::concat_idents;
-use log::error;
+use log::{debug, error};
 use rog_dbus::asus_armoury::AsusArmouryProxy;
 use rog_dbus::zbus_platform::{PlatformProxy, PlatformProxyBlocking};
 use rog_platform::asus_armoury::FirmwareAttribute;
@@ -16,7 +16,7 @@ use crate::{set_ui_callbacks, set_ui_props_async, AttrMinMax, MainWindow, System
 const MINMAX: AttrMinMax = AttrMinMax {
     min: 0,
     max: 0,
-    val: -1.0
+    val: -1.0,
 };
 
 pub fn setup_system_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
@@ -159,7 +159,7 @@ macro_rules! setup_external {
 
 // For handling external value changes
 macro_rules! setup_minmax_external {
-    ($property:ident, $handle:expr, $attr:expr) => {
+    ($property:ident, $handle:expr, $attr:expr, $platform:expr) => {
         let handle_copy = $handle.as_weak();
         let proxy_copy = $attr.clone();
         tokio::spawn(async move {
@@ -179,6 +179,31 @@ macro_rules! setup_minmax_external {
                         })
                         .ok();
                     });
+                }
+            }
+        });
+
+        let handle_copy = $handle.as_weak();
+        let proxy_copy = $attr.clone();
+        let platform_proxy_copy = $platform.clone();
+        tokio::spawn(async move {
+            let mut x = platform_proxy_copy.receive_throttle_thermal_policy_changed().await;
+            use zbus::export::futures_util::StreamExt;
+            while let Some(e) = x.next().await {
+                if let Ok(_) = e.get().await {
+                    debug!("receive_throttle_thermal_policy_changed, getting new {}", stringify!(attr));
+                    let min = proxy_copy.min_value().await.unwrap();
+                    let max = proxy_copy.max_value().await.unwrap();
+                    let val = proxy_copy.current_value().await.unwrap() as f32;
+                    handle_copy
+                        .upgrade_in_event_loop(move |handle| {
+                            concat_idents!(setter = set_, $property {
+                                handle
+                                    .global::<SystemPageData>()
+                                    .setter(AttrMinMax { min, max, val });
+                            });
+                        })
+                        .ok();
                 }
             }
         });
@@ -237,66 +262,67 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
             change_throttle_policy_on_ac
         );
 
+        let platform_copy = platform.clone();
         handle
             .upgrade_in_event_loop(move |handle| {
                 set_ui_callbacks!(handle,
                     SystemPageData(as f32),
-                    platform.charge_control_end_threshold(as u8),
+                    platform_copy.charge_control_end_threshold(as u8),
                     "Charge limit successfully set to {}",
                     "Setting Charge limit failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as i32),
-                    platform.throttle_thermal_policy(.into()),
+                    platform_copy.throttle_thermal_policy(.into()),
                     "Throttle policy set to {}",
                     "Setting Throttle policy failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as i32),
-                    platform.throttle_balanced_epp(.into()),
+                    platform_copy.throttle_balanced_epp(.into()),
                     "Throttle policy EPP set to {}",
                     "Setting Throttle policy EPP failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as i32),
-                    platform.throttle_performance_epp(.into()),
+                    platform_copy.throttle_performance_epp(.into()),
                     "Throttle policy EPP set to {}",
                     "Setting Throttle policy EPP failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as i32),
-                    platform.throttle_quiet_epp(.into()),
+                    platform_copy.throttle_quiet_epp(.into()),
                     "Throttle policy EPP set to {}",
                     "Setting Throttle policy EPP failed"
                 );
                 set_ui_callbacks!(
                     handle,
                     SystemPageData(),
-                    platform.throttle_policy_linked_epp(),
+                    platform_copy.throttle_policy_linked_epp(),
                     "Throttle policy linked to EPP: {}",
                     "Setting Throttle policy linked to EPP failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as i32),
-                    platform.throttle_policy_on_ac(.into()),
+                    platform_copy.throttle_policy_on_ac(.into()),
                     "Throttle policy on AC set to {}",
                     "Setting Throttle policy on AC failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as bool),
-                    platform.change_throttle_policy_on_ac(.into()),
+                    platform_copy.change_throttle_policy_on_ac(.into()),
                     "Throttle policy on AC enabled: {}",
                     "Setting Throttle policy on AC failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as i32),
-                    platform.throttle_policy_on_battery(.into()),
+                    platform_copy.throttle_policy_on_battery(.into()),
                     "Throttle policy on abttery set to {}",
                     "Setting Throttle policy on battery failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as bool),
-                    platform.change_throttle_policy_on_battery(.into()),
+                    platform_copy.change_throttle_policy_on_battery(.into()),
                     "Throttle policy on battery enabled: {}",
                     "Setting Throttle policy on AC failed"
                 );
@@ -323,6 +349,7 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
         for attr in armoury_attrs {
             if let Ok(value) = attr.current_value().await {
                 let name = attr.name().await.unwrap();
+                let platform = platform.clone();
                 handle
                     .upgrade_in_event_loop(move |handle| match name {
                         FirmwareAttribute::ApuMem => {}
@@ -331,42 +358,42 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                         FirmwareAttribute::PptPl1Spl => {
                             init_minmax_property!(ppt_pl1_spl, handle, attr);
                             setup_callback!(ppt_pl1_spl, handle, attr, i32);
-                            setup_minmax_external!(ppt_pl1_spl, handle, attr);
+                            setup_minmax_external!(ppt_pl1_spl, handle, attr, platform);
                         }
                         FirmwareAttribute::PptPl2Sppt => {
                             init_minmax_property!(ppt_pl2_sppt, handle, attr);
                             setup_callback!(ppt_pl2_sppt, handle, attr, i32);
-                            setup_minmax_external!(ppt_pl2_sppt, handle, attr);
+                            setup_minmax_external!(ppt_pl2_sppt, handle, attr, platform);
                         }
                         FirmwareAttribute::PptPl3Fppt => {
                             init_minmax_property!(ppt_pl3_fppt, handle, attr);
                             setup_callback!(ppt_pl3_fppt, handle, attr, i32);
-                            setup_minmax_external!(ppt_pl3_fppt, handle, attr);
+                            setup_minmax_external!(ppt_pl3_fppt, handle, attr, platform);
                         }
                         FirmwareAttribute::PptFppt => {
                             init_minmax_property!(ppt_fppt, handle, attr);
                             setup_callback!(ppt_fppt, handle, attr, i32);
-                            setup_minmax_external!(ppt_fppt, handle, attr);
+                            setup_minmax_external!(ppt_fppt, handle, attr, platform);
                         }
                         FirmwareAttribute::PptApuSppt => {
                             init_minmax_property!(ppt_apu_sppt, handle, attr);
                             setup_callback!(ppt_apu_sppt, handle, attr, i32);
-                            setup_minmax_external!(ppt_apu_sppt, handle, attr);
+                            setup_minmax_external!(ppt_apu_sppt, handle, attr, platform);
                         }
                         FirmwareAttribute::PptPlatformSppt => {
                             init_minmax_property!(ppt_platform_sppt, handle, attr);
                             setup_callback!(ppt_platform_sppt, handle, attr, i32);
-                            setup_minmax_external!(ppt_platform_sppt, handle, attr);
+                            setup_minmax_external!(ppt_platform_sppt, handle, attr, platform);
                         }
                         FirmwareAttribute::NvDynamicBoost => {
                             init_minmax_property!(nv_dynamic_boost, handle, attr);
                             setup_callback!(nv_dynamic_boost, handle, attr, i32);
-                            setup_minmax_external!(nv_dynamic_boost, handle, attr);
+                            setup_minmax_external!(nv_dynamic_boost, handle, attr, platform);
                         }
                         FirmwareAttribute::NvTempTarget => {
                             init_minmax_property!(nv_temp_target, handle, attr);
                             setup_callback!(nv_temp_target, handle, attr, i32);
-                            setup_minmax_external!(nv_temp_target, handle, attr);
+                            setup_minmax_external!(nv_temp_target, handle, attr, platform);
                         }
                         FirmwareAttribute::DgpuBaseTgp => {}
                         FirmwareAttribute::DgpuTgp => {}
@@ -390,7 +417,7 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                         FirmwareAttribute::MiniLedMode => {
                             init_property!(mini_led_mode, handle, value, i32);
                             setup_callback!(mini_led_mode, handle, attr, i32);
-                            setup_external!(mini_led_mode, i32, handle, attr, value)
+                            setup_external!(mini_led_mode, i32, handle, attr, value);
                         }
                         FirmwareAttribute::PendingReboot => {}
                         FirmwareAttribute::None => {}

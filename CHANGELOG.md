@@ -8,6 +8,7 @@
 - Bug fix: Fix UI settigns for AniMe Matrix display
 - Bug fix: better handle missing tray (for example gnome)
 - Strip out all outdated and unsafe tuning stuff
+- Allow each performance profile to have different PPT settings
 
 ## [v6.1.0-rc3]
 
