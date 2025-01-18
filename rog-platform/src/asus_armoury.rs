@@ -292,6 +292,24 @@ pub enum FirmwareAttribute {
     None = 24
 }
 
+impl FirmwareAttribute {
+    pub fn is_ppt(&self) -> bool {
+        matches!(
+            self,
+            FirmwareAttribute::PptPl1Spl
+                | FirmwareAttribute::PptPl2Sppt
+                | FirmwareAttribute::PptPl3Fppt
+                | FirmwareAttribute::PptFppt
+                | FirmwareAttribute::PptApuSppt
+                | FirmwareAttribute::PptPlatformSppt
+                | FirmwareAttribute::NvDynamicBoost
+                | FirmwareAttribute::NvTempTarget
+                | FirmwareAttribute::DgpuBaseTgp
+                | FirmwareAttribute::DgpuTgp
+        )
+    }
+}
+
 impl From<&str> for FirmwareAttribute {
     fn from(s: &str) -> Self {
         match s {

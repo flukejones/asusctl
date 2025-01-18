@@ -210,19 +210,7 @@ impl AsusArmouryAttribute {
                 e
             })?;
 
-        if matches!(
-            self.name(),
-            FirmwareAttribute::PptPl1Spl
-                | FirmwareAttribute::PptPl2Sppt
-                | FirmwareAttribute::PptPl3Fppt
-                | FirmwareAttribute::PptFppt
-                | FirmwareAttribute::PptApuSppt
-                | FirmwareAttribute::PptPlatformSppt
-                | FirmwareAttribute::NvDynamicBoost
-                | FirmwareAttribute::NvTempTarget
-                | FirmwareAttribute::DgpuBaseTgp
-                | FirmwareAttribute::DgpuTgp
-        ) {
+        if self.name().is_ppt() {
             let profile: ThrottlePolicy =
                 ThrottlePolicy::from_str(self.platform.get_platform_profile()?.as_str())?;
 
