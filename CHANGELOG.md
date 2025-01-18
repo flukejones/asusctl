@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+- Per-AC/DC, per-profile tunings enabled (Battery vs AC power +  platform profile)
+
 ## [v6.1.0-rc4]
 
 ### Changed

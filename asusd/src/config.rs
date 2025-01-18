@@ -7,6 +7,7 @@ use rog_platform::platform::ThrottlePolicy;
 use serde::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "asusd.ron";
+type Tunings = HashMap<ThrottlePolicy, HashMap<FirmwareAttribute, i32>>;
 
 #[derive(Deserialize, Serialize, PartialEq)]
 pub struct Config {
@@ -37,11 +38,27 @@ pub struct Config {
     pub throttle_balanced_epp: CPUEPP,
     /// The energy_performance_preference for this throttle/platform profile
     pub throttle_performance_epp: CPUEPP,
-    pub profile_tunings: HashMap<ThrottlePolicy, HashMap<FirmwareAttribute, i32>>,
+    pub ac_profile_tunings: Tunings,
+    pub dc_profile_tunings: Tunings,
     pub armoury_settings: HashMap<FirmwareAttribute, i32>,
     /// Temporary state for AC/Batt
     #[serde(skip)]
     pub last_power_plugged: u8
+}
+
+impl Config {
+    pub fn select_tunings(
+        &mut self,
+        power_plugged: bool,
+        profile: ThrottlePolicy
+    ) -> &mut HashMap<FirmwareAttribute, i32> {
+        let config = if power_plugged {
+            &mut self.ac_profile_tunings
+        } else {
+            &mut self.dc_profile_tunings
+        };
+        config.entry(profile).or_insert_with(HashMap::new)
+    }
 }
 
 impl Default for Config {
@@ -60,7 +77,8 @@ impl Default for Config {
             throttle_quiet_epp: CPUEPP::Power,
             throttle_balanced_epp: CPUEPP::BalancePower,
             throttle_performance_epp: CPUEPP::Performance,
-            profile_tunings: HashMap::default(),
+            ac_profile_tunings: HashMap::default(),
+            dc_profile_tunings: HashMap::default(),
             armoury_settings: HashMap::default(),
             last_power_plugged: Default::default()
         }
@@ -148,7 +166,8 @@ impl From<Config601> for Config {
             throttle_balanced_epp: c.throttle_balanced_epp,
             throttle_performance_epp: c.throttle_performance_epp,
             last_power_plugged: c.last_power_plugged,
-            profile_tunings: HashMap::default(),
+            ac_profile_tunings: HashMap::default(),
+            dc_profile_tunings: HashMap::default(),
             armoury_settings: HashMap::default()
         }
     }

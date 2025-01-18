@@ -178,6 +178,7 @@ impl Attribute {
     }
 }
 
+#[derive(Clone)]
 pub struct FirmwareAttributes {
     attrs: Vec<Attribute>
 }

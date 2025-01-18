@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use config_traits::StdConfig;
 use log::{debug, error, info, warn};
-use rog_platform::asus_armoury::{AttrValue, FirmwareAttribute, FirmwareAttributes};
+use rog_platform::asus_armoury::FirmwareAttributes;
 use rog_platform::cpu::{CPUControl, CPUGovernor, CPUEPP};
 use rog_platform::platform::{Properties, RogPlatform, ThrottlePolicy};
 use rog_platform::power::AsusPower;
@@ -14,6 +14,7 @@ use zbus::fdo::Error as FdoErr;
 use zbus::object_server::SignalEmitter;
 use zbus::{interface, Connection};
 
+use crate::asus_armoury::set_config_or_default;
 use crate::config::Config;
 use crate::error::RogError;
 use crate::{task_watch_item, CtrlTask, ReloadAndNotify};
@@ -661,6 +662,24 @@ impl CtrlTask for CtrlPlatform {
                     if platform3.power.has_charge_control_end_threshold() && !power_plugged {
                         platform3.restore_charge_limit().await;
                     }
+
+                    if let Ok(profile) = platform3
+                        .platform
+                        .get_throttle_thermal_policy()
+                        .map(ThrottlePolicy::from)
+                        .map_err(|e| {
+                            error!("Platform: get_throttle_thermal_policy error: {e}");
+                        })
+                    {
+                        let attrs = FirmwareAttributes::new();
+                        set_config_or_default(
+                            &attrs,
+                            &mut *platform3.config.lock().await,
+                            power_plugged,
+                            profile
+                        )
+                        .await;
+                    }
                 }
             }
         )
@@ -698,35 +717,21 @@ impl CtrlTask for CtrlPlatform {
                         ctrl.throttle_thermal_policy_changed(&signal_ctxt)
                             .await
                             .ok();
-                        for attr in attrs.attributes().iter() {
-                            let name: FirmwareAttribute = attr.name().into();
-                            if name.is_ppt() {
-                                let mut do_default = false;
-                                if let Some(tunings) =
-                                    ctrl.config.lock().await.profile_tunings.get(&profile)
-                                {
-                                    if let Some(tune) = tunings.get(&name) {
-                                        attr.set_current_value(AttrValue::Integer(*tune))
-                                            .map_err(|e| {
-                                                error!("Failed to set {}: {e}", <&str>::from(name));
-                                            })
-                                            .ok();
-                                    } else {
-                                        do_default = true;
-                                    }
-                                } else {
-                                    do_default = true;
-                                }
-                                if do_default {
-                                    let default = attr.default_value().clone();
-                                    attr.set_current_value(default)
-                                        .map_err(|e| {
-                                            error!("Failed to set {}: {e}", <&str>::from(name));
-                                        })
-                                        .ok();
-                                }
-                            }
-                        }
+                        let power_plugged = ctrl
+                            .power
+                            .get_online()
+                            .map_err(|e| {
+                                error!("Could not get power status: {e:?}");
+                                e
+                            })
+                            .unwrap_or_default();
+                        set_config_or_default(
+                            &attrs,
+                            &mut *ctrl.config.lock().await,
+                            power_plugged == 1,
+                            profile
+                        )
+                        .await;
                     }
                 }
             }

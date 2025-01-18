@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -7,6 +6,7 @@ use config_traits::StdConfig;
 use log::{debug, error, info};
 use rog_platform::asus_armoury::{AttrValue, Attribute, FirmwareAttribute, FirmwareAttributes};
 use rog_platform::platform::{RogPlatform, ThrottlePolicy};
+use rog_platform::power::AsusPower;
 use serde::{Deserialize, Serialize};
 use zbus::object_server::SignalEmitter;
 use zbus::zvariant::{ObjectPath, OwnedObjectPath, OwnedValue, Type, Value};
@@ -33,15 +33,22 @@ pub struct AsusArmouryAttribute {
     attr: Attribute,
     config: Arc<Mutex<Config>>,
     /// platform control required here for access to PPD or Throttle profile
-    platform: RogPlatform
+    platform: RogPlatform,
+    power: AsusPower
 }
 
 impl AsusArmouryAttribute {
-    pub fn new(attr: Attribute, platform: RogPlatform, config: Arc<Mutex<Config>>) -> Self {
+    pub fn new(
+        attr: Attribute,
+        platform: RogPlatform,
+        power: AsusPower,
+        config: Arc<Mutex<Config>>
+    ) -> Self {
         Self {
             attr,
             config,
-            platform
+            platform,
+            power
         }
     }
 
@@ -95,7 +102,20 @@ impl crate::Reloadable for AsusArmouryAttribute {
         info!("Reloading {}", self.attr.name());
         let profile: ThrottlePolicy =
             ThrottlePolicy::from_str(self.platform.get_platform_profile()?.as_str())?;
-        if let Some(tunings) = self.config.lock().await.profile_tunings.get(&profile) {
+        let power_plugged = self
+            .power
+            .get_online()
+            .map_err(|e| {
+                error!("Could not get power status: {e:?}");
+                e
+            })
+            .unwrap_or_default();
+        let config = if power_plugged == 1 {
+            &self.config.lock().await.ac_profile_tunings
+        } else {
+            &self.config.lock().await.dc_profile_tunings
+        };
+        if let Some(tunings) = config.get(&profile) {
             if let Some(tune) = tunings.get(&self.name()) {
                 self.attr
                     .set_current_value(AttrValue::Integer(*tune))
@@ -214,29 +234,21 @@ impl AsusArmouryAttribute {
             let profile: ThrottlePolicy =
                 ThrottlePolicy::from_str(self.platform.get_platform_profile()?.as_str())?;
 
-            // var here to prevent async deadlock on else clause
-            let has_profile = self
-                .config
-                .lock()
-                .await
-                .profile_tunings
-                .contains_key(&profile);
-            if has_profile {
-                if let Some(tunings) = self.config.lock().await.profile_tunings.get_mut(&profile) {
-                    if let Some(tune) = tunings.get_mut(&self.name()) {
-                        *tune = value;
-                    } else {
-                        tunings.insert(self.name(), value);
-                        debug!("Set tuning config for {} = {:?}", self.attr.name(), value);
-                    }
-                }
+            let power_plugged = self
+                .power
+                .get_online()
+                .map_err(|e| {
+                    error!("Could not get power status: {e:?}");
+                    e
+                })
+                .unwrap_or_default();
+            let mut config = self.config.lock().await;
+            let tunings = config.select_tunings(power_plugged == 1, profile);
+
+            if let Some(tune) = tunings.get_mut(&self.name()) {
+                *tune = value;
             } else {
-                debug!("Adding tuning config for {}", profile);
-                self.config
-                    .lock()
-                    .await
-                    .profile_tunings
-                    .insert(profile, HashMap::from([(self.name(), value)]));
+                tunings.insert(self.name(), value);
                 debug!("Set tuning config for {} = {:?}", self.attr.name(), value);
             }
         } else {
@@ -274,10 +286,16 @@ impl AsusArmouryAttribute {
 pub async fn start_attributes_zbus(
     conn: &Connection,
     platform: RogPlatform,
+    power: AsusPower,
     config: Arc<Mutex<Config>>
 ) -> Result<(), RogError> {
     for attr in FirmwareAttributes::new().attributes() {
-        let mut attr = AsusArmouryAttribute::new(attr.clone(), platform.clone(), config.clone());
+        let mut attr = AsusArmouryAttribute::new(
+            attr.clone(),
+            platform.clone(),
+            power.clone(),
+            config.clone()
+        );
         attr.reload().await?;
 
         let path = dbus_path_for_attr(attr.attr.name());
@@ -287,4 +305,42 @@ pub async fn start_attributes_zbus(
         attr.move_to_zbus(conn).await?;
     }
     Ok(())
+}
+
+pub async fn set_config_or_default(
+    attrs: &FirmwareAttributes,
+    config: &mut Config,
+    power_plugged: bool,
+    profile: ThrottlePolicy
+) {
+    for attr in attrs.attributes().iter() {
+        let name: FirmwareAttribute = attr.name().into();
+        if name.is_ppt() {
+            let tunings = config.select_tunings(power_plugged, profile);
+
+            if let Some(tune) = tunings.get(&name) {
+                attr.set_current_value(AttrValue::Integer(*tune))
+                    .map_err(|e| {
+                        error!("Failed to set {}: {e}", <&str>::from(name));
+                    })
+                    .ok();
+            } else {
+                let default = attr.default_value().clone();
+                attr.set_current_value(default.clone())
+                    .map_err(|e| {
+                        error!("Failed to set {}: {e}", <&str>::from(name));
+                    })
+                    .ok();
+                if let AttrValue::Integer(i) = default {
+                    tunings.insert(name, i);
+                    info!(
+                        "Set default tuning config for {} = {:?}",
+                        <&str>::from(name),
+                        i
+                    );
+                    config.write();
+                }
+            }
+        }
+    }
 }
