@@ -1,5 +1,5 @@
 [workspace.package]
-version = "6.1.0-rc3"
+version = "6.1.0-rc4"
 rust-version = "1.82"
 license = "MPL-2.0"
 readme = "README.md"
