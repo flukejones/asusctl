@@ -9,6 +9,7 @@ use aura_cli::{LedPowerCommand1, LedPowerCommand2};
 use dmi_id::DMIID;
 use fan_curve_cli::FanCurveCommand;
 use gumdrop::{Opt, Options};
+use log::error;
 use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType, Vec2};
 use rog_aura::keyboard::{AuraPowerState, LaptopAuraPower};
@@ -42,6 +43,14 @@ mod scsi_cli;
 mod slash_cli;
 
 fn main() {
+    let mut logger = env_logger::Builder::new();
+    logger
+        .parse_default_env()
+        .target(env_logger::Target::Stdout)
+        .format_timestamp(None)
+        .filter_level(log::LevelFilter::Debug)
+        .init();
+
     let self_version = env!("CARGO_PKG_VERSION");
     println!("Starting version {self_version}");
     let args: Vec<String> = args().skip(1).collect();
@@ -163,7 +172,7 @@ where
         return Ok(ctrl);
     }
 
-    Err("No Aura interface".into())
+    Err(format!("Did not find {iface_name}").into())
 }
 
 fn do_parsed(
@@ -367,7 +376,12 @@ fn handle_anime(cmd: &AnimeCommand) -> Result<(), Box<dyn std::error::Error>> {
             println!("\n{}", lst);
         }
     }
-    let animes = find_iface::<AnimeProxyBlocking>("xyz.ljones.Anime")?;
+
+    let animes = find_iface::<AnimeProxyBlocking>("xyz.ljones.Anime").map_err(|e| {
+        error!("Did not find any interface for xyz.ljones.Anime: {e:?}");
+        e
+    })?;
+
     for proxy in animes {
         if let Some(enable) = cmd.enable_display {
             proxy.set_enable_display(enable)?;

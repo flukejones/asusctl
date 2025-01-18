@@ -179,7 +179,9 @@ name = "asusctl"
 version = "6.1.0-rc3"
 dependencies = [
  "dmi_id",
+ "env_logger",
  "gumdrop",
+ "log",
  "rog_anime",
  "rog_aura",
  "rog_dbus",

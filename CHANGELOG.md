@@ -5,6 +5,8 @@
 ### Changed
 - Bug fix: UI was setting incorrect value for FPPT
 - Bug fix: Re-add callbacks for the throttle and epp settings in UI
+- Bug fix: Fix UI settigns for AniMe Matrix display
+- Bug fix: better handle missing tray (for example gnome)
 - Strip out all outdated and unsafe tuning stuff
 
 ## [v6.1.0-rc3]
