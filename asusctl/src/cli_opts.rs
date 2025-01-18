@@ -96,6 +96,9 @@ pub struct GraphicsCommand {
 pub struct ArmouryCommand {
     #[options(help = "print help message")]
     pub help: bool,
-    #[options(free)]
+    #[options(
+        free,
+        help = "append each value name followed by the value to set. `-1` sets to default"
+    )]
     pub free: Vec<String>
 }

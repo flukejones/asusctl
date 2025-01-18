@@ -9,7 +9,7 @@ use aura_cli::{LedPowerCommand1, LedPowerCommand2};
 use dmi_id::DMIID;
 use fan_curve_cli::FanCurveCommand;
 use gumdrop::{Opt, Options};
-use log::error;
+use log::{error, info};
 use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType, Vec2};
 use rog_aura::keyboard::{AuraPowerState, LaptopAuraPower};
@@ -1122,7 +1122,12 @@ fn handle_armoury_command(cmd: &ArmouryCommand) -> Result<(), Box<dyn std::error
                 for attr in attr.iter() {
                     let name = attr.name()?;
                     if <&str>::from(name) == cmd[0] {
-                        attr.set_current_value(cmd[1].parse()?)?;
+                        let mut value: i32 = cmd[1].parse()?;
+                        if value == -1 {
+                            info!("Setting to default");
+                            value = attr.default_value()?;
+                        }
+                        attr.set_current_value(value)?;
                         print_firmware_attr(attr)?;
                     }
                 }

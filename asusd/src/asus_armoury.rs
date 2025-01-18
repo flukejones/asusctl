@@ -118,7 +118,7 @@ impl crate::Reloadable for AsusArmouryAttribute {
         if let Some(tunings) = config.get(&profile) {
             if let Some(tune) = tunings.get(&self.name()) {
                 self.attr
-                    .set_current_value(AttrValue::Integer(*tune))
+                    .set_current_value(&AttrValue::Integer(*tune))
                     .map_err(|e| {
                         error!("Could not set value: {e:?}");
                         e
@@ -179,6 +179,11 @@ impl AsusArmouryAttribute {
         }
     }
 
+    async fn restore_default(&self) -> fdo::Result<()> {
+        self.attr.restore_default()?;
+        Ok(())
+    }
+
     #[zbus(property)]
     async fn min_value(&self) -> i32 {
         match self.attr.min_value() {
@@ -224,7 +229,7 @@ impl AsusArmouryAttribute {
     #[zbus(property)]
     async fn set_current_value(&mut self, value: i32) -> fdo::Result<()> {
         self.attr
-            .set_current_value(AttrValue::Integer(value))
+            .set_current_value(&AttrValue::Integer(value))
             .map_err(|e| {
                 error!("Could not set value: {e:?}");
                 e
@@ -319,20 +324,20 @@ pub async fn set_config_or_default(
             let tunings = config.select_tunings(power_plugged, profile);
 
             if let Some(tune) = tunings.get(&name) {
-                attr.set_current_value(AttrValue::Integer(*tune))
+                attr.set_current_value(&AttrValue::Integer(*tune))
                     .map_err(|e| {
                         error!("Failed to set {}: {e}", <&str>::from(name));
                     })
                     .ok();
             } else {
-                let default = attr.default_value().clone();
-                attr.set_current_value(default.clone())
+                let default = attr.default_value();
+                attr.set_current_value(default)
                     .map_err(|e| {
                         error!("Failed to set {}: {e}", <&str>::from(name));
                     })
                     .ok();
                 if let AttrValue::Integer(i) = default {
-                    tunings.insert(name, i);
+                    tunings.insert(name, *i);
                     info!(
                         "Set default tuning config for {} = {:?}",
                         <&str>::from(name),

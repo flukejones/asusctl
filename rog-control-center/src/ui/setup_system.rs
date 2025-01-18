@@ -132,6 +132,23 @@ macro_rules! setup_callback {
     };
 }
 
+// For handling callbacks from UI value changes
+macro_rules! setup_callback_restore_default {
+    ($property:ident, $handle:expr, $attr:expr) => {
+        let proxy_copy = $attr.clone();
+        concat_idents!(on_callback = on_cb_default_, $property {
+            $handle
+                .global::<SystemPageData>()
+                .on_callback(move || {
+                    let proxy_copy = proxy_copy.clone();
+                    tokio::spawn(async move {
+                        proxy_copy.restore_default().await.ok();
+                    });
+                });
+        });
+    };
+}
+
 macro_rules! setup_external {
     ($property:ident, $type:tt, $handle:expr, $attr:expr, $value:expr) => {{
         // EXTERNAL CHANGES
@@ -358,41 +375,49 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                         FirmwareAttribute::PptPl1Spl => {
                             init_minmax_property!(ppt_pl1_spl, handle, attr);
                             setup_callback!(ppt_pl1_spl, handle, attr, i32);
+                            setup_callback_restore_default!(ppt_pl1_spl, handle, attr);
                             setup_minmax_external!(ppt_pl1_spl, handle, attr, platform);
                         }
                         FirmwareAttribute::PptPl2Sppt => {
                             init_minmax_property!(ppt_pl2_sppt, handle, attr);
                             setup_callback!(ppt_pl2_sppt, handle, attr, i32);
+                            setup_callback_restore_default!(ppt_pl2_sppt, handle, attr);
                             setup_minmax_external!(ppt_pl2_sppt, handle, attr, platform);
                         }
                         FirmwareAttribute::PptPl3Fppt => {
                             init_minmax_property!(ppt_pl3_fppt, handle, attr);
                             setup_callback!(ppt_pl3_fppt, handle, attr, i32);
+                            setup_callback_restore_default!(ppt_pl3_fppt, handle, attr);
                             setup_minmax_external!(ppt_pl3_fppt, handle, attr, platform);
                         }
                         FirmwareAttribute::PptFppt => {
                             init_minmax_property!(ppt_fppt, handle, attr);
                             setup_callback!(ppt_fppt, handle, attr, i32);
+                            setup_callback_restore_default!(ppt_fppt, handle, attr);
                             setup_minmax_external!(ppt_fppt, handle, attr, platform);
                         }
                         FirmwareAttribute::PptApuSppt => {
                             init_minmax_property!(ppt_apu_sppt, handle, attr);
                             setup_callback!(ppt_apu_sppt, handle, attr, i32);
+                            setup_callback_restore_default!(ppt_apu_sppt, handle, attr);
                             setup_minmax_external!(ppt_apu_sppt, handle, attr, platform);
                         }
                         FirmwareAttribute::PptPlatformSppt => {
                             init_minmax_property!(ppt_platform_sppt, handle, attr);
                             setup_callback!(ppt_platform_sppt, handle, attr, i32);
+                            setup_callback_restore_default!(ppt_platform_sppt, handle, attr);
                             setup_minmax_external!(ppt_platform_sppt, handle, attr, platform);
                         }
                         FirmwareAttribute::NvDynamicBoost => {
                             init_minmax_property!(nv_dynamic_boost, handle, attr);
                             setup_callback!(nv_dynamic_boost, handle, attr, i32);
+                            setup_callback_restore_default!(nv_dynamic_boost, handle, attr);
                             setup_minmax_external!(nv_dynamic_boost, handle, attr, platform);
                         }
                         FirmwareAttribute::NvTempTarget => {
                             init_minmax_property!(nv_temp_target, handle, attr);
                             setup_callback!(nv_temp_target, handle, attr, i32);
+                            setup_callback_restore_default!(nv_temp_target, handle, attr);
                             setup_minmax_external!(nv_temp_target, handle, attr, platform);
                         }
                         FirmwareAttribute::DgpuBaseTgp => {}

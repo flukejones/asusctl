@@ -76,11 +76,11 @@ impl Attribute {
     }
 
     /// Write the `current_value` directly to the attribute path
-    pub fn set_current_value(&self, new_value: AttrValue) -> Result<(), PlatformError> {
+    pub fn set_current_value(&self, new_value: &AttrValue) -> Result<(), PlatformError> {
         let path = self.base_path.join("current_value");
 
         let value_str = match new_value {
-            AttrValue::Integer(val) => val.to_string(),
+            AttrValue::Integer(val) => &val.to_string(),
             AttrValue::String(val) => val,
             _ => return Err(PlatformError::InvalidValue)
         };
@@ -92,6 +92,10 @@ impl Attribute {
 
     pub fn default_value(&self) -> &AttrValue {
         &self.default_value
+    }
+
+    pub fn restore_default(&self) -> Result<(), PlatformError> {
+        self.set_current_value(&self.default_value)
     }
 
     pub fn possible_values(&self) -> &AttrValue {
@@ -453,6 +457,6 @@ mod tests {
         if let AttrValue::Integer(val) = &mut val {
             *val = 0;
         }
-        attr.set_current_value(val).unwrap();
+        attr.set_current_value(&val).unwrap();
     }
 }

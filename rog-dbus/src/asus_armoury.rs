@@ -48,4 +48,6 @@ pub trait AsusArmoury {
     /// take. Returns `-1` if not used or set.
     #[zbus(property)]
     fn scalar_increment(&self) -> zbus::Result<i32>;
+
+    async fn restore_default(&self) -> zbus::Result<()>;
 }

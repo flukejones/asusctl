@@ -57,6 +57,7 @@ export global SystemPageData {
         val: 20,
     };
     callback cb_ppt_pl1_spl(int);
+    callback cb_default_ppt_pl1_spl();
 
     in-out property <AttrMinMax> ppt_pl2_sppt: {
         min: 0,
@@ -64,6 +65,7 @@ export global SystemPageData {
         val: 20,
     };
     callback cb_ppt_pl2_sppt(int);
+    callback cb_default_ppt_pl2_sppt();
 
     in-out property <AttrMinMax> ppt_pl3_fppt: {
         min: 0,
@@ -71,6 +73,7 @@ export global SystemPageData {
         val: 20,
     };
     callback cb_ppt_pl3_fppt(int);
+    callback cb_default_ppt_pl3_fppt();
 
     in-out property <AttrMinMax> ppt_fppt: {
         min: 0,
@@ -78,6 +81,7 @@ export global SystemPageData {
         val: 20,
     };
     callback cb_ppt_fppt(int);
+    callback cb_default_ppt_fppt();
 
     in-out property <AttrMinMax> ppt_apu_sppt: {
         min: 0,
@@ -85,6 +89,7 @@ export global SystemPageData {
         val: 20,
     };
     callback cb_ppt_apu_sppt(int);
+    callback cb_default_ppt_apu_sppt();
 
     in-out property <AttrMinMax> ppt_platform_sppt: {
         min: 0,
@@ -92,6 +97,7 @@ export global SystemPageData {
         val: 20,
     };
     callback cb_ppt_platform_sppt(int);
+    callback cb_default_ppt_platform_sppt();
 
     in-out property <AttrMinMax> nv_dynamic_boost: {
         min: 0,
@@ -99,6 +105,7 @@ export global SystemPageData {
         val: 5,
     };
     callback cb_nv_dynamic_boost(int);
+    callback cb_default_nv_dynamic_boost();
 
     in-out property <AttrMinMax> nv_temp_target: {
         min: 0,
@@ -106,6 +113,7 @@ export global SystemPageData {
         val: 75,
     };
     callback cb_nv_temp_target(int);
+    callback cb_default_nv_temp_target();
 }
 
 export component PageSystem inherits Rectangle {
