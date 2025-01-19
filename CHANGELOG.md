@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [v6.1.0-rc6]
+
+### Changed
+- Two small fixes, one for `low-power` profile name, and one for base gpu tdp
+- Move to using platform_profile api only (no throttle_thermal_policy)
+
 ## [v6.1.0-rc5]
 
 ### Changed

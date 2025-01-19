@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::{PlatformError, Result};
-use crate::{attr_string, attr_u8, to_device};
+use crate::{attr_string, to_device};
 
 /// The "platform" device provides access to things like:
 /// - `dgpu_disable`
@@ -24,13 +24,6 @@ pub struct RogPlatform {
 }
 
 impl RogPlatform {
-    attr_u8!(
-        /// This is technically the same as `platform_profile` since both are
-        /// tied in-kernel
-        "throttle_thermal_policy",
-        path
-    );
-
     attr_string!(
         /// The acpi platform_profile support
         "platform_profile",
@@ -193,15 +186,15 @@ impl Display for GpuMode {
     Copy,
 )]
 #[zvariant(signature = "u")]
-/// `throttle_thermal_policy` in asus_wmi
-pub enum ThrottlePolicy {
+/// `platform_profile` in asus_wmi
+pub enum PlatformProfile {
     #[default]
     Balanced = 0,
     Performance = 1,
     Quiet = 2
 }
 
-impl ThrottlePolicy {
+impl PlatformProfile {
     pub const fn next(self) -> Self {
         match self {
             Self::Balanced => Self::Performance,
@@ -219,7 +212,7 @@ impl ThrottlePolicy {
     }
 }
 
-impl From<u8> for ThrottlePolicy {
+impl From<u8> for PlatformProfile {
     fn from(num: u8) -> Self {
         match num {
             0 => Self::Balanced,
@@ -233,52 +226,74 @@ impl From<u8> for ThrottlePolicy {
     }
 }
 
-impl From<i32> for ThrottlePolicy {
+impl From<i32> for PlatformProfile {
     fn from(num: i32) -> Self {
         (num as u8).into()
     }
 }
 
-impl From<ThrottlePolicy> for u8 {
-    fn from(p: ThrottlePolicy) -> Self {
+impl From<PlatformProfile> for u8 {
+    fn from(p: PlatformProfile) -> Self {
         match p {
-            ThrottlePolicy::Balanced => 0,
-            ThrottlePolicy::Performance => 1,
-            ThrottlePolicy::Quiet => 2
+            PlatformProfile::Balanced => 0,
+            PlatformProfile::Performance => 1,
+            PlatformProfile::Quiet => 2
         }
     }
 }
 
-impl From<ThrottlePolicy> for i32 {
-    fn from(p: ThrottlePolicy) -> Self {
+impl From<PlatformProfile> for i32 {
+    fn from(p: PlatformProfile) -> Self {
         <u8>::from(p) as i32
     }
 }
 
-impl From<ThrottlePolicy> for &str {
-    fn from(profile: ThrottlePolicy) -> &'static str {
+impl From<PlatformProfile> for &str {
+    fn from(profile: PlatformProfile) -> &'static str {
         match profile {
-            ThrottlePolicy::Balanced => "balanced",
-            ThrottlePolicy::Performance => "performance",
-            ThrottlePolicy::Quiet => "quiet"
+            PlatformProfile::Balanced => "balanced",
+            PlatformProfile::Performance => "performance",
+            PlatformProfile::Quiet => "quiet"
         }
     }
 }
 
-impl std::str::FromStr for ThrottlePolicy {
+impl From<String> for PlatformProfile {
+    fn from(profile: String) -> Self {
+        Self::from(&profile)
+    }
+}
+
+impl From<&String> for PlatformProfile {
+    fn from(profile: &String) -> Self {
+        match profile.to_ascii_lowercase().trim() {
+            "balanced" => PlatformProfile::Balanced,
+            "performance" => PlatformProfile::Performance,
+            "quiet" => PlatformProfile::Quiet,
+            "low-power" => PlatformProfile::Quiet,
+            _ => {
+                warn!("{profile} is unknown, using ThrottlePolicy::Balanced");
+                PlatformProfile::Balanced
+            }
+        }
+    }
+}
+
+impl std::str::FromStr for PlatformProfile {
     type Err = PlatformError;
 
     fn from_str(profile: &str) -> Result<Self> {
         match profile.to_ascii_lowercase().trim() {
-            "balanced" => Ok(ThrottlePolicy::Balanced),
-            "performance" => Ok(ThrottlePolicy::Performance),
-            "quiet" => Ok(ThrottlePolicy::Quiet),
+            "balanced" => Ok(PlatformProfile::Balanced),
+            "performance" => Ok(PlatformProfile::Performance),
+            "quiet" => Ok(PlatformProfile::Quiet),
+            "low-power" => Ok(PlatformProfile::Quiet),
             _ => Err(PlatformError::NotSupported)
         }
     }
 }
 
-impl Display for ThrottlePolicy {
+impl Display for PlatformProfile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
     }

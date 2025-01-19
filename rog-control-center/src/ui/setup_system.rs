@@ -28,8 +28,7 @@ pub fn setup_system_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
     // Null everything before the setup step
     ui.global::<SystemPageData>()
         .set_charge_control_end_threshold(-1.0);
-    ui.global::<SystemPageData>()
-        .set_throttle_thermal_policy(-1);
+    ui.global::<SystemPageData>().set_platform_profile(-1);
     ui.global::<SystemPageData>().set_panel_overdrive(-1);
     ui.global::<SystemPageData>().set_boot_sound(-1);
     ui.global::<SystemPageData>().set_mini_led_mode(-1);
@@ -204,11 +203,11 @@ macro_rules! setup_minmax_external {
         let proxy_copy = $attr.clone();
         let platform_proxy_copy = $platform.clone();
         tokio::spawn(async move {
-            let mut x = platform_proxy_copy.receive_throttle_thermal_policy_changed().await;
+            let mut x = platform_proxy_copy.receive_platform_profile_changed().await;
             use zbus::export::futures_util::StreamExt;
             while let Some(e) = x.next().await {
                 if let Ok(_) = e.get().await {
-                    debug!("receive_throttle_thermal_policy_changed, getting new {}", stringify!(attr));
+                    debug!("receive_platform_profile_changed, getting new {}", stringify!(attr));
                     let min = proxy_copy.min_value().await.unwrap();
                     let max = proxy_copy.max_value().await.unwrap();
                     let val = proxy_copy.current_value().await.unwrap() as f32;
@@ -259,24 +258,34 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
             charge_control_end_threshold
         );
 
-        set_ui_props_async!(handle, platform, SystemPageData, throttle_thermal_policy);
-        set_ui_props_async!(handle, platform, SystemPageData, throttle_policy_linked_epp);
-        set_ui_props_async!(handle, platform, SystemPageData, throttle_balanced_epp);
-        set_ui_props_async!(handle, platform, SystemPageData, throttle_performance_epp);
-        set_ui_props_async!(handle, platform, SystemPageData, throttle_quiet_epp);
-        set_ui_props_async!(handle, platform, SystemPageData, throttle_policy_on_battery);
+        set_ui_props_async!(handle, platform, SystemPageData, platform_profile);
         set_ui_props_async!(
             handle,
             platform,
             SystemPageData,
-            change_throttle_policy_on_battery
+            platform_profile_linked_epp
         );
-        set_ui_props_async!(handle, platform, SystemPageData, throttle_policy_on_ac);
+        set_ui_props_async!(handle, platform, SystemPageData, profile_balanced_epp);
+        set_ui_props_async!(handle, platform, SystemPageData, profile_performance_epp);
+        set_ui_props_async!(handle, platform, SystemPageData, profile_quiet_epp);
         set_ui_props_async!(
             handle,
             platform,
             SystemPageData,
-            change_throttle_policy_on_ac
+            platform_profile_on_battery
+        );
+        set_ui_props_async!(
+            handle,
+            platform,
+            SystemPageData,
+            change_platform_profile_on_battery
+        );
+        set_ui_props_async!(handle, platform, SystemPageData, platform_profile_on_ac);
+        set_ui_props_async!(
+            handle,
+            platform,
+            SystemPageData,
+            change_platform_profile_on_ac
         );
 
         let platform_copy = platform.clone();
@@ -290,56 +299,56 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as i32),
-                    platform_copy.throttle_thermal_policy(.into()),
+                    platform_copy.platform_profile(.into()),
                     "Throttle policy set to {}",
                     "Setting Throttle policy failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as i32),
-                    platform_copy.throttle_balanced_epp(.into()),
+                    platform_copy.profile_balanced_epp(.into()),
                     "Throttle policy EPP set to {}",
                     "Setting Throttle policy EPP failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as i32),
-                    platform_copy.throttle_performance_epp(.into()),
+                    platform_copy.profile_performance_epp(.into()),
                     "Throttle policy EPP set to {}",
                     "Setting Throttle policy EPP failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as i32),
-                    platform_copy.throttle_quiet_epp(.into()),
+                    platform_copy.profile_quiet_epp(.into()),
                     "Throttle policy EPP set to {}",
                     "Setting Throttle policy EPP failed"
                 );
                 set_ui_callbacks!(
                     handle,
                     SystemPageData(),
-                    platform_copy.throttle_policy_linked_epp(),
+                    platform_copy.platform_profile_linked_epp(),
                     "Throttle policy linked to EPP: {}",
                     "Setting Throttle policy linked to EPP failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as i32),
-                    platform_copy.throttle_policy_on_ac(.into()),
+                    platform_copy.platform_profile_on_ac(.into()),
                     "Throttle policy on AC set to {}",
                     "Setting Throttle policy on AC failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as bool),
-                    platform_copy.change_throttle_policy_on_ac(.into()),
+                    platform_copy.change_platform_profile_on_ac(.into()),
                     "Throttle policy on AC enabled: {}",
                     "Setting Throttle policy on AC failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as i32),
-                    platform_copy.throttle_policy_on_battery(.into()),
+                    platform_copy.platform_profile_on_battery(.into()),
                     "Throttle policy on abttery set to {}",
                     "Setting Throttle policy on battery failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as bool),
-                    platform_copy.change_throttle_policy_on_battery(.into()),
+                    platform_copy.change_platform_profile_on_battery(.into()),
                     "Throttle policy on battery enabled: {}",
                     "Setting Throttle policy on AC failed"
                 );

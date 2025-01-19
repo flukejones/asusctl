@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use log::{error, info};
 use rog_dbus::zbus_fan_curves::FanCurvesProxy;
-use rog_platform::platform::ThrottlePolicy;
+use rog_platform::platform::PlatformProfile;
 use rog_profiles::fan_curve_set::CurveData;
 use slint::{ComponentHandle, Model, Weak};
 
@@ -109,21 +109,21 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
         let handle_copy = handle.clone();
         // Do initial setup
         let Ok(balanced) = fans
-            .fan_curve_data(ThrottlePolicy::Balanced)
+            .fan_curve_data(PlatformProfile::Balanced)
             .await
             .map_err(|e| error!("{e:}"))
         else {
             return;
         };
         let Ok(perf) = fans
-            .fan_curve_data(ThrottlePolicy::Performance)
+            .fan_curve_data(PlatformProfile::Performance)
             .await
             .map_err(|e| error!("{e:}"))
         else {
             return;
         };
         let Ok(quiet) = fans
-            .fan_curve_data(ThrottlePolicy::Quiet)
+            .fan_curve_data(PlatformProfile::Quiet)
             .await
             .map_err(|e| error!("{e:}"))
         else {
@@ -144,21 +144,21 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
                             return;
                         }
                         let Ok(balanced) = fans
-                            .fan_curve_data(ThrottlePolicy::Balanced)
+                            .fan_curve_data(PlatformProfile::Balanced)
                             .await
                             .map_err(|e| error!("{e:}"))
                         else {
                             return;
                         };
                         let Ok(perf) = fans
-                            .fan_curve_data(ThrottlePolicy::Performance)
+                            .fan_curve_data(PlatformProfile::Performance)
                             .await
                             .map_err(|e| error!("{e:}"))
                         else {
                             return;
                         };
                         let Ok(quiet) = fans
-                            .fan_curve_data(ThrottlePolicy::Quiet)
+                            .fan_curve_data(PlatformProfile::Quiet)
                             .await
                             .map_err(|e| error!("{e:}"))
                         else {

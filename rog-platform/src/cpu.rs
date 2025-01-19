@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::{PlatformError, Result};
-use crate::platform::ThrottlePolicy;
+use crate::platform::PlatformProfile;
 use crate::{read_attr_string, to_device};
 
 const ATTR_AVAILABLE_GOVERNORS: &str = "cpufreq/scaling_available_governors";
@@ -201,12 +201,12 @@ pub enum CPUEPP {
     Power = 4
 }
 
-impl From<ThrottlePolicy> for CPUEPP {
-    fn from(value: ThrottlePolicy) -> Self {
+impl From<PlatformProfile> for CPUEPP {
+    fn from(value: PlatformProfile) -> Self {
         match value {
-            ThrottlePolicy::Balanced => CPUEPP::BalancePerformance,
-            ThrottlePolicy::Performance => CPUEPP::Performance,
-            ThrottlePolicy::Quiet => CPUEPP::Power
+            PlatformProfile::Balanced => CPUEPP::BalancePerformance,
+            PlatformProfile::Performance => CPUEPP::Performance,
+            PlatformProfile::Quiet => CPUEPP::Power
         }
     }
 }

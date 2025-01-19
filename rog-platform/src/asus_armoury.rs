@@ -309,7 +309,6 @@ impl FirmwareAttribute {
                 | FirmwareAttribute::PptPlatformSppt
                 | FirmwareAttribute::NvDynamicBoost
                 | FirmwareAttribute::NvTempTarget
-                | FirmwareAttribute::DgpuBaseTgp
                 | FirmwareAttribute::DgpuTgp
         )
     }

@@ -22,7 +22,7 @@ use rog_dbus::zbus_aura::AuraProxyBlocking;
 use rog_dbus::zbus_fan_curves::FanCurvesProxyBlocking;
 use rog_dbus::zbus_platform::PlatformProxyBlocking;
 use rog_dbus::zbus_slash::SlashProxyBlocking;
-use rog_platform::platform::{Properties, ThrottlePolicy};
+use rog_platform::platform::{PlatformProfile, Properties};
 use rog_profiles::error::ProfileError;
 use rog_scsi::AuraMode;
 use rog_slash::SlashMode;
@@ -918,16 +918,16 @@ fn handle_throttle_profile(
     }
 
     let proxy = PlatformProxyBlocking::new(conn)?;
-    let current = proxy.throttle_thermal_policy()?;
+    let current = proxy.platform_profile()?;
 
     if cmd.next {
-        proxy.set_throttle_thermal_policy(current.next())?;
+        proxy.set_platform_profile(current.next())?;
     } else if let Some(profile) = cmd.profile_set {
-        proxy.set_throttle_thermal_policy(profile)?;
+        proxy.set_platform_profile(profile)?;
     }
 
     if cmd.list {
-        let res = ThrottlePolicy::list();
+        let res = PlatformProfile::list();
         for p in &res {
             println!("{:?}", p);
         }
@@ -974,7 +974,7 @@ fn handle_fan_curve(
 
     let plat_proxy = PlatformProxyBlocking::new(conn)?;
     if cmd.get_enabled {
-        let profile = plat_proxy.throttle_thermal_policy()?;
+        let profile = plat_proxy.platform_profile()?;
         let curves = fan_proxy.fan_curve_data(profile)?;
         for curve in curves.iter() {
             println!("{}", String::from(curve));
@@ -982,7 +982,7 @@ fn handle_fan_curve(
     }
 
     if cmd.default {
-        let active = plat_proxy.throttle_thermal_policy()?;
+        let active = plat_proxy.platform_profile()?;
         fan_proxy.set_curves_to_defaults(active)?;
     }
 

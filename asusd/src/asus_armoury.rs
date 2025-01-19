@@ -1,11 +1,10 @@
-use std::str::FromStr;
 use std::sync::Arc;
 
 use ::zbus::export::futures_util::lock::Mutex;
 use config_traits::StdConfig;
 use log::{debug, error, info};
 use rog_platform::asus_armoury::{AttrValue, Attribute, FirmwareAttribute, FirmwareAttributes};
-use rog_platform::platform::{RogPlatform, ThrottlePolicy};
+use rog_platform::platform::{PlatformProfile, RogPlatform};
 use rog_platform::power::AsusPower;
 use serde::{Deserialize, Serialize};
 use zbus::object_server::SignalEmitter;
@@ -100,8 +99,7 @@ impl AsusArmouryAttribute {
 impl crate::Reloadable for AsusArmouryAttribute {
     async fn reload(&mut self) -> Result<(), RogError> {
         info!("Reloading {}", self.attr.name());
-        let profile: ThrottlePolicy =
-            ThrottlePolicy::from_str(self.platform.get_platform_profile()?.as_str())?;
+        let profile: PlatformProfile = self.platform.get_platform_profile()?.into();
         let power_plugged = self
             .power
             .get_online()
@@ -182,8 +180,7 @@ impl AsusArmouryAttribute {
     async fn restore_default(&self) -> fdo::Result<()> {
         self.attr.restore_default()?;
         if self.name().is_ppt() {
-            let profile: ThrottlePolicy =
-                ThrottlePolicy::from_str(self.platform.get_platform_profile()?.as_str())?;
+            let profile: PlatformProfile = self.platform.get_platform_profile()?.into();
             let power_plugged = self
                 .power
                 .get_online()
@@ -257,8 +254,7 @@ impl AsusArmouryAttribute {
             })?;
 
         if self.name().is_ppt() {
-            let profile: ThrottlePolicy =
-                ThrottlePolicy::from_str(self.platform.get_platform_profile()?.as_str())?;
+            let profile: PlatformProfile = self.platform.get_platform_profile()?.into();
 
             let power_plugged = self
                 .power
@@ -337,7 +333,7 @@ pub async fn set_config_or_default(
     attrs: &FirmwareAttributes,
     config: &mut Config,
     power_plugged: bool,
-    profile: ThrottlePolicy
+    profile: PlatformProfile
 ) {
     for attr in attrs.attributes().iter() {
         let name: FirmwareAttribute = attr.name().into();

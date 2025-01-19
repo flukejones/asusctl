@@ -3,11 +3,11 @@ use std::collections::HashMap;
 use config_traits::{StdConfig, StdConfigLoad1};
 use rog_platform::asus_armoury::FirmwareAttribute;
 use rog_platform::cpu::CPUEPP;
-use rog_platform::platform::ThrottlePolicy;
+use rog_platform::platform::PlatformProfile;
 use serde::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "asusd.ron";
-type Tunings = HashMap<ThrottlePolicy, HashMap<FirmwareAttribute, i32>>;
+type Tunings = HashMap<PlatformProfile, HashMap<FirmwareAttribute, i32>>;
 
 #[derive(Deserialize, Serialize, PartialEq)]
 pub struct Config {
@@ -22,22 +22,22 @@ pub struct Config {
     /// An optional command/script to run when power is changed to battery
     pub bat_command: String,
     /// Set true if energy_performance_preference should be set if the
-    /// throttle/platform profile is changed
-    pub throttle_policy_linked_epp: bool,
-    /// Which throttle/profile to use on battery power
-    pub throttle_policy_on_battery: ThrottlePolicy,
+    /// platform profile is changed
+    pub platform_profile_linked_epp: bool,
+    /// Which platform profile to use on battery power
+    pub platform_profile_on_battery: PlatformProfile,
     /// Should the throttle policy be set on bat/ac change?
-    pub change_throttle_policy_on_battery: bool,
-    /// Which throttle/profile to use on AC power
-    pub throttle_policy_on_ac: ThrottlePolicy,
-    /// Should the throttle policy be set on bat/ac change?
-    pub change_throttle_policy_on_ac: bool,
-    /// The energy_performance_preference for this throttle/platform profile
-    pub throttle_quiet_epp: CPUEPP,
-    /// The energy_performance_preference for this throttle/platform profile
-    pub throttle_balanced_epp: CPUEPP,
-    /// The energy_performance_preference for this throttle/platform profile
-    pub throttle_performance_epp: CPUEPP,
+    pub change_platform_profile_on_battery: bool,
+    /// Which platform profile to use on AC power
+    pub platform_profile_on_ac: PlatformProfile,
+    /// Should the platform profile be set on bat/ac change?
+    pub change_platform_profile_on_ac: bool,
+    /// The energy_performance_preference for this platform profile
+    pub profile_quiet_epp: CPUEPP,
+    /// The energy_performance_preference for this platform profile
+    pub profile_balanced_epp: CPUEPP,
+    /// The energy_performance_preference for this platform profile
+    pub profile_performance_epp: CPUEPP,
     pub ac_profile_tunings: Tunings,
     pub dc_profile_tunings: Tunings,
     pub armoury_settings: HashMap<FirmwareAttribute, i32>,
@@ -50,7 +50,7 @@ impl Config {
     pub fn select_tunings(
         &mut self,
         power_plugged: bool,
-        profile: ThrottlePolicy
+        profile: PlatformProfile
     ) -> &mut HashMap<FirmwareAttribute, i32> {
         let config = if power_plugged {
             &mut self.ac_profile_tunings
@@ -69,14 +69,14 @@ impl Default for Config {
             disable_nvidia_powerd_on_battery: true,
             ac_command: Default::default(),
             bat_command: Default::default(),
-            throttle_policy_linked_epp: true,
-            throttle_policy_on_battery: ThrottlePolicy::Quiet,
-            change_throttle_policy_on_battery: true,
-            throttle_policy_on_ac: ThrottlePolicy::Performance,
-            change_throttle_policy_on_ac: true,
-            throttle_quiet_epp: CPUEPP::Power,
-            throttle_balanced_epp: CPUEPP::BalancePower,
-            throttle_performance_epp: CPUEPP::Performance,
+            platform_profile_linked_epp: true,
+            platform_profile_on_battery: PlatformProfile::Quiet,
+            change_platform_profile_on_battery: true,
+            platform_profile_on_ac: PlatformProfile::Performance,
+            change_platform_profile_on_ac: true,
+            profile_quiet_epp: CPUEPP::Power,
+            profile_balanced_epp: CPUEPP::BalancePower,
+            profile_performance_epp: CPUEPP::Performance,
             ac_profile_tunings: HashMap::default(),
             dc_profile_tunings: HashMap::default(),
             armoury_settings: HashMap::default(),
@@ -90,8 +90,8 @@ impl StdConfig for Config {
         Config {
             charge_control_end_threshold: 100,
             disable_nvidia_powerd_on_battery: true,
-            throttle_policy_on_battery: ThrottlePolicy::Quiet,
-            throttle_policy_on_ac: ThrottlePolicy::Performance,
+            platform_profile_on_battery: PlatformProfile::Quiet,
+            platform_profile_on_ac: PlatformProfile::Performance,
             ac_command: String::new(),
             bat_command: String::new(),
             ..Default::default()
@@ -120,14 +120,14 @@ pub struct Config601 {
     pub disable_nvidia_powerd_on_battery: bool,
     pub ac_command: String,
     pub bat_command: String,
-    pub throttle_policy_linked_epp: bool,
-    pub throttle_policy_on_battery: ThrottlePolicy,
-    pub change_throttle_policy_on_battery: bool,
-    pub throttle_policy_on_ac: ThrottlePolicy,
-    pub change_throttle_policy_on_ac: bool,
-    pub throttle_quiet_epp: CPUEPP,
-    pub throttle_balanced_epp: CPUEPP,
-    pub throttle_performance_epp: CPUEPP,
+    pub platform_profile_linked_epp: bool,
+    pub platform_profile_on_battery: PlatformProfile,
+    pub change_platform_profile_on_battery: bool,
+    pub platform_profile_on_ac: PlatformProfile,
+    pub change_platform_profile_on_ac: bool,
+    pub profile_quiet_epp: CPUEPP,
+    pub profile_balanced_epp: CPUEPP,
+    pub profile_performance_epp: CPUEPP,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub ppt_pl1_spl: Option<u8>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -157,14 +157,14 @@ impl From<Config601> for Config {
             disable_nvidia_powerd_on_battery: c.disable_nvidia_powerd_on_battery,
             ac_command: c.ac_command,
             bat_command: c.bat_command,
-            throttle_policy_linked_epp: c.throttle_policy_linked_epp,
-            throttle_policy_on_battery: c.throttle_policy_on_battery,
-            change_throttle_policy_on_battery: c.change_throttle_policy_on_battery,
-            throttle_policy_on_ac: c.throttle_policy_on_ac,
-            change_throttle_policy_on_ac: c.change_throttle_policy_on_ac,
-            throttle_quiet_epp: c.throttle_quiet_epp,
-            throttle_balanced_epp: c.throttle_balanced_epp,
-            throttle_performance_epp: c.throttle_performance_epp,
+            platform_profile_linked_epp: c.platform_profile_linked_epp,
+            platform_profile_on_battery: c.platform_profile_on_battery,
+            change_platform_profile_on_battery: c.change_platform_profile_on_battery,
+            platform_profile_on_ac: c.platform_profile_on_ac,
+            change_platform_profile_on_ac: c.change_platform_profile_on_ac,
+            profile_quiet_epp: c.profile_quiet_epp,
+            profile_balanced_epp: c.profile_balanced_epp,
+            profile_performance_epp: c.profile_performance_epp,
             last_power_plugged: c.last_power_plugged,
             ac_profile_tunings: HashMap::default(),
             dc_profile_tunings: HashMap::default(),

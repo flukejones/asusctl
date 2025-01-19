@@ -21,7 +21,7 @@
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
 use rog_platform::cpu::CPUEPP;
-use rog_platform::platform::{Properties, ThrottlePolicy};
+use rog_platform::platform::{PlatformProfile, Properties};
 use zbus::proxy;
 
 #[proxy(
@@ -34,7 +34,7 @@ pub trait Platform {
     fn version(&self) -> zbus::Result<String>;
 
     /// NextThrottleThermalPolicy method
-    fn next_throttle_thermal_policy(&self) -> zbus::Result<()>;
+    fn next_platform_profile(&self) -> zbus::Result<()>;
 
     /// SupportedProperties method
     fn supported_properties(&self) -> zbus::Result<Vec<Properties>>;
@@ -50,55 +50,58 @@ pub trait Platform {
 
     /// ThrottleBalancedEpp property
     #[zbus(property)]
-    fn throttle_balanced_epp(&self) -> zbus::Result<CPUEPP>;
+    fn profile_balanced_epp(&self) -> zbus::Result<CPUEPP>;
     #[zbus(property)]
-    fn set_throttle_balanced_epp(&self, epp: CPUEPP) -> zbus::Result<()>;
+    fn set_profile_balanced_epp(&self, epp: CPUEPP) -> zbus::Result<()>;
 
     /// ThrottlePerformanceEpp property
     #[zbus(property)]
-    fn throttle_performance_epp(&self) -> zbus::Result<CPUEPP>;
+    fn profile_performance_epp(&self) -> zbus::Result<CPUEPP>;
     #[zbus(property)]
-    fn set_throttle_performance_epp(&self, epp: CPUEPP) -> zbus::Result<()>;
+    fn set_profile_performance_epp(&self, epp: CPUEPP) -> zbus::Result<()>;
 
     /// ThrottlePolicyLinkedEpp property
     #[zbus(property)]
-    fn throttle_policy_linked_epp(&self) -> zbus::Result<bool>;
+    fn platform_profile_linked_epp(&self) -> zbus::Result<bool>;
     #[zbus(property)]
-    fn set_throttle_policy_linked_epp(&self, value: bool) -> zbus::Result<()>;
+    fn set_platform_profile_linked_epp(&self, value: bool) -> zbus::Result<()>;
 
     /// ThrottlePolicyOnAc property
     #[zbus(property)]
-    fn throttle_policy_on_ac(&self) -> zbus::Result<ThrottlePolicy>;
+    fn platform_profile_on_ac(&self) -> zbus::Result<PlatformProfile>;
     #[zbus(property)]
-    fn set_throttle_policy_on_ac(&self, throttle_policy: ThrottlePolicy) -> zbus::Result<()>;
+    fn set_platform_profile_on_ac(&self, platform_profile: PlatformProfile) -> zbus::Result<()>;
 
     /// ChangeThrottlePolicyOnAc property
     #[zbus(property)]
-    fn change_throttle_policy_on_ac(&self) -> zbus::Result<bool>;
+    fn change_platform_profile_on_ac(&self) -> zbus::Result<bool>;
     #[zbus(property)]
-    fn set_change_throttle_policy_on_ac(&self, change: bool) -> zbus::Result<()>;
+    fn set_change_platform_profile_on_ac(&self, change: bool) -> zbus::Result<()>;
 
     /// ThrottlePolicyOnBattery property
     #[zbus(property)]
-    fn throttle_policy_on_battery(&self) -> zbus::Result<ThrottlePolicy>;
+    fn platform_profile_on_battery(&self) -> zbus::Result<PlatformProfile>;
     #[zbus(property)]
-    fn set_throttle_policy_on_battery(&self, throttle_policy: ThrottlePolicy) -> zbus::Result<()>;
+    fn set_platform_profile_on_battery(
+        &self,
+        platform_profile: PlatformProfile
+    ) -> zbus::Result<()>;
 
     /// ChangeThrottlePolicyOnAc property
     #[zbus(property)]
-    fn change_throttle_policy_on_battery(&self) -> zbus::Result<bool>;
+    fn change_platform_profile_on_battery(&self) -> zbus::Result<bool>;
     #[zbus(property)]
-    fn set_change_throttle_policy_on_battery(&self, change: bool) -> zbus::Result<()>;
+    fn set_change_platform_profile_on_battery(&self, change: bool) -> zbus::Result<()>;
 
     /// ThrottleQuietEpp property
     #[zbus(property)]
-    fn throttle_quiet_epp(&self) -> zbus::Result<CPUEPP>;
+    fn profile_quiet_epp(&self) -> zbus::Result<CPUEPP>;
     #[zbus(property)]
-    fn set_throttle_quiet_epp(&self, epp: CPUEPP) -> zbus::Result<()>;
+    fn set_profile_quiet_epp(&self, epp: CPUEPP) -> zbus::Result<()>;
 
     /// ThrottlePolicy property
     #[zbus(property)]
-    fn throttle_thermal_policy(&self) -> zbus::Result<ThrottlePolicy>;
+    fn platform_profile(&self) -> zbus::Result<PlatformProfile>;
     #[zbus(property)]
-    fn set_throttle_thermal_policy(&self, throttle_policy: ThrottlePolicy) -> zbus::Result<()>;
+    fn set_platform_profile(&self, platform_profile: PlatformProfile) -> zbus::Result<()>;
 }

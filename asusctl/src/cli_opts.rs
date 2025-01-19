@@ -1,5 +1,5 @@
 use gumdrop::Options;
-use rog_platform::platform::ThrottlePolicy;
+use rog_platform::platform::PlatformProfile;
 
 use crate::anime_cli::AnimeCommand;
 use crate::aura_cli::{LedBrightness, LedPowerCommand1, LedPowerCommand2, SetAuraBuiltin};
@@ -71,7 +71,7 @@ pub struct ProfileCommand {
     pub profile_get: bool,
 
     #[options(meta = "", help = "set the active profile")]
-    pub profile_set: Option<ThrottlePolicy>
+    pub profile_set: Option<PlatformProfile>
 }
 
 #[derive(Options)]

@@ -15,9 +15,9 @@ export struct AttrPossible {
 export global SystemPageData {
     in-out property <float> charge_control_end_threshold: 30;
     callback cb_charge_control_end_threshold(/* charge limit */ int);
-    in-out property <int> throttle_thermal_policy: 0;
-    in-out property <[string]> throttle_policy_choices: [@tr("Balanced"), @tr("Performance"), @tr("Quiet")];
-    callback cb_throttle_thermal_policy(int);
+    in-out property <int> platform_profile: 0;
+    in-out property <[string]> platform_profile_choices: [@tr("Balanced"), @tr("Performance"), @tr("Quiet")];
+    callback cb_platform_profile(int);
     in-out property <[string]> energy_performance_choices: [
         @tr("Default"),
         @tr("Performance"),
@@ -25,23 +25,23 @@ export global SystemPageData {
         @tr("BalancePower"),
         @tr("Power")
     ];
-    in-out property <int> throttle_balanced_epp: 0;
-    callback cb_throttle_balanced_epp(int);
-    in-out property <int> throttle_performance_epp: 0;
-    callback cb_throttle_performance_epp(int);
-    in-out property <int> throttle_quiet_epp: 0;
-    callback cb_throttle_quiet_epp(int);
+    in-out property <int> profile_balanced_epp: 0;
+    callback cb_profile_balanced_epp(int);
+    in-out property <int> profile_performance_epp: 0;
+    callback cb_profile_performance_epp(int);
+    in-out property <int> profile_quiet_epp: 0;
+    callback cb_profile_quiet_epp(int);
     // if the EPP should change with throttle
-    in-out property <bool> throttle_policy_linked_epp: true;
-    callback cb_throttle_policy_linked_epp(bool);
-    in-out property <int> throttle_policy_on_ac: 0;
-    callback cb_throttle_policy_on_ac(int);
-    in-out property <bool> change_throttle_policy_on_ac: true;
-    callback cb_change_throttle_policy_on_ac(bool);
-    in-out property <int> throttle_policy_on_battery: 0;
-    callback cb_throttle_policy_on_battery(int);
-    in-out property <bool> change_throttle_policy_on_battery: true;
-    callback cb_change_throttle_policy_on_battery(bool);
+    in-out property <bool> platform_profile_linked_epp: true;
+    callback cb_platform_profile_linked_epp(bool);
+    in-out property <int> platform_profile_on_ac: 0;
+    callback cb_platform_profile_on_ac(int);
+    in-out property <bool> change_platform_profile_on_ac: true;
+    callback cb_change_platform_profile_on_ac(bool);
+    in-out property <int> platform_profile_on_battery: 0;
+    callback cb_platform_profile_on_battery(int);
+    in-out property <bool> change_platform_profile_on_battery: true;
+    callback cb_change_platform_profile_on_battery(bool);
     //
     in-out property <int> panel_overdrive;
     callback cb_panel_overdrive(int);
@@ -152,15 +152,15 @@ export component PageSystem inherits Rectangle {
                 }
             }
 
-            if SystemPageData.throttle_thermal_policy != -1: HorizontalLayout {
+            if SystemPageData.platform_profile != -1: HorizontalLayout {
                 spacing: 10px;
                 SystemDropdown {
-                    text: @tr("Throttle Policy");
-                    current_index <=> SystemPageData.throttle_thermal_policy;
-                    current_value: SystemPageData.throttle_policy_choices[SystemPageData.throttle_thermal_policy];
-                    model <=> SystemPageData.throttle_policy_choices;
+                    text: @tr("Platform Profile");
+                    current_index <=> SystemPageData.platform_profile;
+                    current_value: SystemPageData.platform_profile_choices[SystemPageData.platform_profile];
+                    model <=> SystemPageData.platform_profile_choices;
                     selected => {
-                        SystemPageData.cb_throttle_thermal_policy(SystemPageData.throttle_thermal_policy)
+                        SystemPageData.cb_platform_profile(SystemPageData.platform_profile)
                     }
                 }
 
@@ -419,39 +419,39 @@ export component PageSystem inherits Rectangle {
 
                         SystemToggle {
                             text: @tr("Change EPP based on Throttle Policy");
-                            checked <=> SystemPageData.throttle_policy_linked_epp;
+                            checked <=> SystemPageData.platform_profile_linked_epp;
                             toggled => {
-                                SystemPageData.cb_throttle_policy_linked_epp(SystemPageData.throttle_policy_linked_epp)
+                                SystemPageData.cb_platform_profile_linked_epp(SystemPageData.platform_profile_linked_epp)
                             }
                         }
 
                         SystemDropdown {
                             text: @tr("EPP for Balanced Policy");
-                            current_index <=> SystemPageData.throttle_balanced_epp;
-                            current_value: SystemPageData.energy_performance_choices[SystemPageData.throttle_balanced_epp];
+                            current_index <=> SystemPageData.profile_balanced_epp;
+                            current_value: SystemPageData.energy_performance_choices[SystemPageData.profile_balanced_epp];
                             model <=> SystemPageData.energy_performance_choices;
                             selected => {
-                                SystemPageData.cb_throttle_balanced_epp(SystemPageData.throttle_balanced_epp)
+                                SystemPageData.cb_profile_balanced_epp(SystemPageData.profile_balanced_epp)
                             }
                         }
 
                         SystemDropdown {
                             text: @tr("EPP for Performance Policy");
-                            current_index <=> SystemPageData.throttle_performance_epp;
-                            current_value: SystemPageData.energy_performance_choices[SystemPageData.throttle_performance_epp];
+                            current_index <=> SystemPageData.profile_performance_epp;
+                            current_value: SystemPageData.energy_performance_choices[SystemPageData.profile_performance_epp];
                             model <=> SystemPageData.energy_performance_choices;
                             selected => {
-                                SystemPageData.cb_throttle_performance_epp(SystemPageData.throttle_performance_epp)
+                                SystemPageData.cb_profile_performance_epp(SystemPageData.profile_performance_epp)
                             }
                         }
 
                         SystemDropdown {
                             text: @tr("EPP for Quiet Policy");
-                            current_index <=> SystemPageData.throttle_quiet_epp;
-                            current_value: SystemPageData.energy_performance_choices[SystemPageData.throttle_quiet_epp];
+                            current_index <=> SystemPageData.profile_quiet_epp;
+                            current_value: SystemPageData.energy_performance_choices[SystemPageData.profile_quiet_epp];
                             model <=> SystemPageData.energy_performance_choices;
                             selected => {
-                                SystemPageData.cb_throttle_quiet_epp(SystemPageData.throttle_quiet_epp)
+                                SystemPageData.cb_profile_quiet_epp(SystemPageData.profile_quiet_epp)
                             }
                         }
                     }
@@ -471,19 +471,19 @@ export component PageSystem inherits Rectangle {
                             spacing: 10px;
                             SystemDropdown {
                                 text: @tr("Throttle Policy on Battery");
-                                current_index <=> SystemPageData.throttle_policy_on_battery;
-                                current_value: SystemPageData.throttle_policy_choices[SystemPageData.throttle_policy_on_battery];
-                                model <=> SystemPageData.throttle_policy_choices;
+                                current_index <=> SystemPageData.platform_profile_on_battery;
+                                current_value: SystemPageData.platform_profile_choices[SystemPageData.platform_profile_on_battery];
+                                model <=> SystemPageData.platform_profile_choices;
                                 selected => {
-                                    SystemPageData.cb_throttle_policy_on_battery(SystemPageData.throttle_policy_on_battery)
+                                    SystemPageData.cb_platform_profile_on_battery(SystemPageData.platform_profile_on_battery)
                                 }
                             }
 
                             SystemToggle {
                                 text: @tr("Enabled");
-                                checked <=> SystemPageData.change_throttle_policy_on_battery;
+                                checked <=> SystemPageData.change_platform_profile_on_battery;
                                 toggled => {
-                                    SystemPageData.cb_change_throttle_policy_on_battery(SystemPageData.change_throttle_policy_on_battery);
+                                    SystemPageData.cb_change_platform_profile_on_battery(SystemPageData.change_platform_profile_on_battery);
                                 }
                             }
                         }
@@ -492,19 +492,19 @@ export component PageSystem inherits Rectangle {
                             spacing: 10px;
                             SystemDropdown {
                                 text: @tr("Throttle Policy on AC");
-                                current_index <=> SystemPageData.throttle_policy_on_ac;
-                                current_value: SystemPageData.throttle_policy_choices[SystemPageData.throttle_policy_on_ac];
-                                model <=> SystemPageData.throttle_policy_choices;
+                                current_index <=> SystemPageData.platform_profile_on_ac;
+                                current_value: SystemPageData.platform_profile_choices[SystemPageData.platform_profile_on_ac];
+                                model <=> SystemPageData.platform_profile_choices;
                                 selected => {
-                                    SystemPageData.cb_throttle_policy_on_ac(SystemPageData.throttle_policy_on_ac)
+                                    SystemPageData.cb_platform_profile_on_ac(SystemPageData.platform_profile_on_ac)
                                 }
                             }
 
                             SystemToggle {
                                 text: @tr("Enabled");
-                                checked <=> SystemPageData.change_throttle_policy_on_ac;
+                                checked <=> SystemPageData.change_platform_profile_on_ac;
                                 toggled => {
-                                    SystemPageData.cb_change_throttle_policy_on_ac(SystemPageData.change_throttle_policy_on_ac);
+                                    SystemPageData.cb_change_platform_profile_on_ac(SystemPageData.change_platform_profile_on_ac);
                                 }
                             }
                         }
