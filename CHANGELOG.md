@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [v6.1.0-rc5]
+
 ### Changed
 - Per-AC/DC, per-profile tunings enabled (Battery vs AC power +  platform profile)
 - Add ability to restore PPT defaults
