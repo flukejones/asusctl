@@ -181,6 +181,27 @@ impl AsusArmouryAttribute {
 
     async fn restore_default(&self) -> fdo::Result<()> {
         self.attr.restore_default()?;
+        if self.name().is_ppt() {
+            let profile: ThrottlePolicy =
+                ThrottlePolicy::from_str(self.platform.get_platform_profile()?.as_str())?;
+            let power_plugged = self
+                .power
+                .get_online()
+                .map_err(|e| {
+                    error!("Could not get power status: {e:?}");
+                    e
+                })
+                .unwrap_or_default();
+
+            let mut config = self.config.lock().await;
+            let tunings = config.select_tunings(power_plugged == 1, profile);
+            if let Some(tune) = tunings.get_mut(&self.name()) {
+                if let AttrValue::Integer(i) = self.attr.default_value() {
+                    *tune = *i;
+                }
+            }
+            config.write();
+        }
         Ok(())
     }
 

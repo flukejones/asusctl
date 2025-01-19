@@ -4,7 +4,8 @@
 
 ### Changed
 - Per-AC/DC, per-profile tunings enabled (Battery vs AC power +  platform profile)
-- Add ability to restore PPT defaults (WIP)
+- Add ability to restore PPT defaults
+- Add PPT help dialogue to UI
 
 ## [v6.1.0-rc4]
 
