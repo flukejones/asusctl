@@ -8,6 +8,7 @@
 - Per-AC/DC, per-profile tunings enabled (Battery vs AC power +  platform profile)
 - Add ability to restore PPT defaults
 - Add PPT help dialogue to UI
+- Bug fix: correctly set charge limit from UI
 
 ## [v6.1.0-rc4]
 

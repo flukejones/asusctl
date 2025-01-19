@@ -145,8 +145,9 @@ export component PageSystem inherits Rectangle {
                 minimum: 20;
                 maximum: 100;
                 has_reset: false;
-                value <=> SystemPageData.charge_control_end_threshold;
+                value: SystemPageData.charge_control_end_threshold;
                 released => {
+                    SystemPageData.charge_control_end_threshold = self.value;
                     SystemPageData.cb_charge_control_end_threshold(Math.round(SystemPageData.charge_control_end_threshold))
                 }
             }
