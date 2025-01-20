@@ -16,7 +16,7 @@ use rog_anime::usb::{
 use rog_anime::{ActionData, AnimeDataBuffer, AnimePacketType};
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::usb_raw::USBRaw;
-use tokio::sync::{Mutex, MutexGuard};
+use tokio::sync::Mutex;
 
 use self::config::{AniMeConfig, AniMeConfigCached};
 use crate::error::RogError;
@@ -75,10 +75,6 @@ impl AniMe {
         self.write_bytes(&pkts[1]).await?;
         debug!("Succesfully initialised AniMe matrix display");
         Ok(())
-    }
-
-    pub async fn lock_config(&self) -> MutexGuard<AniMeConfig> {
-        self.config.lock().await
     }
 
     pub async fn write_bytes(&self, message: &[u8]) -> Result<(), RogError> {
@@ -231,10 +227,11 @@ impl AniMe {
                     })
                     .ok();
             }
+            // A write can block for many milliseconds so lets not hold the config lock for
+            // the same period
+            let enabled = inner.config.lock().await.builtin_anims_enabled;
             inner
-                .write_bytes(&pkt_set_enable_powersave_anim(
-                    inner.config.lock().await.builtin_anims_enabled
-                ))
+                .write_bytes(&pkt_set_enable_powersave_anim(enabled))
                 .await
                 .map_err(|err| {
                     warn!("rog_anime::run_animation:callback {}", err);

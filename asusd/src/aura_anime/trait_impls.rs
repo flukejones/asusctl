@@ -443,50 +443,60 @@ impl crate::CtrlTask for AniMeZbus {
 
 impl crate::Reloadable for AniMeZbus {
     async fn reload(&mut self) -> Result<(), RogError> {
-        if let Ok(config) = self.0.config.try_lock() {
-            let anim = &config.builtin_anims;
-            // Set builtins
-            if config.builtin_anims_enabled {
-                self.0
-                    .write_bytes(&pkt_set_builtin_animations(
-                        anim.boot, anim.awake, anim.sleep, anim.shutdown
-                    ))
-                    .await?;
-            }
-            // Builtins enabled or na?
+        let AniMeConfig {
+            builtin_anims_enabled,
+            builtin_anims,
+            display_enabled,
+            display_brightness,
+            off_when_lid_closed,
+            off_when_unplugged,
+            ..
+        } = *self.0.config.lock().await;
+
+        // Set builtins
+        if builtin_anims_enabled {
             self.0
-                .set_builtins_enabled(config.builtin_anims_enabled, config.display_brightness)
+                .write_bytes(&pkt_set_builtin_animations(
+                    builtin_anims.boot,
+                    builtin_anims.awake,
+                    builtin_anims.sleep,
+                    builtin_anims.shutdown
+                ))
                 .await?;
+        }
+        // Builtins enabled or na?
+        self.0
+            .set_builtins_enabled(builtin_anims_enabled, display_brightness)
+            .await?;
 
-            let manager = get_logind_manager().await;
-            let lid_closed = manager.lid_closed().await.unwrap_or_default();
-            let power_plugged = manager.on_external_power().await.unwrap_or_default();
+        let manager = get_logind_manager().await;
+        let lid_closed = manager.lid_closed().await.unwrap_or_default();
+        let power_plugged = manager.on_external_power().await.unwrap_or_default();
 
-            let turn_off = (lid_closed && config.off_when_lid_closed)
-                || (!power_plugged && config.off_when_unplugged);
+        let turn_off =
+            (lid_closed && off_when_lid_closed) || (!power_plugged && off_when_unplugged);
+        self.0
+            .write_bytes(&pkt_set_enable_display(!turn_off))
+            .await
+            .map_err(|err| {
+                warn!("create_sys_event_tasks::reload {}", err);
+            })
+            .ok();
+
+        if turn_off || !display_enabled {
+            self.0.write_bytes(&pkt_set_enable_display(false)).await?;
+            // early return so we don't run animation thread
+            return Ok(());
+        }
+
+        if !builtin_anims_enabled && !self.0.cache.boot.is_empty() {
             self.0
-                .write_bytes(&pkt_set_enable_display(!turn_off))
+                .write_bytes(&pkt_set_enable_powersave_anim(false))
                 .await
-                .map_err(|err| {
-                    warn!("create_sys_event_tasks::reload {}", err);
-                })
                 .ok();
 
-            if turn_off || !config.display_enabled {
-                self.0.write_bytes(&pkt_set_enable_display(false)).await?;
-                // early return so we don't run animation thread
-                return Ok(());
-            }
-
-            if !config.builtin_anims_enabled && !self.0.cache.boot.is_empty() {
-                self.0
-                    .write_bytes(&pkt_set_enable_powersave_anim(false))
-                    .await
-                    .ok();
-
-                let action = self.0.cache.boot.clone();
-                self.0.run_thread(action, true).await;
-            }
+            let action = self.0.cache.boot.clone();
+            self.0.run_thread(action, true).await;
         }
         Ok(())
     }
