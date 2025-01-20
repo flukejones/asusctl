@@ -6,6 +6,7 @@ pub mod setup_system;
 use std::sync::{Arc, Mutex};
 
 use config_traits::StdConfig;
+use log::warn;
 use rog_dbus::list_iface_blocking;
 use slint::{ComponentHandle, PhysicalSize, SharedString, Weak};
 
@@ -82,6 +83,9 @@ pub fn show_toast(
 }
 
 pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
+    slint::set_xdg_app_id("rog-control-center")
+        .map_err(warn!("Couldn't set application ID: {e:?}"))
+        .ok();
     let ui = MainWindow::new().unwrap();
     if let Ok(lock) = config.try_lock() {
         let fullscreen = lock.start_fullscreen;

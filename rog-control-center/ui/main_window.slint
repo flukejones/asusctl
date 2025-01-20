@@ -19,7 +19,10 @@ export { AppSize, AttrMinMax, SystemPageData, AnimePageData, AppSettingsPageData
 
 export component MainWindow inherits Window {
     title: "ROG Control";
-    default-font-family: "DejaVu Sans";
+    default-font-family: "Noto Sans";
+    default-font-size: 14px;
+    default-font-weight: 400;
+    icon: @image-url("../data/rog-control-center.png");
     in property <[bool]> sidebar_items_avilable: [true, true, true, true, true, true];
     private property <bool> show_notif;
     private property <bool> fade_cover;

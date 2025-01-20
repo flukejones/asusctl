@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use config_traits::StdConfig;
 use log::{debug, error, info, warn};
-use rog_platform::asus_armoury::FirmwareAttributes;
+use rog_platform::asus_armoury::{AttrValue, FirmwareAttribute, FirmwareAttributes};
 use rog_platform::cpu::{CPUControl, CPUGovernor, CPUEPP};
 use rog_platform::platform::{PlatformProfile, Properties, RogPlatform};
 use rog_platform::power::AsusPower;
@@ -43,24 +43,27 @@ macro_rules! platform_get_value {
 pub struct CtrlPlatform {
     power: AsusPower,
     platform: RogPlatform,
+    attributes: FirmwareAttributes,
     cpu_control: Option<CPUControl>,
     config: Arc<Mutex<Config>>
 }
 
 impl CtrlPlatform {
     pub fn new(
+        platform: RogPlatform,
+        power: AsusPower,
+        attributes: FirmwareAttributes,
         config: Arc<Mutex<Config>>,
         config_path: &Path,
         signal_context: SignalEmitter<'static>
     ) -> Result<Self, RogError> {
-        let platform = RogPlatform::new()?;
-        let power = AsusPower::new()?;
         let config1 = config.clone();
         let config_path = config_path.to_owned();
 
         let ret_self = CtrlPlatform {
             power,
             platform,
+            attributes,
             config,
             cpu_control: CPUControl::new()
                 .map_err(|e| error!("Couldn't get CPU control sysfs: {e}"))
@@ -332,6 +335,7 @@ impl CtrlPlatform {
                     warn!("platform_profile {}", err);
                     FdoErr::Failed(format!("RogPlatform: platform_profile: {err}"))
                 })?;
+            self.enable_ppt_group_changed(&ctxt).await?;
             Ok(self.platform_profile_changed(&ctxt).await?)
         } else {
             Err(FdoErr::NotSupported(
@@ -352,6 +356,21 @@ impl CtrlPlatform {
             let change_epp = self.config.lock().await.platform_profile_linked_epp;
             let epp = self.get_config_epp_for_throttle(policy).await;
             self.check_and_set_epp(epp, change_epp);
+
+            let power_plugged = self
+                .power
+                .get_online()
+                .map_err(|e| {
+                    error!("Could not get power status: {e:?}");
+                    e
+                })
+                .unwrap_or_default();
+            self.config
+                .lock()
+                .await
+                .select_tunings(power_plugged == 1, policy)
+                .enabled = false;
+
             self.config.lock().await.write();
             self.platform
                 .set_platform_profile(policy.into())
@@ -475,7 +494,94 @@ impl CtrlPlatform {
         let change_pp = self.config.lock().await.platform_profile_linked_epp;
         self.config.lock().await.profile_performance_epp = epp;
         self.check_and_set_epp(epp, change_pp);
+
         self.config.lock().await.write();
+        Ok(())
+    }
+
+    /// Set if the PPT tuning group for the current profile is enabled
+    #[zbus(property)]
+    async fn enable_ppt_group(&self) -> Result<bool, FdoErr> {
+        let power_plugged = self
+            .power
+            .get_online()
+            .map_err(|e| {
+                error!("Could not get power status: {e:?}");
+                e
+            })
+            .unwrap_or_default();
+        let profile: PlatformProfile = self.platform.get_platform_profile()?.into();
+        Ok(self
+            .config
+            .lock()
+            .await
+            .select_tunings(power_plugged == 1, profile)
+            .enabled)
+    }
+
+    /// Set if the PPT tuning group for the current profile is enabled
+    #[zbus(property)]
+    async fn set_enable_ppt_group(&mut self, enable: bool) -> Result<(), FdoErr> {
+        let power_plugged = self
+            .power
+            .get_online()
+            .map_err(|e| {
+                error!("Could not get power status: {e:?}");
+                e
+            })
+            .unwrap_or_default();
+        let profile: PlatformProfile = self.platform.get_platform_profile()?.into();
+
+        // Clone to reduce blocking
+        let tuning = self
+            .config
+            .lock()
+            .await
+            .select_tunings(power_plugged == 1, profile)
+            .clone();
+
+        for attr in self.attributes.attributes() {
+            let name: FirmwareAttribute = attr.name().into();
+            if name.is_ppt() {
+                // reset stored value
+                if let Some(tune) = self
+                    .config
+                    .lock()
+                    .await
+                    .select_tunings(power_plugged == 1, profile)
+                    .group
+                    .get_mut(&name)
+                {
+                    let value = if !enable {
+                        attr.default_value().clone()
+                    } else {
+                        tuning
+                            .group
+                            .get(&name)
+                            .map(|v| AttrValue::Integer(*v))
+                            .unwrap_or_else(|| attr.default_value().clone())
+                    };
+                    // restore default
+                    attr.set_current_value(&value)?;
+                    if let AttrValue::Integer(i) = value {
+                        *tune = i
+                    }
+                }
+            }
+        }
+
+        if !enable {
+            // finally, reapply the profile to ensure acpi does the thingy
+            self.platform.set_platform_profile(profile.into())?;
+        }
+
+        self.config
+            .lock()
+            .await
+            .select_tunings(power_plugged == 1, profile)
+            .enabled = enable;
+        self.config.lock().await.write();
+
         Ok(())
     }
 }
@@ -665,6 +771,7 @@ impl CtrlTask for CtrlPlatform {
                             error!("Platform: get_platform_profile error: {e}");
                         })
                     {
+                        // TODO: manage this better, shouldn't need to create every time
                         let attrs = FirmwareAttributes::new();
                         set_config_or_default(
                             &attrs,
@@ -709,6 +816,7 @@ impl CtrlTask for CtrlPlatform {
                         let epp = ctrl.get_config_epp_for_throttle(profile).await;
                         ctrl.check_and_set_epp(epp, change_epp);
                         ctrl.platform_profile_changed(&signal_ctxt).await.ok();
+                        ctrl.enable_ppt_group_changed(&signal_ctxt).await.ok();
                         let power_plugged = ctrl
                             .power
                             .get_online()

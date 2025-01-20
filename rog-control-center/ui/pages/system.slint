@@ -1,5 +1,5 @@
 import { SystemSlider, SystemDropdown, SystemToggle, SystemToggleInt } from "../widgets/common.slint";
-import { Palette, HorizontalBox , VerticalBox, ScrollView, Slider, Button, Switch, ComboBox, GroupBox} from "std-widgets.slint";
+import { Palette, HorizontalBox , VerticalBox, ScrollView, Slider, Button, Switch, ComboBox, GroupBox, StandardButton} from "std-widgets.slint";
 
 export struct AttrMinMax {
   min: int,
@@ -114,6 +114,9 @@ export global SystemPageData {
     };
     callback cb_nv_temp_target(int);
     callback cb_default_nv_temp_target();
+
+    in-out property <bool> enable_ppt_group;
+    callback cb_enable_ppt_group(bool);
 }
 
 export component PageSystem inherits Rectangle {
@@ -187,6 +190,25 @@ export component PageSystem inherits Rectangle {
                 }
             }
 
+            if !SystemPageData.asus_armoury_loaded: Rectangle {
+                border-width: 3px;
+                border-color: red;
+                max-height: 30px;
+                VerticalBox {
+                    Text {
+                        text: @tr("no_asus_armoury_driver_1" => "The asus-armoury driver is not loaded");
+                        font-size: 16px;
+                        horizontal-alignment: TextHorizontalAlignment.center;
+                    }
+
+                    Text {
+                        text: @tr("no_asus_armoury_driver_2" => "For advanced features you will require a kernel with this driver added.");
+                        font-size: 16px;
+                        horizontal-alignment: TextHorizontalAlignment.center;
+                    }
+                }
+            }
+
             HorizontalBox {
                 padding: 0px;
                 spacing: 10px;
@@ -215,30 +237,24 @@ export component PageSystem inherits Rectangle {
                 }
             }
 
-            if !SystemPageData.asus_armoury_loaded: Rectangle {
-                border-width: 3px;
-                border-color: red;
-                max-height: 30px;
-                VerticalBox {
+            if SystemPageData.ppt_pl1_spl.val != -1 || SystemPageData.ppt_pl2_sppt.val != -1 || SystemPageData.nv_dynamic_boost.val != -1: HorizontalLayout {
+                padding-right: 10px;
+                padding-left: 10px;
+                alignment: LayoutAlignment.space-between;
+                Rectangle {
+                    height: 32px;
                     Text {
-                        text: @tr("no_asus_armoury_driver_1" => "The asus-armoury driver is not loaded");
                         font-size: 16px;
-                        horizontal-alignment: TextHorizontalAlignment.center;
-                    }
-
-                    Text {
-                        text: @tr("no_asus_armoury_driver_2" => "For advanced features you will require a kernel with this driver added.");
-                        font-size: 16px;
-                        horizontal-alignment: TextHorizontalAlignment.center;
+                        text: @tr("ppt_warning" => "The following settings are not applied until the toggle is enabled.");
                     }
                 }
-            }
 
-            if SystemPageData.ppt_pl1_spl.val != -1: Rectangle {
-                height: 32px;
-                Text {
-                    font-size: 16px;
-                    text: @tr("ppt_warning" => "The following settings may not be safe, please review the help.");
+                Switch {
+                text: @tr("ppt_group_enabled" => "Enable Tuning");
+                    checked <=> SystemPageData.enable_ppt_group;
+                    toggled => {
+                        SystemPageData.cb_enable_ppt_group(SystemPageData.enable_ppt_group)
+                    }
                 }
             }
 
@@ -255,7 +271,7 @@ export component PageSystem inherits Rectangle {
                 }
                 released => {
                     SystemPageData.ppt_pl1_spl.val = self.value;
-                    SystemPageData.cb_ppt_pl1_spl(Math.round(self.value))
+                    SystemPageData.cb_ppt_pl1_spl(Math.round(self.value));
                 }
             }
 

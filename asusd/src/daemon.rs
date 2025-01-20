@@ -12,6 +12,7 @@ use asusd::ctrl_platform::CtrlPlatform;
 use asusd::{print_board_info, start_tasks, CtrlTask, DBUS_NAME};
 use config_traits::{StdConfig, StdConfigLoad1};
 use log::{error, info};
+use rog_platform::asus_armoury::FirmwareAttributes;
 use rog_platform::platform::RogPlatform;
 use rog_platform::power::AsusPower;
 use zbus::fdo::ObjectManager;
@@ -69,7 +70,15 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     // supported.add_to_server(&mut connection).await;
     let platform = RogPlatform::new()?; // TODO: maybe needs async mutex?
     let power = AsusPower::new()?; // TODO: maybe needs async mutex?
-    start_attributes_zbus(&server, platform, power, config.clone()).await?;
+    let attributes = FirmwareAttributes::new();
+    start_attributes_zbus(
+        &server,
+        platform.clone(),
+        power.clone(),
+        attributes.clone(),
+        config.clone()
+    )
+    .await?;
 
     match CtrlFanCurveZbus::new() {
         Ok(ctrl) => {
@@ -82,6 +91,9 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     }
 
     match CtrlPlatform::new(
+        platform,
+        power,
+        attributes,
         config.clone(),
         &cfg_path,
         CtrlPlatform::signal_context(&server)?

@@ -113,15 +113,18 @@ impl crate::Reloadable for AsusArmouryAttribute {
         } else {
             &self.config.lock().await.dc_profile_tunings
         };
-        if let Some(tunings) = config.get(&profile) {
-            if let Some(tune) = tunings.get(&self.name()) {
-                self.attr
-                    .set_current_value(&AttrValue::Integer(*tune))
-                    .map_err(|e| {
-                        error!("Could not set value: {e:?}");
-                        e
-                    })?;
-                info!("Set {} to {:?}", self.attr.name(), tune);
+        if let Some(tuning) = config.get(&profile) {
+            if tuning.enabled {
+                if let Some(tune) = tuning.group.get(&self.name()) {
+                    self.attr
+                        .set_current_value(&AttrValue::Integer(*tune))
+                        .map_err(|e| {
+                            error!("Could not set {} value: {e:?}", self.attr.name());
+                            self.attr.base_path_exists();
+                            e
+                        })?;
+                    info!("Set {} to {:?}", self.attr.name(), tune);
+                }
             }
         }
 
@@ -191,11 +194,19 @@ impl AsusArmouryAttribute {
                 .unwrap_or_default();
 
             let mut config = self.config.lock().await;
-            let tunings = config.select_tunings(power_plugged == 1, profile);
-            if let Some(tune) = tunings.get_mut(&self.name()) {
+            let tuning = config.select_tunings(power_plugged == 1, profile);
+            if let Some(tune) = tuning.group.get_mut(&self.name()) {
                 if let AttrValue::Integer(i) = self.attr.default_value() {
                     *tune = *i;
                 }
+            }
+            if tuning.enabled {
+                self.attr
+                    .set_current_value(self.attr.default_value())
+                    .map_err(|e| {
+                        error!("Could not set value: {e:?}");
+                        e
+                    })?;
             }
             config.write();
         }
@@ -236,6 +247,28 @@ impl AsusArmouryAttribute {
 
     #[zbus(property)]
     async fn current_value(&self) -> fdo::Result<i32> {
+        if self.name().is_ppt() {
+            let profile: PlatformProfile = self.platform.get_platform_profile()?.into();
+            let power_plugged = self
+                .power
+                .get_online()
+                .map_err(|e| {
+                    error!("Could not get power status: {e:?}");
+                    e
+                })
+                .unwrap_or_default();
+            let mut config = self.config.lock().await;
+            let tuning = config.select_tunings(power_plugged == 1, profile);
+            if let Some(tune) = tuning.group.get(&self.name()) {
+                return Ok(*tune);
+            } else if let AttrValue::Integer(i) = self.attr.default_value() {
+                return Ok(*i);
+            }
+            return Err(fdo::Error::Failed(
+                "Could not read current value".to_string()
+            ));
+        }
+
         if let Ok(AttrValue::Integer(i)) = self.attr.current_value() {
             return Ok(i);
         }
@@ -246,16 +279,8 @@ impl AsusArmouryAttribute {
 
     #[zbus(property)]
     async fn set_current_value(&mut self, value: i32) -> fdo::Result<()> {
-        self.attr
-            .set_current_value(&AttrValue::Integer(value))
-            .map_err(|e| {
-                error!("Could not set value: {e:?}");
-                e
-            })?;
-
         if self.name().is_ppt() {
             let profile: PlatformProfile = self.platform.get_platform_profile()?.into();
-
             let power_plugged = self
                 .power
                 .get_online()
@@ -264,16 +289,32 @@ impl AsusArmouryAttribute {
                     e
                 })
                 .unwrap_or_default();
-            let mut config = self.config.lock().await;
-            let tunings = config.select_tunings(power_plugged == 1, profile);
 
-            if let Some(tune) = tunings.get_mut(&self.name()) {
+            let mut config = self.config.lock().await;
+            let tuning = config.select_tunings(power_plugged == 1, profile);
+
+            if let Some(tune) = tuning.group.get_mut(&self.name()) {
                 *tune = value;
             } else {
-                tunings.insert(self.name(), value);
-                debug!("Set tuning config for {} = {:?}", self.attr.name(), value);
+                tuning.group.insert(self.name(), value);
+                debug!("Store tuning config for {} = {:?}", self.attr.name(), value);
+            }
+            if tuning.enabled {
+                self.attr
+                    .set_current_value(&AttrValue::Integer(value))
+                    .map_err(|e| {
+                        error!("Could not set value: {e:?}");
+                        e
+                    })?;
             }
         } else {
+            self.attr
+                .set_current_value(&AttrValue::Integer(value))
+                .map_err(|e| {
+                    error!("Could not set value: {e:?}");
+                    e
+                })?;
+
             let has_attr = self
                 .config
                 .lock()
@@ -309,9 +350,10 @@ pub async fn start_attributes_zbus(
     conn: &Connection,
     platform: RogPlatform,
     power: AsusPower,
+    attributes: FirmwareAttributes,
     config: Arc<Mutex<Config>>
 ) -> Result<(), RogError> {
-    for attr in FirmwareAttributes::new().attributes() {
+    for attr in attributes.attributes() {
         let mut attr = AsusArmouryAttribute::new(
             attr.clone(),
             platform.clone(),
@@ -338,9 +380,13 @@ pub async fn set_config_or_default(
     for attr in attrs.attributes().iter() {
         let name: FirmwareAttribute = attr.name().into();
         if name.is_ppt() {
-            let tunings = config.select_tunings(power_plugged, profile);
+            let tuning = config.select_tunings(power_plugged, profile);
+            if !tuning.enabled {
+                debug!("Tuning group is not enabled, skipping");
+                return;
+            }
 
-            if let Some(tune) = tunings.get(&name) {
+            if let Some(tune) = tuning.group.get(&name) {
                 attr.set_current_value(&AttrValue::Integer(*tune))
                     .map_err(|e| {
                         error!("Failed to set {}: {e}", <&str>::from(name));
@@ -354,7 +400,7 @@ pub async fn set_config_or_default(
                     })
                     .ok();
                 if let AttrValue::Integer(i) = default {
-                    tunings.insert(name, *i);
+                    tuning.group.insert(name, *i);
                     info!(
                         "Set default tuning config for {} = {:?}",
                         <&str>::from(name),

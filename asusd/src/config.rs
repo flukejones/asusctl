@@ -7,7 +7,13 @@ use rog_platform::platform::PlatformProfile;
 use serde::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "asusd.ron";
-type Tunings = HashMap<PlatformProfile, HashMap<FirmwareAttribute, i32>>;
+
+#[derive(Default, Clone, Deserialize, Serialize, PartialEq)]
+pub struct Tuning {
+    pub enabled: bool,
+    pub group: HashMap<FirmwareAttribute, i32>
+}
+type Tunings = HashMap<PlatformProfile, Tuning>;
 
 #[derive(Deserialize, Serialize, PartialEq)]
 pub struct Config {
@@ -47,17 +53,13 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn select_tunings(
-        &mut self,
-        power_plugged: bool,
-        profile: PlatformProfile
-    ) -> &mut HashMap<FirmwareAttribute, i32> {
+    pub fn select_tunings(&mut self, power_plugged: bool, profile: PlatformProfile) -> &mut Tuning {
         let config = if power_plugged {
             &mut self.ac_profile_tunings
         } else {
             &mut self.dc_profile_tunings
         };
-        config.entry(profile).or_insert_with(HashMap::new)
+        config.entry(profile).or_insert_with(Tuning::default)
     }
 }
 

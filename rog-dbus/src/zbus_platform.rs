@@ -104,4 +104,12 @@ pub trait Platform {
     fn platform_profile(&self) -> zbus::Result<PlatformProfile>;
     #[zbus(property)]
     fn set_platform_profile(&self, platform_profile: PlatformProfile) -> zbus::Result<()>;
+
+    /// Set if the PPT tuning group for the current profile is enabled
+    #[zbus(property)]
+    fn enable_ppt_group(&self) -> zbus::Result<bool>;
+
+    /// Set if the PPT tuning group for the current profile is enabled
+    #[zbus(property)]
+    fn set_enable_ppt_group(&self, enable: bool) -> zbus::Result<()>;
 }

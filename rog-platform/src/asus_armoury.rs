@@ -2,6 +2,7 @@ use std::fs::{read_dir, File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
+use log::debug;
 use serde::{Deserialize, Serialize};
 use zbus::zvariant::{OwnedValue, Type, Value};
 
@@ -73,6 +74,15 @@ impl Attribute {
             }
             Err(e) => Err(e)
         }
+    }
+
+    pub fn base_path_exists(&self) -> bool {
+        let exists = self.base_path.exists();
+        debug!(
+            "Attribute path {:?} exits? {exists}",
+            self.base_path.as_os_str()
+        );
+        exists
     }
 
     /// Write the `current_value` directly to the attribute path

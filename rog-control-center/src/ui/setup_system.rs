@@ -288,9 +288,18 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
             change_platform_profile_on_ac
         );
 
+        set_ui_props_async!(handle, platform, SystemPageData, enable_ppt_group);
+
         let platform_copy = platform.clone();
         handle
             .upgrade_in_event_loop(move |handle| {
+                set_ui_callbacks!(handle,
+                    SystemPageData(as bool),
+                    platform_copy.enable_ppt_group(as bool),
+                    "Applied PPT group settings {}",
+                    "Setting PPT group settings failed"
+                );
+
                 set_ui_callbacks!(handle,
                     SystemPageData(as f32),
                     platform_copy.charge_control_end_threshold(as u8),
