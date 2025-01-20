@@ -1,7 +1,7 @@
 use std::sync::atomic::Ordering;
 
 use config_traits::StdConfig;
-use log::{error, warn};
+use log::{debug, error, warn};
 use logind_zbus::manager::ManagerProxy;
 use rog_anime::usb::{
     pkt_set_brightness, pkt_set_builtin_animations, pkt_set_enable_display,
@@ -51,8 +51,11 @@ impl AniMeZbus {
             .object_server()
             .at(path.clone(), self)
             .await
-            .map_err(|e| error!("Couldn't add server at path: {path}, {e:?}"))
-            .ok();
+            .map_err(|e| {
+                error!("Couldn't add server at path: {path}, {e:?}");
+                e
+            })?;
+        debug!("start_tasks was successful");
         Ok(())
     }
 }

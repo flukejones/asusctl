@@ -49,7 +49,12 @@ async fn main() -> Result<()> {
     let self_version = env!("CARGO_PKG_VERSION");
     let zbus_con = zbus::blocking::Connection::system()?;
     let platform_proxy = rog_dbus::zbus_platform::PlatformProxyBlocking::new(&zbus_con)?;
-    let asusd_version = platform_proxy.version().unwrap();
+    let asusd_version = platform_proxy
+        .version()
+        .map_err(|e| {
+            println!("Could not get asusd version: {e:?}\nIs asusd.service running?");
+        })
+        .unwrap();
     if asusd_version != self_version {
         println!("Version mismatch: asusctl = {self_version}, asusd = {asusd_version}");
         return Ok(());

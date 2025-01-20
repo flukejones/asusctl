@@ -8,7 +8,7 @@ use std::sync::Arc;
 use std::thread::sleep;
 
 use config_traits::StdConfig;
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use rog_anime::usb::{
     pkt_flush, pkt_set_brightness, pkt_set_enable_display, pkt_set_enable_powersave_anim,
     pkts_for_init, Brightness
@@ -59,6 +59,8 @@ impl AniMe {
                 config.rename_file_old();
                 *config = AniMeConfig::new();
                 config.write();
+            } else {
+                debug!("Initialised AniMe cache");
             }
         } else {
             error!("AniMe Matrix could not init cache")
@@ -70,7 +72,9 @@ impl AniMe {
         self.do_init_cache().await;
         let pkts = pkts_for_init();
         self.write_bytes(&pkts[0]).await?;
-        self.write_bytes(&pkts[1]).await
+        self.write_bytes(&pkts[1]).await?;
+        debug!("Succesfully initialised AniMe matrix display");
+        Ok(())
     }
 
     pub async fn lock_config(&self) -> MutexGuard<AniMeConfig> {

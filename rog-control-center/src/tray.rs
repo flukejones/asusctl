@@ -208,7 +208,15 @@ pub fn init_tray(_supported_properties: Vec<Properties>, config: Arc<Mutex<Confi
                         }
                     }
                 }
-                Err(e) => warn!("Couldn't get mode form supergfxd: {e:?}")
+                Err(e) => match e {
+                    zbus::Error::MethodError(_, _, message) => {
+                        warn!(
+                            "Couldn't get mode from supergfxd: {message:?}, the supergfxd service \
+                             may not be running or installed"
+                        )
+                    }
+                    _ => warn!("Couldn't get mode from supergfxd: {e:?}")
+                }
             }
 
             info!("Started ROGTray");

@@ -74,7 +74,15 @@ fn main() {
         println!("\nError: {e}\n");
         print_info();
     }) {
-        let asusd_version = platform_proxy.version().unwrap();
+        let asusd_version = platform_proxy
+            .version()
+            .map_err(|e| {
+                error!(
+                    "Could not get asusd version: {e:?}\nIs asusd.service running? {}",
+                    check_service("asusd")
+                );
+            })
+            .unwrap();
         if asusd_version != self_version {
             println!("Version mismatch: asusctl = {self_version}, asusd = {asusd_version}");
             return;

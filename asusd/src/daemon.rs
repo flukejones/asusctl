@@ -100,6 +100,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     // Request dbus name after finishing initalizing all functions
     server.request_name(DBUS_NAME).await?;
 
+    info!("Startup success, begining dbus server loop");
     loop {
         // This is just a blocker to idle and ensure the reator reacts
         server.executor().tick().await;

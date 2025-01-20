@@ -319,11 +319,17 @@ impl DeviceManager {
                 if let DeviceHandle::AniMe(anime) = dev_type.clone() {
                     let path = dbus_path_for_anime();
                     let ctrl = AniMeZbus::new(anime);
-                    ctrl.start_tasks(connection, path.clone()).await.unwrap();
-                    devices.push(AsusDevice {
-                        device: dev_type,
-                        dbus_path: path
-                    });
+                    if ctrl
+                        .start_tasks(connection, path.clone())
+                        .await
+                        .map_err(|e| error!("Failed to start tasks: {e:?}, not adding this device"))
+                        .is_ok()
+                    {
+                        devices.push(AsusDevice {
+                            device: dev_type,
+                            dbus_path: path
+                        });
+                    }
                 }
             } else {
                 info!("Tested device was not AniMe Matrix");
@@ -364,7 +370,9 @@ impl DeviceManager {
 
     pub async fn new(connection: Connection) -> Result<Self, RogError> {
         let conn_copy = connection.clone();
-        let devices = Arc::new(Mutex::new(Self::find_all_devices(&conn_copy).await));
+        let devices = Self::find_all_devices(&conn_copy).await;
+        info!("Found {} valid devices on startup", devices.len());
+        let devices = Arc::new(Mutex::new(devices));
         let manager = Self {
             _dbus_connection: connection
         };
@@ -372,8 +380,6 @@ impl DeviceManager {
         // TODO: The /sysfs/ LEDs don't cause events, so they need to be manually
         // checked for and added
 
-        // detect all plugged in aura devices (eventually)
-        // only USB devices are detected for here
         std::thread::spawn(move || {
             let mut monitor = MonitorBuilder::new()?.listen()?;
             let mut poll = Poll::new()?;
@@ -420,7 +426,10 @@ impl DeviceManager {
                                     {
                                         index
                                     } else {
-                                        warn!("No device for dbus path: {path:?}");
+                                        if dev_prop_matches(&event.device(), "ID_VENDOR_ID", "0b05")
+                                        {
+                                            warn!("No device for dbus path: {path:?}");
+                                        }
                                         return Ok(());
                                     };
                                     info!("removing: {path:?}");
