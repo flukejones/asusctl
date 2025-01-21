@@ -2,11 +2,14 @@
 
 ## [Unreleased]
 
+## [v6.1.0-rc7]
+
 - Refactor PPT handling more:
   1. Per profile, per-ac/dc
   2. Do not apply unless group is enabled
   3. Better reset/disable handling
   4. Selecting a profile defaults PPT to off/disabled
+- Bugfix: prevent an AniMe thread async deadlock
 
 ## [v6.1.0-rc6]
 

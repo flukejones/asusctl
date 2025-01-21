@@ -84,7 +84,7 @@ pub fn show_toast(
 
 pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
     slint::set_xdg_app_id("rog-control-center")
-        .map_err(warn!("Couldn't set application ID: {e:?}"))
+        .map_err(|e| warn!("Couldn't set application ID: {e:?}"))
         .ok();
     let ui = MainWindow::new().unwrap();
     if let Ok(lock) = config.try_lock() {
