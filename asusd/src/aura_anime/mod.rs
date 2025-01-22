@@ -176,7 +176,7 @@ impl AniMe {
                                     return Ok(true); // Do safe exit
                                 }
                                 let inner = inner.clone();
-                                tokio::task::spawn_local(async move {
+                                tokio::task::spawn(async move {
                                     inner
                                         .write_data_buffer(frame)
                                         .await
