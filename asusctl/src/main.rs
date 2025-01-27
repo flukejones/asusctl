@@ -281,8 +281,8 @@ fn do_parsed(
                 }
 
                 println!("\nExtra help can be requested on any command or subcommand:");
-                println!(" asusctl led-mode --help");
-                println!(" asusctl led-mode static --help");
+                println!(" asusctl aura --help");
+                println!(" asusctl aura static --help");
             }
         }
     }
