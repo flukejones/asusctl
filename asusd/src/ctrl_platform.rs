@@ -372,6 +372,7 @@ impl CtrlPlatform {
                 .enabled = false;
 
             self.config.lock().await.write();
+            // TODO: Need to get supported profiles here and ensure we translate to one
             self.platform
                 .set_platform_profile(policy.into())
                 .map_err(|err| {

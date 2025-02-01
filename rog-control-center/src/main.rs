@@ -84,7 +84,7 @@ async fn main() -> Result<()> {
     let board_name = dmi.board_name;
     let prod_family = dmi.product_family;
     info!("Running on {board_name}, product: {prod_family}");
-    let is_rog_ally = prod_family == "RC71L";
+    let is_rog_ally = prod_family == "RC71L" || prod_family == "RC72L";
 
     let args: Vec<String> = args().skip(1).collect();
 
@@ -120,7 +120,9 @@ async fn main() -> Result<()> {
         config.enable_tray_icon = false;
         config.run_in_background = false;
         config.startup_in_background = false;
+        config.start_fullscreen = true;
     }
+    config.write();
 
     let enable_tray_icon = config.enable_tray_icon;
     let startup_in_background = config.startup_in_background;
@@ -136,8 +138,8 @@ async fn main() -> Result<()> {
     // i_slint_backend_selector::with_platform(|_| Ok(())).unwrap();
 
     if !startup_in_background {
-        if let Ok(mut lock) = app_state.lock() {
-            *lock = AppState::MainWindowShouldOpen;
+        if let Ok(mut app_state) = app_state.lock() {
+            *app_state = AppState::MainWindowShouldOpen;
         }
     }
 
@@ -154,15 +156,15 @@ async fn main() -> Result<()> {
         let mut state = AppState::StartingUp;
         loop {
             // save as a var, don't hold the lock the entire time or deadlocks happen
-            if let Ok(lock) = app_state.lock() {
-                state = *lock;
+            if let Ok(app_state) = app_state.lock() {
+                state = *app_state;
             }
 
             // This sleep is required to give the event loop time to react
             sleep(Duration::from_millis(300));
             if state == AppState::MainWindowShouldOpen {
-                if let Ok(mut lock) = app_state.lock() {
-                    *lock = AppState::MainWindowOpen;
+                if let Ok(mut app_state) = app_state.lock() {
+                    *app_state = AppState::MainWindowOpen;
                 }
 
                 let config_copy = config.clone();
@@ -174,20 +176,39 @@ async fn main() -> Result<()> {
                         if let Some(ui) = ui.as_mut() {
                             ui.window().show().unwrap();
                             ui.window().on_close_requested(move || {
-                                if let Ok(mut lock) = app_state_copy.lock() {
-                                    *lock = AppState::MainWindowClosed;
+                                if let Ok(mut app_state) = app_state_copy.lock() {
+                                    *app_state = AppState::MainWindowClosed;
                                 }
                                 slint::CloseRequestResponse::HideWindow
                             });
                         } else {
+                            let config_copy_2 = config_copy.clone();
                             let newui = setup_window(config_copy);
-                            newui.window().show().unwrap();
                             newui.window().on_close_requested(move || {
-                                if let Ok(mut lock) = app_state_copy.lock() {
-                                    *lock = AppState::MainWindowClosed;
+                                if let Ok(mut app_state) = app_state_copy.lock() {
+                                    *app_state = AppState::MainWindowClosed;
                                 }
                                 slint::CloseRequestResponse::HideWindow
                             });
+
+                            let ui_copy = newui.as_weak();
+                            newui
+                                .window()
+                                .set_rendering_notifier(move |s, _| {
+                                    if let slint::RenderingState::RenderingSetup = s {
+                                        let config = config_copy_2.clone();
+                                        ui_copy
+                                            .upgrade_in_event_loop(move |w| {
+                                                let fullscreen =
+                                                    config.lock().is_ok_and(|c| c.start_fullscreen);
+                                                if fullscreen && !w.window().is_fullscreen() {
+                                                    w.window().set_fullscreen(fullscreen);
+                                                }
+                                            })
+                                            .ok();
+                                    }
+                                })
+                                .ok();
                             ui.replace(newui);
                         }
                     });
@@ -197,8 +218,8 @@ async fn main() -> Result<()> {
                 slint::quit_event_loop().unwrap();
                 exit(0);
             } else if state != AppState::MainWindowOpen {
-                if let Ok(lock) = config.lock() {
-                    if !lock.run_in_background {
+                if let Ok(config) = config.lock() {
+                    if !config.run_in_background {
                         slint::quit_event_loop().unwrap();
                         exit(0);
                     }

@@ -16,7 +16,7 @@ use crate::{set_ui_callbacks, set_ui_props_async, AttrMinMax, MainWindow, System
 const MINMAX: AttrMinMax = AttrMinMax {
     min: 0,
     max: 0,
-    val: -1.0
+    current: -1.0
 };
 
 pub fn setup_system_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
@@ -93,13 +93,13 @@ macro_rules! init_minmax_property {
         tokio::spawn(async move {
             let min = proxy_copy.min_value().await.unwrap();
             let max = proxy_copy.max_value().await.unwrap();
-            let val = proxy_copy.current_value().await.unwrap() as f32;
+            let current = proxy_copy.current_value().await.unwrap() as f32;
             handle_copy
                 .upgrade_in_event_loop(move |handle| {
                     concat_idents!(setter = set_, $property {
                         handle
                             .global::<SystemPageData>()
-                            .setter(AttrMinMax { min, max, val });
+                            .setter(AttrMinMax { min, max, current });
                     });
                 })
                 .ok();
@@ -174,30 +174,41 @@ macro_rules! setup_external {
 }
 
 // For handling external value changes
-macro_rules! setup_minmax_external {
-    ($property:ident, $handle:expr, $attr:expr, $platform:expr) => {
+macro_rules! setup_value_watch {
+    ($property:ident, $handle:expr, $proxy:expr, $value_type:ident $($conv: tt)*) => {
         let handle_copy = $handle.as_weak();
-        let proxy_copy = $attr.clone();
+        let proxy_copy = $proxy.clone();
         tokio::spawn(async move {
-            let mut x = proxy_copy.receive_current_value_changed().await;
+            let mut x = concat_idents!(recv = receive_, $value_type, _value_changed {
+                proxy_copy.recv().await
+            });
             use zbus::export::futures_util::StreamExt;
             while let Some(e) = x.next().await {
                 if let Ok(out) = e.get().await {
                     concat_idents!(getter = get_, $property {
-                    handle_copy
-                        .upgrade_in_event_loop(move |handle| {
-                            let mut tmp: AttrMinMax =
-                                handle.global::<SystemPageData>().getter();
-                            tmp.val = out as f32;
-                            concat_idents!(setter = set_, $property {
-                                handle.global::<SystemPageData>().setter(tmp);
-                            });
-                        })
-                        .ok();
+                        handle_copy
+                            .upgrade_in_event_loop(move |handle| {
+                                let mut tmp: AttrMinMax =
+                                    handle.global::<SystemPageData>().getter();
+                                tmp.$value_type = out $($conv)*;
+                                    dbg!(tmp.$value_type);
+                                concat_idents!(setter = set_, $property {
+                                    handle.global::<SystemPageData>().setter(tmp);
+                                });
+                            })
+                            .ok();
                     });
                 }
             }
         });
+    };
+}
+
+macro_rules! setup_minmax_external {
+    ($property:ident, $handle:expr, $attr:expr, $platform:expr) => {
+        setup_value_watch!($property, $handle, $attr, current as f32);
+        setup_value_watch!($property, $handle, $attr, min);
+        setup_value_watch!($property, $handle, $attr, max);
 
         let handle_copy = $handle.as_weak();
         let proxy_copy = $attr.clone();
@@ -210,13 +221,13 @@ macro_rules! setup_minmax_external {
                     debug!("receive_platform_profile_changed, getting new {}", stringify!(attr));
                     let min = proxy_copy.min_value().await.unwrap();
                     let max = proxy_copy.max_value().await.unwrap();
-                    let val = proxy_copy.current_value().await.unwrap() as f32;
+                    let current = proxy_copy.current_value().await.unwrap() as f32;
                     handle_copy
                         .upgrade_in_event_loop(move |handle| {
                             concat_idents!(setter = set_, $property {
                                 handle
                                     .global::<SystemPageData>()
-                                    .setter(AttrMinMax { min, max, val });
+                                    .setter(AttrMinMax { min, max, current });
                             });
                         })
                         .ok();

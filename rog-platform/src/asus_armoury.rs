@@ -172,8 +172,8 @@ impl Attribute {
         )
     }
 
-    pub fn get_watcher(&self) -> Result<inotify::Inotify, PlatformError> {
-        let path = self.base_path.join("current_value");
+    pub fn get_watcher(&self, attr: &str) -> Result<inotify::Inotify, PlatformError> {
+        let path = self.base_path.join(attr);
         if let Some(path) = path.to_str() {
             let inotify = inotify::Inotify::init()?;
             inotify
@@ -317,7 +317,13 @@ impl FirmwareAttribute {
                 | FirmwareAttribute::PptFppt
                 | FirmwareAttribute::PptApuSppt
                 | FirmwareAttribute::PptPlatformSppt
-                | FirmwareAttribute::NvDynamicBoost
+        )
+    }
+
+    pub fn is_dgpu(&self) -> bool {
+        matches!(
+            self,
+            FirmwareAttribute::NvDynamicBoost
                 | FirmwareAttribute::NvTempTarget
                 | FirmwareAttribute::DgpuTgp
         )
@@ -338,7 +344,7 @@ impl From<&str> for FirmwareAttribute {
             "ppt_platform_sppt" => Self::PptPlatformSppt,
             "nv_dynamic_boost" => Self::NvDynamicBoost,
             "nv_temp_target" => Self::NvTempTarget,
-            "dgpu_base_tgp" => Self::DgpuBaseTgp,
+            "nv_base_tgp" => Self::DgpuBaseTgp,
             "dgpu_tgp" => Self::DgpuTgp,
             "charge_mode" => Self::ChargeMode,
             "boot_sound" => Self::BootSound,

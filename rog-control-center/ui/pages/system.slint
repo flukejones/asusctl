@@ -4,12 +4,12 @@ import { Palette, HorizontalBox , VerticalBox, ScrollView, Slider, Button, Switc
 export struct AttrMinMax {
   min: int,
   max: int,
-  val: float,
+  current: float,
 }
 
 export struct AttrPossible {
   range: [int],
-  val: int,
+  current: int,
 }
 
 export global SystemPageData {
@@ -54,7 +54,7 @@ export global SystemPageData {
     in-out property <AttrMinMax> ppt_pl1_spl: {
         min: 0,
         max: 100,
-        val: 20,
+        current: 20,
     };
     callback cb_ppt_pl1_spl(int);
     callback cb_default_ppt_pl1_spl();
@@ -62,7 +62,7 @@ export global SystemPageData {
     in-out property <AttrMinMax> ppt_pl2_sppt: {
         min: 0,
         max: 100,
-        val: 20,
+        current: 20,
     };
     callback cb_ppt_pl2_sppt(int);
     callback cb_default_ppt_pl2_sppt();
@@ -70,7 +70,7 @@ export global SystemPageData {
     in-out property <AttrMinMax> ppt_pl3_fppt: {
         min: 0,
         max: 100,
-        val: 20,
+        current: 20,
     };
     callback cb_ppt_pl3_fppt(int);
     callback cb_default_ppt_pl3_fppt();
@@ -78,7 +78,7 @@ export global SystemPageData {
     in-out property <AttrMinMax> ppt_fppt: {
         min: 0,
         max: 100,
-        val: 20,
+        current: 20,
     };
     callback cb_ppt_fppt(int);
     callback cb_default_ppt_fppt();
@@ -86,7 +86,7 @@ export global SystemPageData {
     in-out property <AttrMinMax> ppt_apu_sppt: {
         min: 0,
         max: 100,
-        val: 20,
+        current: 20,
     };
     callback cb_ppt_apu_sppt(int);
     callback cb_default_ppt_apu_sppt();
@@ -94,7 +94,7 @@ export global SystemPageData {
     in-out property <AttrMinMax> ppt_platform_sppt: {
         min: 0,
         max: 100,
-        val: 20,
+        current: 20,
     };
     callback cb_ppt_platform_sppt(int);
     callback cb_default_ppt_platform_sppt();
@@ -102,7 +102,7 @@ export global SystemPageData {
     in-out property <AttrMinMax> nv_dynamic_boost: {
         min: 0,
         max: 30,
-        val: 5,
+        current: 5,
     };
     callback cb_nv_dynamic_boost(int);
     callback cb_default_nv_dynamic_boost();
@@ -110,7 +110,7 @@ export global SystemPageData {
     in-out property <AttrMinMax> nv_temp_target: {
         min: 0,
         max: 80,
-        val: 75,
+        current: 75,
     };
     callback cb_nv_temp_target(int);
     callback cb_default_nv_temp_target();
@@ -237,7 +237,7 @@ export component PageSystem inherits Rectangle {
                 }
             }
 
-            if SystemPageData.ppt_pl1_spl.val != -1 || SystemPageData.ppt_pl2_sppt.val != -1 || SystemPageData.nv_dynamic_boost.val != -1: HorizontalLayout {
+            if SystemPageData.ppt_pl1_spl.current != -1 || SystemPageData.ppt_pl2_sppt.current != -1 || SystemPageData.nv_dynamic_boost.current != -1: HorizontalLayout {
                 padding-right: 10px;
                 padding-left: 10px;
                 alignment: LayoutAlignment.space-between;
@@ -258,137 +258,137 @@ export component PageSystem inherits Rectangle {
                 }
             }
 
-            if SystemPageData.ppt_pl1_spl.val != -1: SystemSlider {
+            if SystemPageData.ppt_pl1_spl.current != -1: SystemSlider {
                 text: @tr("ppt_pl1_spl" => "CPU Sustained Power Limit");
                 title: @tr("ppt_pl1_spl" => "CPU Sustained Power Limit");
                 help_text: @tr("ppt_pl1_spl_help" => "Long-term CPU power limit that affects sustained workload performance. Higher values may increase heat and power consumption.");
                 minimum: SystemPageData.ppt_pl1_spl.min;
                 maximum: SystemPageData.ppt_pl1_spl.max;
-                value: SystemPageData.ppt_pl1_spl.val;
+                value: SystemPageData.ppt_pl1_spl.current;
                 has_reset: true;
                 cb_do_reset => {
                     SystemPageData.cb_default_ppt_pl1_spl();
                 }
                 released => {
-                    SystemPageData.ppt_pl1_spl.val = self.value;
+                    SystemPageData.ppt_pl1_spl.current = self.value;
                     SystemPageData.cb_ppt_pl1_spl(Math.round(self.value));
                 }
             }
 
-            if SystemPageData.ppt_pl2_sppt.val != -1: SystemSlider {
+            if SystemPageData.ppt_pl2_sppt.current != -1: SystemSlider {
                 text: @tr("ppt_pl2_sppt" => "CPU Turbo Power Limit");
                 title: @tr("ppt_pl2_sppt" => "CPU Turbo Power Limit");
                 help_text: @tr("ppt_pl2_sppt_help" => "Short-term CPU power limit for boost periods. Controls maximum power during brief high-performance bursts.");
                 minimum: SystemPageData.ppt_pl2_sppt.min;
                 maximum: SystemPageData.ppt_pl2_sppt.max;
-                value: SystemPageData.ppt_pl2_sppt.val;
+                value: SystemPageData.ppt_pl2_sppt.current;
                 has_reset: true;
                 cb_do_reset => {
                     SystemPageData.cb_default_ppt_pl2_sppt();
                 }
                 released => {
-                    SystemPageData.ppt_pl2_sppt.val = self.value;
+                    SystemPageData.ppt_pl2_sppt.current = self.value;
                     SystemPageData.cb_ppt_pl2_sppt(Math.round(self.value))
                 }
             }
 
-            if SystemPageData.ppt_pl3_fppt.val != -1: SystemSlider {
+            if SystemPageData.ppt_pl3_fppt.current != -1: SystemSlider {
                 text: @tr("ppt_pl3_fppt" => "CPU Fast Burst Power Limit");
                 title: @tr("ppt_pl3_fppt" => "CPU Fast Burst Power Limit");
                 help_text: @tr("ppt_pl3_fppt_help" => "Ultra-short duration power limit for instantaneous CPU bursts. Affects responsiveness during sudden workload spikes.");
                 minimum: SystemPageData.ppt_pl3_fppt.min;
                 maximum: SystemPageData.ppt_pl3_fppt.max;
-                value: SystemPageData.ppt_pl3_fppt.val;
+                value: SystemPageData.ppt_pl3_fppt.current;
                 has_reset: true;
                 cb_do_reset => {
                     SystemPageData.cb_default_ppt_pl3_fppt();
                 }
                 released => {
-                    SystemPageData.ppt_pl3_fppt.val = self.value;
+                    SystemPageData.ppt_pl3_fppt.current = self.value;
                     SystemPageData.cb_ppt_pl3_fppt(Math.round(self.value))
                 }
             }
-            if SystemPageData.ppt_fppt.val != -1: SystemSlider {
+            if SystemPageData.ppt_fppt.current != -1: SystemSlider {
                 text: @tr("ppt_fppt" => "Fast Package Power Limit");
                 title: @tr("ppt_fppt" => "Fast Package Power Limit");
                 help_text: @tr("ppt_fppt_help" => "Ultra-short duration power limit for system package. Controls maximum power during millisecond-scale load spikes.");
                 minimum: SystemPageData.ppt_fppt.min;
                 maximum: SystemPageData.ppt_fppt.max;
-                value: SystemPageData.ppt_fppt.val;
+                value: SystemPageData.ppt_fppt.current;
                 has_reset: true;
                 cb_do_reset => {
                     SystemPageData.cb_default_ppt_fppt();
                 }
                 released => {
-                    SystemPageData.ppt_fppt.val = self.value;
+                    SystemPageData.ppt_fppt.current = self.value;
                     SystemPageData.cb_ppt_fppt(Math.round(self.value))
                 }
             }
 
-            if SystemPageData.ppt_apu_sppt.val != -1: SystemSlider {
+            if SystemPageData.ppt_apu_sppt.current != -1: SystemSlider {
                 text: @tr("ppt_apu_sppt" => "APU Sustained Power Limit");
                 title: @tr("ppt_apu_sppt" => "APU Sustained Power Limit");
                 help_text: @tr("ppt_apu_sppt_help" => "Long-term power limit for integrated graphics and CPU combined. Affects sustained performance of APU-based workloads.");
                 minimum: SystemPageData.ppt_apu_sppt.min;
                 maximum: SystemPageData.ppt_apu_sppt.max;
-                value: SystemPageData.ppt_apu_sppt.val;
+                value: SystemPageData.ppt_apu_sppt.current;
                 has_reset: true;
                 cb_do_reset => {
                     SystemPageData.cb_default_ppt_apu_sppt();
                 }
                 released => {
-                    SystemPageData.ppt_apu_sppt.val = self.value;
+                    SystemPageData.ppt_apu_sppt.current = self.value;
                     SystemPageData.cb_ppt_apu_sppt(Math.round(self.value))
                 }
             }
 
-            if SystemPageData.ppt_platform_sppt.val != -1: SystemSlider {
+            if SystemPageData.ppt_platform_sppt.current != -1: SystemSlider {
                 text: @tr("ppt_platform_sppt" => "Platform Sustained Power Limit");
                 title: @tr("ppt_platform_sppt" => "Platform Sustained Power Limit");
                 help_text: @tr("ppt_platform_sppt_help" => "Overall system power limit for sustained operations. Controls total platform power consumption over extended periods.");
                 minimum: SystemPageData.ppt_platform_sppt.min;
                 maximum: SystemPageData.ppt_platform_sppt.max;
-                value: SystemPageData.ppt_platform_sppt.val;
+                value: SystemPageData.ppt_platform_sppt.current;
                 has_reset: true;
                 cb_do_reset => {
                     SystemPageData.cb_default_ppt_platform_sppt();
                 }
                 released => {
-                    SystemPageData.ppt_platform_sppt.val = self.value;
+                    SystemPageData.ppt_platform_sppt.current = self.value;
                     SystemPageData.cb_ppt_platform_sppt(Math.round(self.value))
                 }
             }
 
-            if SystemPageData.nv_dynamic_boost.val != -1: SystemSlider {
+            if SystemPageData.nv_dynamic_boost.current != -1: SystemSlider {
                 text: @tr("nv_dynamic_boost" => "GPU Power Boost");
                 title: @tr("nv_dynamic_boost" => "GPU Power Boost");
                 help_text: @tr("nv_dynamic_boost_help" => "Additional power allocation for GPU dynamic boost. Higher values increase GPU performance but generate more heat.");
                 minimum: SystemPageData.nv_dynamic_boost.min;
                 maximum: SystemPageData.nv_dynamic_boost.max;
-                value: SystemPageData.nv_dynamic_boost.val;
+                value: SystemPageData.nv_dynamic_boost.current;
                 has_reset: true;
                 cb_do_reset => {
                     SystemPageData.cb_default_nv_dynamic_boost();
                 }
                 released => {
-                    SystemPageData.nv_dynamic_boost.val = self.value;
+                    SystemPageData.nv_dynamic_boost.current = self.value;
                     SystemPageData.cb_nv_dynamic_boost(Math.round(self.value))
                 }
             }
 
-            if SystemPageData.nv_temp_target.val != -1: SystemSlider {
+            if SystemPageData.nv_temp_target.current != -1: SystemSlider {
                 text: @tr("nv_temp_target" => "GPU Temperature Limit");
                 title: @tr("nv_temp_target" => "GPU Temperature Limit");
                 help_text: @tr("nv_temp_target_help" => "Maximum GPU temperature threshold in Celsius. GPU will throttle to maintain temperature below this limit.");
                 minimum: SystemPageData.nv_temp_target.min;
                 maximum: SystemPageData.nv_temp_target.max;
-                value: SystemPageData.nv_temp_target.val;
+                value: SystemPageData.nv_temp_target.current;
                 has_reset: true;
                 cb_do_reset => {
                     SystemPageData.cb_default_nv_temp_target();
                 }
                 released => {
-                    SystemPageData.nv_temp_target.val = self.value;
+                    SystemPageData.nv_temp_target.current = self.value;
                     SystemPageData.cb_nv_temp_target(Math.round(self.value))
                 }
             }

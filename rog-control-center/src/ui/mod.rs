@@ -8,7 +8,7 @@ use std::sync::{Arc, Mutex};
 use config_traits::StdConfig;
 use log::warn;
 use rog_dbus::list_iface_blocking;
-use slint::{ComponentHandle, PhysicalSize, SharedString, Weak};
+use slint::{ComponentHandle, SharedString, Weak};
 
 use crate::config::Config;
 use crate::ui::setup_anime::setup_anime_page;
@@ -87,15 +87,7 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
         .map_err(|e| warn!("Couldn't set application ID: {e:?}"))
         .ok();
     let ui = MainWindow::new().unwrap();
-    if let Ok(lock) = config.try_lock() {
-        let fullscreen = lock.start_fullscreen;
-        let width = lock.fullscreen_width;
-        let height = lock.fullscreen_height;
-        if fullscreen {
-            ui.window().set_fullscreen(fullscreen);
-            ui.window().set_size(PhysicalSize { width, height });
-        }
-    };
+    ui.window().show().unwrap();
 
     let available = list_iface_blocking().unwrap_or_default();
     ui.set_sidebar_items_avilable(
@@ -129,6 +121,7 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
     if available.contains(&"xyz.ljones.FanCurves".to_string()) {
         setup_fan_curve_page(&ui, config);
     }
+
     ui
 }
 

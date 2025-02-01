@@ -68,29 +68,40 @@ impl AsusArmouryAttribute {
     ) -> Result<(), RogError> {
         use zbus::export::futures_util::StreamExt;
 
-        let ctrl = self.clone();
         let name = self.name();
-        match self.attr.get_watcher() {
-            Ok(watch) => {
-                let name = <&str>::from(name);
-                tokio::spawn(async move {
-                    let mut buffer = [0; 32];
-                    watch
-                        .into_event_stream(&mut buffer)
-                        .unwrap()
-                        .for_each(|_| async {
-                            debug!("{} changed", name);
-                            ctrl.current_value_changed(&signal_ctxt).await.ok();
-                        })
-                        .await;
-                });
-            }
-            Err(e) => info!(
-                "inotify watch failed: {}. You can ignore this if your device does not support \
-                 the feature",
-                e
-            )
+        macro_rules! watch_value_notify {
+            ($attr_str:expr, $fn_prop_changed:ident) => {
+                match self.attr.get_watcher($attr_str) {
+                    Ok(watch) => {
+                        let name = <&str>::from(name);
+                        let ctrl = self.clone();
+                        let sig = signal_ctxt.clone();
+                        tokio::spawn(async move {
+                            let mut buffer = [0; 32];
+                            watch
+                                .into_event_stream(&mut buffer)
+                                .unwrap()
+                                .for_each(|_| async {
+                                    debug!("{} changed", name);
+                                    ctrl.$fn_prop_changed(&sig).await.ok();
+                                })
+                                .await;
+                        });
+                    }
+                    Err(e) => info!(
+                        "inotify watch failed: {}. You can ignore this if your device does not \
+                         support the feature",
+                        e
+                    )
+                }
+            };
         }
+
+        // "current_value", "default_value", "min_value", "max_value"
+        watch_value_notify!("current_value", current_value_changed);
+        watch_value_notify!("default_value", default_value_changed);
+        watch_value_notify!("min_value", min_value_changed);
+        watch_value_notify!("max_value", max_value_changed);
 
         Ok(())
     }
