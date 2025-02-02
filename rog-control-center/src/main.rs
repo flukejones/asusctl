@@ -1,4 +1,4 @@
-use std::env::args;
+use std::env::{self, args};
 use std::path::{Path, PathBuf};
 use std::process::exit;
 use std::sync::{Arc, Mutex};
@@ -31,6 +31,12 @@ async fn main() -> Result<()> {
         .target(env_logger::Target::Stdout)
         .format_timestamp(None)
         .init();
+
+    // If we're running under gamescope we have to set WAYLAND_DISPLAY for winit to
+    // use
+    if let Ok(gamescope) = env::var("GAMESCOPE_WAYLAND_DISPLAY") {
+        env::set_var("WAYLAND_DISPLAY", gamescope);
+    }
 
     // Try to open a proxy and check for app state first
     {
