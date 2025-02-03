@@ -148,7 +148,7 @@
         product_id: "",
         layout_name: "g513i",
         basic_modes: [Static, Breathe, RainbowCycle, RainbowWave, Pulse],
-        basic_zones: [],
+        basic_zones: [Key1, Key2, Key3, Key4],
         advanced_type: Zoned([ZonedKbLeft, ZonedKbLeftMid, ZonedKbRightMid, ZonedKbRight, LightbarRight, LightbarRightCorner, LightbarRightBottom, LightbarLeftBottom, LightbarLeftCorner, LightbarLeft]),
         power_zones: [Keyboard, Lightbar],
     ),
