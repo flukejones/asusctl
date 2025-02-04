@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [v6.1.0]
+
+### Changed
+- Update deps
+- Add support for G513RC RGB modes
+- Many UI fixes
+- Fixes to PPT settings in UI
+
 ## [v6.1.0-rc7]
 
 - Refactor PPT handling more:
