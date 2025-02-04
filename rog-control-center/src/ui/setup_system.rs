@@ -21,7 +21,7 @@ const MINMAX: AttrMinMax = AttrMinMax {
 
 pub fn setup_system_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
     let conn = zbus::blocking::Connection::system().unwrap();
-    let platform = PlatformProxyBlocking::new(&conn).unwrap();
+    let platform = PlatformProxyBlocking::builder(&conn).build().unwrap();
     // let armoury_attrs =
     // find_iface::<AsusArmouryProxyBlocking>("xyz.ljones.AsusArmoury").unwrap();
 
@@ -191,7 +191,6 @@ macro_rules! setup_value_watch {
                                 let mut tmp: AttrMinMax =
                                     handle.global::<SystemPageData>().getter();
                                 tmp.$value_type = out $($conv)*;
-                                    dbg!(tmp.$value_type);
                                 concat_idents!(setter = set_, $property {
                                     handle.global::<SystemPageData>().setter(tmp);
                                 });
@@ -260,7 +259,7 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
     tokio::spawn(async move {
         // Create the connections/proxies here to prevent future delays in process
         let conn = zbus::Connection::system().await.unwrap();
-        let platform = PlatformProxy::new(&conn).await.unwrap();
+        let platform = PlatformProxy::builder(&conn).build().await.unwrap();
 
         set_ui_props_async!(
             handle,

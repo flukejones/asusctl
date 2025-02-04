@@ -265,6 +265,7 @@ export component PageSystem inherits Rectangle {
                 minimum: SystemPageData.ppt_pl1_spl.min;
                 maximum: SystemPageData.ppt_pl1_spl.max;
                 value: SystemPageData.ppt_pl1_spl.current;
+                enabled <=> SystemPageData.enable_ppt_group;
                 has_reset: true;
                 cb_do_reset => {
                     SystemPageData.cb_default_ppt_pl1_spl();
@@ -282,6 +283,7 @@ export component PageSystem inherits Rectangle {
                 minimum: SystemPageData.ppt_pl2_sppt.min;
                 maximum: SystemPageData.ppt_pl2_sppt.max;
                 value: SystemPageData.ppt_pl2_sppt.current;
+                enabled <=> SystemPageData.enable_ppt_group;
                 has_reset: true;
                 cb_do_reset => {
                     SystemPageData.cb_default_ppt_pl2_sppt();
@@ -299,6 +301,7 @@ export component PageSystem inherits Rectangle {
                 minimum: SystemPageData.ppt_pl3_fppt.min;
                 maximum: SystemPageData.ppt_pl3_fppt.max;
                 value: SystemPageData.ppt_pl3_fppt.current;
+                enabled <=> SystemPageData.enable_ppt_group;
                 has_reset: true;
                 cb_do_reset => {
                     SystemPageData.cb_default_ppt_pl3_fppt();
@@ -315,6 +318,7 @@ export component PageSystem inherits Rectangle {
                 minimum: SystemPageData.ppt_fppt.min;
                 maximum: SystemPageData.ppt_fppt.max;
                 value: SystemPageData.ppt_fppt.current;
+                enabled <=> SystemPageData.enable_ppt_group;
                 has_reset: true;
                 cb_do_reset => {
                     SystemPageData.cb_default_ppt_fppt();
@@ -332,6 +336,7 @@ export component PageSystem inherits Rectangle {
                 minimum: SystemPageData.ppt_apu_sppt.min;
                 maximum: SystemPageData.ppt_apu_sppt.max;
                 value: SystemPageData.ppt_apu_sppt.current;
+                enabled <=> SystemPageData.enable_ppt_group;
                 has_reset: true;
                 cb_do_reset => {
                     SystemPageData.cb_default_ppt_apu_sppt();
@@ -349,6 +354,7 @@ export component PageSystem inherits Rectangle {
                 minimum: SystemPageData.ppt_platform_sppt.min;
                 maximum: SystemPageData.ppt_platform_sppt.max;
                 value: SystemPageData.ppt_platform_sppt.current;
+                enabled <=> SystemPageData.enable_ppt_group;
                 has_reset: true;
                 cb_do_reset => {
                     SystemPageData.cb_default_ppt_platform_sppt();
@@ -366,6 +372,7 @@ export component PageSystem inherits Rectangle {
                 minimum: SystemPageData.nv_dynamic_boost.min;
                 maximum: SystemPageData.nv_dynamic_boost.max;
                 value: SystemPageData.nv_dynamic_boost.current;
+                enabled <=> SystemPageData.enable_ppt_group;
                 has_reset: true;
                 cb_do_reset => {
                     SystemPageData.cb_default_nv_dynamic_boost();
@@ -383,6 +390,7 @@ export component PageSystem inherits Rectangle {
                 minimum: SystemPageData.nv_temp_target.min;
                 maximum: SystemPageData.nv_temp_target.max;
                 value: SystemPageData.nv_temp_target.current;
+                enabled <=> SystemPageData.enable_ppt_group;
                 has_reset: true;
                 cb_do_reset => {
                     SystemPageData.cb_default_nv_temp_target();

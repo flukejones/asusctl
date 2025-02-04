@@ -91,7 +91,7 @@ impl LedSupportFile {
     /// to ensure we match to *whole names* first before doing a glob match
     fn match_device(&self, device_name: &str, product_id: &str) -> LedSupportData {
         for config in self.0.iter().rev() {
-            if device_name.contains(&config.device_name) {
+            if device_name.eq_ignore_ascii_case(&config.device_name) {
                 info!("Matched to {}", config.device_name);
                 if !config.product_id.is_empty() {
                     info!("Checking product ID");

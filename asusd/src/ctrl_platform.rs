@@ -350,26 +350,16 @@ impl CtrlPlatform {
     }
 
     #[zbus(property)]
-    async fn set_platform_profile(&mut self, policy: PlatformProfile) -> Result<(), FdoErr> {
+    async fn set_platform_profile(
+        &mut self,
+        #[zbus(signal_context)] ctxt: SignalEmitter<'_>,
+        policy: PlatformProfile
+    ) -> Result<(), FdoErr> {
         // TODO: watch for external changes
         if self.platform.has_platform_profile() {
             let change_epp = self.config.lock().await.platform_profile_linked_epp;
             let epp = self.get_config_epp_for_throttle(policy).await;
             self.check_and_set_epp(epp, change_epp);
-
-            let power_plugged = self
-                .power
-                .get_online()
-                .map_err(|e| {
-                    error!("Could not get power status: {e:?}");
-                    e
-                })
-                .unwrap_or_default();
-            self.config
-                .lock()
-                .await
-                .select_tunings(power_plugged == 1, policy)
-                .enabled = false;
 
             self.config.lock().await.write();
             // TODO: Need to get supported profiles here and ensure we translate to one
@@ -378,7 +368,9 @@ impl CtrlPlatform {
                 .map_err(|err| {
                     warn!("platform_profile {}", err);
                     FdoErr::Failed(format!("RogPlatform: platform_profile: {err}"))
-                })
+                })?;
+            self.enable_ppt_group_changed(&ctxt).await?;
+            Ok(())
         } else {
             Err(FdoErr::NotSupported(
                 "RogPlatform: platform_profile not supported".to_owned()
@@ -406,10 +398,11 @@ impl CtrlPlatform {
     #[zbus(property)]
     async fn set_platform_profile_on_battery(
         &mut self,
+        #[zbus(signal_context)] ctxt: SignalEmitter<'_>,
         policy: PlatformProfile
     ) -> Result<(), FdoErr> {
         self.config.lock().await.platform_profile_on_battery = policy;
-        self.set_platform_profile(policy).await?;
+        self.set_platform_profile(ctxt, policy).await?;
         self.config.lock().await.write();
         Ok(())
     }
@@ -432,9 +425,13 @@ impl CtrlPlatform {
     }
 
     #[zbus(property)]
-    async fn set_platform_profile_on_ac(&mut self, policy: PlatformProfile) -> Result<(), FdoErr> {
+    async fn set_platform_profile_on_ac(
+        &mut self,
+        #[zbus(signal_context)] ctxt: SignalEmitter<'_>,
+        policy: PlatformProfile
+    ) -> Result<(), FdoErr> {
         self.config.lock().await.platform_profile_on_ac = policy;
-        self.set_platform_profile(policy).await?;
+        self.set_platform_profile(ctxt, policy).await?;
         self.config.lock().await.write();
         Ok(())
     }
@@ -533,45 +530,41 @@ impl CtrlPlatform {
             .unwrap_or_default();
         let profile: PlatformProfile = self.platform.get_platform_profile()?.into();
 
-        // Clone to reduce blocking
-        let tuning = self
-            .config
-            .lock()
-            .await
-            .select_tunings(power_plugged == 1, profile)
-            .clone();
+        if enable {
+            // Clone to reduce blocking
+            let tuning = self
+                .config
+                .lock()
+                .await
+                .select_tunings(power_plugged == 1, profile)
+                .clone();
 
-        for attr in self.attributes.attributes() {
-            let name: FirmwareAttribute = attr.name().into();
-            if name.is_ppt() {
-                // reset stored value
-                if let Some(tune) = self
-                    .config
-                    .lock()
-                    .await
-                    .select_tunings(power_plugged == 1, profile)
-                    .group
-                    .get_mut(&name)
-                {
-                    let value = if !enable {
-                        attr.default_value().clone()
-                    } else {
-                        tuning
+            for attr in self.attributes.attributes() {
+                let name: FirmwareAttribute = attr.name().into();
+                if name.is_ppt() {
+                    // reset stored value
+                    if let Some(tune) = self
+                        .config
+                        .lock()
+                        .await
+                        .select_tunings(power_plugged == 1, profile)
+                        .group
+                        .get_mut(&name)
+                    {
+                        let value = tuning
                             .group
                             .get(&name)
                             .map(|v| AttrValue::Integer(*v))
-                            .unwrap_or_else(|| attr.default_value().clone())
-                    };
-                    // restore default
-                    attr.set_current_value(&value)?;
-                    if let AttrValue::Integer(i) = value {
-                        *tune = i
+                            .unwrap_or_else(|| attr.default_value().clone());
+                        // restore default
+                        attr.set_current_value(&value)?;
+                        if let AttrValue::Integer(i) = value {
+                            *tune = i
+                        }
                     }
                 }
             }
-        }
-
-        if !enable {
+        } else {
             // finally, reapply the profile to ensure acpi does the thingy
             self.platform.set_platform_profile(profile.into())?;
         }
@@ -683,6 +676,7 @@ impl CtrlTask for CtrlPlatform {
         let platform1 = self.clone();
         let platform2 = self.clone();
         let platform3 = self.clone();
+        let signal_ctxt_copy = signal_ctxt.clone();
         self.create_sys_event_tasks(
             move |sleeping| {
                 let platform1 = platform1.clone();
@@ -750,6 +744,7 @@ impl CtrlTask for CtrlPlatform {
             },
             move |power_plugged| {
                 let platform3 = platform3.clone();
+                let signal_ctxt_copy = signal_ctxt.clone();
                 // power change
                 async move {
                     if platform3.platform.has_platform_profile() {
@@ -781,6 +776,10 @@ impl CtrlTask for CtrlPlatform {
                             profile
                         )
                         .await;
+                        platform3
+                            .enable_ppt_group_changed(&signal_ctxt_copy)
+                            .await
+                            .ok();
                     }
                 }
             }
@@ -789,7 +788,7 @@ impl CtrlTask for CtrlPlatform {
 
         // This spawns a new task for every item.
         // TODO: find a better way to manage this
-        self.watch_charge_control_end_threshold(signal_ctxt.clone())
+        self.watch_charge_control_end_threshold(signal_ctxt_copy.clone())
             .await?;
 
         let watch_platform_profile = self.platform.monitor_platform_profile()?;
@@ -816,8 +815,8 @@ impl CtrlTask for CtrlPlatform {
                         let change_epp = ctrl.config.lock().await.platform_profile_linked_epp;
                         let epp = ctrl.get_config_epp_for_throttle(profile).await;
                         ctrl.check_and_set_epp(epp, change_epp);
-                        ctrl.platform_profile_changed(&signal_ctxt).await.ok();
-                        ctrl.enable_ppt_group_changed(&signal_ctxt).await.ok();
+                        ctrl.platform_profile_changed(&signal_ctxt_copy).await.ok();
+                        ctrl.enable_ppt_group_changed(&signal_ctxt_copy).await.ok();
                         let power_plugged = ctrl
                             .power
                             .get_online()

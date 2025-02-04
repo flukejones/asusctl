@@ -417,7 +417,7 @@ pub async fn set_config_or_default(
                         <&str>::from(name),
                         i
                     );
-                    config.write();
+                    // config.write();
                 }
             }
         }
