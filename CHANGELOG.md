@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+- Fix aura data matching
+
 ## [v6.1.0]
 
 ### Changed

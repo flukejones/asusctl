@@ -567,15 +567,6 @@
         power_zones: [Keyboard],
     ),
     (
-        device_name: "GA605W",
-        product_id: "",
-        layout_name: "ga401q",
-        basic_modes: [Static, Breathe, RainbowCycle, RainbowWave, Pulse],
-        basic_zones: [],
-        advanced_type: Zoned([SingleZone]),
-        power_zones: [Keyboard],
-    ),
-    (
         device_name: "GL503",
         product_id: "",
         layout_name: "gl503",
