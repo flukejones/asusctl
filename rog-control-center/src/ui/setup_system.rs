@@ -40,6 +40,9 @@ pub fn setup_system_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
     ui.global::<SystemPageData>().set_ppt_platform_sppt(MINMAX);
     ui.global::<SystemPageData>().set_nv_dynamic_boost(MINMAX);
     ui.global::<SystemPageData>().set_nv_temp_target(MINMAX);
+    ui.global::<SystemPageData>().set_ppt_enabled(false);
+    ui.global::<SystemPageData>()
+        .set_ppt_enabled_available(false);
 
     let sys_props = platform.supported_properties().unwrap();
     log::debug!("Available system properties: {sys_props:?}");
@@ -156,7 +159,7 @@ macro_rules! setup_external {
         concat_idents!(setter = set_, $property {
             tokio::spawn(async move {
                 let mut x = proxy_copy.receive_current_value_changed().await;
-                use zbus::export::futures_util::StreamExt;
+                use futures_util::StreamExt;
                 while let Some(e) = x.next().await {
                     if let Ok(out) = e.get().await {
                         handle_copy
@@ -182,7 +185,7 @@ macro_rules! setup_value_watch {
             let mut x = concat_idents!(recv = receive_, $value_type, _value_changed {
                 proxy_copy.recv().await
             });
-            use zbus::export::futures_util::StreamExt;
+            use futures_util::StreamExt;
             while let Some(e) = x.next().await {
                 if let Ok(out) = e.get().await {
                     concat_idents!(getter = get_, $property {
@@ -214,7 +217,7 @@ macro_rules! setup_minmax_external {
         let platform_proxy_copy = $platform.clone();
         tokio::spawn(async move {
             let mut x = platform_proxy_copy.receive_platform_profile_changed().await;
-            use zbus::export::futures_util::StreamExt;
+            use futures_util::StreamExt;
             while let Some(e) = x.next().await {
                 if let Ok(_) = e.get().await {
                     debug!("receive_platform_profile_changed, getting new {}", stringify!(attr));
@@ -400,6 +403,14 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                         FirmwareAttribute::ApuMem => {}
                         FirmwareAttribute::CoresPerformance => {}
                         FirmwareAttribute::CoresEfficiency => {}
+                        FirmwareAttribute::PptEnabled => {
+                            init_property!(ppt_enabled, handle, value, bool);
+                            setup_callback!(ppt_enabled, handle, attr, bool);
+                            setup_external!(ppt_enabled, bool, handle, attr, value);
+                            handle
+                                .global::<SystemPageData>()
+                                .set_ppt_enabled_available(true);
+                        }
                         FirmwareAttribute::PptPl1Spl => {
                             init_minmax_property!(ppt_pl1_spl, handle, attr);
                             setup_callback!(ppt_pl1_spl, handle, attr, i32);

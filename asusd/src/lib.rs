@@ -67,7 +67,7 @@ macro_rules! task_watch_item {
             &self,
             signal_ctxt: SignalEmitter<'static>,
         ) -> Result<(), RogError> {
-            use zbus::export::futures_util::StreamExt;
+            use futures_util::StreamExt;
 
             let ctrl = self.clone();
             concat_idents::concat_idents!(watch_fn = monitor_, $name {

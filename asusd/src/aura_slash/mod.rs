@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
 use config::SlashConfig;
+use futures_util::lock::{Mutex, MutexGuard};
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::usb_raw::USBRaw;
 use rog_slash::usb::{get_options_packet, pkt_set_mode, pkts_for_init};
 use rog_slash::SlashType;
-use tokio::sync::{Mutex, MutexGuard};
 
 use crate::error::RogError;
 

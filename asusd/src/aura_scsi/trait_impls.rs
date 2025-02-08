@@ -83,7 +83,7 @@ impl ScsiZbus {
     #[zbus(property)]
     async fn led_mode_data(&self) -> Result<AuraEffect, ZbErr> {
         // entirely possible to deadlock here, so use try instead of lock()
-        if let Ok(config) = self.0.config.try_lock() {
+        if let Some(config) = self.0.config.try_lock() {
             let mode = config.current_mode;
             match config.modes.get(&mode) {
                 Some(effect) => Ok(effect.clone()),

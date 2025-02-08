@@ -2,7 +2,6 @@ use std::env;
 use std::error::Error;
 use std::sync::Arc;
 
-use ::zbus::export::futures_util::lock::Mutex;
 use ::zbus::Connection;
 use asusd::asus_armoury::start_attributes_zbus;
 use asusd::aura_manager::DeviceManager;
@@ -11,6 +10,7 @@ use asusd::ctrl_fancurves::CtrlFanCurveZbus;
 use asusd::ctrl_platform::CtrlPlatform;
 use asusd::{print_board_info, start_tasks, CtrlTask, DBUS_NAME};
 use config_traits::{StdConfig, StdConfigLoad1};
+use futures_util::lock::Mutex;
 use log::{error, info};
 use rog_platform::asus_armoury::FirmwareAttributes;
 use rog_platform::platform::RogPlatform;

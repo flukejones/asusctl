@@ -2,8 +2,11 @@
 
 ## [Unreleased]
 
+## [v6.1.1]
+
 ### Changed
 - Fix aura data matching
+- Fix charge control slider
 
 ## [v6.1.0]
 

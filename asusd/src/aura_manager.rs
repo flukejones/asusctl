@@ -8,11 +8,11 @@ use std::sync::Arc;
 
 use dmi_id::DMIID;
 use futures_lite::future::block_on;
+use futures_util::lock::Mutex;
 use log::{debug, error, info, warn};
 use mio::{Events, Interest, Poll, Token};
 use rog_platform::error::PlatformError;
 use rog_platform::hid_raw::HidRaw;
-use tokio::sync::Mutex;
 use udev::{Device, MonitorBuilder};
 use zbus::zvariant::{ObjectPath, OwnedObjectPath};
 use zbus::Connection;

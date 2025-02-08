@@ -112,7 +112,7 @@ impl AuraZbus {
         // entirely possible to deadlock here, so use try instead of lock()
         // let ctrl = self.0.lock().await;
         // Ok(config.current_mode)
-        if let Ok(config) = self.0.config.try_lock() {
+        if let Some(config) = self.0.config.try_lock() {
             Ok(config.current_mode)
         } else {
             Err(ZbErr::Failed("Aura control couldn't lock self".to_string()))
@@ -140,7 +140,7 @@ impl AuraZbus {
     #[zbus(property)]
     async fn led_mode_data(&self) -> Result<AuraEffect, ZbErr> {
         // entirely possible to deadlock here, so use try instead of lock()
-        if let Ok(config) = self.0.config.try_lock() {
+        if let Some(config) = self.0.config.try_lock() {
             let mode = config.current_mode;
             match config.builtins.get(&mode) {
                 Some(effect) => Ok(effect.clone()),

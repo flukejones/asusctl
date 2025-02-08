@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use ::zbus::export::futures_util::lock::Mutex;
 use config_traits::StdConfig;
+use futures_util::lock::Mutex;
 use log::{debug, error, info};
 use rog_platform::asus_armoury::{AttrValue, Attribute, FirmwareAttribute, FirmwareAttributes};
 use rog_platform::platform::{PlatformProfile, RogPlatform};
@@ -66,7 +66,7 @@ impl AsusArmouryAttribute {
         &mut self,
         signal_ctxt: SignalEmitter<'static>
     ) -> Result<(), RogError> {
-        use zbus::export::futures_util::StreamExt;
+        use futures_util::StreamExt;
 
         let name = self.name();
         macro_rules! watch_value_notify {

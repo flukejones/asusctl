@@ -8,6 +8,7 @@ use std::sync::Arc;
 use std::thread::sleep;
 
 use config_traits::StdConfig;
+use futures_util::lock::Mutex;
 use log::{debug, error, info, warn};
 use rog_anime::usb::{
     pkt_flush, pkt_set_brightness, pkt_set_enable_display, pkt_set_enable_powersave_anim,
@@ -16,7 +17,6 @@ use rog_anime::usb::{
 use rog_anime::{ActionData, AnimeDataBuffer, AnimePacketType};
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::usb_raw::USBRaw;
-use tokio::sync::Mutex;
 
 use self::config::{AniMeConfig, AniMeConfigCached};
 use crate::error::RogError;
@@ -51,7 +51,7 @@ impl AniMe {
 
     /// Will fail if something is already holding the config lock
     async fn do_init_cache(&mut self) {
-        if let Ok(mut config) = self.config.try_lock() {
+        if let Some(mut config) = self.config.try_lock() {
             if let Err(e) = self.cache.init_from_config(&config, config.anime_type) {
                 error!(
                     "Trying to cache the Anime Config failed, will reset to default config: {e:?}"

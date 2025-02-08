@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use config::ScsiConfig;
+use futures_util::lock::{Mutex, MutexGuard};
 use rog_scsi::{AuraEffect, Device, Task};
-use tokio::sync::{Mutex, MutexGuard};
 
 use crate::error::RogError;
 

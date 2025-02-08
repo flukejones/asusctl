@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use config_traits::{StdConfig, StdConfigLoad};
+use futures_util::lock::Mutex;
 use log::{debug, error, info};
 use rog_anime::error::AnimeError;
 use rog_anime::usb::get_anime_type;
@@ -12,7 +13,6 @@ use rog_platform::usb_raw::USBRaw;
 use rog_scsi::{open_device, ScsiType};
 use rog_slash::error::SlashError;
 use rog_slash::SlashType;
-use tokio::sync::Mutex;
 
 use crate::aura_anime::config::AniMeConfig;
 use crate::aura_anime::AniMe;

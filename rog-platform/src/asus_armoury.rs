@@ -2,7 +2,7 @@ use std::fs::{read_dir, File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
-use log::debug;
+use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use zbus::zvariant::{OwnedValue, Type, Value};
 
@@ -304,7 +304,8 @@ pub enum FirmwareAttribute {
     GpuMuxMode = 21,
     MiniLedMode = 22,
     PendingReboot = 23,
-    None = 24
+    PptEnabled = 24,
+    None = 25
 }
 
 impl FirmwareAttribute {
@@ -336,6 +337,7 @@ impl From<&str> for FirmwareAttribute {
             "apu_mem" => Self::ApuMem,
             "cores_performance" => Self::CoresPerformance,
             "cores_efficiency" => Self::CoresEfficiency,
+            "ppt_enabled" => Self::PptEnabled,
             "ppt_pl1_spl" => Self::PptPl1Spl,
             "ppt_pl2_sppt" => Self::PptPl2Sppt,
             "ppt_pl3_fppt" => Self::PptPl3Fppt,
@@ -357,7 +359,10 @@ impl From<&str> for FirmwareAttribute {
             "gpu_mux_mode" => Self::GpuMuxMode,
             "mini_led_mode" => Self::MiniLedMode,
             "pending_reboot" => Self::PendingReboot,
-            _ => panic!("Invalid firmware attribute: {}", s)
+            _ => {
+                error!("Invalid firmware attribute: {}", s);
+                Self::None
+            }
         }
     }
 }
@@ -368,6 +373,7 @@ impl From<FirmwareAttribute> for &str {
             FirmwareAttribute::ApuMem => "apu_mem",
             FirmwareAttribute::CoresPerformance => "cores_performance",
             FirmwareAttribute::CoresEfficiency => "cores_efficiency",
+            FirmwareAttribute::PptEnabled => "ppt_enabled",
             FirmwareAttribute::PptPl1Spl => "ppt_pl1_spl",
             FirmwareAttribute::PptPl2Sppt => "ppt_pl2_sppt",
             FirmwareAttribute::PptPl3Fppt => "ppt_pl3_fppt",

@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-02-06 20:42+0000\n"
+"POT-Creation-Date: 2025-02-08 10:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -47,203 +47,203 @@ msgctxt "SystemPageData"
 msgid "Power"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:142
+#: rog-control-center/ui/pages/system.slint:146
 msgctxt "PageSystem"
 msgid "Power settings"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:147
+#: rog-control-center/ui/pages/system.slint:151
 msgctxt "PageSystem"
 msgid "Charge limit"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:161
+#: rog-control-center/ui/pages/system.slint:165
 msgctxt "PageSystem"
 msgid "Platform Profile"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:171
+#: rog-control-center/ui/pages/system.slint:175
 msgctxt "PageSystem"
 msgid "Advanced"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:189
+#: rog-control-center/ui/pages/system.slint:193
 msgctxt "PageSystem"
 msgid "Armoury settings"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:199
+#: rog-control-center/ui/pages/system.slint:203
 msgctxt "no_asus_armoury_driver_1"
 msgid "The asus-armoury driver is not loaded"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:205
+#: rog-control-center/ui/pages/system.slint:209
 msgctxt "no_asus_armoury_driver_2"
 msgid "For advanced features you will require a kernel with this driver added."
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:216
+#: rog-control-center/ui/pages/system.slint:220
 msgctxt "PageSystem"
 msgid "Panel Overdrive"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:224
+#: rog-control-center/ui/pages/system.slint:228
 msgctxt "PageSystem"
 msgid "MiniLED Mode"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:232
+#: rog-control-center/ui/pages/system.slint:236
 msgctxt "PageSystem"
 msgid "POST boot sound"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:248
+#: rog-control-center/ui/pages/system.slint:252
 msgctxt "ppt_warning"
 msgid "The following settings are not applied until the toggle is enabled."
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:253
+#: rog-control-center/ui/pages/system.slint:257 rog-control-center/ui/pages/system.slint:264
 msgctxt "ppt_group_enabled"
 msgid "Enable Tuning"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:262 rog-control-center/ui/pages/system.slint:263
+#: rog-control-center/ui/pages/system.slint:275 rog-control-center/ui/pages/system.slint:276
 msgctxt "ppt_pl1_spl"
 msgid "CPU Sustained Power Limit"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:264
+#: rog-control-center/ui/pages/system.slint:277
 msgctxt "ppt_pl1_spl_help"
 msgid ""
 "Long-term CPU power limit that affects sustained workload performance. "
 "Higher values may increase heat and power consumption."
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:280 rog-control-center/ui/pages/system.slint:281
+#: rog-control-center/ui/pages/system.slint:293 rog-control-center/ui/pages/system.slint:294
 msgctxt "ppt_pl2_sppt"
 msgid "CPU Turbo Power Limit"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:282
+#: rog-control-center/ui/pages/system.slint:295
 msgctxt "ppt_pl2_sppt_help"
 msgid ""
 "Short-term CPU power limit for boost periods. Controls maximum power during "
 "brief high-performance bursts."
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:298 rog-control-center/ui/pages/system.slint:299
+#: rog-control-center/ui/pages/system.slint:311 rog-control-center/ui/pages/system.slint:312
 msgctxt "ppt_pl3_fppt"
 msgid "CPU Fast Burst Power Limit"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:300
+#: rog-control-center/ui/pages/system.slint:313
 msgctxt "ppt_pl3_fppt_help"
 msgid ""
 "Ultra-short duration power limit for instantaneous CPU bursts. Affects "
 "responsiveness during sudden workload spikes."
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:315 rog-control-center/ui/pages/system.slint:316
+#: rog-control-center/ui/pages/system.slint:328 rog-control-center/ui/pages/system.slint:329
 msgctxt "ppt_fppt"
 msgid "Fast Package Power Limit"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:317
+#: rog-control-center/ui/pages/system.slint:330
 msgctxt "ppt_fppt_help"
 msgid ""
 "Ultra-short duration power limit for system package. Controls maximum power "
 "during millisecond-scale load spikes."
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:333 rog-control-center/ui/pages/system.slint:334
+#: rog-control-center/ui/pages/system.slint:346 rog-control-center/ui/pages/system.slint:347
 msgctxt "ppt_apu_sppt"
 msgid "APU Sustained Power Limit"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:335
+#: rog-control-center/ui/pages/system.slint:348
 msgctxt "ppt_apu_sppt_help"
 msgid ""
 "Long-term power limit for integrated graphics and CPU combined. Affects "
 "sustained performance of APU-based workloads."
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:351 rog-control-center/ui/pages/system.slint:352
+#: rog-control-center/ui/pages/system.slint:364 rog-control-center/ui/pages/system.slint:365
 msgctxt "ppt_platform_sppt"
 msgid "Platform Sustained Power Limit"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:353
+#: rog-control-center/ui/pages/system.slint:366
 msgctxt "ppt_platform_sppt_help"
 msgid ""
 "Overall system power limit for sustained operations. Controls total platform "
 "power consumption over extended periods."
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:369 rog-control-center/ui/pages/system.slint:370
+#: rog-control-center/ui/pages/system.slint:382 rog-control-center/ui/pages/system.slint:383
 msgctxt "nv_dynamic_boost"
 msgid "GPU Power Boost"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:371
+#: rog-control-center/ui/pages/system.slint:384
 msgctxt "nv_dynamic_boost_help"
 msgid ""
 "Additional power allocation for GPU dynamic boost. Higher values increase "
 "GPU performance but generate more heat."
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:387 rog-control-center/ui/pages/system.slint:388
+#: rog-control-center/ui/pages/system.slint:400 rog-control-center/ui/pages/system.slint:401
 msgctxt "nv_temp_target"
 msgid "GPU Temperature Limit"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:389
+#: rog-control-center/ui/pages/system.slint:402
 msgctxt "nv_temp_target_help"
 msgid ""
 "Maximum GPU temperature threshold in Celsius. GPU will throttle to maintain "
 "temperature below this limit."
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:441
+#: rog-control-center/ui/pages/system.slint:454
 msgctxt "PageSystem"
 msgid "Energy Performance Preference linked to Throttle Policy"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:445
+#: rog-control-center/ui/pages/system.slint:458
 msgctxt "PageSystem"
 msgid "Change EPP based on Throttle Policy"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:453
+#: rog-control-center/ui/pages/system.slint:466
 msgctxt "PageSystem"
 msgid "EPP for Balanced Policy"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:463
+#: rog-control-center/ui/pages/system.slint:476
 msgctxt "PageSystem"
 msgid "EPP for Performance Policy"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:473
+#: rog-control-center/ui/pages/system.slint:486
 msgctxt "PageSystem"
 msgid "EPP for Quiet Policy"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:491
+#: rog-control-center/ui/pages/system.slint:504
 msgctxt "PageSystem"
 msgid "Throttle Policy for power state"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:497
+#: rog-control-center/ui/pages/system.slint:510
 msgctxt "PageSystem"
 msgid "Throttle Policy on Battery"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:507 rog-control-center/ui/pages/system.slint:528
+#: rog-control-center/ui/pages/system.slint:520 rog-control-center/ui/pages/system.slint:541
 msgctxt "PageSystem"
 msgid "Enabled"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:518
+#: rog-control-center/ui/pages/system.slint:531
 msgctxt "PageSystem"
 msgid "Throttle Policy on AC"
 msgstr ""

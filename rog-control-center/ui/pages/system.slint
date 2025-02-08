@@ -115,8 +115,12 @@ export global SystemPageData {
     callback cb_nv_temp_target(int);
     callback cb_default_nv_temp_target();
 
-    in-out property <bool> enable_ppt_group;
+    in-out property <bool> enable_ppt_group: false;
     callback cb_enable_ppt_group(bool);
+
+    in-out property <bool> ppt_enabled_available;
+    in-out property <bool> ppt_enabled;
+    callback cb_ppt_enabled(bool);
 }
 
 export component PageSystem inherits Rectangle {
@@ -249,13 +253,22 @@ export component PageSystem inherits Rectangle {
                     }
                 }
 
-                Switch {
-                text: @tr("ppt_group_enabled" => "Enable Tuning");
+                if !SystemPageData.ppt_enabled_available: Switch {
+                    text: @tr("ppt_group_enabled" => "Enable Tuning");
                     checked <=> SystemPageData.enable_ppt_group;
                     toggled => {
                         SystemPageData.cb_enable_ppt_group(SystemPageData.enable_ppt_group)
                     }
                 }
+                if SystemPageData.ppt_enabled_available: Switch {
+                    text: @tr("ppt_group_enabled" => "Enable Tuning");
+                    checked <=> SystemPageData.ppt_enabled;
+                    toggled => {
+                        SystemPageData.enable_ppt_group = self.checked;
+                        SystemPageData.cb_ppt_enabled(SystemPageData.ppt_enabled)
+                    }
+                }
+
             }
 
             if SystemPageData.ppt_pl1_spl.current != -1: SystemSlider {

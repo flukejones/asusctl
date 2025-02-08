@@ -3,13 +3,13 @@ use std::sync::Arc;
 
 use config_traits::{StdConfig, StdConfigLoad};
 use futures_lite::StreamExt;
+use futures_util::lock::Mutex;
 use log::{debug, error, info, warn};
 use rog_platform::platform::{PlatformProfile, RogPlatform};
 use rog_profiles::error::ProfileError;
 use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::{find_fan_curve_node, FanCurvePU, FanCurveProfiles};
 use serde::{Deserialize, Serialize};
-use tokio::sync::Mutex;
 use zbus::object_server::SignalEmitter;
 use zbus::{interface, Connection};
 

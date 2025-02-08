@@ -41,6 +41,7 @@ zbus.workspace = true
 dirs.workspace = true
 notify-rust.workspace = true
 concat-idents.workspace = true
+futures-util.workspace = true
 
 versions.workspace = true
 

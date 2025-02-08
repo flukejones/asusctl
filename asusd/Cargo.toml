@@ -34,6 +34,7 @@ tokio.workspace = true
 log.workspace = true
 env_logger.workspace = true
 
+futures-util.workspace = true
 zbus.workspace = true
 logind-zbus.workspace = true
 
