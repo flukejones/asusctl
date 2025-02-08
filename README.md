@@ -39,7 +39,7 @@ See the [rog-aura readme](./rog-aura/README.md) for more details.
 
 ## Discord
 
-[![Discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/z8y99XqPb7)
+[![Discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/2qPhKssHyq)
 
 ## SUPPORTED LAPTOPS
 
