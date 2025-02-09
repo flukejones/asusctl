@@ -108,9 +108,12 @@ officially unsuported,but you can still try and test it by yourself(some feature
     make
     sudo make install
 
-**Ubuntu, Popos (unsuported):**
+**Ubuntu:**
 
-instructions removed as outdated
+    sudo apt install gcc pkg-config openssl libasound2-dev cmake build-essential python3 libfreetype6-dev libexpat1-dev libxcb-composite0-dev libssl-dev libx11-dev libfontconfig1-dev curl libclang-dev libudev-dev checkinstall libseat-dev libinput-dev libxkbcommon-dev libgbm-dev
+    npm i npm-run-all --save-dev
+    make
+    sudo make install
 
 ## Installing
 
