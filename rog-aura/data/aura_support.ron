@@ -153,6 +153,15 @@
         power_zones: [Keyboard, Lightbar],
     ),
     (
+        device_name: "G513RW",
+        product_id: "",
+        layout_name: "g513i-per-key",
+        basic_modes: [Static, Breathe, RainbowCycle, RainbowWave, Star, Rain, Highlight, Laser, Ripple, Pulse, Comet, Flash],
+        basic_zones: [],
+        advanced_type: PerKey,
+        power_zones: [Keyboard, Lightbar],
+    ),
+    (
         device_name: "G513RC",
         product_id: "",
         layout_name: "g513i",
