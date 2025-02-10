@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [v6.1.2]
+
+### Changed
+- Try a slightly different tact to fix charge control slider
+
 ## [v6.1.1]
 
 ### Changed

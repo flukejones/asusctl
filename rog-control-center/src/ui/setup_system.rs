@@ -28,6 +28,8 @@ pub fn setup_system_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
     // Null everything before the setup step
     ui.global::<SystemPageData>()
         .set_charge_control_end_threshold(-1.0);
+    ui.global::<SystemPageData>()
+        .set_charge_control_enabled(false);
     ui.global::<SystemPageData>().set_platform_profile(-1);
     ui.global::<SystemPageData>().set_panel_overdrive(-1);
     ui.global::<SystemPageData>().set_boot_sound(-1);
@@ -45,10 +47,12 @@ pub fn setup_system_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
         .set_ppt_enabled_available(false);
 
     let sys_props = platform.supported_properties().unwrap();
-    log::debug!("Available system properties: {sys_props:?}");
+    log::debug!("Available system properties: {:?}", &sys_props);
     if sys_props.contains(&Properties::ChargeControlEndThreshold) {
         ui.global::<SystemPageData>()
             .set_charge_control_end_threshold(60.0);
+        ui.global::<SystemPageData>()
+            .set_charge_control_enabled(true);
     }
 }
 
@@ -406,10 +410,32 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                         FirmwareAttribute::PptEnabled => {
                             init_property!(ppt_enabled, handle, value, bool);
                             setup_callback!(ppt_enabled, handle, attr, bool);
-                            setup_external!(ppt_enabled, bool, handle, attr, value);
+                            let handle_copy = handle.as_weak();
+                            let proxy_copy = attr.clone();
+                            tokio::spawn(async move {
+                                let mut x = proxy_copy.receive_current_value_changed().await;
+                                use futures_util::StreamExt;
+                                while let Some(e) = x.next().await {
+                                    if let Ok(out) = e.get().await {
+                                        handle_copy
+                                            .upgrade_in_event_loop(move |handle| {
+                                                handle
+                                                    .global::<SystemPageData>()
+                                                    .set_enable_ppt_group(out == 1);
+                                                handle
+                                                    .global::<SystemPageData>()
+                                                    .set_ppt_enabled(out == 1);
+                                            })
+                                            .ok();
+                                    }
+                                }
+                            });
                             handle
                                 .global::<SystemPageData>()
                                 .set_ppt_enabled_available(true);
+                            handle
+                                .global::<SystemPageData>()
+                                .set_enable_ppt_group(value == 1);
                         }
                         FirmwareAttribute::PptPl1Spl => {
                             init_minmax_property!(ppt_pl1_spl, handle, attr);

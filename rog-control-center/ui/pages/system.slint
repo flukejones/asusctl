@@ -13,6 +13,7 @@ export struct AttrPossible {
 }
 
 export global SystemPageData {
+    in-out property <bool> charge_control_enabled: true;
     in-out property <float> charge_control_end_threshold: 30;
     callback cb_charge_control_end_threshold(/* charge limit */ int);
     in-out property <int> platform_profile: 0;
@@ -152,6 +153,7 @@ export component PageSystem inherits Rectangle {
                 minimum: 20;
                 maximum: 100;
                 has_reset: false;
+                enabled <=> SystemPageData.charge_control_enabled;
                 value: SystemPageData.charge_control_end_threshold;
                 released => {
                     SystemPageData.charge_control_end_threshold = self.value;
