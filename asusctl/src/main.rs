@@ -1045,7 +1045,7 @@ fn check_systemd_unit_enabled(name: &str) -> bool {
         .output()
     {
         let buf = String::from_utf8_lossy(&out.stdout);
-        return buf.contains("enabled");
+        return buf.contains("enabled") || buf.contains("linked");
     }
     false
 }
