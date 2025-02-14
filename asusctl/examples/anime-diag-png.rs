@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Path::new(&args[1]),
         None,
         args[2].parse::<f32>().unwrap(),
-        AnimeType::GA401
+        AnimeType::GA401,
     )?;
 
     let anime_type = get_anime_type();

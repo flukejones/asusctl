@@ -1,6 +1,6 @@
 use crate::slint_generatedMainWindow::{
     AuraDevType as SlintDeviceType, AuraPowerState as SlintAuraPowerState,
-    LaptopAuraPower as SlintLaptopAuraPower
+    LaptopAuraPower as SlintLaptopAuraPower,
 };
 
 impl From<rog_aura::AuraEffect> for crate::slint_generatedMainWindow::AuraEffect {
@@ -10,20 +10,20 @@ impl From<rog_aura::AuraEffect> for crate::slint_generatedMainWindow::AuraEffect
                 red: m.colour1.r,
                 green: m.colour1.g,
                 blue: m.colour1.b,
-                alpha: 255
+                alpha: 255,
             }
             .into(),
             colour2: RgbaColor {
                 red: m.colour2.r,
                 green: m.colour2.g,
                 blue: m.colour2.b,
-                alpha: 255
+                alpha: 255,
             }
             .into(),
             direction: m.direction.into(),
             mode: m.mode.into(),
             speed: m.speed.into(),
-            zone: m.zone.into()
+            zone: m.zone.into(),
         }
     }
 }
@@ -36,17 +36,17 @@ impl From<crate::slint_generatedMainWindow::AuraEffect> for rog_aura::AuraEffect
             colour1: rog_aura::Colour {
                 r: c1.red,
                 g: c1.green,
-                b: c1.blue
+                b: c1.blue,
             },
             colour2: rog_aura::Colour {
                 r: c2.red,
                 g: c2.green,
-                b: c2.blue
+                b: c2.blue,
             },
             direction: m.direction.into(),
             mode: m.mode.into(),
             speed: m.speed.into(),
-            zone: m.zone.into()
+            zone: m.zone.into(),
         }
     }
 }
@@ -66,7 +66,7 @@ impl From<PowerZones> for SlintPowerZones {
             PowerZones::RearGlow => SlintPowerZones::RearGlow,
             PowerZones::KeyboardAndLightbar => SlintPowerZones::KeyboardAndLightbar,
             PowerZones::Ally => SlintPowerZones::Ally,
-            PowerZones::None => SlintPowerZones::Keyboard
+            PowerZones::None => SlintPowerZones::Keyboard,
         }
     }
 }
@@ -80,7 +80,7 @@ impl From<SlintPowerZones> for PowerZones {
             SlintPowerZones::Lid => PowerZones::Lid,
             SlintPowerZones::RearGlow => PowerZones::RearGlow,
             SlintPowerZones::KeyboardAndLightbar => PowerZones::KeyboardAndLightbar,
-            SlintPowerZones::Ally => PowerZones::Ally
+            SlintPowerZones::Ally => PowerZones::Ally,
         }
     }
 }
@@ -92,7 +92,7 @@ impl From<SlintAuraPowerState> for AuraPowerState {
             boot: value.boot,
             awake: value.awake,
             sleep: value.sleep,
-            shutdown: value.shutdown
+            shutdown: value.shutdown,
         }
     }
 }
@@ -106,7 +106,7 @@ impl From<AuraPowerState> for SlintAuraPowerState {
             sleep: value.sleep,
             shutdown: value.shutdown,
             zone,
-            zone_name_idx: zone as i32
+            zone_name_idx: zone as i32,
         }
     }
 }
@@ -120,7 +120,7 @@ impl From<&AuraPowerState> for SlintAuraPowerState {
             sleep: value.sleep,
             shutdown: value.shutdown,
             zone,
-            zone_name_idx: zone as i32
+            zone_name_idx: zone as i32,
         }
     }
 }
@@ -140,7 +140,7 @@ impl From<LaptopAuraPower> for SlintLaptopAuraPower {
         let converted: Vec<SlintAuraPowerState> =
             value.states.iter().map(SlintAuraPowerState::from).collect();
         Self {
-            states: ModelRc::from(converted.as_slice())
+            states: ModelRc::from(converted.as_slice()),
         }
     }
 }
@@ -154,7 +154,7 @@ impl From<SlintDeviceType> for AuraDeviceType {
             SlintDeviceType::ScsiExtDisk => Self::ScsiExtDisk,
             SlintDeviceType::Unknown => Self::Unknown,
             SlintDeviceType::Ally => Self::Ally,
-            SlintDeviceType::AnimeOrSlash => Self::AnimeOrSlash
+            SlintDeviceType::AnimeOrSlash => Self::AnimeOrSlash,
         }
     }
 }
@@ -168,7 +168,7 @@ impl From<AuraDeviceType> for SlintDeviceType {
             AuraDeviceType::ScsiExtDisk => SlintDeviceType::ScsiExtDisk,
             AuraDeviceType::Unknown => SlintDeviceType::Unknown,
             AuraDeviceType::Ally => SlintDeviceType::Ally,
-            AuraDeviceType::AnimeOrSlash => SlintDeviceType::AnimeOrSlash
+            AuraDeviceType::AnimeOrSlash => SlintDeviceType::AnimeOrSlash,
         }
     }
 }

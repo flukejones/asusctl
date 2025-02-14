@@ -18,7 +18,7 @@ const HEIGHT: usize = 55;
 #[derive(Debug, Clone)]
 pub struct AnimeGrid {
     anime_type: AnimeType,
-    data: [[u8; WIDTH]; HEIGHT]
+    data: [[u8; WIDTH]; HEIGHT],
 }
 
 impl AnimeGrid {
@@ -26,7 +26,7 @@ impl AnimeGrid {
     pub fn new(anime_type: AnimeType) -> Self {
         Self {
             anime_type,
-            data: [[0u8; WIDTH]; HEIGHT]
+            data: [[0u8; WIDTH]; HEIGHT],
         }
     }
 
@@ -174,7 +174,7 @@ mod tests {
             0, 0, 0, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0,
-            0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         ];
         assert_eq!(matrix.data(), &data_cmp);
     }

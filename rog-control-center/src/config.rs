@@ -21,7 +21,7 @@ pub struct Config {
     pub fullscreen_width: u32,
     pub fullscreen_height: u32,
     // This field must be last
-    pub notifications: EnabledNotifications
+    pub notifications: EnabledNotifications,
 }
 
 impl Default for Config {
@@ -36,7 +36,7 @@ impl Default for Config {
             fullscreen_height: 1080,
             notifications: EnabledNotifications::default(),
             ac_command: String::new(),
-            bat_command: String::new()
+            bat_command: String::new(),
         }
     }
 }
@@ -77,7 +77,7 @@ pub struct Config461 {
     pub enable_dgpu_notifications: bool,
     pub dark_mode: bool,
     // This field must be last
-    pub enabled_notifications: EnabledNotifications
+    pub enabled_notifications: EnabledNotifications,
 }
 
 impl From<Config461> for Config {
@@ -92,7 +92,7 @@ impl From<Config461> for Config {
             start_fullscreen: false,
             fullscreen_width: 1920,
             fullscreen_height: 1080,
-            notifications: c.enabled_notifications
+            notifications: c.enabled_notifications,
         }
     }
 }

@@ -5,7 +5,7 @@ use rog_aura::{AuraEffect, AuraModeNum, AuraZone};
 use rog_platform::platform::GpuMode;
 use rog_platform::supported::{
     AdvancedAura, AnimeSupportedFunctions, ChargeSupportedFunctions, LedSupportedFunctions,
-    PlatformProfileFunctions, RogBiosSupportedFunctions, SupportedFunctions
+    PlatformProfileFunctions, RogBiosSupportedFunctions, SupportedFunctions,
 };
 use rog_profiles::fan_curve_set::{CurveData, FanCurveSet};
 use supergfxctl::pci_device::{GfxMode, GfxPower};
@@ -16,7 +16,7 @@ const NOPE: &str = "";
 
 #[derive(Default)]
 pub struct DaemonProxyBlocking<'a> {
-    _phantom: &'a str
+    _phantom: &'a str,
 }
 
 impl<'a> DaemonProxyBlocking<'a> {
@@ -35,7 +35,7 @@ impl<'a> DaemonProxyBlocking<'a> {
 
 #[derive(Default)]
 pub struct RogDbusClientBlocking<'a> {
-    _phantom: &'a str
+    _phantom: &'a str,
 }
 
 impl<'a> RogDbusClientBlocking<'a> {
@@ -126,16 +126,16 @@ impl Profile {
     pub fn fan_curve_data(&self, _p: rog_profiles::Profile) -> Result<FanCurveSet> {
         let mut curve = FanCurveSet::default();
         curve.cpu.pwm = [
-            30, 40, 60, 100, 140, 180, 200, 250
+            30, 40, 60, 100, 140, 180, 200, 250,
         ];
         curve.cpu.temp = [
-            20, 30, 40, 50, 70, 80, 90, 100
+            20, 30, 40, 50, 70, 80, 90, 100,
         ];
         curve.gpu.pwm = [
-            40, 80, 100, 140, 170, 200, 230, 250
+            40, 80, 100, 140, 170, 200, 230, 250,
         ];
         curve.gpu.temp = [
-            20, 30, 40, 50, 70, 80, 90, 100
+            20, 30, 40, 50, 70, 80, 90, 100,
         ];
         Ok(curve)
     }
@@ -204,7 +204,7 @@ impl Led {
                 AuraDevRog2::AwakeKeyb,
                 AuraDevRog2::SleepLogo,
                 AuraDevRog2::AwakeLogo,
-            ]
+            ],
         })
     }
 
@@ -242,11 +242,11 @@ impl Supported {
         Ok(SupportedFunctions {
             anime_ctrl: AnimeSupportedFunctions(true),
             charge_ctrl: ChargeSupportedFunctions {
-                charge_level_set: true
+                charge_level_set: true,
             },
             platform_profile: PlatformProfileFunctions {
                 platform_profile: true,
-                fan_curves: true
+                fan_curves: true,
             },
             keyboard_led: LedSupportedFunctions {
                 dev_id: AuraDevice::X19b6,
@@ -267,7 +267,7 @@ impl Supported {
                     AuraZone::BarRight,
                     AuraZone::Logo,
                 ],
-                advanced_type: AdvancedAura::PerKey
+                advanced_type: AdvancedAura::PerKey,
             },
             rog_bios_ctrl: RogBiosSupportedFunctions {
                 post_sound: true,
@@ -275,8 +275,8 @@ impl Supported {
                 panel_overdrive: true,
                 dgpu_disable: true,
                 mini_led_mode: true,
-                egpu_enable: true
-            }
+                egpu_enable: true,
+            },
         })
     }
 }

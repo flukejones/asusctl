@@ -149,7 +149,7 @@ pub trait ReloadAndNotify {
     fn reload_and_notify(
         &mut self,
         signal_context: &SignalEmitter<'static>,
-        data: Self::Data
+        data: Self::Data,
     ) -> impl Future<Output = Result<(), RogError>> + Send;
 }
 
@@ -159,7 +159,7 @@ pub trait ZbusRun {
     fn add_to_server_helper(
         iface: impl Interface,
         path: &str,
-        server: &mut Connection
+        server: &mut Connection,
     ) -> impl Future<Output = ()> + Send {
         async move {
             server
@@ -188,7 +188,7 @@ pub trait CtrlTask {
     /// separate thread.
     fn create_tasks(
         &self,
-        signal: SignalEmitter<'static>
+        signal: SignalEmitter<'static>,
     ) -> impl Future<Output = Result<(), RogError>> + Send;
 
     // /// Create a timed repeating task
@@ -212,7 +212,7 @@ pub trait CtrlTask {
         mut on_prepare_for_sleep: F1,
         mut on_prepare_for_shutdown: F2,
         mut on_lid_change: F3,
-        mut on_external_power_change: F4
+        mut on_external_power_change: F4,
     ) -> impl Future<Output = ()> + Send
     where
         F1: FnMut(bool) -> Fut1 + Send + 'static,
@@ -222,7 +222,7 @@ pub trait CtrlTask {
         Fut1: Future<Output = ()> + Send,
         Fut2: Future<Output = ()> + Send,
         Fut3: Future<Output = ()> + Send,
-        Fut4: Future<Output = ()> + Send
+        Fut4: Future<Output = ()> + Send,
     {
         async {
             let connection = Connection::system()
@@ -302,10 +302,10 @@ pub trait GetSupported {
 pub async fn start_tasks<T>(
     mut zbus: T,
     connection: &mut Connection,
-    signal_ctx: SignalEmitter<'static>
+    signal_ctx: SignalEmitter<'static>,
 ) -> Result<(), RogError>
 where
-    T: ZbusRun + Reloadable + CtrlTask + Clone
+    T: ZbusRun + Reloadable + CtrlTask + Clone,
 {
     let zbus_clone = zbus.clone();
 

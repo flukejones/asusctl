@@ -5,7 +5,7 @@ use log::{debug, info, warn};
 use rog_aura::aura_detection::LedSupportData;
 use rog_aura::keyboard::LaptopAuraPower;
 use rog_aura::{
-    AuraDeviceType, AuraEffect, AuraModeNum, AuraZone, Direction, LedBrightness, Speed, GRADIENT
+    AuraDeviceType, AuraEffect, AuraModeNum, AuraZone, Direction, LedBrightness, Speed, GRADIENT,
 };
 use serde::{Deserialize, Serialize};
 
@@ -29,7 +29,7 @@ pub struct AuraConfig {
     pub multizone_on: bool,
     pub enabled: LaptopAuraPower,
     #[serde(skip)]
-    pub per_key_mode_active: bool
+    pub per_key_mode_active: bool,
 }
 
 impl StdConfig for AuraConfig {
@@ -74,7 +74,7 @@ impl AuraConfig {
             multizone: None,
             multizone_on: false,
             enabled,
-            per_key_mode_active: false
+            per_key_mode_active: false,
         };
 
         for n in &config.support_data.basic_modes {
@@ -92,7 +92,7 @@ impl AuraConfig {
                         colour1: *GRADIENT.get(i).unwrap_or(&GRADIENT[0]),
                         colour2: *GRADIENT.get(GRADIENT.len() - i).unwrap_or(&GRADIENT[6]),
                         speed: Speed::Med,
-                        direction: Direction::Left
+                        direction: Direction::Left,
                     });
                 }
                 if let Some(m) = config.multizone.as_mut() {
@@ -156,7 +156,7 @@ impl AuraConfig {
                 colour1: *GRADIENT.get(i).unwrap_or(&GRADIENT[0]),
                 colour2: *GRADIENT.get(GRADIENT.len() - i).unwrap_or(&GRADIENT[6]),
                 speed: Speed::Med,
-                direction: Direction::Left
+                direction: Direction::Left,
             });
         }
         if default.is_empty() {
@@ -232,7 +232,7 @@ impl AuraConfig {
 mod tests {
     use rog_aura::keyboard::AuraPowerState;
     use rog_aura::{
-        AuraEffect, AuraModeNum, AuraZone, Colour, Direction, LedBrightness, PowerZones, Speed
+        AuraEffect, AuraModeNum, AuraZone, Colour, Direction, LedBrightness, PowerZones, Speed,
     };
 
     use super::AuraConfig;
@@ -246,7 +246,7 @@ mod tests {
             colour1: Colour {
                 r: 0xff,
                 g: 0x00,
-                b: 0xff
+                b: 0xff,
             },
             zone: AuraZone::Key1,
             ..Default::default()
@@ -259,7 +259,7 @@ mod tests {
             colour1: Colour {
                 r: 0x00,
                 g: 0xff,
-                b: 0xff
+                b: 0xff,
             },
             zone: AuraZone::Key2,
             ..Default::default()
@@ -270,7 +270,7 @@ mod tests {
             colour1: Colour {
                 r: 0xff,
                 g: 0xff,
-                b: 0x00
+                b: 0x00,
             },
             zone: AuraZone::Key3,
             ..Default::default()
@@ -281,7 +281,7 @@ mod tests {
             colour1: Colour {
                 r: 0x00,
                 g: 0xff,
-                b: 0x00
+                b: 0x00,
             },
             zone: AuraZone::Key4,
             ..Default::default()

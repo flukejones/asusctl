@@ -25,7 +25,7 @@ pub struct Timer {
     /// Used only for `TimeType::Timer`, milliseonds to fade the image in for
     fade_in: u64,
     /// Used only for `TimeType::Timer`, milliseonds to fade the image out for
-    fade_out: u64
+    fade_out: u64,
 }
 
 impl From<Timer> for AnimTime {
@@ -46,7 +46,7 @@ impl From<Timer> for AnimTime {
                 }
             }
             TimeType::Count => AnimTime::Count(time.count as u32),
-            TimeType::Infinite => AnimTime::Infinite
+            TimeType::Infinite => AnimTime::Infinite,
         }
     }
 }
@@ -55,7 +55,7 @@ impl From<Timer> for AnimTime {
 pub enum TimeType {
     Timer,
     Count,
-    Infinite
+    Infinite,
 }
 
 /// The inner object exists to allow the zbus proxy to share it with a runner
@@ -63,19 +63,19 @@ pub enum TimeType {
 pub struct CtrlAnimeInner<'a> {
     sequences: Sequences,
     client: AnimeProxyBlocking<'a>,
-    do_early_return: Arc<AtomicBool>
+    do_early_return: Arc<AtomicBool>,
 }
 
 impl CtrlAnimeInner<'static> {
     pub fn new(
         sequences: Sequences,
         client: AnimeProxyBlocking<'static>,
-        do_early_return: Arc<AtomicBool>
+        do_early_return: Arc<AtomicBool>,
     ) -> Result<Self, Error> {
         Ok(Self {
             sequences,
             client,
-            do_early_return
+            do_early_return,
         })
     }
 
@@ -130,7 +130,7 @@ pub struct CtrlAnime<'a> {
     client: AnimeProxyBlocking<'a>,
     inner: Arc<Mutex<CtrlAnimeInner<'a>>>,
     /// Must be the same Atomic as in CtrlAnimeInner
-    inner_early_return: Arc<AtomicBool>
+    inner_early_return: Arc<AtomicBool>,
 }
 
 impl CtrlAnime<'static> {
@@ -138,13 +138,13 @@ impl CtrlAnime<'static> {
         config: Arc<Mutex<ConfigAnime>>,
         inner: Arc<Mutex<CtrlAnimeInner<'static>>>,
         client: AnimeProxyBlocking<'static>,
-        inner_early_return: Arc<AtomicBool>
+        inner_early_return: Arc<AtomicBool>,
     ) -> Result<Self, Error> {
         Ok(CtrlAnime {
             config,
             client,
             inner,
-            inner_early_return
+            inner_early_return,
         })
     }
 
@@ -174,7 +174,7 @@ impl CtrlAnime<'static> {
         index: u32,
         file: &str,
         time: Timer,
-        brightness: f32
+        brightness: f32,
     ) -> zbus::fdo::Result<String> {
         if let Ok(mut config) = self.config.try_lock() {
             let time: AnimTime = time.into();
@@ -182,7 +182,7 @@ impl CtrlAnime<'static> {
             let action = ActionLoader::AsusAnimation {
                 file: file.into(),
                 brightness,
-                time
+                time,
             };
 
             // Must make the inner run loop return early
@@ -216,7 +216,7 @@ impl CtrlAnime<'static> {
         angle: f32,
         xy: (f32, f32),
         time: Timer,
-        brightness: f32
+        brightness: f32,
     ) -> zbus::fdo::Result<String> {
         if let Ok(mut config) = self.config.try_lock() {
             let time: AnimTime = time.into();
@@ -228,7 +228,7 @@ impl CtrlAnime<'static> {
                 angle,
                 translation,
                 brightness,
-                time
+                time,
             };
 
             // Must make the inner run loop return early
@@ -261,7 +261,7 @@ impl CtrlAnime<'static> {
         angle: f32,
         xy: (f32, f32),
         time: Timer,
-        brightness: f32
+        brightness: f32,
     ) -> zbus::fdo::Result<String> {
         if let Ok(mut config) = self.config.try_lock() {
             let file = Path::new(&file);
@@ -272,7 +272,7 @@ impl CtrlAnime<'static> {
                 angle,
                 translation: Vec2::new(xy.0, xy.1),
                 brightness,
-                time
+                time,
             };
 
             // Must make the inner run loop return early

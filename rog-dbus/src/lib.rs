@@ -54,7 +54,7 @@ pub async fn has_iface(iface: &str) -> Result<bool, Box<dyn std::error::Error>> 
 
 pub async fn find_iface_async<T>(iface_name: &str) -> Result<Vec<T>, Box<dyn std::error::Error>>
 where
-    T: ProxyImpl<'static> + From<zbus::Proxy<'static>>
+    T: ProxyImpl<'static> + From<zbus::Proxy<'static>>,
 {
     let conn = zbus::Connection::system().await?;
     let f = zbus::fdo::ObjectManagerProxy::new(&conn, "xyz.ljones.Asusd", "/").await?;
@@ -82,7 +82,7 @@ where
                     .path(path.clone())?
                     .destination("xyz.ljones.Asusd")?
                     .build()
-                    .await?
+                    .await?,
             );
         }
         return Ok(ctrl);

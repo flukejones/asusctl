@@ -24,7 +24,7 @@ fn main() {
     seq.insert(0, &ActionLoader::AsusAnimation {
         file: path.into(),
         time: rog_anime::AnimTime::Infinite,
-        brightness
+        brightness,
     })
     .unwrap();
 

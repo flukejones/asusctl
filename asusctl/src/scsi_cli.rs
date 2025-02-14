@@ -31,5 +31,5 @@ pub struct ScsiCommand {
     pub colours: Vec<Colour>,
 
     #[options(help = "list available animations")]
-    pub list: bool
+    pub list: bool,
 }

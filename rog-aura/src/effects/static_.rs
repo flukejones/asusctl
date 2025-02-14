@@ -8,14 +8,14 @@ use crate::{effect_state_impl, Colour};
 pub struct Static {
     led: LedCode,
     /// The starting colour
-    colour: Colour
+    colour: Colour,
 }
 
 impl Static {
     pub fn new(address: LedCode, colour: Colour) -> Self {
         Self {
             led: address,
-            colour
+            colour,
         }
     }
 }

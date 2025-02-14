@@ -164,7 +164,7 @@ pub enum LedCode {
     /// To be ignored by effects
     Spacing,
     /// To be ignored by effects
-    Blocking
+    Blocking,
 }
 
 impl LedCode {
@@ -210,7 +210,7 @@ pub struct LedUsbPackets {
     /// Wether or not this packet collection is zoned. The determines which
     /// starting bytes are used and what the indexing is for lightbar RGB
     /// colours
-    zoned: bool
+    zoned: bool,
 }
 
 impl Default for LedUsbPackets {
@@ -244,7 +244,7 @@ impl LedUsbPackets {
         }
         Self {
             usb_packets: set,
-            zoned: false
+            zoned: false,
         }
     }
 
@@ -274,7 +274,7 @@ impl LedUsbPackets {
         }
         Self {
             usb_packets: vec![pkt],
-            zoned: true
+            zoned: true,
         }
     }
 
@@ -633,7 +633,7 @@ impl From<&LedCode> for &str {
             LedCode::ZonedKbLeft => "Left Zone (zone 1)",
             LedCode::ZonedKbLeftMid => "Center-left Zone (zone 2)",
             LedCode::ZonedKbRightMid => "Center-right Zone (zone 3)",
-            LedCode::ZonedKbRight => "Right Zone (zone 4)"
+            LedCode::ZonedKbRight => "Right Zone (zone 4)",
         }
     }
 }

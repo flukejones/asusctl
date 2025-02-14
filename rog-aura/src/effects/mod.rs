@@ -32,7 +32,7 @@ pub const RNDTABLE: [i32; 256] = [
     206, 163, 45, 63, 90, 168, 114, 59, 33, 159, 95, 28, 139, 123, 98, 125, 196, 15, 70, 194, 253,
     54, 14, 109, 226, 71, 17, 161, 93, 186, 87, 244, 138, 20, 52, 123, 251, 26, 36, 17, 46, 52,
     231, 232, 76, 31, 221, 84, 37, 216, 165, 212, 106, 197, 242, 98, 43, 39, 175, 254, 145, 190,
-    84, 118, 222, 187, 136, 120, 163, 236, 249
+    84, 118, 222, 187, 136, 120, 163, 236, 249,
 ];
 
 pub fn p_random() -> i32 {
@@ -67,7 +67,7 @@ pub(crate) trait EffectState {
 #[derive(Debug, Deserialize, Serialize, Default)]
 pub struct AdvancedEffects {
     effects: Vec<Effect>,
-    zoned: bool
+    zoned: bool,
 }
 
 impl AdvancedEffects {
@@ -75,7 +75,7 @@ impl AdvancedEffects {
     pub fn new(zoned: bool) -> Self {
         Self {
             effects: Default::default(),
-            zoned
+            zoned,
         }
     }
 
@@ -186,7 +186,7 @@ pub enum Effect {
     Static(Static),
     Breathe(Breathe),
     DoomFlicker(DoomFlicker),
-    DoomLightFlash(DoomLightFlash)
+    DoomLightFlash(DoomLightFlash),
 }
 
 impl Default for Effect {
@@ -211,7 +211,7 @@ mod tests {
             .push(Effect::Static(Static::new(LedCode::F, Colour {
                 r: 255,
                 g: 127,
-                b: 0
+                b: 0,
             })));
 
         seq.next_state(&layout);
@@ -232,14 +232,14 @@ mod tests {
             Colour {
                 r: 255,
                 g: 127,
-                b: 0
+                b: 0,
             },
             Colour {
                 r: 127,
                 g: 0,
-                b: 255
+                b: 255,
             },
-            Speed::Med
+            Speed::Med,
         )));
 
         let s =
@@ -274,10 +274,10 @@ mod tests {
             Colour {
                 r: 255,
                 g: 127,
-                b: 80
+                b: 80,
             },
             100,
-            10
+            10,
         )));
 
         seq.next_state(&layout);

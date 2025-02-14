@@ -56,7 +56,7 @@ fn dbus_path_for_dev(parent: &Device) -> Option<OwnedObjectPath> {
     if let Some(filename) = filename_partial(parent) {
         return Some(
             ObjectPath::from_str_unchecked(&format!("{ASUS_ZBUS_PATH}/{MOD_NAME}/{filename}"))
-                .into()
+                .into(),
         );
     }
     None
@@ -91,17 +91,17 @@ fn dev_prop_matches(dev: &Device, prop: &str, value: &str) -> bool {
 /// required.
 pub struct AsusDevice {
     device: DeviceHandle,
-    dbus_path: OwnedObjectPath
+    dbus_path: OwnedObjectPath,
 }
 
 pub struct DeviceManager {
-    _dbus_connection: Connection
+    _dbus_connection: Connection,
 }
 
 impl DeviceManager {
     async fn init_hid_devices(
         connection: &Connection,
-        device: Device
+        device: Device,
     ) -> Result<Vec<AsusDevice>, RogError> {
         let mut devices = Vec::new();
         if let Some(usb_device) = device.parent_with_subsystem_devtype("usb", "usb_device")? {
@@ -122,7 +122,7 @@ impl DeviceManager {
                         // SLASH DEVICE
                         if let Ok(dev_type) = DeviceHandle::new_slash_hid(
                             dev.clone(),
-                            usb_id.to_str().unwrap_or_default()
+                            usb_id.to_str().unwrap_or_default(),
                         )
                         .await
                         {
@@ -133,14 +133,14 @@ impl DeviceManager {
                                 ctrl.start_tasks(connection, path.clone()).await.unwrap();
                                 devices.push(AsusDevice {
                                     device: dev_type,
-                                    dbus_path: path
+                                    dbus_path: path,
                                 });
                             }
                         }
                         // ANIME MATRIX DEVICE
                         if let Ok(dev_type) = DeviceHandle::maybe_anime_hid(
                             dev.clone(),
-                            usb_id.to_str().unwrap_or_default()
+                            usb_id.to_str().unwrap_or_default(),
                         )
                         .await
                         {
@@ -151,14 +151,14 @@ impl DeviceManager {
                                 ctrl.start_tasks(connection, path.clone()).await.unwrap();
                                 devices.push(AsusDevice {
                                     device: dev_type,
-                                    dbus_path: path
+                                    dbus_path: path,
                                 });
                             }
                         }
                         // AURA LAPTOP DEVICE
                         if let Ok(dev_type) = DeviceHandle::maybe_laptop_aura(
                             Some(dev),
-                            usb_id.to_str().unwrap_or_default()
+                            usb_id.to_str().unwrap_or_default(),
                         )
                         .await
                         {
@@ -169,7 +169,7 @@ impl DeviceManager {
                                 ctrl.start_tasks(connection, path.clone()).await.unwrap();
                                 devices.push(AsusDevice {
                                     device: dev_type,
-                                    dbus_path: path
+                                    dbus_path: path,
                                 });
                             }
                         }
@@ -209,7 +209,7 @@ impl DeviceManager {
     async fn init_scsi(
         connection: &Connection,
         device: &Device,
-        path: OwnedObjectPath
+        path: OwnedObjectPath,
     ) -> Option<AsusDevice> {
         // "ID_MODEL_ID" "1932"
         // "ID_VENDOR_ID" "0b05"
@@ -227,7 +227,7 @@ impl DeviceManager {
                         ctrl.start_tasks(connection, path.clone()).await.unwrap();
                         return Some(AsusDevice {
                             device: dev_type,
-                            dbus_path: path
+                            dbus_path: path,
                         });
                     }
                 }
@@ -305,7 +305,7 @@ impl DeviceManager {
                     ctrl.start_tasks(connection, path.clone()).await.unwrap();
                     devices.push(AsusDevice {
                         device: dev_type,
-                        dbus_path: path
+                        dbus_path: path,
                     });
                 }
             } else {
@@ -327,7 +327,7 @@ impl DeviceManager {
                     {
                         devices.push(AsusDevice {
                             device: dev_type,
-                            dbus_path: path
+                            dbus_path: path,
                         });
                     }
                 }
@@ -354,7 +354,7 @@ impl DeviceManager {
                         ctrl.start_tasks(connection, path.clone()).await.unwrap();
                         devices.push(AsusDevice {
                             device: dev_type,
-                            dbus_path: path
+                            dbus_path: path,
                         });
                     }
                 }
@@ -374,7 +374,7 @@ impl DeviceManager {
         info!("Found {} valid devices on startup", devices.len());
         let devices = Arc::new(Mutex::new(devices));
         let manager = Self {
-            _dbus_connection: connection
+            _dbus_connection: connection,
         };
 
         // TODO: The /sysfs/ LEDs don't cause events, so they need to be manually
@@ -509,7 +509,7 @@ impl DeviceManager {
                                                         .remove::<ScsiZbus, _>(&path)
                                                         .await?
                                                 }
-                                                _ => todo!()
+                                                _ => todo!(),
                                             };
                                             info!("AuraManager removed: {path:?}, {res}");
                                         }

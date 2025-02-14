@@ -16,7 +16,7 @@ use crate::{set_ui_callbacks, set_ui_props_async, AttrMinMax, MainWindow, System
 const MINMAX: AttrMinMax = AttrMinMax {
     min: 0,
     max: 0,
-    current: -1.0
+    current: -1.0,
 };
 
 pub fn setup_system_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {

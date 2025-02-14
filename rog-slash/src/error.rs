@@ -9,7 +9,7 @@ pub enum SlashError {
     NoDevice,
     UnsupportedDevice,
     DataBufferLength,
-    ParseError(String)
+    ParseError(String),
 }
 
 impl fmt::Display for SlashError {
@@ -24,7 +24,7 @@ impl fmt::Display for SlashError {
                 f,
                 "The data buffer was incorrect length for generating USB packets"
             ),
-            SlashError::UnsupportedDevice => write!(f, "Unsupported Slash device found")
+            SlashError::UnsupportedDevice => write!(f, "Unsupported Slash device found"),
         }
     }
 }

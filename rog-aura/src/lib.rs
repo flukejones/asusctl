@@ -29,40 +29,40 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const RED: Colour = Colour {
     r: 0xff,
     g: 0x00,
-    b: 0x00
+    b: 0x00,
 };
 pub const GREEN: Colour = Colour {
     r: 0x00,
     g: 0xff,
-    b: 0x00
+    b: 0x00,
 };
 pub const BLUE: Colour = Colour {
     r: 0x00,
     g: 0x00,
-    b: 0xff
+    b: 0xff,
 };
 pub const VIOLET: Colour = Colour {
     r: 0x9b,
     g: 0x26,
-    b: 0xb6
+    b: 0xb6,
 };
 pub const TEAL: Colour = Colour {
     r: 0x00,
     g: 0x7c,
-    b: 0x80
+    b: 0x80,
 };
 pub const YELLOW: Colour = Colour {
     r: 0xff,
     g: 0xef,
-    b: 0x00
+    b: 0x00,
 };
 pub const ORANGE: Colour = Colour {
     r: 0xff,
     g: 0xa4,
-    b: 0x00
+    b: 0x00,
 };
 pub const GRADIENT: [Colour; 7] = [
-    RED, VIOLET, BLUE, TEAL, GREEN, YELLOW, ORANGE
+    RED, VIOLET, BLUE, TEAL, GREEN, YELLOW, ORANGE,
 ];
 
 #[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
@@ -76,7 +76,7 @@ pub enum AuraDeviceType {
     ScsiExtDisk = 3,
     Ally = 4,
     AnimeOrSlash = 5,
-    Unknown = 255
+    Unknown = 255,
 }
 
 impl AuraDeviceType {
@@ -110,7 +110,7 @@ impl From<&str> for AuraDeviceType {
             "1abe" | "1b4c" => Self::Ally,
             "19b3" | "193b" => Self::AnimeOrSlash,
             "19b6" => Self::LaptopKeyboard2021,
-            _ => Self::Unknown
+            _ => Self::Unknown,
         }
     }
 }
@@ -138,5 +138,5 @@ pub enum PowerZones {
     KeyboardAndLightbar = 5,
     /// Ally specific for creating correct packet
     Ally = 6,
-    None = 255
+    None = 255,
 }

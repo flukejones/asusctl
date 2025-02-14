@@ -13,7 +13,7 @@ pub fn update_fan_data(
     handle: Weak<MainWindow>,
     bal: Vec<CurveData>,
     perf: Vec<CurveData>,
-    quiet: Vec<CurveData>
+    quiet: Vec<CurveData>,
 ) {
     handle
         .upgrade_in_event_loop(move |handle| {
@@ -24,7 +24,7 @@ pub fn update_fan_data(
                     .zip(pwm.iter())
                     .map(|(x, y)| Node {
                         x: *x as f32,
-                        y: *y as f32
+                        y: *y as f32,
                     })
                     .collect();
                 tmp.as_slice().into()
@@ -199,6 +199,6 @@ fn fan_data_for(fan: FanType, enabled: bool, data: Vec<Node>) -> CurveData {
         fan: fan.into(),
         pwm,
         temp,
-        enabled
+        enabled,
     }
 }

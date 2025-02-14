@@ -12,7 +12,7 @@ pub struct DMIID {
     pub bios_vendor: String,
     pub bios_version: String,
     pub product_family: String,
-    pub product_name: String
+    pub product_name: String,
 }
 
 impl DMIID {
@@ -77,7 +77,7 @@ impl DMIID {
                 product_name: device
                     .attribute_value("product_name")
                     .map(|s| s.to_string_lossy().to_string())
-                    .unwrap_or("Unknown".to_string())
+                    .unwrap_or("Unknown".to_string()),
             });
         }
         Err("dmi not found".into())

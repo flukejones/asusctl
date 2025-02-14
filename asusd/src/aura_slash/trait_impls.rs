@@ -2,7 +2,7 @@ use config_traits::StdConfig;
 use log::{debug, error, warn};
 use rog_slash::usb::{
     get_battery_saver_packet, get_boot_packet, get_low_battery_packet, get_options_packet,
-    get_shutdown_packet, get_sleep_packet, pkt_save, pkt_set_mode
+    get_shutdown_packet, get_sleep_packet, pkt_save, pkt_set_mode,
 };
 use rog_slash::{DeviceState, SlashMode};
 use zbus::zvariant::OwnedObjectPath;
@@ -23,7 +23,7 @@ impl SlashZbus {
     pub async fn start_tasks(
         mut self,
         connection: &Connection,
-        path: OwnedObjectPath
+        path: OwnedObjectPath,
     ) -> Result<(), RogError> {
         // let task = zbus.clone();
         self.reload()
@@ -62,7 +62,7 @@ impl SlashZbus {
                 config.slash_type,
                 enabled,
                 brightness,
-                config.display_interval
+                config.display_interval,
             ))
             .await
             .map_err(|err| {
@@ -92,7 +92,7 @@ impl SlashZbus {
                 config.slash_type,
                 enabled,
                 brightness,
-                config.display_interval
+                config.display_interval,
             ))
             .await
             .map_err(|err| {
@@ -117,7 +117,7 @@ impl SlashZbus {
         let mut config = self.0.lock_config().await;
         self.0
             .write_bytes(&get_options_packet(
-                config.slash_type, config.enabled, config.brightness, interval
+                config.slash_type, config.enabled, config.brightness, interval,
             ))
             .await
             .map_err(|err| {
@@ -252,7 +252,7 @@ impl Reloadable for SlashZbus {
                 config.slash_type,
                 config.enabled,
                 config.brightness,
-                config.display_interval
+                config.display_interval,
             ))
             .await
             .map_err(|err| {

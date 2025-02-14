@@ -38,7 +38,7 @@ pub enum AttrValue {
     EnumInt(Vec<i32>),
     EnumStr(Vec<String>),
     #[default]
-    None
+    None,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -50,7 +50,7 @@ pub struct Attribute {
     min_value: AttrValue,
     max_value: AttrValue,
     scalar_increment: AttrValue,
-    base_path: PathBuf
+    base_path: PathBuf,
 }
 
 impl Attribute {
@@ -72,7 +72,7 @@ impl Attribute {
                     Ok(AttrValue::String(val))
                 }
             }
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         }
     }
 
@@ -92,7 +92,7 @@ impl Attribute {
         let value_str = match new_value {
             AttrValue::Integer(val) => &val.to_string(),
             AttrValue::String(val) => val,
-            _ => return Err(PlatformError::InvalidValue)
+            _ => return Err(PlatformError::InvalidValue),
         };
 
         let mut file = OpenOptions::new().write(true).open(&path)?;
@@ -128,7 +128,7 @@ impl Attribute {
     /// change, if they do then it is possibly a driver issue - although this is
     /// subject to `firmware_attributes` class changes in kernel.
     fn read_base_values(
-        base_path: &Path
+        base_path: &Path,
     ) -> (AttrValue, AttrValue, AttrValue, AttrValue, AttrValue) {
         let default_value = match read_string(&base_path.join("default_value")) {
             Ok(val) => {
@@ -138,7 +138,7 @@ impl Attribute {
                     AttrValue::String(val)
                 }
             }
-            Err(_) => AttrValue::None
+            Err(_) => AttrValue::None,
         };
 
         let possible_values = match read_string(&base_path.join("possible_values")) {
@@ -151,7 +151,7 @@ impl Attribute {
                     AttrValue::EnumStr(val.split(';').map(|s| s.to_string()).collect())
                 }
             }
-            Err(_) => AttrValue::None
+            Err(_) => AttrValue::None,
         };
 
         let min_value = read_i32(&base_path.join("min_value"))
@@ -168,7 +168,7 @@ impl Attribute {
             .unwrap_or_default();
 
         (
-            default_value, possible_values, min_value, max_value, scalar_increment
+            default_value, possible_values, min_value, max_value, scalar_increment,
         )
     }
 
@@ -194,7 +194,7 @@ impl Attribute {
 
 #[derive(Clone)]
 pub struct FirmwareAttributes {
-    attrs: Vec<Attribute>
+    attrs: Vec<Attribute>,
 }
 
 #[allow(clippy::new_without_default)]
@@ -221,7 +221,7 @@ impl FirmwareAttributes {
                     min_value,
                     max_value,
                     scalar_increment,
-                    base_path
+                    base_path,
                 });
             }
         }
@@ -305,7 +305,7 @@ pub enum FirmwareAttribute {
     MiniLedMode = 22,
     PendingReboot = 23,
     PptEnabled = 24,
-    None = 25
+    None = 25,
 }
 
 impl FirmwareAttribute {
@@ -395,7 +395,7 @@ impl From<FirmwareAttribute> for &str {
             FirmwareAttribute::GpuMuxMode => "gpu_mux_mode",
             FirmwareAttribute::MiniLedMode => "mini_led_mode",
             FirmwareAttribute::PendingReboot => "pending_reboot",
-            FirmwareAttribute::None => "none"
+            FirmwareAttribute::None => "none",
         }
     }
 }

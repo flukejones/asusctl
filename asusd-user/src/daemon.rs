@@ -61,16 +61,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         CtrlAnimeInner::new(
                             anime,
                             anime_proxy_blocking.clone(),
-                            early_return.clone()
+                            early_return.clone(),
                         )
-                        .unwrap()
+                        .unwrap(),
                     ));
                     // Need new client object for dbus control part
                     let anime_control = CtrlAnime::new(
                         anime_config,
                         inner.clone(),
                         anime_proxy_blocking,
-                        early_return
+                        early_return,
                     )
                     .unwrap();
                     anime_control.add_to_server(&mut connection).await;

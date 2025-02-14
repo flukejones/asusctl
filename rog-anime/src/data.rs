@@ -23,15 +23,15 @@ const PANE_LEN: usize = BLOCK_END - BLOCK_START;
 
 /// First packet is for GA401 + GA402
 pub const USB_PREFIX1: [u8; 7] = [
-    0x5e, 0xc0, 0x02, 0x01, 0x00, 0x73, 0x02
+    0x5e, 0xc0, 0x02, 0x01, 0x00, 0x73, 0x02,
 ];
 /// Second packet is for GA401 + GA402
 pub const USB_PREFIX2: [u8; 7] = [
-    0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x02
+    0x5e, 0xc0, 0x02, 0x74, 0x02, 0x73, 0x02,
 ];
 /// Third packet is for GA402 matrix
 pub const USB_PREFIX3: [u8; 7] = [
-    0x5e, 0xc0, 0x02, 0xe7, 0x04, 0x73, 0x02
+    0x5e, 0xc0, 0x02, 0xe7, 0x04, 0x73, 0x02,
 ];
 
 #[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
@@ -40,7 +40,7 @@ pub struct Animations {
     pub boot: AnimBooting,
     pub awake: AnimAwake,
     pub sleep: AnimSleeping,
-    pub shutdown: AnimShutdown
+    pub shutdown: AnimShutdown,
 }
 
 // TODO: move this out
@@ -54,7 +54,7 @@ pub struct DeviceState {
     pub off_when_unplugged: bool,
     pub off_when_suspended: bool,
     pub off_when_lid_closed: bool,
-    pub brightness_on_battery: Brightness
+    pub brightness_on_battery: Brightness,
 }
 
 #[cfg_attr(feature = "dbus", derive(Type), zvariant(signature = "s"))]
@@ -64,7 +64,7 @@ pub enum AnimeType {
     GA402,
     GU604,
     #[default]
-    Unsupported
+    Unsupported,
 }
 
 impl FromStr for AnimeType {
@@ -75,7 +75,7 @@ impl FromStr for AnimeType {
             "ga401" | "GA401" => Self::GA401,
             "ga402" | "GA402" => Self::GA402,
             "gu604" | "GU604" => Self::GU604,
-            _ => Self::Unsupported
+            _ => Self::Unsupported,
         })
     }
 }
@@ -98,7 +98,7 @@ impl AnimeType {
     pub fn width(&self) -> usize {
         match self {
             AnimeType::GU604 => 70,
-            _ => 74
+            _ => 74,
         }
     }
 
@@ -107,7 +107,7 @@ impl AnimeType {
         match self {
             AnimeType::GA401 => 36,
             AnimeType::GU604 => 43,
-            _ => 39
+            _ => 39,
         }
     }
 
@@ -116,7 +116,7 @@ impl AnimeType {
         match self {
             AnimeType::GA401 => PANE_LEN * 2,
             AnimeType::GU604 => PANE_LEN * 3,
-            _ => PANE_LEN * 3
+            _ => PANE_LEN * 3,
         }
     }
 }
@@ -127,7 +127,7 @@ impl AnimeType {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AnimeDataBuffer {
     data: Vec<u8>,
-    anime: AnimeType
+    anime: AnimeType,
 }
 
 impl AnimeDataBuffer {
@@ -137,7 +137,7 @@ impl AnimeDataBuffer {
 
         AnimeDataBuffer {
             data: vec![0u8; len],
-            anime
+            anime,
         }
     }
 
@@ -180,7 +180,7 @@ impl TryFrom<AnimeDataBuffer> for AnimePacketType {
 
         let mut buffers = match anime.anime {
             AnimeType::GA401 => vec![[0; 640]; 2],
-            AnimeType::GA402 | AnimeType::GU604 | AnimeType::Unsupported => vec![[0; 640]; 3]
+            AnimeType::GA402 | AnimeType::GU604 | AnimeType::Unsupported => vec![[0; 640]; 3],
         };
 
         for (idx, chunk) in anime.data.as_slice().chunks(PANE_LEN).enumerate() {

@@ -84,7 +84,7 @@ pub trait Platform {
     #[zbus(property)]
     fn set_platform_profile_on_battery(
         &self,
-        platform_profile: PlatformProfile
+        platform_profile: PlatformProfile,
     ) -> zbus::Result<()>;
 
     /// ChangeThrottlePolicyOnAc property

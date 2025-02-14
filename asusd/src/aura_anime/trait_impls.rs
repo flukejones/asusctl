@@ -5,7 +5,7 @@ use log::{debug, error, warn};
 use logind_zbus::manager::ManagerProxy;
 use rog_anime::usb::{
     pkt_set_brightness, pkt_set_builtin_animations, pkt_set_enable_display,
-    pkt_set_enable_powersave_anim, Brightness
+    pkt_set_enable_powersave_anim, Brightness,
 };
 use rog_anime::{Animations, AnimeDataBuffer, DeviceState};
 use zbus::object_server::SignalEmitter;
@@ -41,7 +41,7 @@ impl AniMeZbus {
     pub async fn start_tasks(
         mut self,
         connection: &Connection,
-        path: OwnedObjectPath
+        path: OwnedObjectPath,
     ) -> Result<(), RogError> {
         // let task = zbus.clone();
         self.reload()
@@ -169,7 +169,7 @@ impl AniMeZbus {
     async fn set_builtin_animations(&self, settings: Animations) {
         self.0
             .write_bytes(&pkt_set_builtin_animations(
-                settings.boot, settings.awake, settings.sleep, settings.shutdown
+                settings.boot, settings.awake, settings.sleep, settings.shutdown,
             ))
             .await
             .map_err(|err| {
@@ -319,7 +319,7 @@ impl crate::CtrlTask for AniMeZbus {
 
                         inner
                             .write_bytes(&pkt_set_enable_display(
-                                !(sleeping && config.off_when_suspended)
+                                !(sleeping && config.off_when_suspended),
                             ))
                             .await
                             .map_err(|err| {
@@ -330,7 +330,7 @@ impl crate::CtrlTask for AniMeZbus {
                         if config.builtin_anims_enabled {
                             inner
                                 .write_bytes(&pkt_set_enable_powersave_anim(
-                                    !(sleeping && config.off_when_suspended)
+                                    !(sleeping && config.off_when_suspended),
                                 ))
                                 .await
                                 .map_err(|err| {
@@ -433,7 +433,7 @@ impl crate::CtrlTask for AniMeZbus {
                             .ok();
                     }
                 }
-            }
+            },
         )
         .await;
 
@@ -460,7 +460,7 @@ impl crate::Reloadable for AniMeZbus {
                     builtin_anims.boot,
                     builtin_anims.awake,
                     builtin_anims.sleep,
-                    builtin_anims.shutdown
+                    builtin_anims.shutdown,
                 ))
                 .await?;
         }

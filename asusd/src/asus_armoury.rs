@@ -20,7 +20,7 @@ const MOD_NAME: &str = "asus_armoury";
 #[derive(Debug, Default, Clone, Deserialize, Serialize, Type, Value, OwnedValue)]
 pub struct PossibleValues {
     strings: Vec<String>,
-    nums: Vec<i32>
+    nums: Vec<i32>,
 }
 
 fn dbus_path_for_attr(attr_name: &str) -> OwnedObjectPath {
@@ -33,7 +33,7 @@ pub struct AsusArmouryAttribute {
     config: Arc<Mutex<Config>>,
     /// platform control required here for access to PPD or Throttle profile
     platform: RogPlatform,
-    power: AsusPower
+    power: AsusPower,
 }
 
 impl AsusArmouryAttribute {
@@ -41,13 +41,13 @@ impl AsusArmouryAttribute {
         attr: Attribute,
         platform: RogPlatform,
         power: AsusPower,
-        config: Arc<Mutex<Config>>
+        config: Arc<Mutex<Config>>,
     ) -> Self {
         Self {
             attr,
             config,
             platform,
-            power
+            power,
         }
     }
 
@@ -64,7 +64,7 @@ impl AsusArmouryAttribute {
 
     async fn watch_and_notify(
         &mut self,
-        signal_ctxt: SignalEmitter<'static>
+        signal_ctxt: SignalEmitter<'static>,
     ) -> Result<(), RogError> {
         use futures_util::StreamExt;
 
@@ -92,7 +92,7 @@ impl AsusArmouryAttribute {
                         "inotify watch failed: {}. You can ignore this if your device does not \
                          support the feature",
                         e
-                    )
+                    ),
                 }
             };
         }
@@ -187,7 +187,7 @@ impl AsusArmouryAttribute {
     async fn default_value(&self) -> i32 {
         match self.attr.default_value() {
             AttrValue::Integer(i) => *i,
-            _ => -1
+            _ => -1,
         }
     }
 
@@ -228,7 +228,7 @@ impl AsusArmouryAttribute {
     async fn min_value(&self) -> i32 {
         match self.attr.min_value() {
             AttrValue::Integer(i) => *i,
-            _ => -1
+            _ => -1,
         }
     }
 
@@ -236,7 +236,7 @@ impl AsusArmouryAttribute {
     async fn max_value(&self) -> i32 {
         match self.attr.max_value() {
             AttrValue::Integer(i) => *i,
-            _ => -1
+            _ => -1,
         }
     }
 
@@ -244,7 +244,7 @@ impl AsusArmouryAttribute {
     async fn scalar_increment(&self) -> i32 {
         match self.attr.scalar_increment() {
             AttrValue::Integer(i) => *i,
-            _ => -1
+            _ => -1,
         }
     }
 
@@ -252,7 +252,7 @@ impl AsusArmouryAttribute {
     async fn possible_values(&self) -> Vec<i32> {
         match self.attr.possible_values() {
             AttrValue::EnumInt(i) => i.clone(),
-            _ => Vec::default()
+            _ => Vec::default(),
         }
     }
 
@@ -276,7 +276,7 @@ impl AsusArmouryAttribute {
                 return Ok(*i);
             }
             return Err(fdo::Error::Failed(
-                "Could not read current value".to_string()
+                "Could not read current value".to_string(),
             ));
         }
 
@@ -284,7 +284,7 @@ impl AsusArmouryAttribute {
             return Ok(i);
         }
         Err(fdo::Error::Failed(
-            "Could not read current value".to_string()
+            "Could not read current value".to_string(),
         ))
     }
 
@@ -362,14 +362,14 @@ pub async fn start_attributes_zbus(
     platform: RogPlatform,
     power: AsusPower,
     attributes: FirmwareAttributes,
-    config: Arc<Mutex<Config>>
+    config: Arc<Mutex<Config>>,
 ) -> Result<(), RogError> {
     for attr in attributes.attributes() {
         let mut attr = AsusArmouryAttribute::new(
             attr.clone(),
             platform.clone(),
             power.clone(),
-            config.clone()
+            config.clone(),
         );
         attr.reload().await?;
 
@@ -386,7 +386,7 @@ pub async fn set_config_or_default(
     attrs: &FirmwareAttributes,
     config: &mut Config,
     power_plugged: bool,
-    profile: PlatformProfile
+    profile: PlatformProfile,
 ) {
     for attr in attrs.attributes().iter() {
         let name: FirmwareAttribute = attr.name().into();

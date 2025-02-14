@@ -19,7 +19,7 @@ pub struct HidRaw {
     prod_id: String,
     _device_bcd: u32,
     /// Retaining a handle to the file for the duration of `HidRaw`
-    file: RefCell<File>
+    file: RefCell<File>,
 }
 
 impl HidRaw {
@@ -66,7 +66,7 @@ impl HidRaw {
                                 .unwrap_or_default()
                                 .to_string_lossy()
                                 .parse()
-                                .unwrap_or_default()
+                                .unwrap_or_default(),
                         });
                     }
                 }
@@ -98,13 +98,13 @@ impl HidRaw {
                             .unwrap_or_default()
                             .to_string_lossy()
                             .parse()
-                            .unwrap_or_default()
+                            .unwrap_or_default(),
                     });
                 }
             }
         }
         Err(PlatformError::MissingFunction(
-            "hidraw dev no dev path".to_string()
+            "hidraw dev no dev path".to_string(),
         ))
     }
 

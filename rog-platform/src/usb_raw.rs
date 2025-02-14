@@ -24,7 +24,7 @@ impl USBRaw {
     }
 
     fn get_dev_handle(
-        device: &Device<rusb::GlobalContext>
+        device: &Device<rusb::GlobalContext>,
     ) -> Result<DeviceHandle<rusb::GlobalContext>> {
         // We don't expect this ID to ever change
         let device = device.open()?;
@@ -42,7 +42,7 @@ impl USBRaw {
                 0x35e, // value
                 0x00,  // index
                 message,
-                Duration::from_millis(200)
+                Duration::from_millis(200),
             )
             .map_err(PlatformError::USB)
     }

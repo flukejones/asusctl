@@ -11,7 +11,7 @@ const CONFIG_FILE: &str = "asusd.ron";
 #[derive(Default, Clone, Deserialize, Serialize, PartialEq)]
 pub struct Tuning {
     pub enabled: bool,
-    pub group: HashMap<FirmwareAttribute, i32>
+    pub group: HashMap<FirmwareAttribute, i32>,
 }
 type Tunings = HashMap<PlatformProfile, Tuning>;
 
@@ -49,7 +49,7 @@ pub struct Config {
     pub armoury_settings: HashMap<FirmwareAttribute, i32>,
     /// Temporary state for AC/Batt
     #[serde(skip)]
-    pub last_power_plugged: u8
+    pub last_power_plugged: u8,
 }
 
 impl Config {
@@ -82,7 +82,7 @@ impl Default for Config {
             ac_profile_tunings: HashMap::default(),
             dc_profile_tunings: HashMap::default(),
             armoury_settings: HashMap::default(),
-            last_power_plugged: Default::default()
+            last_power_plugged: Default::default(),
         }
     }
 }
@@ -147,7 +147,7 @@ pub struct Config601 {
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub nv_temp_target: Option<u8>,
     #[serde(skip)]
-    pub last_power_plugged: u8
+    pub last_power_plugged: u8,
 }
 
 impl From<Config601> for Config {
@@ -170,7 +170,7 @@ impl From<Config601> for Config {
             last_power_plugged: c.last_power_plugged,
             ac_profile_tunings: HashMap::default(),
             dc_profile_tunings: HashMap::default(),
-            armoury_settings: HashMap::default()
+            armoury_settings: HashMap::default(),
         }
     }
 }

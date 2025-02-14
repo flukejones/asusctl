@@ -12,7 +12,7 @@ use futures_util::lock::Mutex;
 use log::{debug, error, info, warn};
 use rog_anime::usb::{
     pkt_flush, pkt_set_brightness, pkt_set_enable_display, pkt_set_enable_powersave_anim,
-    pkts_for_init, Brightness
+    pkts_for_init, Brightness,
 };
 use rog_anime::{ActionData, AnimeDataBuffer, AnimePacketType};
 use rog_platform::hid_raw::HidRaw;
@@ -30,14 +30,14 @@ pub struct AniMe {
     // set to force thread to exit
     thread_exit: Arc<AtomicBool>,
     // Set to false when the thread exits
-    thread_running: Arc<AtomicBool>
+    thread_running: Arc<AtomicBool>,
 }
 
 impl AniMe {
     pub fn new(
         hid: Option<Arc<Mutex<HidRaw>>>,
         usb: Option<Arc<Mutex<USBRaw>>>,
-        config: Arc<Mutex<AniMeConfig>>
+        config: Arc<Mutex<AniMeConfig>>,
     ) -> Self {
         Self {
             hid,
@@ -45,7 +45,7 @@ impl AniMe {
             config,
             cache: AniMeConfigCached::default(),
             thread_exit: Arc::new(AtomicBool::new(false)),
-            thread_running: Arc::new(AtomicBool::new(false))
+            thread_running: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -106,7 +106,7 @@ impl AniMe {
     pub async fn set_builtins_enabled(
         &self,
         enabled: bool,
-        bright: Brightness
+        bright: Brightness,
     ) -> Result<(), RogError> {
         self.write_bytes(&pkt_set_enable_powersave_anim(enabled))
             .await?;

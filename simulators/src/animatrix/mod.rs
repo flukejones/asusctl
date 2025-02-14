@@ -20,7 +20,7 @@ pub struct Row(
     /// The length to read inclusive
     pub usize,
     /// Offset to the right by how many LEDs
-    pub i32
+    pub i32,
 );
 
 #[derive(Clone, Copy)]
@@ -28,12 +28,12 @@ pub struct LedShape {
     /// Vertical offset from center for the top/bottom points
     pub vertical: i32,
     /// Horizontal offset from center for the top/bottom points
-    pub horizontal: i32
+    pub horizontal: i32,
 }
 
 pub struct AniMatrix {
     rows: Vec<Row>,
-    led_shape: LedShape
+    led_shape: LedShape,
 }
 
 impl AniMatrix {
@@ -41,23 +41,23 @@ impl AniMatrix {
         let led_shape = match model {
             AnimeType::GA401 => LedShape {
                 vertical: 2,
-                horizontal: 5
+                horizontal: 5,
             },
             AnimeType::GA402 | AnimeType::Unsupported => LedShape {
                 vertical: 2,
-                horizontal: 5
+                horizontal: 5,
             },
             AnimeType::GU604 => LedShape {
                 vertical: 2,
-                horizontal: 5
-            }
+                horizontal: 5,
+            },
         };
 
         // Do a hard mapping of each (derived from wireshardk captures)
         let rows = match model {
             AnimeType::GA401 => GA401.to_vec(),
             AnimeType::GA402 | AnimeType::Unsupported => GA402.to_vec(),
-            AnimeType::GU604 => GU604.to_vec()
+            AnimeType::GU604 => GU604.to_vec(),
         };
 
         Self { rows, led_shape }

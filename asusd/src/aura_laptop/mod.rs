@@ -19,7 +19,7 @@ pub mod trait_impls;
 pub struct Aura {
     pub hid: Option<Arc<Mutex<HidRaw>>>,
     pub backlight: Option<Arc<Mutex<KeyboardBacklight>>>,
-    pub config: Arc<Mutex<AuraConfig>>
+    pub config: Arc<Mutex<AuraConfig>>,
 }
 
 impl Aura {
@@ -91,13 +91,13 @@ impl Aura {
     pub async fn write_effect_and_apply(
         &self,
         dev_type: AuraDeviceType,
-        mode: &AuraEffect
+        mode: &AuraEffect,
     ) -> Result<(), RogError> {
         if matches!(dev_type, AuraDeviceType::LaptopKeyboardTuf) {
             if let Some(platform) = &self.backlight {
                 let buf = [
                     1, mode.mode as u8, mode.colour1.r, mode.colour1.g, mode.colour1.b,
-                    mode.speed as u8
+                    mode.speed as u8,
                 ];
                 platform.lock().await.set_kbd_rgb_mode(&buf)?;
             }
@@ -121,7 +121,7 @@ impl Aura {
             return Ok(());
         }
         Err(RogError::MissingFunction(
-            "No LED backlight control available".to_string()
+            "No LED backlight control available".to_string(),
         ))
     }
 
@@ -145,7 +145,7 @@ impl Aura {
                         0x01,
                         p.new_to_byte() as u8,
                         0x0,
-                        0x0
+                        0x0,
                     ];
                     hid_raw.write_bytes(&msg)?;
                     return Ok(());
@@ -154,7 +154,7 @@ impl Aura {
 
             let bytes = config.enabled.to_bytes(config.led_type);
             let msg = [
-                0x5d, 0xbd, 0x01, bytes[0], bytes[1], bytes[2], bytes[3]
+                0x5d, 0xbd, 0x01, bytes[0], bytes[1], bytes[2], bytes[3],
             ];
             hid_raw.write_bytes(&msg)?;
         }
@@ -167,7 +167,7 @@ impl Aura {
     pub async fn write_effect_block(
         &self,
         config: &mut AuraConfig,
-        effect: &AuraLaptopUsbPackets
+        effect: &AuraLaptopUsbPackets,
     ) -> Result<(), RogError> {
         if config.brightness == LedBrightness::Off {
             config.brightness = LedBrightness::Med;
@@ -201,7 +201,7 @@ impl Aura {
                     let g = row[10];
                     let b = row[11];
                     tuf.lock().await.set_kbd_rgb_mode(&[
-                        0, 0, r, g, b, 0
+                        0, 0, r, g, b, 0,
                     ])?;
                 }
             }
@@ -215,7 +215,7 @@ impl Aura {
                 let mut config = self.config.lock().await;
                 if config.ally_fix.is_none() {
                     let msg = [
-                        0x5d, 0xbd, 0x01, 0xff, 0xff, 0xff, 0xff
+                        0x5d, 0xbd, 0x01, 0xff, 0xff, 0xff, 0xff,
                     ];
                     hid_raw.lock().await.write_bytes(&msg)?;
                     info!("Reset Ally power settings to base");

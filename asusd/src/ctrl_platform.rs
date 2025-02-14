@@ -45,7 +45,7 @@ pub struct CtrlPlatform {
     platform: RogPlatform,
     attributes: FirmwareAttributes,
     cpu_control: Option<CPUControl>,
-    config: Arc<Mutex<Config>>
+    config: Arc<Mutex<Config>>,
 }
 
 impl CtrlPlatform {
@@ -55,7 +55,7 @@ impl CtrlPlatform {
         attributes: FirmwareAttributes,
         config: Arc<Mutex<Config>>,
         config_path: &Path,
-        signal_context: SignalEmitter<'static>
+        signal_context: SignalEmitter<'static>,
     ) -> Result<Self, RogError> {
         let config1 = config.clone();
         let config_path = config_path.to_owned();
@@ -67,7 +67,7 @@ impl CtrlPlatform {
             config,
             cpu_control: CPUControl::new()
                 .map_err(|e| error!("Couldn't get CPU control sysfs: {e}"))
-                .ok()
+                .ok(),
         };
         let mut inotify_self = ret_self.clone();
 
@@ -86,7 +86,7 @@ impl CtrlPlatform {
                         inotify::WatchMask::MODIFY
                             | inotify::WatchMask::CLOSE_WRITE
                             | inotify::WatchMask::ATTRIB
-                            | inotify::WatchMask::CREATE
+                            | inotify::WatchMask::CREATE,
                     )
                     .inspect_err(|e| {
                         if e.kind() == std::io::ErrorKind::NotFound {
@@ -128,7 +128,7 @@ impl CtrlPlatform {
         if limit > 0
             && std::mem::replace(
                 &mut self.config.lock().await.charge_control_end_threshold,
-                limit
+                limit,
             ) != limit
         {
             self.power
@@ -210,7 +210,7 @@ impl CtrlPlatform {
         match throttle {
             PlatformProfile::Balanced => self.config.lock().await.profile_balanced_epp,
             PlatformProfile::Performance => self.config.lock().await.profile_performance_epp,
-            PlatformProfile::Quiet => self.config.lock().await.profile_quiet_epp
+            PlatformProfile::Quiet => self.config.lock().await.profile_quiet_epp,
         }
     }
 
@@ -305,7 +305,7 @@ impl CtrlPlatform {
     async fn one_shot_full_charge(&self) -> Result<(), FdoErr> {
         let base_limit = std::mem::replace(
             &mut self.config.lock().await.charge_control_end_threshold,
-            100
+            100,
         );
         if base_limit != 100 {
             self.power.set_charge_control_end_threshold(100)?;
@@ -319,7 +319,7 @@ impl CtrlPlatform {
     /// If fan-curves are supported will also activate a fan curve for profile.
     async fn next_platform_profile(
         &mut self,
-        #[zbus(signal_context)] ctxt: SignalEmitter<'_>
+        #[zbus(signal_context)] ctxt: SignalEmitter<'_>,
     ) -> Result<(), FdoErr> {
         let policy: PlatformProfile =
             platform_get_value!(self, platform_profile, "platform_profile").map(|n| n.into())?;
@@ -339,7 +339,7 @@ impl CtrlPlatform {
             Ok(self.platform_profile_changed(&ctxt).await?)
         } else {
             Err(FdoErr::NotSupported(
-                "RogPlatform: platform_profile not supported".to_owned()
+                "RogPlatform: platform_profile not supported".to_owned(),
             ))
         }
     }
@@ -353,7 +353,7 @@ impl CtrlPlatform {
     async fn set_platform_profile(
         &mut self,
         #[zbus(signal_context)] ctxt: SignalEmitter<'_>,
-        policy: PlatformProfile
+        policy: PlatformProfile,
     ) -> Result<(), FdoErr> {
         // TODO: watch for external changes
         if self.platform.has_platform_profile() {
@@ -373,7 +373,7 @@ impl CtrlPlatform {
             Ok(())
         } else {
             Err(FdoErr::NotSupported(
-                "RogPlatform: platform_profile not supported".to_owned()
+                "RogPlatform: platform_profile not supported".to_owned(),
             ))
         }
     }
@@ -399,7 +399,7 @@ impl CtrlPlatform {
     async fn set_platform_profile_on_battery(
         &mut self,
         #[zbus(signal_context)] ctxt: SignalEmitter<'_>,
-        policy: PlatformProfile
+        policy: PlatformProfile,
     ) -> Result<(), FdoErr> {
         self.config.lock().await.platform_profile_on_battery = policy;
         self.set_platform_profile(ctxt, policy).await?;
@@ -428,7 +428,7 @@ impl CtrlPlatform {
     async fn set_platform_profile_on_ac(
         &mut self,
         #[zbus(signal_context)] ctxt: SignalEmitter<'_>,
-        policy: PlatformProfile
+        policy: PlatformProfile,
     ) -> Result<(), FdoErr> {
         self.config.lock().await.platform_profile_on_ac = policy;
         self.set_platform_profile(ctxt, policy).await?;
@@ -593,7 +593,7 @@ impl ReloadAndNotify for CtrlPlatform {
     async fn reload_and_notify(
         &mut self,
         signal_context: &SignalEmitter<'static>,
-        data: Self::Data
+        data: Self::Data,
     ) -> Result<(), RogError> {
         let mut config = self.config.lock().await;
         if *config != data {
@@ -622,7 +622,7 @@ impl ReloadAndNotify for CtrlPlatform {
                 let epp = match profile {
                     PlatformProfile::Balanced => data.profile_balanced_epp,
                     PlatformProfile::Performance => data.profile_performance_epp,
-                    PlatformProfile::Quiet => data.profile_quiet_epp
+                    PlatformProfile::Quiet => data.profile_quiet_epp,
                 };
                 warn!("setting epp to {epp:?}");
                 self.check_and_set_epp(epp, true);
@@ -694,7 +694,7 @@ impl CtrlTask for CtrlPlatform {
                         platform1
                             .power
                             .set_charge_control_end_threshold(
-                                platform1.config.lock().await.charge_control_end_threshold
+                                platform1.config.lock().await.charge_control_end_threshold,
                             )
                             .ok();
                     }
@@ -728,7 +728,7 @@ impl CtrlTask for CtrlPlatform {
                         platform2
                             .power
                             .set_charge_control_end_threshold(
-                                lock.base_charge_control_end_threshold
+                                lock.base_charge_control_end_threshold,
                             )
                             .map_err(|err| {
                                 warn!("CtrlCharge: charge_control_end_threshold {}", err);
@@ -773,7 +773,7 @@ impl CtrlTask for CtrlPlatform {
                             &attrs,
                             &mut *platform3.config.lock().await,
                             power_plugged,
-                            profile
+                            profile,
                         )
                         .await;
                         platform3
@@ -782,7 +782,7 @@ impl CtrlTask for CtrlPlatform {
                             .ok();
                     }
                 }
-            }
+            },
         )
         .await;
 
@@ -829,7 +829,7 @@ impl CtrlTask for CtrlPlatform {
                             &attrs,
                             &mut *ctrl.config.lock().await,
                             power_plugged == 1,
-                            profile
+                            profile,
                         )
                         .await;
                     }

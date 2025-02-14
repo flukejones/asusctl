@@ -12,7 +12,7 @@ pub mod trait_impls;
 #[derive(Clone)]
 pub struct ScsiAura {
     device: Arc<Mutex<Device>>,
-    config: Arc<Mutex<ScsiConfig>>
+    config: Arc<Mutex<ScsiConfig>>,
 }
 
 impl ScsiAura {

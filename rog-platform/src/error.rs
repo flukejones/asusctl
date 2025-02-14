@@ -22,7 +22,7 @@ pub enum PlatformError {
     InvalidValue,
     NoAuraKeyboard,
     NoAuraNode,
-    CPU(String)
+    CPU(String),
 }
 
 impl fmt::Display for PlatformError {
@@ -52,7 +52,7 @@ impl fmt::Display for PlatformError {
             PlatformError::IoPath(path, detail) => write!(f, "{} {}", path, detail),
             PlatformError::NoAuraKeyboard => write!(f, "No supported Aura keyboard"),
             PlatformError::NoAuraNode => write!(f, "No Aura keyboard node found"),
-            PlatformError::CPU(s) => write!(f, "CPU control: {s}")
+            PlatformError::CPU(s) => write!(f, "CPU control: {s}"),
         }
     }
 }
@@ -76,7 +76,7 @@ impl From<PlatformError> for FdoErr {
         log::error!("PlatformError: got: {error}");
         match error {
             PlatformError::NotSupported => FdoErr::NotSupported("".to_owned()),
-            _ => FdoErr::Failed(format!("Failed with {error}"))
+            _ => FdoErr::Failed(format!("Failed with {error}")),
         }
     }
 }

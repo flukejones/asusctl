@@ -18,7 +18,7 @@ fn main() {
         CompilerConfiguration::new()
             // .embed_resources(EmbedResourcesKind::EmbedFiles)
             .with_include_paths(vec![include])
-            .with_style("fluent".into())
+            .with_style("fluent".into()),
     )
     .unwrap();
 }

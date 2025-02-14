@@ -54,7 +54,7 @@ pub struct LedSupportData {
     #[serde(default)]
     pub advanced_type: AdvancedAuraType,
     /// If empty will default to `Keyboard` power zone
-    pub power_zones: Vec<PowerZones>
+    pub power_zones: Vec<PowerZones>,
 }
 
 impl LedSupportData {
@@ -116,7 +116,7 @@ impl LedSupportFile {
             basic_modes: vec![AuraModeNum::Static],
             basic_zones: vec![],
             advanced_type: AdvancedAuraType::None,
-            power_zones: vec![PowerZones::Keyboard]
+            power_zones: vec![PowerZones::Keyboard],
         }
     }
 
@@ -200,7 +200,7 @@ mod tests {
             power_zones: vec![
                 PowerZones::Keyboard,
                 PowerZones::RearGlow,
-            ]
+            ],
         };
 
         assert!(ron::to_string(&led).is_ok());

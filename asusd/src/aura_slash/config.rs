@@ -17,7 +17,7 @@ pub struct SlashConfig {
     pub show_on_shutdown: bool,
     pub show_on_sleep: bool,
     pub show_on_battery: bool,
-    pub show_battery_warning: bool
+    pub show_battery_warning: bool,
 }
 
 impl Default for SlashConfig {
@@ -32,7 +32,7 @@ impl Default for SlashConfig {
             show_on_shutdown: true,
             show_on_sleep: true,
             show_on_battery: true,
-            show_battery_warning: true
+            show_battery_warning: true,
         }
     }
 }
@@ -58,7 +58,7 @@ impl From<&SlashConfig> for DeviceState {
             slash_enabled: config.enabled,
             slash_brightness: config.brightness,
             slash_interval: config.display_interval,
-            slash_mode: config.display_mode
+            slash_mode: config.display_mode,
         }
     }
 }

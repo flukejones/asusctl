@@ -23,7 +23,7 @@ pub const FAN_CURVE_ZBUS_PATH: &str = "/xyz/ljones";
 pub struct FanCurveConfig {
     pub profiles: FanCurveProfiles,
     #[serde(skip)]
-    pub current: PlatformProfile
+    pub current: PlatformProfile,
 }
 
 impl StdConfig for FanCurveConfig {
@@ -47,7 +47,7 @@ impl StdConfigLoad for FanCurveConfig {}
 #[derive(Debug, Clone)]
 pub struct CtrlFanCurveZbus {
     config: Arc<Mutex<FanCurveConfig>>,
-    platform: RogPlatform
+    platform: RogPlatform,
 }
 
 // Non-zbus-derive impl
@@ -69,7 +69,7 @@ impl CtrlFanCurveZbus {
                 for this in [
                     PlatformProfile::Balanced,
                     PlatformProfile::Performance,
-                    PlatformProfile::Quiet
+                    PlatformProfile::Quiet,
                 ] {
                     // For each profile we need to switch to it before we
                     // can read the existing values from hardware. The ACPI method used
@@ -93,7 +93,7 @@ impl CtrlFanCurveZbus {
 
             return Ok(Self {
                 config: Arc::new(Mutex::new(config)),
-                platform
+                platform,
             });
         }
 
@@ -108,7 +108,7 @@ impl CtrlFanCurveZbus {
     async fn set_fan_curves_enabled(
         &mut self,
         profile: PlatformProfile,
-        enabled: bool
+        enabled: bool,
     ) -> zbus::fdo::Result<()> {
         self.config
             .lock()
@@ -130,7 +130,7 @@ impl CtrlFanCurveZbus {
         &mut self,
         profile: PlatformProfile,
         fan: FanCurvePU,
-        enabled: bool
+        enabled: bool,
     ) -> zbus::fdo::Result<()> {
         self.config
             .lock()
@@ -149,7 +149,7 @@ impl CtrlFanCurveZbus {
     /// Get the fan-curve data for the currently active ThrottlePolicy
     async fn fan_curve_data(
         &mut self,
-        profile: PlatformProfile
+        profile: PlatformProfile,
     ) -> zbus::fdo::Result<Vec<CurveData>> {
         let curve = self
             .config
@@ -166,7 +166,7 @@ impl CtrlFanCurveZbus {
     async fn set_fan_curve(
         &mut self,
         profile: PlatformProfile,
-        curve: CurveData
+        curve: CurveData,
     ) -> zbus::fdo::Result<()> {
         self.config
             .lock()
@@ -261,7 +261,7 @@ impl CtrlTask for CtrlFanCurveZbus {
                                 .profiles
                                 .write_profile_curve_to_platform(
                                     profile,
-                                    &mut find_fan_curve_node().unwrap()
+                                    &mut find_fan_curve_node().unwrap(),
                                 )
                                 .map_err(|e| warn!("write_profile_curve_to_platform, {}", e))
                                 .ok();

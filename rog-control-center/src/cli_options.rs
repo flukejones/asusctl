@@ -23,5 +23,5 @@ pub struct CliStart {
         help = "put ROGCC in layout viewing mode - this is helpful for finding existing layouts \
                 that might match your laptop"
     )]
-    pub layout_viewing: bool
+    pub layout_viewing: bool,
 }

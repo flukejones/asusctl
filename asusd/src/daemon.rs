@@ -30,7 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let is_service = match env::var_os("IS_SERVICE") {
         Some(val) => val == "1",
-        None => true
+        None => true,
     };
 
     if !is_service {
@@ -76,7 +76,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
         platform.clone(),
         power.clone(),
         attributes.clone(),
-        config.clone()
+        config.clone(),
     )
     .await?;
 
@@ -96,7 +96,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
         attributes,
         config.clone(),
         &cfg_path,
-        CtrlPlatform::signal_context(&server)?
+        CtrlPlatform::signal_context(&server)?,
     ) {
         Ok(ctrl) => {
             let sig_ctx = CtrlPlatform::signal_context(&server)?;

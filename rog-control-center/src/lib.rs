@@ -38,5 +38,5 @@ pub enum Page {
     System,
     AuraEffects,
     AnimeMatrix,
-    FanCurves
+    FanCurves,
 }

@@ -31,7 +31,7 @@ const NOTIF_HEADER: &str = "ROG Control";
 pub struct EnabledNotifications {
     pub enabled: bool,
     pub receive_notify_gfx: bool,
-    pub receive_notify_gfx_status: bool
+    pub receive_notify_gfx_status: bool,
 }
 
 impl Default for EnabledNotifications {
@@ -39,7 +39,7 @@ impl Default for EnabledNotifications {
         Self {
             enabled: true,
             receive_notify_gfx: true,
-            receive_notify_gfx_status: true
+            receive_notify_gfx_status: true,
         }
     }
 }
@@ -92,7 +92,7 @@ fn start_dpu_status_mon(config: Arc<Mutex<Config>>) {
 
 pub fn start_notifications(
     config: Arc<Mutex<Config>>,
-    rt: &Runtime
+    rt: &Runtime,
 ) -> Result<Vec<JoinHandle<()>>> {
     // Setup the AC/BAT commands that will run on power status change
     let config_copy = config.clone();
@@ -214,7 +214,7 @@ pub fn start_notifications(
                         supergfxctl::actions::UserActionRequired::Reboot => {
                             do_mux_notification("Graphics mode change requires reboot", &mode)
                         }
-                        _ => do_gfx_action_notif(<&str>::from(action), *action, mode)
+                        _ => do_gfx_action_notif(<&str>::from(action), *action, mode),
                     }
                     .map_err(|e| {
                         error!("zbus signal: do_gfx_action_notif: {e}");
@@ -266,13 +266,13 @@ fn convert_gfx_mode(gfx: GfxMode) -> GpuMode {
         GfxMode::Vfio => GpuMode::Vfio,
         GfxMode::AsusEgpu => GpuMode::Egpu,
         GfxMode::AsusMuxDgpu => GpuMode::Ultimate,
-        GfxMode::None => GpuMode::Error
+        GfxMode::None => GpuMode::Error,
     }
 }
 
 fn base_notification<T>(message: &str, data: &T) -> Notification
 where
-    T: Display
+    T: Display,
 {
     let mut notif = Notification::new();
     notif
@@ -290,7 +290,7 @@ fn do_gpu_status_notif(message: &str, data: &GfxPower) -> Notification {
         GfxPower::Off => "asus_notif_green",
         GfxPower::AsusDisabled => "asus_notif_white",
         GfxPower::AsusMuxDiscreet | GfxPower::Active => "asus_notif_red",
-        GfxPower::Unknown => "gpu-integrated"
+        GfxPower::Unknown => "gpu-integrated",
     };
     notif.icon(icon);
     notif
@@ -331,7 +331,7 @@ fn do_gfx_action_notif(message: &str, action: GfxUserAction, mode: GpuMode) -> R
                     if id == "gfx-mode-session-action" {
                         let mut cmd = Command::new("qdbus");
                         cmd.args([
-                            "org.kde.ksmserver", "/KSMServer", "logout", "1", "0", "0"
+                            "org.kde.ksmserver", "/KSMServer", "logout", "1", "0", "0",
                         ]);
                         cmd.spawn().ok();
                     } else if id == "__closed" {
@@ -375,7 +375,7 @@ fn do_mux_notification(message: &str, m: &GpuMode) -> Result<()> {
                     if id == "gfx-mode-session-action" {
                         let mut cmd = Command::new("qdbus");
                         cmd.args([
-                            "org.kde.ksmserver", "/KSMServer", "logout", "1", "1", "0"
+                            "org.kde.ksmserver", "/KSMServer", "logout", "1", "1", "0",
                         ]);
                         cmd.spawn().ok();
                     } else if id == "__closed" {

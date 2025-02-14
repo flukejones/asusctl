@@ -112,7 +112,7 @@ mod tests {
     #[test]
     fn check() {
         let data = [
-            1, 2, 3, 4, 5
+            1, 2, 3, 4, 5,
         ];
         let mut tmp = String::new();
         for n in data {

@@ -8,7 +8,7 @@ impl From<Profile> for PlatformProfile {
         match value {
             Profile::Balanced => PlatformProfile::Balanced,
             Profile::Performance => PlatformProfile::Performance,
-            Profile::Quiet => PlatformProfile::Quiet
+            Profile::Quiet => PlatformProfile::Quiet,
         }
     }
 }
@@ -18,7 +18,7 @@ impl From<PlatformProfile> for Profile {
         match value {
             PlatformProfile::Balanced => Profile::Balanced,
             PlatformProfile::Performance => Profile::Performance,
-            PlatformProfile::Quiet => Profile::Quiet
+            PlatformProfile::Quiet => Profile::Quiet,
         }
     }
 }
@@ -28,7 +28,7 @@ impl From<FanType> for FanCurvePU {
         match value {
             FanType::CPU => FanCurvePU::CPU,
             FanType::Middle => FanCurvePU::MID,
-            FanType::GPU => FanCurvePU::GPU
+            FanType::GPU => FanCurvePU::GPU,
         }
     }
 }
@@ -38,7 +38,7 @@ impl From<FanCurvePU> for FanType {
         match value {
             FanCurvePU::CPU => FanType::CPU,
             FanCurvePU::GPU => FanType::GPU,
-            FanCurvePU::MID => FanType::Middle
+            FanCurvePU::MID => FanType::Middle,
         }
     }
 }

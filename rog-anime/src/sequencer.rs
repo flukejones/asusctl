@@ -16,13 +16,13 @@ pub enum ActionLoader {
     AsusAnimation {
         file: PathBuf,
         time: AnimTime,
-        brightness: f32
+        brightness: f32,
     },
     /// Image designed to be pixel perfect using the slanted template
     AsusImage {
         file: PathBuf,
         time: AnimTime,
-        brightness: f32
+        brightness: f32,
     },
     /// Animated gif. If the file is a png a static gif is created using the
     /// `time` properties
@@ -32,7 +32,7 @@ pub enum ActionLoader {
         angle: f32,
         translation: Vec2,
         time: AnimTime,
-        brightness: f32
+        brightness: f32,
     },
     Image {
         file: PathBuf,
@@ -40,10 +40,10 @@ pub enum ActionLoader {
         angle: f32,
         translation: Vec2,
         time: AnimTime,
-        brightness: f32
+        brightness: f32,
     },
     /// A pause to be used between sequences
-    Pause(Duration)
+    Pause(Duration),
 }
 
 /// All the possible `AniMe` actions that can be used. The enum is intended to
@@ -64,7 +64,7 @@ pub enum ActionData {
     /// Placeholder
     TimeDate,
     /// Placeholder
-    Matrix
+    Matrix,
 }
 
 impl ActionData {
@@ -73,14 +73,14 @@ impl ActionData {
             ActionLoader::AsusAnimation {
                 file,
                 time,
-                brightness
+                brightness,
             } => ActionData::Animation(AnimeGif::from_diagonal_gif(
-                file, *time, *brightness, anime_type
+                file, *time, *brightness, anime_type,
             )?),
             ActionLoader::AsusImage {
                 file,
                 time,
-                brightness
+                brightness,
             } => match time {
                 AnimTime::Infinite => {
                     let image = AnimeDiagonal::from_png(file, None, *brightness, anime_type)?;
@@ -88,8 +88,8 @@ impl ActionData {
                     ActionData::Image(Box::new(data))
                 }
                 _ => ActionData::Animation(AnimeGif::from_diagonal_png(
-                    file, anime_type, *time, *brightness
-                )?)
+                    file, anime_type, *time, *brightness,
+                )?),
             },
             ActionLoader::ImageAnimation {
                 file,
@@ -97,17 +97,17 @@ impl ActionData {
                 angle,
                 translation,
                 time,
-                brightness
+                brightness,
             } => {
                 if let Some(ext) = file.extension() {
                     if ext.to_string_lossy().to_lowercase() == "png" {
                         return Ok(ActionData::Animation(AnimeGif::from_png(
-                            file, *scale, *angle, *translation, *time, *brightness, anime_type
+                            file, *scale, *angle, *translation, *time, *brightness, anime_type,
                         )?));
                     }
                 }
                 ActionData::Animation(AnimeGif::from_gif(
-                    file, *scale, *angle, *translation, *time, *brightness, anime_type
+                    file, *scale, *angle, *translation, *time, *brightness, anime_type,
                 )?)
             }
             ActionLoader::Image {
@@ -116,23 +116,23 @@ impl ActionData {
                 angle,
                 translation,
                 brightness,
-                time
+                time,
             } => {
                 match time {
                     AnimTime::Infinite => {
                         // If no time then create a plain static image
                         let image = AnimeImage::from_png(
-                            file, *scale, *angle, *translation, *brightness, anime_type
+                            file, *scale, *angle, *translation, *brightness, anime_type,
                         )?;
                         let data = <AnimeDataBuffer>::try_from(&image)?;
                         ActionData::Image(Box::new(data))
                     }
                     _ => ActionData::Animation(AnimeGif::from_png(
-                        file, *scale, *angle, *translation, *time, *brightness, anime_type
-                    )?)
+                        file, *scale, *angle, *translation, *time, *brightness, anime_type,
+                    )?),
                 }
             }
-            ActionLoader::Pause(duration) => ActionData::Pause(*duration)
+            ActionLoader::Pause(duration) => ActionData::Pause(*duration),
         };
         Ok(a)
     }
@@ -171,7 +171,7 @@ impl Sequences {
     pub fn iter(&self) -> ActionIterator<'_> {
         ActionIterator {
             actions: self,
-            next_idx: 0
+            next_idx: 0,
         }
     }
 }
@@ -179,7 +179,7 @@ impl Sequences {
 /// Iteractor helper for iterating over all the actions in `Sequences`
 pub struct ActionIterator<'a> {
     actions: &'a Sequences,
-    next_idx: usize
+    next_idx: usize,
 }
 
 impl<'a> Iterator for ActionIterator<'a> {

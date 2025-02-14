@@ -16,14 +16,14 @@ pub mod trait_impls;
 pub struct Slash {
     hid: Option<Arc<Mutex<HidRaw>>>,
     usb: Option<Arc<Mutex<USBRaw>>>,
-    config: Arc<Mutex<SlashConfig>>
+    config: Arc<Mutex<SlashConfig>>,
 }
 
 impl Slash {
     pub fn new(
         hid: Option<Arc<Mutex<HidRaw>>>,
         usb: Option<Arc<Mutex<USBRaw>>>,
-        config: Arc<Mutex<SlashConfig>>
+        config: Arc<Mutex<SlashConfig>>,
     ) -> Self {
         Self { hid, usb, config }
     }
@@ -57,7 +57,7 @@ impl Slash {
             config.slash_type,
             config.enabled,
             config.brightness,
-            config.display_interval
+            config.display_interval,
         );
         self.write_bytes(&option_packets).await?;
 

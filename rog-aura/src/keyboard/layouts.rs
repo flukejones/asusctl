@@ -26,12 +26,12 @@ pub enum KeyShape {
         pad_left: f32,
         pad_right: f32,
         pad_top: f32,
-        pad_bottom: f32
+        pad_bottom: f32,
     },
     Blank {
         width: f32,
-        height: f32
-    }
+        height: f32,
+    },
 }
 
 impl KeyShape {
@@ -41,7 +41,7 @@ impl KeyShape {
         pad_left: f32,
         pad_right: f32,
         pad_top: f32,
-        pad_bottom: f32
+        pad_bottom: f32,
     ) -> Self {
         Self::Led {
             width,
@@ -49,7 +49,7 @@ impl KeyShape {
             pad_left,
             pad_right,
             pad_top,
-            pad_bottom
+            pad_bottom,
         }
     }
 
@@ -66,7 +66,7 @@ impl KeyShape {
                 pad_left,
                 pad_right,
                 pad_top,
-                pad_bottom
+                pad_bottom,
             } => {
                 *width *= scale;
                 *height *= scale;
@@ -97,7 +97,7 @@ pub struct KeyRow {
     row: Vec<(LedCode, String)>,
     /// The final data structure merged key_shapes and rows
     #[serde(skip)]
-    built_row: Vec<(LedCode, KeyShape)>
+    built_row: Vec<(LedCode, KeyShape)>,
 }
 
 impl KeyRow {
@@ -106,7 +106,7 @@ impl KeyRow {
             pad_left,
             pad_top,
             row,
-            built_row: Default::default()
+            built_row: Default::default(),
         }
     }
 
@@ -132,7 +132,7 @@ impl KeyRow {
                     pad_bottom,
                     ..
                 } => height + pad_top + pad_bottom,
-                KeyShape::Blank { height, .. } => *height
+                KeyShape::Blank { height, .. } => *height,
             };
 
             if h < height {
@@ -156,7 +156,7 @@ impl KeyRow {
                     pad_right,
                     ..
                 } => w += width + pad_left + pad_right,
-                KeyShape::Blank { width, .. } => w += width
+                KeyShape::Blank { width, .. } => w += width,
             }
         }
         w
@@ -185,7 +185,7 @@ pub struct KeyLayout {
     /// Should be copied from the `LaptopLedData` as laptops may have the same
     /// layout, but different EC features.
     #[serde(skip)]
-    advanced_type: AdvancedAuraType
+    advanced_type: AdvancedAuraType,
 }
 
 impl KeyLayout {
@@ -195,7 +195,7 @@ impl KeyLayout {
         if buf.is_empty() {
             Err(Error::IoPath(
                 path.to_string_lossy().to_string(),
-                std::io::ErrorKind::InvalidData.into()
+                std::io::ErrorKind::InvalidData.into(),
             ))
         } else {
             let mut data = ron::from_str::<Self>(&buf)?;
@@ -332,7 +332,7 @@ impl KeyLayout {
             advanced_type: AdvancedAuraType::None,
             key_shapes: HashMap::from([(
                 "regular".to_owned(),
-                KeyShape::new_led(1.0, 1.0, 0.1, 0.1, 0.1, 0.1)
+                KeyShape::new_led(1.0, 1.0, 0.1, 0.1, 0.1, 0.1),
             )]),
             key_rows: vec![
                 KeyRow::new(0.1, 0.1, vec![
@@ -422,7 +422,7 @@ impl KeyLayout {
                     (LedCode::PrtSc, "regular".to_owned()),
                     (LedCode::RCtrl, "regular".to_owned()),
                 ]),
-            ]
+            ],
         }
     }
 }

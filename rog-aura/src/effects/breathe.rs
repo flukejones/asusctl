@@ -19,7 +19,7 @@ pub struct Breathe {
     #[serde(skip)]
     count_flipped: bool,
     #[serde(skip)]
-    use_colour1: bool
+    use_colour1: bool,
 }
 
 impl Breathe {
@@ -31,7 +31,7 @@ impl Breathe {
             speed,
             colour: colour1,
             count_flipped: false,
-            use_colour1: true
+            use_colour1: true,
         }
     }
 }

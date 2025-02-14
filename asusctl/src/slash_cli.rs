@@ -31,5 +31,5 @@ pub struct SlashCommand {
         meta = "",
         help = "Show the low-battery warning animation"
     )]
-    pub show_battery_warning: Option<bool>
+    pub show_battery_warning: Option<bool>,
 }

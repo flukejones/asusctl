@@ -45,5 +45,5 @@ pub struct FanCurveCommand {
         help = "data format = 30c:1%,49c:2%,59c:3%,69c:4%,79c:31%,89c:49%,99c:56%,109c:58%. \
                 `--mod-profile` required. If '%' is omitted the fan range is 0-255"
     )]
-    pub data: Option<CurveData>
+    pub data: Option<CurveData>,
 }

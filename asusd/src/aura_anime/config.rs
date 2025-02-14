@@ -4,7 +4,7 @@ use config_traits::{StdConfig, StdConfigLoad};
 use rog_anime::error::AnimeError;
 use rog_anime::usb::Brightness;
 use rog_anime::{
-    ActionData, ActionLoader, AnimTime, Animations, AnimeType, DeviceState, Fade, Vec2
+    ActionData, ActionLoader, AnimTime, Animations, AnimeType, DeviceState, Fade, Vec2,
 };
 use serde::{Deserialize, Serialize};
 
@@ -15,14 +15,14 @@ pub struct AniMeConfigCached {
     pub system: Vec<ActionData>,
     pub boot: Vec<ActionData>,
     pub wake: Vec<ActionData>,
-    pub shutdown: Vec<ActionData>
+    pub shutdown: Vec<ActionData>,
 }
 
 impl AniMeConfigCached {
     pub fn init_from_config(
         &mut self,
         config: &AniMeConfig,
-        anime_type: AnimeType
+        anime_type: AnimeType,
     ) -> Result<(), AnimeError> {
         let mut sys = Vec::with_capacity(config.system.len());
         for ani in &config.system {
@@ -68,7 +68,7 @@ pub struct AniMeConfig {
     pub off_when_suspended: bool,
     pub off_when_lid_closed: bool,
     pub brightness_on_battery: Brightness,
-    pub builtin_anims: Animations
+    pub builtin_anims: Animations,
 }
 
 impl Default for AniMeConfig {
@@ -87,7 +87,7 @@ impl Default for AniMeConfig {
             off_when_suspended: true,
             off_when_lid_closed: true,
             brightness_on_battery: Brightness::Low,
-            builtin_anims: Animations::default()
+            builtin_anims: Animations::default(),
         }
     }
 }
@@ -118,7 +118,7 @@ impl From<&AniMeConfig> for DeviceState {
             off_when_unplugged: config.off_when_unplugged,
             off_when_suspended: config.off_when_suspended,
             off_when_lid_closed: config.off_when_lid_closed,
-            brightness_on_battery: config.brightness_on_battery
+            brightness_on_battery: config.brightness_on_battery,
         }
     }
 }
@@ -148,8 +148,8 @@ impl AniMeConfig {
                     time: AnimTime::Fade(Fade::new(
                         Duration::from_secs(2),
                         Some(Duration::from_secs(2)),
-                        Duration::from_secs(2)
-                    ))
+                        Duration::from_secs(2),
+                    )),
                 },
             ],
             wake: vec![
@@ -162,8 +162,8 @@ impl AniMeConfig {
                     time: AnimTime::Fade(Fade::new(
                         Duration::from_secs(2),
                         Some(Duration::from_secs(2)),
-                        Duration::from_secs(2)
-                    ))
+                        Duration::from_secs(2),
+                    )),
                 },
             ],
             shutdown: vec![
@@ -173,7 +173,7 @@ impl AniMeConfig {
                     angle: 0.0,
                     translation: Vec2::new(3.0, 2.0),
                     brightness: 1.0,
-                    time: AnimTime::Infinite
+                    time: AnimTime::Infinite,
                 },
             ],
             ..Default::default()

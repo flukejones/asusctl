@@ -16,7 +16,7 @@ pub enum SlashType {
     GA605,
     GU605,
     #[default]
-    Unsupported
+    Unsupported,
 }
 
 impl SlashType {
@@ -25,7 +25,7 @@ impl SlashType {
             SlashType::GA403 => PROD_ID1,
             SlashType::GA605 => PROD_ID2,
             SlashType::GU605 => PROD_ID1,
-            SlashType::Unsupported => 0
+            SlashType::Unsupported => 0,
         }
     }
 
@@ -34,7 +34,7 @@ impl SlashType {
             SlashType::GA403 => PROD_ID1_STR,
             SlashType::GA605 => PROD_ID2_STR,
             SlashType::GU605 => PROD_ID1_STR,
-            SlashType::Unsupported => ""
+            SlashType::Unsupported => "",
         }
     }
 
@@ -60,7 +60,7 @@ impl FromStr for SlashType {
             "ga403" | "GA403" => Self::GA403,
             "ga605" | "GA605" => Self::GA605,
             "gu605" | "GU605" => Self::GU605,
-            _ => Self::Unsupported
+            _ => Self::Unsupported,
         })
     }
 }
@@ -83,7 +83,7 @@ pub enum SlashMode {
     Ramp = 0x34,
     GameOver = 0x42,
     Start = 0x43,
-    Buzzer = 0x44
+    Buzzer = 0x44,
 }
 
 impl FromStr for SlashMode {
@@ -106,7 +106,7 @@ impl FromStr for SlashMode {
             "GameOver" => Ok(SlashMode::GameOver),
             "Start" => Ok(SlashMode::Start),
             "Buzzer" => Ok(SlashMode::Buzzer),
-            _ => Ok(SlashMode::Bounce)
+            _ => Ok(SlashMode::Bounce),
         }
     }
 }
@@ -128,7 +128,7 @@ impl Display for SlashMode {
             SlashMode::Ramp => String::from("Ramp"),
             SlashMode::GameOver => String::from("GameOver"),
             SlashMode::Start => String::from("Start"),
-            SlashMode::Buzzer => String::from("Buzzer")
+            SlashMode::Buzzer => String::from("Buzzer"),
         };
         write!(f, "{}", str)
     }
@@ -151,7 +151,7 @@ impl SlashMode {
             SlashMode::Ramp.to_string(),
             SlashMode::GameOver.to_string(),
             SlashMode::Start.to_string(),
-            SlashMode::Buzzer.to_string()
+            SlashMode::Buzzer.to_string(),
         ]
     }
 }
@@ -162,5 +162,5 @@ pub struct DeviceState {
     pub slash_enabled: bool,
     pub slash_brightness: u8,
     pub slash_interval: u8,
-    pub slash_mode: SlashMode
+    pub slash_mode: SlashMode,
 }

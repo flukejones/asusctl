@@ -18,7 +18,7 @@ const ATTR_EPP: &str = "cpufreq/energy_performance_preference";
 /// which can drastically alter CPU performance.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Clone)]
 pub struct CPUControl {
-    paths: Vec<PathBuf>
+    paths: Vec<PathBuf>,
 }
 
 impl CPUControl {
@@ -54,7 +54,7 @@ impl CPUControl {
                 }
                 match device.attribute_value(ATTR_GOVERNOR) {
                     Some(g) => info!("{ATTR_GOVERNOR}: {g:?}"),
-                    None => return Err(PlatformError::CPU(format!("{ATTR_GOVERNOR} not found")))
+                    None => return Err(PlatformError::CPU(format!("{ATTR_GOVERNOR} not found"))),
                 }
                 match device.attribute_value(ATTR_AVAILABLE_EPP) {
                     Some(g) => info!("{ATTR_AVAILABLE_EPP}: {g:?}"),
@@ -66,7 +66,7 @@ impl CPUControl {
                 }
                 match device.attribute_value(ATTR_EPP) {
                     Some(g) => info!("{ATTR_EPP}: {g:?}"),
-                    None => return Err(PlatformError::CPU(format!("{ATTR_EPP} not found")))
+                    None => return Err(PlatformError::CPU(format!("{ATTR_EPP} not found"))),
                 }
                 supported = true;
             }
@@ -77,7 +77,7 @@ impl CPUControl {
         }
         if cpu.paths.is_empty() {
             return Err(PlatformError::MissingFunction(
-                "asus-nb-wmi not found".into()
+                "asus-nb-wmi not found".into(),
             ));
         }
         Ok(cpu)
@@ -154,7 +154,7 @@ impl CPUControl {
 pub enum CPUGovernor {
     Performance = 0,
     Powersave = 1,
-    BadValue = 2
+    BadValue = 2,
 }
 
 impl From<&str> for CPUGovernor {
@@ -162,7 +162,7 @@ impl From<&str> for CPUGovernor {
         match s {
             "performance" => Self::Performance,
             "powersave" => Self::Powersave,
-            _ => Self::BadValue
+            _ => Self::BadValue,
         }
     }
 }
@@ -172,7 +172,7 @@ impl From<CPUGovernor> for String {
         match g {
             CPUGovernor::Performance => "performance".to_string(),
             CPUGovernor::Powersave => "powersave".to_string(),
-            CPUGovernor::BadValue => "bad_value".to_string()
+            CPUGovernor::BadValue => "bad_value".to_string(),
         }
     }
 }
@@ -198,7 +198,7 @@ pub enum CPUEPP {
     Performance = 1,
     BalancePerformance = 2,
     BalancePower = 3,
-    Power = 4
+    Power = 4,
 }
 
 impl From<PlatformProfile> for CPUEPP {
@@ -206,7 +206,7 @@ impl From<PlatformProfile> for CPUEPP {
         match value {
             PlatformProfile::Balanced => CPUEPP::BalancePerformance,
             PlatformProfile::Performance => CPUEPP::Performance,
-            PlatformProfile::Quiet => CPUEPP::Power
+            PlatformProfile::Quiet => CPUEPP::Power,
         }
     }
 }
@@ -219,7 +219,7 @@ impl From<&str> for CPUEPP {
             "balance_performance" => Self::BalancePerformance,
             "balance_power" => Self::BalancePower,
             "power" => Self::Power,
-            _ => Self::Default
+            _ => Self::Default,
         }
     }
 }
@@ -231,7 +231,7 @@ impl From<CPUEPP> for String {
             CPUEPP::Performance => "performance".to_string(),
             CPUEPP::BalancePerformance => "balance_performance".to_string(),
             CPUEPP::BalancePower => "balance_power".to_string(),
-            CPUEPP::Power => "power".to_string()
+            CPUEPP::Power => "power".to_string(),
         }
     }
 }
@@ -244,7 +244,7 @@ impl From<i32> for CPUEPP {
             2 => Self::BalancePerformance,
             3 => Self::BalancePower,
             4 => Self::Power,
-            _ => Self::Default
+            _ => Self::Default,
         }
     }
 }

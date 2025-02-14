@@ -11,7 +11,7 @@ pub struct InputBased {
     /// - temperature
     /// - fan speed
     /// - time
-    input: Box<dyn InputForEffect>
+    input: Box<dyn InputForEffect>,
 }
 
 impl EffectState for InputBased {

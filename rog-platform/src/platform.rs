@@ -20,7 +20,7 @@ use crate::{attr_string, to_device};
 #[derive(Debug, PartialEq, Eq, PartialOrd, Clone)]
 pub struct RogPlatform {
     path: PathBuf,
-    pp_path: PathBuf
+    pp_path: PathBuf,
 }
 
 impl RogPlatform {
@@ -53,11 +53,11 @@ impl RogPlatform {
             info!("Found platform support at {:?}", device.sysname());
             return Ok(Self {
                 path: device.syspath().to_owned(),
-                pp_path: PathBuf::from_str("/sys/firmware/acpi").unwrap()
+                pp_path: PathBuf::from_str("/sys/firmware/acpi").unwrap(),
             });
         }
         Err(PlatformError::MissingFunction(
-            "asus-nb-wmi not found".into()
+            "asus-nb-wmi not found".into(),
         ))
     }
 }
@@ -67,7 +67,7 @@ impl Default for RogPlatform {
         unsafe {
             Self {
                 path: PathBuf::from_str("/this_shouldNeVErr_exisid").unwrap_unchecked(),
-                pp_path: PathBuf::from_str("/this_shouldNeVErr_exisid").unwrap_unchecked()
+                pp_path: PathBuf::from_str("/this_shouldNeVErr_exisid").unwrap_unchecked(),
             }
         }
     }
@@ -85,7 +85,7 @@ pub enum GpuMode {
     Ultimate = 4,
     #[default]
     Error = 254,
-    NotSupported = 255
+    NotSupported = 255,
 }
 
 impl From<u8> for GpuMode {
@@ -97,7 +97,7 @@ impl From<u8> for GpuMode {
             3 => GpuMode::Vfio,
             4 => GpuMode::Ultimate,
             5 => GpuMode::Error,
-            _ => GpuMode::NotSupported
+            _ => GpuMode::NotSupported,
         }
     }
 }
@@ -164,7 +164,7 @@ impl Display for GpuMode {
             GpuMode::Vfio => write!(f, "VFIO"),
             GpuMode::Ultimate => write!(f, "Ultimate"),
             GpuMode::Error => write!(f, "Error"),
-            GpuMode::NotSupported => write!(f, "Not Supported")
+            GpuMode::NotSupported => write!(f, "Not Supported"),
         }
     }
 }
@@ -191,7 +191,7 @@ pub enum PlatformProfile {
     #[default]
     Balanced = 0,
     Performance = 1,
-    Quiet = 2
+    Quiet = 2,
 }
 
 impl PlatformProfile {
@@ -199,7 +199,7 @@ impl PlatformProfile {
         match self {
             Self::Balanced => Self::Performance,
             Self::Performance => Self::Quiet,
-            Self::Quiet => Self::Balanced
+            Self::Quiet => Self::Balanced,
         }
     }
 
@@ -207,7 +207,7 @@ impl PlatformProfile {
         [
             Self::Balanced,
             Self::Performance,
-            Self::Quiet
+            Self::Quiet,
         ]
     }
 }
@@ -237,7 +237,7 @@ impl From<PlatformProfile> for u8 {
         match p {
             PlatformProfile::Balanced => 0,
             PlatformProfile::Performance => 1,
-            PlatformProfile::Quiet => 2
+            PlatformProfile::Quiet => 2,
         }
     }
 }
@@ -253,7 +253,7 @@ impl From<PlatformProfile> for &str {
         match profile {
             PlatformProfile::Balanced => "balanced",
             PlatformProfile::Performance => "performance",
-            PlatformProfile::Quiet => "quiet"
+            PlatformProfile::Quiet => "quiet",
         }
     }
 }
@@ -288,7 +288,7 @@ impl std::str::FromStr for PlatformProfile {
             "performance" => Ok(PlatformProfile::Performance),
             "quiet" => Ok(PlatformProfile::Quiet),
             "low-power" => Ok(PlatformProfile::Quiet),
-            _ => Err(PlatformError::NotSupported)
+            _ => Err(PlatformError::NotSupported),
         }
     }
 }
@@ -311,5 +311,5 @@ pub enum Properties {
     PanelOd,
     MiniLedMode,
     EgpuEnable,
-    ThrottlePolicy
+    ThrottlePolicy,
 }

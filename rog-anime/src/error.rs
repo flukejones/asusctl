@@ -24,7 +24,7 @@ pub enum AnimeError {
     DataBufferLength,
     PixelGifWidth(usize),
     PixelGifHeight(usize),
-    ParseError(String)
+    ParseError(String),
 }
 
 impl fmt::Display for AnimeError {
@@ -61,7 +61,7 @@ impl fmt::Display for AnimeError {
             AnimeError::PixelGifHeight(n) => write!(
                 f,
                 "The gif used for pixel-perfect gif is is taller than {n}"
-            )
+            ),
         }
     }
 }

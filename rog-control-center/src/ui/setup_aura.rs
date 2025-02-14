@@ -9,7 +9,7 @@ use slint::{ComponentHandle, Model, RgbaColor, SharedString};
 use crate::config::Config;
 use crate::ui::show_toast;
 use crate::{
-    set_ui_callbacks, set_ui_props_async, AuraPageData, MainWindow, PowerZones as SlintPowerZones
+    set_ui_callbacks, set_ui_props_async, AuraPageData, MainWindow, PowerZones as SlintPowerZones,
 };
 
 fn decode_hex(s: &str) -> RgbaColor<u8> {
@@ -19,7 +19,7 @@ fn decode_hex(s: &str) -> RgbaColor<u8> {
             alpha: 255,
             red: 0,
             green: 0,
-            blue: 0
+            blue: 0,
         };
     }
     let c: Vec<u8> = (0..s.len())
@@ -30,7 +30,7 @@ fn decode_hex(s: &str) -> RgbaColor<u8> {
         alpha: 255,
         red: *c.first().unwrap_or(&255),
         green: *c.get(1).unwrap_or(&128),
-        blue: *c.get(2).unwrap_or(&32)
+        blue: *c.get(2).unwrap_or(&32),
     }
 }
 
@@ -198,7 +198,7 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                                 "Aura power settings changed".into(),
                                 "Failed to set Aura power settings".into(),
                                 handle_copy,
-                                proxy_copy.set_led_power(power).await
+                                proxy_copy.set_led_power(power).await,
                             );
                         });
                     });

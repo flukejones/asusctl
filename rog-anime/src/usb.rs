@@ -35,7 +35,7 @@ pub enum Brightness {
     Low = 1,
     #[default]
     Med = 2,
-    High = 3
+    High = 3,
 }
 
 impl FromStr for Brightness {
@@ -47,7 +47,7 @@ impl FromStr for Brightness {
             "Low" | "low" => Brightness::Low,
             "Med" | "med" => Brightness::Med,
             "High" | "high" => Brightness::High,
-            _ => Brightness::Med
+            _ => Brightness::Med,
         })
     }
 }
@@ -58,7 +58,7 @@ impl From<u8> for Brightness {
             0 => Brightness::Off,
             1 => Brightness::Low,
             3 => Brightness::High,
-            _ => Brightness::Med
+            _ => Brightness::Med,
         }
     }
 }
@@ -84,7 +84,7 @@ impl From<Brightness> for i32 {
 pub enum AnimBooting {
     #[default]
     GlitchConstruction = 0,
-    StaticEmergence = 1
+    StaticEmergence = 1,
 }
 
 impl FromStr for AnimBooting {
@@ -94,7 +94,7 @@ impl FromStr for AnimBooting {
         match s {
             "GlitchConstruction" => Ok(Self::GlitchConstruction),
             "StaticEmergence" => Ok(Self::StaticEmergence),
-            _ => Err(AnimeError::ParseError(s.to_owned()))
+            _ => Err(AnimeError::ParseError(s.to_owned())),
         }
     }
 }
@@ -104,7 +104,7 @@ impl From<i32> for AnimBooting {
         match value {
             0 => Self::GlitchConstruction,
             1 => Self::StaticEmergence,
-            _ => Self::default()
+            _ => Self::default(),
         }
     }
 }
@@ -124,7 +124,7 @@ impl From<AnimBooting> for i32 {
 pub enum AnimAwake {
     #[default]
     BinaryBannerScroll = 0,
-    RogLogoGlitch = 1
+    RogLogoGlitch = 1,
 }
 
 impl FromStr for AnimAwake {
@@ -134,7 +134,7 @@ impl FromStr for AnimAwake {
         match s {
             "BinaryBannerScroll" => Ok(Self::BinaryBannerScroll),
             "RogLogoGlitch" => Ok(Self::RogLogoGlitch),
-            _ => Err(AnimeError::ParseError(s.to_owned()))
+            _ => Err(AnimeError::ParseError(s.to_owned())),
         }
     }
 }
@@ -144,7 +144,7 @@ impl From<i32> for AnimAwake {
         match value {
             0 => Self::BinaryBannerScroll,
             1 => Self::RogLogoGlitch,
-            _ => Self::default()
+            _ => Self::default(),
         }
     }
 }
@@ -164,7 +164,7 @@ impl From<AnimAwake> for i32 {
 pub enum AnimSleeping {
     #[default]
     BannerSwipe = 0,
-    Starfield = 1
+    Starfield = 1,
 }
 
 impl FromStr for AnimSleeping {
@@ -174,7 +174,7 @@ impl FromStr for AnimSleeping {
         match s {
             "BannerSwipe" => Ok(Self::BannerSwipe),
             "Starfield" => Ok(Self::Starfield),
-            _ => Err(AnimeError::ParseError(s.to_owned()))
+            _ => Err(AnimeError::ParseError(s.to_owned())),
         }
     }
 }
@@ -184,7 +184,7 @@ impl From<i32> for AnimSleeping {
         match value {
             0 => Self::BannerSwipe,
             1 => Self::Starfield,
-            _ => Self::default()
+            _ => Self::default(),
         }
     }
 }
@@ -204,7 +204,7 @@ impl From<AnimSleeping> for i32 {
 pub enum AnimShutdown {
     #[default]
     GlitchOut = 0,
-    SeeYa = 1
+    SeeYa = 1,
 }
 
 impl FromStr for AnimShutdown {
@@ -214,7 +214,7 @@ impl FromStr for AnimShutdown {
         match s {
             "GlitchOut" => Ok(Self::GlitchOut),
             "SeeYa" => Ok(Self::SeeYa),
-            _ => Err(AnimeError::ParseError(s.to_owned()))
+            _ => Err(AnimeError::ParseError(s.to_owned())),
         }
     }
 }
@@ -224,7 +224,7 @@ impl From<i32> for AnimShutdown {
         match value {
             0 => Self::GlitchOut,
             1 => Self::SeeYa,
-            _ => Self::default()
+            _ => Self::default(),
         }
     }
 }
@@ -326,7 +326,7 @@ pub const fn pkt_set_builtin_animations(
     boot: AnimBooting,
     awake: AnimAwake,
     sleep: AnimSleeping,
-    shutdown: AnimShutdown
+    shutdown: AnimShutdown,
 ) -> [u8; PACKET_SIZE] {
     let mut pkt = [0; PACKET_SIZE];
     pkt[0] = DEV_PAGE;

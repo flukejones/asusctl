@@ -16,7 +16,7 @@ pub struct AnimeFrame {
     /// the `asusd` daemon over dbus or converted to USB packet with
     /// `AnimePacketType::from(buffer)`
     data: AnimeDataBuffer,
-    delay: Duration
+    delay: Duration,
 }
 
 impl AnimeFrame {
@@ -44,7 +44,7 @@ pub enum AnimTime {
     /// Run for infinite time
     Infinite,
     /// Fade in, play for, fade out
-    Fade(Fade)
+    Fade(Fade),
 }
 
 impl Default for AnimTime {
@@ -59,7 +59,7 @@ impl Default for AnimTime {
 pub struct Fade {
     fade_in: Duration,
     show_for: Option<Duration>,
-    fade_out: Duration
+    fade_out: Duration,
 }
 
 impl Fade {
@@ -67,7 +67,7 @@ impl Fade {
         Self {
             fade_in,
             show_for,
-            fade_out
+            fade_out,
         }
     }
 
@@ -100,7 +100,7 @@ impl AnimeGif {
         file_name: &Path,
         duration: AnimTime,
         brightness: f32,
-        anime_type: AnimeType
+        anime_type: AnimeType,
     ) -> Result<Self> {
         let mut matrix = AnimeDiagonal::new(anime_type, None);
 
@@ -142,7 +142,7 @@ impl AnimeGif {
 
             frames.push(AnimeFrame {
                 data: matrix.into_data_buffer(anime_type)?,
-                delay: Duration::from_millis(wait as u64)
+                delay: Duration::from_millis(wait as u64),
             });
         }
         Ok(Self(frames, duration))
@@ -154,7 +154,7 @@ impl AnimeGif {
         file_name: &Path,
         anime_type: AnimeType,
         duration: AnimTime,
-        brightness: f32
+        brightness: f32,
     ) -> Result<Self> {
         let image = AnimeDiagonal::from_png(file_name, None, brightness, anime_type)?;
 
@@ -170,7 +170,7 @@ impl AnimeGif {
 
         let single = AnimeFrame {
             data: image.into_data_buffer(anime_type)?,
-            delay: Duration::from_millis(30)
+            delay: Duration::from_millis(30),
         };
         let frames = vec![single; frame_count as usize];
 
@@ -187,7 +187,7 @@ impl AnimeGif {
         translation: Vec2,
         duration: AnimTime,
         brightness: f32,
-        anime_type: AnimeType
+        anime_type: AnimeType,
     ) -> Result<Self> {
         let mut frames = Vec::new();
         let mut decoder = gif::DecodeOptions::new();
@@ -211,7 +211,7 @@ impl AnimeGif {
             brightness,
             pixels,
             decoder.width() as u32,
-            anime_type
+            anime_type,
         )?;
 
         while let Some(frame) = decoder.read_next_frame()? {
@@ -226,7 +226,7 @@ impl AnimeGif {
                     brightness,
                     pixels,
                     width as u32,
-                    anime_type
+                    anime_type,
                 )?;
             }
             for (y, row) in frame.buffer.chunks(frame.width as usize * 4).enumerate() {
@@ -239,7 +239,7 @@ impl AnimeGif {
                         (x + frame.left as usize) + ((y + frame.top as usize) * width as usize);
                     image.get_mut()[pos] = Pixel {
                         color: ((px[0] as u32 + px[1] as u32 + px[2] as u32) / 3),
-                        alpha: 1.0
+                        alpha: 1.0,
                     };
                 }
             }
@@ -247,7 +247,7 @@ impl AnimeGif {
 
             frames.push(AnimeFrame {
                 data: <AnimeDataBuffer>::try_from(&image)?,
-                delay: Duration::from_millis(wait as u64)
+                delay: Duration::from_millis(wait as u64),
             });
         }
         Ok(Self(frames, duration))
@@ -265,7 +265,7 @@ impl AnimeGif {
         translation: Vec2,
         duration: AnimTime,
         brightness: f32,
-        anime_type: AnimeType
+        anime_type: AnimeType,
     ) -> Result<Self> {
         let image =
             AnimeImage::from_png(file_name, scale, angle, translation, brightness, anime_type)?;
@@ -282,7 +282,7 @@ impl AnimeGif {
 
         let single = AnimeFrame {
             data: <AnimeDataBuffer>::try_from(&image)?,
-            delay: Duration::from_millis(30)
+            delay: Duration::from_millis(30),
         };
         let frames = vec![single; frame_count as usize];
 
