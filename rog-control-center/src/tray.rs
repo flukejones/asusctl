@@ -32,7 +32,10 @@ static ICONS: OnceLock<Icons> = OnceLock::new();
 fn read_icon(file: &Path) -> Icon {
     let mut path = PathBuf::from(TRAY_ICON_PATH);
     path.push(file);
-    let mut file = OpenOptions::new().read(true).open(path).unwrap();
+    let mut file = OpenOptions::new()
+        .read(true)
+        .open(&path)
+        .unwrap_or_else(|_| panic!("Missing icon: {:?}", path));
     let mut bytes = Vec::new();
     file.read_to_end(&mut bytes).unwrap();
 
