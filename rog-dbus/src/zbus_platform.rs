@@ -99,6 +99,10 @@ pub trait Platform {
     #[zbus(property)]
     fn set_profile_quiet_epp(&self, epp: CPUEPP) -> zbus::Result<()>;
 
+    /// PlatformProfileChoices property
+    #[zbus(property)]
+    fn platform_profile_choices(&self) -> zbus::Result<Vec<PlatformProfile>>;
+
     /// ThrottlePolicy property
     #[zbus(property)]
     fn platform_profile(&self) -> zbus::Result<PlatformProfile>;

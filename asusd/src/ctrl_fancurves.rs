@@ -216,7 +216,7 @@ impl CtrlFanCurveZbus {
             .lock()
             .await
             .profiles
-            .set_active_curve_to_defaults((&active).into(), &mut find_fan_curve_node()?)?;
+            .set_active_curve_to_defaults(active.as_str().into(), &mut find_fan_curve_node()?)?;
         self.platform.set_platform_profile(active.as_str())?;
 
         self.config.lock().await.write();

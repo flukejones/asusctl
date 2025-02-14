@@ -207,6 +207,7 @@ impl From<PlatformProfile> for CPUEPP {
             PlatformProfile::Balanced => CPUEPP::BalancePerformance,
             PlatformProfile::Performance => CPUEPP::Performance,
             PlatformProfile::Quiet => CPUEPP::Power,
+            PlatformProfile::LowPower => CPUEPP::Power,
         }
     }
 }

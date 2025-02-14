@@ -35,7 +35,9 @@ async fn main() -> Result<()> {
     // If we're running under gamescope we have to set WAYLAND_DISPLAY for winit to
     // use
     if let Ok(gamescope) = env::var("GAMESCOPE_WAYLAND_DISPLAY") {
-        env::set_var("WAYLAND_DISPLAY", gamescope);
+        if !gamescope.is_empty() {
+            env::set_var("WAYLAND_DISPLAY", gamescope);
+        }
     }
 
     // Try to open a proxy and check for app state first

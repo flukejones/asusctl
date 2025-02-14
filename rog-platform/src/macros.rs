@@ -155,6 +155,18 @@ macro_rules! get_attr_string {
 }
 
 #[macro_export]
+macro_rules! get_attr_string_array {
+    ($(#[$attr:meta])* $attr_name:literal $item:ident) => {
+        concat_idents::concat_idents!(fn_name = get_, $attr_name {
+            $(#[$attr])*
+            pub fn fn_name(&self) -> Result<Vec<PlatformProfile>> {
+                $crate::read_attr_string_array(&to_device(&self.$item)?, $attr_name)
+            }
+        });
+    };
+}
+
+#[macro_export]
 macro_rules! set_attr_string {
     ($(#[$attr:meta])* $attr_name:literal $item:ident) => {
         concat_idents::concat_idents!(fn_name = set_, $attr_name {
@@ -172,6 +184,15 @@ macro_rules! attr_string {
         $crate::has_attr!($attr_name $item);
         $crate::get_attr_string!($attr_name $item);
         $crate::set_attr_string!($attr_name $item);
+        $crate::watch_attr!($attr_name $item);
+    };
+}
+
+#[macro_export]
+macro_rules! attr_string_array {
+    ($(#[$attr:meta])* $attr_name:literal, $item:ident) => {
+        $crate::has_attr!($attr_name $item);
+        $crate::get_attr_string_array!($attr_name $item);
         $crate::watch_attr!($attr_name $item);
     };
 }

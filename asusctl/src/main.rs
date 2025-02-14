@@ -927,16 +927,16 @@ fn handle_throttle_profile(
 
     let proxy = PlatformProxyBlocking::new(conn)?;
     let current = proxy.platform_profile()?;
+    let choices = proxy.platform_profile_choices()?;
 
     if cmd.next {
-        proxy.set_platform_profile(current.next())?;
+        proxy.set_platform_profile(PlatformProfile::next(current, &choices))?;
     } else if let Some(profile) = cmd.profile_set {
         proxy.set_platform_profile(profile)?;
     }
 
     if cmd.list {
-        let res = PlatformProfile::list();
-        for p in &res {
+        for p in &choices {
             println!("{:?}", p);
         }
     }

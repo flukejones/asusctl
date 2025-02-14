@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::{PlatformError, Result};
-use crate::{attr_string, to_device};
+use crate::{attr_string, attr_string_array, to_device};
 
 /// The "platform" device provides access to things like:
 /// - `dgpu_disable`
@@ -27,6 +27,12 @@ impl RogPlatform {
     attr_string!(
         /// The acpi platform_profile support
         "platform_profile",
+        pp_path
+    );
+
+    attr_string_array!(
+        /// The acpi platform_profile support
+        "platform_profile_choices",
         pp_path
     );
 
@@ -169,7 +175,7 @@ impl Display for GpuMode {
     }
 }
 
-#[repr(u32)]
+#[repr(i32)]
 #[derive(
     Deserialize,
     Serialize,
@@ -185,39 +191,40 @@ impl Display for GpuMode {
     Clone,
     Copy,
 )]
-#[zvariant(signature = "u")]
+#[zvariant(signature = "i")]
 /// `platform_profile` in asus_wmi
 pub enum PlatformProfile {
     #[default]
     Balanced = 0,
     Performance = 1,
     Quiet = 2,
+    LowPower = 3,
 }
 
 impl PlatformProfile {
-    pub const fn next(self) -> Self {
-        match self {
+    pub fn next(current: Self, choices: &[Self]) -> Self {
+        match current {
             Self::Balanced => Self::Performance,
-            Self::Performance => Self::Quiet,
+            Self::Performance => {
+                if choices.contains(&Self::LowPower) {
+                    Self::LowPower
+                } else {
+                    Self::Quiet
+                }
+            }
             Self::Quiet => Self::Balanced,
+            Self::LowPower => Self::Balanced,
         }
-    }
-
-    pub const fn list() -> [Self; 3] {
-        [
-            Self::Balanced,
-            Self::Performance,
-            Self::Quiet,
-        ]
     }
 }
 
-impl From<u8> for PlatformProfile {
-    fn from(num: u8) -> Self {
+impl From<i32> for PlatformProfile {
+    fn from(num: i32) -> Self {
         match num {
             0 => Self::Balanced,
             1 => Self::Performance,
             2 => Self::Quiet,
+            3 => Self::LowPower,
             _ => {
                 warn!("Unknown number for PlatformProfile: {}", num);
                 Self::Balanced
@@ -226,56 +233,38 @@ impl From<u8> for PlatformProfile {
     }
 }
 
-impl From<i32> for PlatformProfile {
-    fn from(num: i32) -> Self {
-        (num as u8).into()
-    }
-}
-
-impl From<PlatformProfile> for u8 {
-    fn from(p: PlatformProfile) -> Self {
-        match p {
-            PlatformProfile::Balanced => 0,
-            PlatformProfile::Performance => 1,
-            PlatformProfile::Quiet => 2,
-        }
-    }
-}
-
 impl From<PlatformProfile> for i32 {
     fn from(p: PlatformProfile) -> Self {
-        <u8>::from(p) as i32
+        p as i32
+    }
+}
+
+impl From<&PlatformProfile> for &str {
+    fn from(profile: &PlatformProfile) -> &'static str {
+        match profile {
+            PlatformProfile::Balanced => "balanced",
+            PlatformProfile::Performance => "performance",
+            PlatformProfile::Quiet => "quiet",
+            PlatformProfile::LowPower => "low-power",
+        }
     }
 }
 
 impl From<PlatformProfile> for &str {
     fn from(profile: PlatformProfile) -> &'static str {
-        match profile {
-            PlatformProfile::Balanced => "balanced",
-            PlatformProfile::Performance => "performance",
-            PlatformProfile::Quiet => "quiet",
-        }
+        <&str>::from(&profile)
     }
 }
 
 impl From<String> for PlatformProfile {
     fn from(profile: String) -> Self {
-        Self::from(&profile)
+        Self::from(profile.as_str())
     }
 }
 
-impl From<&String> for PlatformProfile {
-    fn from(profile: &String) -> Self {
-        match profile.to_ascii_lowercase().trim() {
-            "balanced" => PlatformProfile::Balanced,
-            "performance" => PlatformProfile::Performance,
-            "quiet" => PlatformProfile::Quiet,
-            "low-power" => PlatformProfile::Quiet,
-            _ => {
-                warn!("{profile} is unknown, using ThrottlePolicy::Balanced");
-                PlatformProfile::Balanced
-            }
-        }
+impl Display for PlatformProfile {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({})", <&str>::from(self))
     }
 }
 
@@ -287,15 +276,24 @@ impl std::str::FromStr for PlatformProfile {
             "balanced" => Ok(PlatformProfile::Balanced),
             "performance" => Ok(PlatformProfile::Performance),
             "quiet" => Ok(PlatformProfile::Quiet),
-            "low-power" => Ok(PlatformProfile::Quiet),
+            "low-power" => Ok(PlatformProfile::LowPower),
             _ => Err(PlatformError::NotSupported),
         }
     }
 }
 
-impl Display for PlatformProfile {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+impl From<&str> for PlatformProfile {
+    fn from(profile: &str) -> Self {
+        match profile.to_ascii_lowercase().trim() {
+            "balanced" => PlatformProfile::Balanced,
+            "performance" => PlatformProfile::Performance,
+            "quiet" => PlatformProfile::Quiet,
+            "low-power" => PlatformProfile::LowPower,
+            _ => {
+                warn!("{profile} is unknown, using ThrottlePolicy::Balanced");
+                PlatformProfile::Balanced
+            }
+        }
     }
 }
 

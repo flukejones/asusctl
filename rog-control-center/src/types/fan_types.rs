@@ -9,6 +9,7 @@ impl From<Profile> for PlatformProfile {
             Profile::Balanced => PlatformProfile::Balanced,
             Profile::Performance => PlatformProfile::Performance,
             Profile::Quiet => PlatformProfile::Quiet,
+            Profile::LowPower => PlatformProfile::LowPower,
         }
     }
 }
@@ -19,6 +20,7 @@ impl From<PlatformProfile> for Profile {
             PlatformProfile::Balanced => Profile::Balanced,
             PlatformProfile::Performance => Profile::Performance,
             PlatformProfile::Quiet => Profile::Quiet,
+            PlatformProfile::LowPower => Profile::LowPower,
         }
     }
 }
