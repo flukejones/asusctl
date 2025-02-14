@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [v6.1.3]
+
+### Changed
+- Many small bugfixes such as for platform profile switching
+
 ## [v6.1.2]
 
 ### Changed
