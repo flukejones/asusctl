@@ -1,5 +1,5 @@
 [workspace.package]
-version = "6.1.4"
+version = "6.1.5"
 rust-version = "1.82"
 license = "MPL-2.0"
 readme = "README.md"
@@ -44,8 +44,8 @@ smol = "^2.0"
 mio = "0.8.11"
 
 futures-util = "0.3.31"
-zbus = "5.1.1"
-logind-zbus = { version = "5.0.0" } #, default-features = false, features = ["non_blocking"] }
+zbus = "5.5.0"
+logind-zbus = { version = "5.2.0" } #, default-features = false, features = ["non_blocking"] }
 
 serde = { version = "^1.0", features = ["serde_derive"] }
 ron = "*"
@@ -66,7 +66,7 @@ gif = "^0.12.0"
 
 versions = "6.2"
 
-notify-rust = { version = "4.11.4", features = ["z", "async"] }
+notify-rust = { version = "4.11.5", features = ["z", "async"] }
 
 sg = { git = "https://github.com/flukejones/sg-rs.git" }
 

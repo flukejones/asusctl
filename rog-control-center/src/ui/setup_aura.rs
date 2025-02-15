@@ -211,7 +211,7 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
         // spawn required since the while let never exits
         tokio::spawn(async move {
             let mut x = proxy_copy.receive_led_mode_data_changed().await;
-            use zbus::export::futures_util::StreamExt;
+            use futures_util::StreamExt;
             while let Some(e) = x.next().await {
                 if let Ok(out) = e.get().await {
                     handle_copy

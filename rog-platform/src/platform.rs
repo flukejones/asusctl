@@ -175,7 +175,7 @@ impl Display for GpuMode {
     }
 }
 
-#[repr(i32)]
+#[repr(u32)]
 #[derive(
     Deserialize,
     Serialize,
@@ -191,7 +191,7 @@ impl Display for GpuMode {
     Clone,
     Copy,
 )]
-#[zvariant(signature = "i")]
+#[zvariant(signature = "u")]
 /// `platform_profile` in asus_wmi
 pub enum PlatformProfile {
     #[default]

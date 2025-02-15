@@ -9,6 +9,7 @@ use std::process::Command;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+use futures_util::StreamExt;
 use log::{debug, error, info, warn};
 use notify_rust::{Hint, Notification, Timeout, Urgency};
 use rog_platform::platform::GpuMode;
@@ -19,7 +20,6 @@ use supergfxctl::pci_device::{GfxMode, GfxPower};
 use supergfxctl::zbus_proxy::DaemonProxy as SuperProxy;
 use tokio::runtime::Runtime;
 use tokio::task::JoinHandle;
-use zbus::export::futures_util::StreamExt;
 
 use crate::config::Config;
 use crate::error::Result;

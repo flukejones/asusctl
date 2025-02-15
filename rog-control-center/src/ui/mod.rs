@@ -50,7 +50,7 @@ macro_rules! set_ui_callbacks {
         tokio::spawn(async move {
             let mut x = proxy_copy.receive().await;
             concat_idents::concat_idents!(set = set_, $proxy_fn {
-            use zbus::export::futures_util::StreamExt;
+            use futures_util::StreamExt;
             while let Some(e) = x.next().await {
                 if let Ok(out) = e.get().await {
                     handle_copy.upgrade_in_event_loop(move |handle| {

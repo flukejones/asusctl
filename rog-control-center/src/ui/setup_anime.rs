@@ -62,7 +62,7 @@ pub fn setup_anime_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                         let anime_copy = anime.clone();
                         tokio::spawn(async move {
                             let mut x = anime_copy.receive_builtin_animations_changed().await;
-                            use zbus::export::futures_util::StreamExt;
+                            use futures_util::StreamExt;
                             while let Some(e) = x.next().await {
                                 if let Ok(out) = e.get().await {
                                     handle_copy

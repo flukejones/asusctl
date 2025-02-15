@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [v6.1.5]
+
+### Changed
+- Update dependencies
+- Fix fan-curve proxy type signatures
+
 ## [v6.1.4]
 
 ### Changed
