@@ -111,21 +111,21 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
         let Ok(balanced) = fans
             .fan_curve_data(PlatformProfile::Balanced)
             .await
-            .map_err(|e| error!("{e:}"))
+            .map_err(|e| error!("Couldn't get balanced data: {e:}"))
         else {
             return;
         };
         let Ok(perf) = fans
             .fan_curve_data(PlatformProfile::Performance)
             .await
-            .map_err(|e| error!("{e:}"))
+            .map_err(|e| error!("Couldn't get performance data: {e:}"))
         else {
             return;
         };
         let Ok(quiet) = fans
             .fan_curve_data(PlatformProfile::Quiet)
             .await
-            .map_err(|e| error!("{e:}"))
+            .map_err(|e| error!("Couldn't get quiet data: {e:}"))
         else {
             return;
         };

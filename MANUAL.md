@@ -48,7 +48,7 @@ The LED controller (e.g, aura) enables setting many of the factory modes availab
 
 #### Supported laptops
 
-There are over 60 supported laptops as of 01-01-2023. Please see [the rog-aura crate readme for further details](/rog-aura/README.md).
+There are over 80 supported laptops as of 01-01-2023. Please see [the rog-aura crate readme for further details](/rog-aura/README.md).
 
 ### Charge control
 
@@ -420,13 +420,13 @@ To switch to next/previous Aura modes you will need to bind both the aura keys (
 **Next**
 
 ```
-asusctl led-mode -n
+asusctl aura -n
 ```
 
 **Previous**
 
 ```
-asusctl led-mode -p
+asusctl aura -p
 ```
 
 To switch Fan/Thermal profiles you need to bind the Fn+F5 key to `asusctl profile -n`.

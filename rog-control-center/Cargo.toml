@@ -49,11 +49,12 @@ versions.workspace = true
 git = "https://github.com/slint-ui/slint.git"
 default-features = false
 features = [
-    "gettext",
     "compat-1-2",
+    "gettext",
+    "accessibility",
     "backend-winit-wayland",
-    "renderer-winit-femtovg",
-    # "renderer-skia-opengl",
+    # "renderer-femtovg",
+    "renderer-skia-opengl",
 ]
 
 [build-dependencies.slint-build]
