@@ -53,8 +53,8 @@ features = [
     "gettext",
     "accessibility",
     "backend-winit-wayland",
-    # "renderer-femtovg",
-    "renderer-skia-opengl",
+    "renderer-femtovg",
+    # "renderer-skia-opengl",
 ]
 
 [build-dependencies.slint-build]

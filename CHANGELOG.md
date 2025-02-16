@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [v6.1.6]
+
+### Changed
+- Disable skia bindings for UI again. It causes failures in build pipelines and requires extra dependencies.
+
 ## [v6.1.5]
 
 ### Changed
