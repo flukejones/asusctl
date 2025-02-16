@@ -26,6 +26,8 @@ pub struct SlashCommand {
     pub show_on_sleep: Option<bool>,
     #[options(short = "b", meta = "", help = "Show the animation on battery")]
     pub show_on_battery: Option<bool>,
+    // #[options(short = "L", meta = "", help = "Show the animation on lid closed")]
+    // pub show_on_lid_closed: Option<bool>,
     #[options(
         short = "w",
         meta = "",

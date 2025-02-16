@@ -60,4 +60,10 @@ pub trait Slash {
     fn show_on_sleep(&self) -> zbus::Result<bool>;
     #[zbus(property)]
     fn set_show_on_sleep(&self, value: bool) -> zbus::Result<()>;
+
+    /// ShowOnLidClosed property
+    #[zbus(property)]
+    fn show_on_lid_closed(&self) -> zbus::Result<bool>;
+    #[zbus(property)]
+    fn set_show_on_lid_closed(&self, value: bool) -> zbus::Result<()>;
 }

@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [v6.1.7]
+
+### Changed
+- Fix Slash display enable
+
 ## [v6.1.6]
 
 ### Changed

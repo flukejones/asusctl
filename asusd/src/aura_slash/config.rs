@@ -18,6 +18,7 @@ pub struct SlashConfig {
     pub show_on_sleep: bool,
     pub show_on_battery: bool,
     pub show_battery_warning: bool,
+    pub show_on_lid_closed: bool,
 }
 
 impl Default for SlashConfig {
@@ -33,6 +34,7 @@ impl Default for SlashConfig {
             show_on_sleep: true,
             show_on_battery: true,
             show_battery_warning: true,
+            show_on_lid_closed: true,
         }
     }
 }

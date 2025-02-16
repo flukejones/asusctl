@@ -575,6 +575,7 @@ fn handle_slash(cmd: &SlashCommand) -> Result<(), Box<dyn std::error::Error>> {
         && cmd.show_on_sleep.is_none()
         && cmd.show_on_battery.is_none()
         && cmd.show_battery_warning.is_none()
+        // && cmd.show_on_lid_closed.is_none()
         && cmd.mode.is_none()
         && !cmd.list
         && !cmd.enable
@@ -620,6 +621,9 @@ fn handle_slash(cmd: &SlashCommand) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(show) = cmd.show_battery_warning {
             proxy.set_show_battery_warning(show)?;
         }
+        // if let Some(show) = cmd.show_on_lid_closed {
+        //     proxy.set_show_on_lid_closed(show)?;
+        // }
     }
     if cmd.list {
         let res = SlashMode::list();
