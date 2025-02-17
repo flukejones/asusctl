@@ -74,22 +74,36 @@ fn main() {
         println!("\nError: {e}\n");
         print_info();
     }) {
-        let asusd_version = platform_proxy
-            .version()
-            .map_err(|e| {
+        let asusd_version = match platform_proxy.version() {
+            Ok(version) => version,
+            Err(e) => {
                 error!(
                     "Could not get asusd version: {e:?}\nIs asusd.service running? {}",
                     check_service("asusd")
                 );
-            })
-            .unwrap();
+                return;
+            }
+        };
+
         if asusd_version != self_version {
             println!("Version mismatch: asusctl = {self_version}, asusd = {asusd_version}");
             return;
         }
 
-        let supported_properties = platform_proxy.supported_properties().unwrap();
-        let supported_interfaces = list_iface_blocking().unwrap();
+        let supported_properties = match platform_proxy.supported_properties() {
+            Ok(props) => props,
+            Err(e) => {
+                error!("Could not get supported properties: {e:?}");
+                return;
+            }
+        };
+        let supported_interfaces = match list_iface_blocking() {
+            Ok(ifaces) => ifaces,
+            Err(e) => {
+                error!("Could not get supported interfaces: {e:?}");
+                return;
+            }
+        };
 
         if parsed.version {
             println!("asusctl v{}", env!("CARGO_PKG_VERSION"));
