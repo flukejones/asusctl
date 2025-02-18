@@ -1,0 +1,53 @@
+#!/bin/sh
+set -e
+
+ROOT_DIR=$(git rev-parse --show-toplevel)
+AURA_DATA="${ROOT_DIR}/rog-aura/data/aura_support.ron"
+SPEC_FILE="${ROOT_DIR}/distro-packaging/fedora/asusctl.spec"
+TRANSLATION="${ROOT_DIR}/rog-control-center/translations/en/rog-control-center.po"
+VERSION=$(grep -Pm1 'version = "(\d+.\d+.\d+.*)"' "${ROOT_DIR}/Cargo.toml" | cut -d'"' -f2)
+
+if [ -z "$VERSION" ]; then
+    echo "Error: Could not extract version from Cargo.toml"
+    exit 1
+fi
+if [ ! -f "$SPEC_FILE" ]; then
+    echo "Error: Spec file not found at ${SPEC_FILE}"
+    exit 1
+fi
+
+# Update spec file
+sed -i "s/^%define version.*/%define version ${VERSION}/" "$SPEC_FILE"
+if git diff --quiet "$SPEC_FILE"; then
+    echo "No changes to spec file"
+else
+    git add "$SPEC_FILE"
+    git commit --no-verify -m "chore: update spec file version to ${VERSION}"
+    echo "Updated spec file version to ${VERSION}"
+fi
+
+# Update translations only if UI files changed
+if git diff-tree -r HEAD@{1} HEAD --name-only | grep -q "^rog-control-center/ui/"; then
+    echo 'find -name \*.slint | xargs slint-tr-extractor -o ${TRANSLATION}'
+    find -name \*.slint | xargs slint-tr-extractor -o $TRANSLATION
+    if git diff --quiet "$TRANSLATION"; then
+        echo "No changes to translation file"
+    else
+        git add "$TRANSLATION"
+        git commit --no-verify -m "chore: update translations"
+        echo "Updated ${TRANSLATION}"
+    fi
+else
+    echo "No changes in rog-control-center/ui/, skipping translation update"
+fi
+
+# Update aura data
+cargo test --package rog_aura --lib -- aura_detection::tests::check_data_file_parse --exact
+cargo test --package rog_aura --lib -- aura_detection::tests::find_data_file_groups --exact
+if git diff --quiet "$AURA_DATA"; then
+    echo "No changes to aura data file"
+else
+    git add "$AURA_DATA"
+    git commit --no-verify -m "chore: update aura data"
+    echo "Updated $AURA_DATA"
+fi
