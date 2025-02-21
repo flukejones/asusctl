@@ -1,7 +1,7 @@
 #
-# spec file for package asus-nb-ctrl
+# spec file for package asusctl
 #
-# Copyright (c) 2020-2025 Luke Jones <luke@ljones.dev>
+# Copyright (c) 2020-2021 Luke Jones <luke@ljones.dev>
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -15,6 +15,8 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+
 
 %if %{defined fedora}
 %global debug_package %{nil}
@@ -29,16 +31,18 @@
 Name:    asusctl
 Version: %{version}
 Release: %{pkg_release}
-Summary: Control fan speeds, LEDs, graphics modes, and charge levels for ASUS notebooks
-License: MPLv2
-
-Group:   System Environment/Kernel
+Summary:        Control fan speeds, LEDs, graphics modes, and charge levels for ASUS notebooks
+License:        MPL-2.0
 
 URL:     https://gitlab.com/asus-linux/asusctl
-Source:  https://gitlab.com/asus-linux/asusctl/-/archive/%{version}/%{name}-%{version}.tar.gz
+Source0: %{name}-%{version}.tar.gz
 
+%if %{defined fedora}
 BuildRequires:  rust-packaging
 BuildRequires:  systemd-rpm-macros
+%else
+BuildRequires:  cargo-packaging
+%endif
 BuildRequires:  git
 BuildRequires:  clang-devel
 BuildRequires:  cargo
@@ -53,16 +57,18 @@ BuildRequires:  pkgconfig(xkbcommon)
 BuildRequires:  pkgconfig(libzstd)
 BuildRequires:  desktop-file-utils
 
+Requires:       libappindicator-gtk3
+
 %description
-asus-nb-ctrl is a utility for Linux to control many aspects of various
-ASUS laptops but can also be used with non-Asus laptops with reduced features.
+asusctl is a utility for Linux to control many aspects of various ASUS laptops
+but can also be used with non-Asus laptops with reduced features.
 
 It provides an interface for rootless control of some system functions such as
 fan speeds, keyboard LEDs, battery charge level, and graphics modes.
-asus-nb-ctrl enables third-party apps to use the above with dbus methods.
+asusctl enables third-party apps to use the above with dbus methods.
 
 %package rog-gui
-Summary: An experimental GUI for %{name}
+Summary:        An experimental GUI for %{name}
 
 %description rog-gui
 A one-stop-shop GUI tool for asusd/asusctl. It aims to provide most controls,
@@ -70,8 +76,9 @@ a notification service, and ability to run in the background.
 
 %prep
 %autosetup
-
+%if %{defined fedora}
 %cargo_prep
+%endif
 sed -i 's|offline = true|offline = false|' .cargo/config.toml
 sed -i 's|source.crates-io|source.ignore_this|' .cargo/config.toml
 
@@ -89,6 +96,18 @@ install -D -m 0644 rog-anime/README.md %{buildroot}/%{_docdir}/%{name}/README-an
 install -D -m 0644 rog-anime/data/diagonal-template.png %{buildroot}/%{_docdir}/%{name}/diagonal-template.png
 
 desktop-file-validate %{buildroot}/%{_datadir}/applications/rog-control-center.desktop
+
+%pre
+%service_add_pre asusd.service
+
+%post
+%service_add_post asusd.service
+
+%preun
+%service_del_preun asusd.service
+
+%postun
+%service_del_postun asusd.service
 
 %files
 %license LICENSE

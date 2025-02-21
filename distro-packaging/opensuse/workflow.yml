@@ -1,0 +1,10 @@
+workflow:
+  steps:
+    - trigger_services:
+        project: home:luke_nukem:asus
+        package: asusctl
+    - rebuild_package:
+        project: home:luke_nukem:asus
+        package: asusctl
+  filters:
+    event: tag_push

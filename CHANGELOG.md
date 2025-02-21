@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [v6.1.8]
+
+### Changed
+- Testing CI for opensuse RPM build
+
 ## [v6.1.7]
 
 ### Changed
