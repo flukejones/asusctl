@@ -17,25 +17,22 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #
 
-
 %if %{defined fedora}
 %global debug_package %{nil}
 %endif
 
-%define version 6.1.7
 %define specrelease %{?dist}
 %define pkg_release 8%{specrelease}
 
 # Use hardening ldflags.
 %global rustflags -Clink-arg=-Wl,-z,relro,-z,now
 Name:    asusctl
-Version: %{version}
 Release: %{pkg_release}
 Summary:        Control fan speeds, LEDs, graphics modes, and charge levels for ASUS notebooks
 License:        MPL-2.0
 
 URL:     https://gitlab.com/asus-linux/asusctl
-Source0: %{name}-%{version}.tar.gz
+Source0: %{name}-%{version}.tar
 
 %if %{defined fedora}
 BuildRequires:  rust-packaging
@@ -75,36 +72,34 @@ A one-stop-shop GUI tool for asusd/asusctl. It aims to provide most controls,
 a notification service, and ability to run in the background.
 
 %prep
-%autosetup
-%if %{defined fedora}
-%cargo_prep
-%endif
-sed -i 's|offline = true|offline = false|' .cargo/config.toml
-sed -i 's|source.crates-io|source.ignore_this|' .cargo/config.toml
+  %setup -q -n my_package-%version
+  %if %{defined fedora}
+  %cargo_prep
+  %endif
+  sed -i 's|offline = true|offline = false|' .cargo/config.toml
+  sed -i 's|source.crates-io|source.ignore_this|' .cargo/config.toml
 
 %build
-export RUSTFLAGS="%{rustflags}"
-%cargo_build
+  export RUSTFLAGS="%{rustflags}"
+  %cargo_build
 
 %install
-export RUSTFLAGS="%{rustflags}"
-mkdir -p "%{buildroot}/%{_bindir}" "%{buildroot}%{_docdir}"
-%make_install
-
-install -D -m 0644 README.md %{buildroot}/%{_docdir}/%{name}/README.md
-install -D -m 0644 rog-anime/README.md %{buildroot}/%{_docdir}/%{name}/README-anime.md
-install -D -m 0644 rog-anime/data/diagonal-template.png %{buildroot}/%{_docdir}/%{name}/diagonal-template.png
-
-desktop-file-validate %{buildroot}/%{_datadir}/applications/rog-control-center.desktop
+  export RUSTFLAGS="%{rustflags}"
+  mkdir -p "%{buildroot}/%{_bindir}" "%{buildroot}%{_docdir}"
+  %make_install
+  install -D -m 0644 README.md %{buildroot}/%{_docdir}/%{name}/README.md
+  install -D -m 0644 rog-anime/README.md %{buildroot}/%{_docdir}/%{name}/README-anime.md
+  install -D -m 0644 rog-anime/data/diagonal-template.png %{buildroot}/%{_docdir}/%{name}/diagonal-template.png
+  desktop-file-validate %{buildroot}/%{_datadir}/applications/rog-control-center.desktop
 
 %pre
-%service_add_pre asusd.service
+  %service_add_pre asusd.service
 
 %post
-%service_add_post asusd.service
+  %service_add_post asusd.service
 
 %preun
-%service_del_preun asusd.service
+  %service_del_preun asusd.service
 
 %postun
 %service_del_postun asusd.service
