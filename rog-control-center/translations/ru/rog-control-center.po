@@ -246,7 +246,7 @@ msgstr "Изменить EPP на основе политики дроссель
 #: rog-control-center/ui/pages/system.slint:445
 msgctxt "PageSystem"
 msgid "EPP for Balanced Policy"
-msgstr "EPP для сбаланного режима"
+msgstr "EPP для сбалансированного режима"
 
 #: rog-control-center/ui/pages/system.slint:455
 msgctxt "PageSystem"
@@ -485,7 +485,7 @@ msgstr "Сбалансированный"
 #: rog-control-center/ui/pages/fans.slint:193
 msgctxt "PageFans"
 msgid "CPU"
-msgstr "Процессор"
+msgstr "Центральный Процессор"
 
 #: rog-control-center/ui/pages/fans.slint:93
 #: rog-control-center/ui/pages/fans.slint:152
