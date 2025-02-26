@@ -71,7 +71,7 @@ msgstr "Больше"
 #: rog-control-center/ui/pages/system.slint:189
 msgctxt "PageSystem"
 msgid "Armoury settings"
-msgstr "Настройки Armoury"
+msgstr "Настройки Armoury Crate"
 
 #: rog-control-center/ui/pages/system.slint:199
 msgctxt "no_asus_armoury_driver_1"
@@ -83,7 +83,7 @@ msgctxt "no_asus_armoury_driver_2"
 msgid ""
 "For advanced features you will require a kernel with this driver added."
 msgstr ""
-"Для расширенных функций вам потребуется ядро ​​с добавленным драйвером."
+"Для расширенных функций требуется ядро с поддержкой этого драйвера."
 
 #: rog-control-center/ui/pages/system.slint:216
 msgctxt "PageSystem"
@@ -93,7 +93,7 @@ msgstr "Панель перегрузки"
 #: rog-control-center/ui/pages/system.slint:224
 msgctxt "PageSystem"
 msgid "MiniLED Mode"
-msgstr "Минилированный режим"
+msgstr "Режим MiniLED"
 
 #: rog-control-center/ui/pages/system.slint:232
 msgctxt "PageSystem"
@@ -104,7 +104,7 @@ msgstr "Звук при загрузке системы"
 msgctxt "ppt_warning"
 msgid "The following settings are not applied until the toggle is enabled."
 msgstr ""
-"Следующие настройки не применяются до тех пор, пока переключатель не будет включен."
+"Следующие настройки применяются только после включения переключателя."
 
 #: rog-control-center/ui/pages/system.slint:253
 msgctxt "ppt_group_enabled"
@@ -115,7 +115,7 @@ msgstr "Включить настройку"
 #: rog-control-center/ui/pages/system.slint:263
 msgctxt "ppt_pl1_spl"
 msgid "CPU Sustained Power Limit"
-msgstr "Предел устойчивой мощности процессора"
+msgstr "Долгосрочный лимит мощности процессора"
 
 #: rog-control-center/ui/pages/system.slint:264
 msgctxt "ppt_pl1_spl_help"
@@ -131,7 +131,7 @@ msgstr ""
 #: rog-control-center/ui/pages/system.slint:280
 msgctxt "ppt_pl2_sppt"
 msgid "CPU Turbo Power Limit"
-msgstr "Предел мощности CPU Turbo"
+msgstr "Лимит мощности в режиме Turbo процессора"
 
 #: rog-control-center/ui/pages/system.slint:281
 msgctxt "ppt_pl2_sppt_help"
@@ -146,7 +146,7 @@ msgstr ""
 #: rog-control-center/ui/pages/system.slint:297
 msgctxt "ppt_pl3_fppt"
 msgid "CPU Fast Burst Power Limit"
-msgstr "Предел мощности быстрого всплеска процессора"
+msgstr "Лимит мощности для кратковременных всплесков процессора"
 
 #: rog-control-center/ui/pages/system.slint:298
 msgctxt "ppt_pl3_fppt_help"
@@ -162,7 +162,7 @@ msgstr ""
 #: rog-control-center/ui/pages/system.slint:313
 msgctxt "ppt_fppt"
 msgid "Fast Package Power Limit"
-msgstr "Предел мощности быстрого пакета"
+msgstr "Лимит мощности для кратковременных нагрузок на систему"
 
 #: rog-control-center/ui/pages/system.slint:314
 msgctxt "ppt_fppt_help"
@@ -171,13 +171,13 @@ msgid ""
 "during millisecond-scale load spikes."
 msgstr ""
 "Ультра-короткая продолжительность предела мощности для системного пакета. "
-"Управление максимальной мощностью во время всплесков нагрузки в миллисекунд."
+"Управление максимальной мощностью во время кратковременных всплесков нагрузки."
 
 #: rog-control-center/ui/pages/system.slint:329
 #: rog-control-center/ui/pages/system.slint:330
 msgctxt "ppt_apu_sppt"
 msgid "APU Sustained Power Limit"
-msgstr "APU устойчивого предела мощности"
+msgstr "Долгосрочный лимит мощности APU"
 
 #: rog-control-center/ui/pages/system.slint:331
 msgctxt "ppt_apu_sppt_help"
@@ -186,14 +186,13 @@ msgid ""
 "sustained performance of APU-based workloads."
 msgstr ""
 "Долгосрочный лимит мощности для интегрированной графики и процессора "
-"объединена. Влияет на устойчивую производительность рабочих нагрузок на "
-"основе APU."
+"объединена. Влияет на производительность задач, использующих APU."
 
 #: rog-control-center/ui/pages/system.slint:346
 #: rog-control-center/ui/pages/system.slint:347
 msgctxt "ppt_platform_sppt"
 msgid "Platform Sustained Power Limit"
-msgstr "Предел устойчивой мощности платформы"
+msgstr "Долгосрочный лимит мощности системы"
 
 #: rog-control-center/ui/pages/system.slint:348
 msgctxt "ppt_platform_sppt_help"
@@ -208,7 +207,7 @@ msgstr ""
 #: rog-control-center/ui/pages/system.slint:364
 msgctxt "nv_dynamic_boost"
 msgid "GPU Power Boost"
-msgstr "Усиление мощности GPU"
+msgstr "Динамическое усиление мощности GPU"
 
 #: rog-control-center/ui/pages/system.slint:365
 msgctxt "nv_dynamic_boost_help"
@@ -223,7 +222,7 @@ msgstr ""
 #: rog-control-center/ui/pages/system.slint:381
 msgctxt "nv_temp_target"
 msgid "GPU Temperature Limit"
-msgstr "Температурные ограничения GPU"
+msgstr "Предел температуры GPU"
 
 #: rog-control-center/ui/pages/system.slint:382
 msgctxt "nv_temp_target_help"
@@ -267,7 +266,7 @@ msgstr "Политика ограничения для состояния пит
 #: rog-control-center/ui/pages/system.slint:489
 msgctxt "PageSystem"
 msgid "Throttle Policy on Battery"
-msgstr "Политика дроссельной заслонки (от аккумулятора)"
+msgstr "Политика управления производительностью (от аккумулятора)"
 
 #: rog-control-center/ui/pages/system.slint:499
 #: rog-control-center/ui/pages/system.slint:520
@@ -278,7 +277,7 @@ msgstr "Включено"
 #: rog-control-center/ui/pages/system.slint:510
 msgctxt "PageSystem"
 msgid "Throttle Policy on AC"
-msgstr "Политика дроссельной заслонки (от сети)"
+msgstr "Политика управления производительностью (от сети)"
 
 #: rog-control-center/ui/pages/aura.slint:28
 msgctxt "PageAura"
@@ -328,7 +327,7 @@ msgstr "Напряжения"
 #: rog-control-center/ui/pages/anime.slint:6
 msgctxt "Anime Brightness"
 msgid "Off"
-msgstr "Выключенный"
+msgstr "Выключено"
 
 #: rog-control-center/ui/pages/anime.slint:7
 msgctxt "Anime Brightness"
@@ -348,17 +347,17 @@ msgstr "Высокая"
 #: rog-control-center/ui/pages/anime.slint:23
 msgctxt "AnimePageData"
 msgid "Glitch Construction"
-msgstr "Строительство Glitch"
+msgstr "Глитч-конструкция"
 
 #: rog-control-center/ui/pages/anime.slint:23
 msgctxt "AnimePageData"
 msgid "Static Emergence"
-msgstr "Статическое предупреждение"
+msgstr "Статическое состояние"
 
 #: rog-control-center/ui/pages/anime.slint:25
 msgctxt "AnimePageData"
 msgid "Binary Banner Scroll"
-msgstr "Бинарная баннерная свиток"
+msgstr "Бинарный бегущий баннер"
 
 #: rog-control-center/ui/pages/anime.slint:25
 msgctxt "AnimePageData"
@@ -368,22 +367,22 @@ msgstr "ROG Logo Glitch"
 #: rog-control-center/ui/pages/anime.slint:27
 msgctxt "AnimePageData"
 msgid "Banner Swipe"
-msgstr "Баннер смахивает"
+msgstr "Смахивающий баннер"
 
 #: rog-control-center/ui/pages/anime.slint:27
 msgctxt "AnimePageData"
 msgid "Starfield"
-msgstr "Старфилд"
+msgstr "Звездное поле"
 
 #: rog-control-center/ui/pages/anime.slint:29
 msgctxt "AnimePageData"
 msgid "Glitch Out"
-msgstr "Схватить"
+msgstr "Сбой"
 
 #: rog-control-center/ui/pages/anime.slint:29
 msgctxt "AnimePageData"
 msgid "See Ya"
-msgstr "Увидимся"
+msgstr "До встречи"
 
 #: rog-control-center/ui/pages/anime.slint:50
 msgctxt "Anime Brightness"
@@ -439,7 +438,7 @@ msgstr "Расширенные настройки дисплея"
 #: rog-control-center/ui/pages/anime.slint:225
 msgctxt "PageAnime"
 msgid "Off when lid closed"
-msgstr "Выключен, когда крышка закрыта"
+msgstr "Выключить при закрытии крышки"
 
 #: rog-control-center/ui/pages/anime.slint:234
 msgctxt "PageAnime"
@@ -449,12 +448,12 @@ msgstr "Выключен при приостановке"
 #: rog-control-center/ui/pages/anime.slint:243
 msgctxt "PageAnime"
 msgid "Off when on battery"
-msgstr "Выключен, при питании от батареи"
+msgstr "Выключить при питании от батареи"
 
 #: rog-control-center/ui/pages/fans.slint:26
 msgctxt "FanTab"
 msgid "This fan is not avilable on this machine"
-msgstr "Куллер корпуса не обнаружен"
+msgstr "Кулер корпуса недоступен"
 
 #: rog-control-center/ui/pages/fans.slint:34
 msgctxt "FanTab"
@@ -563,7 +562,7 @@ msgstr "Задняя подсветка"
 #: rog-control-center/ui/types/aura_types.slint:65
 msgctxt "Aura power zone"
 msgid "Keyboard and Lightbar"
-msgstr "Клавиатура и лампочка"
+msgstr "Клавиатура и световая панель"
 
 #: rog-control-center/ui/types/aura_types.slint:58
 msgctxt "Aura power zone"
@@ -573,7 +572,7 @@ msgstr "Союзник"
 #: rog-control-center/ui/types/aura_types.slint:68
 msgctxt "Aura brightness"
 msgid "Off"
-msgstr "Выключенна"
+msgstr "Выключена"
 
 #: rog-control-center/ui/types/aura_types.slint:69
 msgctxt "Aura brightness"
@@ -661,7 +660,7 @@ msgstr "Вспышка"
 #: rog-control-center/ui/types/aura_types.slint:100
 msgctxt "Aura zone"
 msgid "None"
-msgstr "Ничего"
+msgstr "Отсутствует"
 
 #: rog-control-center/ui/types/aura_types.slint:101
 msgctxt "Aura zone"
@@ -796,12 +795,12 @@ msgstr "Подсветка"
 #: rog-control-center/ui/main_window.slint:58
 msgctxt "Menu3"
 msgid "AniMe Matrix"
-msgstr "Аниме -матрица"
+msgstr "Матрица AniMe"
 
 #: rog-control-center/ui/main_window.slint:59
 msgctxt "Menu4"
 msgid "Fan Curves"
-msgstr "Режимы охлаждения"
+msgstr "Кривые вентиляторов"
 
 #: rog-control-center/ui/main_window.slint:60
 msgctxt "Menu5"
