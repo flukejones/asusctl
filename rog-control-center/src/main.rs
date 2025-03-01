@@ -8,7 +8,7 @@ use std::time::Duration;
 use config_traits::{StdConfig, StdConfigLoad1};
 use dmi_id::DMIID;
 use gumdrop::Options;
-use log::{info, warn, LevelFilter};
+use log::{debug, info, warn, LevelFilter};
 use rog_control_center::cli_options::CliStart;
 use rog_control_center::config::Config;
 use rog_control_center::error::Result;
@@ -35,21 +35,20 @@ async fn main() -> Result<()> {
     // If we're running under gamescope we have to set WAYLAND_DISPLAY for winit to
     // use
     if let Ok(gamescope) = env::var("GAMESCOPE_WAYLAND_DISPLAY") {
-        dbg!(1);
+        debug!("Gamescope detected");
         if !gamescope.is_empty() {
-            dbg!(2);
+            debug!("Setting WAYLAND_DISPLAY to {}", gamescope);
             env::set_var("WAYLAND_DISPLAY", gamescope);
         }
         // gamescope-0
         else if let Ok(wayland) = env::var("WAYLAND_DISPLAY") {
-            dbg!(3);
+            debug!("Wayland display detected");
             if wayland.is_empty() {
-                dbg!(4);
+                debug!("Setting WAYLAND_DISPLAY to gamescope-0");
                 env::set_var("WAYLAND_DISPLAY", "gamescope-0");
             }
         }
     }
-    dbg!("SHITR");
 
     // Try to open a proxy and check for app state first
     {
@@ -76,7 +75,7 @@ async fn main() -> Result<()> {
         .unwrap();
     if asusd_version != self_version {
         println!("Version mismatch: asusctl = {self_version}, asusd = {asusd_version}");
-        return Ok(());
+        // return Ok(());
     }
 
     // start tokio

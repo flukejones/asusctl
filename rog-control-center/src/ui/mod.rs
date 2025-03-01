@@ -86,8 +86,13 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
     slint::set_xdg_app_id("rog-control-center")
         .map_err(|e| warn!("Couldn't set application ID: {e:?}"))
         .ok();
-    let ui = MainWindow::new().unwrap();
-    ui.window().show().unwrap();
+    let ui = MainWindow::new()
+        .map_err(|e| warn!("Couldn't create main window: {e:?}"))
+        .unwrap();
+    ui.window()
+        .show()
+        .map_err(|e| warn!("Couldn't show main window: {e:?}"))
+        .unwrap();
 
     let available = list_iface_blocking().unwrap_or_default();
     ui.set_sidebar_items_avilable(
