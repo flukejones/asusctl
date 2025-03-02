@@ -54,14 +54,17 @@ pub fn update_fan_data(
                 global.set_performance_available(true);
                 match fan.fan {
                     rog_profiles::FanCurvePU::CPU => {
+                        global.set_cpu_fan_available(true);
                         global.set_performance_cpu_enabled(fan.enabled);
                         global.set_performance_cpu(collect(&fan.temp, &fan.pwm))
                     }
                     rog_profiles::FanCurvePU::GPU => {
+                        global.set_gpu_fan_available(true);
                         global.set_performance_gpu_enabled(fan.enabled);
                         global.set_performance_gpu(collect(&fan.temp, &fan.pwm))
                     }
                     rog_profiles::FanCurvePU::MID => {
+                        global.set_mid_fan_available(true);
                         global.set_performance_mid_enabled(fan.enabled);
                         global.set_performance_mid(collect(&fan.temp, &fan.pwm))
                     }
@@ -71,12 +74,18 @@ pub fn update_fan_data(
                 global.set_quiet_available(true);
                 match fan.fan {
                     rog_profiles::FanCurvePU::CPU => {
+                        global.set_cpu_fan_available(true);
+                        global.set_quiet_cpu_enabled(fan.enabled);
                         global.set_quiet_cpu(collect(&fan.temp, &fan.pwm))
                     }
                     rog_profiles::FanCurvePU::GPU => {
+                        global.set_gpu_fan_available(true);
+                        global.set_quiet_gpu_enabled(fan.enabled);
                         global.set_quiet_gpu(collect(&fan.temp, &fan.pwm))
                     }
                     rog_profiles::FanCurvePU::MID => {
+                        global.set_mid_fan_available(true);
+                        global.set_quiet_mid_enabled(fan.enabled);
                         global.set_quiet_mid(collect(&fan.temp, &fan.pwm))
                     }
                 }
@@ -129,6 +138,7 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
         else {
             return;
         };
+        dbg!(&quiet);
         update_fan_data(handle, balanced, perf, quiet);
 
         let handle_next1 = handle_copy.clone();
@@ -194,6 +204,8 @@ fn fan_data_for(fan: FanType, enabled: bool, data: Vec<Node>) -> CurveData {
         temp[i] = n.x as u8;
         pwm[i] = n.y as u8;
     }
+
+    dbg!(&fan, enabled);
 
     CurveData {
         fan: fan.into(),

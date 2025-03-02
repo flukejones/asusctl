@@ -8,6 +8,7 @@
 - Testing CI for opensuse RPM build
 - ROGCC: Fixes to showing the PPT enablement toggle
 - ROGCC: Fixes to how PPT and NV sliders work and enable/disable
+- RGOCC: Fix quiet fan-curves availability
 
 ## [v6.1.7]
 
