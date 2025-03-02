@@ -284,9 +284,9 @@ export component PageSystem inherits Rectangle {
                 cb_do_reset => {
                     SystemPageData.cb_default_ppt_pl1_spl();
                 }
-                released => {
-                    SystemPageData.ppt_pl1_spl.current = self.value;
-                    SystemPageData.cb_ppt_pl1_spl(Math.round(self.value));
+                released(value) => {
+                    SystemPageData.ppt_pl1_spl.current = Math.round(value);
+                    SystemPageData.cb_ppt_pl1_spl(Math.round(value));
                 }
             }
 
@@ -302,9 +302,9 @@ export component PageSystem inherits Rectangle {
                 cb_do_reset => {
                     SystemPageData.cb_default_ppt_pl2_sppt();
                 }
-                released => {
-                    SystemPageData.ppt_pl2_sppt.current = self.value;
-                    SystemPageData.cb_ppt_pl2_sppt(Math.round(self.value))
+                released(value) => {
+                    SystemPageData.ppt_pl2_sppt.current = Math.round(value);
+                    SystemPageData.cb_ppt_pl2_sppt(Math.round(value));
                 }
             }
 
@@ -320,9 +320,9 @@ export component PageSystem inherits Rectangle {
                 cb_do_reset => {
                     SystemPageData.cb_default_ppt_pl3_fppt();
                 }
-                released => {
-                    SystemPageData.ppt_pl3_fppt.current = self.value;
-                    SystemPageData.cb_ppt_pl3_fppt(Math.round(self.value))
+                released(value) => {
+                    SystemPageData.ppt_pl3_fppt.current = Math.round(value);
+                    SystemPageData.cb_ppt_pl3_fppt(Math.round(value));
                 }
             }
             if SystemPageData.ppt_fppt.current != -1: SystemSlider {
@@ -337,9 +337,9 @@ export component PageSystem inherits Rectangle {
                 cb_do_reset => {
                     SystemPageData.cb_default_ppt_fppt();
                 }
-                released => {
-                    SystemPageData.ppt_fppt.current = self.value;
-                    SystemPageData.cb_ppt_fppt(Math.round(self.value))
+                released(value) => {
+                    SystemPageData.ppt_fppt.current = Math.round(value);
+                    SystemPageData.cb_ppt_fppt(Math.round(value));
                 }
             }
 
@@ -355,9 +355,9 @@ export component PageSystem inherits Rectangle {
                 cb_do_reset => {
                     SystemPageData.cb_default_ppt_apu_sppt();
                 }
-                released => {
-                    SystemPageData.ppt_apu_sppt.current = self.value;
-                    SystemPageData.cb_ppt_apu_sppt(Math.round(self.value))
+                released(value) => {
+                    SystemPageData.ppt_apu_sppt.current = Math.round(value);
+                    SystemPageData.cb_ppt_apu_sppt(Math.round(value));
                 }
             }
 
@@ -373,9 +373,9 @@ export component PageSystem inherits Rectangle {
                 cb_do_reset => {
                     SystemPageData.cb_default_ppt_platform_sppt();
                 }
-                released => {
-                    SystemPageData.ppt_platform_sppt.current = self.value;
-                    SystemPageData.cb_ppt_platform_sppt(Math.round(self.value))
+                released(value) => {
+                    SystemPageData.ppt_platform_sppt.current = Math.round(value);
+                    SystemPageData.cb_ppt_platform_sppt(Math.round(value));
                 }
             }
 
@@ -391,9 +391,9 @@ export component PageSystem inherits Rectangle {
                 cb_do_reset => {
                     SystemPageData.cb_default_nv_dynamic_boost();
                 }
-                released => {
-                    SystemPageData.nv_dynamic_boost.current = self.value;
-                    SystemPageData.cb_nv_dynamic_boost(Math.round(self.value))
+                released(value) => {
+                    SystemPageData.nv_dynamic_boost.current = Math.round(value);
+                    SystemPageData.cb_nv_dynamic_boost(Math.round(value));
                 }
             }
 
@@ -409,9 +409,9 @@ export component PageSystem inherits Rectangle {
                 cb_do_reset => {
                     SystemPageData.cb_default_nv_temp_target();
                 }
-                released => {
-                    SystemPageData.nv_temp_target.current = self.value;
-                    SystemPageData.cb_nv_temp_target(Math.round(self.value))
+                released(value) => {
+                    SystemPageData.nv_temp_target.current = Math.round(value);
+                    SystemPageData.cb_nv_temp_target(Math.round(value));
                 }
             }
         }

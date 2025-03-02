@@ -12,14 +12,14 @@ export component RogItem inherits Rectangle {
 export component SystemSlider inherits RogItem {
     in property <string> title;
     in property <string> text;
-    in-out property <bool> enabled: true;
     in-out property <float> value;
-    in-out property <float> minimum;
-    in-out property <float> maximum;
-    callback released(int);
+    in property <float> minimum;
+    in property <float> maximum;
+    callback released(float);
 
-    in-out property <string> help_text;
-    in-out property <bool> has_reset: false;
+    in property <string> help_text;
+    in property <bool> enabled: true;
+    in property <bool> has_reset: false;
     callback cb_do_reset();
 
     HorizontalLayout {
@@ -27,44 +27,34 @@ export component SystemSlider inherits RogItem {
             width: 40%;
             alignment: LayoutAlignment.stretch;
             padding-left: 10px;
-            TouchArea {
-                enabled <=> root.enabled;
-                clicked => {
-                    slider.value += 1;
-                    if slider.value > slider.maximum {
-                        slider.value = slider.minimum;
-                    }
+            HorizontalLayout {
+                spacing: 6px;
+                Text {
+                    font-size: 16px;
+                    vertical-alignment: TextVerticalAlignment.center;
+                    color: Palette.control-foreground;
+                    text: root.text;
                 }
-                HorizontalLayout {
-                    spacing: 6px;
-                    Text {
-                        font-size: 16px;
-                        vertical-alignment: TextVerticalAlignment.center;
-                        color: Palette.control-foreground;
-                        text <=> root.text;
-                    }
 
-                    Text {
-                        font-size: 16px;
-                        horizontal-alignment: TextHorizontalAlignment.right;
-                        vertical-alignment: TextVerticalAlignment.center;
-                        color: Palette.control-foreground;
-                        text: "\{Math.round(root.value)}";
-                    }
+                Text {
+                    font-size: 16px;
+                    horizontal-alignment: TextHorizontalAlignment.right;
+                    vertical-alignment: TextVerticalAlignment.center;
+                    color: Palette.control-foreground;
+                    text: "\{Math.round(root.value)}";
                 }
             }
         }
 
         HorizontalBox {
-            // alignment: LayoutAlignment.end;
             padding-right: 20px;
             slider := Slider {
-                enabled <=> root.enabled;
+                enabled: root.enabled;
                 maximum: root.maximum;
                 minimum: root.minimum;
                 value <=> root.value;
-                released => {
-                    root.released(Math.round(root.value))
+                released(value) => {
+                    root.released(value)
                 }
             }
         }
@@ -79,14 +69,14 @@ export component SystemSlider inherits RogItem {
                 border-color: Palette.accent-background;
                 background: Palette.background;
                 Dialog {
-                    title <=> root.title;
+                    title: root.title;
                     VerticalBox {
                         Text {
                             max-width: 420px;
                             font-size: 18px;
                             wrap: TextWrap.word-wrap;
                             horizontal-alignment: TextHorizontalAlignment.center;
-                            text <=> root.title;
+                            text: root.title;
                         }
 
                         Rectangle {
@@ -99,7 +89,7 @@ export component SystemSlider inherits RogItem {
                             max-width: 420px;
                             font-size: 16px;
                             wrap: TextWrap.word-wrap;
-                            text <=> root.help_text;
+                            text: root.help_text;
                         }
                     }
 
@@ -153,7 +143,7 @@ export component SystemSlider inherits RogItem {
         reset := HorizontalBox {
             if (has_reset): StandardButton {
                 kind: StandardButtonKind.reset;
-                enabled <=> root.enabled;
+                enabled: root.enabled;
                 clicked => {
                     reset_popup.show();
                 }
@@ -175,7 +165,7 @@ export component SystemToggle inherits RogItem {
                 font-size: 16px;
                 vertical-alignment: TextVerticalAlignment.center;
                 color: Palette.control-foreground;
-                text <=> root.text;
+                text: root.text;
             }
         }
 
@@ -206,7 +196,7 @@ export component SystemToggleInt inherits RogItem {
                 font-size: 16px;
                 vertical-alignment: TextVerticalAlignment.center;
                 color: Palette.control-foreground;
-                text <=> root.text;
+                text: root.text;
             }
         }
 
@@ -237,7 +227,7 @@ export component SystemToggleVert inherits RogItem {
             vertical-alignment: TextVerticalAlignment.bottom;
             horizontal-alignment: TextHorizontalAlignment.center;
             color: Palette.control-foreground;
-            text <=> root.text;
+            text: root.text;
         }
 
         HorizontalLayout {
@@ -267,7 +257,7 @@ export component SystemDropdown inherits RogItem {
                 font-size: 16px;
                 vertical-alignment: TextVerticalAlignment.center;
                 color: Palette.control-foreground;
-                text <=> root.text;
+                text: root.text;
             }
         }
 
