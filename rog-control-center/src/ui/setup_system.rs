@@ -20,12 +20,18 @@ const MINMAX: AttrMinMax = AttrMinMax {
 };
 
 pub fn setup_system_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
-    let conn = zbus::blocking::Connection::system().unwrap();
-    let platform = PlatformProxyBlocking::builder(&conn).build().unwrap();
+    let conn = zbus::blocking::Connection::system()
+        .map_err(|e| error!("DBus system connection failed: {e:?}"))
+        .unwrap();
+    let platform = PlatformProxyBlocking::builder(&conn)
+        .build()
+        .map_err(|e| error!("PlatformProxy failed: {e:?}"))
+        .unwrap();
     // let armoury_attrs =
     // find_iface::<AsusArmouryProxyBlocking>("xyz.ljones.AsusArmoury").unwrap();
 
     // Null everything before the setup step
+    debug!("Defaulting system page values");
     ui.global::<SystemPageData>()
         .set_charge_control_end_threshold(-1.0);
     ui.global::<SystemPageData>()
@@ -46,13 +52,17 @@ pub fn setup_system_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
     ui.global::<SystemPageData>()
         .set_ppt_enabled_available(false);
 
-    let sys_props = platform.supported_properties().unwrap();
-    log::debug!("Available system properties: {:?}", &sys_props);
-    if sys_props.contains(&Properties::ChargeControlEndThreshold) {
-        ui.global::<SystemPageData>()
-            .set_charge_control_end_threshold(60.0);
-        ui.global::<SystemPageData>()
-            .set_charge_control_enabled(true);
+    if let Ok(sys_props) = platform
+        .supported_properties()
+        .map_err(|e| log::error!("Failed to get supported properties: {}", e))
+    {
+        log::debug!("Available system properties: {:?}", &sys_props);
+        if sys_props.contains(&Properties::ChargeControlEndThreshold) {
+            ui.global::<SystemPageData>()
+                .set_charge_control_end_threshold(60.0);
+            ui.global::<SystemPageData>()
+                .set_charge_control_enabled(true);
+        }
     }
 }
 
@@ -265,9 +275,21 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
 
     tokio::spawn(async move {
         // Create the connections/proxies here to prevent future delays in process
-        let conn = zbus::Connection::system().await.unwrap();
-        let platform = PlatformProxy::builder(&conn).build().await.unwrap();
+        let conn = zbus::Connection::system()
+            .await
+            .map_err(|e| {
+                log::error!("Failed to connect to system bus: {}", e);
+            })
+            .unwrap();
+        let platform = PlatformProxy::builder(&conn)
+            .build()
+            .await
+            .map_err(|e| {
+                log::error!("Failed to create platform proxy: {}", e);
+            })
+            .unwrap();
 
+        debug!("Setting up system page profile callbacks");
         set_ui_props_async!(
             handle,
             platform,
@@ -310,6 +332,7 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
         let platform_copy = platform.clone();
         handle
             .upgrade_in_event_loop(move |handle| {
+                debug!("Setting up system page standard callbacks");
                 set_ui_callbacks!(handle,
                     SystemPageData(as bool),
                     platform_copy.enable_ppt_group(as bool),
@@ -383,6 +406,7 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
 
         let armoury_attrs;
         if let Ok(attrs) = find_iface_async::<AsusArmouryProxy>("xyz.ljones.AsusArmoury").await {
+            debug!("Found AsusArmoury interfaces");
             armoury_attrs = attrs;
             handle
                 .upgrade_in_event_loop(|ui| {
@@ -401,6 +425,7 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
         for attr in armoury_attrs {
             if let Ok(value) = attr.current_value().await {
                 let name = attr.name().await.unwrap();
+                debug!("Setting up {} = {value}", <&str>::from(name));
                 let platform = platform.clone();
                 handle
                     .upgrade_in_event_loop(move |handle| match name {
@@ -515,5 +540,17 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                     .ok();
             }
         }
+        handle
+            .upgrade_in_event_loop(|ui| {
+                debug!(
+                    "get_asus_armoury_loaded: {:?}",
+                    ui.global::<SystemPageData>().get_asus_armoury_loaded()
+                );
+                debug!(
+                    "get_ppt_enabled_available: {:?}",
+                    ui.global::<SystemPageData>().get_ppt_enabled_available()
+                );
+            })
+            .ok();
     });
 }

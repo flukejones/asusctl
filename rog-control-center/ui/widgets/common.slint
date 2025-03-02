@@ -28,7 +28,7 @@ export component SystemSlider inherits RogItem {
             alignment: LayoutAlignment.stretch;
             padding-left: 10px;
             TouchArea {
-            enabled <=> root.enabled;
+                enabled <=> root.enabled;
                 clicked => {
                     slider.value += 1;
                     if slider.value > slider.maximum {

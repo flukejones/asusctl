@@ -51,7 +51,6 @@ default-features = false
 features = [
     "compat-1-2",
     "gettext",
-    "accessibility",
     "backend-winit-wayland",
     "renderer-femtovg",
     # "renderer-skia-opengl",
