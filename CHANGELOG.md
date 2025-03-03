@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [v6.1.10]
+
+### Changed
+- asusd: single line fix for profile switching
+
 ## [v6.1.9]
 
 ### Changed

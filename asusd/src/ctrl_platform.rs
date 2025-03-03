@@ -374,7 +374,7 @@ impl CtrlPlatform {
             self.config.lock().await.write();
 
             let choices = self.platform.get_platform_profile_choices()?;
-            if !choices.contains(&PlatformProfile::LowPower) {
+            if !choices.contains(&policy) {
                 return Err(FdoErr::NotSupported(format!(
                     "RogPlatform: platform_profile: {} not supported",
                     policy
