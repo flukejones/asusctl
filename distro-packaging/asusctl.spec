@@ -20,9 +20,9 @@
 %global debug_package %{nil}
 %endif
 
-%define version 6.1.8
+%define version 6.1.9
 %define specrelease %{?dist}
-%define pkg_release 8%{specrelease}
+%define pkg_release 9%{specrelease}
 
 # Use hardening ldflags.
 %global rustflags -Clink-arg=-Wl,-z,relro,-z,now

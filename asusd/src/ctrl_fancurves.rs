@@ -66,11 +66,8 @@ impl CtrlFanCurveZbus {
                 info!("Fetching default fan curves");
 
                 let current = platform.get_platform_profile()?;
-                for this in [
-                    PlatformProfile::Balanced,
-                    PlatformProfile::Performance,
-                    PlatformProfile::Quiet,
-                ] {
+                let profiles = platform.get_platform_profile_choices()?;
+                for this in profiles {
                     // For each profile we need to switch to it before we
                     // can read the existing values from hardware. The ACPI method used
                     // for this is what limits us.
