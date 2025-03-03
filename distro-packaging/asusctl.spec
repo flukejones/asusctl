@@ -20,7 +20,7 @@
 %global debug_package %{nil}
 %endif
 
-%define version 6.1.9
+%define version 6.1.10
 %define specrelease %{?dist}
 %define pkg_release 9%{specrelease}
 
