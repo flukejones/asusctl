@@ -9,6 +9,7 @@ pub enum Error {
     ConfigLockFail,
     XdgVars,
     Zbus(zbus::Error),
+    ZbusFdo(zbus::fdo::Error),
     Notification(notify_rust::error::Error),
 }
 
@@ -21,6 +22,7 @@ impl fmt::Display for Error {
             Error::ConfigLockFail => write!(f, "Failed to lock user config"),
             Error::XdgVars => write!(f, "XDG environment vars appear unset"),
             Error::Zbus(err) => write!(f, "Error: {}", err),
+            Error::ZbusFdo(err) => write!(f, "Error: {}", err),
             Error::Notification(err) => write!(f, "Notification Error: {}", err),
         }
     }
@@ -37,6 +39,12 @@ impl From<std::io::Error> for Error {
 impl From<zbus::Error> for Error {
     fn from(err: zbus::Error) -> Self {
         Error::Zbus(err)
+    }
+}
+
+impl From<zbus::fdo::Error> for Error {
+    fn from(err: zbus::fdo::Error) -> Self {
+        Error::ZbusFdo(err)
     }
 }
 
