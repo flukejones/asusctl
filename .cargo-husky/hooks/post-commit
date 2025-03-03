@@ -3,7 +3,7 @@ set -e
 
 ROOT_DIR=$(git rev-parse --show-toplevel)
 AURA_DATA="${ROOT_DIR}/rog-aura/data/aura_support.ron"
-SPEC_FILE="${ROOT_DIR}/distro-packaging/fedora/asusctl.spec"
+SPEC_FILE="${ROOT_DIR}/distro-packaging/asusctl.spec"
 TRANSLATION="${ROOT_DIR}/rog-control-center/translations/en/rog-control-center.po"
 VERSION=$(grep -Pm1 'version = "(\d+.\d+.\d+.*)"' "${ROOT_DIR}/Cargo.toml" | cut -d'"' -f2)
 

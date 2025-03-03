@@ -6,7 +6,7 @@ use rog_dbus::asus_armoury::AsusArmouryProxy;
 use rog_dbus::zbus_platform::{PlatformProxy, PlatformProxyBlocking};
 use rog_platform::asus_armoury::FirmwareAttribute;
 use rog_platform::platform::Properties;
-use slint::ComponentHandle;
+use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel};
 
 use super::show_toast;
 use crate::config::Config;
@@ -297,7 +297,59 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
             charge_control_end_threshold
         );
 
-        set_ui_props_async!(handle, platform, SystemPageData, platform_profile);
+        let platform_copy = platform.clone();
+        if let Ok(mut value) = platform.platform_profile_choices().await {
+            handle
+                .upgrade_in_event_loop(move |handle| {
+                    value.sort();
+                    let translate: Vec<SharedString> = handle
+                        .global::<SystemPageData>()
+                        .get_platform_profile_choices()
+                        .iter()
+                        .collect();
+                    let mut indexes = Vec::new();
+                    let strings: Vec<SharedString> = value
+                        .iter()
+                        .filter_map(|p| {
+                            let index = i32::from(*p) as usize;
+                            if index < translate.len() {
+                                indexes.push(index as i32);
+                                Some(translate[index].clone())
+                            } else {
+                                None
+                            }
+                        })
+                        .collect();
+                    let choices = ModelRc::new(VecModel::from(strings));
+                    handle
+                        .global::<SystemPageData>()
+                        .set_platform_profile_choices(choices);
+                    handle
+                        .global::<SystemPageData>()
+                        .set_platform_profile_indexes(ModelRc::from(indexes.as_slice()));
+
+                    // Set current only after setting the choices up
+                    let handle = handle.as_weak();
+                    tokio::spawn(async move {
+                        if let Ok(value) = platform_copy.platform_profile().await {
+                            let profile_value = <i32>::from(value);
+                            handle
+                                .upgrade_in_event_loop(move |handle| {
+                                    if let Some(position) =
+                                        indexes.iter().position(|&index| index == profile_value)
+                                    {
+                                        handle
+                                            .global::<SystemPageData>()
+                                            .set_platform_profile(position as i32);
+                                    }
+                                })
+                                .ok();
+                        }
+                    });
+                })
+                .ok();
+        }
+
         set_ui_props_async!(
             handle,
             platform,
@@ -333,6 +385,54 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
         handle
             .upgrade_in_event_loop(move |handle| {
                 debug!("Setting up system page standard callbacks");
+
+                let handle_copy = handle.as_weak();
+                let proxy_copy = platform_copy.clone();
+                handle
+                    .global::<SystemPageData>()
+                    .on_cb_platform_profile(move |value| {
+                        let proxy_copy = proxy_copy.clone();
+                        let handle_copy = handle_copy.clone();
+                        tokio::spawn(async move {
+                            show_toast(
+                                format!("Throttle policy set to {}", value).into(),
+                                "Setting Throttle policy failed".into(),
+                                handle_copy,
+                                proxy_copy.set_platform_profile(value.into()).await,
+                            );
+                        });
+                    });
+
+                let handle_copy = handle.as_weak();
+                let proxy_copy = platform_copy.clone();
+                // spawn required since the while let never exits
+                tokio::spawn(async move {
+                    let mut x = proxy_copy.receive_platform_profile_changed().await;
+                    use futures_util::StreamExt;
+                    while let Some(e) = x.next().await {
+                        if let Ok(out) = e.get().await {
+                            handle_copy
+                                .upgrade_in_event_loop(move |handle| {
+                                    let indexes = handle
+                                        .global::<SystemPageData>()
+                                        .get_platform_profile_indexes();
+                                    handle
+                                        .global::<SystemPageData>()
+                                        .set_platform_profile(out as i32);
+                                    let profile_value = <i32>::from(out);
+                                    if let Some(position) =
+                                        indexes.iter().position(|index| index == profile_value)
+                                    {
+                                        handle
+                                            .global::<SystemPageData>()
+                                            .set_platform_profile(position as i32);
+                                    }
+                                })
+                                .ok();
+                        }
+                    }
+                });
+
                 set_ui_callbacks!(handle,
                     SystemPageData(as bool),
                     platform_copy.enable_ppt_group(as bool),
@@ -346,12 +446,12 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                     "Charge limit successfully set to {}",
                     "Setting Charge limit failed"
                 );
-                set_ui_callbacks!(handle,
-                    SystemPageData(as i32),
-                    platform_copy.platform_profile(.into()),
-                    "Throttle policy set to {}",
-                    "Setting Throttle policy failed"
-                );
+                // set_ui_callbacks!(handle,
+                //     SystemPageData(as i32),
+                //     platform_copy.platform_profile(.into()),
+                //     "Throttle policy set to {}",
+                //     "Setting Throttle policy failed"
+                // );
                 set_ui_callbacks!(handle,
                     SystemPageData(as i32),
                     platform_copy.profile_balanced_epp(.into()),

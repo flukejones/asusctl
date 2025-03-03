@@ -212,6 +212,7 @@ impl CtrlPlatform {
             PlatformProfile::Performance => self.config.lock().await.profile_performance_epp,
             PlatformProfile::Quiet => self.config.lock().await.profile_quiet_epp,
             PlatformProfile::LowPower => self.config.lock().await.profile_quiet_epp,
+            PlatformProfile::Custom => self.config.lock().await.profile_custom_epp,
         }
     }
 
@@ -354,16 +355,7 @@ impl CtrlPlatform {
 
     #[zbus(property)]
     fn platform_profile(&self) -> Result<PlatformProfile, FdoErr> {
-        let choices = self.platform.get_platform_profile_choices()?;
         let policy: PlatformProfile = self.platform.get_platform_profile()?.as_str().into();
-        let policy = if policy == PlatformProfile::LowPower
-            && choices.contains(&PlatformProfile::LowPower)
-        {
-            PlatformProfile::Quiet
-        } else {
-            policy
-        };
-
         Ok(policy)
     }
 
@@ -382,13 +374,12 @@ impl CtrlPlatform {
             self.config.lock().await.write();
 
             let choices = self.platform.get_platform_profile_choices()?;
-            let policy = if policy == PlatformProfile::Quiet
-                && choices.contains(&PlatformProfile::LowPower)
-            {
-                PlatformProfile::LowPower
-            } else {
-                policy
-            };
+            if !choices.contains(&PlatformProfile::LowPower) {
+                return Err(FdoErr::NotSupported(format!(
+                    "RogPlatform: platform_profile: {} not supported",
+                    policy
+                )));
+            }
 
             self.platform
                 .set_platform_profile(policy.into())
@@ -651,6 +642,7 @@ impl ReloadAndNotify for CtrlPlatform {
                     PlatformProfile::Performance => data.profile_performance_epp,
                     PlatformProfile::Quiet => data.profile_quiet_epp,
                     PlatformProfile::LowPower => data.profile_quiet_epp,
+                    PlatformProfile::Custom => data.profile_custom_epp,
                 };
                 warn!("setting epp to {epp:?}");
                 self.check_and_set_epp(epp, true);

@@ -43,6 +43,8 @@ pub struct Config {
     /// The energy_performance_preference for this platform profile
     pub profile_balanced_epp: CPUEPP,
     /// The energy_performance_preference for this platform profile
+    pub profile_custom_epp: CPUEPP,
+    /// The energy_performance_preference for this platform profile
     pub profile_performance_epp: CPUEPP,
     pub ac_profile_tunings: Tunings,
     pub dc_profile_tunings: Tunings,
@@ -79,6 +81,7 @@ impl Default for Config {
             profile_quiet_epp: CPUEPP::Power,
             profile_balanced_epp: CPUEPP::BalancePower,
             profile_performance_epp: CPUEPP::Performance,
+            profile_custom_epp: CPUEPP::Performance,
             ac_profile_tunings: HashMap::default(),
             dc_profile_tunings: HashMap::default(),
             armoury_settings: HashMap::default(),
@@ -167,6 +170,7 @@ impl From<Config601> for Config {
             profile_quiet_epp: c.profile_quiet_epp,
             profile_balanced_epp: c.profile_balanced_epp,
             profile_performance_epp: c.profile_performance_epp,
+            profile_custom_epp: c.profile_performance_epp,
             last_power_plugged: c.last_power_plugged,
             ac_profile_tunings: HashMap::default(),
             dc_profile_tunings: HashMap::default(),

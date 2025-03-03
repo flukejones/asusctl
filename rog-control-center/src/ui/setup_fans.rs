@@ -138,7 +138,6 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
         else {
             return;
         };
-        dbg!(&quiet);
         update_fan_data(handle, balanced, perf, quiet);
 
         let handle_next1 = handle_copy.clone();

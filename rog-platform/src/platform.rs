@@ -186,6 +186,7 @@ impl Display for GpuMode {
     Debug,
     PartialEq,
     Eq,
+    Ord,
     PartialOrd,
     Hash,
     Clone,
@@ -199,6 +200,7 @@ pub enum PlatformProfile {
     Performance = 1,
     Quiet = 2,
     LowPower = 3,
+    Custom = 4,
 }
 
 impl PlatformProfile {
@@ -212,8 +214,7 @@ impl PlatformProfile {
                     Self::Quiet
                 }
             }
-            Self::Quiet => Self::Balanced,
-            Self::LowPower => Self::Balanced,
+            Self::Quiet | Self::LowPower | Self::Custom => Self::Balanced,
         }
     }
 }
@@ -225,6 +226,7 @@ impl From<i32> for PlatformProfile {
             1 => Self::Performance,
             2 => Self::Quiet,
             3 => Self::LowPower,
+            4 => Self::Custom,
             _ => {
                 warn!("Unknown number for PlatformProfile: {}", num);
                 Self::Balanced
@@ -246,6 +248,7 @@ impl From<&PlatformProfile> for &str {
             PlatformProfile::Performance => "performance",
             PlatformProfile::Quiet => "quiet",
             PlatformProfile::LowPower => "low-power",
+            PlatformProfile::Custom => "custom",
         }
     }
 }
@@ -277,6 +280,7 @@ impl std::str::FromStr for PlatformProfile {
             "performance" => Ok(PlatformProfile::Performance),
             "quiet" => Ok(PlatformProfile::Quiet),
             "low-power" => Ok(PlatformProfile::LowPower),
+            "custom" => Ok(PlatformProfile::Custom),
             _ => Err(PlatformError::NotSupported),
         }
     }
@@ -289,6 +293,7 @@ impl From<&str> for PlatformProfile {
             "performance" => PlatformProfile::Performance,
             "quiet" => PlatformProfile::Quiet,
             "low-power" => PlatformProfile::LowPower,
+            "custom" => PlatformProfile::Custom,
             _ => {
                 warn!("{profile} is unknown, using ThrottlePolicy::Balanced");
                 PlatformProfile::Balanced

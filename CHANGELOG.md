@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [v6.1.9]
+
+### Changed
+- ROGCC: better handling of platform profiles
+
 ## [v6.1.8]
 
 ### Changed
