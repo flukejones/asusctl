@@ -69,7 +69,11 @@ impl AniMeZbus {
     /// it is restarted
     async fn write(&self, input: AnimeDataBuffer) -> zbus::fdo::Result<()> {
         let bright = self.0.config.lock().await.display_brightness;
-        self.0.set_builtins_enabled(false, bright).await?;
+        if self.0.config.lock().await.builtin_anims_enabled {
+            // This clears the display, causing flickers if done indiscriminately on every
+            // write. Therefore, we guard it behind a config check.
+            self.0.set_builtins_enabled(false, bright).await?;
+        }
         self.0.thread_exit.store(true, Ordering::SeqCst);
         self.0.write_data_buffer(input).await.map_err(|err| {
             warn!("ctrl_anime::run_animation:callback {}", err);
