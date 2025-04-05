@@ -1,6 +1,7 @@
 #![deny(unused_must_use)]
 /// Configuration loading, saving
 pub mod config;
+pub mod ctrl_backlight;
 /// Control platform profiles + fan-curves if available
 pub mod ctrl_fancurves;
 /// Control ASUS bios function such as boot sound, Optimus/Dedicated gfx mode

@@ -2,6 +2,7 @@
 //! on ROG, Strix, and TUF laptops.
 
 pub mod asus_armoury;
+pub mod backlight;
 pub mod cpu;
 pub mod error;
 pub mod hid_raw;
@@ -55,18 +56,29 @@ pub fn write_attr_bool(device: &mut Device, attr: &str, value: bool) -> Result<(
         })
 }
 
-pub fn read_attr_u8(device: &Device, attr_name: &str) -> Result<u8> {
+pub fn read_attr_num<T>(device: &Device, attr_name: &str) -> Result<T>
+where
+    T: std::str::FromStr,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
     if let Some(value) = device.attribute_value(attr_name) {
         let tmp = value.to_string_lossy();
-        return tmp.parse::<u8>().map_err(|_e| PlatformError::ParseNum);
+        return tmp.parse::<T>().map_err(|_e| PlatformError::ParseNum);
     }
     Err(PlatformError::AttrNotFound(attr_name.to_owned()))
 }
 
-pub fn write_attr_u8(device: &mut Device, attr: &str, value: u8) -> Result<()> {
-    device
-        .set_attribute_value(attr, value.to_string())
-        .map_err(|e| PlatformError::IoPath(attr.into(), e))
+pub fn write_attr_num<T>(device: &mut Device, attr_name: &str, value: T) -> Result<()>
+where
+    T: std::fmt::Display,
+{
+    if device
+        .set_attribute_value(attr_name, format!("{value}"))
+        .is_err()
+    {
+        return Err(PlatformError::AttrNotFound(attr_name.to_owned()));
+    }
+    Ok(())
 }
 
 pub fn read_attr_u8_array(device: &Device, attr_name: &str) -> Result<Vec<u8>> {

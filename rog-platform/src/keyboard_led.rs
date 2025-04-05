@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use log::{info, warn};
 
 use crate::error::{PlatformError, Result};
-use crate::{attr_u8, has_attr, set_attr_u8_array, to_device};
+use crate::{attr_num, has_attr, set_attr_u8_array, to_device};
 
 /// The sysfs control for backlight levels. This is only for the 3-step
 /// backlight setting, and for TUF laptops. It is not a hard requirement
@@ -14,7 +14,7 @@ pub struct KeyboardBacklight {
 }
 
 impl KeyboardBacklight {
-    attr_u8!("brightness", path);
+    attr_num!("brightness", path, u8);
 
     has_attr!("kbd_rgb_mode" path);
 

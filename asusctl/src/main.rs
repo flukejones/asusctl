@@ -19,6 +19,7 @@ use rog_dbus::list_iface_blocking;
 use rog_dbus::scsi_aura::ScsiAuraProxyBlocking;
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use rog_dbus::zbus_aura::AuraProxyBlocking;
+use rog_dbus::zbus_backlight::BacklightProxyBlocking;
 use rog_dbus::zbus_fan_curves::FanCurvesProxyBlocking;
 use rog_dbus::zbus_platform::PlatformProxyBlocking;
 use rog_dbus::zbus_slash::SlashProxyBlocking;
@@ -218,6 +219,7 @@ fn do_parsed(
         Some(CliCommand::Slash(cmd)) => handle_slash(cmd)?,
         Some(CliCommand::Scsi(cmd)) => handle_scsi(cmd)?,
         Some(CliCommand::Armoury(cmd)) => handle_armoury_command(cmd)?,
+        Some(CliCommand::Backlight(cmd)) => handle_backlight(cmd)?,
         None => {
             if (!parsed.show_supported
                 && parsed.kbd_bright.is_none()
@@ -379,6 +381,46 @@ fn do_gfx() {
          asusctl graphics switching generic so all laptops can use it"
     );
     println!("This command will be removed in future");
+}
+
+fn handle_backlight(cmd: &BacklightCommand) -> Result<(), Box<dyn std::error::Error>> {
+    if (cmd.screenpad_brightness.is_none()
+        && cmd.screenpad_gamma.is_none()
+        && cmd.sync_screenpad_brightness.is_none())
+        || cmd.help
+    {
+        println!("Missing arg or command\n\n{}", cmd.self_usage());
+
+        let backlights = find_iface::<BacklightProxyBlocking>("xyz.ljones.Backlight")?;
+        for backlight in backlights {
+            println!("Current screenpad settings:");
+            println!("  Brightness: {}", backlight.screenpad_brightness()?);
+            println!("  Gamma: {}", backlight.screenpad_gamma()?);
+            println!(
+                "  Sync with primary: {}",
+                backlight.screenpad_sync_with_primary()?
+            );
+        }
+
+        return Ok(());
+    }
+
+    let backlights = find_iface::<BacklightProxyBlocking>("xyz.ljones.Backlight")?;
+    for backlight in backlights {
+        if let Some(brightness) = cmd.screenpad_brightness {
+            backlight.set_screenpad_brightness(brightness)?;
+        }
+
+        if let Some(gamma) = cmd.screenpad_gamma {
+            backlight.set_screenpad_gamma(gamma.to_string().as_str())?;
+        }
+
+        if let Some(sync) = cmd.sync_screenpad_brightness {
+            backlight.set_screenpad_sync_with_primary(sync)?;
+        }
+    }
+
+    Ok(())
 }
 
 fn handle_anime(cmd: &AnimeCommand) -> Result<(), Box<dyn std::error::Error>> {

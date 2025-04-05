@@ -5,6 +5,7 @@ pub mod asus_armoury;
 pub mod scsi_aura;
 pub mod zbus_anime;
 pub mod zbus_aura;
+pub mod zbus_backlight;
 pub mod zbus_fan_curves;
 pub mod zbus_platform;
 pub mod zbus_slash;

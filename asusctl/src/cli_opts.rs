@@ -54,6 +54,8 @@ pub enum CliCommand {
                 driver, some of the settings will be the same as the older platform interface"
     )]
     Armoury(ArmouryCommand),
+    #[options(name = "backlight", help = "Set screen backlight levels")]
+    Backlight(BacklightCommand),
 }
 
 #[derive(Debug, Clone, Options)]
@@ -101,4 +103,22 @@ pub struct ArmouryCommand {
         help = "append each value name followed by the value to set. `-1` sets to default"
     )]
     pub free: Vec<String>,
+}
+
+#[derive(Options)]
+pub struct BacklightCommand {
+    #[options(help = "print help message")]
+    pub help: bool,
+    #[options(meta = "", help = "Set screen brightness <0-100>")]
+    pub screenpad_brightness: Option<i32>,
+    #[options(
+        meta = "",
+        help = "Set screenpad gamma brightness 0.5 - 2.2, 1.0 == linear"
+    )]
+    pub screenpad_gamma: Option<f32>,
+    #[options(
+        meta = "",
+        help = "Set screenpad brightness to sync with primary display"
+    )]
+    pub sync_screenpad_brightness: Option<bool>,
 }

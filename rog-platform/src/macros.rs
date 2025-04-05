@@ -74,36 +74,41 @@ macro_rules! attr_bool {
 }
 
 #[macro_export]
-macro_rules! get_attr_u8 {
-    ($(#[$attr:meta])* $attr_name:literal $item:ident) => {
+macro_rules! get_attr_num {
+    ($(#[$attr:meta])* $attr_name:literal $item:ident $type:ty) => {
         concat_idents::concat_idents!(fn_name = get_, $attr_name {
             $(#[$attr])*
-            pub fn fn_name(&self) -> Result<u8> {
-                $crate::read_attr_u8(&to_device(&self.$item)?, $attr_name)
+            pub fn fn_name(&self) -> Result<$type> {
+                $crate::read_attr_num::<$type>(&to_device(&self.$item)?, $attr_name)
             }
         });
     };
+    ($(#[$attr:meta])* $attr_name:literal $item:ident) => {
+        $crate::get_attr_num!($(#[$attr])* $attr_name $item $type);
+    };
 }
 
-/// Most attributes expect `u8` as a char, so `1` should be written as `b'1'`.
 #[macro_export]
-macro_rules! set_attr_u8 {
-    ($(#[$attr:meta])* $attr_name:literal $item:ident) => {
+macro_rules! set_attr_num {
+    ($(#[$attr:meta])* $attr_name:literal $item:ident $type:ty) => {
         concat_idents::concat_idents!(fn_name = set_, $attr_name {
             $(#[$attr])*
-            pub fn fn_name(&self, value: u8) -> Result<()> {
-                $crate::write_attr_u8(&mut to_device(&self.$item)?, $attr_name, value)
+            pub fn fn_name(&self, value: $type) -> Result<()> {
+                $crate::write_attr_num(&mut to_device(&self.$item)?, $attr_name, value as $type)
             }
         });
+    };
+    ($(#[$attr:meta])* $attr_name:literal $item:ident) => {
+        $crate::set_attr_num!($(#[$attr])* $attr_name $item $type);
     };
 }
 
 #[macro_export]
-macro_rules! attr_u8 {
-    ($(#[$attr:meta])* $attr_name:literal, $item:ident) => {
+macro_rules! attr_num {
+    ($(#[$attr:meta])* $attr_name:literal, $item:ident, $type:ty) => {
         $crate::has_attr!($(#[$attr])* $attr_name $item);
-        $crate::get_attr_u8!($(#[$attr])* $attr_name $item);
-        $crate::set_attr_u8!($(#[$attr])* $attr_name $item);
+        $crate::get_attr_num!($(#[$attr])* $attr_name $item $type);
+        $crate::set_attr_num!($(#[$attr])* $attr_name $item $type);
         $crate::watch_attr!($(#[$attr])* $attr_name $item);
     };
 }
