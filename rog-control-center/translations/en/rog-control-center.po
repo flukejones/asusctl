@@ -2,7 +2,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2025-03-01 07:51+0000\n"
+"POT-Creation-Date: 2025-04-05 19:36+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -12,285 +12,44 @@ msgstr ""
 "Language: \n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: rog-control-center/ui/pages/system.slint:20
-msgctxt "SystemPageData"
-msgid "Balanced"
+#: rog-control-center/ui/main_window.slint:55
+msgctxt "MainWindow"
+msgid "ROG"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:20 rog-control-center/ui/pages/system.slint:24
-msgctxt "SystemPageData"
-msgid "Performance"
+#: rog-control-center/ui/main_window.slint:57
+msgctxt "Menu1"
+msgid "System Control"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:20
-msgctxt "SystemPageData"
-msgid "Quiet"
+#: rog-control-center/ui/main_window.slint:58
+msgctxt "Menu2"
+msgid "Keyboard Aura"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:23
-msgctxt "SystemPageData"
-msgid "Default"
+#: rog-control-center/ui/main_window.slint:59
+msgctxt "Menu3"
+msgid "AniMe Matrix"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:25
-msgctxt "SystemPageData"
-msgid "BalancePerformance"
+#: rog-control-center/ui/main_window.slint:60
+msgctxt "Menu4"
+msgid "Fan Curves"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:26
-msgctxt "SystemPageData"
-msgid "BalancePower"
+#: rog-control-center/ui/main_window.slint:61
+msgctxt "Menu5"
+msgid "App Settings"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:27
-msgctxt "SystemPageData"
-msgid "Power"
+#: rog-control-center/ui/main_window.slint:62
+msgctxt "Menu6"
+msgid "About"
 msgstr ""
 
-#: rog-control-center/ui/pages/system.slint:147
-msgctxt "PageSystem"
-msgid "Power settings"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:152
-msgctxt "PageSystem"
-msgid "Charge limit"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:167
-msgctxt "PageSystem"
-msgid "Platform Profile"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:177
-msgctxt "PageSystem"
-msgid "Advanced"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:195
-msgctxt "PageSystem"
-msgid "Armoury settings"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:205
-msgctxt "no_asus_armoury_driver_1"
-msgid "The asus-armoury driver is not loaded"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:211
-msgctxt "no_asus_armoury_driver_2"
-msgid "For advanced features you will require a kernel with this driver added."
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:222
-msgctxt "PageSystem"
-msgid "Panel Overdrive"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:230
-msgctxt "PageSystem"
-msgid "MiniLED Mode"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:238
-msgctxt "PageSystem"
-msgid "POST boot sound"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:254
-msgctxt "ppt_warning"
-msgid "The following settings are not applied until the toggle is enabled."
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:259 rog-control-center/ui/pages/system.slint:266
-msgctxt "ppt_group_enabled"
-msgid "Enable Tuning"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:277 rog-control-center/ui/pages/system.slint:278
-msgctxt "ppt_pl1_spl"
-msgid "CPU Sustained Power Limit"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:279
-msgctxt "ppt_pl1_spl_help"
-msgid ""
-"Long-term CPU power limit that affects sustained workload performance. "
-"Higher values may increase heat and power consumption."
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:295 rog-control-center/ui/pages/system.slint:296
-msgctxt "ppt_pl2_sppt"
-msgid "CPU Turbo Power Limit"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:297
-msgctxt "ppt_pl2_sppt_help"
-msgid ""
-"Short-term CPU power limit for boost periods. Controls maximum power during "
-"brief high-performance bursts."
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:313 rog-control-center/ui/pages/system.slint:314
-msgctxt "ppt_pl3_fppt"
-msgid "CPU Fast Burst Power Limit"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:315
-msgctxt "ppt_pl3_fppt_help"
-msgid ""
-"Ultra-short duration power limit for instantaneous CPU bursts. Affects "
-"responsiveness during sudden workload spikes."
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:330 rog-control-center/ui/pages/system.slint:331
-msgctxt "ppt_fppt"
-msgid "Fast Package Power Limit"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:332
-msgctxt "ppt_fppt_help"
-msgid ""
-"Ultra-short duration power limit for system package. Controls maximum power "
-"during millisecond-scale load spikes."
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:348 rog-control-center/ui/pages/system.slint:349
-msgctxt "ppt_apu_sppt"
-msgid "APU Sustained Power Limit"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:350
-msgctxt "ppt_apu_sppt_help"
-msgid ""
-"Long-term power limit for integrated graphics and CPU combined. Affects "
-"sustained performance of APU-based workloads."
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:366 rog-control-center/ui/pages/system.slint:367
-msgctxt "ppt_platform_sppt"
-msgid "Platform Sustained Power Limit"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:368
-msgctxt "ppt_platform_sppt_help"
-msgid ""
-"Overall system power limit for sustained operations. Controls total platform "
-"power consumption over extended periods."
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:384 rog-control-center/ui/pages/system.slint:385
-msgctxt "nv_dynamic_boost"
-msgid "GPU Power Boost"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:386
-msgctxt "nv_dynamic_boost_help"
-msgid ""
-"Additional power allocation for GPU dynamic boost. Higher values increase "
-"GPU performance but generate more heat."
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:402 rog-control-center/ui/pages/system.slint:403
-msgctxt "nv_temp_target"
-msgid "GPU Temperature Limit"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:404
-msgctxt "nv_temp_target_help"
-msgid ""
-"Maximum GPU temperature threshold in Celsius. GPU will throttle to maintain "
-"temperature below this limit."
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:456
-msgctxt "PageSystem"
-msgid "Energy Performance Preference linked to Throttle Policy"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:460
-msgctxt "PageSystem"
-msgid "Change EPP based on Throttle Policy"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:468
-msgctxt "PageSystem"
-msgid "EPP for Balanced Policy"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:478
-msgctxt "PageSystem"
-msgid "EPP for Performance Policy"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:488
-msgctxt "PageSystem"
-msgid "EPP for Quiet Policy"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:506
-msgctxt "PageSystem"
-msgid "Throttle Policy for power state"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:512
-msgctxt "PageSystem"
-msgid "Throttle Policy on Battery"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:522 rog-control-center/ui/pages/system.slint:543
-msgctxt "PageSystem"
-msgid "Enabled"
-msgstr ""
-
-#: rog-control-center/ui/pages/system.slint:533
-msgctxt "PageSystem"
-msgid "Throttle Policy on AC"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:28
-msgctxt "PageAura"
-msgid "Brightness"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:39
-msgctxt "PageAura"
-msgid "Aura mode"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:59
-msgctxt "PageAura"
-msgid "Colour 1"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:85
-msgctxt "PageAura"
-msgid "Colour 2"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:119
-msgctxt "PageAura"
-msgid "Zone"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:142
-msgctxt "PageAura"
-msgid "Direction"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:164
-msgctxt "PageAura"
-msgid "Speed"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:185
-msgctxt "PageAura"
-msgid "Power Settings"
-msgstr ""
-
-#: rog-control-center/ui/pages/aura.slint:270
-msgctxt "PageAura"
-msgid "Power Zones"
+#: rog-control-center/ui/main_window.slint:74
+msgctxt "MainWindow"
+msgid "Quit App"
 msgstr ""
 
 #: rog-control-center/ui/pages/anime.slint:6
@@ -418,6 +177,322 @@ msgctxt "PageAnime"
 msgid "Off when on battery"
 msgstr ""
 
+#: rog-control-center/ui/pages/system.slint:20
+msgctxt "SystemPageData"
+msgid "Balanced"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:20 rog-control-center/ui/pages/system.slint:27
+msgctxt "SystemPageData"
+msgid "Performance"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:20
+msgctxt "SystemPageData"
+msgid "Quiet"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:20
+msgctxt "SystemPageData"
+msgid "LowPower"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:26
+msgctxt "SystemPageData"
+msgid "Default"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:28
+msgctxt "SystemPageData"
+msgid "BalancePerformance"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:29
+msgctxt "SystemPageData"
+msgid "BalancePower"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:30
+msgctxt "SystemPageData"
+msgid "Power"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:159
+msgctxt "PageSystem"
+msgid "Power settings"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:164
+msgctxt "PageSystem"
+msgid "Charge limit"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:179
+msgctxt "PageSystem"
+msgid "Platform Profile"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:189
+msgctxt "PageSystem"
+msgid "Advanced"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:209
+msgctxt "PageSystem"
+msgid "Screenpad brightness"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:233
+msgctxt "PageSystem"
+msgid "Sync with primary"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:253
+msgctxt "PageSystem"
+msgid "Armoury settings"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:263
+msgctxt "no_asus_armoury_driver_1"
+msgid "The asus-armoury driver is not loaded"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:269
+msgctxt "no_asus_armoury_driver_2"
+msgid "For advanced features you will require a kernel with this driver added."
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:280
+msgctxt "PageSystem"
+msgid "Panel Overdrive"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:288
+msgctxt "PageSystem"
+msgid "MiniLED Mode"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:296
+msgctxt "PageSystem"
+msgid "POST boot sound"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:312
+msgctxt "ppt_warning"
+msgid "The following settings are not applied until the toggle is enabled."
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:317 rog-control-center/ui/pages/system.slint:324
+msgctxt "ppt_group_enabled"
+msgid "Enable Tuning"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:334 rog-control-center/ui/pages/system.slint:335
+msgctxt "ppt_pl1_spl"
+msgid "CPU Sustained Power Limit"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:336
+msgctxt "ppt_pl1_spl_help"
+msgid ""
+"Long-term CPU power limit that affects sustained workload performance. "
+"Higher values may increase heat and power consumption."
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:352 rog-control-center/ui/pages/system.slint:353
+msgctxt "ppt_pl2_sppt"
+msgid "CPU Turbo Power Limit"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:354
+msgctxt "ppt_pl2_sppt_help"
+msgid ""
+"Short-term CPU power limit for boost periods. Controls maximum power during "
+"brief high-performance bursts."
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:370 rog-control-center/ui/pages/system.slint:371
+msgctxt "ppt_pl3_fppt"
+msgid "CPU Fast Burst Power Limit"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:372
+msgctxt "ppt_pl3_fppt_help"
+msgid ""
+"Ultra-short duration power limit for instantaneous CPU bursts. Affects "
+"responsiveness during sudden workload spikes."
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:387 rog-control-center/ui/pages/system.slint:388
+msgctxt "ppt_fppt"
+msgid "Fast Package Power Limit"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:389
+msgctxt "ppt_fppt_help"
+msgid ""
+"Ultra-short duration power limit for system package. Controls maximum power "
+"during millisecond-scale load spikes."
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:405 rog-control-center/ui/pages/system.slint:406
+msgctxt "ppt_apu_sppt"
+msgid "APU Sustained Power Limit"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:407
+msgctxt "ppt_apu_sppt_help"
+msgid ""
+"Long-term power limit for integrated graphics and CPU combined. Affects "
+"sustained performance of APU-based workloads."
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:423 rog-control-center/ui/pages/system.slint:424
+msgctxt "ppt_platform_sppt"
+msgid "Platform Sustained Power Limit"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:425
+msgctxt "ppt_platform_sppt_help"
+msgid ""
+"Overall system power limit for sustained operations. Controls total platform "
+"power consumption over extended periods."
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:441 rog-control-center/ui/pages/system.slint:442
+msgctxt "nv_dynamic_boost"
+msgid "GPU Power Boost"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:443
+msgctxt "nv_dynamic_boost_help"
+msgid ""
+"Additional power allocation for GPU dynamic boost. Higher values increase "
+"GPU performance but generate more heat."
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:459 rog-control-center/ui/pages/system.slint:460
+msgctxt "nv_temp_target"
+msgid "GPU Temperature Limit"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:461
+msgctxt "nv_temp_target_help"
+msgid ""
+"Maximum GPU temperature threshold in Celsius. GPU will throttle to maintain "
+"temperature below this limit."
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:513
+msgctxt "PageSystem"
+msgid "Energy Performance Preference linked to Throttle Policy"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:517
+msgctxt "PageSystem"
+msgid "Change EPP based on Throttle Policy"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:525
+msgctxt "PageSystem"
+msgid "EPP for Balanced Policy"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:535
+msgctxt "PageSystem"
+msgid "EPP for Performance Policy"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:545
+msgctxt "PageSystem"
+msgid "EPP for Quiet Policy"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:563
+msgctxt "PageSystem"
+msgid "Throttle Policy for power state"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:569
+msgctxt "PageSystem"
+msgid "Throttle Policy on Battery"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:579 rog-control-center/ui/pages/system.slint:600
+msgctxt "PageSystem"
+msgid "Enabled"
+msgstr ""
+
+#: rog-control-center/ui/pages/system.slint:590
+msgctxt "PageSystem"
+msgid "Throttle Policy on AC"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:28
+msgctxt "PageAura"
+msgid "Brightness"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:39
+msgctxt "PageAura"
+msgid "Aura mode"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:59
+msgctxt "PageAura"
+msgid "Colour 1"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:85
+msgctxt "PageAura"
+msgid "Colour 2"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:119
+msgctxt "PageAura"
+msgid "Zone"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:142
+msgctxt "PageAura"
+msgid "Direction"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:164
+msgctxt "PageAura"
+msgid "Speed"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:185
+msgctxt "PageAura"
+msgid "Power Settings"
+msgstr ""
+
+#: rog-control-center/ui/pages/aura.slint:270
+msgctxt "PageAura"
+msgid "Power Zones"
+msgstr ""
+
+#: rog-control-center/ui/pages/app_settings.slint:26
+msgctxt "PageAppSettings"
+msgid "Run in background after closing"
+msgstr ""
+
+#: rog-control-center/ui/pages/app_settings.slint:34
+msgctxt "PageAppSettings"
+msgid "Start app in background (UI closed)"
+msgstr ""
+
+#: rog-control-center/ui/pages/app_settings.slint:42
+msgctxt "PageAppSettings"
+msgid "Enable system tray icon"
+msgstr ""
+
+#: rog-control-center/ui/pages/app_settings.slint:50
+msgctxt "PageAppSettings"
+msgid "Enable dGPU notifications"
+msgstr ""
+
 #: rog-control-center/ui/pages/fans.slint:26
 msgctxt "FanTab"
 msgid "This fan is not avilable on this machine"
@@ -473,24 +548,49 @@ msgctxt "PageFans"
 msgid "Quiet"
 msgstr ""
 
-#: rog-control-center/ui/pages/app_settings.slint:26
-msgctxt "PageAppSettings"
-msgid "Run in background after closing"
+#: rog-control-center/ui/widgets/common.slint:126
+msgctxt "confirm_reset"
+msgid "Are you sure you want to reset this?"
 msgstr ""
 
-#: rog-control-center/ui/pages/app_settings.slint:34
-msgctxt "PageAppSettings"
-msgid "Start app in background (UI closed)"
+#: rog-control-center/ui/widgets/aura_power.slint:33
+msgctxt "AuraPowerGroup"
+msgid "Boot"
 msgstr ""
 
-#: rog-control-center/ui/pages/app_settings.slint:42
-msgctxt "PageAppSettings"
-msgid "Enable system tray icon"
+#: rog-control-center/ui/widgets/aura_power.slint:43
+msgctxt "AuraPowerGroup"
+msgid "Awake"
 msgstr ""
 
-#: rog-control-center/ui/pages/app_settings.slint:50
-msgctxt "PageAppSettings"
-msgid "Enable dGPU notifications"
+#: rog-control-center/ui/widgets/aura_power.slint:53
+msgctxt "AuraPowerGroup"
+msgid "Sleep"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:63
+msgctxt "AuraPowerGroup"
+msgid "Shutdown"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:102
+msgctxt "AuraPowerGroupOld"
+msgid "Zone Selection"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:114
+msgctxt "AuraPowerGroupOld"
+msgid "Boot"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:124
+msgctxt "AuraPowerGroupOld"
+msgid "Awake"
+msgstr ""
+
+#: rog-control-center/ui/widgets/aura_power.slint:134
+msgctxt "AuraPowerGroupOld"
+msgid "Sleep"
 msgstr ""
 
 #: rog-control-center/ui/types/aura_types.slint:52
@@ -686,90 +786,5 @@ msgstr ""
 #: rog-control-center/ui/types/aura_types.slint:120
 msgctxt "Aura speed"
 msgid "High"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:33
-msgctxt "AuraPowerGroup"
-msgid "Boot"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:43
-msgctxt "AuraPowerGroup"
-msgid "Awake"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:53
-msgctxt "AuraPowerGroup"
-msgid "Sleep"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:63
-msgctxt "AuraPowerGroup"
-msgid "Shutdown"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:102
-msgctxt "AuraPowerGroupOld"
-msgid "Zone Selection"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:114
-msgctxt "AuraPowerGroupOld"
-msgid "Boot"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:124
-msgctxt "AuraPowerGroupOld"
-msgid "Awake"
-msgstr ""
-
-#: rog-control-center/ui/widgets/aura_power.slint:134
-msgctxt "AuraPowerGroupOld"
-msgid "Sleep"
-msgstr ""
-
-#: rog-control-center/ui/widgets/common.slint:136
-msgctxt "confirm_reset"
-msgid "Are you sure you want to reset this?"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:55
-msgctxt "MainWindow"
-msgid "ROG"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:57
-msgctxt "Menu1"
-msgid "System Control"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:58
-msgctxt "Menu2"
-msgid "Keyboard Aura"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:59
-msgctxt "Menu3"
-msgid "AniMe Matrix"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:60
-msgctxt "Menu4"
-msgid "Fan Curves"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:61
-msgctxt "Menu5"
-msgid "App Settings"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:62
-msgctxt "Menu6"
-msgid "About"
-msgstr ""
-
-#: rog-control-center/ui/main_window.slint:74
-msgctxt "MainWindow"
-msgid "Quit App"
 msgstr ""
 
