@@ -57,6 +57,7 @@ impl CtrlBacklight {
             .screenpad_sync_primary
             .unwrap_or_default();
 
+        // If sync is enabled and we're setting screenpad brightness, set primary first
         if sync && *device_type == BacklightType::Screenpad {
             if let Some(primary) = self.get_backlight(&BacklightType::Primary) {
                 if let Ok(primary_max) = primary.get_max_brightness() {
@@ -88,6 +89,8 @@ impl CtrlBacklight {
                 FdoErr::Failed(format!("Failed to set brightness: {}", e))
             })?;
 
+            // If sync is enabled and we're setting primary brightness, set screenpad
+            // afterward
             if sync && *device_type == BacklightType::Primary {
                 for other in self
                     .backlights
@@ -118,7 +121,7 @@ impl CtrlBacklight {
         }
     }
 
-    fn get_brightness_percent(&self, device_type: &BacklightType) -> Result<i32, FdoErr> {
+    async fn get_brightness_percent(&self, device_type: &BacklightType) -> Result<i32, FdoErr> {
         if let Some(backlight) = self.get_backlight(device_type) {
             let brightness = backlight.get_brightness().map_err(|e| {
                 warn!("Failed to get brightness: {}", e);
@@ -130,7 +133,14 @@ impl CtrlBacklight {
                 FdoErr::Failed(format!("Failed to get max brightness: {}", e))
             })?;
 
-            Ok((brightness as u32 * 100 / max as u32) as i32)
+            if *device_type == BacklightType::Screenpad {
+                let gamma = self.config.lock().await.screenpad_gamma.unwrap_or(1.0);
+                let normalized = brightness as f32 / max as f32;
+                let corrected = normalized.powf(1.0 / gamma);
+                Ok((corrected * 100.0).round() as i32)
+            } else {
+                Ok(brightness * 100 / max)
+            }
         } else {
             Err(FdoErr::NotSupported(format!(
                 "Backlight {:?} not found",
@@ -164,12 +174,19 @@ impl CtrlBacklight {
                             if !sync {
                                 continue;
                             }
-                        } else if sync.is_none() {
+                        } else if backlights
+                            .config
+                            .lock()
+                            .await
+                            .screenpad_sync_primary
+                            .is_none()
+                        {
                             continue;
                         }
 
                         let level = backlights
                             .get_brightness_percent(&BacklightType::Primary)
+                            .await
                             .unwrap_or(60);
                         backlights
                             .set_brightness_with_sync(&BacklightType::Screenpad, level)
@@ -231,7 +248,7 @@ impl CtrlBacklight {
 
     #[zbus(property)]
     async fn primary_brightness(&self) -> Result<i32, FdoErr> {
-        self.get_brightness_percent(&BacklightType::Primary)
+        self.get_brightness_percent(&BacklightType::Primary).await
     }
 
     #[zbus(property)]
@@ -253,13 +270,13 @@ impl CtrlBacklight {
 
     #[zbus(property)]
     async fn screenpad_brightness(&self) -> Result<i32, FdoErr> {
-        self.get_brightness_percent(&BacklightType::Screenpad)
+        self.get_brightness_percent(&BacklightType::Screenpad).await
     }
 
     #[zbus(property)]
     async fn set_screenpad_brightness(
         &self,
-        #[zbus(signal_context)] ctxt: SignalEmitter<'_>,
+        // #[zbus(signal_context)] ctxt: SignalEmitter<'_>,
         level: i32,
     ) -> Result<(), zbus::Error> {
         if level > 100 {
@@ -268,7 +285,7 @@ impl CtrlBacklight {
 
         self.set_brightness_with_sync(&BacklightType::Screenpad, level)
             .await?;
-        self.screenpad_brightness_changed(&ctxt).await?;
+        // self.screenpad_brightness_changed(&ctxt).await?;
 
         Ok(())
     }

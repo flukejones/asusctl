@@ -1,4 +1,4 @@
-import { SystemSlider, SystemDropdown, SystemToggle, SystemToggleInt } from "../widgets/common.slint";
+import { SystemSlider, SystemDropdown, SystemToggle, SystemToggleInt, RogItem } from "../widgets/common.slint";
 import { Palette, HorizontalBox , VerticalBox, ScrollView, Slider, Button, Switch, ComboBox, GroupBox, StandardButton} from "std-widgets.slint";
 
 export struct AttrMinMax {
@@ -53,6 +53,15 @@ export global SystemPageData {
     callback cb_boot_sound(int);
     in-out property <int> mini_led_mode;
     callback cb_mini_led_mode(int);
+
+    in-out property <float> screenpad_gamma;
+    callback cb_screenpad_gamma(float);
+    // percentage
+    in-out property <int> screenpad_brightness: 50;
+    callback cb_screenpad_brightness(int);
+    in-out property <bool> screenpad_sync_with_primary: false;
+    callback cb_screenpad_sync_with_primary(bool);
+
     in-out property <bool> asus_armoury_loaded: false;
 
     in-out property <AttrMinMax> ppt_pl1_spl: {
@@ -181,6 +190,52 @@ export component PageSystem inherits Rectangle {
                     clicked => {
                         root.show_fade_cover = true;
                         root.show_throttle_advanced = true;
+                    }
+                }
+            }
+
+            if SystemPageData.screenpad_brightness != -1: RogItem {
+                HorizontalLayout {
+                    padding-left: 10px;
+                    padding-right: 20px;
+                    HorizontalLayout {
+                        width: 38%;
+                        alignment: LayoutAlignment.space-between;
+                        padding-right: 15px;
+                        Text {
+                            font-size: 16px;
+                            vertical-alignment: TextVerticalAlignment.center;
+                            color: Palette.control-foreground;
+                            text: @tr("Screenpad brightness");
+                        }
+                    }
+
+                    HorizontalLayout {
+                        width: 38%;
+                        alignment: LayoutAlignment.stretch;
+                        screen_bright := Slider {
+                            enabled: true;
+                            minimum: 0;
+                            maximum: 100;
+                            value: SystemPageData.screenpad_brightness;
+                            released(value) => {
+                                // SystemPageData.screenpad_brightness = self.value;
+                                SystemPageData.cb_screenpad_brightness(Math.floor(self.value));
+                            }
+                        }
+                    }
+
+                    HorizontalLayout {
+                    width: 20%;
+                    padding-left: 10px;
+                        alignment: LayoutAlignment.stretch;
+                        Switch {
+                            text: @tr("Sync with primary");
+                            checked <=> SystemPageData.screenpad_sync_with_primary;
+                            toggled => {
+                                SystemPageData.cb_screenpad_sync_with_primary(self.checked);
+                            }
+                        }
                     }
                 }
             }

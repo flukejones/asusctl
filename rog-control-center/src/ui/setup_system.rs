@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex};
 use concat_idents::concat_idents;
 use log::{debug, error};
 use rog_dbus::asus_armoury::AsusArmouryProxy;
+use rog_dbus::zbus_backlight::BacklightProxy;
 use rog_dbus::zbus_platform::{PlatformProxy, PlatformProxyBlocking};
 use rog_platform::asus_armoury::FirmwareAttribute;
 use rog_platform::platform::Properties;
@@ -40,6 +41,7 @@ pub fn setup_system_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
     ui.global::<SystemPageData>().set_panel_overdrive(-1);
     ui.global::<SystemPageData>().set_boot_sound(-1);
     ui.global::<SystemPageData>().set_mini_led_mode(-1);
+    ui.global::<SystemPageData>().set_screenpad_brightness(-1);
     ui.global::<SystemPageData>().set_ppt_pl1_spl(MINMAX);
     ui.global::<SystemPageData>().set_ppt_pl2_sppt(MINMAX);
     ui.global::<SystemPageData>().set_ppt_pl3_fppt(MINMAX);
@@ -288,6 +290,13 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                 log::error!("Failed to create platform proxy: {}", e);
             })
             .unwrap();
+        let backlight = BacklightProxy::builder(&conn)
+            .build()
+            .await
+            .map_err(|e| {
+                log::error!("Failed to create backlight proxy: {}", e);
+            })
+            .unwrap();
 
         debug!("Setting up system page profile callbacks");
         set_ui_props_async!(
@@ -380,6 +389,24 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
         );
 
         set_ui_props_async!(handle, platform, SystemPageData, enable_ppt_group);
+
+        set_ui_props_async!(handle, backlight, SystemPageData, screenpad_brightness);
+        if let Ok(value) = backlight.screenpad_gamma().await {
+            handle
+                .upgrade_in_event_loop(move |handle| {
+                    handle
+                        .global::<SystemPageData>()
+                        .set_screenpad_gamma(value.parse().unwrap_or(1.0));
+                })
+                .ok();
+        }
+
+        set_ui_props_async!(
+            handle,
+            backlight,
+            SystemPageData,
+            screenpad_sync_with_primary
+        );
 
         let platform_copy = platform.clone();
         handle
@@ -500,6 +527,27 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                     platform_copy.change_platform_profile_on_battery(.into()),
                     "Throttle policy on battery enabled: {}",
                     "Setting Throttle policy on AC failed"
+                );
+
+                set_ui_callbacks!(handle,
+                    SystemPageData(as i32),
+                    backlight.screenpad_brightness(as i32),
+                    "Screenpad successfully set to {}",
+                    "Setting screenpad brightness failed"
+                );
+
+                set_ui_callbacks!(handle,
+                    SystemPageData(as bool),
+                    backlight.screenpad_sync_with_primary(as bool),
+                    "Screenpad successfully set to {}",
+                    "Setting screenpad brightness failed"
+                );
+
+                set_ui_callbacks!(handle,
+                    SystemPageData(.parse().unwrap_or(1.0)),
+                    backlight.screenpad_gamma(.to_string().as_str()),
+                    "Screenpad successfully set to {}",
+                    "Setting screenpad brightness failed"
                 );
             })
             .ok();
