@@ -156,7 +156,7 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
         let profile = if platform_profile_choices.contains(&PlatformProfile::Quiet) {
             PlatformProfile::Quiet
         } else {
-            PlatformProfile::Quiet
+            PlatformProfile::LowPower
         };
         let quiet = match fans.fan_curve_data(profile).await {
             Ok(data) => data,
