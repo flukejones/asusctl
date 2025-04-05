@@ -275,8 +275,14 @@ fn do_parsed(
                             return false;
                         }
 
-                        if command.trim().starts_with("platform")
+                        if command.trim().starts_with("armoury")
                             && !supported_interfaces.contains(&"xyz.ljones.AsusArmoury".to_string())
+                        {
+                            return false;
+                        }
+
+                        if command.trim().starts_with("backlight")
+                            && !supported_interfaces.contains(&"xyz.ljones.Backlight".to_string())
                         {
                             return false;
                         }

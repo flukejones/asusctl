@@ -2,7 +2,17 @@
 
 ## [Unreleased]
 
-## [v6.1.10]
+## [v6.1.11]
+
+### Changed
+- Fix anime flickering issue when using custom anims (@I-Al-Istannen)
+- Include pt_BR translations file (@PabloKiryu)
+
+## Added
+- Support for the screenpad brightness on some Laptops. This includes syncing to the primary screen brightness, and a gamma adjustment to set brightness scaling.
+  - Add asusctl CLI options
+  - Add UI options
+  - Add a fake gamma correction (`asusctl backlight --sync-screenpad-brightness`, 1.5 for example sets screenpad low brightness lower than primary, and scales upwards)
 
 ### Changed
 - asusd: single line fix for profile switching
