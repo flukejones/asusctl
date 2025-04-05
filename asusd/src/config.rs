@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use config_traits::{StdConfig, StdConfigLoad1};
+use config_traits::{StdConfig, StdConfigLoad2};
 use rog_platform::asus_armoury::FirmwareAttribute;
 use rog_platform::cpu::CPUEPP;
 use rog_platform::platform::PlatformProfile;
@@ -49,6 +49,10 @@ pub struct Config {
     pub ac_profile_tunings: Tunings,
     pub dc_profile_tunings: Tunings,
     pub armoury_settings: HashMap<FirmwareAttribute, i32>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub screenpad_gamma: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub screenpad_sync_primary: Option<bool>,
     /// Temporary state for AC/Batt
     #[serde(skip)]
     pub last_power_plugged: u8,
@@ -86,6 +90,8 @@ impl Default for Config {
             dc_profile_tunings: HashMap::default(),
             armoury_settings: HashMap::default(),
             last_power_plugged: Default::default(),
+            screenpad_gamma: Default::default(),
+            screenpad_sync_primary: Default::default(),
         }
     }
 }
@@ -112,7 +118,59 @@ impl StdConfig for Config {
     }
 }
 
-impl StdConfigLoad1<Config601> for Config {}
+impl StdConfigLoad2<Config611, Config601> for Config {}
+
+#[derive(Deserialize, Serialize)]
+pub struct Config611 {
+    pub charge_control_end_threshold: u8,
+    #[serde(skip)]
+    pub base_charge_control_end_threshold: u8,
+    pub disable_nvidia_powerd_on_battery: bool,
+    pub ac_command: String,
+    pub bat_command: String,
+    pub platform_profile_linked_epp: bool,
+    pub platform_profile_on_battery: PlatformProfile,
+    pub change_platform_profile_on_battery: bool,
+    pub platform_profile_on_ac: PlatformProfile,
+    pub change_platform_profile_on_ac: bool,
+    pub profile_quiet_epp: CPUEPP,
+    pub profile_balanced_epp: CPUEPP,
+    pub profile_custom_epp: CPUEPP,
+    pub profile_performance_epp: CPUEPP,
+    pub ac_profile_tunings: Tunings,
+    pub dc_profile_tunings: Tunings,
+    pub armoury_settings: HashMap<FirmwareAttribute, i32>,
+    #[serde(skip)]
+    pub last_power_plugged: u8,
+}
+
+impl From<Config611> for Config {
+    fn from(c: Config611) -> Self {
+        Self {
+            // Restore the base charge limit
+            charge_control_end_threshold: c.charge_control_end_threshold,
+            base_charge_control_end_threshold: c.charge_control_end_threshold,
+            disable_nvidia_powerd_on_battery: c.disable_nvidia_powerd_on_battery,
+            ac_command: c.ac_command,
+            bat_command: c.bat_command,
+            platform_profile_linked_epp: c.platform_profile_linked_epp,
+            platform_profile_on_battery: c.platform_profile_on_battery,
+            change_platform_profile_on_battery: c.change_platform_profile_on_battery,
+            platform_profile_on_ac: c.platform_profile_on_ac,
+            change_platform_profile_on_ac: c.change_platform_profile_on_ac,
+            profile_quiet_epp: c.profile_quiet_epp,
+            profile_balanced_epp: c.profile_balanced_epp,
+            profile_performance_epp: c.profile_performance_epp,
+            profile_custom_epp: c.profile_performance_epp,
+            last_power_plugged: c.last_power_plugged,
+            ac_profile_tunings: HashMap::default(),
+            dc_profile_tunings: HashMap::default(),
+            armoury_settings: HashMap::default(),
+            screenpad_gamma: None,
+            screenpad_sync_primary: Default::default(),
+        }
+    }
+}
 
 #[derive(Deserialize, Serialize)]
 pub struct Config601 {
@@ -175,6 +233,8 @@ impl From<Config601> for Config {
             ac_profile_tunings: HashMap::default(),
             dc_profile_tunings: HashMap::default(),
             armoury_settings: HashMap::default(),
+            screenpad_gamma: None,
+            screenpad_sync_primary: Default::default(),
         }
     }
 }

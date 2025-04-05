@@ -10,7 +10,7 @@ use asusd::ctrl_backlight::CtrlBacklight;
 use asusd::ctrl_fancurves::CtrlFanCurveZbus;
 use asusd::ctrl_platform::CtrlPlatform;
 use asusd::{print_board_info, start_tasks, CtrlTask, ZbusRun, DBUS_NAME};
-use config_traits::{StdConfig, StdConfigLoad1};
+use config_traits::{StdConfig, StdConfigLoad2};
 use futures_util::lock::Mutex;
 use log::{error, info};
 use rog_platform::asus_armoury::FirmwareAttributes;
@@ -91,7 +91,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    match CtrlBacklight::new() {
+    match CtrlBacklight::new(config.clone()) {
         Ok(backlight) => {
             backlight.add_to_server(&mut server).await;
         }

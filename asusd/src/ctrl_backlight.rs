@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use config_traits::StdConfig;
 use futures_util::lock::Mutex;
 use log::{info, warn};
 use rog_platform::backlight::{Backlight, BacklightType};
@@ -7,18 +8,18 @@ use zbus::fdo::Error as FdoErr;
 use zbus::object_server::SignalEmitter;
 use zbus::{interface, Connection};
 
+use crate::config::Config;
 use crate::error::RogError;
 use crate::ASUS_ZBUS_PATH;
 
 #[derive(Debug, Clone)]
 pub struct CtrlBacklight {
     backlights: Vec<Backlight>,
-    sync_all: Arc<Mutex<bool>>,
-    gamma: Arc<Mutex<f32>>,
+    config: Arc<Mutex<Config>>,
 }
 
 impl CtrlBacklight {
-    pub fn new() -> Result<Self, RogError> {
+    pub fn new(config: Arc<Mutex<Config>>) -> Result<Self, RogError> {
         let mut backlights = Vec::new();
 
         if let Ok(primary) = Backlight::new(BacklightType::Primary) {
@@ -35,11 +36,7 @@ impl CtrlBacklight {
             return Err(RogError::MissingFunction("No backlights found".into()));
         }
 
-        Ok(Self {
-            backlights,
-            sync_all: Arc::new(Mutex::new(true)),
-            gamma: Arc::new(Mutex::new(1.0)),
-        })
+        Ok(Self { backlights, config })
     }
 
     fn get_backlight(&self, device_type: &BacklightType) -> Option<&Backlight> {
@@ -59,9 +56,9 @@ impl CtrlBacklight {
                 FdoErr::Failed(format!("Failed to get max brightness: {}", e))
             })?;
 
+            let gamma = self.config.lock().await.screenpad_gamma.unwrap_or(1.0);
             let scaled = if *device_type == BacklightType::Screenpad {
                 // Apply non-linear scaling with the configurable gamma value only for Screenpad
-                let gamma = *self.gamma.lock().await;
                 let normalized_level = level as f32 / 100.0;
                 let gamma_corrected = normalized_level.powf(gamma);
                 (gamma_corrected * max as f32) as i32
@@ -75,7 +72,13 @@ impl CtrlBacklight {
                 FdoErr::Failed(format!("Failed to set brightness: {}", e))
             })?;
 
-            if *self.sync_all.lock().await {
+            let sync = self
+                .config
+                .lock()
+                .await
+                .screenpad_sync_primary
+                .unwrap_or_default();
+            if sync {
                 for other in self
                     .backlights
                     .iter()
@@ -84,7 +87,6 @@ impl CtrlBacklight {
                     if let Ok(other_max) = other.get_max_brightness() {
                         let other_scaled = if other.device_type() == &BacklightType::Screenpad {
                             // Apply gamma only to Screenpad
-                            let gamma = *self.gamma.lock().await;
                             let normalized_level = level as f32 / 100.0;
                             let gamma_corrected = normalized_level.powf(gamma);
                             (gamma_corrected * other_max as f32) as i32
@@ -132,18 +134,23 @@ impl CtrlBacklight {
 impl CtrlBacklight {
     #[zbus(property)]
     async fn screenpad_sync_with_primary(&self) -> bool {
-        *self.sync_all.lock().await
+        self.config
+            .lock()
+            .await
+            .screenpad_sync_primary
+            .unwrap_or_default()
     }
 
     #[zbus(property)]
     async fn set_screenpad_sync_with_primary(&self, sync: bool) -> Result<(), zbus::Error> {
-        *self.sync_all.lock().await = sync;
+        self.config.lock().await.screenpad_sync_primary = Some(sync);
+        self.config.lock().await.write();
         Ok(())
     }
 
     #[zbus(property)]
     async fn screenpad_gamma(&self) -> String {
-        (*self.gamma.lock().await).to_string()
+        (self.config.lock().await.screenpad_gamma.unwrap_or(1.0)).to_string()
     }
 
     #[zbus(property)]
@@ -158,7 +165,8 @@ impl CtrlBacklight {
         if gamma > 2.0 {
             return Err(FdoErr::Failed("Gamma value must be 2.0 or less".into()).into());
         }
-        *self.gamma.lock().await = gamma;
+        self.config.lock().await.screenpad_gamma = Some(gamma);
+        self.config.lock().await.write();
         Ok(())
     }
 
