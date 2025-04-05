@@ -93,6 +93,7 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
 
     match CtrlBacklight::new(config.clone()) {
         Ok(backlight) => {
+            backlight.start_watch_primary().await?;
             backlight.add_to_server(&mut server).await;
         }
         Err(err) => {

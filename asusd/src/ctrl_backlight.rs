@@ -50,6 +50,22 @@ impl CtrlBacklight {
         device_type: &BacklightType,
         level: i32,
     ) -> Result<(), FdoErr> {
+        let sync = self
+            .config
+            .lock()
+            .await
+            .screenpad_sync_primary
+            .unwrap_or_default();
+
+        if sync && *device_type == BacklightType::Screenpad {
+            if let Some(primary) = self.get_backlight(&BacklightType::Primary) {
+                if let Ok(primary_max) = primary.get_max_brightness() {
+                    let primary_scaled = level * primary_max / 100;
+                    let _ = primary.set_brightness(primary_scaled);
+                }
+            }
+        }
+
         if let Some(backlight) = self.get_backlight(device_type) {
             let max = backlight.get_max_brightness().map_err(|e| {
                 warn!("Failed to get max brightness: {}", e);
@@ -72,13 +88,7 @@ impl CtrlBacklight {
                 FdoErr::Failed(format!("Failed to set brightness: {}", e))
             })?;
 
-            let sync = self
-                .config
-                .lock()
-                .await
-                .screenpad_sync_primary
-                .unwrap_or_default();
-            if sync {
+            if sync && *device_type == BacklightType::Primary {
                 for other in self
                     .backlights
                     .iter()
@@ -127,6 +137,55 @@ impl CtrlBacklight {
                 device_type
             )))
         }
+    }
+
+    pub async fn start_watch_primary(&self) -> Result<(), RogError> {
+        if self.get_backlight(&BacklightType::Screenpad).is_none() {
+            return Ok(());
+        }
+
+        if let Some(sync) = self.config.lock().await.screenpad_sync_primary {
+            if !sync {
+                return Ok(());
+            }
+        }
+
+        if let Some(backlight) = self.get_backlight(&BacklightType::Primary) {
+            let watch = backlight.monitor_brightness()?;
+
+            let backlights = self.clone();
+            tokio::spawn(async move {
+                let mut buffer = [0; 32];
+                use futures_lite::StreamExt;
+                if let Ok(mut stream) = watch.into_event_stream(&mut buffer) {
+                    while (stream.next().await).is_some() {
+                        let sync = backlights.config.lock().await.screenpad_sync_primary;
+                        if let Some(sync) = sync {
+                            if !sync {
+                                continue;
+                            }
+                        } else if sync.is_none() {
+                            continue;
+                        }
+
+                        let level = backlights
+                            .get_brightness_percent(&BacklightType::Primary)
+                            .unwrap_or(60);
+                        backlights
+                            .set_brightness_with_sync(&BacklightType::Screenpad, level)
+                            .await
+                            .ok();
+                    }
+                    // watch
+                    //     .into_event_stream(&mut buffer)
+                    //     .unwrap()
+                    //     .for_each(|_| async {})
+                    //     .await;
+                }
+            });
+        }
+
+        Ok(())
     }
 }
 
