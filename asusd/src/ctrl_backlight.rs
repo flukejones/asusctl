@@ -170,9 +170,8 @@ impl CtrlBacklight {
                 let mut buffer = [0; 32];
                 use futures_lite::StreamExt;
                 if let Ok(mut stream) = watch.into_event_stream(&mut buffer) {
-                    while (stream.next().await).is_some() {
-                        // other processes cause "MODIFY" event and make this spin 100%, so sleep
-                        tokio::time::sleep(Duration::from_secs(1)).await;
+                    loop {
+                        let _ = stream.next().await;
 
                         let sync = backlights.config.lock().await.screenpad_sync_primary;
                         if let Some(sync) = sync {
@@ -200,6 +199,9 @@ impl CtrlBacklight {
                                 .await
                                 .ok();
                         }
+
+                        // other processes cause "MODIFY" event and make this spin 100%, so sleep
+                        tokio::time::sleep(Duration::from_millis(300)).await;
                     }
                     // watch
                     //     .into_event_stream(&mut buffer)
