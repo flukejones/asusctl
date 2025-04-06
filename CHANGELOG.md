@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [v6.1.12]
+
+### Changed
+- Fix an unbounded event loop caused by other processes causing a "modify" event on the screen backlight brightness.
+
 ## [v6.1.11]
 
 ### Changed

@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::time::Duration;
 
 use config_traits::StdConfig;
 use futures_util::lock::Mutex;
@@ -165,10 +166,14 @@ impl CtrlBacklight {
 
             let backlights = self.clone();
             tokio::spawn(async move {
+                let mut last_level = 0;
                 let mut buffer = [0; 32];
                 use futures_lite::StreamExt;
                 if let Ok(mut stream) = watch.into_event_stream(&mut buffer) {
                     while (stream.next().await).is_some() {
+                        // other processes cause "MODIFY" event and make this spin 100%, so sleep
+                        tokio::time::sleep(Duration::from_secs(1)).await;
+
                         let sync = backlights.config.lock().await.screenpad_sync_primary;
                         if let Some(sync) = sync {
                             if !sync {
@@ -188,10 +193,13 @@ impl CtrlBacklight {
                             .get_brightness_percent(&BacklightType::Primary)
                             .await
                             .unwrap_or(60);
-                        backlights
-                            .set_brightness_with_sync(&BacklightType::Screenpad, level)
-                            .await
-                            .ok();
+                        if last_level != level {
+                            last_level = level;
+                            backlights
+                                .set_brightness_with_sync(&BacklightType::Screenpad, level)
+                                .await
+                                .ok();
+                        }
                     }
                     // watch
                     //     .into_event_stream(&mut buffer)
