@@ -38,12 +38,12 @@ fn decode_hex(s: &str) -> RgbaColor<u8> {
 // TODO: return all
 async fn find_aura_iface() -> Result<AuraProxy<'static>, Box<dyn std::error::Error>> {
     let conn = zbus::Connection::system().await?;
-    let f = zbus::fdo::ObjectManagerProxy::new(&conn, "org.asuslinux.Daemon", "/").await?;
+    let f = zbus::fdo::ObjectManagerProxy::new(&conn, "xyz.ljones.Asusd", "/").await?;
     let interfaces = f.get_managed_objects().await?;
     let mut aura_paths = Vec::new();
     for v in interfaces.iter() {
         for k in v.1.keys() {
-            if k.as_str() == "org.asuslinux.Aura" {
+            if k.as_str() == "xyz.ljones.Aura" {
                 println!("Found aura device at {}, {}", v.0, k);
                 aura_paths.push(v.0.clone());
             }
@@ -56,7 +56,7 @@ async fn find_aura_iface() -> Result<AuraProxy<'static>, Box<dyn std::error::Err
     if let Some(path) = aura_paths.first() {
         return Ok(AuraProxy::builder(&conn)
             .path(path.clone())?
-            .destination("org.asuslinux.Daemon")?
+            .destination("xyz.ljones.Asusd")?
             .build()
             .await?);
     }
@@ -65,12 +65,12 @@ async fn find_aura_iface() -> Result<AuraProxy<'static>, Box<dyn std::error::Err
 }
 
 pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
-    ui.global::<AuraPageData>().on_set_hex_from_colour(|c| {
+    ui.global::<AuraPageData>().on_cb_hex_from_colour(|c| {
         format!("#{:02X}{:02X}{:02X}", c.red(), c.green(), c.blue()).into()
     });
 
     ui.global::<AuraPageData>()
-        .on_set_hex_to_colour(|s| decode_hex(s.as_str()).into());
+        .on_cb_hex_to_colour(|s| decode_hex(s.as_str()).into());
 
     let handle = ui.as_weak();
     tokio::spawn(async move {
@@ -89,7 +89,7 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
             let dev_type = aura
                 .device_type()
                 .await
-                .unwrap_or(AuraDeviceType::LaptopPost2021);
+                .unwrap_or(AuraDeviceType::LaptopKeyboard2021);
             log::debug!("Available LED power modes {pow3r:?}");
             handle
                 .upgrade_in_event_loop(move |handle| {
@@ -189,7 +189,7 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
             .upgrade_in_event_loop(|handle| {
                 handle
                     .global::<AuraPageData>()
-                    .on_set_led_power(move |power| {
+                    .on_cb_led_power(move |power| {
                         let handle_copy = handle_copy.clone();
                         let proxy_copy = aura.clone();
                         let power: LaptopAuraPower = power.into();
@@ -211,7 +211,7 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
         // spawn required since the while let never exits
         tokio::spawn(async move {
             let mut x = proxy_copy.receive_led_mode_data_changed().await;
-            use zbus::export::futures_util::StreamExt;
+            use futures_util::StreamExt;
             while let Some(e) = x.next().await {
                 if let Ok(out) = e.get().await {
                     handle_copy

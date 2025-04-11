@@ -10,40 +10,142 @@ export component RogItem inherits Rectangle {
 }
 
 export component SystemSlider inherits RogItem {
+    in property <string> title;
     in property <string> text;
     in-out property <float> value;
-    in-out property <float> minimum;
-    in-out property <float> maximum;
-    callback released(int);
+    in property <float> minimum;
+    in property <float> maximum;
+    callback released(float);
+
+    in property <string> help_text;
+    in property <bool> enabled: true;
+    in property <bool> has_reset: false;
+    callback cb_do_reset();
+
     HorizontalLayout {
         HorizontalLayout {
-            width: 50%;
-            alignment: LayoutAlignment.space-between;
+            width: 40%;
+            alignment: LayoutAlignment.stretch;
             padding-left: 10px;
-            Text {
-                font-size: 16px;
-                vertical-alignment: TextVerticalAlignment.center;
-                color: Palette.control-foreground;
-                text <=> root.text;
-            }
+            HorizontalLayout {
+                spacing: 6px;
+                Text {
+                    font-size: 16px;
+                    vertical-alignment: TextVerticalAlignment.center;
+                    color: Palette.control-foreground;
+                    text: root.text;
+                }
 
-            Text {
-                font-size: 16px;
-                vertical-alignment: TextVerticalAlignment.center;
-                color: Palette.control-foreground;
-                text: "\{Math.round(root.value)}";
+                Text {
+                    font-size: 16px;
+                    horizontal-alignment: TextHorizontalAlignment.right;
+                    vertical-alignment: TextVerticalAlignment.center;
+                    color: Palette.control-foreground;
+                    text: "\{Math.round(root.value)}";
+                }
             }
         }
 
         HorizontalBox {
-            // alignment: LayoutAlignment.end;
             padding-right: 20px;
-            Slider {
+            slider := Slider {
+                enabled: root.enabled;
                 maximum: root.maximum;
                 minimum: root.minimum;
                 value <=> root.value;
-                released => {
-                    root.released(Math.round(root.value))
+                released(value) => {
+                    root.released(value)
+                }
+            }
+        }
+
+        help_popup := PopupWindow {
+            x: help.x - self.width + help.width - 10px;
+            y: help.y - self.height + help.height - 10px;
+            Rectangle {
+                drop-shadow-blur: 10px;
+                drop-shadow-color: black;
+                border-radius: 10px;
+                border-color: Palette.accent-background;
+                background: Palette.background;
+                Dialog {
+                    title: root.title;
+                    VerticalBox {
+                        Text {
+                            max-width: 420px;
+                            font-size: 18px;
+                            wrap: TextWrap.word-wrap;
+                            horizontal-alignment: TextHorizontalAlignment.center;
+                            text: root.title;
+                        }
+
+                        Rectangle {
+                            height: 1px;
+                            border-color: black;
+                            border-width: 1px;
+                        }
+
+                        Text {
+                            max-width: 420px;
+                            font-size: 16px;
+                            wrap: TextWrap.word-wrap;
+                            text: root.help_text;
+                        }
+                    }
+
+                    StandardButton {
+                        kind: ok;
+                    }
+                }
+            }
+        }
+
+        help := HorizontalBox {
+            if (help_text != ""): StandardButton {
+                kind: StandardButtonKind.help;
+                clicked => {
+                    help_popup.show();
+                }
+            }
+        }
+
+        reset_popup := PopupWindow {
+            x: reset.x - self.width + reset.width;
+            y: reset.y - self.height + reset.height;
+            Rectangle {
+                drop-shadow-blur: 10px;
+                drop-shadow-color: black;
+                border-radius: 10px;
+                border-color: Palette.accent-background;
+                background: Palette.background;
+                Dialog {
+                    Text {
+                        max-width: 420px;
+                        font-size: 16px;
+                        wrap: TextWrap.word-wrap;
+                        text: @tr("confirm_reset" => "Are you sure you want to reset this?");
+                    }
+
+                    StandardButton {
+                        kind: ok;
+                        clicked => {
+                            root.cb_do_reset();
+                        }
+                    }
+
+                    StandardButton {
+                        kind: cancel;
+                    }
+                }
+            }
+        }
+
+        reset := HorizontalBox {
+            if (has_reset): StandardButton {
+                kind: StandardButtonKind.reset;
+                enabled: root.enabled;
+                clicked => {
+                    reset_popup.show();
                 }
             }
         }
@@ -63,7 +165,7 @@ export component SystemToggle inherits RogItem {
                 font-size: 16px;
                 vertical-alignment: TextVerticalAlignment.center;
                 color: Palette.control-foreground;
-                text <=> root.text;
+                text: root.text;
             }
         }
 
@@ -74,6 +176,38 @@ export component SystemToggle inherits RogItem {
                 checked <=> root.checked;
                 toggled => {
                     root.toggled(root.checked)
+                }
+            }
+        }
+    }
+}
+
+export component SystemToggleInt inherits RogItem {
+    in property <string> text;
+    // in-out property <bool> checked;
+    in-out property <int> checked_int;
+    callback toggled(int);
+    HorizontalLayout {
+        spacing: 6px;
+        HorizontalLayout {
+            alignment: LayoutAlignment.start;
+            padding-left: 10px;
+            Text {
+                font-size: 16px;
+                vertical-alignment: TextVerticalAlignment.center;
+                color: Palette.control-foreground;
+                text: root.text;
+            }
+        }
+
+        HorizontalLayout {
+            alignment: LayoutAlignment.end;
+            padding-right: 20px;
+            Switch {
+                checked: root.checked_int != 0;
+                toggled => {
+                    root.checked_int = self.checked ? 1 : 0;
+                    root.toggled(root.checked_int);
                 }
             }
         }
@@ -93,7 +227,7 @@ export component SystemToggleVert inherits RogItem {
             vertical-alignment: TextVerticalAlignment.bottom;
             horizontal-alignment: TextHorizontalAlignment.center;
             color: Palette.control-foreground;
-            text <=> root.text;
+            text: root.text;
         }
 
         HorizontalLayout {
@@ -123,7 +257,7 @@ export component SystemDropdown inherits RogItem {
                 font-size: 16px;
                 vertical-alignment: TextVerticalAlignment.center;
                 color: Palette.control-foreground;
-                text <=> root.text;
+                text: root.text;
             }
         }
 

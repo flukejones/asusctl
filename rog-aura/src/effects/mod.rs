@@ -12,7 +12,7 @@ pub use breathe::*;
 mod static_;
 pub use static_::*;
 
-use crate::keyboard::{KeyLayout, LedCode, LedUsbPackets, UsbPackets};
+use crate::keyboard::{AuraLaptopUsbPackets, KeyLayout, LedCode, LedUsbPackets};
 use crate::Colour;
 
 // static mut RNDINDEX: usize = 0;
@@ -106,7 +106,7 @@ impl AdvancedEffects {
         }
     }
 
-    pub fn create_packets(&self) -> UsbPackets {
+    pub fn create_packets(&self) -> AuraLaptopUsbPackets {
         let mut usb_packets = if self.zoned {
             // TODO: figure out if that single byte difference for multizone actually
             // matters
@@ -207,14 +207,12 @@ mod tests {
     fn single_key_next_state_then_create() {
         let layout = KeyLayout::default_layout();
         let mut seq = AdvancedEffects::new(false);
-        seq.effects.push(Effect::Static(Static::new(
-            LedCode::F,
-            Colour {
+        seq.effects
+            .push(Effect::Static(Static::new(LedCode::F, Colour {
                 r: 255,
                 g: 127,
                 b: 0,
-            },
-        )));
+            })));
 
         seq.next_state(&layout);
         let packets = seq.create_packets();

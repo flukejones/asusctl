@@ -2,11 +2,10 @@ use std::path::PathBuf;
 
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
-use typeshare::typeshare;
 use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::{PlatformError, Result};
-use crate::platform::ThrottlePolicy;
+use crate::platform::PlatformProfile;
 use crate::{read_attr_string, to_device};
 
 const ATTR_AVAILABLE_GOVERNORS: &str = "cpufreq/scaling_available_governors";
@@ -147,7 +146,6 @@ impl CPUControl {
     }
 }
 
-#[typeshare]
 #[repr(u8)]
 #[derive(
     Deserialize, Serialize, Type, Value, OwnedValue, Debug, PartialEq, PartialOrd, Clone, Copy,
@@ -179,7 +177,6 @@ impl From<CPUGovernor> for String {
     }
 }
 
-#[typeshare]
 #[repr(u32)]
 #[derive(
     Deserialize,
@@ -204,12 +201,14 @@ pub enum CPUEPP {
     Power = 4,
 }
 
-impl From<ThrottlePolicy> for CPUEPP {
-    fn from(value: ThrottlePolicy) -> Self {
+impl From<PlatformProfile> for CPUEPP {
+    fn from(value: PlatformProfile) -> Self {
         match value {
-            ThrottlePolicy::Balanced => CPUEPP::BalancePerformance,
-            ThrottlePolicy::Performance => CPUEPP::Performance,
-            ThrottlePolicy::Quiet => CPUEPP::Power,
+            PlatformProfile::Balanced => CPUEPP::BalancePerformance,
+            PlatformProfile::Performance => CPUEPP::Performance,
+            PlatformProfile::Quiet => CPUEPP::Power,
+            PlatformProfile::LowPower => CPUEPP::Power,
+            PlatformProfile::Custom => CPUEPP::BalancePower,
         }
     }
 }
@@ -268,21 +267,18 @@ mod tests {
     fn check_cpu() {
         let cpu = CPUControl::new().unwrap();
         assert_eq!(cpu.get_governor().unwrap(), CPUGovernor::Powersave);
-        assert_eq!(
-            cpu.get_available_governors().unwrap(),
-            vec![CPUGovernor::Performance, CPUGovernor::Powersave]
-        );
+        assert_eq!(cpu.get_available_governors().unwrap(), vec![
+            CPUGovernor::Performance,
+            CPUGovernor::Powersave
+        ]);
 
         assert_eq!(cpu.get_epp().unwrap(), CPUEPP::BalancePower);
-        assert_eq!(
-            cpu.get_available_epp().unwrap(),
-            vec![
-                CPUEPP::Default,
-                CPUEPP::Performance,
-                CPUEPP::BalancePerformance,
-                CPUEPP::BalancePower,
-                CPUEPP::Power,
-            ]
-        );
+        assert_eq!(cpu.get_available_epp().unwrap(), vec![
+            CPUEPP::Default,
+            CPUEPP::Performance,
+            CPUEPP::BalancePerformance,
+            CPUEPP::BalancePower,
+            CPUEPP::Power,
+        ]);
     }
 }

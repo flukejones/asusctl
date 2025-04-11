@@ -32,9 +32,3 @@ config-traits = { path = "../config-traits" }
 
 zbus.workspace = true
 env_logger.workspace = true
-
-[dev-dependencies]
-cargo-husky.workspace = true
-
-[package.metadata.cargo-machete]
-ignored = ["serde"]

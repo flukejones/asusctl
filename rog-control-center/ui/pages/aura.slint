@@ -30,7 +30,7 @@ export component PageAura inherits Rectangle {
                     current_value: AuraPageData.brightness_names[self.current-index];
                     model <=> AuraPageData.brightness_names;
                     selected => {
-                        AuraPageData.set_brightness(AuraPageData.brightness)
+                        AuraPageData.cb_brightness(AuraPageData.brightness)
                     }
                 }
 
@@ -44,7 +44,7 @@ export component PageAura inherits Rectangle {
                         AuraPageData.led_mode_data.mode = AuraPageData.led_mode;
                         AuraPageData.led_mode_data.mode = AuraPageData.current_available_mode;
                         self.current_value = AuraPageData.available_mode_names[self.current-index];
-                        AuraPageData.set_led_mode(AuraPageData.current_available_mode);
+                        AuraPageData.cb_led_mode(AuraPageData.current_available_mode);
                     }
                 }
             }
@@ -67,14 +67,14 @@ export component PageAura inherits Rectangle {
                                 final_colour <=> AuraPageData.color1;
                                 colourbox <=> AuraPageData.colorbox1;
                                 set_hex_from_colour(c1) => {
-                                    return AuraPageData.set_hex_from_colour(c1);
+                                    return AuraPageData.cb_hex_from_colour(c1);
                                 }
                                 hex_to_colour(s) => {
-                                    return AuraPageData.set_hex_to_colour(s);
+                                    return AuraPageData.cb_hex_to_colour(s);
                                 }
                                 released => {
                                     AuraPageData.led_mode_data.colour1 = AuraPageData.color1;
-                                    AuraPageData.set_led_mode_data(AuraPageData.led_mode_data);
+                                    AuraPageData.cb_led_mode_data(AuraPageData.led_mode_data);
                                 }
                             }
                         }
@@ -93,14 +93,14 @@ export component PageAura inherits Rectangle {
                                 final_colour <=> AuraPageData.color2;
                                 colourbox <=> AuraPageData.colorbox2;
                                 set_hex_from_colour(c1) => {
-                                    return AuraPageData.set_hex_from_colour(c1);
+                                    return AuraPageData.cb_hex_from_colour(c1);
                                 }
                                 hex_to_colour(s) => {
-                                    return AuraPageData.set_hex_to_colour(s);
+                                    return AuraPageData.cb_hex_to_colour(s);
                                 }
                                 released => {
                                     AuraPageData.led_mode_data.colour2 = AuraPageData.color2;
-                                    AuraPageData.set_led_mode_data(AuraPageData.led_mode_data);
+                                    AuraPageData.cb_led_mode_data(AuraPageData.led_mode_data);
                                 }
                             }
                         }
@@ -129,7 +129,7 @@ export component PageAura inherits Rectangle {
                             model <=> AuraPageData.zone_names;
                             selected => {
                                 AuraPageData.led_mode_data.zone = self.current-index;
-                                AuraPageData.set_led_mode_data(AuraPageData.led_mode_data);
+                                AuraPageData.cb_led_mode_data(AuraPageData.led_mode_data);
                             }
                         }
                     }
@@ -151,7 +151,7 @@ export component PageAura inherits Rectangle {
                             model <=> AuraPageData.direction_names;
                             selected => {
                                 AuraPageData.led_mode_data.direction = self.current-index;
-                                AuraPageData.set_led_mode_data(AuraPageData.led_mode_data);
+                                AuraPageData.cb_led_mode_data(AuraPageData.led_mode_data);
                             }
                         }
                     }
@@ -173,7 +173,7 @@ export component PageAura inherits Rectangle {
                             model <=> AuraPageData.speed_names;
                             selected => {
                                 AuraPageData.led_mode_data.speed = self.current-index;
-                                AuraPageData.set_led_mode_data(AuraPageData.led_mode_data);
+                                AuraPageData.cb_led_mode_data(AuraPageData.led_mode_data);
                             }
                         }
                     }
@@ -218,22 +218,22 @@ export component PageAura inherits Rectangle {
                     boot_checked: state.boot;
                     boot_toggled => {
                         AuraPageData.led_power.states[idx].boot = zone.boot_checked;
-                        AuraPageData.set_led_power(AuraPageData.led_power);
+                        AuraPageData.cb_led_power(AuraPageData.led_power);
                     }
                     awake_checked: state.awake;
                     awake_toggled => {
                         AuraPageData.led_power.states[idx].awake = zone.awake_checked;
-                        AuraPageData.set_led_power(AuraPageData.led_power);
+                        AuraPageData.cb_led_power(AuraPageData.led_power);
                     }
                     sleep_checked: state.sleep;
                     sleep_toggled => {
                         AuraPageData.led_power.states[idx].sleep = zone.sleep_checked;
-                        AuraPageData.set_led_power(AuraPageData.led_power);
+                        AuraPageData.cb_led_power(AuraPageData.led_power);
                     }
                     shutdown_checked: state.shutdown;
                     shutdown_toggled => {
                         AuraPageData.led_power.states[idx].shutdown = zone.shutdown_checked;
-                        AuraPageData.set_led_power(AuraPageData.led_power);
+                        AuraPageData.cb_led_power(AuraPageData.led_power);
                     }
                 }
             }
@@ -271,22 +271,22 @@ export component PageAura inherits Rectangle {
                     zone_strings <=> AuraPageData.power_zone_names_old;
                     selected_zone => {
                         AuraPageData.led_power.states[idx].zone = AuraPageData.supported_power_zones[old_zone.current_zone];
-                        AuraPageData.set_led_power(AuraPageData.led_power);
+                        AuraPageData.cb_led_power(AuraPageData.led_power);
                     }
                     boot_checked: state.boot;
                     boot_toggled => {
                         AuraPageData.led_power.states[idx].boot = old_zone.boot_checked;
-                        AuraPageData.set_led_power(AuraPageData.led_power);
+                        AuraPageData.cb_led_power(AuraPageData.led_power);
                     }
                     awake_checked: state.awake;
                     awake_toggled => {
                         AuraPageData.led_power.states[idx].awake = old_zone.awake_checked;
-                        AuraPageData.set_led_power(AuraPageData.led_power);
+                        AuraPageData.cb_led_power(AuraPageData.led_power);
                     }
                     sleep_checked: state.sleep;
                     sleep_toggled => {
                         AuraPageData.led_power.states[idx].sleep = old_zone.sleep_checked;
-                        AuraPageData.set_led_power(AuraPageData.led_power);
+                        AuraPageData.cb_led_power(AuraPageData.led_power);
                     }
                 }
             }

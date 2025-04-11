@@ -9,9 +9,9 @@ use std::process::Command;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+use futures_util::StreamExt;
 use log::{debug, error, info, warn};
 use notify_rust::{Hint, Notification, Timeout, Urgency};
-use rog_dbus::zbus_platform::PlatformProxy;
 use rog_platform::platform::GpuMode;
 use rog_platform::power::AsusPower;
 use serde::{Deserialize, Serialize};
@@ -20,7 +20,6 @@ use supergfxctl::pci_device::{GfxMode, GfxPower};
 use supergfxctl::zbus_proxy::DaemonProxy as SuperProxy;
 use tokio::runtime::Runtime;
 use tokio::task::JoinHandle;
-use zbus::export::futures_util::StreamExt;
 
 use crate::config::Config;
 use crate::error::Result;
@@ -154,54 +153,53 @@ pub fn start_notifications(
     };
 
     // GPU MUX Mode notif
-    let enabled_notifications_copy = config.clone();
-    tokio::spawn(async move {
-        let conn = zbus::Connection::system().await.map_err(|e| {
-            error!("zbus signal: receive_notify_gpu_mux_mode: {e}");
-            e
-        })?;
-        let proxy = PlatformProxy::new(&conn).await.map_err(|e| {
-            error!("zbus signal: receive_notify_gpu_mux_mode: {e}");
-            e
-        })?;
+    // TODO: need to get armoury attrs and iter to find
+    // let enabled_notifications_copy = config.clone();
+    // tokio::spawn(async move {
+    //     let conn = zbus::Connection::system().await.map_err(|e| {
+    //         error!("zbus signal: receive_notify_gpu_mux_mode: {e}");
+    //         e
+    //     })?;
+    //     let proxy = PlatformProxy::new(&conn).await.map_err(|e| {
+    //         error!("zbus signal: receive_notify_gpu_mux_mode: {e}");
+    //         e
+    //     })?;
 
-        let mut actual_mux_mode = GpuMode::Error;
-        if let Ok(mode) = proxy.gpu_mux_mode().await {
-            actual_mux_mode = GpuMode::from(mode);
-        }
+    //     let mut actual_mux_mode = GpuMode::Error;
+    //     if let Ok(mode) = proxy.gpu_mux_mode().await {
+    //         actual_mux_mode = GpuMode::from(mode);
+    //     }
 
-        info!("Started zbus signal thread: receive_notify_gpu_mux_mode");
-        while let Some(e) = proxy.receive_gpu_mux_mode_changed().await.next().await {
-            if let Ok(config) = enabled_notifications_copy.lock() {
-                if !config.notifications.enabled || !config.notifications.receive_notify_gfx {
-                    continue;
-                }
-            }
-            if let Ok(out) = e.get().await {
-                let mode = GpuMode::from(out);
-                if mode == actual_mux_mode {
-                    continue;
-                }
-                do_mux_notification("Reboot required. BIOS GPU MUX mode set to", &mode).ok();
-            }
-        }
-        Ok::<(), zbus::Error>(())
-    });
+    //     info!("Started zbus signal thread: receive_notify_gpu_mux_mode");
+    //     while let Some(e) =
+    // proxy.receive_gpu_mux_mode_changed().await.next().await {         if let
+    // Ok(config) = enabled_notifications_copy.lock() {             if
+    // !config.notifications.enabled || !config.notifications.receive_notify_gfx {
+    //                 continue;
+    //             }
+    //         }
+    //         if let Ok(out) = e.get().await {
+    //             let mode = GpuMode::from(out);
+    //             if mode == actual_mux_mode {
+    //                 continue;
+    //             }
+    //             do_mux_notification("Reboot required. BIOS GPU MUX mode set to",
+    // &mode).ok();         }
+    //     }
+    //     Ok::<(), zbus::Error>(())
+    // });
 
     let enabled_notifications_copy = config.clone();
     // GPU Mode change/action notif
     tokio::spawn(async move {
-        let conn = zbus::Connection::system().await.map_err(|e| {
-            no_supergfx(&e);
-            e
+        let conn = zbus::Connection::system().await.inspect_err(|e| {
+            no_supergfx(e);
         })?;
-        let proxy = SuperProxy::builder(&conn).build().await.map_err(|e| {
-            no_supergfx(&e);
-            e
+        let proxy = SuperProxy::builder(&conn).build().await.inspect_err(|e| {
+            no_supergfx(e);
         })?;
-        let _ = proxy.mode().await.map_err(|e| {
-            no_supergfx(&e);
-            e
+        let _ = proxy.mode().await.inspect_err(|e| {
+            no_supergfx(e);
         })?;
 
         let proxy_copy = proxy.clone();
@@ -332,7 +330,9 @@ fn do_gfx_action_notif(message: &str, action: GfxUserAction, mode: GpuMode) -> R
                 handle.wait_for_action(|id| {
                     if id == "gfx-mode-session-action" {
                         let mut cmd = Command::new("qdbus");
-                        cmd.args(["org.kde.ksmserver", "/KSMServer", "logout", "1", "0", "0"]);
+                        cmd.args([
+                            "org.kde.ksmserver", "/KSMServer", "logout", "1", "0", "0",
+                        ]);
                         cmd.spawn().ok();
                     } else if id == "__closed" {
                         // TODO: cancel the switching
@@ -374,7 +374,9 @@ fn do_mux_notification(message: &str, m: &GpuMode) -> Result<()> {
                 handle.wait_for_action(|id| {
                     if id == "gfx-mode-session-action" {
                         let mut cmd = Command::new("qdbus");
-                        cmd.args(["org.kde.ksmserver", "/KSMServer", "logout", "1", "1", "0"]);
+                        cmd.args([
+                            "org.kde.ksmserver", "/KSMServer", "logout", "1", "1", "0",
+                        ]);
                         cmd.spawn().ok();
                     } else if id == "__closed" {
                         // TODO: cancel the switching

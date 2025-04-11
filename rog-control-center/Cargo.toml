@@ -16,11 +16,10 @@ x11 = ["slint/backend-winit-x11"]
 tokio-debug = ["console-subscriber"]
 
 [dependencies]
-console-subscriber = { version = "0.2.0", optional = true }
+console-subscriber = { version = "^0.4", optional = true }
 
-nix = { version = "^0.28.0", features = ["fs"] }
-tempfile = "3.3.0"
-betrayer = { version = "0.2.0" }
+ksni = { version = "0.3", default-features = false, features = ["async-io"] }
+image = "0.25.5"
 
 asusd = { path = "../asusd" }
 config-traits = { path = "../config-traits" }
@@ -42,6 +41,7 @@ zbus.workspace = true
 dirs.workspace = true
 notify-rust.workspace = true
 concat-idents.workspace = true
+futures-util.workspace = true
 
 versions.workspace = true
 
@@ -49,16 +49,12 @@ versions.workspace = true
 git = "https://github.com/slint-ui/slint.git"
 default-features = false
 features = [
-    "gettext",
     "compat-1-2",
-    "backend-linuxkms",
+    "gettext",
     "backend-winit-wayland",
-    "renderer-winit-femtovg",
+    "renderer-femtovg",
     # "renderer-skia-opengl",
 ]
 
 [build-dependencies.slint-build]
 git = "https://github.com/slint-ui/slint.git"
-
-[dev-dependencies]
-cargo-husky.workspace = true

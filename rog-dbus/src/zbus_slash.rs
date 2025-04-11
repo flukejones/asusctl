@@ -2,11 +2,11 @@ use rog_slash::SlashMode;
 use zbus::proxy;
 
 #[proxy(
-    interface = "org.asuslinux.Slash",
-    default_service = "org.asuslinux.Daemon",
-    default_path = "/org/asuslinux"
+    interface = "xyz.ljones.Slash",
+    default_service = "xyz.ljones.Asusd",
+    default_path = "/xyz/ljones"
 )]
-trait Slash {
+pub trait Slash {
     /// EnableDisplay property
     #[zbus(property)]
     fn enabled(&self) -> zbus::Result<bool>;
@@ -27,7 +27,43 @@ trait Slash {
 
     /// Slash modes property
     #[zbus(property)]
-    fn slash_mode(&self) -> zbus::Result<SlashMode>;
+    fn mode(&self) -> zbus::Result<SlashMode>;
     #[zbus(property)]
-    fn set_slash_mode(&self, value: SlashMode) -> zbus::Result<()>;
+    fn set_mode(&self, value: SlashMode) -> zbus::Result<()>;
+
+    /// ShowBatteryWarning property
+    #[zbus(property)]
+    fn show_battery_warning(&self) -> zbus::Result<bool>;
+    #[zbus(property)]
+    fn set_show_battery_warning(&self, value: bool) -> zbus::Result<()>;
+
+    /// ShowOnBattery property
+    #[zbus(property)]
+    fn show_on_battery(&self) -> zbus::Result<bool>;
+    #[zbus(property)]
+    fn set_show_on_battery(&self, value: bool) -> zbus::Result<()>;
+
+    /// ShowOnBoot property
+    #[zbus(property)]
+    fn show_on_boot(&self) -> zbus::Result<bool>;
+    #[zbus(property)]
+    fn set_show_on_boot(&self, value: bool) -> zbus::Result<()>;
+
+    /// ShowOnShutdown property
+    #[zbus(property)]
+    fn show_on_shutdown(&self) -> zbus::Result<bool>;
+    #[zbus(property)]
+    fn set_show_on_shutdown(&self, value: bool) -> zbus::Result<()>;
+
+    /// ShowOnSleep property
+    #[zbus(property)]
+    fn show_on_sleep(&self) -> zbus::Result<bool>;
+    #[zbus(property)]
+    fn set_show_on_sleep(&self, value: bool) -> zbus::Result<()>;
+
+    /// ShowOnLidClosed property
+    #[zbus(property)]
+    fn show_on_lid_closed(&self) -> zbus::Result<bool>;
+    #[zbus(property)]
+    fn set_show_on_lid_closed(&self, value: bool) -> zbus::Result<()>;
 }

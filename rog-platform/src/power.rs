@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use log::{info, warn};
 
 use crate::error::{PlatformError, Result};
-use crate::{attr_u8, to_device};
+use crate::{attr_num, to_device};
 
 /// The "platform" device provides access to things like:
 /// - `dgpu_disable`
@@ -20,9 +20,9 @@ pub struct AsusPower {
 }
 
 impl AsusPower {
-    attr_u8!("charge_control_end_threshold", battery);
+    attr_num!("charge_control_end_threshold", battery, u8);
 
-    attr_u8!("online", mains);
+    attr_num!("online", mains, u8);
 
     /// When checking for battery this will look in order:
     /// - if attr `manufacturer` contains `asus`

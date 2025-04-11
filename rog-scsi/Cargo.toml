@@ -1,0 +1,24 @@
+[package]
+name = "rog_scsi"
+version.workspace = true
+rust-version.workspace = true
+license.workspace = true
+readme.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description.workspace = true
+edition.workspace = true
+
+[features]
+default = ["dbus", "ron"]
+dbus = ["zbus"]
+
+[dependencies]
+sg.workspace = true
+serde.workspace = true
+zbus = { workspace = true, optional = true }
+
+# cli and logging
+
+ron = { version = "*", optional = true }

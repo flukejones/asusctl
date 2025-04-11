@@ -1,6 +1,6 @@
 import { Palette, Button, VerticalBox } from "std-widgets.slint";
 import { AppSize } from "globals.slint";
-import { PageSystem, AvailableSystemProperties, SystemPageData } from "pages/system.slint";
+import { PageSystem, SystemPageData, AttrMinMax } from "pages/system.slint";
 import { SideBar } from "widgets/sidebar.slint";
 import { PageAbout } from "pages/about.slint";
 import { PageFans } from "pages/fans.slint";
@@ -15,14 +15,18 @@ import { AuraPageData, AuraDevType, LaptopAuraPower, AuraPowerState, PowerZones,
 export { AuraPageData, AuraDevType, LaptopAuraPower, AuraPowerState, PowerZones, AuraEffect }
 import { PageAppSettings, AppSettingsPageData } from "pages/app_settings.slint";
 
-export { AppSize, AvailableSystemProperties, SystemPageData, AnimePageData, AppSettingsPageData }
+export { AppSize, AttrMinMax, SystemPageData, AnimePageData, AppSettingsPageData }
 
 export component MainWindow inherits Window {
     title: "ROG Control";
-    default-font-family: "DejaVu Sans";
+    always-on-top: true;
+    default-font-family: "Noto Sans";
+    default-font-size: 14px;
+    default-font-weight: 400;
+    icon: @image-url("../data/rog-control-center.png");
     in property <[bool]> sidebar_items_avilable: [true, true, true, true, true, true];
-    private property <bool> show-notif;
-    private property <bool> fade-cover;
+    private property <bool> show_notif;
+    private property <bool> fade_cover;
     private property <bool> toast: false;
     private property <string> toast_text: "I show when something is waiting";
     callback show_toast(string);
@@ -31,10 +35,10 @@ export component MainWindow inherits Window {
         toast_text = text;
     }
     callback exit-app();
-    callback show-notification(bool);
-    show-notification(yes) => {
-        show-notif = yes;
-        fade-cover = yes;
+    callback show_notification(bool);
+    show_notification(yes) => {
+        show_notif = yes;
+        fade_cover = yes;
     }
     callback external_colour_change();
     external_colour_change() => {
@@ -109,7 +113,7 @@ export component MainWindow inherits Window {
         }
     }
 
-    if fade-cover: Rectangle {
+    if fade_cover: Rectangle {
         x: 0px;
         y: 0px;
         width: root.width;
@@ -121,10 +125,10 @@ export component MainWindow inherits Window {
             width: 100%;
             clicked => {
                 // toolbar-dropdown.close();
-                if (show-notif) {
-                    show-notif = false;
+                if (show_notif) {
+                    show_notif = false;
                 }
-                fade-cover = false;
+                fade_cover = false;
             }
         }
     }
@@ -134,7 +138,8 @@ export component MainWindow inherits Window {
         y: 0px;
         width: root.width;
         height: 32px;
-        opacity: 0.8;
+        opacity: 1.0;
+        background: Colors.grey;
         TouchArea {
             height: 100%;
             width: 100%;
@@ -155,7 +160,7 @@ export component MainWindow inherits Window {
     }
 
     // // TODO: or use Dialogue
-    if show-notif: Rectangle {
+    if show_notif: Rectangle {
         x: root.width / 8;
         y: root.height / 8;
         height: (root.height / 8) * 6;
@@ -164,7 +169,7 @@ export component MainWindow inherits Window {
             height: 100%;
             width: 100%;
             clicked => {
-                show-notif = false;
+                show_notif = false;
                 exit-app();
             }
         }

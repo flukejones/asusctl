@@ -17,6 +17,7 @@ pub struct HidRaw {
     syspath: PathBuf,
     /// The product ID. The vendor ID is not kept
     prod_id: String,
+    _device_bcd: u32,
     /// Retaining a handle to the file for the duration of `HidRaw`
     file: RefCell<File>,
 }
@@ -43,33 +44,29 @@ impl HidRaw {
                     PlatformError::IoPath(endpoint.devpath().to_string_lossy().to_string(), e)
                 })?
             {
-                if let Some(parent_id) = usb_device.attribute_value("idProduct") {
-                    if parent_id == id_product {
-                        if let Some(dev_node) = endpoint.devnode() {
-                            info!("Using device at: {:?} for hidraw control", dev_node);
-                            return Ok(Self {
-                                file: RefCell::new(OpenOptions::new().write(true).open(dev_node)?),
-                                devfs_path: dev_node.to_owned(),
-                                prod_id: id_product.to_string(),
-                                syspath: endpoint.syspath().into(),
-                            });
+                if let Some(dev_node) = endpoint.devnode() {
+                    if let Some(this_id_product) = usb_device.attribute_value("idProduct") {
+                        if this_id_product != id_product {
+                            continue;
                         }
-                    }
-                }
-            } else {
-                // Try to see if there is a virtual device created with uhid for testing
-                let dev_path = endpoint.devpath().to_string_lossy();
-                if dev_path.contains("virtual") && dev_path.contains(&id_product.to_uppercase()) {
-                    if let Some(dev_node) = endpoint.devnode() {
-                        info!(
-                            "Using device at: {:?} for <TODO: label control> control",
-                            dev_node
-                        );
+                        let dev_path = endpoint.devpath().to_string_lossy();
+                        if dev_path.contains("virtual") {
+                            info!(
+                                "Using device at: {:?} for <TODO: label control> control",
+                                dev_node
+                            );
+                        }
                         return Ok(Self {
                             file: RefCell::new(OpenOptions::new().write(true).open(dev_node)?),
                             devfs_path: dev_node.to_owned(),
-                            prod_id: id_product.to_string(),
+                            prod_id: this_id_product.to_string_lossy().into(),
                             syspath: endpoint.syspath().into(),
+                            _device_bcd: usb_device
+                                .attribute_value("bcdDevice")
+                                .unwrap_or_default()
+                                .to_string_lossy()
+                                .parse()
+                                .unwrap_or_default(),
                         });
                     }
                 }
@@ -82,18 +79,26 @@ impl HidRaw {
     }
 
     /// Make `HidRaw` device from a udev device
-    pub fn from_device(device: Device) -> Result<Self> {
-        if let Some(parent) = device
+    pub fn from_device(endpoint: Device) -> Result<Self> {
+        if let Some(parent) = endpoint
             .parent_with_subsystem_devtype("usb", "usb_device")
-            .map_err(|e| PlatformError::IoPath(device.devpath().to_string_lossy().to_string(), e))?
+            .map_err(|e| {
+                PlatformError::IoPath(endpoint.devpath().to_string_lossy().to_string(), e)
+            })?
         {
-            if let Some(dev_node) = device.devnode() {
+            if let Some(dev_node) = endpoint.devnode() {
                 if let Some(id_product) = parent.attribute_value("idProduct") {
                     return Ok(Self {
                         file: RefCell::new(OpenOptions::new().write(true).open(dev_node)?),
                         devfs_path: dev_node.to_owned(),
                         prod_id: id_product.to_string_lossy().into(),
-                        syspath: device.syspath().into(),
+                        syspath: endpoint.syspath().into(),
+                        _device_bcd: endpoint
+                            .attribute_value("bcdDevice")
+                            .unwrap_or_default()
+                            .to_string_lossy()
+                            .parse()
+                            .unwrap_or_default(),
                     });
                 }
             }
@@ -110,7 +115,6 @@ impl HidRaw {
     /// Write an array of raw bytes to the device using the hidraw interface
     pub fn write_bytes(&self, message: &[u8]) -> Result<()> {
         if let Ok(mut file) = self.file.try_borrow_mut() {
-            // let mut file = self.file.borrow_mut();
             // TODO: re-get the file if error?
             file.write_all(message).map_err(|e| {
                 PlatformError::IoPath(self.devfs_path.to_string_lossy().to_string(), e)

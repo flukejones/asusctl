@@ -1,24 +1,28 @@
-use rog_platform::platform::ThrottlePolicy;
+use rog_platform::platform::PlatformProfile;
 use rog_profiles::FanCurvePU;
 
 use crate::{FanType, Profile};
 
-impl From<Profile> for ThrottlePolicy {
+impl From<Profile> for PlatformProfile {
     fn from(value: Profile) -> Self {
         match value {
-            Profile::Balanced => ThrottlePolicy::Balanced,
-            Profile::Performance => ThrottlePolicy::Performance,
-            Profile::Quiet => ThrottlePolicy::Quiet,
+            Profile::Balanced => PlatformProfile::Balanced,
+            Profile::Performance => PlatformProfile::Performance,
+            Profile::Quiet => PlatformProfile::Quiet,
+            Profile::LowPower => PlatformProfile::LowPower,
+            Profile::Custom => PlatformProfile::Custom,
         }
     }
 }
 
-impl From<ThrottlePolicy> for Profile {
-    fn from(value: ThrottlePolicy) -> Self {
+impl From<PlatformProfile> for Profile {
+    fn from(value: PlatformProfile) -> Self {
         match value {
-            ThrottlePolicy::Balanced => Profile::Balanced,
-            ThrottlePolicy::Performance => Profile::Performance,
-            ThrottlePolicy::Quiet => Profile::Quiet,
+            PlatformProfile::Balanced => Profile::Balanced,
+            PlatformProfile::Performance => Profile::Performance,
+            PlatformProfile::Quiet => Profile::Quiet,
+            PlatformProfile::LowPower => Profile::LowPower,
+            PlatformProfile::Custom => Profile::Custom,
         }
     }
 }

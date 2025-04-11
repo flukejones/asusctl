@@ -66,7 +66,7 @@ pub struct CtrlAnimeInner<'a> {
     do_early_return: Arc<AtomicBool>,
 }
 
-impl<'a> CtrlAnimeInner<'static> {
+impl CtrlAnimeInner<'static> {
     pub fn new(
         sequences: Sequences,
         client: AnimeProxyBlocking<'static>,
@@ -81,7 +81,7 @@ impl<'a> CtrlAnimeInner<'static> {
 
     /// To be called on each main loop iteration to pump out commands to the
     /// anime
-    pub fn run(&'a self) -> Result<(), Error> {
+    pub fn run(&self) -> Result<(), Error> {
         if self.do_early_return.load(Ordering::SeqCst) {
             return Ok(());
         }
@@ -151,10 +151,7 @@ impl CtrlAnime<'static> {
     pub async fn add_to_server(self, server: &mut zbus::Connection) {
         server
             .object_server()
-            .at(
-                &ObjectPath::from_str_unchecked("/org/asuslinux/Anime"),
-                self,
-            )
+            .at(&ObjectPath::from_str_unchecked("/xyz/ljones/Anime"), self)
             .await
             .map_err(|err| {
                 println!("CtrlAnime: add_to_server {}", err);
@@ -170,7 +167,7 @@ impl CtrlAnime<'static> {
 // - Do actions
 // - Write config if required
 // - Unset inner_early_return
-#[interface(name = "org.asuslinux.Daemon")]
+#[interface(name = "xyz.ljones.Asusd")]
 impl CtrlAnime<'static> {
     pub fn insert_asus_gif(
         &mut self,

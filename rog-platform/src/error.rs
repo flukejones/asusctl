@@ -19,6 +19,7 @@ pub enum PlatformError {
     MissingLedBrightNode(String, std::io::Error),
     IoPath(String, std::io::Error),
     Io(std::io::Error),
+    InvalidValue,
     NoAuraKeyboard,
     NoAuraNode,
     CPU(String),
@@ -38,6 +39,9 @@ impl fmt::Display for PlatformError {
             PlatformError::NotSupported => write!(f, "Not supported"),
             PlatformError::AttrNotFound(deets) => write!(f, "Attribute not found: {}", deets),
             PlatformError::Io(deets) => write!(f, "std::io error: {}", deets),
+            PlatformError::InvalidValue => {
+                write!(f, "The input value did not match the attribute value type")
+            }
             PlatformError::MissingFunction(deets) => write!(f, "Missing functionality: {}", deets),
             PlatformError::MissingLedBrightNode(path, error) => write!(
                 f,

@@ -16,8 +16,7 @@ pub enum ProfileError {
     /// (pwm/temp, prev, next)
     ParseFanCurvePrevHigher(&'static str, u8, u8),
     ParseFanCurvePercentOver100(u8),
-    NotEnoughPoints,
-    // Zbus(zbus::Error),
+    NotEnoughPoints, // Zbus(zbus::Error),
 }
 
 impl fmt::Display for ProfileError {

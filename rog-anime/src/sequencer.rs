@@ -75,10 +75,7 @@ impl ActionData {
                 time,
                 brightness,
             } => ActionData::Animation(AnimeGif::from_diagonal_gif(
-                file,
-                *time,
-                *brightness,
-                anime_type,
+                file, *time, *brightness, anime_type,
             )?),
             ActionLoader::AsusImage {
                 file,
@@ -91,10 +88,7 @@ impl ActionData {
                     ActionData::Image(Box::new(data))
                 }
                 _ => ActionData::Animation(AnimeGif::from_diagonal_png(
-                    file,
-                    anime_type,
-                    *time,
-                    *brightness,
+                    file, anime_type, *time, *brightness,
                 )?),
             },
             ActionLoader::ImageAnimation {
@@ -108,24 +102,12 @@ impl ActionData {
                 if let Some(ext) = file.extension() {
                     if ext.to_string_lossy().to_lowercase() == "png" {
                         return Ok(ActionData::Animation(AnimeGif::from_png(
-                            file,
-                            *scale,
-                            *angle,
-                            *translation,
-                            *time,
-                            *brightness,
-                            anime_type,
+                            file, *scale, *angle, *translation, *time, *brightness, anime_type,
                         )?));
                     }
                 }
                 ActionData::Animation(AnimeGif::from_gif(
-                    file,
-                    *scale,
-                    *angle,
-                    *translation,
-                    *time,
-                    *brightness,
-                    anime_type,
+                    file, *scale, *angle, *translation, *time, *brightness, anime_type,
                 )?)
             }
             ActionLoader::Image {
@@ -140,24 +122,13 @@ impl ActionData {
                     AnimTime::Infinite => {
                         // If no time then create a plain static image
                         let image = AnimeImage::from_png(
-                            file,
-                            *scale,
-                            *angle,
-                            *translation,
-                            *brightness,
-                            anime_type,
+                            file, *scale, *angle, *translation, *brightness, anime_type,
                         )?;
                         let data = <AnimeDataBuffer>::try_from(&image)?;
                         ActionData::Image(Box::new(data))
                     }
                     _ => ActionData::Animation(AnimeGif::from_png(
-                        file,
-                        *scale,
-                        *angle,
-                        *translation,
-                        *time,
-                        *brightness,
-                        anime_type,
+                        file, *scale, *angle, *translation, *time, *brightness, anime_type,
                     )?),
                 }
             }

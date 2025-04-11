@@ -1,6 +1,5 @@
 use log::{error, trace};
 use serde::{Deserialize, Serialize};
-use typeshare::typeshare;
 use udev::Device;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
@@ -31,7 +30,6 @@ pub(crate) fn temp_str(fan: char, index: usize) -> String {
     string
 }
 
-#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Deserialize, Serialize, Default, Debug, Clone)]
 pub struct CurveData {
@@ -91,7 +89,7 @@ impl std::str::FromStr for CurveData {
         }
 
         for (index, value) in input.split(',').enumerate() {
-            for (select, num) in value.splitn(2, |c| c == 'c' || c == ':').enumerate() {
+            for (select, num) in value.splitn(2, ['c', ':']).enumerate() {
                 if num.contains('%') {
                     percentages = true;
                 }
@@ -101,9 +99,7 @@ impl std::str::FromStr for CurveData {
                 if select == 0 {
                     if temp_prev > r {
                         return Err(ProfileError::ParseFanCurvePrevHigher(
-                            "temperature",
-                            temp_prev,
-                            r,
+                            "temperature", temp_prev, r,
                         ));
                     }
                     temp_prev = r;
@@ -118,9 +114,7 @@ impl std::str::FromStr for CurveData {
                     }
                     if pwm_prev > p {
                         return Err(ProfileError::ParseFanCurvePrevHigher(
-                            "percentage",
-                            pwm_prev,
-                            p,
+                            "percentage", pwm_prev, p,
                         ));
                     }
                     pwm_prev = p;
@@ -173,13 +167,13 @@ impl CurveData {
         for (index, out) in self.pwm.iter().enumerate() {
             let pwm = pwm_str(pwm_num, index);
             trace!("writing {pwm}");
-            device.set_attribute_value(&pwm, &out.to_string())?;
+            device.set_attribute_value(&pwm, out.to_string())?;
         }
 
         for (index, out) in self.temp.iter().enumerate() {
             let temp = temp_str(pwm_num, index);
             trace!("writing {temp}");
-            device.set_attribute_value(&temp, &out.to_string())?;
+            device.set_attribute_value(&temp, out.to_string())?;
         }
 
         // Enable must be done *after* all points are written pwm3_enable

@@ -3,26 +3,27 @@ use std::sync::Arc;
 
 use config_traits::{StdConfig, StdConfigLoad};
 use futures_lite::StreamExt;
+use futures_util::lock::Mutex;
 use log::{debug, error, info, warn};
-use rog_platform::platform::{RogPlatform, ThrottlePolicy};
+use rog_platform::platform::{PlatformProfile, RogPlatform};
 use rog_profiles::error::ProfileError;
 use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::{find_fan_curve_node, FanCurvePU, FanCurveProfiles};
 use serde::{Deserialize, Serialize};
-use tokio::sync::Mutex;
-use zbus::{interface, Connection, SignalContext};
+use zbus::object_server::SignalEmitter;
+use zbus::{interface, Connection};
 
 use crate::error::RogError;
 use crate::{CtrlTask, CONFIG_PATH_BASE};
 
 pub const FAN_CURVE_ZBUS_NAME: &str = "FanCurves";
-pub const FAN_CURVE_ZBUS_PATH: &str = "/org/asuslinux";
+pub const FAN_CURVE_ZBUS_PATH: &str = "/xyz/ljones";
 
 #[derive(Deserialize, Serialize, Debug, Default)]
 pub struct FanCurveConfig {
     pub profiles: FanCurveProfiles,
     #[serde(skip)]
-    pub current: u8,
+    pub current: PlatformProfile,
 }
 
 impl StdConfig for FanCurveConfig {
@@ -53,7 +54,7 @@ pub struct CtrlFanCurveZbus {
 impl CtrlFanCurveZbus {
     pub fn new() -> Result<Self, RogError> {
         let platform = RogPlatform::new()?;
-        if platform.has_throttle_thermal_policy() {
+        if platform.has_platform_profile() {
             info!("Device has profile control available");
             find_fan_curve_node()?;
             info!("Device has fan curves available");
@@ -64,16 +65,13 @@ impl CtrlFanCurveZbus {
             if config.profiles.balanced.is_empty() || !config.file_path().exists() {
                 info!("Fetching default fan curves");
 
-                let current = platform.get_throttle_thermal_policy()?;
-                for this in [
-                    ThrottlePolicy::Balanced,
-                    ThrottlePolicy::Performance,
-                    ThrottlePolicy::Quiet,
-                ] {
+                let current = platform.get_platform_profile()?;
+                let profiles = platform.get_platform_profile_choices()?;
+                for this in profiles {
                     // For each profile we need to switch to it before we
                     // can read the existing values from hardware. The ACPI method used
                     // for this is what limits us.
-                    platform.set_throttle_thermal_policy(this.into())?;
+                    platform.set_platform_profile(this.into())?;
                     let mut dev = find_fan_curve_node()?;
                     fan_curves.set_active_curve_to_defaults(this, &mut dev)?;
 
@@ -82,7 +80,7 @@ impl CtrlFanCurveZbus {
                         info!("{}", String::from(curve));
                     }
                 }
-                platform.set_throttle_thermal_policy(current)?;
+                platform.set_platform_profile(current.as_str())?;
                 config.profiles = fan_curves;
                 config.write();
             } else {
@@ -100,13 +98,13 @@ impl CtrlFanCurveZbus {
     }
 }
 
-#[interface(name = "org.asuslinux.FanCurves")]
+#[interface(name = "xyz.ljones.FanCurves")]
 impl CtrlFanCurveZbus {
     /// Set all fan curves for a profile to enabled status. Will also activate a
     /// fan curve if in the same profile mode
     async fn set_fan_curves_enabled(
         &mut self,
-        profile: ThrottlePolicy,
+        profile: PlatformProfile,
         enabled: bool,
     ) -> zbus::fdo::Result<()> {
         self.config
@@ -127,7 +125,7 @@ impl CtrlFanCurveZbus {
     /// activate a fan curve if in the same profile mode
     async fn set_profile_fan_curve_enabled(
         &mut self,
-        profile: ThrottlePolicy,
+        profile: PlatformProfile,
         fan: FanCurvePU,
         enabled: bool,
     ) -> zbus::fdo::Result<()> {
@@ -148,7 +146,7 @@ impl CtrlFanCurveZbus {
     /// Get the fan-curve data for the currently active ThrottlePolicy
     async fn fan_curve_data(
         &mut self,
-        profile: ThrottlePolicy,
+        profile: PlatformProfile,
     ) -> zbus::fdo::Result<Vec<CurveData>> {
         let curve = self
             .config
@@ -164,7 +162,7 @@ impl CtrlFanCurveZbus {
     /// Will also activate the fan curve if the user is in the same mode.
     async fn set_fan_curve(
         &mut self,
-        profile: ThrottlePolicy,
+        profile: PlatformProfile,
         curve: CurveData,
     ) -> zbus::fdo::Result<()> {
         self.config
@@ -172,7 +170,7 @@ impl CtrlFanCurveZbus {
             .await
             .profiles
             .save_fan_curve(curve, profile)?;
-        let active: ThrottlePolicy = self.platform.get_throttle_thermal_policy()?.into();
+        let active: PlatformProfile = self.platform.get_platform_profile()?.into();
         if active == profile {
             self.config
                 .lock()
@@ -189,15 +187,15 @@ impl CtrlFanCurveZbus {
     ///
     /// Each platform_profile has a different default and the default can be
     /// read only for the currently active profile.
-    async fn set_curves_to_defaults(&mut self, profile: ThrottlePolicy) -> zbus::fdo::Result<()> {
-        let active = self.platform.get_throttle_thermal_policy()?;
-        self.platform.set_throttle_thermal_policy(profile.into())?;
+    async fn set_curves_to_defaults(&mut self, profile: PlatformProfile) -> zbus::fdo::Result<()> {
+        let active = self.platform.get_platform_profile()?;
+        self.platform.set_platform_profile(profile.into())?;
         self.config
             .lock()
             .await
             .profiles
             .set_active_curve_to_defaults(profile, &mut find_fan_curve_node()?)?;
-        self.platform.set_throttle_thermal_policy(active)?;
+        self.platform.set_platform_profile(active.as_str())?;
         self.config.lock().await.write();
         Ok(())
     }
@@ -207,16 +205,16 @@ impl CtrlFanCurveZbus {
     ///
     /// Each platform_profile has a different default and the defualt can be
     /// read only for the currently active profile.
-    async fn reset_profile_curves(&self, profile: ThrottlePolicy) -> zbus::fdo::Result<()> {
-        let active = self.platform.get_throttle_thermal_policy()?;
+    async fn reset_profile_curves(&self, profile: PlatformProfile) -> zbus::fdo::Result<()> {
+        let active = self.platform.get_platform_profile()?;
 
-        self.platform.set_throttle_thermal_policy(profile.into())?;
+        self.platform.set_platform_profile(profile.into())?;
         self.config
             .lock()
             .await
             .profiles
-            .set_active_curve_to_defaults(active.into(), &mut find_fan_curve_node()?)?;
-        self.platform.set_throttle_thermal_policy(active)?;
+            .set_active_curve_to_defaults(active.as_str().into(), &mut find_fan_curve_node()?)?;
+        self.platform.set_platform_profile(active.as_str())?;
 
         self.config.lock().await.write();
         Ok(())
@@ -234,27 +232,32 @@ impl CtrlTask for CtrlFanCurveZbus {
         FAN_CURVE_ZBUS_PATH
     }
 
-    async fn create_tasks(&self, _signal_ctxt: SignalContext<'static>) -> Result<(), RogError> {
-        let watch_throttle_thermal_policy = self.platform.monitor_throttle_thermal_policy()?;
+    async fn create_tasks(&self, _signal_ctxt: SignalEmitter<'static>) -> Result<(), RogError> {
+        let watch_platform_profile = self.platform.monitor_platform_profile()?;
         let platform = self.platform.clone();
         let config = self.config.clone();
         let fan_curves = self.config.clone();
 
         tokio::spawn(async move {
             let mut buffer = [0; 32];
-            if let Ok(mut stream) = watch_throttle_thermal_policy.into_event_stream(&mut buffer) {
+            if let Ok(mut stream) = watch_platform_profile.into_event_stream(&mut buffer) {
                 while (stream.next().await).is_some() {
-                    debug!("watch_throttle_thermal_policy changed");
-                    if let Ok(profile) = platform.get_throttle_thermal_policy().map_err(|e| {
-                        error!("get_throttle_thermal_policy error: {e}");
-                    }) {
+                    debug!("watch_platform_profile changed");
+                    if let Ok(profile) =
+                        platform
+                            .get_platform_profile()
+                            .map(|p| p.into())
+                            .map_err(|e| {
+                                error!("get_platform_profile error: {e}");
+                            })
+                    {
                         if profile != config.lock().await.current {
                             fan_curves
                                 .lock()
                                 .await
                                 .profiles
                                 .write_profile_curve_to_platform(
-                                    profile.into(),
+                                    profile,
                                     &mut find_fan_curve_node().unwrap(),
                                 )
                                 .map_err(|e| warn!("write_profile_curve_to_platform, {}", e))
@@ -273,7 +276,7 @@ impl CtrlTask for CtrlFanCurveZbus {
 impl crate::Reloadable for CtrlFanCurveZbus {
     /// Fetch the active profile and use that to set all related components up
     async fn reload(&mut self) -> Result<(), RogError> {
-        let active = self.platform.get_throttle_thermal_policy()?.into();
+        let active = self.platform.get_platform_profile()?.into();
         let mut config = self.config.lock().await;
         if let Ok(mut device) = find_fan_curve_node() {
             config

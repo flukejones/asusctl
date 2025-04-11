@@ -1,17 +1,19 @@
 #![deny(unused_must_use)]
 /// Configuration loading, saving
 pub mod config;
-/// Control of anime matrix display
-pub mod ctrl_anime;
-/// Keyboard LED brightness control, RGB, and LED display modes
-pub mod ctrl_aura;
+pub mod ctrl_backlight;
 /// Control platform profiles + fan-curves if available
 pub mod ctrl_fancurves;
 /// Control ASUS bios function such as boot sound, Optimus/Dedicated gfx mode
 pub mod ctrl_platform;
-/// Control of Slash led bar
-pub mod ctrl_slash;
 
+pub mod asus_armoury;
+pub mod aura_anime;
+pub mod aura_laptop;
+pub mod aura_manager;
+pub mod aura_scsi;
+pub mod aura_slash;
+pub mod aura_types;
 pub mod error;
 
 use std::future::Future;
@@ -22,15 +24,19 @@ use futures_lite::stream::StreamExt;
 use log::{debug, info, warn};
 use logind_zbus::manager::ManagerProxy;
 use tokio::time::sleep;
+use zbus::object_server::{Interface, SignalEmitter};
+use zbus::proxy::CacheProperties;
 use zbus::zvariant::ObjectPath;
-use zbus::{CacheProperties, Connection, SignalContext};
+use zbus::Connection;
 
 use crate::error::RogError;
 
 const CONFIG_PATH_BASE: &str = "/etc/asusd/";
-pub static DBUS_NAME: &str = "org.asuslinux.Daemon";
-pub static DBUS_PATH: &str = "/org/asuslinux/Daemon";
-pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";
+pub const ASUS_ZBUS_PATH: &str = "/xyz/ljones";
+
+pub static DBUS_NAME: &str = "xyz.ljones.Asusd";
+pub static DBUS_PATH: &str = "/xyz/ljones/Daemon";
+pub static DBUS_IFACE: &str = "xyz.ljones.Asusd";
 
 /// This macro adds a function which spawns an `inotify` task on the passed in
 /// `Executor`.
@@ -39,7 +45,7 @@ pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";
 /// methods to be available:
 /// - `<name>() -> SomeValue`, functionally is a getter, but is allowed to have
 ///   side effects.
-/// - `notify_<name>(SignalContext, SomeValue)`
+/// - `notify_<name>(SignalEmitter, SomeValue)`
 ///
 /// In most cases if `SomeValue` is stored in a config then `<name>()` getter is
 /// expected to update it. The getter should *never* write back to the path or
@@ -60,9 +66,9 @@ macro_rules! task_watch_item {
         concat_idents::concat_idents!(fn_name = watch_, $name {
         async fn fn_name(
             &self,
-            signal_ctxt: SignalContext<'static>,
+            signal_ctxt: SignalEmitter<'static>,
         ) -> Result<(), RogError> {
-            use zbus::export::futures_util::StreamExt;
+            use futures_util::StreamExt;
 
             let ctrl = self.clone();
             concat_idents::concat_idents!(watch_fn = monitor_, $name {
@@ -100,9 +106,9 @@ macro_rules! task_watch_item_notify {
         concat_idents::concat_idents!(fn_name = watch_, $name {
         async fn fn_name(
             &self,
-            signal_ctxt: SignalContext<'static>,
+            signal_ctxt: SignalEmitter<'static>,
         ) -> Result<(), RogError> {
-            use zbus::export::futures_util::StreamExt;
+            use futures_util::StreamExt;
 
             let ctrl = self.clone();
             concat_idents::concat_idents!(watch_fn = monitor_, $name {
@@ -143,7 +149,7 @@ pub trait ReloadAndNotify {
 
     fn reload_and_notify(
         &mut self,
-        signal_context: &SignalContext<'static>,
+        signal_context: &SignalEmitter<'static>,
         data: Self::Data,
     ) -> impl Future<Output = Result<(), RogError>> + Send;
 }
@@ -152,7 +158,7 @@ pub trait ZbusRun {
     fn add_to_server(self, server: &mut Connection) -> impl Future<Output = ()> + Send;
 
     fn add_to_server_helper(
-        iface: impl zbus::Interface,
+        iface: impl Interface,
         path: &str,
         server: &mut Connection,
     ) -> impl Future<Output = ()> + Send {
@@ -174,8 +180,8 @@ pub trait ZbusRun {
 pub trait CtrlTask {
     fn zbus_path() -> &'static str;
 
-    fn signal_context(connection: &Connection) -> Result<SignalContext<'static>, zbus::Error> {
-        SignalContext::new(connection, Self::zbus_path())
+    fn signal_context(connection: &Connection) -> Result<SignalEmitter<'static>, zbus::Error> {
+        SignalEmitter::new(connection, Self::zbus_path())
     }
 
     /// Implement to set up various tasks that may be required, using the
@@ -183,7 +189,7 @@ pub trait CtrlTask {
     /// separate thread.
     fn create_tasks(
         &self,
-        signal: SignalContext<'static>,
+        signal: SignalEmitter<'static>,
     ) -> impl Future<Output = Result<(), RogError>> + Send;
 
     // /// Create a timed repeating task
@@ -297,7 +303,7 @@ pub trait GetSupported {
 pub async fn start_tasks<T>(
     mut zbus: T,
     connection: &mut Connection,
-    signal_ctx: SignalContext<'static>,
+    signal_ctx: SignalEmitter<'static>,
 ) -> Result<(), RogError>
 where
     T: ZbusRun + Reloadable + CtrlTask + Clone,

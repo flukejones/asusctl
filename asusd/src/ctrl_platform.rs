@@ -3,19 +3,22 @@ use std::process::Command;
 use std::sync::Arc;
 
 use config_traits::StdConfig;
+use futures_util::lock::Mutex;
 use log::{debug, error, info, warn};
+use rog_platform::asus_armoury::{AttrValue, FirmwareAttribute, FirmwareAttributes};
 use rog_platform::cpu::{CPUControl, CPUGovernor, CPUEPP};
-use rog_platform::platform::{GpuMode, Properties, RogPlatform, ThrottlePolicy};
+use rog_platform::platform::{PlatformProfile, Properties, RogPlatform};
 use rog_platform::power::AsusPower;
-use zbus::export::futures_util::lock::Mutex;
 use zbus::fdo::Error as FdoErr;
-use zbus::{interface, Connection, SignalContext};
+use zbus::object_server::SignalEmitter;
+use zbus::{interface, Connection};
 
+use crate::asus_armoury::set_config_or_default;
 use crate::config::Config;
 use crate::error::RogError;
-use crate::{task_watch_item, task_watch_item_notify, CtrlTask, ReloadAndNotify};
+use crate::{task_watch_item, CtrlTask, ReloadAndNotify};
 
-const PLATFORM_ZBUS_PATH: &str = "/org/asuslinux";
+const PLATFORM_ZBUS_PATH: &str = "/xyz/ljones";
 
 macro_rules! platform_get_value {
     ($self:ident, $property:tt, $prop_name:literal) => {
@@ -36,78 +39,31 @@ macro_rules! platform_get_value {
     }
 }
 
-macro_rules! platform_set_value {
-    ($self:ident, $property:tt, $prop_name:literal, $new_value:expr) => {
-        concat_idents::concat_idents!(has = has_, $property {
-            if $self.platform.has() {
-                concat_idents::concat_idents!(set = set_, $property {
-                    $self.platform.set($new_value).map_err(|err| {
-                        error!("RogPlatform: {} {err}", $prop_name);
-                        FdoErr::NotSupported(format!("RogPlatform: {} {err}", $prop_name))
-                    })?;
-                });
-                let mut lock = $self.config.lock().await;
-                lock.$property = $new_value;
-                lock.write();
-                Ok(())
-            } else {
-                debug!("RogPlatform: {} not supported", $prop_name);
-                Err(FdoErr::NotSupported(format!("RogPlatform: {} not supported", $prop_name)))
-            }
-        })
-    }
-}
-
-macro_rules! platform_ppt_set_value {
-    ($self:ident, $property:tt, $prop_name:literal, $new_value:expr) => {
-        concat_idents::concat_idents!(has = has_, $property {
-            if $self.platform.has() {
-                concat_idents::concat_idents!(set = set_, $property {
-                    $self.platform.set($new_value).map_err(|err| {
-                        error!("RogPlatform: {} {err}", $prop_name);
-                        FdoErr::NotSupported(format!("RogPlatform: {} {err}", $prop_name))
-                    })?;
-                });
-                let mut lock = $self.config.lock().await;
-                lock.$property = Some($new_value);
-                lock.write();
-                Ok(())
-            } else {
-                debug!("RogPlatform: ppt: setting {} not supported", $prop_name);
-                Err(FdoErr::NotSupported(format!("RogPlatform: {} not supported", $prop_name)))
-            }
-        })
-    }
-}
-
 #[derive(Clone)]
 pub struct CtrlPlatform {
     power: AsusPower,
     platform: RogPlatform,
+    attributes: FirmwareAttributes,
     cpu_control: Option<CPUControl>,
     config: Arc<Mutex<Config>>,
 }
 
 impl CtrlPlatform {
     pub fn new(
+        platform: RogPlatform,
+        power: AsusPower,
+        attributes: FirmwareAttributes,
         config: Arc<Mutex<Config>>,
         config_path: &Path,
-        signal_context: SignalContext<'static>,
+        signal_context: SignalEmitter<'static>,
     ) -> Result<Self, RogError> {
-        let platform = RogPlatform::new()?;
-        let power = AsusPower::new()?;
-
-        if !platform.has_gpu_mux_mode() {
-            info!("G-Sync Switchable Graphics or GPU MUX not detected");
-            info!("Standard graphics switching will still work.");
-        }
-
         let config1 = config.clone();
         let config_path = config_path.to_owned();
 
         let ret_self = CtrlPlatform {
             power,
             platform,
+            attributes,
             config,
             cpu_control: CPUControl::new()
                 .map_err(|e| error!("Couldn't get CPU control sysfs: {e}"))
@@ -116,7 +72,7 @@ impl CtrlPlatform {
         let mut inotify_self = ret_self.clone();
 
         tokio::spawn(async move {
-            use zbus::export::futures_util::StreamExt;
+            use futures_util::StreamExt;
             info!("Starting inotify watch for asusd config file");
 
             let mut buffer = [0; 32];
@@ -132,13 +88,12 @@ impl CtrlPlatform {
                             | inotify::WatchMask::ATTRIB
                             | inotify::WatchMask::CREATE,
                     )
-                    .map_err(|e| {
+                    .inspect_err(|e| {
                         if e.kind() == std::io::ErrorKind::NotFound {
                             error!("Not found: {:?}", config_path);
                         } else {
                             error!("Could not set asusd config inotify: {:?}", config_path);
                         }
-                        e
                     })
                     .ok();
                 let mut events = inotify.into_event_stream(&mut buffer).unwrap();
@@ -168,15 +123,22 @@ impl CtrlPlatform {
         Ok(ret_self)
     }
 
-    fn set_gfx_mode(&self, mode: GpuMode) -> Result<(), RogError> {
-        self.platform.set_gpu_mux_mode(mode.to_mux_attr())?;
-        // self.update_initramfs(enable)?;
-        if mode == GpuMode::Ultimate {
-            info!("Set system-level graphics mode: Dedicated Nvidia");
-        } else {
-            info!("Set system-level graphics mode: Optimus");
+    async fn restore_charge_limit(&self) {
+        let limit = self.config.lock().await.base_charge_control_end_threshold;
+        if limit > 0
+            && std::mem::replace(
+                &mut self.config.lock().await.charge_control_end_threshold,
+                limit,
+            ) != limit
+        {
+            self.power
+                .set_charge_control_end_threshold(limit)
+                .map_err(|e| {
+                    error!("Couldn't restore charge limit: {e}");
+                })
+                .ok();
+            self.config.lock().await.write();
         }
-        Ok(())
     }
 
     async fn run_ac_or_bat_cmd(&self, power_plugged: bool) {
@@ -244,45 +206,45 @@ impl CtrlPlatform {
         }
     }
 
-    async fn get_config_epp_for_throttle(&self, throttle: ThrottlePolicy) -> CPUEPP {
+    async fn get_config_epp_for_throttle(&self, throttle: PlatformProfile) -> CPUEPP {
         match throttle {
-            ThrottlePolicy::Balanced => self.config.lock().await.throttle_balanced_epp,
-            ThrottlePolicy::Performance => self.config.lock().await.throttle_performance_epp,
-            ThrottlePolicy::Quiet => self.config.lock().await.throttle_quiet_epp,
+            PlatformProfile::Balanced => self.config.lock().await.profile_balanced_epp,
+            PlatformProfile::Performance => self.config.lock().await.profile_performance_epp,
+            PlatformProfile::Quiet => self.config.lock().await.profile_quiet_epp,
+            PlatformProfile::LowPower => self.config.lock().await.profile_quiet_epp,
+            PlatformProfile::Custom => self.config.lock().await.profile_custom_epp,
         }
     }
 
     async fn update_policy_ac_or_bat(&self, power_plugged: bool, change_epp: bool) {
-        if power_plugged && !self.config.lock().await.change_throttle_policy_on_ac {
+        if power_plugged && !self.config.lock().await.change_platform_profile_on_ac {
             debug!(
-                "Power status changed but set_throttle_policy_on_ac set false. Not setting the \
+                "Power status changed but set_platform_profile_on_ac set false. Not setting the \
                  thing"
             );
             return;
         }
-        if !power_plugged && !self.config.lock().await.change_throttle_policy_on_battery {
+        if !power_plugged && !self.config.lock().await.change_platform_profile_on_battery {
             debug!(
-                "Power status changed but set_throttle_policy_on_battery set false. Not setting \
+                "Power status changed but set_platform_profile_on_battery set false. Not setting \
                  the thing"
             );
             return;
         }
 
         let throttle = if power_plugged {
-            self.config.lock().await.throttle_policy_on_ac
+            self.config.lock().await.platform_profile_on_ac
         } else {
-            self.config.lock().await.throttle_policy_on_battery
+            self.config.lock().await.platform_profile_on_battery
         };
         debug!("Setting {throttle:?} before EPP");
         let epp = self.get_config_epp_for_throttle(throttle).await;
-        self.platform
-            .set_throttle_thermal_policy(throttle.into())
-            .ok();
+        self.platform.set_platform_profile(throttle.into()).ok();
         self.check_and_set_epp(epp, change_epp);
     }
 }
 
-#[interface(name = "org.asuslinux.Platform")]
+#[interface(name = "xyz.ljones.Platform")]
 impl CtrlPlatform {
     #[zbus(property)]
     async fn version(&self) -> String {
@@ -319,21 +281,7 @@ impl CtrlPlatform {
             Properties::ChargeControlEndThreshold
         );
 
-        platform_name!(dgpu_disable, Properties::DgpuDisable);
-        platform_name!(gpu_mux_mode, Properties::GpuMuxMode);
-        platform_name!(boot_sound, Properties::PostAnimationSound);
-        platform_name!(panel_od, Properties::PanelOd);
-        platform_name!(mini_led_mode, Properties::MiniLedMode);
-        platform_name!(egpu_enable, Properties::EgpuEnable);
-        platform_name!(throttle_thermal_policy, Properties::ThrottlePolicy);
-
-        platform_name!(ppt_pl1_spl, Properties::PptPl1Spl);
-        platform_name!(ppt_pl2_sppt, Properties::PptPl2Sppt);
-        platform_name!(ppt_fppt, Properties::PptFppt);
-        platform_name!(ppt_apu_sppt, Properties::PptApuSppt);
-        platform_name!(ppt_platform_sppt, Properties::PptPlatformSppt);
-        platform_name!(nv_dynamic_boost, Properties::NvDynamicBoost);
-        platform_name!(nv_temp_target, Properties::NvTempTarget);
+        platform_name!(platform_profile, Properties::ThrottlePolicy);
 
         supported
     }
@@ -351,151 +299,169 @@ impl CtrlPlatform {
         }
         self.power.set_charge_control_end_threshold(limit)?;
         self.config.lock().await.charge_control_end_threshold = limit;
+        self.config.lock().await.base_charge_control_end_threshold = limit;
         self.config.lock().await.write();
         Ok(())
     }
 
-    #[zbus(property)]
-    fn gpu_mux_mode(&self) -> Result<u8, FdoErr> {
-        self.platform.get_gpu_mux_mode().map_err(|err| {
-            warn!("get_gpu_mux_mode {err}");
-            FdoErr::NotSupported("RogPlatform: set_gpu_mux_mode not supported".to_owned())
-        })
-    }
-
-    #[zbus(property)]
-    async fn set_gpu_mux_mode(&mut self, mode: u8) -> Result<(), FdoErr> {
-        if self.platform.has_gpu_mux_mode() {
-            self.set_gfx_mode(mode.into()).map_err(|err| {
-                warn!("set_gpu_mux_mode {}", err);
-                FdoErr::Failed(format!("RogPlatform: set_gpu_mux_mode: {err}"))
-            })?;
+    async fn one_shot_full_charge(&self) -> Result<(), FdoErr> {
+        let base_limit = std::mem::replace(
+            &mut self.config.lock().await.charge_control_end_threshold,
+            100,
+        );
+        if base_limit != 100 {
+            self.power.set_charge_control_end_threshold(100)?;
+            self.config.lock().await.base_charge_control_end_threshold = base_limit;
             self.config.lock().await.write();
-        } else {
-            return Err(FdoErr::NotSupported(
-                "RogPlatform: set_gpu_mux_mode not supported".to_owned(),
-            ));
         }
         Ok(())
     }
 
     /// Toggle to next platform_profile. Names provided by `Profiles`.
     /// If fan-curves are supported will also activate a fan curve for profile.
-    async fn next_throttle_thermal_policy(
+    async fn next_platform_profile(
         &mut self,
-        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+        #[zbus(signal_context)] ctxt: SignalEmitter<'_>,
     ) -> Result<(), FdoErr> {
-        let policy: ThrottlePolicy =
-            platform_get_value!(self, throttle_thermal_policy, "throttle_thermal_policy")
-                .map(|n| n.into())?;
-        let policy = ThrottlePolicy::next(policy);
+        let policy: PlatformProfile =
+            platform_get_value!(self, platform_profile, "platform_profile").map(|n| n.into())?;
+        let choices =
+            platform_get_value!(self, platform_profile_choices, "platform_profile_choices")?;
+        let policy = PlatformProfile::next(policy, &choices);
 
-        if self.platform.has_throttle_thermal_policy() {
-            let change_epp = self.config.lock().await.throttle_policy_linked_epp;
+        if self.platform.has_platform_profile() {
+            let change_epp = self.config.lock().await.platform_profile_linked_epp;
             let epp = self.get_config_epp_for_throttle(policy).await;
             self.check_and_set_epp(epp, change_epp);
             self.platform
-                .set_throttle_thermal_policy(policy.into())
+                .set_platform_profile(policy.into())
                 .map_err(|err| {
-                    warn!("throttle_thermal_policy {}", err);
-                    FdoErr::Failed(format!("RogPlatform: throttle_thermal_policy: {err}"))
+                    warn!("platform_profile {}", err);
+                    FdoErr::Failed(format!("RogPlatform: platform_profile: {err}"))
                 })?;
-            Ok(self.throttle_thermal_policy_changed(&ctxt).await?)
+            self.enable_ppt_group_changed(&ctxt).await?;
+            Ok(self.platform_profile_changed(&ctxt).await?)
         } else {
             Err(FdoErr::NotSupported(
-                "RogPlatform: throttle_thermal_policy not supported".to_owned(),
+                "RogPlatform: platform_profile not supported".to_owned(),
             ))
         }
     }
 
     #[zbus(property)]
-    fn throttle_thermal_policy(&self) -> Result<ThrottlePolicy, FdoErr> {
-        platform_get_value!(self, throttle_thermal_policy, "throttle_thermal_policy")
-            .map(|n| n.into())
+    fn platform_profile_choices(&self) -> Result<Vec<PlatformProfile>, FdoErr> {
+        platform_get_value!(self, platform_profile_choices, "platform_profile_choices")
     }
 
     #[zbus(property)]
-    async fn set_throttle_thermal_policy(&mut self, policy: ThrottlePolicy) -> Result<(), FdoErr> {
+    fn platform_profile(&self) -> Result<PlatformProfile, FdoErr> {
+        let policy: PlatformProfile = self.platform.get_platform_profile()?.as_str().into();
+        Ok(policy)
+    }
+
+    #[zbus(property)]
+    async fn set_platform_profile(
+        &mut self,
+        #[zbus(signal_context)] ctxt: SignalEmitter<'_>,
+        policy: PlatformProfile,
+    ) -> Result<(), FdoErr> {
         // TODO: watch for external changes
-        if self.platform.has_throttle_thermal_policy() {
-            let change_epp = self.config.lock().await.throttle_policy_linked_epp;
+        if self.platform.has_platform_profile() {
+            let change_epp = self.config.lock().await.platform_profile_linked_epp;
             let epp = self.get_config_epp_for_throttle(policy).await;
             self.check_and_set_epp(epp, change_epp);
+
             self.config.lock().await.write();
+
+            let choices = self.platform.get_platform_profile_choices()?;
+            if !choices.contains(&policy) {
+                return Err(FdoErr::NotSupported(format!(
+                    "RogPlatform: platform_profile: {} not supported",
+                    policy
+                )));
+            }
+
             self.platform
-                .set_throttle_thermal_policy(policy.into())
+                .set_platform_profile(policy.into())
                 .map_err(|err| {
-                    warn!("throttle_thermal_policy {}", err);
-                    FdoErr::Failed(format!("RogPlatform: throttle_thermal_policy: {err}"))
-                })
+                    warn!("platform_profile {}", err);
+                    FdoErr::Failed(format!("RogPlatform: platform_profile: {err}"))
+                })?;
+            self.enable_ppt_group_changed(&ctxt).await?;
+            Ok(())
         } else {
             Err(FdoErr::NotSupported(
-                "RogPlatform: throttle_thermal_policy not supported".to_owned(),
+                "RogPlatform: platform_profile not supported".to_owned(),
             ))
         }
     }
 
     #[zbus(property)]
-    async fn throttle_policy_linked_epp(&self) -> Result<bool, FdoErr> {
-        Ok(self.config.lock().await.throttle_policy_linked_epp)
+    async fn platform_profile_linked_epp(&self) -> Result<bool, FdoErr> {
+        Ok(self.config.lock().await.platform_profile_linked_epp)
     }
 
     #[zbus(property)]
-    async fn set_throttle_policy_linked_epp(&self, linked: bool) -> Result<(), zbus::Error> {
-        self.config.lock().await.throttle_policy_linked_epp = linked;
+    async fn set_platform_profile_linked_epp(&self, linked: bool) -> Result<(), zbus::Error> {
+        self.config.lock().await.platform_profile_linked_epp = linked;
         self.config.lock().await.write();
         Ok(())
     }
 
     #[zbus(property)]
-    async fn throttle_policy_on_battery(&self) -> Result<ThrottlePolicy, FdoErr> {
-        Ok(self.config.lock().await.throttle_policy_on_battery)
+    async fn platform_profile_on_battery(&self) -> Result<PlatformProfile, FdoErr> {
+        Ok(self.config.lock().await.platform_profile_on_battery)
     }
 
     #[zbus(property)]
-    async fn set_throttle_policy_on_battery(
+    async fn set_platform_profile_on_battery(
         &mut self,
-        policy: ThrottlePolicy,
+        #[zbus(signal_context)] ctxt: SignalEmitter<'_>,
+        policy: PlatformProfile,
     ) -> Result<(), FdoErr> {
-        self.config.lock().await.throttle_policy_on_battery = policy;
-        self.set_throttle_thermal_policy(policy).await?;
+        self.config.lock().await.platform_profile_on_battery = policy;
+        self.set_platform_profile(ctxt, policy).await?;
         self.config.lock().await.write();
         Ok(())
     }
 
     #[zbus(property)]
-    async fn change_throttle_policy_on_battery(&self) -> Result<bool, FdoErr> {
-        Ok(self.config.lock().await.change_throttle_policy_on_battery)
+    async fn change_platform_profile_on_battery(&self) -> Result<bool, FdoErr> {
+        Ok(self.config.lock().await.change_platform_profile_on_battery)
     }
 
     #[zbus(property)]
-    async fn set_change_throttle_policy_on_battery(&mut self, change: bool) -> Result<(), FdoErr> {
-        self.config.lock().await.change_throttle_policy_on_battery = change;
+    async fn set_change_platform_profile_on_battery(&mut self, change: bool) -> Result<(), FdoErr> {
+        self.config.lock().await.change_platform_profile_on_battery = change;
         self.config.lock().await.write();
         Ok(())
     }
 
     #[zbus(property)]
-    async fn throttle_policy_on_ac(&self) -> Result<ThrottlePolicy, FdoErr> {
-        Ok(self.config.lock().await.throttle_policy_on_ac)
+    async fn platform_profile_on_ac(&self) -> Result<PlatformProfile, FdoErr> {
+        Ok(self.config.lock().await.platform_profile_on_ac)
     }
 
     #[zbus(property)]
-    async fn set_throttle_policy_on_ac(&mut self, policy: ThrottlePolicy) -> Result<(), FdoErr> {
-        self.config.lock().await.throttle_policy_on_ac = policy;
-        self.set_throttle_thermal_policy(policy).await?;
+    async fn set_platform_profile_on_ac(
+        &mut self,
+        #[zbus(signal_context)] ctxt: SignalEmitter<'_>,
+        policy: PlatformProfile,
+    ) -> Result<(), FdoErr> {
+        self.config.lock().await.platform_profile_on_ac = policy;
+        self.set_platform_profile(ctxt, policy).await?;
         self.config.lock().await.write();
         Ok(())
     }
 
     #[zbus(property)]
-    async fn change_throttle_policy_on_ac(&self) -> Result<bool, FdoErr> {
-        Ok(self.config.lock().await.change_throttle_policy_on_ac)
+    async fn change_platform_profile_on_ac(&self) -> Result<bool, FdoErr> {
+        Ok(self.config.lock().await.change_platform_profile_on_ac)
     }
 
     #[zbus(property)]
-    async fn set_change_throttle_policy_on_ac(&mut self, change: bool) -> Result<(), FdoErr> {
-        self.config.lock().await.change_throttle_policy_on_ac = change;
+    async fn set_change_platform_profile_on_ac(&mut self, change: bool) -> Result<(), FdoErr> {
+        self.config.lock().await.change_platform_profile_on_ac = change;
         self.config.lock().await.write();
         Ok(())
     }
@@ -503,14 +469,14 @@ impl CtrlPlatform {
     /// The energy_performance_preference for the quiet throttle/platform
     /// profile
     #[zbus(property)]
-    async fn throttle_quiet_epp(&self) -> Result<CPUEPP, FdoErr> {
-        Ok(self.config.lock().await.throttle_quiet_epp)
+    async fn profile_quiet_epp(&self) -> Result<CPUEPP, FdoErr> {
+        Ok(self.config.lock().await.profile_quiet_epp)
     }
 
     #[zbus(property)]
-    async fn set_throttle_quiet_epp(&mut self, epp: CPUEPP) -> Result<(), FdoErr> {
-        let change_pp = self.config.lock().await.throttle_policy_linked_epp;
-        self.config.lock().await.throttle_quiet_epp = epp;
+    async fn set_profile_quiet_epp(&mut self, epp: CPUEPP) -> Result<(), FdoErr> {
+        let change_pp = self.config.lock().await.platform_profile_linked_epp;
+        self.config.lock().await.profile_quiet_epp = epp;
         self.check_and_set_epp(epp, change_pp);
         self.config.lock().await.write();
         Ok(())
@@ -519,14 +485,14 @@ impl CtrlPlatform {
     /// The energy_performance_preference for the balanced throttle/platform
     /// profile
     #[zbus(property)]
-    async fn throttle_balanced_epp(&self) -> Result<CPUEPP, FdoErr> {
-        Ok(self.config.lock().await.throttle_balanced_epp)
+    async fn profile_balanced_epp(&self) -> Result<CPUEPP, FdoErr> {
+        Ok(self.config.lock().await.profile_balanced_epp)
     }
 
     #[zbus(property)]
-    async fn set_throttle_balanced_epp(&mut self, epp: CPUEPP) -> Result<(), FdoErr> {
-        let change_pp = self.config.lock().await.throttle_policy_linked_epp;
-        self.config.lock().await.throttle_balanced_epp = epp;
+    async fn set_profile_balanced_epp(&mut self, epp: CPUEPP) -> Result<(), FdoErr> {
+        let change_pp = self.config.lock().await.platform_profile_linked_epp;
+        self.config.lock().await.profile_balanced_epp = epp;
         self.check_and_set_epp(epp, change_pp);
         self.config.lock().await.write();
         Ok(())
@@ -535,169 +501,99 @@ impl CtrlPlatform {
     /// The energy_performance_preference for the performance throttle/platform
     /// profile
     #[zbus(property)]
-    async fn throttle_performance_epp(&self) -> Result<CPUEPP, FdoErr> {
-        Ok(self.config.lock().await.throttle_performance_epp)
+    async fn profile_performance_epp(&self) -> Result<CPUEPP, FdoErr> {
+        Ok(self.config.lock().await.profile_performance_epp)
     }
 
     #[zbus(property)]
-    async fn set_throttle_performance_epp(&mut self, epp: CPUEPP) -> Result<(), FdoErr> {
-        let change_pp = self.config.lock().await.throttle_policy_linked_epp;
-        self.config.lock().await.throttle_performance_epp = epp;
+    async fn set_profile_performance_epp(&mut self, epp: CPUEPP) -> Result<(), FdoErr> {
+        let change_pp = self.config.lock().await.platform_profile_linked_epp;
+        self.config.lock().await.profile_performance_epp = epp;
         self.check_and_set_epp(epp, change_pp);
+
         self.config.lock().await.write();
         Ok(())
     }
 
-    /// Get the `panel_od` value from platform. Updates the stored value in
-    /// internal config also.
+    /// Set if the PPT tuning group for the current profile is enabled
     #[zbus(property)]
-    fn panel_od(&self) -> Result<bool, FdoErr> {
-        platform_get_value!(self, panel_od, "panel_od")
+    async fn enable_ppt_group(&self) -> Result<bool, FdoErr> {
+        let power_plugged = self
+            .power
+            .get_online()
+            .map_err(|e| {
+                error!("Could not get power status: {e:?}");
+                e
+            })
+            .unwrap_or_default();
+        let profile: PlatformProfile = self.platform.get_platform_profile()?.into();
+        Ok(self
+            .config
+            .lock()
+            .await
+            .select_tunings(power_plugged == 1, profile)
+            .enabled)
     }
 
+    /// Set if the PPT tuning group for the current profile is enabled
     #[zbus(property)]
-    async fn set_panel_od(&mut self, overdrive: bool) -> Result<(), FdoErr> {
-        platform_set_value!(self, panel_od, "panel_od", overdrive)?;
+    async fn set_enable_ppt_group(&mut self, enable: bool) -> Result<(), FdoErr> {
+        let power_plugged = self
+            .power
+            .get_online()
+            .map_err(|e| {
+                error!("Could not get power status: {e:?}");
+                e
+            })
+            .unwrap_or_default();
+        let profile: PlatformProfile = self.platform.get_platform_profile()?.into();
+
+        if enable {
+            // Clone to reduce blocking
+            let tuning = self
+                .config
+                .lock()
+                .await
+                .select_tunings(power_plugged == 1, profile)
+                .clone();
+
+            for attr in self.attributes.attributes() {
+                let name: FirmwareAttribute = attr.name().into();
+                if name.is_ppt() {
+                    // reset stored value
+                    if let Some(tune) = self
+                        .config
+                        .lock()
+                        .await
+                        .select_tunings(power_plugged == 1, profile)
+                        .group
+                        .get_mut(&name)
+                    {
+                        let value = tuning
+                            .group
+                            .get(&name)
+                            .map(|v| AttrValue::Integer(*v))
+                            .unwrap_or_else(|| attr.default_value().clone());
+                        // restore default
+                        attr.set_current_value(&value)?;
+                        if let AttrValue::Integer(i) = value {
+                            *tune = i
+                        }
+                    }
+                }
+            }
+        } else {
+            // finally, reapply the profile to ensure acpi does the thingy
+            self.platform.set_platform_profile(profile.into())?;
+        }
+
+        self.config
+            .lock()
+            .await
+            .select_tunings(power_plugged == 1, profile)
+            .enabled = enable;
         self.config.lock().await.write();
-        Ok(())
-    }
 
-    /// Get the `boot_sound` value from platform. Updates the stored value in
-    /// internal config also.
-    #[zbus(property)]
-    fn boot_sound(&self) -> Result<bool, FdoErr> {
-        platform_get_value!(self, boot_sound, "boot_sound")
-    }
-
-    #[zbus(property)]
-    async fn set_boot_sound(&mut self, on: bool) -> Result<(), FdoErr> {
-        platform_set_value!(self, boot_sound, "boot_sound", on)?;
-        self.config.lock().await.write();
-        Ok(())
-    }
-
-    /// Get the `panel_od` value from platform. Updates the stored value in
-    /// internal config also.
-    #[zbus(property)]
-    fn mini_led_mode(&self) -> Result<bool, FdoErr> {
-        platform_get_value!(self, mini_led_mode, "mini_led_mode")
-    }
-
-    #[zbus(property)]
-    async fn set_mini_led_mode(&mut self, on: bool) -> Result<(), FdoErr> {
-        platform_set_value!(self, mini_led_mode, "mini_led_mode", on)?;
-        self.config.lock().await.write();
-        Ok(())
-    }
-
-    #[zbus(property)]
-    fn dgpu_disable(&self) -> Result<bool, FdoErr> {
-        platform_get_value!(self, dgpu_disable, "dgpu_disable")
-    }
-
-    #[zbus(property)]
-    fn egpu_enable(&self) -> Result<bool, FdoErr> {
-        platform_get_value!(self, egpu_enable, "egpu_enable")
-    }
-
-    /// ***********************************************************************
-    /// Set the Package Power Target total of CPU: PL1 on Intel, SPL on AMD.
-    /// Shown on Intel+Nvidia or AMD+Nvidia based systems:
-    /// * min=5, max=250
-    #[zbus(property)]
-    async fn ppt_pl1_spl(&self) -> Result<u8, FdoErr> {
-        platform_get_value!(self, ppt_pl1_spl, "ppt_pl1_spl")
-    }
-
-    #[zbus(property)]
-    async fn set_ppt_pl1_spl(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_ppt_set_value!(self, ppt_pl1_spl, "ppt_pl1_spl", value)?;
-        self.config.lock().await.write();
-        Ok(())
-    }
-
-    /// Set the Slow Package Power Tracking Limit of CPU: PL2 on Intel, SPPT,
-    /// on AMD. Shown on Intel+Nvidia or AMD+Nvidia based systems:
-    /// * min=5, max=250
-    #[zbus(property)]
-    async fn ppt_pl2_sppt(&self) -> Result<u8, FdoErr> {
-        platform_get_value!(self, ppt_pl2_sppt, "ppt_pl2_sppt")
-    }
-
-    #[zbus(property)]
-    async fn set_ppt_pl2_sppt(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_ppt_set_value!(self, ppt_pl2_sppt, "ppt_pl2_sppt", value)?;
-        self.config.lock().await.write();
-        Ok(())
-    }
-
-    /// Set the Fast Package Power Tracking Limit of CPU. AMD+Nvidia only:
-    /// * min=5, max=250
-    #[zbus(property)]
-    async fn ppt_fppt(&self) -> Result<u8, FdoErr> {
-        platform_get_value!(self, ppt_fppt, "ppt_fppt")
-    }
-
-    #[zbus(property)]
-    async fn set_ppt_fppt(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_ppt_set_value!(self, ppt_fppt, "ppt_fppt", value)?;
-        self.config.lock().await.write();
-        Ok(())
-    }
-
-    /// Set the APU SPPT limit. Shown on full AMD systems only:
-    /// * min=5, max=130
-    #[zbus(property)]
-    async fn ppt_apu_sppt(&self) -> Result<u8, FdoErr> {
-        platform_get_value!(self, ppt_apu_sppt, "ppt_apu_sppt")
-    }
-
-    #[zbus(property)]
-    async fn set_ppt_apu_sppt(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_ppt_set_value!(self, ppt_apu_sppt, "ppt_apu_sppt", value)?;
-        self.config.lock().await.write();
-        Ok(())
-    }
-
-    /// Set the platform SPPT limit. Shown on full AMD systems only:
-    /// * min=5, max=130
-    #[zbus(property)]
-    async fn ppt_platform_sppt(&self) -> Result<u8, FdoErr> {
-        platform_get_value!(self, ppt_platform_sppt, "ppt_platform_sppt")
-    }
-
-    #[zbus(property)]
-    async fn set_ppt_platform_sppt(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_ppt_set_value!(self, ppt_platform_sppt, "ppt_platform_sppt", value)?;
-        self.config.lock().await.write();
-        Ok(())
-    }
-
-    /// Set the dynamic boost limit of the Nvidia dGPU:
-    /// * min=5, max=25
-    #[zbus(property)]
-    async fn nv_dynamic_boost(&self) -> Result<u8, FdoErr> {
-        platform_get_value!(self, nv_dynamic_boost, "nv_dynamic_boost")
-    }
-
-    #[zbus(property)]
-    async fn set_nv_dynamic_boost(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_ppt_set_value!(self, nv_dynamic_boost, "nv_dynamic_boost", value)?;
-        self.config.lock().await.write();
-        Ok(())
-    }
-
-    /// Set the target temperature limit of the Nvidia dGPU:
-    /// * min=75, max=87
-    #[zbus(property)]
-    async fn nv_temp_target(&self) -> Result<u8, FdoErr> {
-        platform_get_value!(self, nv_temp_target, "nv_temp_target")
-    }
-
-    #[zbus(property)]
-    async fn set_nv_temp_target(&mut self, value: u8) -> Result<(), FdoErr> {
-        platform_ppt_set_value!(self, nv_temp_target, "nv_temp_target", value)?;
-        self.config.lock().await.write();
         Ok(())
     }
 }
@@ -714,69 +610,49 @@ impl ReloadAndNotify for CtrlPlatform {
     /// Called on config file changed externally
     async fn reload_and_notify(
         &mut self,
-        signal_context: &SignalContext<'static>,
+        signal_context: &SignalEmitter<'static>,
         data: Self::Data,
     ) -> Result<(), RogError> {
         let mut config = self.config.lock().await;
         if *config != data {
             info!("asusd.ron updated externally, reloading and updating internal copy");
 
-            if self.power.has_charge_control_end_threshold() {
+            let mut base_charge_control_end_threshold = None;
+
+            if self.power.has_charge_control_end_threshold()
+                && data.charge_control_end_threshold != config.charge_control_end_threshold
+            {
                 let limit = data.charge_control_end_threshold;
                 warn!("setting charge_control_end_threshold to {limit}");
                 self.power.set_charge_control_end_threshold(limit)?;
                 self.charge_control_end_threshold_changed(signal_context)
                     .await?;
+                base_charge_control_end_threshold = (config.base_charge_control_end_threshold > 0)
+                    .then_some(config.base_charge_control_end_threshold)
+                    .or(Some(limit));
             }
 
-            if self.platform.has_throttle_thermal_policy()
-                && config.throttle_policy_linked_epp != data.throttle_policy_linked_epp
+            if self.platform.has_platform_profile()
+                && config.platform_profile_linked_epp != data.platform_profile_linked_epp
             {
-                // TODO: extra stuff
-            }
+                let profile: PlatformProfile = self.platform.get_platform_profile()?.into();
 
-            macro_rules! reload_and_notify {
-                ($property:tt, $prop_name:literal) => {
-                    concat_idents::concat_idents!(has = has_, $property {
-                        if self.platform.has() && config.$property != data.$property {
-                            concat_idents::concat_idents!(set = set_, $property {
-                            self.platform
-                                .set(data.$property)?;});
-                            concat_idents::concat_idents!(changed = $property, _changed {
-                            self.changed(signal_context).await?;});
-                        }
-                    })
-                }
+                let epp = match profile {
+                    PlatformProfile::Balanced => data.profile_balanced_epp,
+                    PlatformProfile::Performance => data.profile_performance_epp,
+                    PlatformProfile::Quiet => data.profile_quiet_epp,
+                    PlatformProfile::LowPower => data.profile_quiet_epp,
+                    PlatformProfile::Custom => data.profile_custom_epp,
+                };
+                warn!("setting epp to {epp:?}");
+                self.check_and_set_epp(epp, true);
             }
-            reload_and_notify!(mini_led_mode, "mini_led_mode");
-            reload_and_notify!(panel_od, "panel_od");
-            reload_and_notify!(boot_sound, "boot_sound");
-            // reload_and_notify!(throttle_thermal_policy, "throttle_thermal_policy");
-
-            macro_rules! ppt_reload_and_notify {
-                ($property:tt, $prop_name:literal) => {
-                    concat_idents::concat_idents!(has = has_, $property {
-                        if self.platform.has() && config.$property != data.$property {
-                            concat_idents::concat_idents!(set = set_, $property {
-                            self.platform
-                                .set(data.$property.unwrap_or_default())?;});
-                            concat_idents::concat_idents!(changed = $property, _changed {
-                            self.changed(signal_context).await?;});
-                        }
-                    })
-                }
-            }
-            ppt_reload_and_notify!(ppt_pl1_spl, "ppt_pl1_spl");
-            ppt_reload_and_notify!(ppt_pl2_sppt, "ppt_pl2_sppt");
-            ppt_reload_and_notify!(ppt_fppt, "ppt_fppt");
-            ppt_reload_and_notify!(ppt_apu_sppt, "ppt_apu_sppt");
-            ppt_reload_and_notify!(ppt_platform_sppt, "ppt_platform_sppt");
-            ppt_reload_and_notify!(nv_dynamic_boost, "nv_dynamic_boost");
-            ppt_reload_and_notify!(nv_temp_target, "nv_temp_target");
+            // reload_and_notify!(platform_profile, "platform_profile");
 
             *config = data;
+            config.base_charge_control_end_threshold =
+                base_charge_control_end_threshold.unwrap_or_default();
         }
-
         Ok(())
     }
 }
@@ -785,6 +661,7 @@ impl crate::Reloadable for CtrlPlatform {
     async fn reload(&mut self) -> Result<(), RogError> {
         info!("Begin Platform settings restore");
         if self.power.has_charge_control_end_threshold() {
+            // self.restore_charge_limit().await;
             let limit = self.config.lock().await.charge_control_end_threshold;
             info!("reloading charge_control_end_threshold to {limit}");
             self.power.set_charge_control_end_threshold(limit)?;
@@ -792,45 +669,10 @@ impl crate::Reloadable for CtrlPlatform {
             warn!("No charge_control_end_threshold found")
         }
 
-        macro_rules! reload {
-            ($property:tt, $prop_name:literal) => {
-                concat_idents::concat_idents!(has = has_, $property {
-                  if self.platform.has() {
-                        concat_idents::concat_idents!(set = set_, $property {
-                        self.platform
-                            .set(self.config.lock().await.$property)?;});
-
-                    }
-                })
-            }
-        }
-        reload!(mini_led_mode, "mini_led_mode");
-        reload!(panel_od, "panel_od");
-        reload!(boot_sound, "boot_sound");
-
-        macro_rules! ppt_reload {
-            ($property:tt, $prop_name:literal) => {
-                concat_idents::concat_idents!(has = has_, $property {
-                    if self.platform.has() {
-                        concat_idents::concat_idents!(set = set_, $property {
-                        self.platform
-                            .set(self.config.lock().await.$property.unwrap_or_default())?;});
-                    }
-                })
-            }
-        }
-        ppt_reload!(ppt_pl1_spl, "ppt_pl1_spl");
-        ppt_reload!(ppt_pl2_sppt, "ppt_pl2_sppt");
-        ppt_reload!(ppt_fppt, "ppt_fppt");
-        ppt_reload!(ppt_apu_sppt, "ppt_apu_sppt");
-        ppt_reload!(ppt_platform_sppt, "ppt_platform_sppt");
-        ppt_reload!(nv_dynamic_boost, "nv_dynamic_boost");
-        ppt_reload!(nv_temp_target, "nv_temp_target");
-
         if let Ok(power_plugged) = self.power.get_online() {
             self.config.lock().await.last_power_plugged = power_plugged;
-            if self.platform.has_throttle_thermal_policy() {
-                let change_epp = self.config.lock().await.throttle_policy_linked_epp;
+            if self.platform.has_platform_profile() {
+                let change_epp = self.config.lock().await.platform_profile_linked_epp;
                 self.update_policy_ac_or_bat(power_plugged > 0, change_epp)
                     .await;
             }
@@ -842,34 +684,7 @@ impl crate::Reloadable for CtrlPlatform {
 }
 
 impl CtrlPlatform {
-    task_watch_item!(panel_od "panel_od" platform);
-
-    task_watch_item!(mini_led_mode "mini_led_mode" platform);
-
     task_watch_item!(charge_control_end_threshold "charge_control_end_threshold" power);
-
-    task_watch_item_notify!(boot_sound platform);
-
-    task_watch_item_notify!(dgpu_disable platform);
-
-    task_watch_item_notify!(egpu_enable platform);
-
-    // NOTE: see note further below
-    task_watch_item_notify!(gpu_mux_mode platform);
-
-    task_watch_item_notify!(ppt_pl1_spl platform);
-
-    task_watch_item_notify!(ppt_pl2_sppt platform);
-
-    task_watch_item_notify!(ppt_fppt platform);
-
-    task_watch_item_notify!(ppt_apu_sppt platform);
-
-    task_watch_item_notify!(ppt_platform_sppt platform);
-
-    task_watch_item_notify!(nv_dynamic_boost platform);
-
-    task_watch_item_notify!(nv_temp_target platform);
 }
 
 impl CtrlTask for CtrlPlatform {
@@ -877,25 +692,15 @@ impl CtrlTask for CtrlPlatform {
         PLATFORM_ZBUS_PATH
     }
 
-    async fn create_tasks(&self, signal_ctxt: SignalContext<'static>) -> Result<(), RogError> {
+    async fn create_tasks(&self, signal_ctxt: SignalEmitter<'static>) -> Result<(), RogError> {
         let platform1 = self.clone();
         let platform2 = self.clone();
         let platform3 = self.clone();
+        let signal_ctxt_copy = signal_ctxt.clone();
         self.create_sys_event_tasks(
             move |sleeping| {
                 let platform1 = platform1.clone();
                 async move {
-                    info!("RogPlatform reloading panel_od");
-                    if !sleeping && platform1.platform.has_panel_od() {
-                        platform1
-                            .platform
-                            .set_panel_od(platform1.config.lock().await.panel_od)
-                            .map_err(|err| {
-                                warn!("CtrlCharge: panel_od {}", err);
-                                err
-                            })
-                            .ok();
-                    }
                     // This block is commented out due to some kind of issue reported. Maybe the
                     // desktops used were storing a value whcih was then read here.
                     // Don't store it on suspend, assume that the current config setting is desired
@@ -915,9 +720,9 @@ impl CtrlTask for CtrlPlatform {
                     }
                     if let Ok(power_plugged) = platform1.power.get_online() {
                         if platform1.config.lock().await.last_power_plugged != power_plugged {
-                            if !sleeping && platform1.platform.has_throttle_thermal_policy() {
+                            if !sleeping && platform1.platform.has_platform_profile() {
                                 let change_epp =
-                                    platform1.config.lock().await.throttle_policy_linked_epp;
+                                    platform1.config.lock().await.platform_profile_linked_epp;
                                 platform1
                                     .update_policy_ac_or_bat(power_plugged > 0, change_epp)
                                     .await;
@@ -935,12 +740,18 @@ impl CtrlTask for CtrlPlatform {
                 async move {
                     info!("RogPlatform reloading panel_od");
                     let lock = platform2.config.lock().await;
-                    if !shutting_down && platform2.platform.has_panel_od() {
+                    if shutting_down
+                        && platform2.power.has_charge_control_end_threshold()
+                        && lock.base_charge_control_end_threshold > 0
+                    {
+                        info!("RogPlatform restoring charge_control_end_threshold");
                         platform2
-                            .platform
-                            .set_panel_od(lock.panel_od)
+                            .power
+                            .set_charge_control_end_threshold(
+                                lock.base_charge_control_end_threshold,
+                            )
                             .map_err(|err| {
-                                warn!("CtrlCharge: panel_od {}", err);
+                                warn!("CtrlCharge: charge_control_end_threshold {}", err);
                                 err
                             })
                             .ok();
@@ -953,15 +764,43 @@ impl CtrlTask for CtrlPlatform {
             },
             move |power_plugged| {
                 let platform3 = platform3.clone();
+                let signal_ctxt_copy = signal_ctxt.clone();
                 // power change
                 async move {
-                    if platform3.platform.has_throttle_thermal_policy() {
-                        let change_epp = platform3.config.lock().await.throttle_policy_linked_epp;
+                    if platform3.platform.has_platform_profile() {
+                        let change_epp = platform3.config.lock().await.platform_profile_linked_epp;
                         platform3
                             .update_policy_ac_or_bat(power_plugged, change_epp)
                             .await;
                     }
                     platform3.run_ac_or_bat_cmd(power_plugged).await;
+                    // In case one-shot charge was used, restore the old charge limit
+                    if platform3.power.has_charge_control_end_threshold() && !power_plugged {
+                        platform3.restore_charge_limit().await;
+                    }
+
+                    if let Ok(profile) = platform3
+                        .platform
+                        .get_platform_profile()
+                        .map(|p| p.into())
+                        .map_err(|e| {
+                            error!("Platform: get_platform_profile error: {e}");
+                        })
+                    {
+                        // TODO: manage this better, shouldn't need to create every time
+                        let attrs = FirmwareAttributes::new();
+                        set_config_or_default(
+                            &attrs,
+                            &mut *platform3.config.lock().await,
+                            power_plugged,
+                            profile,
+                        )
+                        .await;
+                        platform3
+                            .enable_ppt_group_changed(&signal_ctxt_copy)
+                            .await
+                            .ok();
+                    }
                 }
             },
         )
@@ -969,48 +808,50 @@ impl CtrlTask for CtrlPlatform {
 
         // This spawns a new task for every item.
         // TODO: find a better way to manage this
-        self.watch_panel_od(signal_ctxt.clone()).await?;
-        self.watch_mini_led_mode(signal_ctxt.clone()).await?;
-        self.watch_charge_control_end_threshold(signal_ctxt.clone())
+        self.watch_charge_control_end_threshold(signal_ctxt_copy.clone())
             .await?;
 
-        self.watch_dgpu_disable(signal_ctxt.clone()).await?;
-        self.watch_egpu_enable(signal_ctxt.clone()).await?;
-
-        // NOTE: Can't have this as a watch because on a write to it, it reverts back to
-        // booted-with value  as it does not actually change until reboot.
-        self.watch_gpu_mux_mode(signal_ctxt.clone()).await?;
-        self.watch_boot_sound(signal_ctxt.clone()).await?;
-
-        self.watch_ppt_pl1_spl(signal_ctxt.clone()).await?;
-        self.watch_ppt_pl2_sppt(signal_ctxt.clone()).await?;
-        self.watch_ppt_fppt(signal_ctxt.clone()).await?;
-        self.watch_ppt_apu_sppt(signal_ctxt.clone()).await?;
-        self.watch_ppt_platform_sppt(signal_ctxt.clone()).await?;
-        self.watch_nv_dynamic_boost(signal_ctxt.clone()).await?;
-        self.watch_nv_temp_target(signal_ctxt.clone()).await?;
-
-        let watch_throttle_thermal_policy = self.platform.monitor_throttle_thermal_policy()?;
+        let watch_platform_profile = self.platform.monitor_platform_profile()?;
         let ctrl = self.clone();
 
+        // Need a copy here, not ideal. But first use in asus_armoury.rs is
+        // moved to zbus
+        let attrs = FirmwareAttributes::new();
         tokio::spawn(async move {
             use futures_lite::StreamExt;
             let mut buffer = [0; 32];
-            if let Ok(mut stream) = watch_throttle_thermal_policy.into_event_stream(&mut buffer) {
+            if let Ok(mut stream) = watch_platform_profile.into_event_stream(&mut buffer) {
                 while (stream.next().await).is_some() {
                     // this blocks
-                    debug!("Platform: watch_throttle_thermal_policy changed");
+                    debug!("Platform: watch_platform_profile changed");
                     if let Ok(profile) = ctrl
                         .platform
-                        .get_throttle_thermal_policy()
-                        .map(ThrottlePolicy::from)
+                        .get_platform_profile()
+                        .map(|p| p.into())
                         .map_err(|e| {
-                            error!("Platform: get_throttle_thermal_policy error: {e}");
+                            error!("Platform: get_platform_profile error: {e}");
                         })
                     {
-                        let change_epp = ctrl.config.lock().await.throttle_policy_linked_epp;
+                        let change_epp = ctrl.config.lock().await.platform_profile_linked_epp;
                         let epp = ctrl.get_config_epp_for_throttle(profile).await;
                         ctrl.check_and_set_epp(epp, change_epp);
+                        ctrl.platform_profile_changed(&signal_ctxt_copy).await.ok();
+                        ctrl.enable_ppt_group_changed(&signal_ctxt_copy).await.ok();
+                        let power_plugged = ctrl
+                            .power
+                            .get_online()
+                            .map_err(|e| {
+                                error!("Could not get power status: {e:?}");
+                                e
+                            })
+                            .unwrap_or_default();
+                        set_config_or_default(
+                            &attrs,
+                            &mut *ctrl.config.lock().await,
+                            power_plugged == 1,
+                            profile,
+                        )
+                        .await;
                     }
                 }
             }

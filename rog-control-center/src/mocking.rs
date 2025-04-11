@@ -125,10 +125,18 @@ impl Profile {
 
     pub fn fan_curve_data(&self, _p: rog_profiles::Profile) -> Result<FanCurveSet> {
         let mut curve = FanCurveSet::default();
-        curve.cpu.pwm = [30, 40, 60, 100, 140, 180, 200, 250];
-        curve.cpu.temp = [20, 30, 40, 50, 70, 80, 90, 100];
-        curve.gpu.pwm = [40, 80, 100, 140, 170, 200, 230, 250];
-        curve.gpu.temp = [20, 30, 40, 50, 70, 80, 90, 100];
+        curve.cpu.pwm = [
+            30, 40, 60, 100, 140, 180, 200, 250,
+        ];
+        curve.cpu.temp = [
+            20, 30, 40, 50, 70, 80, 90, 100,
+        ];
+        curve.gpu.pwm = [
+            40, 80, 100, 140, 170, 200, 230, 250,
+        ];
+        curve.gpu.temp = [
+            20, 30, 40, 50, 70, 80, 90, 100,
+        ];
         Ok(curve)
     }
 

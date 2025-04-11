@@ -2,14 +2,12 @@ use std::fmt::Display;
 use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
-use typeshare::typeshare;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::Error;
-use crate::LED_MSG_LEN;
+use crate::AURA_LAPTOP_LED_MSG_LEN;
 
-#[typeshare]
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[cfg_attr(
     feature = "dbus",
@@ -79,7 +77,6 @@ impl From<i32> for LedBrightness {
     }
 }
 
-#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
 #[derive(Debug, Clone, PartialEq, Eq, Copy, Deserialize, Serialize)]
 pub struct Colour {
@@ -120,7 +117,11 @@ impl From<&[f32; 3]> for Colour {
 
 impl From<Colour> for [f32; 3] {
     fn from(c: Colour) -> Self {
-        [c.r as f32 / 255.0, c.g as f32 / 255.0, c.b as f32 / 255.0]
+        [
+            c.r as f32 / 255.0,
+            c.g as f32 / 255.0,
+            c.b as f32 / 255.0,
+        ]
     }
 }
 
@@ -136,11 +137,12 @@ impl From<&[u8; 3]> for Colour {
 
 impl From<Colour> for [u8; 3] {
     fn from(c: Colour) -> Self {
-        [c.r, c.g, c.b]
+        [
+            c.r, c.g, c.b,
+        ]
     }
 }
 
-#[typeshare]
 #[cfg_attr(
     feature = "dbus",
     derive(Type, Value, OwnedValue),
@@ -200,7 +202,6 @@ impl From<Speed> for u8 {
 /// Used for Rainbow mode.
 ///
 /// Enum corresponds to the required integer value
-#[typeshare]
 #[cfg_attr(
     feature = "dbus",
     derive(Type, Value, OwnedValue),
@@ -248,7 +249,6 @@ impl From<Direction> for i32 {
 }
 
 /// Enum of modes that convert to the actual number required by a USB HID packet
-#[typeshare]
 #[cfg_attr(
     feature = "dbus",
     derive(Type, Value, OwnedValue),
@@ -360,7 +360,6 @@ impl From<AuraEffect> for AuraModeNum {
 }
 
 /// Base effects have no zoning, while multizone is 1-4
-#[typeshare]
 #[cfg_attr(
     feature = "dbus",
     derive(Type, Value, OwnedValue),
@@ -432,7 +431,6 @@ impl From<AuraZone> for i32 {
 /// ```rust
 /// // let bytes: [u8; LED_MSG_LEN] = mode.into();
 /// ```
-#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct AuraEffect {
@@ -494,56 +492,6 @@ impl Display for AuraEffect {
     }
 }
 
-pub struct AuraParameters {
-    pub zone: bool,
-    pub colour1: bool,
-    pub colour2: bool,
-    pub speed: bool,
-    pub direction: bool,
-}
-
-#[allow(clippy::fn_params_excessive_bools)]
-impl AuraParameters {
-    pub const fn new(
-        zone: bool,
-        colour1: bool,
-        colour2: bool,
-        speed: bool,
-        direction: bool,
-    ) -> Self {
-        Self {
-            zone,
-            colour1,
-            colour2,
-            speed,
-            direction,
-        }
-    }
-}
-
-impl AuraEffect {
-    /// A helper to provide detail on what effects have which parameters, e.g
-    /// the static factory mode accepts only one colour.
-    pub const fn allowed_parameters(mode: AuraModeNum) -> AuraParameters {
-        match mode {
-            AuraModeNum::Static
-            | AuraModeNum::Highlight
-            | AuraModeNum::Pulse
-            | AuraModeNum::Comet
-            | AuraModeNum::Flash => AuraParameters::new(true, true, false, false, false),
-            AuraModeNum::Breathe => AuraParameters::new(true, true, true, true, false),
-            AuraModeNum::RainbowCycle | AuraModeNum::Rain => {
-                AuraParameters::new(true, false, false, true, false)
-            }
-            AuraModeNum::RainbowWave => AuraParameters::new(true, false, false, true, true),
-            AuraModeNum::Star => AuraParameters::new(true, true, true, true, true),
-            AuraModeNum::Laser | AuraModeNum::Ripple => {
-                AuraParameters::new(true, true, false, true, false)
-            }
-        }
-    }
-}
-
 /// Parses `AuraEffect` in to packet data for writing to the USB interface
 ///
 /// Byte structure where colour is RGB, one byte per R, G, B:
@@ -552,9 +500,9 @@ impl AuraEffect {
 /// |---|---|-----|-----|---------|------|----------|---|-----------|
 /// |5d |b3 |Zone |Mode |Colour 1 |Speed |Direction |00 |Colour 2   |
 /// ```
-impl From<&AuraEffect> for [u8; LED_MSG_LEN] {
+impl From<&AuraEffect> for [u8; AURA_LAPTOP_LED_MSG_LEN] {
     fn from(aura: &AuraEffect) -> Self {
-        let mut msg = [0u8; LED_MSG_LEN];
+        let mut msg = [0u8; AURA_LAPTOP_LED_MSG_LEN];
         msg[0] = 0x5d;
         msg[1] = 0xb3;
         msg[2] = aura.zone as u8;
@@ -573,7 +521,7 @@ impl From<&AuraEffect> for [u8; LED_MSG_LEN] {
 
 impl From<&AuraEffect> for Vec<u8> {
     fn from(aura: &AuraEffect) -> Self {
-        let mut msg = vec![0u8; LED_MSG_LEN];
+        let mut msg = vec![0u8; AURA_LAPTOP_LED_MSG_LEN];
         msg[0] = 0x5d;
         msg[1] = 0xb3;
         msg[2] = aura.zone as u8;
@@ -592,7 +540,9 @@ impl From<&AuraEffect> for Vec<u8> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{AuraEffect, AuraModeNum, AuraZone, Colour, Direction, Speed, LED_MSG_LEN};
+    use crate::{
+        AuraEffect, AuraModeNum, AuraZone, Colour, Direction, Speed, AURA_LAPTOP_LED_MSG_LEN,
+    };
 
     #[test]
     fn check_led_static_packet() {
@@ -608,7 +558,7 @@ mod tests {
             speed: Speed::Med,
             direction: Direction::Right,
         };
-        let ar = <[u8; LED_MSG_LEN]>::from(&st);
+        let ar = <[u8; AURA_LAPTOP_LED_MSG_LEN]>::from(&st);
 
         println!("{:02x?}", ar);
         let check = [
@@ -636,7 +586,10 @@ mod tests {
             0x5d, 0xb3, 0x01, 0x00, 0xff, 0x00, 0x00, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
         ];
-        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+        assert_eq!(
+            <[u8; AURA_LAPTOP_LED_MSG_LEN]>::from(&st)[..9],
+            capture[..9]
+        );
 
         st.zone = AuraZone::Key2;
         st.colour1 = Colour {
@@ -648,7 +601,10 @@ mod tests {
             0x5d, 0xb3, 0x02, 0x00, 0xff, 0xff, 0x00, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
         ];
-        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+        assert_eq!(
+            <[u8; AURA_LAPTOP_LED_MSG_LEN]>::from(&st)[..9],
+            capture[..9]
+        );
 
         st.zone = AuraZone::Key3;
         st.colour1 = Colour {
@@ -660,7 +616,10 @@ mod tests {
             0x5d, 0xb3, 0x03, 0x00, 0x00, 0xff, 0xff, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
         ];
-        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+        assert_eq!(
+            <[u8; AURA_LAPTOP_LED_MSG_LEN]>::from(&st)[..9],
+            capture[..9]
+        );
 
         st.zone = AuraZone::Key4;
         st.colour1 = Colour {
@@ -672,7 +631,10 @@ mod tests {
             0x5d, 0xb3, 0x04, 0x00, 0xff, 0x00, 0xff, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
         ];
-        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+        assert_eq!(
+            <[u8; AURA_LAPTOP_LED_MSG_LEN]>::from(&st)[..9],
+            capture[..9]
+        );
 
         st.zone = AuraZone::Logo;
         st.colour1 = Colour {
@@ -684,7 +646,10 @@ mod tests {
             0x5d, 0xb3, 0x05, 0x00, 0x2c, 0xff, 0x00, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
         ];
-        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+        assert_eq!(
+            <[u8; AURA_LAPTOP_LED_MSG_LEN]>::from(&st)[..9],
+            capture[..9]
+        );
 
         st.zone = AuraZone::BarLeft;
         st.colour1 = Colour {
@@ -696,7 +661,10 @@ mod tests {
             0x5d, 0xb3, 0x06, 0x00, 0xff, 0x00, 0x00, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
         ];
-        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+        assert_eq!(
+            <[u8; AURA_LAPTOP_LED_MSG_LEN]>::from(&st)[..9],
+            capture[..9]
+        );
 
         st.zone = AuraZone::BarRight;
         st.colour1 = Colour {
@@ -708,13 +676,19 @@ mod tests {
             0x5d, 0xb3, 0x07, 0x00, 0xff, 0x00, 0xcd, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
         ];
-        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+        assert_eq!(
+            <[u8; AURA_LAPTOP_LED_MSG_LEN]>::from(&st)[..9],
+            capture[..9]
+        );
 
         st.mode = AuraModeNum::RainbowWave;
         let capture = [
             0x5d, 0xb3, 0x07, 0x03, 0xff, 0x00, 0xcd, 0xe1, 0x01, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
             0x0, 0x0,
         ];
-        assert_eq!(<[u8; LED_MSG_LEN]>::from(&st)[..9], capture[..9]);
+        assert_eq!(
+            <[u8; AURA_LAPTOP_LED_MSG_LEN]>::from(&st)[..9],
+            capture[..9]
+        );
     }
 }

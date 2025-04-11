@@ -9,17 +9,17 @@ export global AnimePageData {
         @tr("Anime Brightness" => "High"),
     ];
     in-out property <int> brightness;
-    callback set_brightness(int);
+    callback cb_brightness(int);
     in-out property <bool> builtins_enabled;
-    callback set_builtins_enabled(bool);
+    callback cb_builtins_enabled(bool);
     in-out property <bool> enable_display;
-    callback set_enable_display(bool);
+    callback cb_enable_display(bool);
     in-out property <bool> off_when_lid_closed;
-    callback set_off_when_lid_closed(bool);
+    callback cb_off_when_lid_closed(bool);
     in-out property <bool> off_when_suspended;
-    callback set_off_when_suspended(bool);
+    callback cb_off_when_suspended(bool);
     in-out property <bool> off_when_unplugged;
-    callback set_off_when_unplugged(bool);
+    callback cb_off_when_unplugged(bool);
     in-out property <[string]> boot_anim_choices: [@tr("Glitch Construction"), @tr("Static Emergence")];
     in property <int> boot_anim: 0;
     in-out property <[string]> awake_anim_choices: [@tr("Binary Banner Scroll"), @tr("Rog Logo Glitch")];
@@ -28,7 +28,7 @@ export global AnimePageData {
     in property <int> sleep_anim: 0;
     in-out property <[string]> shutdown_anim_choices: [@tr("Glitch Out"), @tr("See Ya")];
     in property <int> shutdown_anim: 0;
-    callback set_builtin_animations(int, int, int, int);
+    callback cb_builtin_animations(int, int, int, int);
 }
 
 export component PageAnime inherits Rectangle {
@@ -53,7 +53,7 @@ export component PageAnime inherits Rectangle {
                 model <=> AnimePageData.brightness_names;
                 selected => {
                     self.current_value = AnimePageData.brightness_names[AnimePageData.brightness];
-                    AnimePageData.set_brightness(AnimePageData.brightness)
+                    AnimePageData.cb_brightness(AnimePageData.brightness)
                 }
             }
         }
@@ -66,7 +66,7 @@ export component PageAnime inherits Rectangle {
                 text: @tr("Enable display");
                 checked <=> AnimePageData.enable_display;
                 toggled => {
-                    AnimePageData.set_enable_display(AnimePageData.enable_display)
+                    AnimePageData.cb_enable_display(AnimePageData.enable_display)
                 }
             }
 
@@ -89,7 +89,7 @@ export component PageAnime inherits Rectangle {
                 text: @tr("Use built-in animations");
                 checked <=> AnimePageData.builtins_enabled;
                 toggled => {
-                    AnimePageData.set_builtins_enabled(AnimePageData.builtins_enabled)
+                    AnimePageData.cb_builtins_enabled(AnimePageData.builtins_enabled)
                 }
             }
 
@@ -152,7 +152,7 @@ export component PageAnime inherits Rectangle {
                         current_value: AnimePageData.boot_anim_choices[AnimePageData.boot_anim];
                         model <=> AnimePageData.boot_anim_choices;
                         selected => {
-                            AnimePageData.set_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
+                            AnimePageData.cb_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
                         }
                     }
 
@@ -162,7 +162,7 @@ export component PageAnime inherits Rectangle {
                         current_value: AnimePageData.awake_anim_choices[AnimePageData.awake_anim];
                         model <=> AnimePageData.awake_anim_choices;
                         selected => {
-                            AnimePageData.set_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
+                            AnimePageData.cb_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
                         }
                     }
 
@@ -172,7 +172,7 @@ export component PageAnime inherits Rectangle {
                         current_value: AnimePageData.sleep_anim_choices[AnimePageData.sleep_anim];
                         model <=> AnimePageData.sleep_anim_choices;
                         selected => {
-                            AnimePageData.set_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
+                            AnimePageData.cb_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
                         }
                     }
 
@@ -182,7 +182,7 @@ export component PageAnime inherits Rectangle {
                         current_value: AnimePageData.shutdown_anim_choices[AnimePageData.shutdown_anim];
                         model <=> AnimePageData.shutdown_anim_choices;
                         selected => {
-                            AnimePageData.set_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
+                            AnimePageData.cb_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
                         }
                     }
                 }
@@ -225,7 +225,7 @@ export component PageAnime inherits Rectangle {
                         text: @tr("Off when lid closed");
                         checked <=> AnimePageData.off_when_lid_closed;
                         toggled => {
-                            AnimePageData.set_off_when_lid_closed(AnimePageData.off_when_lid_closed)
+                            AnimePageData.cb_off_when_lid_closed(AnimePageData.off_when_lid_closed)
                         }
                     }
 
@@ -234,7 +234,7 @@ export component PageAnime inherits Rectangle {
                         text: @tr("Off when suspended");
                         checked <=> AnimePageData.off_when_suspended;
                         toggled => {
-                            AnimePageData.set_off_when_suspended(AnimePageData.off_when_suspended)
+                            AnimePageData.cb_off_when_suspended(AnimePageData.off_when_suspended)
                         }
                     }
 
@@ -243,7 +243,7 @@ export component PageAnime inherits Rectangle {
                         text: @tr("Off when on battery");
                         checked <=> AnimePageData.off_when_unplugged;
                         toggled => {
-                            AnimePageData.set_off_when_unplugged(AnimePageData.off_when_unplugged)
+                            AnimePageData.cb_off_when_unplugged(AnimePageData.off_when_unplugged)
                         }
                     }
                 }

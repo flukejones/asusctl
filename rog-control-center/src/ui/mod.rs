@@ -6,8 +6,9 @@ pub mod setup_system;
 use std::sync::{Arc, Mutex};
 
 use config_traits::StdConfig;
+use log::warn;
 use rog_dbus::list_iface_blocking;
-use slint::{ComponentHandle, PhysicalSize, SharedString, Weak};
+use slint::{ComponentHandle, SharedString, Weak};
 
 use crate::config::Config;
 use crate::ui::setup_anime::setup_anime_page;
@@ -15,21 +16,6 @@ use crate::ui::setup_aura::setup_aura_page;
 use crate::ui::setup_fans::setup_fan_curve_page;
 use crate::ui::setup_system::{setup_system_page, setup_system_page_callbacks};
 use crate::{AppSettingsPageData, MainWindow};
-
-// This macro expects are consistent naming between proxy calls and slint
-// globals
-#[macro_export]
-macro_rules! set_ui_props_async {
-    ($ui:ident, $proxy:ident, $global:ident, $proxy_fn:ident) => {
-        if let Ok(value) = $proxy.$proxy_fn().await {
-            $ui.upgrade_in_event_loop(move |handle| {
-                concat_idents::concat_idents!(set = set_, $proxy_fn {
-                    handle.global::<$global>().set(value.into());
-                });
-            }).ok();
-        }
-    };
-}
 
 // this macro sets up:
 // - a link from UI callback -> dbus proxy property
@@ -41,7 +27,7 @@ macro_rules! set_ui_callbacks {
         let handle_copy = $handle.as_weak();
         let proxy_copy = $proxy.clone();
         let data = $handle.global::<$data>();
-        concat_idents::concat_idents!(on_set = on_set_, $proxy_fn {
+        concat_idents::concat_idents!(on_set = on_cb_, $proxy_fn {
         data.on_set(move |value| {
             let proxy_copy = proxy_copy.clone();
             let handle_copy = handle_copy.clone();
@@ -64,7 +50,7 @@ macro_rules! set_ui_callbacks {
         tokio::spawn(async move {
             let mut x = proxy_copy.receive().await;
             concat_idents::concat_idents!(set = set_, $proxy_fn {
-            use zbus::export::futures_util::StreamExt;
+            use futures_util::StreamExt;
             while let Some(e) = x.next().await {
                 if let Ok(out) = e.get().await {
                     handle_copy.upgrade_in_event_loop(move |handle| {
@@ -97,25 +83,25 @@ pub fn show_toast(
 }
 
 pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
-    let ui = MainWindow::new().unwrap();
-    if let Ok(lock) = config.try_lock() {
-        let fullscreen = lock.start_fullscreen;
-        let width = lock.fullscreen_width;
-        let height = lock.fullscreen_height;
-        if fullscreen {
-            ui.window().set_fullscreen(fullscreen);
-            ui.window().set_size(PhysicalSize { width, height });
-        }
-    };
+    slint::set_xdg_app_id("rog-control-center")
+        .map_err(|e| warn!("Couldn't set application ID: {e:?}"))
+        .ok();
+    let ui = MainWindow::new()
+        .map_err(|e| warn!("Couldn't create main window: {e:?}"))
+        .unwrap();
+    ui.window()
+        .show()
+        .map_err(|e| warn!("Couldn't show main window: {e:?}"))
+        .unwrap();
 
     let available = list_iface_blocking().unwrap_or_default();
     ui.set_sidebar_items_avilable(
         [
             // Needs to match the order of slint sidebar items
-            available.contains(&"org.asuslinux.Platform".to_string()),
-            available.contains(&"org.asuslinux.Aura".to_string()),
-            available.contains(&"org.asuslinux.Anime".to_string()),
-            available.contains(&"org.asuslinux.FanCurves".to_string()),
+            available.contains(&"xyz.ljones.Platform".to_string()),
+            available.contains(&"xyz.ljones.Aura".to_string()),
+            available.contains(&"xyz.ljones.Anime".to_string()),
+            available.contains(&"xyz.ljones.FanCurves".to_string()),
             true,
             true,
         ]
@@ -127,19 +113,20 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
     });
 
     setup_app_settings_page(&ui, config.clone());
-    if available.contains(&"org.asuslinux.Platform".to_string()) {
+    if available.contains(&"xyz.ljones.Platform".to_string()) {
         setup_system_page(&ui, config.clone());
         setup_system_page_callbacks(&ui, config.clone());
     }
-    if available.contains(&"org.asuslinux.Aura".to_string()) {
+    if available.contains(&"xyz.ljones.Aura".to_string()) {
         setup_aura_page(&ui, config.clone());
     }
-    if available.contains(&"org.asuslinux.Anime".to_string()) {
+    if available.contains(&"xyz.ljones.Anime".to_string()) {
         setup_anime_page(&ui, config.clone());
     }
-    if available.contains(&"org.asuslinux.FanCurves".to_string()) {
+    if available.contains(&"xyz.ljones.FanCurves".to_string()) {
         setup_fan_curve_page(&ui, config);
     }
+
     ui
 }
 

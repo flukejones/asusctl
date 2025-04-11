@@ -1,7 +1,7 @@
 #
 # spec file for package asus-nb-ctrl
 #
-# Copyright (c) 2020-2021 Luke Jones <luke@ljones.dev>
+# Copyright (c) 2020-2025 Luke Jones <luke@ljones.dev>
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -20,45 +20,42 @@
 %global debug_package %{nil}
 %endif
 
+%define version 6.1.12
 %define specrelease %{?dist}
-%define pkg_release 3%{specrelease}
+%define pkg_release 9%{specrelease}
 
 # Use hardening ldflags.
 %global rustflags -Clink-arg=-Wl,-z,relro,-z,now
-Name:           asusctl
-Version:        6.0.7
+Name:    asusctl
+Version: %{version}
 Release: %{pkg_release}
-Summary:        Control fan speeds, LEDs, graphics modes, and charge levels for ASUS notebooks
-License:        MPLv2
+Summary: Control fan speeds, LEDs, graphics modes, and charge levels for ASUS notebooks
+License: MPLv2
 
-Group:          System Environment/Kernel
+Group:   System Environment/Kernel
 
-URL:            https://gitlab.com/asus-linux/asusctl
-Source:         %{name}-%{version}.tar.gz
-Source1:        vendor_%{name}_%{version}.tar.xz
-Source2:        cargo-config
+URL:     https://gitlab.com/asus-linux/asusctl
+Source:  https://gitlab.com/asus-linux/asusctl/-/archive/%{version}/%{name}-%{version}.tar.gz
 
-BuildRequires:  cargo
+%if %{defined fedora}
 BuildRequires:  rust-packaging
 BuildRequires:  systemd-rpm-macros
+%else
+BuildRequires:  cargo-packaging
+%endif
+BuildRequires:  git
 BuildRequires:  clang-devel
+BuildRequires:  cargo
 BuildRequires:  cmake
 BuildRequires:  rust
 BuildRequires:  rust-std-static
-BuildRequires:  pkgconfig(expat)
 BuildRequires:  pkgconfig(gbm)
-BuildRequires:  pkgconfig(dbus-1)
-BuildRequires:  pkgconfig(libdrm)
 BuildRequires:  pkgconfig(libinput)
 BuildRequires:  pkgconfig(libseat)
 BuildRequires:  pkgconfig(libudev)
 BuildRequires:  pkgconfig(xkbcommon)
 BuildRequires:  pkgconfig(libzstd)
-BuildRequires:  pkgconfig(gtk+-3.0)
-BuildRequires:  pkgconfig(gdk-3.0)
 BuildRequires:  desktop-file-utils
-
-# expat-devel pcre2-devel
 
 %description
 asus-nb-ctrl is a utility for Linux to control many aspects of various
@@ -76,21 +73,28 @@ A one-stop-shop GUI tool for asusd/asusctl. It aims to provide most controls,
 a notification service, and ability to run in the background.
 
 %prep
-# %setup -D -T -a 1 -c -n %{name}-%{version}/vendor
-# %setup -D -T -a 0 -c
 %autosetup
-%setup -D -T -a 1
-
-mv Cargo.lock{,.bak}
+%if %{defined fedora}
 %cargo_prep
-mv Cargo.lock{.bak,}
-sed -i 's|replace-with = "local-registry"|replace-with = "vendored-sources"|' .cargo/config
-cat %{SOURCE2} >> .cargo/config
+sed -i 's|offline = true|offline = false|' .cargo/config.toml
+sed -i 's|source.crates-io|source.ignore_this|' .cargo/config.toml
+%else
+mkdir -p .cargo
+cat > .cargo/config.toml << 'EOF'
+[term]
+verbose = true
+[net]
+offline = false
+EOF
+%endif
 
 %build
 export RUSTFLAGS="%{rustflags}"
+%if %{defined fedora}
 %cargo_build
-#cargo build --release --frozen --offline --config .cargo/config.toml
+%else
+/usr/bin/cargo auditable build --release
+%endif
 
 %install
 export RUSTFLAGS="%{rustflags}"

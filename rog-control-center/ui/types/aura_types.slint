@@ -4,6 +4,8 @@ export enum AuraDevType {
     Tuf,
     ScsiExtDisk,
     Unknown,
+    Ally,
+    AnimeOrSlash,
 }
 
 export struct AuraEffect {
@@ -28,6 +30,7 @@ export enum PowerZones {
     Lid,
     RearGlow,
     KeyboardAndLightbar,
+    Ally,
 }
 
 export struct AuraPowerState {
@@ -52,6 +55,7 @@ export global AuraPageData {
         @tr("Aura power zone" => "Lid"),
         @tr("Aura power zone" => "Rear Glow"),
         @tr("Aura power zone" => "Keyboard and Lightbar"),
+        @tr("Aura power zone" => "Ally"),
     ];
     // Exists only for the older 0x1866 keybaords. On page setup it must
     // be set to match the supported_power_zones
@@ -67,7 +71,7 @@ export global AuraPageData {
         @tr("Aura brightness" => "High"),
     ];
     in-out property <int> brightness;
-    callback set_brightness(int);
+    callback cb_brightness(int);
     in-out property <[string]> mode_names: [
         @tr("Basic aura mode" => "Static"),
         @tr("Basic aura mode" => "Breathe"),
@@ -91,7 +95,7 @@ export global AuraPageData {
     in-out property <int> current_available_mode: 0;
     in-out property <[int]> supported_basic_modes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12];
     in-out property <int> led_mode;
-    callback set_led_mode(int);
+    callback cb_led_mode(int);
     in-out property <[string]> zone_names: [
         @tr("Aura zone" => "None"),
         @tr("Aura zone" => "Key1"),
@@ -126,7 +130,7 @@ export global AuraPageData {
         speed: 0,
         direction: 0,
     };
-    callback set_led_mode_data(AuraEffect);
+    callback cb_led_mode_data(AuraEffect);
     in-out property <color> color1;
     in-out property <brush> colorbox1;
     in-out property <color> color2;
@@ -143,8 +147,8 @@ export global AuraPageData {
         colorbox1 = data.colour1;
         colorbox2 = data.colour2;
     }
-    callback set_hex_from_colour(color) -> string;
-    callback set_hex_to_colour(string) -> color;
+    callback cb_hex_from_colour(color) -> string;
+    callback cb_hex_to_colour(string) -> color;
     in-out property <AuraDevType> device_type: AuraDevType.Old;
     // List of indexes to power_zone_names. Must correspond to rog-aura crate
     in-out property <[PowerZones]> supported_power_zones: [
@@ -161,5 +165,5 @@ export global AuraPageData {
             shutdown: true,
         }]
     };
-    callback set_led_power(LaptopAuraPower);
+    callback cb_led_power(LaptopAuraPower);
 }

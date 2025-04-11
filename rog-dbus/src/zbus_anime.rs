@@ -3,11 +3,11 @@ use rog_anime::{Animations, AnimeDataBuffer, DeviceState as AnimeDeviceState};
 use zbus::proxy;
 
 #[proxy(
-    interface = "org.asuslinux.Anime",
-    default_service = "org.asuslinux.Daemon",
-    default_path = "/org/asuslinux"
+    interface = "xyz.ljones.Anime",
+    default_service = "xyz.ljones.Asusd",
+    default_path = "/xyz/ljones"
 )]
-trait Anime {
+pub trait Anime {
     /// DeviceState method
     fn device_state(&self) -> zbus::Result<AnimeDeviceState>;
 

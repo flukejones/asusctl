@@ -2,6 +2,151 @@
 
 ## [Unreleased]
 
+## [v6.1.12]
+
+### Changed
+- Fix an unbounded event loop caused by other processes causing a "modify" event on the screen backlight brightness.
+
+## [v6.1.11]
+
+### Changed
+- Fix anime flickering issue when using custom anims (@I-Al-Istannen)
+- Include pt_BR translations file (@PabloKiryu)
+
+## Added
+- Support for the screenpad brightness on some Laptops. This includes syncing to the primary screen brightness, and a gamma adjustment to set brightness scaling.
+  - Add asusctl CLI options
+  - Add UI options
+  - Add a fake gamma correction (`asusctl backlight --sync-screenpad-brightness`, 1.5 for example sets screenpad low brightness lower than primary, and scales upwards)
+
+### Changed
+- asusd: single line fix for profile switching
+
+## [v6.1.9]
+
+### Changed
+- ROGCC: better handling of platform profiles
+
+## [v6.1.8]
+
+### Changed
+- Testing CI for opensuse RPM build
+- ROGCC: Fixes to showing the PPT enablement toggle
+- ROGCC: Fixes to how PPT and NV sliders work and enable/disable
+- RGOCC: Fix quiet fan-curves availability
+
+## [v6.1.7]
+
+### Changed
+- Fix Slash display enable
+
+## [v6.1.6]
+
+### Changed
+- Disable skia bindings for UI again. It causes failures in build pipelines and requires extra dependencies.
+
+## [v6.1.5]
+
+### Changed
+- Update dependencies
+- Fix fan-curve proxy type signatures
+
+## [v6.1.4]
+
+### Changed
+- Fix git doing me a dirty
+
+## [v6.1.3]
+
+### Changed
+- Many small bugfixes such as for platform profile switching
+
+## [v6.1.2]
+
+### Changed
+- Try a slightly different tact to fix charge control slider
+
+## [v6.1.1]
+
+### Changed
+- Fix aura data matching
+- Fix charge control slider
+
+## [v6.1.0]
+
+### Changed
+- Update deps
+- Add support for G513RC RGB modes
+- Many UI fixes
+- Fixes to PPT settings in UI
+
+## [v6.1.0-rc7]
+
+- Refactor PPT handling more:
+  1. Per profile, per-ac/dc
+  2. Do not apply unless group is enabled
+  3. Better reset/disable handling
+  4. Selecting a profile defaults PPT to off/disabled
+- Bugfix: prevent an AniMe thread async deadlock
+
+## [v6.1.0-rc6]
+
+### Changed
+- Two small fixes, one for `low-power` profile name, and one for base gpu tdp
+- Move to using platform_profile api only (no throttle_thermal_policy)
+
+## [v6.1.0-rc5]
+
+### Changed
+- Per-AC/DC, per-profile tunings enabled (Battery vs AC power +  platform profile)
+- Add ability to restore PPT defaults
+- Add PPT help dialogue to UI
+- Bug fix: correctly set charge limit from UI
+
+## [v6.1.0-rc4]
+
+### Changed
+- Bug fix: UI was setting incorrect value for FPPT
+- Bug fix: Re-add callbacks for the throttle and epp settings in UI
+- Bug fix: Fix UI settigns for AniMe Matrix display
+- Bug fix: better handle missing tray (for example gnome)
+- Strip out all outdated and unsafe tuning stuff
+- Allow each performance profile to have different PPT settings
+
+## [v6.1.0-rc3]
+
+### Changed
+- Bug fixes
+- Partial support for per-profile CPU tunings (WIP)
+
+## [v6.1.0-rc2]
+
+### Added
+- asus-armoury driver support. WIP, will be adjusted/changed further
+- More "Slash" display controls
+
+## [v6.1.0-rc1]
+
+### Added
+- ROG Arion external driver LED support
+- Add GA605W LED layout
+- Add GA605 + GU605 Slash support
+
+### Changed
+- Fix attribute writes. At some point the kernel API seems to have changed.
+- Extremely large refactor of Aura device handling. Should enable easy add of different kinds now.
+- Rename CLI args for aura related properties. This will likely change further as more devices are added
+
+## [v6.0.12]
+
+### Changed
+- Add Ally X aura config
+- Fixes to Ally led power configs
+- Fix CLI led modes
+- Add FX517Z to aura_support
+- Add G614JJ Aura support
+- Add G614JZ (2023 Strix G16) Aura support
+
 ## [v6.0.11]
 
 ### Changed

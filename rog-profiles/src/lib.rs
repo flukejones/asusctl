@@ -4,9 +4,8 @@ pub mod fan_curve_set;
 use error::ProfileError;
 use fan_curve_set::CurveData;
 use log::debug;
-use rog_platform::platform::ThrottlePolicy;
+use rog_platform::platform::PlatformProfile;
 use serde::{Deserialize, Serialize};
-use typeshare::typeshare;
 pub use udev::Device;
 #[cfg(feature = "dbus")]
 use zbus::zvariant::Type;
@@ -33,7 +32,6 @@ pub fn find_fan_curve_node() -> Result<Device, ProfileError> {
     Err(ProfileError::NotSupported)
 }
 
-#[typeshare]
 #[cfg_attr(
     feature = "dbus",
     derive(Type, Value, OwnedValue),
@@ -49,7 +47,11 @@ pub enum FanCurvePU {
 impl FanCurvePU {
     fn which_fans(device: &Device) -> Vec<Self> {
         let mut fans = Vec::with_capacity(3);
-        for fan in [Self::CPU, Self::GPU, Self::MID] {
+        for fan in [
+            Self::CPU,
+            Self::GPU,
+            Self::MID,
+        ] {
             let pwm_num: char = fan.into();
             let pwm_enable = format!("pwm{pwm_num}_enable");
             debug!("Looking for {pwm_enable}");
@@ -105,13 +107,13 @@ impl Default for FanCurvePU {
 }
 
 /// Main purpose of `FanCurves` is to enable restoring state on system boot
-#[typeshare]
 #[cfg_attr(feature = "dbus", derive(Type))]
 #[derive(Deserialize, Serialize, Debug, Default)]
 pub struct FanCurveProfiles {
     pub balanced: Vec<CurveData>,
     pub performance: Vec<CurveData>,
     pub quiet: Vec<CurveData>,
+    pub custom: Vec<CurveData>,
 }
 
 impl FanCurveProfiles {
@@ -124,7 +126,7 @@ impl FanCurveProfiles {
 
     pub fn read_from_dev_profile(
         &mut self,
-        profile: ThrottlePolicy,
+        profile: PlatformProfile,
         device: &Device,
     ) -> Result<(), ProfileError> {
         let fans = Self::supported_fans()?;
@@ -142,9 +144,10 @@ impl FanCurveProfiles {
         }
 
         match profile {
-            ThrottlePolicy::Balanced => self.balanced = curves,
-            ThrottlePolicy::Performance => self.performance = curves,
-            ThrottlePolicy::Quiet => self.quiet = curves,
+            PlatformProfile::Balanced => self.balanced = curves,
+            PlatformProfile::Performance => self.performance = curves,
+            PlatformProfile::Quiet | PlatformProfile::LowPower => self.quiet = curves,
+            PlatformProfile::Custom => self.custom = curves,
         }
         Ok(())
     }
@@ -156,7 +159,7 @@ impl FanCurveProfiles {
     /// read only for the currently active profile.
     pub fn set_active_curve_to_defaults(
         &mut self,
-        profile: ThrottlePolicy,
+        profile: PlatformProfile,
         device: &mut Device,
     ) -> Result<(), ProfileError> {
         let fans = Self::supported_fans()?;
@@ -174,13 +177,14 @@ impl FanCurveProfiles {
     /// in the enabled list it will become active.
     pub fn write_profile_curve_to_platform(
         &mut self,
-        profile: ThrottlePolicy,
+        profile: PlatformProfile,
         device: &mut Device,
     ) -> Result<(), ProfileError> {
         let fans = match profile {
-            ThrottlePolicy::Balanced => &mut self.balanced,
-            ThrottlePolicy::Performance => &mut self.performance,
-            ThrottlePolicy::Quiet => &mut self.quiet,
+            PlatformProfile::Balanced => &mut self.balanced,
+            PlatformProfile::Performance => &mut self.performance,
+            PlatformProfile::Quiet | PlatformProfile::LowPower => &mut self.quiet,
+            PlatformProfile::Custom => &mut self.custom,
         };
         for fan in fans.iter().filter(|f| !f.enabled) {
             debug!("write_profile_curve_to_platform: writing profile:{profile}, {fan:?}");
@@ -195,20 +199,25 @@ impl FanCurveProfiles {
         Ok(())
     }
 
-    pub fn set_profile_curves_enabled(&mut self, profile: ThrottlePolicy, enabled: bool) {
+    pub fn set_profile_curves_enabled(&mut self, profile: PlatformProfile, enabled: bool) {
         match profile {
-            ThrottlePolicy::Balanced => {
+            PlatformProfile::Balanced => {
                 for curve in self.balanced.iter_mut() {
                     curve.enabled = enabled;
                 }
             }
-            ThrottlePolicy::Performance => {
+            PlatformProfile::Performance => {
                 for curve in self.performance.iter_mut() {
                     curve.enabled = enabled;
                 }
             }
-            ThrottlePolicy::Quiet => {
+            PlatformProfile::Quiet | PlatformProfile::LowPower => {
                 for curve in self.quiet.iter_mut() {
+                    curve.enabled = enabled;
+                }
+            }
+            PlatformProfile::Custom => {
+                for curve in self.custom.iter_mut() {
                     curve.enabled = enabled;
                 }
             }
@@ -217,12 +226,12 @@ impl FanCurveProfiles {
 
     pub fn set_profile_fan_curve_enabled(
         &mut self,
-        profile: ThrottlePolicy,
+        profile: PlatformProfile,
         fan: FanCurvePU,
         enabled: bool,
     ) {
         match profile {
-            ThrottlePolicy::Balanced => {
+            PlatformProfile::Balanced => {
                 for curve in self.balanced.iter_mut() {
                     if curve.fan == fan {
                         curve.enabled = enabled;
@@ -230,7 +239,7 @@ impl FanCurveProfiles {
                     }
                 }
             }
-            ThrottlePolicy::Performance => {
+            PlatformProfile::Performance => {
                 for curve in self.performance.iter_mut() {
                     if curve.fan == fan {
                         curve.enabled = enabled;
@@ -238,8 +247,16 @@ impl FanCurveProfiles {
                     }
                 }
             }
-            ThrottlePolicy::Quiet => {
+            PlatformProfile::Quiet | PlatformProfile::LowPower => {
                 for curve in self.quiet.iter_mut() {
+                    if curve.fan == fan {
+                        curve.enabled = enabled;
+                        break;
+                    }
+                }
+            }
+            PlatformProfile::Custom => {
+                for curve in self.custom.iter_mut() {
                     if curve.fan == fan {
                         curve.enabled = enabled;
                         break;
@@ -249,32 +266,40 @@ impl FanCurveProfiles {
         }
     }
 
-    pub fn get_fan_curves_for(&self, name: ThrottlePolicy) -> &[CurveData] {
+    pub fn get_fan_curves_for(&self, name: PlatformProfile) -> &[CurveData] {
         match name {
-            ThrottlePolicy::Balanced => &self.balanced,
-            ThrottlePolicy::Performance => &self.performance,
-            ThrottlePolicy::Quiet => &self.quiet,
+            PlatformProfile::Balanced => &self.balanced,
+            PlatformProfile::Performance => &self.performance,
+            PlatformProfile::Quiet | PlatformProfile::LowPower => &self.quiet,
+            PlatformProfile::Custom => &self.custom,
         }
     }
 
-    pub fn get_fan_curve_for(&self, name: &ThrottlePolicy, pu: FanCurvePU) -> Option<&CurveData> {
+    pub fn get_fan_curve_for(&self, name: &PlatformProfile, pu: FanCurvePU) -> Option<&CurveData> {
         match name {
-            ThrottlePolicy::Balanced => {
+            PlatformProfile::Balanced => {
                 for this_curve in self.balanced.iter() {
                     if this_curve.fan == pu {
                         return Some(this_curve);
                     }
                 }
             }
-            ThrottlePolicy::Performance => {
+            PlatformProfile::Performance => {
                 for this_curve in self.performance.iter() {
                     if this_curve.fan == pu {
                         return Some(this_curve);
                     }
                 }
             }
-            ThrottlePolicy::Quiet => {
+            PlatformProfile::Quiet | PlatformProfile::LowPower => {
                 for this_curve in self.quiet.iter() {
+                    if this_curve.fan == pu {
+                        return Some(this_curve);
+                    }
+                }
+            }
+            PlatformProfile::Custom => {
+                for this_curve in self.custom.iter() {
                     if this_curve.fan == pu {
                         return Some(this_curve);
                     }
@@ -287,10 +312,10 @@ impl FanCurveProfiles {
     pub fn save_fan_curve(
         &mut self,
         curve: CurveData,
-        profile: ThrottlePolicy,
+        profile: PlatformProfile,
     ) -> Result<(), ProfileError> {
         match profile {
-            ThrottlePolicy::Balanced => {
+            PlatformProfile::Balanced => {
                 for this_curve in self.balanced.iter_mut() {
                     if this_curve.fan == curve.fan {
                         *this_curve = curve;
@@ -298,7 +323,7 @@ impl FanCurveProfiles {
                     }
                 }
             }
-            ThrottlePolicy::Performance => {
+            PlatformProfile::Performance => {
                 for this_curve in self.performance.iter_mut() {
                     if this_curve.fan == curve.fan {
                         *this_curve = curve;
@@ -306,8 +331,16 @@ impl FanCurveProfiles {
                     }
                 }
             }
-            ThrottlePolicy::Quiet => {
+            PlatformProfile::Quiet | PlatformProfile::LowPower => {
                 for this_curve in self.quiet.iter_mut() {
+                    if this_curve.fan == curve.fan {
+                        *this_curve = curve;
+                        break;
+                    }
+                }
+            }
+            PlatformProfile::Custom => {
+                for this_curve in self.custom.iter_mut() {
                     if this_curve.fan == curve.fan {
                         *this_curve = curve;
                         break;

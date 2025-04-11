@@ -6,13 +6,14 @@ After=nvidia-powerd.service systemd-udevd.service
 
 [Service]
 Environment=IS_SERVICE=1
-Environment=RUST_LOG="info"
+Environment=RUST_LOG="debug"
 # required to prevent init issues with hid_asus and MCU
 ExecStartPre=/bin/sleep 1
 ExecStart=/usr/bin/asusd
 Restart=on-failure
 RestartSec=1
 Type=dbus
-BusName=org.asuslinux.Daemon
+BusName=xyz.ljones.Asusd
 SELinuxContext=system_u:system_r:unconfined_t:s0
 #SELinuxContext=system_u:object_r:modules_object_t:s0
+TimeoutSec=10

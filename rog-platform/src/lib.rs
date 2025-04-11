@@ -1,6 +1,8 @@
 //! This crate functions as a wrapper of all the relevant ASUS functionality
 //! on ROG, Strix, and TUF laptops.
 
+pub mod asus_armoury;
+pub mod backlight;
 pub mod cpu;
 pub mod error;
 pub mod hid_raw;
@@ -13,6 +15,8 @@ pub mod usb_raw;
 use std::path::Path;
 
 use error::{PlatformError, Result};
+use log::warn;
+use platform::PlatformProfile;
 use udev::Device;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -43,23 +47,38 @@ pub fn read_attr_bool(device: &Device, attr_name: &str) -> Result<bool> {
 }
 
 pub fn write_attr_bool(device: &mut Device, attr: &str, value: bool) -> Result<()> {
+    let value = if value { 1 } else { 0 };
     device
-        .set_attribute_value(attr, &(value as u8).to_string())
-        .map_err(|e| PlatformError::IoPath(attr.into(), e))
+        .set_attribute_value(attr, value.to_string())
+        .map_err(|e| {
+            warn!("attr write error: {e:?}");
+            PlatformError::IoPath(attr.into(), e)
+        })
 }
 
-pub fn read_attr_u8(device: &Device, attr_name: &str) -> Result<u8> {
+pub fn read_attr_num<T>(device: &Device, attr_name: &str) -> Result<T>
+where
+    T: std::str::FromStr,
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
     if let Some(value) = device.attribute_value(attr_name) {
         let tmp = value.to_string_lossy();
-        return tmp.parse::<u8>().map_err(|_e| PlatformError::ParseNum);
+        return tmp.parse::<T>().map_err(|_e| PlatformError::ParseNum);
     }
     Err(PlatformError::AttrNotFound(attr_name.to_owned()))
 }
 
-pub fn write_attr_u8(device: &mut Device, attr: &str, value: u8) -> Result<()> {
-    device
-        .set_attribute_value(attr, &(value).to_string())
-        .map_err(|e| PlatformError::IoPath(attr.into(), e))
+pub fn write_attr_num<T>(device: &mut Device, attr_name: &str, value: T) -> Result<()>
+where
+    T: std::fmt::Display,
+{
+    if device
+        .set_attribute_value(attr_name, format!("{value}"))
+        .is_err()
+    {
+        return Err(PlatformError::AttrNotFound(attr_name.to_owned()));
+    }
+    Ok(())
 }
 
 pub fn read_attr_u8_array(device: &Device, attr_name: &str) -> Result<Vec<u8>> {
@@ -101,11 +120,25 @@ pub fn write_attr_string(device: &mut Device, attr: &str, value: &str) -> Result
         .map_err(|e| PlatformError::IoPath(attr.into(), e))
 }
 
+pub fn read_attr_string_array(device: &Device, attr_name: &str) -> Result<Vec<PlatformProfile>> {
+    if let Some(value) = device.attribute_value(attr_name) {
+        let tmp: Vec<PlatformProfile> = value
+            .to_string_lossy()
+            .split(' ')
+            .map(PlatformProfile::from)
+            .collect();
+        return Ok(tmp);
+    }
+    Err(PlatformError::AttrNotFound(attr_name.to_owned()))
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
     fn check() {
-        let data = [1, 2, 3, 4, 5];
+        let data = [
+            1, 2, 3, 4, 5,
+        ];
         let mut tmp = String::new();
         for n in data {
             tmp.push_str(&n.to_string());

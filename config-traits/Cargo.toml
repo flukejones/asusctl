@@ -13,6 +13,3 @@ serde.workspace = true
 ron.workspace = true
 
 log.workspace = true
-
-[dev-dependencies]
-cargo-husky.workspace = true

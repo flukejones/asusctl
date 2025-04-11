@@ -2,19 +2,20 @@ use std::env;
 use std::error::Error;
 use std::sync::Arc;
 
-use ::zbus::export::futures_util::lock::Mutex;
 use ::zbus::Connection;
+use asusd::asus_armoury::start_attributes_zbus;
+use asusd::aura_manager::DeviceManager;
 use asusd::config::Config;
-use asusd::ctrl_anime::trait_impls::CtrlAnimeZbus;
-use asusd::ctrl_anime::CtrlAnime;
-use asusd::ctrl_aura::manager::AuraManager;
+use asusd::ctrl_backlight::CtrlBacklight;
 use asusd::ctrl_fancurves::CtrlFanCurveZbus;
 use asusd::ctrl_platform::CtrlPlatform;
-use asusd::ctrl_slash::trait_impls::CtrlSlashZbus;
-use asusd::ctrl_slash::CtrlSlash;
-use asusd::{print_board_info, start_tasks, CtrlTask, DBUS_NAME};
-use config_traits::{StdConfig, StdConfigLoad1};
+use asusd::{print_board_info, start_tasks, CtrlTask, ZbusRun, DBUS_NAME};
+use config_traits::{StdConfig, StdConfigLoad2};
+use futures_util::lock::Mutex;
 use log::{error, info};
+use rog_platform::asus_armoury::FirmwareAttributes;
+use rog_platform::platform::RogPlatform;
+use rog_platform::power::AsusPower;
 use zbus::fdo::ObjectManager;
 
 #[tokio::main]
@@ -25,11 +26,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .parse_default_env()
         .target(env_logger::Target::Stdout)
         .format_timestamp(None)
+        .filter_level(log::LevelFilter::Debug)
         .init();
 
     let is_service = match env::var_os("IS_SERVICE") {
         Some(val) => val == "1",
-        None => false,
+        None => true,
     };
 
     if !is_service {
@@ -59,76 +61,71 @@ async fn start_daemon() -> Result<(), Box<dyn Error>> {
     // println!("{:?}", supported.supported_functions());
 
     // Start zbus server
-    let mut connection = Connection::system().await?;
-    connection
-        .object_server()
-        .at("/", ObjectManager)
-        .await
-        .unwrap();
+    let mut server = Connection::system().await?;
+    server.object_server().at("/", ObjectManager).await.unwrap();
 
     let config = Config::new().load();
     let cfg_path = config.file_path();
     let config = Arc::new(Mutex::new(config));
 
     // supported.add_to_server(&mut connection).await;
+    let platform = RogPlatform::new()?; // TODO: maybe needs async mutex?
+    let power = AsusPower::new()?; // TODO: maybe needs async mutex?
+    let attributes = FirmwareAttributes::new();
+    start_attributes_zbus(
+        &server,
+        platform.clone(),
+        power.clone(),
+        attributes.clone(),
+        config.clone(),
+    )
+    .await?;
 
     match CtrlFanCurveZbus::new() {
         Ok(ctrl) => {
-            let sig_ctx = CtrlFanCurveZbus::signal_context(&connection)?;
-            start_tasks(ctrl, &mut connection, sig_ctx).await?;
+            let sig_ctx = CtrlFanCurveZbus::signal_context(&server)?;
+            start_tasks(ctrl, &mut server, sig_ctx).await?;
         }
         Err(err) => {
             error!("FanCurves: {}", err);
         }
     }
 
+    match CtrlBacklight::new(config.clone()) {
+        Ok(backlight) => {
+            backlight.start_watch_primary().await?;
+            backlight.add_to_server(&mut server).await;
+        }
+        Err(err) => {
+            error!("Backlight: {}", err);
+        }
+    }
+
     match CtrlPlatform::new(
+        platform,
+        power,
+        attributes,
         config.clone(),
         &cfg_path,
-        CtrlPlatform::signal_context(&connection)?,
+        CtrlPlatform::signal_context(&server)?,
     ) {
         Ok(ctrl) => {
-            let sig_ctx = CtrlPlatform::signal_context(&connection)?;
-            start_tasks(ctrl, &mut connection, sig_ctx).await?;
+            let sig_ctx = CtrlPlatform::signal_context(&server)?;
+            start_tasks(ctrl, &mut server, sig_ctx).await?;
         }
         Err(err) => {
             error!("CtrlPlatform: {}", err);
         }
     }
 
-    match CtrlAnime::new() {
-        Ok(ctrl) => {
-            let zbus = CtrlAnimeZbus(Arc::new(Mutex::new(ctrl)));
-            let sig_ctx = CtrlAnimeZbus::signal_context(&connection)?;
-            start_tasks(zbus, &mut connection, sig_ctx).await?;
-        }
-        Err(err) => {
-            info!("AniMe control: {}", err);
-        }
-    }
-
-    match CtrlSlash::new() {
-        Ok(ctrl) => {
-            let zbus = CtrlSlashZbus(Arc::new(Mutex::new(ctrl)));
-            // Currently, the Slash has no need for a loop watching power events, however,
-            // it could be cool to have the slash do some power-on/off animation
-            // (It has a built-in power on animation which plays when u plug in the power
-            // supply)
-            let sig_ctx = CtrlSlashZbus::signal_context(&connection)?;
-            start_tasks(zbus, &mut connection, sig_ctx).await?;
-        }
-        Err(err) => {
-            info!("AniMe control: {}", err);
-        }
-    }
-
-    let _ = AuraManager::new(connection.clone()).await?;
+    let _ = DeviceManager::new(server.clone()).await?;
 
     // Request dbus name after finishing initalizing all functions
-    connection.request_name(DBUS_NAME).await?;
+    server.request_name(DBUS_NAME).await?;
 
+    info!("Startup success, begining dbus server loop");
     loop {
         // This is just a blocker to idle and ensure the reator reacts
-        connection.executor().tick().await;
+        server.executor().tick().await;
     }
 }

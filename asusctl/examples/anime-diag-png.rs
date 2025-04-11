@@ -3,7 +3,7 @@ use std::error::Error;
 use std::path::Path;
 use std::process::exit;
 
-use rog_anime::usb::get_maybe_anime_type;
+use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimeDiagonal, AnimeType};
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use zbus::blocking::Connection;
@@ -26,7 +26,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         AnimeType::GA401,
     )?;
 
-    let anime_type = get_maybe_anime_type()?;
+    let anime_type = get_anime_type();
 
     proxy.write(matrix.into_data_buffer(anime_type)?).unwrap();
 

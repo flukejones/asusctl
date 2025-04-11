@@ -1,9 +1,10 @@
 use gumdrop::Options;
-use rog_platform::platform::ThrottlePolicy;
+use rog_platform::platform::PlatformProfile;
 
 use crate::anime_cli::AnimeCommand;
 use crate::aura_cli::{LedBrightness, LedPowerCommand1, LedPowerCommand2, SetAuraBuiltin};
 use crate::fan_curve_cli::FanCurveCommand;
+use crate::scsi_cli::ScsiCommand;
 use crate::slash_cli::SlashCommand;
 
 #[derive(Default, Options)]
@@ -22,6 +23,8 @@ pub struct CliStart {
     pub prev_kbd_bright: bool,
     #[options(meta = "", help = "Set your battery charge limit <20-100>")]
     pub chg_limit: Option<u8>,
+    #[options(help = "Toggle one-shot battery charge to 100%")]
+    pub one_shot_chg: bool,
     #[options(command)]
     pub command: Option<CliCommand>,
 }
@@ -29,11 +32,11 @@ pub struct CliStart {
 #[derive(Options)]
 pub enum CliCommand {
     #[options(help = "Set the keyboard lighting from built-in modes")]
-    LedMode(LedModeCommand),
+    Aura(LedModeCommand),
     #[options(help = "Set the LED power states")]
-    LedPow1(LedPowerCommand1),
+    AuraPowerOld(LedPowerCommand1),
     #[options(help = "Set the LED power states")]
-    LedPow2(LedPowerCommand2),
+    AuraPower(LedPowerCommand2),
     #[options(help = "Set or select platform_profile")]
     Profile(ProfileCommand),
     #[options(help = "Set, select, or modify fan curves if supported")]
@@ -44,8 +47,15 @@ pub enum CliCommand {
     Anime(AnimeCommand),
     #[options(name = "slash", help = "Manage Slash Ledbar")]
     Slash(SlashCommand),
-    #[options(help = "Change bios settings")]
-    Bios(BiosCommand),
+    #[options(name = "scsi", help = "Manage SCSI external drive")]
+    Scsi(ScsiCommand),
+    #[options(
+        help = "Change platform settings. This is a new interface exposed by the asus-armoury \
+                driver, some of the settings will be the same as the older platform interface"
+    )]
+    Armoury(ArmouryCommand),
+    #[options(name = "backlight", help = "Set screen backlight levels")]
+    Backlight(BacklightCommand),
 }
 
 #[derive(Debug, Clone, Options)]
@@ -63,7 +73,7 @@ pub struct ProfileCommand {
     pub profile_get: bool,
 
     #[options(meta = "", help = "set the active profile")]
-    pub profile_set: Option<ThrottlePolicy>,
+    pub profile_set: Option<PlatformProfile>,
 }
 
 #[derive(Options)]
@@ -85,34 +95,30 @@ pub struct GraphicsCommand {
 }
 
 #[derive(Options, Debug)]
-pub struct BiosCommand {
+pub struct ArmouryCommand {
     #[options(help = "print help message")]
     pub help: bool,
     #[options(
-        meta = "",
-        short = "S",
-        no_long,
-        help = "set bios POST sound: asusctl -S <true/false>"
+        free,
+        help = "append each value name followed by the value to set. `-1` sets to default"
     )]
-    pub post_sound_set: Option<bool>,
-    #[options(no_long, short = "s", help = "read bios POST sound")]
-    pub post_sound_get: bool,
+    pub free: Vec<String>,
+}
+
+#[derive(Options)]
+pub struct BacklightCommand {
+    #[options(help = "print help message")]
+    pub help: bool,
+    #[options(meta = "", help = "Set screen brightness <0-100>")]
+    pub screenpad_brightness: Option<i32>,
     #[options(
         meta = "",
-        short = "D",
-        no_long,
-        help = "Switch GPU MUX mode: 0 = Discrete, 1 = Optimus, reboot required"
+        help = "Set screenpad gamma brightness 0.5 - 2.2, 1.0 == linear"
     )]
-    pub gpu_mux_mode_set: Option<u8>,
-    #[options(no_long, short = "d", help = "get GPU mode")]
-    pub gpu_mux_mode_get: bool,
+    pub screenpad_gamma: Option<f32>,
     #[options(
         meta = "",
-        short = "O",
-        no_long,
-        help = "Set device panel overdrive <true/false>"
+        help = "Set screenpad brightness to sync with primary display"
     )]
-    pub panel_overdrive_set: Option<bool>,
-    #[options(no_long, short = "o", help = "get panel overdrive")]
-    pub panel_overdrive_get: bool,
+    pub sync_screenpad_brightness: Option<bool>,
 }

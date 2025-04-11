@@ -321,7 +321,9 @@ impl AnimeImage {
             let pos = Vec3::new(led.x(), led.y(), 1.0);
             let x0 = led_from_px.mul_vec3(pos + Vec3::new(0.0, -0.5, 0.0));
 
-            const GROUP: [f32; 4] = [0.0, 0.5, 1.0, 1.5];
+            const GROUP: [f32; 4] = [
+                0.0, 0.5, 1.0, 1.5,
+            ];
             for u in &GROUP {
                 for v in &GROUP {
                     let sample = x0 + *u * du + *v * dv;

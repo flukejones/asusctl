@@ -18,6 +18,7 @@ config-traits = { path = "../config-traits" }
 rog_anime = { path = "../rog-anime", features = ["dbus"] }
 rog_slash = { path = "../rog-slash", features = ["dbus"] }
 rog_aura = { path = "../rog-aura", features = ["dbus"] }
+rog_scsi = { path = "../rog-scsi", features = ["dbus"] }
 rog_platform = { path = "../rog-platform" }
 rog_profiles = { path = "../rog-profiles" }
 dmi_id = { path = "../dmi-id" }
@@ -33,6 +34,7 @@ tokio.workspace = true
 log.workspace = true
 env_logger.workspace = true
 
+futures-util.workspace = true
 zbus.workspace = true
 logind-zbus.workspace = true
 
@@ -43,6 +45,3 @@ concat-idents.workspace = true
 
 [dev-dependencies]
 cargo-husky.workspace = true
-
-[package.metadata.cargo-machete]
-ignored = ["serde"]

@@ -23,12 +23,5 @@ path = "src/lib.rs"
 
 [dependencies]
 serde.workspace = true
-typeshare.workspace = true
 zbus = { workspace = true, optional = true }
 dmi_id = { path = "../dmi-id", optional = true }
-
-[dev-dependencies]
-cargo-husky.workspace = true
-
-[package.metadata.cargo-machete]
-ignored = ["serde"]

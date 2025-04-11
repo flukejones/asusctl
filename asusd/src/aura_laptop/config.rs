@@ -14,7 +14,13 @@ use crate::error::RogError;
 #[derive(Deserialize, Serialize, Default, Debug, Clone)]
 // #[serde(default)]
 pub struct AuraConfig {
+    #[serde(skip)]
+    pub led_type: AuraDeviceType,
+    #[serde(skip)]
+    pub support_data: LedSupportData,
     pub config_name: String,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub ally_fix: Option<bool>,
     pub brightness: LedBrightness,
     pub current_mode: AuraModeNum,
     pub builtins: BTreeMap<AuraModeNum, AuraEffect>,
@@ -22,6 +28,8 @@ pub struct AuraConfig {
     pub multizone: Option<BTreeMap<AuraModeNum, Vec<AuraEffect>>>,
     pub multizone_on: bool,
     pub enabled: LaptopAuraPower,
+    #[serde(skip)]
+    pub per_key_mode_active: bool,
 }
 
 impl StdConfig for AuraConfig {
@@ -56,24 +64,28 @@ impl AuraConfig {
         let support_data = LedSupportData::get_data(prod_id);
         let enabled = LaptopAuraPower::new(device_type, &support_data);
         let mut config = AuraConfig {
+            led_type: device_type,
+            support_data,
             config_name: format!("aura_{prod_id}.ron"),
+            ally_fix: None,
             brightness: LedBrightness::Med,
             current_mode: AuraModeNum::Static,
             builtins: BTreeMap::new(),
             multizone: None,
             multizone_on: false,
             enabled,
+            per_key_mode_active: false,
         };
 
-        for n in &support_data.basic_modes {
+        for n in &config.support_data.basic_modes {
             debug!("creating default for {n}");
             config
                 .builtins
                 .insert(*n, AuraEffect::default_with_mode(*n));
 
-            if !support_data.basic_zones.is_empty() {
+            if !config.support_data.basic_zones.is_empty() {
                 let mut default = vec![];
-                for (i, tmp) in support_data.basic_zones.iter().enumerate() {
+                for (i, tmp) in config.support_data.basic_zones.iter().enumerate() {
                     default.push(AuraEffect {
                         mode: *n,
                         zone: *tmp,
@@ -135,12 +147,9 @@ impl AuraConfig {
 
     /// Create a default for the `current_mode` if multizone and no config
     /// exists.
-    pub(super) fn create_multizone_default(
-        &mut self,
-        supported_data: &LedSupportData,
-    ) -> Result<(), RogError> {
+    pub fn create_multizone_default(&mut self) -> Result<(), RogError> {
         let mut default = vec![];
-        for (i, tmp) in supported_data.basic_zones.iter().enumerate() {
+        for (i, tmp) in self.support_data.basic_zones.iter().enumerate() {
             default.push(AuraEffect {
                 mode: self.current_mode,
                 zone: *tmp,
@@ -162,6 +171,60 @@ impl AuraConfig {
             self.multizone = Some(tmp);
         }
         Ok(())
+    }
+
+    /// Reload the config from disk then verify and update it if required.
+    /// Always rewrites the file to disk.
+    pub fn load_and_update_config(prod_id: &str) -> AuraConfig {
+        // New loads data from the DB also
+        let mut config_init = AuraConfig::new(prod_id);
+        // config_init.set_filename(prod_id);
+        let mut config_loaded = config_init.clone().load();
+        // update the initialised data with what we loaded from disk
+        for mode_init in &mut config_init.builtins {
+            // update init values from loaded values if they exist
+            if let Some(loaded) = config_loaded.builtins.get(mode_init.0) {
+                *mode_init.1 = loaded.clone();
+            }
+        }
+        // Then replace just incase the initialised data contains new modes added
+        config_loaded.builtins = config_init.builtins;
+        config_loaded.support_data = config_init.support_data;
+        config_loaded.led_type = config_init.led_type;
+        config_loaded.ally_fix = config_init.ally_fix;
+
+        for enabled_init in &mut config_init.enabled.states {
+            for enabled in &mut config_loaded.enabled.states {
+                if enabled.zone == enabled_init.zone {
+                    *enabled_init = *enabled;
+                    break;
+                }
+            }
+        }
+        config_loaded.enabled = config_init.enabled;
+
+        if let (Some(mut multizone_init), Some(multizone_loaded)) =
+            (config_init.multizone, config_loaded.multizone.as_mut())
+        {
+            for mode in multizone_init.iter_mut() {
+                // update init values from loaded values if they exist
+                if let Some(loaded) = multizone_loaded.get(mode.0) {
+                    let mut new_set = Vec::new();
+                    let data = LedSupportData::get_data(prod_id);
+                    // only reuse a zone mode if the mode is supported
+                    for mode in loaded {
+                        if data.basic_modes.contains(&mode.mode) {
+                            new_set.push(mode.clone());
+                        }
+                    }
+                    *mode.1 = new_set;
+                }
+            }
+            *multizone_loaded = multizone_init;
+        }
+
+        config_loaded.write();
+        config_loaded
     }
 }
 
@@ -231,38 +294,26 @@ mod tests {
         let res = config.multizone.unwrap();
         let sta = res.get(&AuraModeNum::Static).unwrap();
         assert_eq!(sta.len(), 4);
-        assert_eq!(
-            sta[0].colour1,
-            Colour {
-                r: 0xff,
-                g: 0x00,
-                b: 0xff
-            }
-        );
-        assert_eq!(
-            sta[1].colour1,
-            Colour {
-                r: 0x00,
-                g: 0xff,
-                b: 0xff
-            }
-        );
-        assert_eq!(
-            sta[2].colour1,
-            Colour {
-                r: 0xff,
-                g: 0xff,
-                b: 0x00
-            }
-        );
-        assert_eq!(
-            sta[3].colour1,
-            Colour {
-                r: 0x00,
-                g: 0xff,
-                b: 0x00
-            }
-        );
+        assert_eq!(sta[0].colour1, Colour {
+            r: 0xff,
+            g: 0x00,
+            b: 0xff
+        });
+        assert_eq!(sta[1].colour1, Colour {
+            r: 0x00,
+            g: 0xff,
+            b: 0xff
+        });
+        assert_eq!(sta[2].colour1, Colour {
+            r: 0xff,
+            g: 0xff,
+            b: 0x00
+        });
+        assert_eq!(sta[3].colour1, Colour {
+            r: 0x00,
+            g: 0xff,
+            b: 0x00
+        });
     }
 
     #[test]
@@ -320,28 +371,22 @@ mod tests {
 
         assert_eq!(config.brightness, LedBrightness::Med);
         assert_eq!(config.builtins.len(), 5);
-        assert_eq!(
-            config.builtins.first_entry().unwrap().get(),
-            &AuraEffect {
-                mode: AuraModeNum::Static,
-                zone: AuraZone::None,
-                colour1: Colour { r: 166, g: 0, b: 0 },
-                colour2: Colour { r: 0, g: 0, b: 0 },
-                speed: Speed::Med,
-                direction: Direction::Right
-            }
-        );
+        assert_eq!(config.builtins.first_entry().unwrap().get(), &AuraEffect {
+            mode: AuraModeNum::Static,
+            zone: AuraZone::None,
+            colour1: Colour { r: 166, g: 0, b: 0 },
+            colour2: Colour { r: 0, g: 0, b: 0 },
+            speed: Speed::Med,
+            direction: Direction::Right
+        });
         assert_eq!(config.enabled.states.len(), 1);
-        assert_eq!(
-            config.enabled.states[0],
-            AuraPowerState {
-                zone: PowerZones::KeyboardAndLightbar,
-                boot: true,
-                awake: true,
-                sleep: true,
-                shutdown: true
-            }
-        );
+        assert_eq!(config.enabled.states[0], AuraPowerState {
+            zone: PowerZones::KeyboardAndLightbar,
+            boot: true,
+            awake: true,
+            sleep: true,
+            shutdown: true
+        });
     }
 
     #[test]
@@ -351,27 +396,21 @@ mod tests {
 
         assert_eq!(config.brightness, LedBrightness::Med);
         assert_eq!(config.builtins.len(), 12);
-        assert_eq!(
-            config.builtins.first_entry().unwrap().get(),
-            &AuraEffect {
-                mode: AuraModeNum::Static,
-                zone: AuraZone::None,
-                colour1: Colour { r: 166, g: 0, b: 0 },
-                colour2: Colour { r: 0, g: 0, b: 0 },
-                speed: Speed::Med,
-                direction: Direction::Right
-            }
-        );
+        assert_eq!(config.builtins.first_entry().unwrap().get(), &AuraEffect {
+            mode: AuraModeNum::Static,
+            zone: AuraZone::None,
+            colour1: Colour { r: 166, g: 0, b: 0 },
+            colour2: Colour { r: 0, g: 0, b: 0 },
+            speed: Speed::Med,
+            direction: Direction::Right
+        });
         assert_eq!(config.enabled.states.len(), 4);
-        assert_eq!(
-            config.enabled.states[0],
-            AuraPowerState {
-                zone: PowerZones::Keyboard,
-                boot: true,
-                awake: true,
-                sleep: true,
-                shutdown: true
-            }
-        );
+        assert_eq!(config.enabled.states[0], AuraPowerState {
+            zone: PowerZones::Keyboard,
+            boot: true,
+            awake: true,
+            sleep: true,
+            shutdown: true
+        });
     }
 }

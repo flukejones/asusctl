@@ -4,11 +4,10 @@ use std::str::FromStr;
 
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
-use typeshare::typeshare;
 use zbus::zvariant::{OwnedValue, Type, Value};
 
 use crate::error::{PlatformError, Result};
-use crate::{attr_bool, attr_string, attr_u8, to_device};
+use crate::{attr_string, attr_string_array, to_device};
 
 /// The "platform" device provides access to things like:
 /// - `dgpu_disable`
@@ -25,84 +24,16 @@ pub struct RogPlatform {
 }
 
 impl RogPlatform {
-    attr_bool!("dgpu_disable", path);
-
-    attr_bool!("egpu_enable", path);
-
-    attr_u8!("gpu_mux_mode", path);
-
-    attr_bool!("panel_od", path);
-
-    attr_bool!("mini_led_mode", path);
-
-    attr_u8!(
-        /// This is technically the same as `platform_profile` since both are
-        /// tied in-kernel
-        "throttle_thermal_policy",
-        path
-    );
-
     attr_string!(
         /// The acpi platform_profile support
         "platform_profile",
         pp_path
     );
 
-    attr_u8!(
-        /// Package Power Target total of CPU: PL1 on Intel, SPL on AMD.
-        /// Shown on Intel+Nvidia or AMD+Nvidia based systems:
-        /// * min=5, max=250
-        "ppt_pl1_spl",
-        path
-    );
-
-    attr_u8!(
-        /// Slow Package Power Tracking Limit of CPU: PL2 on Intel, SPPT,
-        /// on AMD. Shown on Intel+Nvidia or AMD+Nvidia based systems:
-        /// * min=5, max=250
-        "ppt_pl2_sppt",
-        path
-    );
-
-    attr_u8!(
-        /// Fast Package Power Tracking Limit of CPU. AMD+Nvidia only:
-        /// * min=5, max=250
-        "ppt_fppt",
-        path
-    );
-
-    attr_u8!(
-        /// APU SPPT limit. Shown on full AMD systems only:
-        /// * min=5, max=130
-        "ppt_apu_sppt",
-        path
-    );
-
-    attr_u8!(
-        /// Platform SPPT limit. Shown on full AMD systems only:
-        /// * min=5, max=130
-        "ppt_platform_sppt",
-        path
-    );
-
-    attr_u8!(
-        /// Dynamic boost limit of the Nvidia dGPU:
-        /// * min=5, max=25
-        "nv_dynamic_boost",
-        path
-    );
-
-    attr_u8!(
-        /// Target temperature limit of the Nvidia dGPU:
-        /// * min=75, max=87
-        "nv_temp_target",
-        path
-    );
-
-    attr_bool!(
-        /// Control the POST animation "FWOOoosh" sound
-        "boot_sound",
-        path
+    attr_string_array!(
+        /// The acpi platform_profile support
+        "platform_profile_choices",
+        pp_path
     );
 
     pub fn new() -> Result<Self> {
@@ -148,7 +79,6 @@ impl Default for RogPlatform {
     }
 }
 
-#[typeshare]
 #[repr(u8)]
 #[derive(
     Serialize, Deserialize, Default, Type, Value, OwnedValue, Debug, PartialEq, Eq, Clone, Copy,
@@ -245,7 +175,6 @@ impl Display for GpuMode {
     }
 }
 
-#[typeshare]
 #[repr(u32)]
 #[derive(
     Deserialize,
@@ -257,41 +186,47 @@ impl Display for GpuMode {
     Debug,
     PartialEq,
     Eq,
-    PartialOrd,
     Ord,
+    PartialOrd,
     Hash,
     Clone,
     Copy,
 )]
 #[zvariant(signature = "u")]
-/// `throttle_thermal_policy` in asus_wmi
-pub enum ThrottlePolicy {
+/// `platform_profile` in asus_wmi
+pub enum PlatformProfile {
     #[default]
     Balanced = 0,
     Performance = 1,
     Quiet = 2,
+    LowPower = 3,
+    Custom = 4,
 }
 
-impl ThrottlePolicy {
-    pub const fn next(self) -> Self {
-        match self {
+impl PlatformProfile {
+    pub fn next(current: Self, choices: &[Self]) -> Self {
+        match current {
             Self::Balanced => Self::Performance,
-            Self::Performance => Self::Quiet,
-            Self::Quiet => Self::Balanced,
+            Self::Performance => {
+                if choices.contains(&Self::LowPower) {
+                    Self::LowPower
+                } else {
+                    Self::Quiet
+                }
+            }
+            Self::Quiet | Self::LowPower | Self::Custom => Self::Balanced,
         }
     }
-
-    pub const fn list() -> [Self; 3] {
-        [Self::Balanced, Self::Performance, Self::Quiet]
-    }
 }
 
-impl From<u8> for ThrottlePolicy {
-    fn from(num: u8) -> Self {
+impl From<i32> for PlatformProfile {
+    fn from(num: i32) -> Self {
         match num {
             0 => Self::Balanced,
             1 => Self::Performance,
             2 => Self::Quiet,
+            3 => Self::LowPower,
+            4 => Self::Custom,
             _ => {
                 warn!("Unknown number for PlatformProfile: {}", num);
                 Self::Balanced
@@ -300,59 +235,74 @@ impl From<u8> for ThrottlePolicy {
     }
 }
 
-impl From<i32> for ThrottlePolicy {
-    fn from(num: i32) -> Self {
-        (num as u8).into()
+impl From<PlatformProfile> for i32 {
+    fn from(p: PlatformProfile) -> Self {
+        p as i32
     }
 }
 
-impl From<ThrottlePolicy> for u8 {
-    fn from(p: ThrottlePolicy) -> Self {
-        match p {
-            ThrottlePolicy::Balanced => 0,
-            ThrottlePolicy::Performance => 1,
-            ThrottlePolicy::Quiet => 2,
-        }
-    }
-}
-
-impl From<ThrottlePolicy> for i32 {
-    fn from(p: ThrottlePolicy) -> Self {
-        <u8>::from(p) as i32
-    }
-}
-
-impl From<ThrottlePolicy> for &str {
-    fn from(profile: ThrottlePolicy) -> &'static str {
+impl From<&PlatformProfile> for &str {
+    fn from(profile: &PlatformProfile) -> &'static str {
         match profile {
-            ThrottlePolicy::Balanced => "balanced",
-            ThrottlePolicy::Performance => "performance",
-            ThrottlePolicy::Quiet => "quiet",
+            PlatformProfile::Balanced => "balanced",
+            PlatformProfile::Performance => "performance",
+            PlatformProfile::Quiet => "quiet",
+            PlatformProfile::LowPower => "low-power",
+            PlatformProfile::Custom => "custom",
         }
     }
 }
 
-impl std::str::FromStr for ThrottlePolicy {
+impl From<PlatformProfile> for &str {
+    fn from(profile: PlatformProfile) -> &'static str {
+        <&str>::from(&profile)
+    }
+}
+
+impl From<String> for PlatformProfile {
+    fn from(profile: String) -> Self {
+        Self::from(profile.as_str())
+    }
+}
+
+impl Display for PlatformProfile {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({})", <&str>::from(self))
+    }
+}
+
+impl std::str::FromStr for PlatformProfile {
     type Err = PlatformError;
 
     fn from_str(profile: &str) -> Result<Self> {
         match profile.to_ascii_lowercase().trim() {
-            "balanced" => Ok(ThrottlePolicy::Balanced),
-            "performance" => Ok(ThrottlePolicy::Performance),
-            "quiet" => Ok(ThrottlePolicy::Quiet),
+            "balanced" => Ok(PlatformProfile::Balanced),
+            "performance" => Ok(PlatformProfile::Performance),
+            "quiet" => Ok(PlatformProfile::Quiet),
+            "low-power" => Ok(PlatformProfile::LowPower),
+            "custom" => Ok(PlatformProfile::Custom),
             _ => Err(PlatformError::NotSupported),
         }
     }
 }
 
-impl Display for ThrottlePolicy {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+impl From<&str> for PlatformProfile {
+    fn from(profile: &str) -> Self {
+        match profile.to_ascii_lowercase().trim() {
+            "balanced" => PlatformProfile::Balanced,
+            "performance" => PlatformProfile::Performance,
+            "quiet" => PlatformProfile::Quiet,
+            "low-power" => PlatformProfile::LowPower,
+            "custom" => PlatformProfile::Custom,
+            _ => {
+                warn!("{profile} is unknown, using ThrottlePolicy::Balanced");
+                PlatformProfile::Balanced
+            }
+        }
     }
 }
 
 /// CamelCase names of the properties. Intended for use with DBUS
-#[typeshare]
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Type, PartialEq, PartialOrd)]
 #[zvariant(signature = "s")]
@@ -365,11 +315,4 @@ pub enum Properties {
     MiniLedMode,
     EgpuEnable,
     ThrottlePolicy,
-    PptPl1Spl,
-    PptPl2Sppt,
-    PptFppt,
-    PptApuSppt,
-    PptPlatformSppt,
-    NvDynamicBoost,
-    NvTempTarget,
 }

@@ -13,3 +13,6 @@ reorder_modules = true
 unstable_features = true
 use_field_init_shorthand = true
 wrap_comments = true
+array_width = 8
+overflow_delimited_expr = true
+short_array_element_width_threshold = 20

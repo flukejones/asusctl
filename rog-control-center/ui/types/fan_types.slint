@@ -4,13 +4,15 @@ export enum Profile {
     Balanced,
     Performance,
     Quiet,
+    LowPower,
+    Custom
 }
 
 export enum FanType {
     CPU,
     Middle,
     GPU,
- }
+}
 
 export global FanPageData {
     in-out property <[Profile]> available_profiles: [Profile.Balanced, Profile.Performance, Profile.Quiet];

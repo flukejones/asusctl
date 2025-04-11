@@ -1,6 +1,6 @@
 # `asusctl` for ASUS ROG
 
-[Become a Patron!](https://www.patreon.com/bePatron?u=7602281) - [Asus Linux Website](https://asus-linux.org/)
+[![Become a Patron!](https://github.com/codebard/patron-button-and-widgets-by-codebard/blob/master/images/become_a_patron_button.png?raw=true)](https://www.patreon.com/bePatron?u=7602281) [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/V7V5CLU67) - [Asus Linux Website](https://asus-linux.org/)
 
 **WARNING:** Many features are developed in tandem with kernel patches. If you see a feature is missing you either need a patched kernel or latest release.
 
@@ -11,7 +11,9 @@ Now includes a GUI, `rog-control-center`.
 
 ## Kernel support
 
-**The minimum supported kernel version is 6.10**, which will contain the patches from [here](https://lore.kernel.org/platform-driver-x86/20240404001652.86207-1-luke@ljones.dev/). This is especially required for 2023+ devices and possibly some lat 2022 devices.
+Due to on-going driver work the minimum suggested kernel version is always **the latest*, as improvements and fixes are continuous.
+
+Support for some new features is not avilable unless you run a patched kernel with the work I am doing [in this github repo](https://github.com/flukejones/linux/tree/wip/ally-6.13). Use the linked branch, or `wip/ally-6.12`. Everything that is done here is upstreamed eventually (a long process).
 
 Z13 devices will need [these](https://lore.kernel.org/linux-input/20240416090402.31057-1-luke@ljones.dev/T/#t)
 
@@ -37,7 +39,7 @@ See the [rog-aura readme](./rog-aura/README.md) for more details.
 
 ## Discord
 
-[![Discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/z8y99XqPb7)
+[![Discord](https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/B8GftRW2Hd)
 
 ## SUPPORTED LAPTOPS
 
@@ -84,7 +86,7 @@ Rust and cargo are required, they can be installed from [rustup.rs](https://rust
 
 **fedora:**
 
-    dnf install cmake clang-devel libinput-devel libseat-devel libgbm-devel libxkbcommon-devel systemd-devel libdrm-devel expat-devel pcre2-devel libzstd-devel gtk3-devel
+    dnf install cmake clang-devel  libxkbcommon-devel systemd-devel expat-devel pcre2-devel libzstd-devel gtk3-devel
     make
     sudo make install
 
@@ -93,7 +95,16 @@ Rust and cargo are required, they can be installed from [rustup.rs](https://rust
 Works with KDE Plasma (without GTK packages)
 
     zypper in -t pattern devel_basis
-    zypper in rustup make cmake clang-devel libinput-devel libseat-devel libgbm-devel libxkbcommon-devel systemd-devel libdrm-devel expat-devel pcre2-devel libzstd-devel gtk3-devel
+    zypper in rustup make cmake clang-devel libxkbcommon-devel systemd-devel expat-devel pcre2-devel libzstd-devel gtk3-devel
+    make
+    sudo make install
+
+**Debian(unsuported):**
+
+officially unsuported,but you can still try and test it by yourself(some features may not be available).
+
+    sudo apt install libclang-dev libudev-dev libfontconfig-dev build-essential cmake libxkbcommon-dev
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     make
     sudo make install
 

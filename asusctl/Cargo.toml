@@ -10,13 +10,16 @@ edition.workspace = true
 
 [dependencies]
 rog_anime = { path = "../rog-anime" }
+rog_scsi = { path = "../rog-scsi" }
 rog_slash = { path = "../rog-slash" }
 rog_aura = { path = "../rog-aura" }
 rog_dbus = { path = "../rog-dbus" }
 rog_profiles = { path = "../rog-profiles" }
 rog_platform = { path = "../rog-platform" }
-asusd = { path = "../asusd" }
 dmi_id = { path = "../dmi-id" }
+
+log.workspace = true
+env_logger.workspace = true
 
 ron.workspace = true
 gumdrop.workspace = true
@@ -24,5 +27,3 @@ zbus.workspace = true
 
 [dev-dependencies]
 rog_dbus = { path = "../rog-dbus" }
-
-cargo-husky.workspace = true

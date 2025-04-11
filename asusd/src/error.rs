@@ -142,3 +142,10 @@ impl From<RogError> for zbus::fdo::Error {
         zbus::fdo::Error::Failed(format!("{}", err))
     }
 }
+
+impl From<RogError> for zbus::Error {
+    #[inline]
+    fn from(err: RogError) -> Self {
+        zbus::Error::Failure(format!("{}", err))
+    }
+}

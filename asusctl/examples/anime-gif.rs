@@ -2,7 +2,7 @@ use std::env;
 use std::path::Path;
 use std::thread::sleep;
 
-use rog_anime::usb::get_maybe_anime_type;
+use rog_anime::usb::get_anime_type;
 use rog_anime::{ActionData, ActionLoader, Sequences};
 use rog_dbus::zbus_anime::AnimeProxyBlocking;
 use zbus::blocking::Connection;
@@ -19,16 +19,13 @@ fn main() {
 
     let path = Path::new(&args[1]);
     let brightness = args[2].parse::<f32>().unwrap();
-    let anime_type = get_maybe_anime_type().unwrap();
+    let anime_type = get_anime_type();
     let mut seq = Sequences::new(anime_type);
-    seq.insert(
-        0,
-        &ActionLoader::AsusAnimation {
-            file: path.into(),
-            time: rog_anime::AnimTime::Infinite,
-            brightness,
-        },
-    )
+    seq.insert(0, &ActionLoader::AsusAnimation {
+        file: path.into(),
+        time: rog_anime::AnimTime::Infinite,
+        brightness,
+    })
     .unwrap();
 
     loop {
