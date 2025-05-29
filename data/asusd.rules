@@ -9,6 +9,7 @@ ENV{DMI_FAMILY}=="*Strix*", GOTO="asusd_start"
 ENV{DMI_FAMILY}=="*Vivo*ook*", GOTO="asusd_start"
 ENV{DMI_FAMILY}=="*Zenbook*", GOTO="asusd_start"
 ENV{DMI_FAMILY}=="*ProArt*", GOTO="asusd_start"
+ENV{DMI_FAMILY}=="*TX Gaming*", GOTO="asusd_start"
 # No match so
 GOTO="asusd_end"
 
